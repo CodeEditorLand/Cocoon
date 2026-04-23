@@ -8,6 +8,7 @@
  */
 
 import type { HandlerContext } from "../HandlerContext.js";
+import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
 
 type Listener<T> = (Event: T) => unknown;
 
@@ -39,13 +40,11 @@ const MakeEventSubscriber =
 		return Subscription;
 	};
 
-let OutputChannelCounter = 0;
-let TerminalCounter = 0;
-let TreeDataProviderCounter = 0;
-let WebviewPanelCounter = 0;
-let WebviewViewCounter = 0;
-let CustomEditorCounter = 0;
-let ProgressCounter = 0;
+// Legacy `*Counter` locals replaced by the shared `NextProviderHandle()`
+// from LanguageProviderRegistry. The handle MUST be a plain numeric value
+// because Mountain's notification parser reads it as `u64`; a stringified
+// `"terminal:1"` etc. previously fell back to `handle=0` and every new
+// provider of the same type collided on the same Mountain registry key.
 
 /**
  * Registry of locally-registered tree-data providers, keyed by the handle
@@ -72,7 +71,6 @@ export const TreeDataProvidersByViewId = new Map<string, any>();
 export const WebviewViewProviders = new Map<string, any>();
 export const CustomEditorProviders = new Map<string, any>();
 export const WebviewPanels = new Map<string, any>();
-let StatusBarCounter = 0;
 
 const CreateWindowNamespace = (Context: HandlerContext) => {
 	// User-interaction prompts need a *round-trip* (sendRequest) not a
@@ -170,8 +168,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		},
 
 		createTerminal: (Options?: { name?: string; [k: string]: unknown }) => {
-			const Handle = `terminal:${++TerminalCounter}`;
-			const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
+			const Handle = NextProviderHandle();
+			const Name = Options?.name ?? `Terminal ${Handle}`;
 			Context.SendToMountain("window.createTerminal", {
 				handle: Handle,
 				name: Name,
@@ -253,7 +251,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			AlignmentOrId?: unknown,
 			Priority?: number,
 		): Record<string, unknown> => {
-			const Handle = `statusBar:${++StatusBarCounter}`;
+			const Handle = NextProviderHandle();
 			const Item = {
 				id: Handle,
 				alignment:
@@ -290,7 +288,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Name: string,
 			Options?: string | { log?: boolean },
 		) => {
-			const Handle = `outputChannel:${++OutputChannelCounter}`;
+			const Handle = NextProviderHandle();
 			const IsLog =
 				typeof Options === "object" && Options !== null
 					? Options.log === true
@@ -476,7 +474,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			ShowOptions: unknown,
 			Options?: unknown,
 		) => {
-			const Handle = `webviewPanel:${++WebviewPanelCounter}`;
+			const Handle = NextProviderHandle();
 			let CurrentHtml = "";
 			let CurrentOptions = (Options ?? {}) as Record<string, unknown>;
 			Context.MountainClient?.sendRequest("webview.create", [
@@ -553,7 +551,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					]).catch(() => {});
 				},
 				dispose: () => {
-					WebviewPanels.delete(Handle);
+					WebviewPanels.delete(String(Handle));
 					Context.Emitter.removeAllListeners(
 						`webview.message:${Handle}`,
 					);
@@ -580,7 +578,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					};
 				},
 			};
-			WebviewPanels.set(Handle, Panel);
+			WebviewPanels.set(String(Handle), Panel);
 			return Panel;
 		},
 
@@ -651,8 +649,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		) => {
 			const Provider = Options?.treeDataProvider;
 			if (Provider) {
-				const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-				TreeDataProviders.set(Handle, Provider);
+				const Handle = NextProviderHandle();
+				TreeDataProviders.set(String(Handle), Provider);
 				TreeDataProvidersByViewId.set(Id, Provider);
 				// Send ONLY the serialisable primitive options to Mountain.
 				// The previous version forwarded `Options` verbatim, which
@@ -696,8 +694,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		},
 
 		registerTreeDataProvider: (ViewId: string, Provider: any) => {
-			const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-			TreeDataProviders.set(Handle, Provider);
+			const Handle = NextProviderHandle();
+			TreeDataProviders.set(String(Handle), Provider);
 			TreeDataProvidersByViewId.set(ViewId, Provider);
 			Context.MountainClient?.sendRequest("tree.register", [
 				Handle,
@@ -706,7 +704,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			]).catch(() => {});
 			return {
 				dispose: () => {
-					TreeDataProviders.delete(Handle);
+					TreeDataProviders.delete(String(Handle));
 					TreeDataProvidersByViewId.delete(ViewId);
 					Context.MountainClient?.sendRequest("tree.unregister", [
 						Handle,
@@ -716,15 +714,15 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		},
 		registerWebviewPanelSerializer: () => ({ dispose: () => {} }),
 		registerWebviewViewProvider: (ViewId: string, Provider: any) => {
-			const Handle = `webviewView:${++WebviewViewCounter}`;
-			WebviewViewProviders.set(Handle, Provider);
+			const Handle = NextProviderHandle();
+			WebviewViewProviders.set(String(Handle), Provider);
 			Context.MountainClient?.sendRequest("webview.registerView", [
 				Handle,
 				ViewId,
 			]).catch(() => {});
 			return {
 				dispose: () => {
-					WebviewViewProviders.delete(Handle);
+					WebviewViewProviders.delete(String(Handle));
 					Context.MountainClient?.sendRequest(
 						"webview.unregisterView",
 						[Handle],
@@ -733,15 +731,15 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			};
 		},
 		registerCustomEditorProvider: (ViewType: string, Provider: any) => {
-			const Handle = `customEditor:${++CustomEditorCounter}`;
-			CustomEditorProviders.set(Handle, Provider);
+			const Handle = NextProviderHandle();
+			CustomEditorProviders.set(String(Handle), Provider);
 			Context.MountainClient?.sendRequest(
 				"webview.registerCustomEditor",
 				[Handle, ViewType],
 			).catch(() => {});
 			return {
 				dispose: () => {
-					CustomEditorProviders.delete(Handle);
+					CustomEditorProviders.delete(String(Handle));
 					Context.MountainClient?.sendRequest(
 						"webview.unregisterCustomEditor",
 						[Handle],
@@ -750,7 +748,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			};
 		},
 		registerFileDecorationProvider: (Provider: any) => {
-			const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_file_decoration_provider", {
 				handle: Handle,
 				extension_id: "",
@@ -774,7 +772,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			};
 		},
 		registerUriHandler: (Handler: any) => {
-			const Handle = `uriHandler:${Date.now()}`;
+			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_uri_handler", {
 				handle: Handle,
 				extension_id: "",
@@ -790,7 +788,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			};
 		},
 		registerTerminalLinkProvider: (Provider: any) => {
-			const Handle = `terminalLink:${Date.now()}`;
+			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_terminal_link_provider", {
 				handle: Handle,
 				extension_id: "",
@@ -812,7 +810,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			};
 		},
 		registerTerminalProfileProvider: (Id: string, Provider: any) => {
-			const Handle = `terminalProfile:${Id}:${Date.now()}`;
+			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_terminal_profile_provider", {
 				handle: Handle,
 				profile_id: Id,
@@ -842,7 +840,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			_Opener: unknown,
 			_Metadata?: unknown,
 		) => {
-			const Handle = `externalUriOpener:${Id}:${Date.now()}`;
+			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_external_uri_opener", {
 				handle: Handle,
 				opener_id: Id,
@@ -865,7 +863,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// no-op CancellationToken (no cancellation plumbing yet). The
 		// Task's return value is forwarded verbatim.
 		withProgress: async (Options: any, Task: any) => {
-			const Handle = `progress:${++ProgressCounter}`;
+			const Handle = NextProviderHandle();
 			const Title =
 				(Options && typeof Options === "object" && Options.title) ||
 				"Progress";

@@ -62,7 +62,15 @@ var CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderR
     } catch {
       return [];
     }
-  }, "getCommands")
+  }, "getCommands"),
+  // `onDidExecuteCommand` - stock VS Code event that fires post-dispatch
+  // for any `executeCommand` call. Extensions (vim, gitlens, telemetry
+  // collectors) subscribe to observe user-invoked commands. Land doesn't
+  // surface a post-dispatch stream yet; stub with a no-op disposable so
+  // the subscription doesn't crash. Emitting real events requires a hook
+  // in the Mountain Command.Execute effect to broadcast back - deferred.
+  onDidExecuteCommand: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "onDidExecuteCommand")
 }), "CreateCommandsNamespace");
 var CommandsNamespace_default = CreateCommandsNamespace;
 export {

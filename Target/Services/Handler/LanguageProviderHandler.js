@@ -20767,6 +20767,10 @@ function RegisterAutoHandle(Provider) {
   return Handle;
 }
 __name(RegisterAutoHandle, "RegisterAutoHandle");
+function NextProviderHandle() {
+  return NextHandle++;
+}
+__name(NextProviderHandle, "NextProviderHandle");
 var Commands = /* @__PURE__ */ new Map();
 function RegisterCommand(CommandId, Callback) {
   Commands.set(CommandId, Callback);

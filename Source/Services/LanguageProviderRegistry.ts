@@ -70,6 +70,25 @@ export function RegisterAutoHandle(Provider: ProviderObject): number {
 	return Handle;
 }
 
+/**
+ * Allocate a new numeric handle WITHOUT registering a provider object.
+ *
+ * Use this for register_*_provider notifications that Cocoon does not
+ * dispatch back to locally (debug_configuration, file_system, task,
+ * uri_handler, terminal_*, notebook_*, status_bar, progress, webview*,
+ * tree_data_provider, etc.). Previously these call sites used string
+ * handles like `debugConfig:1` which Mountain parsed as `u64` - the
+ * parse always yielded `None` and Mountain fell back to `handle=0`,
+ * causing every provider of the same type to collide on the same key
+ * in Mountain's `HashMap<u32, ProviderRegistrationDTO>` registry.
+ *
+ * Sharing the counter with `RegisterAutoHandle` means no collision
+ * between language-provider handles and stand-alone provider handles.
+ */
+export function NextProviderHandle(): number {
+	return NextHandle++;
+}
+
 /** Command registry - maps command IDs to callbacks. */
 const Commands = new Map<string, Function>();
 
@@ -79,6 +98,16 @@ const Commands = new Map<string, Function>();
  */
 export function RegisterCommand(CommandId: string, Callback: Function): void {
 	Commands.set(CommandId, Callback);
+}
+
+/**
+ * Probe whether a command ID has a local Cocoon handler. Used by
+ * `CommandsRoute.Route` to pick the tier BEFORE dispatching, so the
+ * decision can be logged without actually executing. Keeps the
+ * Cocoon-local-vs-Mountain-remote split observable.
+ */
+export function HasCommand(CommandId: string): boolean {
+	return Commands.has(CommandId);
 }
 
 /**

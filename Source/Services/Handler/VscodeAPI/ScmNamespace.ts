@@ -8,12 +8,11 @@
  */
 
 import type { HandlerContext } from "../HandlerContext.js";
-
-let ScmCounter = 0;
+import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
 
 const CreateScmNamespace = (Context: HandlerContext) => ({
 	createSourceControl: (Id: string, Label: string, RootUri?: unknown) => {
-		const Handle = `scm:${++ScmCounter}`;
+		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_scm_provider", {
 			handle: Handle,
 			id: Id,

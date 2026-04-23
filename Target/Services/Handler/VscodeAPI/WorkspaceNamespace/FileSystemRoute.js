@@ -160,14 +160,61 @@ var BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context) => (F
   return { dispose: /* @__PURE__ */ __name(() => {
   }, "dispose") };
 }, "BuildRegisterResourceLabelFormatter");
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts
+function ExtractScheme(Uri) {
+  if (Uri && typeof Uri === "object") {
+    const WithScheme = Uri;
+    if (typeof WithScheme.scheme === "string" && WithScheme.scheme.length > 0) {
+      return WithScheme.scheme;
+    }
+  }
+  if (typeof Uri === "string") {
+    const Colon = Uri.indexOf(":");
+    if (Colon > 0 && Colon < 32) {
+      const Scheme = Uri.slice(0, Colon);
+      if (/^[a-zA-Z][a-zA-Z0-9+\-.]*$/.test(Scheme)) {
+        return Scheme.toLowerCase();
+      }
+    }
+    return "file";
+  }
+  return "file";
+}
+__name(ExtractScheme, "ExtractScheme");
+function ExtractFsPath(Uri) {
+  if (Uri && typeof Uri === "object") {
+    const WithPath = Uri;
+    if (typeof WithPath.fsPath === "string" && WithPath.fsPath.length > 0) {
+      return WithPath.fsPath;
+    }
+    if (typeof WithPath.path === "string" && WithPath.path.length > 0) {
+      return WithPath.path;
+    }
+  }
+  if (typeof Uri === "string") {
+    if (Uri.startsWith("file://")) {
+      try {
+        return decodeURIComponent(Uri.slice("file://".length));
+      } catch {
+        return Uri.slice("file://".length);
+      }
+    }
+    if (Uri.startsWith("/")) return Uri;
+  }
+  return void 0;
+}
+__name(ExtractFsPath, "ExtractFsPath");
+function Route(Uri) {
+  const Scheme = ExtractScheme(Uri);
+  if (Scheme !== "file") return "mountain";
+  if (ClaimedFileSystemSchemes.has("file")) return "mountain";
+  return ExtractFsPath(Uri) !== void 0 ? "native" : "mountain";
+}
+__name(Route, "Route");
 export {
-  BuildRegisterFileSystemProvider,
-  BuildRegisterNotebookContentProvider,
-  BuildRegisterNotebookSerializer,
-  BuildRegisterRemoteAuthorityResolver,
-  BuildRegisterResourceLabelFormatter,
-  BuildRegisterTaskProvider,
-  BuildRegisterTextDocumentContentProvider,
-  ClaimedFileSystemSchemes
+  ExtractFsPath,
+  ExtractScheme,
+  Route
 };
-//# sourceMappingURL=Providers.js.map
+//# sourceMappingURL=FileSystemRoute.js.map

@@ -15,6 +15,7 @@
  */
 
 import type { HandlerContext } from "../HandlerContext.js";
+import { LogRoute, Route } from "./CommandsRoute.js";
 
 const CreateCommandsNamespace = (
 	Context: HandlerContext,
@@ -61,11 +62,31 @@ const CreateCommandsNamespace = (
 		Command: string,
 		...Arguments: unknown[]
 	): Promise<unknown> => {
-		const LocalResult = LanguageProviderRegistry.ExecuteCommand(
-			Command,
-			...Arguments,
-		);
-		if (LocalResult !== undefined) return LocalResult;
+		// Route decision BEFORE dispatch so `[DEV:CMD-ROUTE]` observes
+		// what actually happened. `Route()` probes
+		// `LanguageProviderRegistry.HasCommand(Command)` - a Map lookup -
+		// and returns `"local"` when present, `"mountain"` otherwise.
+		// Keeps the tier split observable per-run; same pattern as
+		// `[DEV:FS-ROUTE]`.
+		const Decision = Route(Command, {
+			Has: LanguageProviderRegistry.HasCommand,
+		});
+		LogRoute(Command, Decision);
+
+		if (Decision === "local") {
+			const LocalResult = LanguageProviderRegistry.ExecuteCommand(
+				Command,
+				...Arguments,
+			);
+			if (LocalResult !== undefined) return LocalResult;
+			// Local handler returned undefined - either the extension's
+			// command legitimately has no return value, or (rare) the
+			// handler was deregistered between `Has` probe and invoke.
+			// Fall through to Mountain so workbench commands with the
+			// same id as a legitimate extension no-op still reach their
+			// native handler.
+		}
+
 		try {
 			// Routed by Mountain via Track::SideCarRequest → Command.Execute effect.
 			return await Context.MountainClient?.sendRequest(
@@ -89,6 +110,16 @@ const CreateCommandsNamespace = (
 			return [];
 		}
 	},
+
+	// `onDidExecuteCommand` - stock VS Code event that fires post-dispatch
+	// for any `executeCommand` call. Extensions (vim, gitlens, telemetry
+	// collectors) subscribe to observe user-invoked commands. Land doesn't
+	// surface a post-dispatch stream yet; stub with a no-op disposable so
+	// the subscription doesn't crash. Emitting real events requires a hook
+	// in the Mountain Command.Execute effect to broadcast back - deferred.
+	onDidExecuteCommand: (
+		_Listener: (Event: { command: string; arguments: unknown[] }) => unknown,
+	) => ({ dispose: () => {} }),
 });
 
 export default CreateCommandsNamespace;

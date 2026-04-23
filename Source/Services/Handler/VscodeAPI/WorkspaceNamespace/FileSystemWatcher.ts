@@ -10,11 +10,8 @@
 import GlobToRegex from "../../../../Utility/GlobToRegex.js";
 import Tier from "../../../../Utility/Tier.js";
 import type { HandlerContext } from "../../HandlerContext.js";
+import { NextProviderHandle } from "../../../LanguageProviderRegistry.js";
 import { ExtractGlobPattern, ResolveWorkspaceFolders } from "./Helpers.js";
-
-// Process-wide counter for createFileSystemWatcher handles. Monotonic so the
-// same handle never re-appears after dispose.
-let WatcherCounter = 0;
 
 export const CreateFileSystemWatcher = (
 	Context: HandlerContext,
@@ -52,7 +49,7 @@ export const CreateFileSystemWatcher = (
 		return StubWatcher;
 	}
 
-	const Handle = `watcher:${++WatcherCounter}`;
+	const Handle = NextProviderHandle();
 	// `**` anywhere in the pattern forces recursive watching; plain
 	// globs restricted to a single directory use NonRecursive so we
 	// don't subscribe to the whole tree just to watch one folder.

@@ -9,18 +9,19 @@
  */
 
 import type { HandlerContext } from "../../HandlerContext.js";
+import { NextProviderHandle } from "../../../LanguageProviderRegistry.js";
 
 const MakeProvider = (
 	Context: HandlerContext,
 	RegisterMethod: string,
 	UnregisterMethod: string,
-	HandlePrefix: string,
+	_LegacyHandlePrefix: string,
 	ExtraPayload: (Key: string) => Record<string, unknown>,
-	OnRegister?: (Handle: string, Key: string, Provider: any) => void,
-	OnDispose?: (Handle: string, Key: string) => void,
+	OnRegister?: (Handle: number, Key: string, Provider: any) => void,
+	OnDispose?: (Handle: number, Key: string) => void,
 ) =>
 (Key: string, _Provider: any, _Options?: any) => {
-	const Handle = `${HandlePrefix}:${Key}:${Date.now()}`;
+	const Handle = NextProviderHandle();
 	Context.SendToMountain(RegisterMethod, {
 		handle: Handle,
 		...ExtraPayload(Key),
@@ -58,6 +59,22 @@ export const BuildRegisterTextDocumentContentProvider = (
 		},
 	);
 
+/**
+ * Local registry of schemes an extension has claimed via
+ * `workspace.registerFileSystemProvider(scheme, provider, ...)`.
+ *
+ * Used by `FileSystemNamespace`'s tier-A/tier-C routing decision: for a
+ * `file://` URI, if the `file` scheme is NOT in this set, the operation
+ * can run natively in Cocoon's Node runtime (zero Mountain RTT). If an
+ * extension has registered a provider for the scheme, we MUST forward to
+ * Mountain so the provider is consulted - otherwise the extension's
+ * ability to serve custom URIs silently breaks.
+ *
+ * Exported so the routing module + its tests can read it. `disposeAll`
+ * is for test teardown.
+ */
+export const ClaimedFileSystemSchemes = new Set<string>();
+
 export const BuildRegisterFileSystemProvider =
 	(Context: HandlerContext) =>
 	(
@@ -65,7 +82,8 @@ export const BuildRegisterFileSystemProvider =
 		_Provider: any,
 		Options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
 	) => {
-		const Handle = `fileSystemProvider:${Scheme}:${Date.now()}`;
+		const Handle = NextProviderHandle();
+		ClaimedFileSystemSchemes.add(Scheme);
 		Context.SendToMountain("register_file_system_provider", {
 			handle: Handle,
 			scheme: Scheme,
@@ -75,6 +93,7 @@ export const BuildRegisterFileSystemProvider =
 		}).catch(() => {});
 		return {
 			dispose: () => {
+				ClaimedFileSystemSchemes.delete(Scheme);
 				Context.SendToMountain("unregister_file_system_provider", {
 					handle: Handle,
 				}).catch(() => {});

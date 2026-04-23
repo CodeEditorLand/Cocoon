@@ -8,8 +8,7 @@
  */
 
 import type { HandlerContext } from "../HandlerContext.js";
-
-let DebugProviderCounter = 0;
+import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -27,7 +26,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 		DebugType: string,
 		_Factory: unknown,
 	) => {
-		const Handle = `debugAdapter:${++DebugProviderCounter}`;
+		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_debug_adapter", {
 			handle: Handle,
 			debug_type: DebugType,
@@ -46,7 +45,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 		DebugType: string,
 		_Provider: unknown,
 	) => {
-		const Handle = `debugConfig:${++DebugProviderCounter}`;
+		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_debug_configuration_provider", {
 			handle: Handle,
 			debug_type: DebugType,

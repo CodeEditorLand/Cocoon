@@ -7,7 +7,10 @@
  */
 
 import type { HandlerContext } from "../../HandlerContext.js";
+import { promises as FsPromises } from "node:fs";
+
 import { Call, EventSubscriber } from "./Helpers.js";
+import { ExtractFsPath, Route } from "./FileSystemRoute.js";
 
 export const BuildOpenTextDocument =
 	(Context: HandlerContext) => async (UriOrPath: any) => {
@@ -15,11 +18,51 @@ export const BuildOpenTextDocument =
 			typeof UriOrPath === "string"
 				? UriOrPath
 				: (UriOrPath?.toString?.() ?? "");
+
+		// Cache hit short-circuits every backend - typed model registry
+		// already holds the latest contents.
 		const Cached = Context.DocumentContentCache.get(UriString);
-		const Text =
-			Cached ??
-			(await Call<string>(Context, "FileSystem.ReadFile", [UriString])) ??
-			"";
+		let Text: string;
+		if (Cached !== undefined) {
+			Text = Cached;
+		} else {
+			// Tier-split match: `file://` with no custom provider reads
+			// through Cocoon's own Node backend; everything else (Mountain-
+			// owned schemes, custom-provider schemes) routes through the
+			// FileSystem.ReadFile gRPC effect.
+			const Decision = Route(UriOrPath);
+			if (Decision === "native") {
+				const Path = ExtractFsPath(UriOrPath);
+				if (Path !== undefined) {
+					if (process.env["LAND_DEV_LOG"]) {
+						process.stdout.write(
+							`[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}\n`,
+						);
+					}
+					try {
+						Text = await FsPromises.readFile(Path, "utf8");
+					} catch {
+						Text = "";
+					}
+				} else {
+					Text =
+						(await Call<string>(Context, "FileSystem.ReadFile", [
+							UriString,
+						])) ?? "";
+				}
+			} else {
+				if (process.env["LAND_DEV_LOG"]) {
+					process.stdout.write(
+						`[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}\n`,
+					);
+				}
+				Text =
+					(await Call<string>(Context, "FileSystem.ReadFile", [
+						UriString,
+					])) ?? "";
+			}
+		}
+
 		return {
 			uri: UriOrPath,
 			fileName: UriString,

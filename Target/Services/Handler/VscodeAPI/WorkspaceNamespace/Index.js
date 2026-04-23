@@ -481,8 +481,62 @@ LandFixLog_default.Info(
 );
 var Tier_default = Tier;
 
+// Source/Services/LanguageProviderRegistry.ts
+var Callbacks = /* @__PURE__ */ new Map();
+function Register(Handle, Provider) {
+  Callbacks.set(Handle, Provider);
+}
+__name(Register, "Register");
+function Unregister(Handle) {
+  Callbacks.delete(Handle);
+}
+__name(Unregister, "Unregister");
+function Get(Handle) {
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
+}
+__name(Get, "Get");
+var NextHandle = 1e4;
+function RegisterAutoHandle(Provider) {
+  const Handle = NextHandle++;
+  Callbacks.set(Handle, Provider);
+  return Handle;
+}
+__name(RegisterAutoHandle, "RegisterAutoHandle");
+function NextProviderHandle() {
+  return NextHandle++;
+}
+__name(NextProviderHandle, "NextProviderHandle");
+var Commands = /* @__PURE__ */ new Map();
+function RegisterCommand(CommandId, Callback) {
+  Commands.set(CommandId, Callback);
+}
+__name(RegisterCommand, "RegisterCommand");
+function ExecuteCommand(CommandId, ...Args) {
+  const Handler = Commands.get(CommandId);
+  if (Handler) return Handler(...Args);
+  return void 0;
+}
+__name(ExecuteCommand, "ExecuteCommand");
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+__name(UnregisterCommand, "UnregisterCommand");
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+__name(ListCommands, "ListCommands");
+function ListHandles() {
+  return Array.from(Callbacks.keys());
+}
+__name(ListHandles, "ListHandles");
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
-var WatcherCounter = 0;
 var CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
   const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
   }, "dispose") };
@@ -509,7 +563,7 @@ var CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCr
   if (!Root) {
     return StubWatcher;
   }
-  const Handle = `watcher:${++WatcherCounter}`;
+  const Handle = NextProviderHandle();
   const IsRecursive = PatternString.includes("**");
   Context.MountainClient?.sendRequest("FileWatcher.Register", [
     Handle,
@@ -794,11 +848,204 @@ var BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener,
   return Subscription;
 }, "BuildOnDidChangeConfiguration");
 
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts
+var MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMethod, _LegacyHandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
+  const Handle = NextProviderHandle();
+  Context.SendToMountain(RegisterMethod, {
+    handle: Handle,
+    ...ExtraPayload(Key)
+  }).catch(() => {
+  });
+  OnRegister?.(Handle, Key, _Provider);
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      OnDispose?.(Handle, Key);
+      Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
+        () => {
+        }
+      );
+    }, "dispose")
+  };
+}, "MakeProvider");
+var BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
+  Context,
+  "register_text_document_content_provider",
+  "unregister_text_document_content_provider",
+  "textDocumentContent",
+  (Scheme) => ({ scheme: Scheme, extension_id: "" }),
+  (_Handle, Scheme, Provider) => {
+    Context.ExtensionRegistry.set(
+      `__textDocumentContentProvider:${Scheme}`,
+      Provider
+    );
+  },
+  (_Handle, Scheme) => {
+    Context.ExtensionRegistry.delete(
+      `__textDocumentContentProvider:${Scheme}`
+    );
+  }
+), "BuildRegisterTextDocumentContentProvider");
+var ClaimedFileSystemSchemes = /* @__PURE__ */ new Set();
+var BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Scheme, _Provider, Options) => {
+  const Handle = NextProviderHandle();
+  ClaimedFileSystemSchemes.add(Scheme);
+  Context.SendToMountain("register_file_system_provider", {
+    handle: Handle,
+    scheme: Scheme,
+    is_case_sensitive: Options?.isCaseSensitive ?? true,
+    is_readonly: Options?.isReadonly ?? false,
+    extension_id: ""
+  }).catch(() => {
+  });
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      ClaimedFileSystemSchemes.delete(Scheme);
+      Context.SendToMountain("unregister_file_system_provider", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "dispose")
+  };
+}, "BuildRegisterFileSystemProvider");
+var BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
+  Context,
+  "register_task_provider",
+  "unregister_task_provider",
+  "taskProvider",
+  (TaskType) => ({ task_type: TaskType, extension_id: "" })
+), "BuildRegisterTaskProvider");
+var BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
+  Context,
+  "register_notebook_content_provider",
+  "unregister_notebook_content_provider",
+  "notebookContent",
+  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+), "BuildRegisterNotebookContentProvider");
+var BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
+  Context,
+  "register_notebook_serializer",
+  "unregister_notebook_serializer",
+  "notebookSerializer",
+  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+), "BuildRegisterNotebookSerializer");
+var BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
+  Context.SendToMountain("register_remote_authority_resolver", {
+    authority_prefix: AuthorityPrefix,
+    extension_id: ""
+  }).catch(() => {
+  });
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain(
+        "unregister_remote_authority_resolver",
+        { authority_prefix: AuthorityPrefix }
+      ).catch(() => {
+      });
+    }, "dispose")
+  };
+}, "BuildRegisterRemoteAuthorityResolver");
+var BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context) => (Formatter) => {
+  Context.SendToMountain("register_resource_label_formatter", {
+    formatter: Formatter
+  }).catch(() => {
+  });
+  return { dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") };
+}, "BuildRegisterResourceLabelFormatter");
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts
+function ExtractScheme(Uri) {
+  if (Uri && typeof Uri === "object") {
+    const WithScheme = Uri;
+    if (typeof WithScheme.scheme === "string" && WithScheme.scheme.length > 0) {
+      return WithScheme.scheme;
+    }
+  }
+  if (typeof Uri === "string") {
+    const Colon = Uri.indexOf(":");
+    if (Colon > 0 && Colon < 32) {
+      const Scheme = Uri.slice(0, Colon);
+      if (/^[a-zA-Z][a-zA-Z0-9+\-.]*$/.test(Scheme)) {
+        return Scheme.toLowerCase();
+      }
+    }
+    return "file";
+  }
+  return "file";
+}
+__name(ExtractScheme, "ExtractScheme");
+function ExtractFsPath(Uri) {
+  if (Uri && typeof Uri === "object") {
+    const WithPath = Uri;
+    if (typeof WithPath.fsPath === "string" && WithPath.fsPath.length > 0) {
+      return WithPath.fsPath;
+    }
+    if (typeof WithPath.path === "string" && WithPath.path.length > 0) {
+      return WithPath.path;
+    }
+  }
+  if (typeof Uri === "string") {
+    if (Uri.startsWith("file://")) {
+      try {
+        return decodeURIComponent(Uri.slice("file://".length));
+      } catch {
+        return Uri.slice("file://".length);
+      }
+    }
+    if (Uri.startsWith("/")) return Uri;
+  }
+  return void 0;
+}
+__name(ExtractFsPath, "ExtractFsPath");
+function Route(Uri) {
+  const Scheme = ExtractScheme(Uri);
+  if (Scheme !== "file") return "mountain";
+  if (ClaimedFileSystemSchemes.has("file")) return "mountain";
+  return ExtractFsPath(Uri) !== void 0 ? "native" : "mountain";
+}
+__name(Route, "Route");
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts
+import { promises as FsPromises } from "node:fs";
 var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath) => {
   const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
   const Cached = Context.DocumentContentCache.get(UriString);
-  const Text = Cached ?? await Call(Context, "FileSystem.ReadFile", [UriString]) ?? "";
+  let Text;
+  if (Cached !== void 0) {
+    Text = Cached;
+  } else {
+    const Decision = Route(UriOrPath);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(UriOrPath);
+      if (Path !== void 0) {
+        if (process.env["LAND_DEV_LOG"]) {
+          process.stdout.write(
+            `[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}
+`
+          );
+        }
+        try {
+          Text = await FsPromises.readFile(Path, "utf8");
+        } catch {
+          Text = "";
+        }
+      } else {
+        Text = await Call(Context, "FileSystem.ReadFile", [
+          UriString
+        ]) ?? "";
+      }
+    } else {
+      if (process.env["LAND_DEV_LOG"]) {
+        process.stdout.write(
+          `[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}
+`
+        );
+      }
+      Text = await Call(Context, "FileSystem.ReadFile", [
+        UriString
+      ]) ?? "";
+    }
+  }
   return {
     uri: UriOrPath,
     fileName: UriString,
@@ -884,119 +1131,72 @@ var BuildDocumentEventMembers = /* @__PURE__ */ __name((Context) => ({
   )
 }), "BuildDocumentEventMembers");
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts
-var MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMethod, HandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
-  const Handle = `${HandlePrefix}:${Key}:${Date.now()}`;
-  Context.SendToMountain(RegisterMethod, {
-    handle: Handle,
-    ...ExtraPayload(Key)
-  }).catch(() => {
-  });
-  OnRegister?.(Handle, Key, _Provider);
-  return {
-    dispose: /* @__PURE__ */ __name(() => {
-      OnDispose?.(Handle, Key);
-      Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-        () => {
-        }
-      );
-    }, "dispose")
-  };
-}, "MakeProvider");
-var BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-  Context,
-  "register_text_document_content_provider",
-  "unregister_text_document_content_provider",
-  "textDocumentContent",
-  (Scheme) => ({ scheme: Scheme, extension_id: "" }),
-  (_Handle, Scheme, Provider) => {
-    Context.ExtensionRegistry.set(
-      `__textDocumentContentProvider:${Scheme}`,
-      Provider
-    );
-  },
-  (_Handle, Scheme) => {
-    Context.ExtensionRegistry.delete(
-      `__textDocumentContentProvider:${Scheme}`
-    );
-  }
-), "BuildRegisterTextDocumentContentProvider");
-var BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Scheme, _Provider, Options) => {
-  const Handle = `fileSystemProvider:${Scheme}:${Date.now()}`;
-  Context.SendToMountain("register_file_system_provider", {
-    handle: Handle,
-    scheme: Scheme,
-    is_case_sensitive: Options?.isCaseSensitive ?? true,
-    is_readonly: Options?.isReadonly ?? false,
-    extension_id: ""
-  }).catch(() => {
-  });
-  return {
-    dispose: /* @__PURE__ */ __name(() => {
-      Context.SendToMountain("unregister_file_system_provider", {
-        handle: Handle
-      }).catch(() => {
-      });
-    }, "dispose")
-  };
-}, "BuildRegisterFileSystemProvider");
-var BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-  Context,
-  "register_task_provider",
-  "unregister_task_provider",
-  "taskProvider",
-  (TaskType) => ({ task_type: TaskType, extension_id: "" })
-), "BuildRegisterTaskProvider");
-var BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-  Context,
-  "register_notebook_content_provider",
-  "unregister_notebook_content_provider",
-  "notebookContent",
-  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
-), "BuildRegisterNotebookContentProvider");
-var BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
-  Context,
-  "register_notebook_serializer",
-  "unregister_notebook_serializer",
-  "notebookSerializer",
-  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
-), "BuildRegisterNotebookSerializer");
-var BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
-  Context.SendToMountain("register_remote_authority_resolver", {
-    authority_prefix: AuthorityPrefix,
-    extension_id: ""
-  }).catch(() => {
-  });
-  return {
-    dispose: /* @__PURE__ */ __name(() => {
-      Context.SendToMountain(
-        "unregister_remote_authority_resolver",
-        { authority_prefix: AuthorityPrefix }
-      ).catch(() => {
-      });
-    }, "dispose")
-  };
-}, "BuildRegisterRemoteAuthorityResolver");
-var BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context) => (Formatter) => {
-  Context.SendToMountain("register_resource_label_formatter", {
-    formatter: Formatter
-  }).catch(() => {
-  });
-  return { dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") };
-}, "BuildRegisterResourceLabelFormatter");
-
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
+import { promises as FsPromises2 } from "node:fs";
+import { dirname as PathDirname } from "node:path";
+var FileType = {
+  Unknown: 0,
+  File: 1,
+  Directory: 2,
+  SymbolicLink: 64
+};
+var LogRoute = /* @__PURE__ */ __name((Operation, Uri, Decision) => {
+  if (!process.env["LAND_DEV_LOG"]) return;
+  process.stdout.write(
+    `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${String(Uri)}
+`
+  );
+}, "LogRoute");
+var ThrowFileNotFound = /* @__PURE__ */ __name((Uri) => {
+  const Api = globalThis.__cocoonVscodeAPI;
+  const FileNotFound = Api?.FileSystemError?.FileNotFound;
+  if (typeof FileNotFound === "function") throw FileNotFound(Uri);
+  const Synthetic = new Error(
+    `EntryNotFound (FileSystemError): ${String(Uri)}`
+  );
+  Synthetic.code = "FileNotFound";
+  Synthetic.name = "FileSystemError";
+  throw Synthetic;
+}, "ThrowFileNotFound");
+var MetadataToStat = /* @__PURE__ */ __name((Metadata) => ({
+  type: Metadata.isSymbolicLink() ? FileType.SymbolicLink : Metadata.isDirectory() ? FileType.Directory : FileType.File,
+  size: Metadata.size,
+  mtime: Math.floor(Metadata.mtimeMs),
+  ctime: Math.floor(Metadata.ctimeMs)
+}), "MetadataToStat");
 var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
-  stat: /* @__PURE__ */ __name(async (Uri) => await Call(Context, "FileSystem.Stat", [
-    String(Uri)
-  ]) ?? {
-    type: 1,
-    size: 0,
-    ctime: 0,
-    mtime: 0
+  stat: /* @__PURE__ */ __name(async (Uri) => {
+    const Decision = Route(Uri);
+    LogRoute("stat", Uri, Decision);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(Uri);
+      try {
+        const Metadata = await FsPromises2.lstat(Path);
+        return MetadataToStat(Metadata);
+      } catch (Err) {
+        if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+        throw Err;
+      }
+    }
+    return await Call(Context, "FileSystem.Stat", [String(Uri)]) ?? {
+      type: FileType.File,
+      size: 0,
+      ctime: 0,
+      mtime: 0
+    };
   }, "stat"),
   readFile: /* @__PURE__ */ __name(async (Uri) => {
+    const Decision = Route(Uri);
+    LogRoute("readFile", Uri, Decision);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(Uri);
+      try {
+        return await FsPromises2.readFile(Path);
+      } catch (Err) {
+        if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+        throw Err;
+      }
+    }
     const UriString = String(Uri);
     try {
       const Raw2 = await Context.MountainClient?.sendRequest(
@@ -1004,30 +1204,17 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
         [UriString]
       );
       if (Raw2 == null) return Buffer.alloc(0);
-      if (Array.isArray(Raw2)) {
-        return Buffer.from(Raw2);
-      }
+      if (Array.isArray(Raw2)) return Buffer.from(Raw2);
       if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
       return Buffer.from(String(Raw2), "utf8");
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
-      const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
-      if (LooksLike404) {
+      if (/resource not found|ENOENT|not found/i.test(Message)) {
         process.stdout.write(
           `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
 `
         );
-        const Api = globalThis.__cocoonVscodeAPI;
-        const FileNotFound = Api?.FileSystemError?.FileNotFound;
-        if (typeof FileNotFound === "function") {
-          throw FileNotFound(Uri);
-        }
-        const Synthetic = new Error(
-          `EntryNotFound (FileSystemError): ${UriString}`
-        );
-        Synthetic.code = "FileNotFound";
-        Synthetic.name = "FileSystemError";
-        throw Synthetic;
+        ThrowFileNotFound(Uri);
       }
       process.stdout.write(
         `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
@@ -1037,39 +1224,131 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
     }
   }, "readFile"),
   writeFile: /* @__PURE__ */ __name(async (Uri, Content) => {
+    const Decision = Route(Uri);
+    LogRoute("writeFile", Uri, Decision);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(Uri);
+      const Parent = PathDirname(Path);
+      if (Parent && Parent !== Path) {
+        await FsPromises2.mkdir(Parent, { recursive: true }).catch(
+          () => {
+          }
+        );
+      }
+      await FsPromises2.writeFile(Path, Content);
+      return;
+    }
     const Text = new TextDecoder().decode(Content);
-    await Call(Context, "FileSystem.WriteFile", [
-      String(Uri),
-      Text
-    ]);
+    await Call(Context, "FileSystem.WriteFile", [String(Uri), Text]);
   }, "writeFile"),
-  readDirectory: /* @__PURE__ */ __name(async (Uri) => await Call(Context, "FileSystem.ReadDirectory", [
-    String(Uri)
-  ]) ?? [], "readDirectory"),
+  readDirectory: /* @__PURE__ */ __name(async (Uri) => {
+    const Decision = Route(Uri);
+    LogRoute("readDirectory", Uri, Decision);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(Uri);
+      try {
+        const Entries = await FsPromises2.readdir(Path, {
+          withFileTypes: true
+        });
+        return Entries.map((Entry) => {
+          const Type = Entry.isSymbolicLink() ? FileType.SymbolicLink : Entry.isDirectory() ? FileType.Directory : FileType.File;
+          return [Entry.name, Type];
+        });
+      } catch (Err) {
+        if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+        throw Err;
+      }
+    }
+    return await Call(
+      Context,
+      "FileSystem.ReadDirectory",
+      [String(Uri)]
+    ) ?? [];
+  }, "readDirectory"),
   createDirectory: /* @__PURE__ */ __name(async (Uri) => {
-    await Call(Context, "FileSystem.CreateDirectory", [
-      String(Uri)
-    ]);
+    const Decision = Route(Uri);
+    LogRoute("createDirectory", Uri, Decision);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(Uri);
+      await FsPromises2.mkdir(Path, { recursive: true });
+      return;
+    }
+    await Call(Context, "FileSystem.CreateDirectory", [String(Uri)]);
   }, "createDirectory"),
   delete: /* @__PURE__ */ __name(async (Uri, Options) => {
+    const Decision = Route(Uri);
+    LogRoute("delete", Uri, Decision);
+    if (Decision === "native") {
+      const Path = ExtractFsPath(Uri);
+      try {
+        await FsPromises2.rm(Path, {
+          recursive: Options?.recursive ?? false,
+          force: false
+        });
+        return;
+      } catch (Err) {
+        if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+        throw Err;
+      }
+    }
     await Call(Context, "FileSystem.Delete", [
       String(Uri),
       Options?.recursive ?? false
     ]);
   }, "delete"),
   rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+    const SourceRoute = Route(Source);
+    const TargetRoute = Route(Target);
+    const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
+    LogRoute("rename", Source, Decision);
+    if (Decision === "native") {
+      const SourcePath = ExtractFsPath(Source);
+      const TargetPath = ExtractFsPath(Target);
+      try {
+        await FsPromises2.rename(SourcePath, TargetPath);
+        return;
+      } catch (Err) {
+        if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+        throw Err;
+      }
+    }
     await Call(Context, "FileSystem.Rename", [
       String(Source),
       String(Target)
     ]);
   }, "rename"),
   copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+    const SourceRoute = Route(Source);
+    const TargetRoute = Route(Target);
+    const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
+    LogRoute("copy", Source, Decision);
+    if (Decision === "native") {
+      const SourcePath = ExtractFsPath(Source);
+      const TargetPath = ExtractFsPath(Target);
+      const Parent = PathDirname(TargetPath);
+      if (Parent && Parent !== TargetPath) {
+        await FsPromises2.mkdir(Parent, { recursive: true }).catch(
+          () => {
+          }
+        );
+      }
+      try {
+        await FsPromises2.copyFile(SourcePath, TargetPath);
+        return;
+      } catch (Err) {
+        if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+        throw Err;
+      }
+    }
     await Call(Context, "FileSystem.Copy", [
       String(Source),
       String(Target)
     ]);
   }, "copy"),
-  isWritableFileSystem: /* @__PURE__ */ __name((_Scheme) => true, "isWritableFileSystem")
+  isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
+    if (Scheme === "file") return true;
+    return true;
+  }, "isWritableFileSystem")
 }), "BuildFileSystemNamespace");
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
@@ -1098,10 +1377,92 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     notebookDocuments: [],
     getConfiguration: BuildGetConfiguration(Context, ConfigState),
     findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => FindFilesLocal(Context, ReadFolders(), Include, Exclude, MaxResults), "findFiles"),
+    // `findFiles2` - VS Code 1.90+ multi-pattern search API. Extensions
+    // (copilot, vim, markdown-language-features) upgraded to this
+    // signature. Map the first pattern through the same FindFilesLocal
+    // glob engine the legacy `findFiles` uses so behaviour matches.
+    findFiles2: /* @__PURE__ */ __name(async (FilePatterns, Options) => {
+      const Include = Array.isArray(FilePatterns) ? FilePatterns[0] : FilePatterns;
+      return FindFilesLocal(
+        Context,
+        ReadFolders(),
+        Include,
+        Options?.exclude,
+        Options?.maxResults
+      );
+    }, "findFiles2"),
+    // `findTextInFiles` / `findTextInFiles2` - ripgrep-backed text
+    // search. Mountain has `Search.TextSearch` in Track/Effect but no
+    // Cocoon caller today. Stub with an empty Progress + Promise until
+    // the text-search round-trip is wired; matches VS Code's "no hits"
+    // return shape so callers (eslint, search-extensions) don't crash.
+    findTextInFiles: /* @__PURE__ */ __name(async (_Query, _Options, _Callback, _Token) => ({ limitHit: false }), "findTextInFiles"),
+    findTextInFiles2: /* @__PURE__ */ __name(async (_Query, _Options, _Callback, _Token) => ({ limitHit: false }), "findTextInFiles2"),
     openTextDocument: BuildOpenTextDocument(Context),
+    // `openNotebookDocument` - notebook renderer support. Land has no
+    // notebook editor yet; return a minimal NotebookDocument shape so
+    // callers that immediately read `.uri` / `.cellCount` don't crash.
+    openNotebookDocument: /* @__PURE__ */ __name(async (_UriOrContent, _Content) => ({
+      uri: void 0,
+      version: 1,
+      notebookType: "jupyter-notebook",
+      isUntitled: false,
+      isDirty: false,
+      isClosed: false,
+      metadata: {},
+      cellCount: 0,
+      cellAt: /* @__PURE__ */ __name(() => null, "cellAt"),
+      getCells: /* @__PURE__ */ __name(() => [], "getCells"),
+      save: /* @__PURE__ */ __name(async () => false, "save")
+    }), "openNotebookDocument"),
     saveAll: BuildSaveAll(Context),
     applyEdit: BuildApplyEdit(Context),
-    asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
+    asRelativePath: /* @__PURE__ */ __name((PathOrUri, IncludeWorkspaceFolder) => {
+      const Raw2 = typeof PathOrUri === "string" ? PathOrUri : PathOrUri?.fsPath ?? PathOrUri?.path ?? String(PathOrUri);
+      const Folders = ReadFolders();
+      for (const Folder of Folders) {
+        const FolderPath = Folder.uri?.fsPath ?? Folder.uri?.path ?? "";
+        if (FolderPath && Raw2.startsWith(FolderPath)) {
+          const Relative = Raw2.slice(FolderPath.length).replace(
+            /^\/+/,
+            ""
+          );
+          if (IncludeWorkspaceFolder && Folders.length > 1) {
+            return `${Folder.name}/${Relative}`;
+          }
+          return Relative;
+        }
+      }
+      return Raw2;
+    }, "asRelativePath"),
+    // `getWorkspaceFolder(uri)` - single-folder lookup. THE most-called
+    // workspace API: every extension that handles a URI does
+    // `workspace.getWorkspaceFolder(uri).name` / `.uri` / `.index` to
+    // find the containing folder. Missing this crashes any URI-handling
+    // extension with `cannot read 'name' of undefined`. Delegates to
+    // prefix match on folder URIs - exactly what VS Code does before
+    // calling its `resolveWorkspaceFolder` RPC.
+    getWorkspaceFolder: /* @__PURE__ */ __name((Uri) => {
+      const Raw2 = typeof Uri === "string" ? Uri : Uri?.fsPath ?? Uri?.path ?? "";
+      if (!Raw2) return void 0;
+      for (const Folder of ReadFolders()) {
+        const FolderPath = Folder.uri?.fsPath ?? Folder.uri?.path ?? "";
+        if (FolderPath && Raw2.startsWith(FolderPath)) {
+          return Folder;
+        }
+      }
+      return void 0;
+    }, "getWorkspaceFolder"),
+    // `resolveProxy` - Land has no network proxy intercept; let the
+    // extension fall back to direct connections by returning undefined.
+    // Stock VS Code's `extHostWorkspace.resolveProxy` routes through
+    // the main process's `IRequestService`.
+    resolveProxy: /* @__PURE__ */ __name(async (_Url) => void 0, "resolveProxy"),
+    // Text codec helpers - VS Code 1.98+ exposes these on
+    // `vscode.workspace`. TextEncoder/Decoder are globals in Node 16+,
+    // so direct delegation is safe.
+    encode: /* @__PURE__ */ __name((Value, _Encoding) => new TextEncoder().encode(Value), "encode"),
+    decode: /* @__PURE__ */ __name((Buffer2, Encoding) => new TextDecoder(Encoding ?? "utf-8").decode(Buffer2), "decode"),
     // BATCH-14 follow-up: forwards through Mountain's `$updateWorkspaceFolders`
     // which mutates ApplicationState.Workspace and fires `$deltaWorkspaceFolders`
     // back - the listener wiring from BATCH-14 does the rest.
@@ -1146,6 +1507,25 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     }, "dispose") }), "registerCanonicalUriProvider"),
     onDidGrantWorkspaceTrust: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "onDidGrantWorkspaceTrust"),
+    // `vscode.git`'s activate() subscribes to this at
+    // `extensions/git/out/main.js:init`. Land has no workspace-trust
+    // enforcement yet (every workspace is treated as trusted), so the
+    // "trusted folders set changed" event can never fire. Expose a
+    // real no-op subscription whose disposable is safe to call - any
+    // missing property here crashes git activation with
+    // `TypeError: …onDidChangeWorkspaceTrustedFolders is not a function`
+    // and the Source Control panel then shows "No source control
+    // providers registered" because `vscode.git.createSourceControl`
+    // never runs. Added for parity with
+    // `vs/workbench/api/common/extHostWorkspace.ts::onDidChangeWorkspaceTrustedFolders`.
+    onDidChangeWorkspaceTrustedFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "onDidChangeWorkspaceTrustedFolders"),
+    // Same family; kept stubbed for symmetry so any other extension
+    // that subscribes to the non-folder-scoped variant doesn't fail
+    // at activation time.
+    onDidChangeWorkspaceTrust: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "onDidChangeWorkspaceTrust"),
+    workspaceTrustedFolders: [],
     isTrusted: true,
     trusted: true,
     requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),

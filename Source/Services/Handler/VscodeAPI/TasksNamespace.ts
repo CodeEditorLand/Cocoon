@@ -8,8 +8,7 @@
  */
 
 import type { HandlerContext } from "../HandlerContext.js";
-
-let TaskProviderCounter = 0;
+import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -24,7 +23,7 @@ const EventSubscriber =
 
 const CreateTasksNamespace = (Context: HandlerContext) => ({
 	registerTaskProvider: (TaskType: string, _Provider: unknown) => {
-		const Handle = `taskProvider:${++TaskProviderCounter}`;
+		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_task_provider", {
 			handle: Handle,
 			task_type: TaskType,

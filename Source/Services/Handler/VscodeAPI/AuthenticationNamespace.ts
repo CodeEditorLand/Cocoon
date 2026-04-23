@@ -8,8 +8,7 @@
  */
 
 import type { HandlerContext } from "../HandlerContext.js";
-
-let AuthProviderCounter = 0;
+import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -29,7 +28,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) => ({
 		_Provider: unknown,
 		Options?: { supportsMultipleAccounts?: boolean },
 	) => {
-		const Handle = `authProvider:${++AuthProviderCounter}`;
+		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_authentication_provider", {
 			handle: Handle,
 			provider_id: ProviderId,

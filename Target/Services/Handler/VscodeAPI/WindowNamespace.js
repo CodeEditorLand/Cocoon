@@ -1,6 +1,61 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
+// Source/Services/LanguageProviderRegistry.ts
+var Callbacks = /* @__PURE__ */ new Map();
+function Register(Handle, Provider) {
+  Callbacks.set(Handle, Provider);
+}
+__name(Register, "Register");
+function Unregister(Handle) {
+  Callbacks.delete(Handle);
+}
+__name(Unregister, "Unregister");
+function Get(Handle) {
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
+}
+__name(Get, "Get");
+var NextHandle = 1e4;
+function RegisterAutoHandle(Provider) {
+  const Handle = NextHandle++;
+  Callbacks.set(Handle, Provider);
+  return Handle;
+}
+__name(RegisterAutoHandle, "RegisterAutoHandle");
+function NextProviderHandle() {
+  return NextHandle++;
+}
+__name(NextProviderHandle, "NextProviderHandle");
+var Commands = /* @__PURE__ */ new Map();
+function RegisterCommand(CommandId, Callback) {
+  Commands.set(CommandId, Callback);
+}
+__name(RegisterCommand, "RegisterCommand");
+function ExecuteCommand(CommandId, ...Args) {
+  const Handler = Commands.get(CommandId);
+  if (Handler) return Handler(...Args);
+  return void 0;
+}
+__name(ExecuteCommand, "ExecuteCommand");
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+__name(UnregisterCommand, "UnregisterCommand");
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+__name(ListCommands, "ListCommands");
+function ListHandles() {
+  return Array.from(Callbacks.keys());
+}
+__name(ListHandles, "ListHandles");
+
 // Source/Services/Handler/VscodeAPI/WindowNamespace.ts
 var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
   const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
@@ -15,19 +70,11 @@ var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callba
   }
   return Subscription;
 }, "MakeEventSubscriber");
-var OutputChannelCounter = 0;
-var TerminalCounter = 0;
-var TreeDataProviderCounter = 0;
-var WebviewPanelCounter = 0;
-var WebviewViewCounter = 0;
-var CustomEditorCounter = 0;
-var ProgressCounter = 0;
 var TreeDataProviders = /* @__PURE__ */ new Map();
 var TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
 var WebviewViewProviders = /* @__PURE__ */ new Map();
 var CustomEditorProviders = /* @__PURE__ */ new Map();
 var WebviewPanels = /* @__PURE__ */ new Map();
-var StatusBarCounter = 0;
 var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
   const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
     let Options = void 0;
@@ -99,8 +146,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       }
     }, "showSaveDialog"),
     createTerminal: /* @__PURE__ */ __name((Options) => {
-      const Handle = `terminal:${++TerminalCounter}`;
-      const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
+      const Handle = NextProviderHandle();
+      const Name = Options?.name ?? `Terminal ${Handle}`;
       Context.SendToMountain("window.createTerminal", {
         handle: Handle,
         name: Name,
@@ -172,7 +219,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "createTerminal"),
     createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
-      const Handle = `statusBar:${++StatusBarCounter}`;
+      const Handle = NextProviderHandle();
       const Item = {
         id: Handle,
         alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
@@ -207,7 +254,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return Item;
     }, "createStatusBarItem"),
     createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
-      const Handle = `outputChannel:${++OutputChannelCounter}`;
+      const Handle = NextProviderHandle();
       const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
       Context.SendToMountain("outputChannel.create", {
         handle: Handle,
@@ -412,7 +459,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       }, "dispose") }), "onDidHide")
     }), "createInputBox"),
     createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
-      const Handle = `webviewPanel:${++WebviewPanelCounter}`;
+      const Handle = NextProviderHandle();
       let CurrentHtml = "";
       let CurrentOptions = Options ?? {};
       Context.MountainClient?.sendRequest("webview.create", [
@@ -489,7 +536,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           });
         }, "reveal"),
         dispose: /* @__PURE__ */ __name(() => {
-          WebviewPanels.delete(Handle);
+          WebviewPanels.delete(String(Handle));
           Context.Emitter.removeAllListeners(
             `webview.message:${Handle}`
           );
@@ -517,7 +564,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           };
         }, "onDidChangeViewState")
       };
-      WebviewPanels.set(Handle, Panel);
+      WebviewPanels.set(String(Handle), Panel);
       return Panel;
     }, "createWebviewPanel"),
     showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
@@ -573,8 +620,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     createTreeView: /* @__PURE__ */ __name((Id, Options) => {
       const Provider = Options?.treeDataProvider;
       if (Provider) {
-        const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-        TreeDataProviders.set(Handle, Provider);
+        const Handle = NextProviderHandle();
+        TreeDataProviders.set(String(Handle), Provider);
         TreeDataProvidersByViewId.set(Id, Provider);
         const SerializableOptions = {
           showCollapseAll: Options?.showCollapseAll === true,
@@ -617,8 +664,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "createTreeView"),
     registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
-      const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-      TreeDataProviders.set(Handle, Provider);
+      const Handle = NextProviderHandle();
+      TreeDataProviders.set(String(Handle), Provider);
       TreeDataProvidersByViewId.set(ViewId, Provider);
       Context.MountainClient?.sendRequest("tree.register", [
         Handle,
@@ -628,7 +675,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          TreeDataProviders.delete(Handle);
+          TreeDataProviders.delete(String(Handle));
           TreeDataProvidersByViewId.delete(ViewId);
           Context.MountainClient?.sendRequest("tree.unregister", [
             Handle
@@ -640,8 +687,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerWebviewPanelSerializer"),
     registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
-      const Handle = `webviewView:${++WebviewViewCounter}`;
-      WebviewViewProviders.set(Handle, Provider);
+      const Handle = NextProviderHandle();
+      WebviewViewProviders.set(String(Handle), Provider);
       Context.MountainClient?.sendRequest("webview.registerView", [
         Handle,
         ViewId
@@ -649,7 +696,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          WebviewViewProviders.delete(Handle);
+          WebviewViewProviders.delete(String(Handle));
           Context.MountainClient?.sendRequest(
             "webview.unregisterView",
             [Handle]
@@ -659,8 +706,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "registerWebviewViewProvider"),
     registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
-      const Handle = `customEditor:${++CustomEditorCounter}`;
-      CustomEditorProviders.set(Handle, Provider);
+      const Handle = NextProviderHandle();
+      CustomEditorProviders.set(String(Handle), Provider);
       Context.MountainClient?.sendRequest(
         "webview.registerCustomEditor",
         [Handle, ViewType]
@@ -668,7 +715,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          CustomEditorProviders.delete(Handle);
+          CustomEditorProviders.delete(String(Handle));
           Context.MountainClient?.sendRequest(
             "webview.unregisterCustomEditor",
             [Handle]
@@ -678,7 +725,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "registerCustomEditorProvider"),
     registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
-      const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+      const Handle = NextProviderHandle();
       Context.SendToMountain("register_file_decoration_provider", {
         handle: Handle,
         extension_id: ""
@@ -702,7 +749,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "registerFileDecorationProvider"),
     registerUriHandler: /* @__PURE__ */ __name((Handler) => {
-      const Handle = `uriHandler:${Date.now()}`;
+      const Handle = NextProviderHandle();
       Context.SendToMountain("register_uri_handler", {
         handle: Handle,
         extension_id: ""
@@ -720,7 +767,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "registerUriHandler"),
     registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
-      const Handle = `terminalLink:${Date.now()}`;
+      const Handle = NextProviderHandle();
       Context.SendToMountain("register_terminal_link_provider", {
         handle: Handle,
         extension_id: ""
@@ -744,7 +791,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
     }, "registerTerminalLinkProvider"),
     registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
-      const Handle = `terminalProfile:${Id}:${Date.now()}`;
+      const Handle = NextProviderHandle();
       Context.SendToMountain("register_terminal_profile_provider", {
         handle: Handle,
         profile_id: Id,
@@ -773,7 +820,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       }, "dispose")
     }), "registerProfileContentHandler"),
     registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
-      const Handle = `externalUriOpener:${Id}:${Date.now()}`;
+      const Handle = NextProviderHandle();
       Context.SendToMountain("register_external_uri_opener", {
         handle: Handle,
         opener_id: Id,
@@ -797,7 +844,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     // no-op CancellationToken (no cancellation plumbing yet). The
     // Task's return value is forwarded verbatim.
     withProgress: /* @__PURE__ */ __name(async (Options, Task) => {
-      const Handle = `progress:${++ProgressCounter}`;
+      const Handle = NextProviderHandle();
       const Title = Options && typeof Options === "object" && Options.title || "Progress";
       const Location = (Options && typeof Options === "object" && Options.location) ?? 15;
       let Increment = 0;
