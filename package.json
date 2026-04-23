@@ -36,7 +36,7 @@
 		"@grpc/proto-loader": "0.8.0",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.2",
 		"@tauri-apps/plugin-fs": "2.5.0",
-		"effect": "3.21.1",
+		"effect": "3.21.2",
 		"google-protobuf": "4.0.2",
 		"protobufjs": "8.0.1",
 		"ts-protoc-gen": "0.15.0"
