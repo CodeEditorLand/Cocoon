@@ -495,13 +495,17 @@ message RPCDataPayload {
       const duration = Date.now() - startTime;
       if (response.error) {
         const rpcError = response.error;
-        this.circuitBreakerFailureCount++;
-        this.UpdateCircuitBreaker(
-          false,
-          new Error(
-            `RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`
-          )
-        );
+        const RpcMessage = String(rpcError.Message ?? "");
+        const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(RpcMessage);
+        if (!IsBenignNotFound) {
+          this.circuitBreakerFailureCount++;
+          this.UpdateCircuitBreaker(
+            false,
+            new Error(
+              `RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`
+            )
+          );
+        }
         const error = new Error(
           `Mountain request failed: ${rpcError.Message}`
         );
@@ -519,21 +523,21 @@ message RPCDataPayload {
     } catch (error) {
       const duration = Date.now() - startTime;
       this.errorCount++;
-      this.circuitBreakerFailureCount++;
       const ErrorMessage = error instanceof Error ? error.message : String(error);
-      const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
+      const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
       if (IsBenignNotFound) {
         process.stdout.write(
           `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}
 `
         );
       } else {
+        this.circuitBreakerFailureCount++;
+        this.UpdateCircuitBreaker(false, error);
         console.error(
           `[MountainClientService] Request ${method} failed after ${duration}ms:`,
           error
         );
       }
-      this.UpdateCircuitBreaker(false, error);
       if (cancellationToken?.isCancellationRequested) {
         console.log(
           `[MountainClientService] Request ${requestIdentifier} was cancelled`

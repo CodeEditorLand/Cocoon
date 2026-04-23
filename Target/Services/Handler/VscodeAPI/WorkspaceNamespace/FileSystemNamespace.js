@@ -87,15 +87,12 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
         "FileSystem.ReadFile",
         [UriString]
       );
-      if (Raw == null) return new Uint8Array();
+      if (Raw == null) return Buffer.alloc(0);
       if (Array.isArray(Raw)) {
-        return Uint8Array.from(
-          Raw,
-          (N) => Number(N) & 255
-        );
+        return Buffer.from(Raw);
       }
-      if (Raw instanceof Uint8Array) return Raw;
-      return new TextEncoder().encode(String(Raw));
+      if (Raw instanceof Uint8Array) return Buffer.from(Raw);
+      return Buffer.from(String(Raw), "utf8");
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
       const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);

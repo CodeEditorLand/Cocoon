@@ -632,13 +632,28 @@ message RPCDataPayload {
 			// Check for error in response with proper RPC error handling
 			if (response.error) {
 				const rpcError = response.error;
-				this.circuitBreakerFailureCount++;
-				this.UpdateCircuitBreaker(
-					false,
-					new Error(
-						`RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`,
-					),
-				);
+				// Benign 404s on FileSystem.* reads (missing first-run cache
+				// files, optional config probes, etc.) MUST NOT count against
+				// the circuit breaker. Otherwise a handful of expected
+				// not-founds at startup trips the breaker open and blocks
+				// every downstream read for 60s - cascading unhandled
+				// rejections in extensions that then treat "circuit open" as
+				// a fatal I/O error.
+				const RpcMessage = String(rpcError.Message ?? "");
+				const IsBenignNotFound =
+					(method === "FileSystem.ReadFile" ||
+						method === "FileSystem.Stat" ||
+						method === "FileSystem.ReadDirectory") &&
+					/resource not found|ENOENT|not found/i.test(RpcMessage);
+				if (!IsBenignNotFound) {
+					this.circuitBreakerFailureCount++;
+					this.UpdateCircuitBreaker(
+						false,
+						new Error(
+							`RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`,
+						),
+					);
+				}
 
 				// Create structured error for better error handling
 				const error = new Error(
@@ -668,33 +683,39 @@ message RPCDataPayload {
 		} catch (error) {
 			const duration = Date.now() - startTime;
 			this.errorCount++;
-			this.circuitBreakerFailureCount++;
 
-			// Benign 404s on `FileSystem.ReadFile` are very common - every
+			// Benign 404s on `FileSystem.*` reads are very common - every
 			// extension that probes for an optional cache file (terminal-
 			// suggest, json-language-features schema associations, …) hits
 			// this path. Downgrade to `info` so the error log stays focused
 			// on genuine failures. The downstream `readFile` shim converts
 			// the throw into `vscode.FileSystemError.FileNotFound` and
 			// extensions handle it via their own try/catch.
+			//
+			// Crucially, these benign 404s MUST NOT count against the
+			// circuit breaker. Counting them trips the breaker open after
+			// 6-8 startup probes and blocks every subsequent read for 60s,
+			// cascading into extension-activation failures (redhat.vscode-
+			// yaml, terminal-suggest, schemas-associations).
 			const ErrorMessage =
 				error instanceof Error ? error.message : String(error);
 			const IsBenignNotFound =
-				method === "FileSystem.ReadFile" &&
+				(method === "FileSystem.ReadFile" ||
+					method === "FileSystem.Stat" ||
+					method === "FileSystem.ReadDirectory") &&
 				/resource not found|ENOENT|not found/i.test(ErrorMessage);
 			if (IsBenignNotFound) {
 				process.stdout.write(
 					`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}\n`,
 				);
 			} else {
+				this.circuitBreakerFailureCount++;
+				this.UpdateCircuitBreaker(false, error);
 				console.error(
 					`[MountainClientService] Request ${method} failed after ${duration}ms:`,
 					error,
 				);
 			}
-
-			// Update circuit breaker with detailed error information
-			this.UpdateCircuitBreaker(false, error);
 
 			// Handle cancellation specifically
 			if (cancellationToken?.isCancellationRequested) {

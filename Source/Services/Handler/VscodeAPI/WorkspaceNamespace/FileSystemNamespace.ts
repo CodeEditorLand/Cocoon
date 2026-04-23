@@ -30,27 +30,28 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		//
 		// Mountain's `FileSystem.ReadFile` effect returns the file bytes
 		// as `json!(Vec<u8>)` which serde serialises as a JSON NUMBER
-		// array `[123, 34, ...]`, not a string. The previous TextEncoder
-		// path stringified that to `"123,34,..."` and `JSON.parse` of an
-		// extension's package.json then threw "Unexpected non-whitespace
-		// character after JSON at position 2" (redhat.java). Accept
-		// both shapes: number array → Uint8Array byte-for-byte; string →
-		// UTF-8 encode.
+		// array `[123, 34, ...]`. Convert to a Node `Buffer` (which
+		// extends `Uint8Array`) so extensions that do
+		// `JSON.parse(await workspace.fs.readFile(uri))` - passing the
+		// returned value DIRECTLY to JSON.parse without decoding - get
+		// the expected UTF-8 string from `.toString()`. A plain
+		// `Uint8Array` inherits Array's comma-joined toString ("123,34,
+		// ..."), which parses up to the first comma and throws
+		// "Unexpected non-whitespace character after JSON at position 3"
+		// (redhat.java activation bug). Node's Buffer.toString() defaults
+		// to UTF-8 decoding, matching stock VS Code's behaviour.
 		const UriString = String(Uri);
 		try {
 			const Raw = await Context.MountainClient?.sendRequest(
 				"FileSystem.ReadFile",
 				[UriString],
 			);
-			if (Raw == null) return new Uint8Array();
+			if (Raw == null) return Buffer.alloc(0);
 			if (Array.isArray(Raw)) {
-				return Uint8Array.from(
-					Raw as readonly number[],
-					(N) => Number(N) & 0xff,
-				);
+				return Buffer.from(Raw as readonly number[]);
 			}
-			if (Raw instanceof Uint8Array) return Raw;
-			return new TextEncoder().encode(String(Raw));
+			if (Raw instanceof Uint8Array) return Buffer.from(Raw);
+			return Buffer.from(String(Raw), "utf8");
 		} catch (Err: unknown) {
 			const Message =
 				Err instanceof Error ? Err.message : String(Err);

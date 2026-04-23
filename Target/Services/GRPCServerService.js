@@ -594,13 +594,17 @@ message RPCDataPayload {
           const duration = Date.now() - startTime;
           if (response.error) {
             const rpcError = response.error;
-            this.circuitBreakerFailureCount++;
-            this.UpdateCircuitBreaker(
-              false,
-              new Error(
-                `RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`
-              )
-            );
+            const RpcMessage = String(rpcError.Message ?? "");
+            const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(RpcMessage);
+            if (!IsBenignNotFound) {
+              this.circuitBreakerFailureCount++;
+              this.UpdateCircuitBreaker(
+                false,
+                new Error(
+                  `RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`
+                )
+              );
+            }
             const error = new Error(
               `Mountain request failed: ${rpcError.Message}`
             );
@@ -618,21 +622,21 @@ message RPCDataPayload {
         } catch (error) {
           const duration = Date.now() - startTime;
           this.errorCount++;
-          this.circuitBreakerFailureCount++;
           const ErrorMessage = error instanceof Error ? error.message : String(error);
-          const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
+          const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           if (IsBenignNotFound) {
             process.stdout.write(
               `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}
 `
             );
           } else {
+            this.circuitBreakerFailureCount++;
+            this.UpdateCircuitBreaker(false, error);
             console.error(
               `[MountainClientService] Request ${method} failed after ${duration}ms:`,
               error
             );
           }
-          this.UpdateCircuitBreaker(false, error);
           if (cancellationToken?.isCancellationRequested) {
             console.log(
               `[MountainClientService] Request ${requestIdentifier} was cancelled`
@@ -23976,15 +23980,12 @@ var init_FileSystemNamespace = __esm({
             "FileSystem.ReadFile",
             [UriString]
           );
-          if (Raw == null) return new Uint8Array();
+          if (Raw == null) return Buffer.alloc(0);
           if (Array.isArray(Raw)) {
-            return Uint8Array.from(
-              Raw,
-              (N) => Number(N) & 255
-            );
+            return Buffer.from(Raw);
           }
-          if (Raw instanceof Uint8Array) return Raw;
-          return new TextEncoder().encode(String(Raw));
+          if (Raw instanceof Uint8Array) return Buffer.from(Raw);
+          return Buffer.from(String(Raw), "utf8");
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
           const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
