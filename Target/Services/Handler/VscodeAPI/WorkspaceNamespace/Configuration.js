@@ -1,6 +1,25 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
+// Source/Services/DevLog.ts
+var Raw = process.env["LAND_DEV_LOG"] ?? "";
+var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+var TagSet = new Set(ParsedTags);
+var IsShort = TagSet.has("short");
+var HasAll = TagSet.has("all");
+var IsEnabled = /* @__PURE__ */ __name((Tag) => {
+  if (TagSet.size === 0) return false;
+  if (HasAll || IsShort) return true;
+  return TagSet.has(Tag.toLowerCase());
+}, "IsEnabled");
+var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+  if (!IsEnabled(Tag)) return;
+  const TagUpper = Tag.toUpperCase();
+  process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+}, "CocoonDevLog");
+var DevLog_default = CocoonDevLog;
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
 var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
   Context.WorkspaceEventEmitter.on(EventName, Listener);
@@ -39,26 +58,26 @@ var DefaultExcludeSegments = /* @__PURE__ */ new Set([
   "build",
   ".DS_Store"
 ]);
-var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
-  if (typeof Raw === "string" && Raw.length > 0) return Raw;
-  if (Raw && typeof Raw === "object") {
-    const Obj = Raw;
+var ExtractGlobPattern = /* @__PURE__ */ __name((Raw2) => {
+  if (typeof Raw2 === "string" && Raw2.length > 0) return Raw2;
+  if (Raw2 && typeof Raw2 === "object") {
+    const Obj = Raw2;
     if (typeof Obj["pattern"] === "string") return Obj["pattern"];
     if (typeof Obj["glob"] === "string") return Obj["glob"];
   }
   return void 0;
 }, "ExtractGlobPattern");
 var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
-  const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
-  if (typeof Raw !== "string" || Raw.length === 0) return void 0;
-  if (Raw.startsWith("file:")) {
+  const Raw2 = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+  if (typeof Raw2 !== "string" || Raw2.length === 0) return void 0;
+  if (Raw2.startsWith("file:")) {
     try {
-      return decodeURIComponent(new URL(Raw).pathname);
+      return decodeURIComponent(new URL(Raw2).pathname);
     } catch {
-      return Raw.replace(/^file:\/\//, "");
+      return Raw2.replace(/^file:\/\//, "");
     }
   }
-  return Raw;
+  return Raw2;
 }, "FolderToFsPath");
 var ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
   const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
@@ -109,18 +128,33 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
     const Contributed = Manifest.contributes?.configuration;
     if (!Contributed) return;
     const Sections = Array.isArray(Contributed) ? Contributed : [Contributed];
+    let Seeded = 0;
+    let Skipped = 0;
+    let ExtensionId = "";
+    const ManifestShape = PackageJSON ?? {};
+    if (ManifestShape.publisher && ManifestShape.name) {
+      ExtensionId = `${ManifestShape.publisher}.${ManifestShape.name}`;
+    }
     for (const Section of Sections) {
       const Properties = Section?.properties;
       if (!Properties) continue;
       for (const [DottedKey, Declaration] of Object.entries(
         Properties
       )) {
-        if (ConfigCache.has(DottedKey)) continue;
+        if (ConfigCache.has(DottedKey)) {
+          Skipped++;
+          continue;
+        }
         if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
           ConfigCache.set(DottedKey, Declaration.default);
+          Seeded++;
         }
       }
     }
+    CocoonDevLog(
+      "config-prime",
+      `[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`
+    );
   }, "PrePopulateFromManifest");
   Context.Emitter.on("configurationChanged", (Payload) => {
     const Shape = Payload ?? {};
@@ -176,12 +210,24 @@ var BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section,
       const Cached = State.ConfigCache.get(Full);
       if (Cached === null || Cached === void 0) {
         const Subtree2 = SynthesiseSubtree(State.ConfigCache, Full);
-        if (Subtree2 !== void 0) return Subtree2;
+        if (Subtree2 !== void 0) {
+          CocoonDevLog(
+            "config-prime",
+            `[ConfigPrime] synthesise key=${Full} source=null-shadowed`
+          );
+          return Subtree2;
+        }
       }
       return Cached;
     }
     const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-    if (Subtree !== void 0) return Subtree;
+    if (Subtree !== void 0) {
+      CocoonDevLog(
+        "config-prime",
+        `[ConfigPrime] synthesise key=${Full} source=miss`
+      );
+      return Subtree;
+    }
     State.PrimeConfig(Full);
     return DefaultValue;
   }, "get"),

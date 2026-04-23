@@ -16,6 +16,7 @@
  * to another's listener.
  */
 
+import { CocoonDevLog } from "../../../DevLog.js";
 import type { HandlerContext } from "../../HandlerContext.js";
 import { Call } from "./Helpers.js";
 
@@ -120,6 +121,16 @@ export const CreateConfigurationState = (
 		const Sections = Array.isArray(Contributed)
 			? Contributed
 			: [Contributed];
+		let Seeded = 0;
+		let Skipped = 0;
+		let ExtensionId = "";
+		const ManifestShape = (PackageJSON ?? {}) as {
+			publisher?: string;
+			name?: string;
+		};
+		if (ManifestShape.publisher && ManifestShape.name) {
+			ExtensionId = `${ManifestShape.publisher}.${ManifestShape.name}`;
+		}
 		for (const Section of Sections) {
 			const Properties = Section?.properties;
 			if (!Properties) continue;
@@ -129,16 +140,31 @@ export const CreateConfigurationState = (
 				// Only seed keys that don't already have a cached value -
 				// a user override (workspace or global settings) always
 				// wins over the manifest default.
-				if (ConfigCache.has(DottedKey)) continue;
+				if (ConfigCache.has(DottedKey)) {
+					Skipped++;
+					continue;
+				}
 				if (
 					Declaration !== null &&
 					typeof Declaration === "object" &&
 					"default" in Declaration
 				) {
 					ConfigCache.set(DottedKey, Declaration.default);
+					Seeded++;
 				}
 			}
 		}
+		// `config-prime` tag: surfaces per-extension priming activity so
+		// `LAND_DEV_LOG=config-prime tail -f Mountain.dev.log` shows
+		// which extension manifests successfully seeded defaults vs
+		// which ones contributed zero config (non-issue) vs which ones
+		// hit cache-already-populated paths (follows up on F2 / GitLens
+		// fix correctness). Cocoon stdout is captured into Mountain's
+		// log via the existing `[Cocoon stdout]` sink.
+		CocoonDevLog(
+			"config-prime",
+			`[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`,
+		);
 	};
 
 	// Listen for Mountain-side `configuration.change` notifications (routed
@@ -238,7 +264,13 @@ export const BuildGetConfiguration = (
 			// `cfg.codeLens.enabled` read would throw on `null`.
 			if (Cached === null || Cached === undefined) {
 				const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-				if (Subtree !== undefined) return Subtree as T;
+				if (Subtree !== undefined) {
+					CocoonDevLog(
+						"config-prime",
+						`[ConfigPrime] synthesise key=${Full} source=null-shadowed`,
+					);
+					return Subtree as T;
+				}
 			}
 			return Cached as T;
 		}
@@ -247,7 +279,13 @@ export const BuildGetConfiguration = (
 		// extensions that do `cfg.blame.format` get the expected shape
 		// rather than `TypeError: Cannot read properties of undefined`.
 		const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-		if (Subtree !== undefined) return Subtree as T;
+		if (Subtree !== undefined) {
+			CocoonDevLog(
+				"config-prime",
+				`[ConfigPrime] synthesise key=${Full} source=miss`,
+			);
+			return Subtree as T;
+		}
 		State.PrimeConfig(Full);
 		return DefaultValue;
 	},

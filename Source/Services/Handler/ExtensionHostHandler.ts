@@ -13,6 +13,7 @@
 
 import * as NodeFS from "node:fs";
 
+import { CocoonDevLog } from "../DevLog.js";
 import * as LanguageProviderRegistry from "../LanguageProviderRegistry.js";
 import type { HandlerContext } from "./HandlerContext.js";
 
@@ -937,8 +938,20 @@ const ActivateExtension = async (
 	if (Context.ActivatedExtensions.has(ExtensionId)) return;
 	Context.ActivatedExtensions.add(ExtensionId);
 
+	const StartMs = Date.now();
+	CocoonDevLog(
+		"ext-activate",
+		`[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`,
+	);
+
 	const Extension = Context.ExtensionRegistry.get(ExtensionId);
-	if (!Extension) return;
+	if (!Extension) {
+		CocoonDevLog(
+			"ext-activate",
+			`[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`,
+		);
+		return;
+	}
 
 	// Mountain sends ExtensionLocation as a file:// URL (from url::Url::from_directory_path)
 	const LocationRaw: unknown =
@@ -1101,14 +1114,27 @@ const ActivateExtension = async (
 			console.log(
 				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`,
 			);
+			CocoonDevLog(
+				"ext-activate",
+				`[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,
+			);
 		} else {
 			console.warn(
 				`[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`,
+			);
+			CocoonDevLog(
+				"ext-activate",
+				`[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,
 			);
 		}
 	} catch (Err: unknown) {
 		// Remove from set so a retry is possible
 		Context.ActivatedExtensions.delete(ExtensionId);
+		const Message = Err instanceof Error ? Err.message : String(Err);
+		CocoonDevLog(
+			"ext-activate",
+			`[ExtActivate] fail ext=${ExtensionId} duration_ms=${Date.now() - StartMs} error=${Message.replace(/\n/g, " | ")}`,
+		);
 		throw Err;
 	}
 };

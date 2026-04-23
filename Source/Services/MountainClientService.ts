@@ -39,6 +39,7 @@ import {
 	RPCError,
 } from "../Generated/Vine";
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
+import { CocoonDevLog } from "./DevLog.js";
 
 // ESM compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -987,6 +988,10 @@ message RPCDataPayload {
 				console.log(
 					"[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)",
 				);
+				CocoonDevLog(
+					"breaker",
+					`[Breaker] transition from=HalfOpen to=Closed reason=service-recovered`,
+				);
 				this.circuitBreakerState = CircuitBreakerState.Closed;
 			}
 		} else {
@@ -996,10 +1001,15 @@ message RPCDataPayload {
 			if (
 				this.circuitBreakerFailureCount >= this.circuitBreakerThreshold
 			) {
+				const PriorState = this.circuitBreakerState;
 				this.circuitBreakerState = CircuitBreakerState.Open;
 				this.circuitBreakerOpenTime = Date.now();
 				console.log(
 					`[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`,
+				);
+				CocoonDevLog(
+					"breaker",
+					`[Breaker] transition from=${PriorState} to=Open failures=${this.circuitBreakerFailureCount} threshold=${this.circuitBreakerThreshold}`,
 				);
 			}
 		}
@@ -1018,6 +1028,10 @@ message RPCDataPayload {
 				this.circuitBreakerState = CircuitBreakerState.HalfOpen;
 				console.log(
 					"[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery",
+				);
+				CocoonDevLog(
+					"breaker",
+					`[Breaker] transition from=Open to=HalfOpen reason=timeout-elapsed`,
 				);
 			} else {
 				throw new Error(

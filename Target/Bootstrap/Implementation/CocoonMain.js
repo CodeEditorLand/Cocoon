@@ -25,9 +25,9 @@ var init_LandFixLog = __esm({
     Long = Mode === "long";
     DebugEnabled = Long;
     AllowList = (() => {
-      const Raw = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw || Raw.trim().length === 0) return void 0;
-      const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw2 || Raw2.trim().length === 0) return void 0;
+      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
       return Tags.length === 0 ? void 0 : new Set(Tags);
     })();
     PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
@@ -1252,6 +1252,31 @@ var init_IMountainClientService = __esm({
   }
 });
 
+// Source/Services/DevLog.ts
+var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_default;
+var init_DevLog = __esm({
+  "Source/Services/DevLog.ts"() {
+    "use strict";
+    Raw = process.env["LAND_DEV_LOG"] ?? "";
+    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+    TagSet = new Set(ParsedTags);
+    IsShort = TagSet.has("short");
+    HasAll = TagSet.has("all");
+    IsEnabled = /* @__PURE__ */ __name((Tag) => {
+      if (TagSet.size === 0) return false;
+      if (HasAll || IsShort) return true;
+      return TagSet.has(Tag.toLowerCase());
+    }, "IsEnabled");
+    CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+      if (!IsEnabled(Tag)) return;
+      const TagUpper = Tag.toUpperCase();
+      process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+    }, "CocoonDevLog");
+    DevLog_default = CocoonDevLog;
+  }
+});
+
 // Source/Services/MountainClientService.ts
 var MountainClientService_exports = {};
 __export(MountainClientService_exports, {
@@ -1269,6 +1294,7 @@ var init_MountainClientService = __esm({
   "Source/Services/MountainClientService.ts"() {
     "use strict";
     init_IMountainClientService();
+    init_DevLog();
     __filename = fileURLToPath(import.meta.url);
     __dirname = dirname(__filename);
     require2 = createRequire(import.meta.url);
@@ -1991,15 +2017,24 @@ message RPCDataPayload {
             console.log(
               "[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)"
             );
+            CocoonDevLog(
+              "breaker",
+              `[Breaker] transition from=HalfOpen to=Closed reason=service-recovered`
+            );
             this.circuitBreakerState = "CLOSED" /* Closed */;
           }
         } else {
           this.circuitBreakerFailureCount++;
           if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
+            const PriorState = this.circuitBreakerState;
             this.circuitBreakerState = "OPEN" /* Open */;
             this.circuitBreakerOpenTime = Date.now();
             console.log(
               `[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`
+            );
+            CocoonDevLog(
+              "breaker",
+              `[Breaker] transition from=${PriorState} to=Open failures=${this.circuitBreakerFailureCount} threshold=${this.circuitBreakerThreshold}`
             );
           }
         }
@@ -2013,6 +2048,10 @@ message RPCDataPayload {
             this.circuitBreakerState = "HALF_OPEN" /* HalfOpen */;
             console.log(
               "[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery"
+            );
+            CocoonDevLog(
+              "breaker",
+              `[Breaker] transition from=Open to=HalfOpen reason=timeout-elapsed`
             );
           } else {
             throw new Error(
@@ -24791,26 +24830,26 @@ var init_Helpers = __esm({
       "build",
       ".DS_Store"
     ]);
-    ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
-      if (typeof Raw === "string" && Raw.length > 0) return Raw;
-      if (Raw && typeof Raw === "object") {
-        const Obj = Raw;
+    ExtractGlobPattern = /* @__PURE__ */ __name((Raw2) => {
+      if (typeof Raw2 === "string" && Raw2.length > 0) return Raw2;
+      if (Raw2 && typeof Raw2 === "object") {
+        const Obj = Raw2;
         if (typeof Obj["pattern"] === "string") return Obj["pattern"];
         if (typeof Obj["glob"] === "string") return Obj["glob"];
       }
       return void 0;
     }, "ExtractGlobPattern");
     FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
-      const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
-      if (typeof Raw !== "string" || Raw.length === 0) return void 0;
-      if (Raw.startsWith("file:")) {
+      const Raw2 = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+      if (typeof Raw2 !== "string" || Raw2.length === 0) return void 0;
+      if (Raw2.startsWith("file:")) {
         try {
-          return decodeURIComponent(new URL(Raw).pathname);
+          return decodeURIComponent(new URL(Raw2).pathname);
         } catch {
-          return Raw.replace(/^file:\/\//, "");
+          return Raw2.replace(/^file:\/\//, "");
         }
       }
-      return Raw;
+      return Raw2;
     }, "FolderToFsPath");
     ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context21) => {
       const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
@@ -25105,6 +25144,7 @@ var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnD
 var init_Configuration = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
     "use strict";
+    init_DevLog();
     init_Helpers();
     CreateConfigurationState = /* @__PURE__ */ __name((Context21) => {
       const ConfigCache = /* @__PURE__ */ new Map();
@@ -25144,18 +25184,33 @@ var init_Configuration = __esm({
         const Contributed = Manifest.contributes?.configuration;
         if (!Contributed) return;
         const Sections = Array.isArray(Contributed) ? Contributed : [Contributed];
+        let Seeded = 0;
+        let Skipped = 0;
+        let ExtensionId = "";
+        const ManifestShape = PackageJSON ?? {};
+        if (ManifestShape.publisher && ManifestShape.name) {
+          ExtensionId = `${ManifestShape.publisher}.${ManifestShape.name}`;
+        }
         for (const Section of Sections) {
           const Properties = Section?.properties;
           if (!Properties) continue;
           for (const [DottedKey, Declaration] of Object.entries(
             Properties
           )) {
-            if (ConfigCache.has(DottedKey)) continue;
+            if (ConfigCache.has(DottedKey)) {
+              Skipped++;
+              continue;
+            }
             if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
               ConfigCache.set(DottedKey, Declaration.default);
+              Seeded++;
             }
           }
         }
+        CocoonDevLog(
+          "config-prime",
+          `[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`
+        );
       }, "PrePopulateFromManifest");
       Context21.Emitter.on("configurationChanged", (Payload) => {
         const Shape = Payload ?? {};
@@ -25211,12 +25266,24 @@ var init_Configuration = __esm({
           const Cached = State.ConfigCache.get(Full);
           if (Cached === null || Cached === void 0) {
             const Subtree2 = SynthesiseSubtree(State.ConfigCache, Full);
-            if (Subtree2 !== void 0) return Subtree2;
+            if (Subtree2 !== void 0) {
+              CocoonDevLog(
+                "config-prime",
+                `[ConfigPrime] synthesise key=${Full} source=null-shadowed`
+              );
+              return Subtree2;
+            }
           }
           return Cached;
         }
         const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-        if (Subtree !== void 0) return Subtree;
+        if (Subtree !== void 0) {
+          CocoonDevLog(
+            "config-prime",
+            `[ConfigPrime] synthesise key=${Full} source=miss`
+          );
+          return Subtree;
+        }
         State.PrimeConfig(Full);
         return DefaultValue;
       }, "get"),
@@ -25326,8 +25393,8 @@ var init_TextDocument = __esm({
         }
       }));
       const Additions = ToAdd.map((Folder) => {
-        const Raw = Folder?.uri;
-        const Serialized = typeof Raw === "string" ? Raw : Raw?.["toString"]?.call(Raw) ?? String(Raw ?? "");
+        const Raw2 = Folder?.uri;
+        const Serialized = typeof Raw2 === "string" ? Raw2 : Raw2?.["toString"]?.call(Raw2) ?? String(Raw2 ?? "");
         return { uri: { value: Serialized }, name: Folder?.name ?? "" };
       });
       Context21.MountainClient?.sendRequest("$updateWorkspaceFolders", {
@@ -25507,16 +25574,16 @@ var init_FileSystemNamespace = __esm({
       readFile: /* @__PURE__ */ __name(async (Uri2) => {
         const UriString = String(Uri2);
         try {
-          const Raw = await Context21.MountainClient?.sendRequest(
+          const Raw2 = await Context21.MountainClient?.sendRequest(
             "FileSystem.ReadFile",
             [UriString]
           );
-          if (Raw == null) return Buffer.alloc(0);
-          if (Array.isArray(Raw)) {
-            return Buffer.from(Raw);
+          if (Raw2 == null) return Buffer.alloc(0);
+          if (Array.isArray(Raw2)) {
+            return Buffer.from(Raw2);
           }
-          if (Raw instanceof Uint8Array) return Buffer.from(Raw);
-          return Buffer.from(String(Raw), "utf8");
+          if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
+          return Buffer.from(String(Raw2), "utf8");
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
           const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
@@ -26326,7 +26393,7 @@ var init_ExtensionsNamespace = __esm({
         }
       });
     }, "MakePermissiveExports");
-    NormalizeLocation = /* @__PURE__ */ __name((Raw) => {
+    NormalizeLocation = /* @__PURE__ */ __name((Raw2) => {
       const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
       const UriFactoryAvailable = VsCodeUri && typeof VsCodeUri.file === "function";
       const MakeUri = /* @__PURE__ */ __name((Path) => {
@@ -26349,17 +26416,17 @@ var init_ExtensionsNamespace = __esm({
           }
         };
       }, "MakeUri");
-      if (typeof Raw === "string" && Raw.length > 0) {
-        let Path = Raw;
-        if (Raw.startsWith("file:")) {
+      if (typeof Raw2 === "string" && Raw2.length > 0) {
+        let Path = Raw2;
+        if (Raw2.startsWith("file:")) {
           try {
-            Path = decodeURIComponent(new URL(Raw).pathname);
+            Path = decodeURIComponent(new URL(Raw2).pathname);
           } catch (Error2) {
             LandFixLog_default.Warn(
               "ExtNs",
-              `URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
+              `URL parse failed for ${Raw2}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
             );
-            Path = Raw.replace(/^file:\/\//, "");
+            Path = Raw2.replace(/^file:\/\//, "");
           }
         }
         Path = Path.replace(/\/$/, "");
@@ -26367,19 +26434,19 @@ var init_ExtensionsNamespace = __esm({
           LandFixLog_default.DebugOnce(
             "ExtNs",
             `string:${Path}`,
-            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=real)`
+            `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=real)`
           );
         } else {
           LandFixLog_default.InfoOnce(
             "ExtNs",
             `string-fallback:${Path}`,
-            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=FALLBACK)`
+            `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=FALLBACK)`
           );
         }
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      if (Raw && typeof Raw === "object") {
-        const Obj = Raw;
+      if (Raw2 && typeof Raw2 === "object") {
+        const Obj = Raw2;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
         if (UriFactoryAvailable) {
           LandFixLog_default.DebugOnce(
@@ -26398,14 +26465,14 @@ var init_ExtensionsNamespace = __esm({
       }
       LandFixLog_default.Warn(
         "ExtNs",
-        `extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
+        `extensionLocation missing or unsupported type: ${typeof Raw2}; using empty path`
       );
       return { ExtensionPath: "", ExtensionUri: MakeUri("") };
     }, "NormalizeLocation");
-    ToExtensionObject = /* @__PURE__ */ __name((Context21, Id, Raw) => {
+    ToExtensionObject = /* @__PURE__ */ __name((Context21, Id, Raw2) => {
       const Exports = MakePermissiveExports();
       const { ExtensionPath, ExtensionUri } = NormalizeLocation(
-        Raw?.extensionLocation
+        Raw2?.extensionLocation
       );
       return {
         id: Id,
@@ -26415,7 +26482,7 @@ var init_ExtensionsNamespace = __esm({
         // built-ins that have completed activation; without it, callers
         // like the `github` extension treat the extension as missing.
         isActive: true,
-        packageJSON: Raw,
+        packageJSON: Raw2,
         extensionKind: 1,
         exports: Exports,
         // Critical: `activate()` must resolve to the SAME exports object
@@ -26428,17 +26495,17 @@ var init_ExtensionsNamespace = __esm({
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context21) => ({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
-        const Raw = Context21.ExtensionRegistry.get(Identifier);
-        return Raw ? ToExtensionObject(Context21, Identifier, Raw) : void 0;
+        const Raw2 = Context21.ExtensionRegistry.get(Identifier);
+        return Raw2 ? ToExtensionObject(Context21, Identifier, Raw2) : void 0;
       }, "getExtension"),
       get all() {
-        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context21, Id, Raw));
+        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context21, Id, Raw2));
       },
       // Some extensions (html-language-features) iterate
       // `extensions.allAcrossExtensionHosts`; return the same array as `all`
       // so `for (...of...)` does not throw on `is not iterable`.
       get allAcrossExtensionHosts() {
-        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context21, Id, Raw));
+        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context21, Id, Raw2));
       },
       onDidChange: /* @__PURE__ */ __name((Listener) => {
         Context21.Emitter.on("deltaExtensions", Listener);
@@ -26465,32 +26532,32 @@ var init_EnvNamespace = __esm({
     init_LandFixLog();
     CreateEnvNamespace = /* @__PURE__ */ __name((Context21) => {
       const Env = Context21.ExtensionHostInitData?.environment ?? {};
-      const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
-        if (typeof Raw !== "string" || Raw.length === 0) {
+      const NormalizeAppRoot = /* @__PURE__ */ __name((Raw2) => {
+        if (typeof Raw2 !== "string" || Raw2.length === 0) {
           LandFixLog_default.Warn(
             "EnvNs",
             "appRoot empty or non-string, returning ''"
           );
           return "";
         }
-        if (!Raw.startsWith("file:")) {
-          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw}`);
-          return Raw;
+        if (!Raw2.startsWith("file:")) {
+          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw2}`);
+          return Raw2;
         }
         try {
           const Normalised = decodeURIComponent(
-            new URL(Raw).pathname
+            new URL(Raw2).pathname
           ).replace(/\/$/, "");
           LandFixLog_default.Info(
             "EnvNs",
-            `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+            `appRoot normalised file-URL ${Raw2} \u2192 ${Normalised}`
           );
           return Normalised;
         } catch (Error2) {
-          const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+          const Fallback = Raw2.replace(/^file:\/\//, "").replace(/\/$/, "");
           LandFixLog_default.Warn(
             "EnvNs",
-            `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
+            `appRoot URL parse failed; fallback ${Raw2} \u2192 ${Fallback}`,
             {
               error: Error2 instanceof Error2 ? Error2.message : String(Error2)
             }
@@ -27022,6 +27089,7 @@ var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent,
 var init_ExtensionHostHandler = __esm({
   "Source/Services/Handler/ExtensionHostHandler.ts"() {
     "use strict";
+    init_DevLog();
     init_LanguageProviderRegistry();
     HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context21, Parameters) => {
       const Extensions = Parameters?.extensions ?? [];
@@ -27513,9 +27581,9 @@ ${Stack}`
           // safe defaults so extensions that reference them don't crash.
           l10n: {
             t: /* @__PURE__ */ __name((Message, ...Arguments) => {
-              const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
-              if (!Arguments.length) return Raw;
-              return Raw.replace(
+              const Raw2 = typeof Message === "string" ? Message : Message?.message ?? String(Message);
+              if (!Arguments.length) return Raw2;
+              return Raw2.replace(
                 /\{(\d+)\}/g,
                 (_Match, Index) => {
                   const Replacement = Arguments[Number(Index)];
@@ -27740,8 +27808,19 @@ ${Stack}`
     ActivateExtension = /* @__PURE__ */ __name(async (Context21, ExtensionId, ActivationEvent) => {
       if (Context21.ActivatedExtensions.has(ExtensionId)) return;
       Context21.ActivatedExtensions.add(ExtensionId);
+      const StartMs = Date.now();
+      CocoonDevLog(
+        "ext-activate",
+        `[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`
+      );
       const Extension2 = Context21.ExtensionRegistry.get(ExtensionId);
-      if (!Extension2) return;
+      if (!Extension2) {
+        CocoonDevLog(
+          "ext-activate",
+          `[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`
+        );
+        return;
+      }
       const LocationRaw = Extension2?.ExtensionLocation ?? Extension2?.extensionLocation ?? Extension2?.location?.path ?? Extension2?.location;
       const MainFile = Extension2?.main ?? Extension2?.Main;
       if (!LocationRaw || !MainFile) {
@@ -27796,11 +27875,11 @@ ${Stack}`
         const Manifest = await (async () => {
           try {
             const { readFile } = await import("node:fs/promises");
-            const Raw = await readFile(
+            const Raw2 = await readFile(
               `${ExtensionPath}/package.json`,
               "utf8"
             );
-            return JSON.parse(Raw);
+            return JSON.parse(Raw2);
           } catch {
             return Extension2;
           }
@@ -27840,13 +27919,26 @@ ${Stack}`
           console.log(
             `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
           );
+          CocoonDevLog(
+            "ext-activate",
+            `[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
+          );
         } else {
           console.warn(
             `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
           );
+          CocoonDevLog(
+            "ext-activate",
+            `[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
+          );
         }
       } catch (Err) {
         Context21.ActivatedExtensions.delete(ExtensionId);
+        const Message = Err instanceof Error ? Err.message : String(Err);
+        CocoonDevLog(
+          "ext-activate",
+          `[ExtActivate] fail ext=${ExtensionId} duration_ms=${Date.now() - StartMs} error=${Message.replace(/\n/g, " | ")}`
+        );
         throw Err;
       }
     }, "ActivateExtension");
@@ -28483,16 +28575,16 @@ var init_WorkspaceContainsActivator = __esm({
     init_GlobToRegex();
     WORKSPACE_CONTAINS_PREFIX = "workspaceContains:";
     UriToFsPath = /* @__PURE__ */ __name((Uri2) => {
-      const Raw = typeof Uri2 === "string" ? Uri2 : Uri2?.["fsPath"] ?? Uri2?.["path"] ?? Uri2?.["external"];
-      if (typeof Raw !== "string" || Raw.length === 0) return void 0;
-      if (Raw.startsWith("file:")) {
+      const Raw2 = typeof Uri2 === "string" ? Uri2 : Uri2?.["fsPath"] ?? Uri2?.["path"] ?? Uri2?.["external"];
+      if (typeof Raw2 !== "string" || Raw2.length === 0) return void 0;
+      if (Raw2.startsWith("file:")) {
         try {
-          return decodeURIComponent(new URL(Raw).pathname);
+          return decodeURIComponent(new URL(Raw2).pathname);
         } catch {
-          return Raw.replace(/^file:\/\//, "");
+          return Raw2.replace(/^file:\/\//, "");
         }
       }
-      return Raw;
+      return Raw2;
     }, "UriToFsPath");
     FolderContainsGlob = /* @__PURE__ */ __name(async (FsPath, Glob) => {
       const { stat, readdir } = await import("node:fs/promises");
@@ -28643,22 +28735,22 @@ var init_NotificationHandler = __esm({
   async "Source/Services/Handler/NotificationHandler.ts"() {
     "use strict";
     ({ URI: LazyURI } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
-    HydrateUri = /* @__PURE__ */ __name((Raw) => {
-      if (!Raw) return null;
-      if (typeof Raw === "string") {
+    HydrateUri = /* @__PURE__ */ __name((Raw2) => {
+      if (!Raw2) return null;
+      if (typeof Raw2 === "string") {
         try {
           return LazyURI.parse(
-            Raw
+            Raw2
           );
         } catch {
           return null;
         }
       }
-      if (typeof Raw.toString === "function" && typeof Raw.fsPath === "string")
-        return Raw;
+      if (typeof Raw2.toString === "function" && typeof Raw2.fsPath === "string")
+        return Raw2;
       try {
         return LazyURI.parse(
-          Raw.toString()
+          Raw2.toString()
         );
       } catch {
         return null;
@@ -34675,9 +34767,9 @@ var init_Bootstrap = __esm({
           "info",
           "[Cocoon Bootstrap] Stage 2: Loading configuration..."
         );
-        const ParsePort = /* @__PURE__ */ __name((Raw, Fallback) => {
-          if (Raw === void 0) return Fallback;
-          const Value = parseInt(Raw, 10);
+        const ParsePort = /* @__PURE__ */ __name((Raw2, Fallback) => {
+          if (Raw2 === void 0) return Fallback;
+          const Value = parseInt(Raw2, 10);
           return Number.isFinite(Value) && Value > 0 && Value < 65536 ? Value : Fallback;
         }, "ParsePort");
         const ResolvedConfig = {

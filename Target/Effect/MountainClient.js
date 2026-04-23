@@ -12,6 +12,25 @@ var IMountainClientService = Effect.Service()(
   }
 );
 
+// Source/Services/DevLog.ts
+var Raw = process.env["LAND_DEV_LOG"] ?? "";
+var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+var TagSet = new Set(ParsedTags);
+var IsShort = TagSet.has("short");
+var HasAll = TagSet.has("all");
+var IsEnabled = /* @__PURE__ */ __name((Tag) => {
+  if (TagSet.size === 0) return false;
+  if (HasAll || IsShort) return true;
+  return TagSet.has(Tag.toLowerCase());
+}, "IsEnabled");
+var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+  if (!IsEnabled(Tag)) return;
+  const TagUpper = Tag.toUpperCase();
+  process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+}, "CocoonDevLog");
+var DevLog_default = CocoonDevLog;
+
 // Source/Services/MountainClientService.ts
 import { createRequire } from "module";
 import { dirname } from "path";
@@ -741,15 +760,24 @@ message RPCDataPayload {
         console.log(
           "[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)"
         );
+        CocoonDevLog(
+          "breaker",
+          `[Breaker] transition from=HalfOpen to=Closed reason=service-recovered`
+        );
         this.circuitBreakerState = "CLOSED" /* Closed */;
       }
     } else {
       this.circuitBreakerFailureCount++;
       if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
+        const PriorState = this.circuitBreakerState;
         this.circuitBreakerState = "OPEN" /* Open */;
         this.circuitBreakerOpenTime = Date.now();
         console.log(
           `[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`
+        );
+        CocoonDevLog(
+          "breaker",
+          `[Breaker] transition from=${PriorState} to=Open failures=${this.circuitBreakerFailureCount} threshold=${this.circuitBreakerThreshold}`
         );
       }
     }
@@ -763,6 +791,10 @@ message RPCDataPayload {
         this.circuitBreakerState = "HALF_OPEN" /* HalfOpen */;
         console.log(
           "[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery"
+        );
+        CocoonDevLog(
+          "breaker",
+          `[Breaker] transition from=Open to=HalfOpen reason=timeout-elapsed`
         );
       } else {
         throw new Error(

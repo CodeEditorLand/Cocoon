@@ -26,6 +26,31 @@ var init_IMountainClientService = __esm({
   }
 });
 
+// Source/Services/DevLog.ts
+var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_default;
+var init_DevLog = __esm({
+  "Source/Services/DevLog.ts"() {
+    "use strict";
+    Raw = process.env["LAND_DEV_LOG"] ?? "";
+    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+    TagSet = new Set(ParsedTags);
+    IsShort = TagSet.has("short");
+    HasAll = TagSet.has("all");
+    IsEnabled = /* @__PURE__ */ __name((Tag) => {
+      if (TagSet.size === 0) return false;
+      if (HasAll || IsShort) return true;
+      return TagSet.has(Tag.toLowerCase());
+    }, "IsEnabled");
+    CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+      if (!IsEnabled(Tag)) return;
+      const TagUpper = Tag.toUpperCase();
+      process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+    }, "CocoonDevLog");
+    DevLog_default = CocoonDevLog;
+  }
+});
+
 // Source/Services/MountainClientService.ts
 var MountainClientService_exports = {};
 __export(MountainClientService_exports, {
@@ -43,6 +68,7 @@ var init_MountainClientService = __esm({
   "Source/Services/MountainClientService.ts"() {
     "use strict";
     init_IMountainClientService();
+    init_DevLog();
     __filename = fileURLToPath(import.meta.url);
     __dirname = dirname(__filename);
     require2 = createRequire(import.meta.url);
@@ -765,15 +791,24 @@ message RPCDataPayload {
             console.log(
               "[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)"
             );
+            CocoonDevLog(
+              "breaker",
+              `[Breaker] transition from=HalfOpen to=Closed reason=service-recovered`
+            );
             this.circuitBreakerState = "CLOSED" /* Closed */;
           }
         } else {
           this.circuitBreakerFailureCount++;
           if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
+            const PriorState = this.circuitBreakerState;
             this.circuitBreakerState = "OPEN" /* Open */;
             this.circuitBreakerOpenTime = Date.now();
             console.log(
               `[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`
+            );
+            CocoonDevLog(
+              "breaker",
+              `[Breaker] transition from=${PriorState} to=Open failures=${this.circuitBreakerFailureCount} threshold=${this.circuitBreakerThreshold}`
             );
           }
         }
@@ -787,6 +822,10 @@ message RPCDataPayload {
             this.circuitBreakerState = "HALF_OPEN" /* HalfOpen */;
             console.log(
               "[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery"
+            );
+            CocoonDevLog(
+              "breaker",
+              `[Breaker] transition from=Open to=HalfOpen reason=timeout-elapsed`
             );
           } else {
             throw new Error(

@@ -21886,26 +21886,26 @@ var init_Helpers = __esm({
       "build",
       ".DS_Store"
     ]);
-    ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
-      if (typeof Raw === "string" && Raw.length > 0) return Raw;
-      if (Raw && typeof Raw === "object") {
-        const Obj = Raw;
+    ExtractGlobPattern = /* @__PURE__ */ __name((Raw2) => {
+      if (typeof Raw2 === "string" && Raw2.length > 0) return Raw2;
+      if (Raw2 && typeof Raw2 === "object") {
+        const Obj = Raw2;
         if (typeof Obj["pattern"] === "string") return Obj["pattern"];
         if (typeof Obj["glob"] === "string") return Obj["glob"];
       }
       return void 0;
     }, "ExtractGlobPattern");
     FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
-      const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
-      if (typeof Raw !== "string" || Raw.length === 0) return void 0;
-      if (Raw.startsWith("file:")) {
+      const Raw2 = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+      if (typeof Raw2 !== "string" || Raw2.length === 0) return void 0;
+      if (Raw2.startsWith("file:")) {
         try {
-          return decodeURIComponent(new URL(Raw).pathname);
+          return decodeURIComponent(new URL(Raw2).pathname);
         } catch {
-          return Raw.replace(/^file:\/\//, "");
+          return Raw2.replace(/^file:\/\//, "");
         }
       }
-      return Raw;
+      return Raw2;
     }, "FolderToFsPath");
     ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
       const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
@@ -22055,9 +22055,9 @@ var init_LandFixLog = __esm({
     Long = Mode === "long";
     DebugEnabled = Long;
     AllowList = (() => {
-      const Raw = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw || Raw.trim().length === 0) return void 0;
-      const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw2 || Raw2.trim().length === 0) return void 0;
+      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
       return Tags.length === 0 ? void 0 : new Set(Tags);
     })();
     PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
@@ -22296,11 +22296,37 @@ var init_FileSystemWatcher = __esm({
   }
 });
 
+// Source/Services/DevLog.ts
+var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_default;
+var init_DevLog = __esm({
+  "Source/Services/DevLog.ts"() {
+    "use strict";
+    Raw = process.env["LAND_DEV_LOG"] ?? "";
+    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+    TagSet = new Set(ParsedTags);
+    IsShort = TagSet.has("short");
+    HasAll = TagSet.has("all");
+    IsEnabled = /* @__PURE__ */ __name((Tag) => {
+      if (TagSet.size === 0) return false;
+      if (HasAll || IsShort) return true;
+      return TagSet.has(Tag.toLowerCase());
+    }, "IsEnabled");
+    CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+      if (!IsEnabled(Tag)) return;
+      const TagUpper = Tag.toUpperCase();
+      process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+    }, "CocoonDevLog");
+    DevLog_default = CocoonDevLog;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
 var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
 var init_Configuration = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
     "use strict";
+    init_DevLog();
     init_Helpers();
     CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
       const ConfigCache = /* @__PURE__ */ new Map();
@@ -22340,18 +22366,33 @@ var init_Configuration = __esm({
         const Contributed = Manifest.contributes?.configuration;
         if (!Contributed) return;
         const Sections = Array.isArray(Contributed) ? Contributed : [Contributed];
+        let Seeded = 0;
+        let Skipped = 0;
+        let ExtensionId = "";
+        const ManifestShape = PackageJSON ?? {};
+        if (ManifestShape.publisher && ManifestShape.name) {
+          ExtensionId = `${ManifestShape.publisher}.${ManifestShape.name}`;
+        }
         for (const Section of Sections) {
           const Properties = Section?.properties;
           if (!Properties) continue;
           for (const [DottedKey, Declaration] of Object.entries(
             Properties
           )) {
-            if (ConfigCache.has(DottedKey)) continue;
+            if (ConfigCache.has(DottedKey)) {
+              Skipped++;
+              continue;
+            }
             if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
               ConfigCache.set(DottedKey, Declaration.default);
+              Seeded++;
             }
           }
         }
+        CocoonDevLog(
+          "config-prime",
+          `[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`
+        );
       }, "PrePopulateFromManifest");
       Context.Emitter.on("configurationChanged", (Payload) => {
         const Shape = Payload ?? {};
@@ -22407,12 +22448,24 @@ var init_Configuration = __esm({
           const Cached = State.ConfigCache.get(Full);
           if (Cached === null || Cached === void 0) {
             const Subtree2 = SynthesiseSubtree(State.ConfigCache, Full);
-            if (Subtree2 !== void 0) return Subtree2;
+            if (Subtree2 !== void 0) {
+              CocoonDevLog(
+                "config-prime",
+                `[ConfigPrime] synthesise key=${Full} source=null-shadowed`
+              );
+              return Subtree2;
+            }
           }
           return Cached;
         }
         const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-        if (Subtree !== void 0) return Subtree;
+        if (Subtree !== void 0) {
+          CocoonDevLog(
+            "config-prime",
+            `[ConfigPrime] synthesise key=${Full} source=miss`
+          );
+          return Subtree;
+        }
         State.PrimeConfig(Full);
         return DefaultValue;
       }, "get"),
@@ -22522,8 +22575,8 @@ var init_TextDocument = __esm({
         }
       }));
       const Additions = ToAdd.map((Folder) => {
-        const Raw = Folder?.uri;
-        const Serialized = typeof Raw === "string" ? Raw : Raw?.["toString"]?.call(Raw) ?? String(Raw ?? "");
+        const Raw2 = Folder?.uri;
+        const Serialized = typeof Raw2 === "string" ? Raw2 : Raw2?.["toString"]?.call(Raw2) ?? String(Raw2 ?? "");
         return { uri: { value: Serialized }, name: Folder?.name ?? "" };
       });
       Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
@@ -22703,16 +22756,16 @@ var init_FileSystemNamespace = __esm({
       readFile: /* @__PURE__ */ __name(async (Uri2) => {
         const UriString = String(Uri2);
         try {
-          const Raw = await Context.MountainClient?.sendRequest(
+          const Raw2 = await Context.MountainClient?.sendRequest(
             "FileSystem.ReadFile",
             [UriString]
           );
-          if (Raw == null) return Buffer.alloc(0);
-          if (Array.isArray(Raw)) {
-            return Buffer.from(Raw);
+          if (Raw2 == null) return Buffer.alloc(0);
+          if (Array.isArray(Raw2)) {
+            return Buffer.from(Raw2);
           }
-          if (Raw instanceof Uint8Array) return Buffer.from(Raw);
-          return Buffer.from(String(Raw), "utf8");
+          if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
+          return Buffer.from(String(Raw2), "utf8");
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
           const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
@@ -23522,7 +23575,7 @@ var init_ExtensionsNamespace = __esm({
         }
       });
     }, "MakePermissiveExports");
-    NormalizeLocation = /* @__PURE__ */ __name((Raw) => {
+    NormalizeLocation = /* @__PURE__ */ __name((Raw2) => {
       const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
       const UriFactoryAvailable = VsCodeUri && typeof VsCodeUri.file === "function";
       const MakeUri = /* @__PURE__ */ __name((Path) => {
@@ -23545,17 +23598,17 @@ var init_ExtensionsNamespace = __esm({
           }
         };
       }, "MakeUri");
-      if (typeof Raw === "string" && Raw.length > 0) {
-        let Path = Raw;
-        if (Raw.startsWith("file:")) {
+      if (typeof Raw2 === "string" && Raw2.length > 0) {
+        let Path = Raw2;
+        if (Raw2.startsWith("file:")) {
           try {
-            Path = decodeURIComponent(new URL(Raw).pathname);
+            Path = decodeURIComponent(new URL(Raw2).pathname);
           } catch (Error2) {
             LandFixLog_default.Warn(
               "ExtNs",
-              `URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
+              `URL parse failed for ${Raw2}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
             );
-            Path = Raw.replace(/^file:\/\//, "");
+            Path = Raw2.replace(/^file:\/\//, "");
           }
         }
         Path = Path.replace(/\/$/, "");
@@ -23563,19 +23616,19 @@ var init_ExtensionsNamespace = __esm({
           LandFixLog_default.DebugOnce(
             "ExtNs",
             `string:${Path}`,
-            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=real)`
+            `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=real)`
           );
         } else {
           LandFixLog_default.InfoOnce(
             "ExtNs",
             `string-fallback:${Path}`,
-            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=FALLBACK)`
+            `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=FALLBACK)`
           );
         }
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      if (Raw && typeof Raw === "object") {
-        const Obj = Raw;
+      if (Raw2 && typeof Raw2 === "object") {
+        const Obj = Raw2;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
         if (UriFactoryAvailable) {
           LandFixLog_default.DebugOnce(
@@ -23594,14 +23647,14 @@ var init_ExtensionsNamespace = __esm({
       }
       LandFixLog_default.Warn(
         "ExtNs",
-        `extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
+        `extensionLocation missing or unsupported type: ${typeof Raw2}; using empty path`
       );
       return { ExtensionPath: "", ExtensionUri: MakeUri("") };
     }, "NormalizeLocation");
-    ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
+    ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw2) => {
       const Exports = MakePermissiveExports();
       const { ExtensionPath, ExtensionUri } = NormalizeLocation(
-        Raw?.extensionLocation
+        Raw2?.extensionLocation
       );
       return {
         id: Id,
@@ -23611,7 +23664,7 @@ var init_ExtensionsNamespace = __esm({
         // built-ins that have completed activation; without it, callers
         // like the `github` extension treat the extension as missing.
         isActive: true,
-        packageJSON: Raw,
+        packageJSON: Raw2,
         extensionKind: 1,
         exports: Exports,
         // Critical: `activate()` must resolve to the SAME exports object
@@ -23624,17 +23677,17 @@ var init_ExtensionsNamespace = __esm({
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => ({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
-        const Raw = Context.ExtensionRegistry.get(Identifier);
-        return Raw ? ToExtensionObject(Context, Identifier, Raw) : void 0;
+        const Raw2 = Context.ExtensionRegistry.get(Identifier);
+        return Raw2 ? ToExtensionObject(Context, Identifier, Raw2) : void 0;
       }, "getExtension"),
       get all() {
-        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context, Id, Raw2));
       },
       // Some extensions (html-language-features) iterate
       // `extensions.allAcrossExtensionHosts`; return the same array as `all`
       // so `for (...of...)` does not throw on `is not iterable`.
       get allAcrossExtensionHosts() {
-        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context, Id, Raw2));
       },
       onDidChange: /* @__PURE__ */ __name((Listener) => {
         Context.Emitter.on("deltaExtensions", Listener);
@@ -23661,32 +23714,32 @@ var init_EnvNamespace = __esm({
     init_LandFixLog();
     CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
       const Env = Context.ExtensionHostInitData?.environment ?? {};
-      const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
-        if (typeof Raw !== "string" || Raw.length === 0) {
+      const NormalizeAppRoot = /* @__PURE__ */ __name((Raw2) => {
+        if (typeof Raw2 !== "string" || Raw2.length === 0) {
           LandFixLog_default.Warn(
             "EnvNs",
             "appRoot empty or non-string, returning ''"
           );
           return "";
         }
-        if (!Raw.startsWith("file:")) {
-          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw}`);
-          return Raw;
+        if (!Raw2.startsWith("file:")) {
+          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw2}`);
+          return Raw2;
         }
         try {
           const Normalised = decodeURIComponent(
-            new URL(Raw).pathname
+            new URL(Raw2).pathname
           ).replace(/\/$/, "");
           LandFixLog_default.Info(
             "EnvNs",
-            `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+            `appRoot normalised file-URL ${Raw2} \u2192 ${Normalised}`
           );
           return Normalised;
         } catch (Error2) {
-          const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+          const Fallback = Raw2.replace(/^file:\/\//, "").replace(/\/$/, "");
           LandFixLog_default.Warn(
             "EnvNs",
-            `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
+            `appRoot URL parse failed; fallback ${Raw2} \u2192 ${Fallback}`,
             {
               error: Error2 instanceof Error2 ? Error2.message : String(Error2)
             }
@@ -24272,6 +24325,7 @@ function ListHandles() {
 __name(ListHandles, "ListHandles");
 
 // Source/Services/Handler/ExtensionHostHandler.ts
+init_DevLog();
 import * as NodeFS from "node:fs";
 var HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context, Parameters) => {
   const Extensions = Parameters?.extensions ?? [];
@@ -24763,9 +24817,9 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
       // safe defaults so extensions that reference them don't crash.
       l10n: {
         t: /* @__PURE__ */ __name((Message, ...Arguments) => {
-          const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
-          if (!Arguments.length) return Raw;
-          return Raw.replace(
+          const Raw2 = typeof Message === "string" ? Message : Message?.message ?? String(Message);
+          if (!Arguments.length) return Raw2;
+          return Raw2.replace(
             /\{(\d+)\}/g,
             (_Match, Index) => {
               const Replacement = Arguments[Number(Index)];
@@ -24990,8 +25044,19 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
 var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, ActivationEvent) => {
   if (Context.ActivatedExtensions.has(ExtensionId)) return;
   Context.ActivatedExtensions.add(ExtensionId);
+  const StartMs = Date.now();
+  CocoonDevLog(
+    "ext-activate",
+    `[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`
+  );
   const Extension = Context.ExtensionRegistry.get(ExtensionId);
-  if (!Extension) return;
+  if (!Extension) {
+    CocoonDevLog(
+      "ext-activate",
+      `[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`
+    );
+    return;
+  }
   const LocationRaw = Extension?.ExtensionLocation ?? Extension?.extensionLocation ?? Extension?.location?.path ?? Extension?.location;
   const MainFile = Extension?.main ?? Extension?.Main;
   if (!LocationRaw || !MainFile) {
@@ -25046,11 +25111,11 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
     const Manifest = await (async () => {
       try {
         const { readFile } = await import("node:fs/promises");
-        const Raw = await readFile(
+        const Raw2 = await readFile(
           `${ExtensionPath}/package.json`,
           "utf8"
         );
-        return JSON.parse(Raw);
+        return JSON.parse(Raw2);
       } catch {
         return Extension;
       }
@@ -25090,13 +25155,26 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
       console.log(
         `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
       );
+      CocoonDevLog(
+        "ext-activate",
+        `[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
+      );
     } else {
       console.warn(
         `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
       );
+      CocoonDevLog(
+        "ext-activate",
+        `[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
+      );
     }
   } catch (Err) {
     Context.ActivatedExtensions.delete(ExtensionId);
+    const Message = Err instanceof Error ? Err.message : String(Err);
+    CocoonDevLog(
+      "ext-activate",
+      `[ExtActivate] fail ext=${ExtensionId} duration_ms=${Date.now() - StartMs} error=${Message.replace(/\n/g, " | ")}`
+    );
     throw Err;
   }
 }, "ActivateExtension");
