@@ -35361,7 +35361,7 @@ var Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
 }, "default");
 
 // Source/Telemetry/PostHog/Configuration.ts
-var DefaultKey = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
+var DefaultKey = "";
 var DefaultHost = "https://eu.i.posthog.com";
 var DefaultBatchWindowMilliseconds = 3e3;
 var DefaultBatchMaximum = 50;

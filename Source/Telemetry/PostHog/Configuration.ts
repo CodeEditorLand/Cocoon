@@ -15,7 +15,7 @@ export type Configuration = {
 	readonly DistinctIdentifierSeed: string;
 };
 
-const DefaultKey = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
+const DefaultKey = "";
 
 const DefaultHost = "https://eu.i.posthog.com";
 
