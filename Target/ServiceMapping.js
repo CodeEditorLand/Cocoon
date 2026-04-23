@@ -2618,6 +2618,1250 @@ var init_MountainClient = __esm({
   }
 });
 
+// Source/Interfaces/IExtensionHostService.ts
+var IExtensionHostService_exports = {};
+__export(IExtensionHostService_exports, {
+  IExtensionHostService: () => IExtensionHostService
+});
+import { Context as Context6 } from "effect";
+var IExtensionHostService;
+var init_IExtensionHostService = __esm({
+  "Source/Interfaces/IExtensionHostService.ts"() {
+    "use strict";
+    IExtensionHostService = Context6.Tag(
+      "IExtensionHostService"
+    );
+  }
+});
+
+// Source/Interfaces/IConfigurationService.ts
+var IConfigurationService_exports = {};
+__export(IConfigurationService_exports, {
+  ConfigurationScope: () => ConfigurationScope,
+  IConfigurationService: () => IConfigurationService
+});
+import { Context as Context7 } from "effect";
+var ConfigurationScope, IConfigurationService;
+var init_IConfigurationService = __esm({
+  "Source/Interfaces/IConfigurationService.ts"() {
+    "use strict";
+    ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
+      ConfigurationScope3["APPLICATION"] = "APPLICATION";
+      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
+      ConfigurationScope3["PROFILE"] = "PROFILE";
+      return ConfigurationScope3;
+    })(ConfigurationScope || {});
+    IConfigurationService = Context7.Tag(
+      "IConfigurationService"
+    );
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WindowNamespace.ts
+var WindowNamespace_exports = {};
+__export(WindowNamespace_exports, {
+  CustomEditorProviders: () => CustomEditorProviders,
+  TreeDataProviders: () => TreeDataProviders,
+  TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
+  WebviewPanels: () => WebviewPanels,
+  WebviewViewProviders: () => WebviewViewProviders,
+  default: () => WindowNamespace_default
+});
+var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
+var init_WindowNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
+    "use strict";
+    MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback, ThisArg, Disposables) => {
+      const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
+      Context21.Emitter.on(EventName, Bound);
+      const Subscription = {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context21.Emitter.off(EventName, Bound);
+        }, "dispose")
+      };
+      if (Disposables && typeof Disposables.push === "function") {
+        Disposables.push(Subscription);
+      }
+      return Subscription;
+    }, "MakeEventSubscriber");
+    OutputChannelCounter = 0;
+    TerminalCounter = 0;
+    TreeDataProviderCounter = 0;
+    WebviewPanelCounter = 0;
+    WebviewViewCounter = 0;
+    CustomEditorCounter = 0;
+    ProgressCounter = 0;
+    TreeDataProviders = /* @__PURE__ */ new Map();
+    TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
+    WebviewViewProviders = /* @__PURE__ */ new Map();
+    CustomEditorProviders = /* @__PURE__ */ new Map();
+    WebviewPanels = /* @__PURE__ */ new Map();
+    StatusBarCounter = 0;
+    CreateWindowNamespace = /* @__PURE__ */ __name((Context21) => {
+      const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
+        let Options = void 0;
+        let Actions = Items;
+        if (Items.length > 0 && Items[0] && typeof Items[0] === "object" && !Array.isArray(Items[0]) && "modal" in Items[0]) {
+          Options = Items[0];
+          Actions = Items.slice(1);
+        }
+        try {
+          const Selection3 = await Context21.MountainClient?.sendRequest(
+            "Window.ShowMessage",
+            [
+              {
+                message: Message,
+                level: Level,
+                items: Actions,
+                options: Options ?? {}
+              }
+            ]
+          );
+          return Selection3 ?? void 0;
+        } catch {
+          return void 0;
+        }
+      }, "ShowMessage");
+      return {
+        showInformationMessage: ShowMessage("info"),
+        showErrorMessage: ShowMessage("error"),
+        showWarningMessage: ShowMessage("warn"),
+        showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
+          try {
+            return await Context21.MountainClient?.sendRequest(
+              "Window.ShowQuickPick",
+              [Items, Options ?? {}]
+            );
+          } catch {
+            return void 0;
+          }
+        }, "showQuickPick"),
+        showInputBox: /* @__PURE__ */ __name(async (Options) => {
+          try {
+            return await Context21.MountainClient?.sendRequest(
+              "Window.ShowInputBox",
+              [Options ?? {}]
+            );
+          } catch {
+            return void 0;
+          }
+        }, "showInputBox"),
+        showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
+          try {
+            const Selected = await Context21.MountainClient?.sendRequest(
+              "Window.ShowOpenDialog",
+              [Options ?? {}]
+            );
+            return Array.isArray(Selected) ? Selected : [];
+          } catch {
+            return [];
+          }
+        }, "showOpenDialog"),
+        showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
+          try {
+            return await Context21.MountainClient?.sendRequest(
+              "Window.ShowSaveDialog",
+              [Options ?? {}]
+            );
+          } catch {
+            return void 0;
+          }
+        }, "showSaveDialog"),
+        createTerminal: /* @__PURE__ */ __name((Options) => {
+          const Handle = `terminal:${++TerminalCounter}`;
+          const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
+          Context21.SendToMountain("window.createTerminal", {
+            handle: Handle,
+            name: Name,
+            options: Options ?? {}
+          }).catch(() => {
+          });
+          let ProcessIdPromise;
+          const ResolveProcessId = /* @__PURE__ */ __name(() => {
+            if (ProcessIdPromise !== void 0) return ProcessIdPromise;
+            ProcessIdPromise = (async () => {
+              try {
+                const Response = await Context21.MountainClient?.sendRequest(
+                  "Terminal.GetProcessId",
+                  [Handle]
+                );
+                if (typeof Response === "number") return Response;
+                if (Response && typeof Response.pid === "number") {
+                  return Response.pid;
+                }
+                return void 0;
+              } catch {
+                return void 0;
+              }
+            })();
+            return ProcessIdPromise;
+          }, "ResolveProcessId");
+          return {
+            name: Name,
+            get processId() {
+              return ResolveProcessId();
+            },
+            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+              Context21.SendToMountain("terminal.sendText", {
+                handle: Handle,
+                text: Text
+              }).catch(() => {
+              });
+            }, "sendText"),
+            show: /* @__PURE__ */ __name((PreserveFocus) => {
+              Context21.SendToMountain("terminal.show", {
+                handle: Handle,
+                preserveFocus: PreserveFocus
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("terminal.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "hide"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("terminal.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose"),
+            // vscode.window.Terminal.resize(columns, rows) → Mountain
+            // PTY master receives SIGWINCH; shell redraws line editor.
+            resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
+              try {
+                await Context21.MountainClient?.sendRequest(
+                  "Terminal.Resize",
+                  [Handle, Columns, Rows]
+                );
+              } catch {
+              }
+            }, "resize")
+          };
+        }, "createTerminal"),
+        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
+          const Handle = `statusBar:${++StatusBarCounter}`;
+          const Item = {
+            id: Handle,
+            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+            priority: Priority,
+            text: "",
+            tooltip: "",
+            command: void 0,
+            show: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("statusBar.update", {
+                handle: Handle,
+                text: Item.text,
+                tooltip: Item.tooltip,
+                command: Item.command,
+                visible: true
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("statusBar.update", {
+                handle: Handle,
+                visible: false
+              }).catch(() => {
+              });
+            }, "hide"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("statusBar.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+          return Item;
+        }, "createStatusBarItem"),
+        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
+          const Handle = `outputChannel:${++OutputChannelCounter}`;
+          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
+          Context21.SendToMountain("outputChannel.create", {
+            handle: Handle,
+            name: Name,
+            log: IsLog
+          }).catch(() => {
+          });
+          const Channel = {
+            name: Name,
+            append: /* @__PURE__ */ __name((Value) => {
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: Value
+              }).catch(() => {
+              });
+            }, "append"),
+            appendLine: /* @__PURE__ */ __name((Value) => {
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `${Value}
+`
+              }).catch(() => {
+              });
+            }, "appendLine"),
+            clear: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("outputChannel.clear", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "clear"),
+            show: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("outputChannel.show", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("outputChannel.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "hide"),
+            replace: /* @__PURE__ */ __name((Value) => {
+              Context21.SendToMountain("outputChannel.clear", {
+                handle: Handle
+              }).catch(() => {
+              });
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: Value
+              }).catch(() => {
+              });
+            }, "replace"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("outputChannel.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose"),
+            // LogOutputChannel additions - returned when the caller passes
+            // `{ log: true }`. Kept on the base channel for simplicity;
+            // these are inert on non-log channels.
+            logLevel: 2,
+            // LogLevel.Info
+            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onDidChangeLogLevel"),
+            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[trace] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "trace"),
+            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[debug] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "debug"),
+            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[info] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "info"),
+            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[warn] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "warn"),
+            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
+              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
+              Context21.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[error] ${Text}
+`
+              }).catch(() => {
+              });
+            }, "error")
+          };
+          void IsLog;
+          return Channel;
+        }, "createOutputChannel"),
+        createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
+          const Key = `decoration:${Math.random().toString(36).slice(2)}`;
+          Context21.SendToMountain("window.createTextEditorDecorationType", {
+            key: Key,
+            options: Options ?? {}
+          }).catch(() => {
+          });
+          return {
+            key: Key,
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain(
+                "window.disposeTextEditorDecorationType",
+                {
+                  key: Key
+                }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "createTextEditorDecorationType"),
+        registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalQuickFixProvider"),
+        registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalCompletionProvider"),
+        createQuickPick: /* @__PURE__ */ __name(() => ({
+          value: "",
+          placeholder: void 0,
+          items: [],
+          activeItems: [],
+          selectedItems: [],
+          canSelectMany: false,
+          matchOnDescription: false,
+          matchOnDetail: false,
+          busy: false,
+          enabled: true,
+          ignoreFocusOut: false,
+          step: void 0,
+          totalSteps: void 0,
+          title: void 0,
+          buttons: [],
+          show: /* @__PURE__ */ __name(() => {
+          }, "show"),
+          hide: /* @__PURE__ */ __name(() => {
+          }, "hide"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidAccept"),
+          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeValue"),
+          onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeActive"),
+          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeSelection"),
+          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerButton"),
+          onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerItemButton"),
+          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidHide")
+        }), "createQuickPick"),
+        createInputBox: /* @__PURE__ */ __name(() => ({
+          value: "",
+          valueSelection: void 0,
+          placeholder: void 0,
+          password: false,
+          busy: false,
+          enabled: true,
+          ignoreFocusOut: false,
+          prompt: void 0,
+          validationMessage: void 0,
+          step: void 0,
+          totalSteps: void 0,
+          title: void 0,
+          buttons: [],
+          show: /* @__PURE__ */ __name(() => {
+          }, "show"),
+          hide: /* @__PURE__ */ __name(() => {
+          }, "hide"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidAccept"),
+          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeValue"),
+          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerButton"),
+          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidHide")
+        }), "createInputBox"),
+        createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
+          const Handle = `webviewPanel:${++WebviewPanelCounter}`;
+          let CurrentHtml = "";
+          let CurrentOptions = Options ?? {};
+          Context21.MountainClient?.sendRequest("webview.create", [
+            Handle,
+            ViewType,
+            Title,
+            ShowOptions,
+            CurrentOptions
+          ]).catch(() => {
+          });
+          const Panel = {
+            viewType: ViewType,
+            title: Title,
+            iconPath: void 0,
+            webview: {
+              get options() {
+                return CurrentOptions;
+              },
+              set options(Value) {
+                CurrentOptions = Value;
+                Context21.MountainClient?.sendRequest(
+                  "webview.setOptions",
+                  [Handle, Value]
+                ).catch(() => {
+                });
+              },
+              get html() {
+                return CurrentHtml;
+              },
+              set html(Value) {
+                CurrentHtml = Value;
+                Context21.MountainClient?.sendRequest(
+                  "webview.setHtml",
+                  [Handle, Value]
+                ).catch(() => {
+                });
+              },
+              cspSource: "vscode-resource: vscode-webview-resource: https:",
+              asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+              postMessage: /* @__PURE__ */ __name(async (Message) => {
+                try {
+                  await Context21.MountainClient?.sendRequest(
+                    "webview.postMessage",
+                    [Handle, Message]
+                  );
+                  return true;
+                } catch {
+                  return false;
+                }
+              }, "postMessage"),
+              onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+                const Event2 = `webview.message:${Handle}`;
+                Context21.Emitter.on(Event2, Listener);
+                return {
+                  dispose: /* @__PURE__ */ __name(() => {
+                    Context21.Emitter.removeListener(
+                      Event2,
+                      Listener
+                    );
+                  }, "dispose")
+                };
+              }, "onDidReceiveMessage")
+            },
+            options: CurrentOptions,
+            viewColumn: 1,
+            active: true,
+            visible: true,
+            reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
+              Context21.MountainClient?.sendRequest("webview.reveal", [
+                Handle,
+                Column,
+                PreserveFocus
+              ]).catch(() => {
+              });
+            }, "reveal"),
+            dispose: /* @__PURE__ */ __name(() => {
+              WebviewPanels.delete(Handle);
+              Context21.Emitter.removeAllListeners(
+                `webview.message:${Handle}`
+              );
+              Context21.MountainClient?.sendRequest("webview.dispose", [
+                Handle
+              ]).catch(() => {
+              });
+            }, "dispose"),
+            onDidDispose: /* @__PURE__ */ __name((Listener) => {
+              const Event2 = `webview.dispose:${Handle}`;
+              Context21.Emitter.on(Event2, Listener);
+              return {
+                dispose: /* @__PURE__ */ __name(() => {
+                  Context21.Emitter.removeListener(Event2, Listener);
+                }, "dispose")
+              };
+            }, "onDidDispose"),
+            onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
+              const Event2 = `webview.viewState:${Handle}`;
+              Context21.Emitter.on(Event2, Listener);
+              return {
+                dispose: /* @__PURE__ */ __name(() => {
+                  Context21.Emitter.removeListener(Event2, Listener);
+                }, "dispose")
+              };
+            }, "onDidChangeViewState")
+          };
+          WebviewPanels.set(Handle, Panel);
+          return Panel;
+        }, "createWebviewPanel"),
+        showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
+          Context21.SendToMountain("window.showTextDocument", {
+            document: _Document,
+            column: _Column,
+            preserveFocus: _PreserveFocus
+          }).catch(() => {
+          });
+          return void 0;
+        }, "showTextDocument"),
+        showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
+        tabGroups: {
+          all: [],
+          activeTabGroup: {
+            tabs: [],
+            isActive: true,
+            viewColumn: 1,
+            activeTab: void 0
+          },
+          onDidChangeTabs: MakeEventSubscriber(
+            Context21,
+            "window.didChangeTabs"
+          ),
+          onDidChangeTabGroups: MakeEventSubscriber(
+            Context21,
+            "window.didChangeTabGroups"
+          ),
+          close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+            try {
+              await Context21.MountainClient?.sendRequest("Command.Execute", [
+                "workbench.action.closeActiveEditor",
+                []
+              ]);
+              return true;
+            } catch {
+              return false;
+            }
+          }, "close")
+        },
+        activeColorTheme: {
+          kind: 2,
+          // ColorThemeKind.Dark
+          onDidChange: MakeEventSubscriber(
+            Context21,
+            "window.didChangeActiveColorTheme"
+          )
+        },
+        onDidChangeActiveColorTheme: MakeEventSubscriber(
+          Context21,
+          "window.didChangeActiveColorTheme"
+        ),
+        createTreeView: /* @__PURE__ */ __name((Id, Options) => {
+          const Provider = Options?.treeDataProvider;
+          if (Provider) {
+            const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
+            TreeDataProviders.set(Handle, Provider);
+            TreeDataProvidersByViewId.set(Id, Provider);
+            const SerializableOptions = {
+              showCollapseAll: Options?.showCollapseAll === true,
+              canSelectMany: Options?.canSelectMany === true,
+              manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
+            };
+            Context21.MountainClient?.sendRequest("tree.register", [
+              Handle,
+              Id,
+              SerializableOptions
+            ]).catch(() => {
+            });
+          }
+          return {
+            reveal: /* @__PURE__ */ __name(async () => {
+            }, "reveal"),
+            dispose: /* @__PURE__ */ __name(() => {
+              TreeDataProvidersByViewId.delete(Id);
+              Context21.MountainClient?.sendRequest("tree.dispose", [
+                Id
+              ]).catch(() => {
+              });
+            }, "dispose"),
+            selection: [],
+            visible: true,
+            title: void 0,
+            description: void 0,
+            message: void 0,
+            badge: void 0,
+            onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeSelection"),
+            onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeVisibility"),
+            onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidCollapseElement"),
+            onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidExpandElement"),
+            onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeCheckboxState")
+          };
+        }, "createTreeView"),
+        registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+          const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
+          TreeDataProviders.set(Handle, Provider);
+          TreeDataProvidersByViewId.set(ViewId, Provider);
+          Context21.MountainClient?.sendRequest("tree.register", [
+            Handle,
+            ViewId,
+            {}
+          ]).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              TreeDataProviders.delete(Handle);
+              TreeDataProvidersByViewId.delete(ViewId);
+              Context21.MountainClient?.sendRequest("tree.unregister", [
+                Handle
+              ]).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTreeDataProvider"),
+        registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerWebviewPanelSerializer"),
+        registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+          const Handle = `webviewView:${++WebviewViewCounter}`;
+          WebviewViewProviders.set(Handle, Provider);
+          Context21.MountainClient?.sendRequest("webview.registerView", [
+            Handle,
+            ViewId
+          ]).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              WebviewViewProviders.delete(Handle);
+              Context21.MountainClient?.sendRequest(
+                "webview.unregisterView",
+                [Handle]
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerWebviewViewProvider"),
+        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
+          const Handle = `customEditor:${++CustomEditorCounter}`;
+          CustomEditorProviders.set(Handle, Provider);
+          Context21.MountainClient?.sendRequest(
+            "webview.registerCustomEditor",
+            [Handle, ViewType]
+          ).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              CustomEditorProviders.delete(Handle);
+              Context21.MountainClient?.sendRequest(
+                "webview.unregisterCustomEditor",
+                [Handle]
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerCustomEditorProvider"),
+        registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
+          const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+          Context21.SendToMountain("register_file_decoration_provider", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__fileDecorationProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__fileDecorationProvider:${Handle}`
+              );
+              Context21.SendToMountain(
+                "unregister_file_decoration_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerFileDecorationProvider"),
+        registerUriHandler: /* @__PURE__ */ __name((Handler) => {
+          const Handle = `uriHandler:${Date.now()}`;
+          Context21.SendToMountain("register_uri_handler", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+              Context21.SendToMountain("unregister_uri_handler", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerUriHandler"),
+        registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
+          const Handle = `terminalLink:${Date.now()}`;
+          Context21.SendToMountain("register_terminal_link_provider", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__terminalLinkProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__terminalLinkProvider:${Handle}`
+              );
+              Context21.SendToMountain(
+                "unregister_terminal_link_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTerminalLinkProvider"),
+        registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
+          const Handle = `terminalProfile:${Id}:${Date.now()}`;
+          Context21.SendToMountain("register_terminal_profile_provider", {
+            handle: Handle,
+            profile_id: Id,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__terminalProfileProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__terminalProfileProvider:${Handle}`
+              );
+              Context21.SendToMountain(
+                "unregister_terminal_profile_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTerminalProfileProvider"),
+        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerProfileContentHandler"),
+        registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
+          const Handle = `externalUriOpener:${Id}:${Date.now()}`;
+          Context21.SendToMountain("register_external_uri_opener", {
+            handle: Handle,
+            opener_id: Id,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain(
+                "unregister_external_uri_opener",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerExternalUriOpener"),
+        // Runs a Task with a progress object that reports to Mountain, which
+        // in turn updates the status-bar progress indicator in Sky.
+        // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
+        // We provide a real `report({ message, increment })` path and a
+        // no-op CancellationToken (no cancellation plumbing yet). The
+        // Task's return value is forwarded verbatim.
+        withProgress: /* @__PURE__ */ __name(async (Options, Task3) => {
+          const Handle = `progress:${++ProgressCounter}`;
+          const Title = Options && typeof Options === "object" && Options.title || "Progress";
+          const Location3 = (Options && typeof Options === "object" && Options.location) ?? 15;
+          let Increment = 0;
+          const Progress = {
+            report: /* @__PURE__ */ __name((Value) => {
+              if (Value?.increment) Increment += Value.increment;
+              Context21.SendToMountain("progress.report", {
+                handle: Handle,
+                title: Title,
+                location: Location3,
+                message: Value?.message,
+                increment: Increment
+              }).catch(() => {
+              });
+            }, "report")
+          };
+          const CancellationToken3 = {
+            isCancellationRequested: false,
+            onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onCancellationRequested")
+          };
+          Context21.SendToMountain("progress.start", {
+            handle: Handle,
+            title: Title,
+            location: Location3
+          }).catch(() => {
+          });
+          try {
+            return await Task3(Progress, CancellationToken3);
+          } finally {
+            Context21.SendToMountain("progress.end", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }
+        }, "withProgress"),
+        setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
+          Context21.SendToMountain("statusBar.message", {
+            text: Text,
+            hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
+          }).catch(() => {
+          });
+          return { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+        }, "setStatusBarMessage"),
+        // Events sourced from Mountain gRPC notifications → Context.Emitter
+        onDidChangeActiveTextEditor: MakeEventSubscriber(
+          Context21,
+          "window.didChangeActiveTextEditor"
+        ),
+        onDidChangeVisibleTextEditors: MakeEventSubscriber(
+          Context21,
+          "window.didChangeVisibleTextEditors"
+        ),
+        onDidChangeTextEditorSelection: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTextEditorSelection"
+        ),
+        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTextEditorVisibleRanges"
+        ),
+        onDidChangeTextEditorOptions: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTextEditorOptions"
+        ),
+        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTextEditorViewColumn"
+        ),
+        onDidOpenTerminal: MakeEventSubscriber(
+          Context21,
+          "window.didOpenTerminal"
+        ),
+        onDidCloseTerminal: MakeEventSubscriber(
+          Context21,
+          "window.didCloseTerminal"
+        ),
+        onDidChangeActiveTerminal: MakeEventSubscriber(
+          Context21,
+          "window.didChangeActiveTerminal"
+        ),
+        onDidChangeTerminalState: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTerminalState"
+        ),
+        onDidWriteTerminalData: MakeEventSubscriber(
+          Context21,
+          "terminalData"
+        ),
+        // Shell-integration events added for openai.chatgpt activation;
+        // Land doesn't track shell integration yet so these fire never.
+        // Must be a subscribable function, not a plain object.
+        onDidChangeTerminalShellIntegration: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTerminalShellIntegration"
+        ),
+        onDidStartTerminalShellExecution: MakeEventSubscriber(
+          Context21,
+          "window.didStartTerminalShellExecution"
+        ),
+        onDidEndTerminalShellExecution: MakeEventSubscriber(
+          Context21,
+          "window.didEndTerminalShellExecution"
+        ),
+        onDidChangeWindowState: MakeEventSubscriber(
+          Context21,
+          "window.didChangeWindowState"
+        ),
+        activeTextEditor: void 0,
+        visibleTextEditors: [],
+        terminals: [],
+        activeTerminal: void 0,
+        state: { focused: true, active: true }
+      };
+    }, "CreateWindowNamespace");
+    WindowNamespace_default = CreateWindowNamespace;
+  }
+});
+
+// Source/Interfaces/IPerformanceMonitoringService.ts
+var IPerformanceMonitoringService_exports = {};
+__export(IPerformanceMonitoringService_exports, {
+  IPerformanceMonitoringService: () => IPerformanceMonitoringService
+});
+import { Context as Context8 } from "effect";
+var IPerformanceMonitoringService;
+var init_IPerformanceMonitoringService = __esm({
+  "Source/Interfaces/IPerformanceMonitoringService.ts"() {
+    "use strict";
+    IPerformanceMonitoringService = Context8.Tag("IPerformanceMonitoringService");
+  }
+});
+
+// Source/Interfaces/ISecurityService.ts
+var ISecurityService_exports = {};
+__export(ISecurityService_exports, {
+  ISecurityService: () => ISecurityService
+});
+import { Context as Context9 } from "effect";
+var ISecurityService;
+var init_ISecurityService = __esm({
+  "Source/Interfaces/ISecurityService.ts"() {
+    "use strict";
+    ISecurityService = Context9.Tag("ISecurityService");
+  }
+});
+
+// Source/Services/Handler/RequestRoutingHandler.ts
+var RequestRoutingHandler_exports = {};
+__export(RequestRoutingHandler_exports, {
+  default: () => RequestRoutingHandler_default
+});
+var RouteRequest, RequestRoutingHandler_default;
+var init_RequestRoutingHandler = __esm({
+  "Source/Services/Handler/RequestRoutingHandler.ts"() {
+    "use strict";
+    RouteRequest = /* @__PURE__ */ __name(async (Method, Parameters) => {
+      console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
+      const RoutePatterns = {
+        "extension.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { IExtensionHostService: IExtensionHostService3 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
+          switch (Method2) {
+            case "extension.activate": {
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
+              return await ExtensionHostService2.activateExtension(
+                Params.extensionId,
+                Params.reason
+              );
+            }
+            case "extension.deactivate": {
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
+              await ExtensionHostService2.deactivateExtension(
+                Params.extensionId
+              );
+              return { success: true };
+            }
+            case "extension.get": {
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
+              return ExtensionHostService2.getActivatedExtension(
+                Params.extensionId
+              );
+            }
+            default:
+              throw new Error(`Unknown extension method: ${Method2}`);
+          }
+        }, "extension.\\w+"),
+        "configuration.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { IConfigurationService: IConfigurationService3 } = await Promise.resolve().then(() => (init_IConfigurationService(), IConfigurationService_exports));
+          switch (Method2) {
+            case "configuration.get": {
+              const ConfigService = await ServiceMapping2.getService(
+                IConfigurationService3
+              );
+              return await ConfigService.getValue(
+                Params.key,
+                Params.scope
+              );
+            }
+            case "configuration.set": {
+              const ConfigService = await ServiceMapping2.getService(
+                IConfigurationService3
+              );
+              await ConfigService.setValue(
+                Params.key,
+                Params.value,
+                Params.scope
+              );
+              return { success: true };
+            }
+            case "configuration.update": {
+              const ConfigService = await ServiceMapping2.getService(
+                IConfigurationService3
+              );
+              await ConfigService.updateValue(
+                Params.key,
+                Params.updater,
+                Params.scope
+              );
+              return { success: true };
+            }
+            default:
+              throw new Error(`Unknown configuration method: ${Method2}`);
+          }
+        }, "configuration.\\w+"),
+        // Mountain → Cocoon tree-children round-trip keyed on `viewId`.
+        // Emitted by `Mountain/Source/RPC/CocoonService/TreeView.rs::
+        // GetTreeChildren`. Unlike the `tree.*` legacy path that keys on the
+        // Cocoon-side `treeDataProvider:N` handle, this variant identifies
+        // providers by the same viewId the extension declared in its
+        // contributes.views manifest - the only stable key Mountain has.
+        "^\\$provideTreeChildren$": /* @__PURE__ */ __name(async (_Method, Params) => {
+          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const ViewId = Params?.viewId ?? Params?.[0];
+          const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
+          const Provider = TreeDataProvidersByViewId2.get(String(ViewId));
+          if (!Provider) {
+            return { items: [] };
+          }
+          const Element = ItemHandle ? ItemHandle : void 0;
+          const Children = await Provider.getChildren?.(Element) ?? [];
+          const Items = await Promise.all(
+            (Array.isArray(Children) ? Children : []).map(
+              async (Child, Index) => {
+                const Item = await Provider.getTreeItem?.(Child) ?? Child;
+                const Raw2 = Item;
+                const Label = typeof Raw2.label === "string" ? Raw2.label : Raw2.label?.label ?? "";
+                const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
+                const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
+                const CollapsibleState = Raw2.collapsibleState ?? 0;
+                return {
+                  handle: String(
+                    Raw2.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`
+                  ),
+                  label: Label,
+                  isCollapsed: CollapsibleState === 1,
+                  icon: String(Icon)
+                };
+              }
+            )
+          );
+          return { items: Items };
+        }, "^\\$provideTreeChildren$"),
+        "tree\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const Handle = Params?.handle ?? Params?.[0];
+          const Provider = TreeDataProviders2.get(String(Handle));
+          if (!Provider) {
+            throw new Error(
+              `TreeDataProvider handle not registered: ${Handle}`
+            );
+          }
+          switch (Method2) {
+            case "tree.getChildren": {
+              const Element = Params?.element ?? Params?.[1];
+              const Children = await Provider.getChildren?.(Element) ?? [];
+              return Array.isArray(Children) ? Children : [];
+            }
+            case "tree.getTreeItem": {
+              const Element = Params?.element ?? Params?.[1];
+              return await Provider.getTreeItem?.(Element) ?? null;
+            }
+            case "tree.getParent": {
+              const Element = Params?.element ?? Params?.[1];
+              return await Provider.getParent?.(Element) ?? null;
+            }
+            case "tree.resolveTreeItem": {
+              const Item = Params?.item ?? Params?.[1];
+              const Element = Params?.element ?? Params?.[2];
+              return await Provider.resolveTreeItem?.(Item, Element) ?? Item;
+            }
+            default:
+              throw new Error(`Unknown tree method: ${Method2}`);
+          }
+        }, "tree\\.\\w+"),
+        "webview\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { WebviewPanels: WebviewPanels2, WebviewViewProviders: WebviewViewProviders2, CustomEditorProviders: CustomEditorProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const Handle = Params?.handle ?? Params?.[0];
+          switch (Method2) {
+            case "webview.resolveView": {
+              const Provider = WebviewViewProviders2.get(String(Handle));
+              if (!Provider) {
+                throw new Error(
+                  `WebviewViewProvider handle not registered: ${Handle}`
+                );
+              }
+              const View = Params?.view ?? Params?.[1];
+              const Ctx = Params?.context ?? Params?.[2];
+              return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
+            }
+            case "webview.resolveCustomEditor": {
+              const Provider = CustomEditorProviders2.get(String(Handle));
+              if (!Provider) {
+                throw new Error(
+                  `CustomEditorProvider handle not registered: ${Handle}`
+                );
+              }
+              const Document = Params?.document ?? Params?.[1];
+              const Panel = Params?.panel ?? Params?.[2];
+              return await Provider.resolveCustomEditor?.(
+                Document,
+                Panel,
+                { asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath") }
+              ) ?? null;
+            }
+            default: {
+              const Panel = WebviewPanels2.get(String(Handle));
+              if (!Panel) return null;
+              return null;
+            }
+          }
+        }, "webview\\.\\w+"),
+        "performance.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { IPerformanceMonitoringService: IPerformanceMonitoringService3 } = await Promise.resolve().then(() => (init_IPerformanceMonitoringService(), IPerformanceMonitoringService_exports));
+          switch (Method2) {
+            case "performance.metrics": {
+              const PerfService = await ServiceMapping2.getService(
+                IPerformanceMonitoringService3
+              );
+              return PerfService.getMetrics();
+            }
+            case "performance.alerts": {
+              const PerfService = await ServiceMapping2.getService(
+                IPerformanceMonitoringService3
+              );
+              return PerfService.getAlerts();
+            }
+            case "performance.report": {
+              const PerfService = await ServiceMapping2.getService(
+                IPerformanceMonitoringService3
+              );
+              return PerfService.generateReport();
+            }
+            default:
+              throw new Error(`Unknown performance method: ${Method2}`);
+          }
+        }, "performance.\\w+"),
+        "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { ISecurityService: ISecurityService3 } = await Promise.resolve().then(() => (init_ISecurityService(), ISecurityService_exports));
+          switch (Method2) {
+            case "security.policy": {
+              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
+              return await SecurityService2.getSecurityPolicy(
+                Params.extensionId
+              );
+            }
+            case "security.audit": {
+              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
+              return SecurityService2.getAuditLog();
+            }
+            case "security.incidents": {
+              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
+              return SecurityService2.getActiveIncidents();
+            }
+            default:
+              throw new Error(`Unknown security method: ${Method2}`);
+          }
+        }, "security.\\w+")
+      };
+      for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
+        const Regex = new RegExp(Pattern);
+        if (Regex.test(Method)) {
+          return Handler(Method, Parameters);
+        }
+      }
+      return void 0;
+    }, "RouteRequest");
+    RequestRoutingHandler_default = RouteRequest;
+  }
+});
+
 // Source/Services/LanguageProviderRegistry.ts
 var LanguageProviderRegistry_exports = {};
 __export(LanguageProviderRegistry_exports, {
@@ -2688,12 +3932,12 @@ var init_LanguageProviderRegistry = __esm({
 });
 
 // Source/Interfaces/IGRPCServerService.ts
-import { Context as Context6 } from "effect";
+import { Context as Context10 } from "effect";
 var IGRPCServerService;
 var init_IGRPCServerService = __esm({
   "Source/Interfaces/IGRPCServerService.ts"() {
     "use strict";
-    IGRPCServerService = Context6.GenericTag("IGRPCServerService");
+    IGRPCServerService = Context10.GenericTag("IGRPCServerService");
   }
 });
 
@@ -23704,936 +24948,6 @@ var init_extHostTypes = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WindowNamespace.ts
-var WindowNamespace_exports = {};
-__export(WindowNamespace_exports, {
-  CustomEditorProviders: () => CustomEditorProviders,
-  TreeDataProviders: () => TreeDataProviders,
-  TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
-  WebviewPanels: () => WebviewPanels,
-  WebviewViewProviders: () => WebviewViewProviders,
-  default: () => WindowNamespace_default
-});
-var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
-var init_WindowNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
-    "use strict";
-    MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback, ThisArg, Disposables) => {
-      const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
-      Context21.Emitter.on(EventName, Bound);
-      const Subscription = {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.off(EventName, Bound);
-        }, "dispose")
-      };
-      if (Disposables && typeof Disposables.push === "function") {
-        Disposables.push(Subscription);
-      }
-      return Subscription;
-    }, "MakeEventSubscriber");
-    OutputChannelCounter = 0;
-    TerminalCounter = 0;
-    TreeDataProviderCounter = 0;
-    WebviewPanelCounter = 0;
-    WebviewViewCounter = 0;
-    CustomEditorCounter = 0;
-    ProgressCounter = 0;
-    TreeDataProviders = /* @__PURE__ */ new Map();
-    TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
-    WebviewViewProviders = /* @__PURE__ */ new Map();
-    CustomEditorProviders = /* @__PURE__ */ new Map();
-    WebviewPanels = /* @__PURE__ */ new Map();
-    StatusBarCounter = 0;
-    CreateWindowNamespace = /* @__PURE__ */ __name((Context21) => {
-      const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
-        let Options = void 0;
-        let Actions = Items;
-        if (Items.length > 0 && Items[0] && typeof Items[0] === "object" && !Array.isArray(Items[0]) && "modal" in Items[0]) {
-          Options = Items[0];
-          Actions = Items.slice(1);
-        }
-        try {
-          const Selection3 = await Context21.MountainClient?.sendRequest(
-            "Window.ShowMessage",
-            [
-              {
-                message: Message,
-                level: Level,
-                items: Actions,
-                options: Options ?? {}
-              }
-            ]
-          );
-          return Selection3 ?? void 0;
-        } catch {
-          return void 0;
-        }
-      }, "ShowMessage");
-      return {
-        showInformationMessage: ShowMessage("info"),
-        showErrorMessage: ShowMessage("error"),
-        showWarningMessage: ShowMessage("warn"),
-        showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
-          try {
-            return await Context21.MountainClient?.sendRequest(
-              "Window.ShowQuickPick",
-              [Items, Options ?? {}]
-            );
-          } catch {
-            return void 0;
-          }
-        }, "showQuickPick"),
-        showInputBox: /* @__PURE__ */ __name(async (Options) => {
-          try {
-            return await Context21.MountainClient?.sendRequest(
-              "Window.ShowInputBox",
-              [Options ?? {}]
-            );
-          } catch {
-            return void 0;
-          }
-        }, "showInputBox"),
-        showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
-          try {
-            const Selected = await Context21.MountainClient?.sendRequest(
-              "Window.ShowOpenDialog",
-              [Options ?? {}]
-            );
-            return Array.isArray(Selected) ? Selected : [];
-          } catch {
-            return [];
-          }
-        }, "showOpenDialog"),
-        showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
-          try {
-            return await Context21.MountainClient?.sendRequest(
-              "Window.ShowSaveDialog",
-              [Options ?? {}]
-            );
-          } catch {
-            return void 0;
-          }
-        }, "showSaveDialog"),
-        createTerminal: /* @__PURE__ */ __name((Options) => {
-          const Handle = `terminal:${++TerminalCounter}`;
-          const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
-          Context21.SendToMountain("window.createTerminal", {
-            handle: Handle,
-            name: Name,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          let ProcessIdPromise;
-          const ResolveProcessId = /* @__PURE__ */ __name(() => {
-            if (ProcessIdPromise !== void 0) return ProcessIdPromise;
-            ProcessIdPromise = (async () => {
-              try {
-                const Response = await Context21.MountainClient?.sendRequest(
-                  "Terminal.GetProcessId",
-                  [Handle]
-                );
-                if (typeof Response === "number") return Response;
-                if (Response && typeof Response.pid === "number") {
-                  return Response.pid;
-                }
-                return void 0;
-              } catch {
-                return void 0;
-              }
-            })();
-            return ProcessIdPromise;
-          }, "ResolveProcessId");
-          return {
-            name: Name,
-            get processId() {
-              return ResolveProcessId();
-            },
-            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
-              Context21.SendToMountain("terminal.sendText", {
-                handle: Handle,
-                text: Text
-              }).catch(() => {
-              });
-            }, "sendText"),
-            show: /* @__PURE__ */ __name((PreserveFocus) => {
-              Context21.SendToMountain("terminal.show", {
-                handle: Handle,
-                preserveFocus: PreserveFocus
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("terminal.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("terminal.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // vscode.window.Terminal.resize(columns, rows) → Mountain
-            // PTY master receives SIGWINCH; shell redraws line editor.
-            resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
-              try {
-                await Context21.MountainClient?.sendRequest(
-                  "Terminal.Resize",
-                  [Handle, Columns, Rows]
-                );
-              } catch {
-              }
-            }, "resize")
-          };
-        }, "createTerminal"),
-        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
-          const Handle = `statusBar:${++StatusBarCounter}`;
-          const Item = {
-            id: Handle,
-            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
-            priority: Priority,
-            text: "",
-            tooltip: "",
-            command: void 0,
-            show: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("statusBar.update", {
-                handle: Handle,
-                text: Item.text,
-                tooltip: Item.tooltip,
-                command: Item.command,
-                visible: true
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("statusBar.update", {
-                handle: Handle,
-                visible: false
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("statusBar.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-          return Item;
-        }, "createStatusBarItem"),
-        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
-          const Handle = `outputChannel:${++OutputChannelCounter}`;
-          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
-          Context21.SendToMountain("outputChannel.create", {
-            handle: Handle,
-            name: Name,
-            log: IsLog
-          }).catch(() => {
-          });
-          const Channel = {
-            name: Name,
-            append: /* @__PURE__ */ __name((Value) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: Value
-              }).catch(() => {
-              });
-            }, "append"),
-            appendLine: /* @__PURE__ */ __name((Value) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `${Value}
-`
-              }).catch(() => {
-              });
-            }, "appendLine"),
-            clear: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "clear"),
-            show: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.show", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            replace: /* @__PURE__ */ __name((Value) => {
-              Context21.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: Value
-              }).catch(() => {
-              });
-            }, "replace"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // LogOutputChannel additions - returned when the caller passes
-            // `{ log: true }`. Kept on the base channel for simplicity;
-            // these are inert on non-log channels.
-            logLevel: 2,
-            // LogLevel.Info
-            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "onDidChangeLogLevel"),
-            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[trace] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "trace"),
-            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[debug] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "debug"),
-            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[info] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "info"),
-            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[warn] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "warn"),
-            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
-              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[error] ${Text}
-`
-              }).catch(() => {
-              });
-            }, "error")
-          };
-          void IsLog;
-          return Channel;
-        }, "createOutputChannel"),
-        createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
-          const Key = `decoration:${Math.random().toString(36).slice(2)}`;
-          Context21.SendToMountain("window.createTextEditorDecorationType", {
-            key: Key,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          return {
-            key: Key,
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain(
-                "window.disposeTextEditorDecorationType",
-                {
-                  key: Key
-                }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "createTextEditorDecorationType"),
-        registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalQuickFixProvider"),
-        registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalCompletionProvider"),
-        createQuickPick: /* @__PURE__ */ __name(() => ({
-          value: "",
-          placeholder: void 0,
-          items: [],
-          activeItems: [],
-          selectedItems: [],
-          canSelectMany: false,
-          matchOnDescription: false,
-          matchOnDetail: false,
-          busy: false,
-          enabled: true,
-          ignoreFocusOut: false,
-          step: void 0,
-          totalSteps: void 0,
-          title: void 0,
-          buttons: [],
-          show: /* @__PURE__ */ __name(() => {
-          }, "show"),
-          hide: /* @__PURE__ */ __name(() => {
-          }, "hide"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidAccept"),
-          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeValue"),
-          onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeActive"),
-          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeSelection"),
-          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerButton"),
-          onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerItemButton"),
-          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidHide")
-        }), "createQuickPick"),
-        createInputBox: /* @__PURE__ */ __name(() => ({
-          value: "",
-          valueSelection: void 0,
-          placeholder: void 0,
-          password: false,
-          busy: false,
-          enabled: true,
-          ignoreFocusOut: false,
-          prompt: void 0,
-          validationMessage: void 0,
-          step: void 0,
-          totalSteps: void 0,
-          title: void 0,
-          buttons: [],
-          show: /* @__PURE__ */ __name(() => {
-          }, "show"),
-          hide: /* @__PURE__ */ __name(() => {
-          }, "hide"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidAccept"),
-          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeValue"),
-          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerButton"),
-          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidHide")
-        }), "createInputBox"),
-        createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
-          const Handle = `webviewPanel:${++WebviewPanelCounter}`;
-          let CurrentHtml = "";
-          let CurrentOptions = Options ?? {};
-          Context21.MountainClient?.sendRequest("webview.create", [
-            Handle,
-            ViewType,
-            Title,
-            ShowOptions,
-            CurrentOptions
-          ]).catch(() => {
-          });
-          const Panel = {
-            viewType: ViewType,
-            title: Title,
-            iconPath: void 0,
-            webview: {
-              get options() {
-                return CurrentOptions;
-              },
-              set options(Value) {
-                CurrentOptions = Value;
-                Context21.MountainClient?.sendRequest(
-                  "webview.setOptions",
-                  [Handle, Value]
-                ).catch(() => {
-                });
-              },
-              get html() {
-                return CurrentHtml;
-              },
-              set html(Value) {
-                CurrentHtml = Value;
-                Context21.MountainClient?.sendRequest(
-                  "webview.setHtml",
-                  [Handle, Value]
-                ).catch(() => {
-                });
-              },
-              cspSource: "vscode-resource: vscode-webview-resource: https:",
-              asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
-              postMessage: /* @__PURE__ */ __name(async (Message) => {
-                try {
-                  await Context21.MountainClient?.sendRequest(
-                    "webview.postMessage",
-                    [Handle, Message]
-                  );
-                  return true;
-                } catch {
-                  return false;
-                }
-              }, "postMessage"),
-              onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
-                const Event2 = `webview.message:${Handle}`;
-                Context21.Emitter.on(Event2, Listener);
-                return {
-                  dispose: /* @__PURE__ */ __name(() => {
-                    Context21.Emitter.removeListener(
-                      Event2,
-                      Listener
-                    );
-                  }, "dispose")
-                };
-              }, "onDidReceiveMessage")
-            },
-            options: CurrentOptions,
-            viewColumn: 1,
-            active: true,
-            visible: true,
-            reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
-              Context21.MountainClient?.sendRequest("webview.reveal", [
-                Handle,
-                Column,
-                PreserveFocus
-              ]).catch(() => {
-              });
-            }, "reveal"),
-            dispose: /* @__PURE__ */ __name(() => {
-              WebviewPanels.delete(Handle);
-              Context21.Emitter.removeAllListeners(
-                `webview.message:${Handle}`
-              );
-              Context21.MountainClient?.sendRequest("webview.dispose", [
-                Handle
-              ]).catch(() => {
-              });
-            }, "dispose"),
-            onDidDispose: /* @__PURE__ */ __name((Listener) => {
-              const Event2 = `webview.dispose:${Handle}`;
-              Context21.Emitter.on(Event2, Listener);
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  Context21.Emitter.removeListener(Event2, Listener);
-                }, "dispose")
-              };
-            }, "onDidDispose"),
-            onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
-              const Event2 = `webview.viewState:${Handle}`;
-              Context21.Emitter.on(Event2, Listener);
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  Context21.Emitter.removeListener(Event2, Listener);
-                }, "dispose")
-              };
-            }, "onDidChangeViewState")
-          };
-          WebviewPanels.set(Handle, Panel);
-          return Panel;
-        }, "createWebviewPanel"),
-        showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          Context21.SendToMountain("window.showTextDocument", {
-            document: _Document,
-            column: _Column,
-            preserveFocus: _PreserveFocus
-          }).catch(() => {
-          });
-          return void 0;
-        }, "showTextDocument"),
-        showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
-        tabGroups: {
-          all: [],
-          activeTabGroup: {
-            tabs: [],
-            isActive: true,
-            viewColumn: 1,
-            activeTab: void 0
-          },
-          onDidChangeTabs: MakeEventSubscriber(
-            Context21,
-            "window.didChangeTabs"
-          ),
-          onDidChangeTabGroups: MakeEventSubscriber(
-            Context21,
-            "window.didChangeTabGroups"
-          ),
-          close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
-            try {
-              await Context21.MountainClient?.sendRequest("Command.Execute", [
-                "workbench.action.closeActiveEditor",
-                []
-              ]);
-              return true;
-            } catch {
-              return false;
-            }
-          }, "close")
-        },
-        activeColorTheme: {
-          kind: 2,
-          // ColorThemeKind.Dark
-          onDidChange: MakeEventSubscriber(
-            Context21,
-            "window.didChangeActiveColorTheme"
-          )
-        },
-        onDidChangeActiveColorTheme: MakeEventSubscriber(
-          Context21,
-          "window.didChangeActiveColorTheme"
-        ),
-        createTreeView: /* @__PURE__ */ __name((Id, Options) => {
-          const Provider = Options?.treeDataProvider;
-          if (Provider) {
-            const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-            TreeDataProviders.set(Handle, Provider);
-            TreeDataProvidersByViewId.set(Id, Provider);
-            const SerializableOptions = {
-              showCollapseAll: Options?.showCollapseAll === true,
-              canSelectMany: Options?.canSelectMany === true,
-              manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
-            };
-            Context21.MountainClient?.sendRequest("tree.register", [
-              Handle,
-              Id,
-              SerializableOptions
-            ]).catch(() => {
-            });
-          }
-          return {
-            reveal: /* @__PURE__ */ __name(async () => {
-            }, "reveal"),
-            dispose: /* @__PURE__ */ __name(() => {
-              TreeDataProvidersByViewId.delete(Id);
-              Context21.MountainClient?.sendRequest("tree.dispose", [
-                Id
-              ]).catch(() => {
-              });
-            }, "dispose"),
-            selection: [],
-            visible: true,
-            title: void 0,
-            description: void 0,
-            message: void 0,
-            badge: void 0,
-            onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeSelection"),
-            onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeVisibility"),
-            onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidCollapseElement"),
-            onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidExpandElement"),
-            onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeCheckboxState")
-          };
-        }, "createTreeView"),
-        registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
-          const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-          TreeDataProviders.set(Handle, Provider);
-          TreeDataProvidersByViewId.set(ViewId, Provider);
-          Context21.MountainClient?.sendRequest("tree.register", [
-            Handle,
-            ViewId,
-            {}
-          ]).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              TreeDataProviders.delete(Handle);
-              TreeDataProvidersByViewId.delete(ViewId);
-              Context21.MountainClient?.sendRequest("tree.unregister", [
-                Handle
-              ]).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerTreeDataProvider"),
-        registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerWebviewPanelSerializer"),
-        registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
-          const Handle = `webviewView:${++WebviewViewCounter}`;
-          WebviewViewProviders.set(Handle, Provider);
-          Context21.MountainClient?.sendRequest("webview.registerView", [
-            Handle,
-            ViewId
-          ]).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              WebviewViewProviders.delete(Handle);
-              Context21.MountainClient?.sendRequest(
-                "webview.unregisterView",
-                [Handle]
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerWebviewViewProvider"),
-        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
-          const Handle = `customEditor:${++CustomEditorCounter}`;
-          CustomEditorProviders.set(Handle, Provider);
-          Context21.MountainClient?.sendRequest(
-            "webview.registerCustomEditor",
-            [Handle, ViewType]
-          ).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              CustomEditorProviders.delete(Handle);
-              Context21.MountainClient?.sendRequest(
-                "webview.unregisterCustomEditor",
-                [Handle]
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerCustomEditorProvider"),
-        registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
-          const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-          Context21.SendToMountain("register_file_decoration_provider", {
-            handle: Handle,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context21.ExtensionRegistry.set(
-            `__fileDecorationProvider:${Handle}`,
-            Provider
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(
-                `__fileDecorationProvider:${Handle}`
-              );
-              Context21.SendToMountain(
-                "unregister_file_decoration_provider",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerFileDecorationProvider"),
-        registerUriHandler: /* @__PURE__ */ __name((Handler) => {
-          const Handle = `uriHandler:${Date.now()}`;
-          Context21.SendToMountain("register_uri_handler", {
-            handle: Handle,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context21.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
-              Context21.SendToMountain("unregister_uri_handler", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerUriHandler"),
-        registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
-          const Handle = `terminalLink:${Date.now()}`;
-          Context21.SendToMountain("register_terminal_link_provider", {
-            handle: Handle,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context21.ExtensionRegistry.set(
-            `__terminalLinkProvider:${Handle}`,
-            Provider
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(
-                `__terminalLinkProvider:${Handle}`
-              );
-              Context21.SendToMountain(
-                "unregister_terminal_link_provider",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerTerminalLinkProvider"),
-        registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
-          const Handle = `terminalProfile:${Id}:${Date.now()}`;
-          Context21.SendToMountain("register_terminal_profile_provider", {
-            handle: Handle,
-            profile_id: Id,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context21.ExtensionRegistry.set(
-            `__terminalProfileProvider:${Handle}`,
-            Provider
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(
-                `__terminalProfileProvider:${Handle}`
-              );
-              Context21.SendToMountain(
-                "unregister_terminal_profile_provider",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerTerminalProfileProvider"),
-        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "registerProfileContentHandler"),
-        registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
-          const Handle = `externalUriOpener:${Id}:${Date.now()}`;
-          Context21.SendToMountain("register_external_uri_opener", {
-            handle: Handle,
-            opener_id: Id,
-            extension_id: ""
-          }).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain(
-                "unregister_external_uri_opener",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerExternalUriOpener"),
-        // Runs a Task with a progress object that reports to Mountain, which
-        // in turn updates the status-bar progress indicator in Sky.
-        // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
-        // We provide a real `report({ message, increment })` path and a
-        // no-op CancellationToken (no cancellation plumbing yet). The
-        // Task's return value is forwarded verbatim.
-        withProgress: /* @__PURE__ */ __name(async (Options, Task3) => {
-          const Handle = `progress:${++ProgressCounter}`;
-          const Title = Options && typeof Options === "object" && Options.title || "Progress";
-          const Location3 = (Options && typeof Options === "object" && Options.location) ?? 15;
-          let Increment = 0;
-          const Progress = {
-            report: /* @__PURE__ */ __name((Value) => {
-              if (Value?.increment) Increment += Value.increment;
-              Context21.SendToMountain("progress.report", {
-                handle: Handle,
-                title: Title,
-                location: Location3,
-                message: Value?.message,
-                increment: Increment
-              }).catch(() => {
-              });
-            }, "report")
-          };
-          const CancellationToken3 = {
-            isCancellationRequested: false,
-            onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onCancellationRequested")
-          };
-          Context21.SendToMountain("progress.start", {
-            handle: Handle,
-            title: Title,
-            location: Location3
-          }).catch(() => {
-          });
-          try {
-            return await Task3(Progress, CancellationToken3);
-          } finally {
-            Context21.SendToMountain("progress.end", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }
-        }, "withProgress"),
-        setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
-          Context21.SendToMountain("statusBar.message", {
-            text: Text,
-            hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
-          }).catch(() => {
-          });
-          return { dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") };
-        }, "setStatusBarMessage"),
-        // Events sourced from Mountain gRPC notifications → Context.Emitter
-        onDidChangeActiveTextEditor: MakeEventSubscriber(
-          Context21,
-          "window.didChangeActiveTextEditor"
-        ),
-        onDidChangeVisibleTextEditors: MakeEventSubscriber(
-          Context21,
-          "window.didChangeVisibleTextEditors"
-        ),
-        onDidChangeTextEditorSelection: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorSelection"
-        ),
-        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorVisibleRanges"
-        ),
-        onDidChangeTextEditorOptions: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorOptions"
-        ),
-        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorViewColumn"
-        ),
-        onDidOpenTerminal: MakeEventSubscriber(
-          Context21,
-          "window.didOpenTerminal"
-        ),
-        onDidCloseTerminal: MakeEventSubscriber(
-          Context21,
-          "window.didCloseTerminal"
-        ),
-        onDidChangeActiveTerminal: MakeEventSubscriber(
-          Context21,
-          "window.didChangeActiveTerminal"
-        ),
-        onDidChangeTerminalState: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTerminalState"
-        ),
-        onDidWriteTerminalData: MakeEventSubscriber(
-          Context21,
-          "terminalData"
-        ),
-        // Shell-integration events added for openai.chatgpt activation;
-        // Land doesn't track shell integration yet so these fire never.
-        // Must be a subscribable function, not a plain object.
-        onDidChangeTerminalShellIntegration: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTerminalShellIntegration"
-        ),
-        onDidStartTerminalShellExecution: MakeEventSubscriber(
-          Context21,
-          "window.didStartTerminalShellExecution"
-        ),
-        onDidEndTerminalShellExecution: MakeEventSubscriber(
-          Context21,
-          "window.didEndTerminalShellExecution"
-        ),
-        onDidChangeWindowState: MakeEventSubscriber(
-          Context21,
-          "window.didChangeWindowState"
-        ),
-        activeTextEditor: void 0,
-        visibleTextEditors: [],
-        terminals: [],
-        activeTerminal: void 0,
-        state: { focused: true, active: true }
-      };
-    }, "CreateWindowNamespace");
-    WindowNamespace_default = CreateWindowNamespace;
-  }
-});
-
 // Source/Utility/GlobToRegex.ts
 var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
 var init_GlobToRegex = __esm({
@@ -29064,316 +29378,6 @@ var init_NotificationHandler = __esm({
   }
 });
 
-// Source/Interfaces/IExtensionHostService.ts
-var IExtensionHostService_exports = {};
-__export(IExtensionHostService_exports, {
-  IExtensionHostService: () => IExtensionHostService
-});
-import { Context as Context7 } from "effect";
-var IExtensionHostService;
-var init_IExtensionHostService = __esm({
-  "Source/Interfaces/IExtensionHostService.ts"() {
-    "use strict";
-    IExtensionHostService = Context7.Tag(
-      "IExtensionHostService"
-    );
-  }
-});
-
-// Source/Interfaces/IConfigurationService.ts
-var IConfigurationService_exports = {};
-__export(IConfigurationService_exports, {
-  ConfigurationScope: () => ConfigurationScope,
-  IConfigurationService: () => IConfigurationService
-});
-import { Context as Context8 } from "effect";
-var ConfigurationScope, IConfigurationService;
-var init_IConfigurationService = __esm({
-  "Source/Interfaces/IConfigurationService.ts"() {
-    "use strict";
-    ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
-      ConfigurationScope3["APPLICATION"] = "APPLICATION";
-      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
-      ConfigurationScope3["PROFILE"] = "PROFILE";
-      return ConfigurationScope3;
-    })(ConfigurationScope || {});
-    IConfigurationService = Context8.Tag(
-      "IConfigurationService"
-    );
-  }
-});
-
-// Source/Interfaces/IPerformanceMonitoringService.ts
-var IPerformanceMonitoringService_exports = {};
-__export(IPerformanceMonitoringService_exports, {
-  IPerformanceMonitoringService: () => IPerformanceMonitoringService
-});
-import { Context as Context9 } from "effect";
-var IPerformanceMonitoringService;
-var init_IPerformanceMonitoringService = __esm({
-  "Source/Interfaces/IPerformanceMonitoringService.ts"() {
-    "use strict";
-    IPerformanceMonitoringService = Context9.Tag("IPerformanceMonitoringService");
-  }
-});
-
-// Source/Interfaces/ISecurityService.ts
-var ISecurityService_exports = {};
-__export(ISecurityService_exports, {
-  ISecurityService: () => ISecurityService
-});
-import { Context as Context10 } from "effect";
-var ISecurityService;
-var init_ISecurityService = __esm({
-  "Source/Interfaces/ISecurityService.ts"() {
-    "use strict";
-    ISecurityService = Context10.Tag("ISecurityService");
-  }
-});
-
-// Source/Services/Handler/RequestRoutingHandler.ts
-var RouteRequest, RequestRoutingHandler_default;
-var init_RequestRoutingHandler = __esm({
-  "Source/Services/Handler/RequestRoutingHandler.ts"() {
-    "use strict";
-    RouteRequest = /* @__PURE__ */ __name(async (Method, Parameters) => {
-      console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
-      const RoutePatterns = {
-        "extension.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IExtensionHostService: IExtensionHostService3 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
-          switch (Method2) {
-            case "extension.activate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
-              return await ExtensionHostService2.activateExtension(
-                Params.extensionId,
-                Params.reason
-              );
-            }
-            case "extension.deactivate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
-              await ExtensionHostService2.deactivateExtension(
-                Params.extensionId
-              );
-              return { success: true };
-            }
-            case "extension.get": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
-              return ExtensionHostService2.getActivatedExtension(
-                Params.extensionId
-              );
-            }
-            default:
-              throw new Error(`Unknown extension method: ${Method2}`);
-          }
-        }, "extension.\\w+"),
-        "configuration.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IConfigurationService: IConfigurationService3 } = await Promise.resolve().then(() => (init_IConfigurationService(), IConfigurationService_exports));
-          switch (Method2) {
-            case "configuration.get": {
-              const ConfigService = await ServiceMapping2.getService(
-                IConfigurationService3
-              );
-              return await ConfigService.getValue(
-                Params.key,
-                Params.scope
-              );
-            }
-            case "configuration.set": {
-              const ConfigService = await ServiceMapping2.getService(
-                IConfigurationService3
-              );
-              await ConfigService.setValue(
-                Params.key,
-                Params.value,
-                Params.scope
-              );
-              return { success: true };
-            }
-            case "configuration.update": {
-              const ConfigService = await ServiceMapping2.getService(
-                IConfigurationService3
-              );
-              await ConfigService.updateValue(
-                Params.key,
-                Params.updater,
-                Params.scope
-              );
-              return { success: true };
-            }
-            default:
-              throw new Error(`Unknown configuration method: ${Method2}`);
-          }
-        }, "configuration.\\w+"),
-        // Mountain → Cocoon tree-children round-trip keyed on `viewId`.
-        // Emitted by `Mountain/Source/RPC/CocoonService/TreeView.rs::
-        // GetTreeChildren`. Unlike the `tree.*` legacy path that keys on the
-        // Cocoon-side `treeDataProvider:N` handle, this variant identifies
-        // providers by the same viewId the extension declared in its
-        // contributes.views manifest - the only stable key Mountain has.
-        "^\\$provideTreeChildren$": /* @__PURE__ */ __name(async (_Method, Params) => {
-          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
-          const ViewId = Params?.viewId ?? Params?.[0];
-          const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
-          const Provider = TreeDataProvidersByViewId2.get(String(ViewId));
-          if (!Provider) {
-            return { items: [] };
-          }
-          const Element = ItemHandle ? ItemHandle : void 0;
-          const Children = await Provider.getChildren?.(Element) ?? [];
-          const Items = await Promise.all(
-            (Array.isArray(Children) ? Children : []).map(
-              async (Child, Index) => {
-                const Item = await Provider.getTreeItem?.(Child) ?? Child;
-                const Raw2 = Item;
-                const Label = typeof Raw2.label === "string" ? Raw2.label : Raw2.label?.label ?? "";
-                const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
-                const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
-                const CollapsibleState = Raw2.collapsibleState ?? 0;
-                return {
-                  handle: String(
-                    Raw2.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`
-                  ),
-                  label: Label,
-                  isCollapsed: CollapsibleState === 1,
-                  icon: String(Icon)
-                };
-              }
-            )
-          );
-          return { items: Items };
-        }, "^\\$provideTreeChildren$"),
-        "tree\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
-          const Handle = Params?.handle ?? Params?.[0];
-          const Provider = TreeDataProviders2.get(String(Handle));
-          if (!Provider) {
-            throw new Error(
-              `TreeDataProvider handle not registered: ${Handle}`
-            );
-          }
-          switch (Method2) {
-            case "tree.getChildren": {
-              const Element = Params?.element ?? Params?.[1];
-              const Children = await Provider.getChildren?.(Element) ?? [];
-              return Array.isArray(Children) ? Children : [];
-            }
-            case "tree.getTreeItem": {
-              const Element = Params?.element ?? Params?.[1];
-              return await Provider.getTreeItem?.(Element) ?? null;
-            }
-            case "tree.getParent": {
-              const Element = Params?.element ?? Params?.[1];
-              return await Provider.getParent?.(Element) ?? null;
-            }
-            case "tree.resolveTreeItem": {
-              const Item = Params?.item ?? Params?.[1];
-              const Element = Params?.element ?? Params?.[2];
-              return await Provider.resolveTreeItem?.(Item, Element) ?? Item;
-            }
-            default:
-              throw new Error(`Unknown tree method: ${Method2}`);
-          }
-        }, "tree\\.\\w+"),
-        "webview\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { WebviewPanels: WebviewPanels2, WebviewViewProviders: WebviewViewProviders2, CustomEditorProviders: CustomEditorProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
-          const Handle = Params?.handle ?? Params?.[0];
-          switch (Method2) {
-            case "webview.resolveView": {
-              const Provider = WebviewViewProviders2.get(String(Handle));
-              if (!Provider) {
-                throw new Error(
-                  `WebviewViewProvider handle not registered: ${Handle}`
-                );
-              }
-              const View = Params?.view ?? Params?.[1];
-              const Ctx = Params?.context ?? Params?.[2];
-              return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
-            }
-            case "webview.resolveCustomEditor": {
-              const Provider = CustomEditorProviders2.get(String(Handle));
-              if (!Provider) {
-                throw new Error(
-                  `CustomEditorProvider handle not registered: ${Handle}`
-                );
-              }
-              const Document = Params?.document ?? Params?.[1];
-              const Panel = Params?.panel ?? Params?.[2];
-              return await Provider.resolveCustomEditor?.(
-                Document,
-                Panel,
-                { asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath") }
-              ) ?? null;
-            }
-            default: {
-              const Panel = WebviewPanels2.get(String(Handle));
-              if (!Panel) return null;
-              return null;
-            }
-          }
-        }, "webview\\.\\w+"),
-        "performance.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IPerformanceMonitoringService: IPerformanceMonitoringService3 } = await Promise.resolve().then(() => (init_IPerformanceMonitoringService(), IPerformanceMonitoringService_exports));
-          switch (Method2) {
-            case "performance.metrics": {
-              const PerfService = await ServiceMapping2.getService(
-                IPerformanceMonitoringService3
-              );
-              return PerfService.getMetrics();
-            }
-            case "performance.alerts": {
-              const PerfService = await ServiceMapping2.getService(
-                IPerformanceMonitoringService3
-              );
-              return PerfService.getAlerts();
-            }
-            case "performance.report": {
-              const PerfService = await ServiceMapping2.getService(
-                IPerformanceMonitoringService3
-              );
-              return PerfService.generateReport();
-            }
-            default:
-              throw new Error(`Unknown performance method: ${Method2}`);
-          }
-        }, "performance.\\w+"),
-        "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { ISecurityService: ISecurityService3 } = await Promise.resolve().then(() => (init_ISecurityService(), ISecurityService_exports));
-          switch (Method2) {
-            case "security.policy": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
-              return await SecurityService2.getSecurityPolicy(
-                Params.extensionId
-              );
-            }
-            case "security.audit": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
-              return SecurityService2.getAuditLog();
-            }
-            case "security.incidents": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
-              return SecurityService2.getActiveIncidents();
-            }
-            default:
-              throw new Error(`Unknown security method: ${Method2}`);
-          }
-        }, "security.\\w+")
-      };
-      for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
-        const Regex = new RegExp(Pattern);
-        if (Regex.test(Method)) {
-          return Handler(Method, Parameters);
-        }
-      }
-      return void 0;
-    }, "RouteRequest");
-    RequestRoutingHandler_default = RouteRequest;
-  }
-});
-
 // Source/Services/GRPCServerService.ts
 var GRPCServerService_exports = {};
 __export(GRPCServerService_exports, {
@@ -29841,6 +29845,10 @@ var init_GRPCServerService = __esm({
             Context21,
             parameters
           );
+        }
+        if (method === "$provideTreeChildren") {
+          const RequestRoutingHandler = (await Promise.resolve().then(() => (init_RequestRoutingHandler(), RequestRoutingHandler_exports))).default;
+          return RequestRoutingHandler(method, parameters);
         }
         if (/^\$provide[A-Z]/.test(method)) {
           return LanguageProviderHandler_default(

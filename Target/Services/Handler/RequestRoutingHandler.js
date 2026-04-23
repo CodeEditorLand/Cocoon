@@ -29532,6 +29532,10 @@ var init_GRPCServerService = __esm({
             parameters
           );
         }
+        if (method === "$provideTreeChildren") {
+          const RequestRoutingHandler = (await Promise.resolve().then(() => (init_RequestRoutingHandler(), RequestRoutingHandler_exports))).default;
+          return RequestRoutingHandler(method, parameters);
+        }
         if (/^\$provide[A-Z]/.test(method)) {
           return LanguageProviderHandler_default(
             method,
@@ -35009,6 +35013,10 @@ var init_ISecurityService = __esm({
 });
 
 // Source/Services/Handler/RequestRoutingHandler.ts
+var RequestRoutingHandler_exports = {};
+__export(RequestRoutingHandler_exports, {
+  default: () => RequestRoutingHandler_default
+});
 var RouteRequest, RequestRoutingHandler_default;
 var init_RequestRoutingHandler = __esm({
   "Source/Services/Handler/RequestRoutingHandler.ts"() {

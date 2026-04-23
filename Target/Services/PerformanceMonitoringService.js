@@ -23084,268 +23084,4917 @@ var init_ErrorHandlingService = __esm({
   }
 });
 
-// Source/Interfaces/IGRPCServerService.ts
-import { Context as Context7 } from "effect";
-var IGRPCServerService;
-var init_IGRPCServerService = __esm({
-  "Source/Interfaces/IGRPCServerService.ts"() {
+// Source/Utility/LandFixLog.ts
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
+var init_LandFixLog = __esm({
+  "Source/Utility/LandFixLog.ts"() {
     "use strict";
-    IGRPCServerService = Context7.GenericTag("IGRPCServerService");
+    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+    Enabled = Mode !== "off";
+    Long = Mode === "long";
+    DebugEnabled = Long;
+    AllowList = (() => {
+      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw2 || Raw2.trim().length === 0) return void 0;
+      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      return Tags.length === 0 ? void 0 : new Set(Tags);
+    })();
+    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+    FormatTimestamp = /* @__PURE__ */ __name(() => {
+      const Now = /* @__PURE__ */ new Date();
+      if (Long) return Now.toISOString();
+      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+        Now.getSeconds()
+      )}.${PadThree(Now.getMilliseconds())}`;
+    }, "FormatTimestamp");
+    SerializeContext = /* @__PURE__ */ __name((Context21) => {
+      const Seen = /* @__PURE__ */ new WeakSet();
+      try {
+        return JSON.stringify(Context21, (_Key, Value) => {
+          if (Value instanceof Error) {
+            return { name: Value.name, message: Value.message };
+          }
+          if (typeof Value === "bigint") return String(Value);
+          if (typeof Value === "function") return "[Function]";
+          if (typeof Value === "object" && Value !== null) {
+            if (Seen.has(Value)) return "[Circular]";
+            Seen.add(Value);
+          }
+          return Value;
+        });
+      } catch {
+        return '"[Unserializable]"';
+      }
+    }, "SerializeContext");
+    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context21) => {
+      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+      if (!Context21) return `${Head}
+`;
+      return `${Head} ${SerializeContext(Context21)}
+`;
+    }, "FormatLine");
+    Emit = /* @__PURE__ */ __name((Stream2, Level, Tag, Message, Context21) => {
+      if (!Enabled) return;
+      if (AllowList && !AllowList.has(Tag)) return;
+      try {
+        Stream2.write(FormatLine(Level, Tag, Message, Context21));
+      } catch {
+      }
+    }, "Emit");
+    Info = /* @__PURE__ */ __name((Tag, Message, Context21) => {
+      Emit(process.stdout, "info", Tag, Message, Context21);
+    }, "Info");
+    Warn = /* @__PURE__ */ __name((Tag, Message, Context21) => {
+      Emit(process.stdout, "warn", Tag, Message, Context21);
+    }, "Warn");
+    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context21) => {
+      Emit(process.stderr, "error", Tag, Message, Context21);
+    }, "ErrorLog");
+    Debug = /* @__PURE__ */ __name((Tag, Message, Context21) => {
+      if (!DebugEnabled) return;
+      Emit(process.stdout, "debug", Tag, Message, Context21);
+    }, "Debug");
+    SeenOnce = /* @__PURE__ */ new Set();
+    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context21) => {
+      if (!DebugEnabled) return;
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "debug", Tag, Message, Context21);
+    }, "DebugOnce");
+    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context21) => {
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "info", Tag, Message, Context21);
+    }, "InfoOnce");
+    LandFixLog = {
+      Info,
+      InfoOnce,
+      Warn,
+      Error: ErrorLog,
+      Debug,
+      DebugOnce,
+      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+    };
+    LandFixLog_default = LandFixLog;
   }
 });
 
-// Source/Services/Handler/DocumentContentHandler.ts
-var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
-var init_DocumentContentHandler = __esm({
-  "Source/Services/Handler/DocumentContentHandler.ts"() {
+// Source/Effect/Telemetry.ts
+import {
+  Context as Context7,
+  Effect as Effect8,
+  HashMap,
+  Layer as Layer6,
+  Option,
+  Ref,
+  Stream,
+  SubscriptionRef
+} from "effect";
+var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
+var init_Telemetry = __esm({
+  "Source/Effect/Telemetry.ts"() {
     "use strict";
-    InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
-      const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
-      if (!ExtensionMatch?.[1]) return "plaintext";
-      const Extension2 = ExtensionMatch[1].toLowerCase();
-      const LanguageMap = {
-        ts: "typescript",
-        tsx: "typescriptreact",
-        js: "javascript",
-        jsx: "javascriptreact",
-        json: "json",
-        jsonc: "jsonc",
-        md: "markdown",
-        html: "html",
-        htm: "html",
-        css: "css",
-        scss: "scss",
-        less: "less",
-        xml: "xml",
-        yaml: "yaml",
-        yml: "yaml",
-        toml: "toml",
-        rs: "rust",
-        py: "python",
-        rb: "ruby",
-        go: "go",
-        java: "java",
-        c: "c",
-        cpp: "cpp",
-        h: "c",
-        hpp: "cpp",
-        cs: "csharp",
-        swift: "swift",
-        sh: "shellscript",
-        bash: "shellscript",
-        zsh: "shellscript",
-        ps1: "powershell",
-        sql: "sql",
-        graphql: "graphql",
-        proto: "proto3",
-        dockerfile: "dockerfile",
-        vue: "vue",
-        svelte: "svelte",
-        astro: "astro",
-        txt: "plaintext"
-      };
-      return LanguageMap[Extension2] ?? "plaintext";
-    }, "InferLanguageIdentifier");
-    BuildTextDocument = /* @__PURE__ */ __name((Uri2, Content, Version = 1, LanguageIdentifier) => {
-      const Lines = Content.split(/\r?\n/);
-      const FileName = Uri2.replace(/^file:\/\//, "");
-      const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri2);
+    TelemetryCollectionError = class extends Error {
+      constructor(operation, cause) {
+        super(
+          `Telemetry collection failed for '${operation}': ${String(cause)}`
+        );
+        this.operation = operation;
+        this.cause = cause;
+      }
+      operation;
+      cause;
+      static {
+        __name(this, "TelemetryCollectionError");
+      }
+      _tag = "TelemetryCollectionError";
+    };
+    TelemetryTag = class extends Context7.Tag("Cocoon/Telemetry")() {
+      static {
+        __name(this, "TelemetryTag");
+      }
+    };
+    Telemetry = TelemetryTag;
+    TelemetryLive = Layer6.effect(
+      Telemetry,
+      Effect8.gen(function* () {
+        const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
+        const spansRef = yield* SubscriptionRef.make(HashMap.empty());
+        const eventsRef = yield* SubscriptionRef.make([]);
+        const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect8.gen(function* () {
+          const metric = {
+            name,
+            value,
+            timestamp: Date.now(),
+            labels
+          };
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            {
+              type: "metric",
+              timestamp: metric.timestamp,
+              data: metric
+            }
+          ]);
+          const currentMetrics = yield* metricsRef.get;
+          const nameMetrics = HashMap.get(currentMetrics, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          yield* Ref.set(
+            metricsRef,
+            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+          );
+        }), "recordMetric");
+        const startSpan = /* @__PURE__ */ __name((name, labels) => Effect8.gen(function* () {
+          const startTime = Date.now();
+          const span = {
+            name,
+            startTime,
+            success: false,
+            labels: labels ?? {}
+          };
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            { type: "span", timestamp: startTime, data: span }
+          ]);
+          return {
+            end: /* @__PURE__ */ __name((success, error) => Effect8.gen(function* () {
+              const endTime = Date.now();
+              const completedSpan = {
+                ...span,
+                endTime,
+                duration: endTime - startTime,
+                success,
+                error
+              };
+              const events2 = yield* eventsRef.get;
+              yield* Ref.set(eventsRef, [
+                ...events2,
+                {
+                  type: "span",
+                  timestamp: endTime,
+                  data: completedSpan
+                }
+              ]);
+              const currentSpans = yield* spansRef.get;
+              const nameSpans = HashMap.get(
+                currentSpans,
+                name
+              ).pipe(Option.getOrElse(() => []));
+              yield* Ref.set(
+                spansRef,
+                HashMap.set(currentSpans, name, [
+                  ...nameSpans,
+                  completedSpan
+                ])
+              );
+            }), "end")
+          };
+        }), "startSpan");
+        const log = /* @__PURE__ */ __name((level, message, context) => Effect8.gen(function* () {
+          const logEntry = {
+            level,
+            message,
+            context
+          };
+          const timestamp = Date.now();
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            { type: "log", timestamp, data: logEntry }
+          ]);
+          const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+          let ContextText = "";
+          if (context && Object.keys(context).length > 0) {
+            try {
+              ContextText = ` ${JSON.stringify(context)}`;
+            } catch {
+              ContextText = " [unserializable-context]";
+            }
+          }
+          const Line = `${Prefix} ${message}${ContextText}
+`;
+          const Stream2 = level === "error" ? process.stderr : process.stdout;
+          try {
+            Stream2.write(Line);
+          } catch {
+          }
+        }), "log");
+        const getMetrics = /* @__PURE__ */ __name((name) => Effect8.gen(function* () {
+          const metrics = yield* metricsRef.get;
+          return HashMap.get(metrics, name).pipe(
+            Option.getOrElse(() => [])
+          );
+        }), "getMetrics");
+        const getAverageDuration = /* @__PURE__ */ __name((name) => Effect8.gen(function* () {
+          const spans = yield* spansRef.get;
+          const nameSpans = HashMap.get(spans, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          if (nameSpans.length === 0) {
+            return 0;
+          }
+          const totalDuration = nameSpans.reduce(
+            (sum2, span) => {
+              return sum2 + (span.duration ?? 0);
+            },
+            0
+          );
+          return totalDuration / nameSpans.length;
+        }), "getAverageDuration");
+        const getSuccessRate = /* @__PURE__ */ __name((name) => Effect8.gen(function* () {
+          const spans = yield* spansRef.get;
+          const nameSpans = HashMap.get(spans, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          if (nameSpans.length === 0) {
+            return 1;
+          }
+          const successCount = nameSpans.filter(
+            (span) => span.success
+          ).length;
+          return successCount / nameSpans.length;
+        }), "getSuccessRate");
+        const flush = Effect8.gen(function* () {
+          yield* Ref.set(metricsRef, HashMap.empty());
+          yield* Ref.set(spansRef, HashMap.empty());
+          yield* Ref.set(eventsRef, []);
+        });
+        return {
+          recordMetric,
+          startSpan,
+          log,
+          events: eventsRef.changes,
+          getMetrics,
+          getAverageDuration,
+          getSuccessRate,
+          flush
+        };
+      })
+    );
+    makeMockTelemetry = /* @__PURE__ */ __name(() => ({
+      recordMetric: /* @__PURE__ */ __name(() => Effect8.void, "recordMetric"),
+      startSpan: /* @__PURE__ */ __name(() => Effect8.succeed({
+        end: /* @__PURE__ */ __name(() => Effect8.void, "end")
+      }), "startSpan"),
+      log: /* @__PURE__ */ __name((level, message, context) => Effect8.sync(() => {
+        const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+        let ContextText = "";
+        if (context && Object.keys(context).length > 0) {
+          try {
+            ContextText = ` ${JSON.stringify(context)}`;
+          } catch {
+            ContextText = " [unserializable-context]";
+          }
+        }
+        const Stream2 = level === "error" ? process.stderr : process.stdout;
+        try {
+          Stream2.write(`${Prefix} ${message}${ContextText}
+`);
+        } catch {
+        }
+      }), "log"),
+      events: Stream.empty,
+      getMetrics: /* @__PURE__ */ __name(() => Effect8.succeed([]), "getMetrics"),
+      getAverageDuration: /* @__PURE__ */ __name(() => Effect8.succeed(0), "getAverageDuration"),
+      getSuccessRate: /* @__PURE__ */ __name(() => Effect8.succeed(1), "getSuccessRate"),
+      flush: Effect8.void
+    }), "makeMockTelemetry");
+    TelemetryMock = Layer6.effect(
+      Telemetry,
+      Effect8.succeed(makeMockTelemetry())
+    );
+    withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect8.gen(function* () {
+      const telemetry = yield* Telemetry;
+      const span = yield* telemetry.startSpan(name, labels);
+      const result = yield* effect.pipe(
+        Effect8.catchAll(
+          (error) => Effect8.gen(function* () {
+            yield* span.end(false, String(error));
+            return yield* Effect8.fail(error);
+          })
+        )
+      );
+      yield* span.end(true);
+      return result;
+    }), "withSpan");
+  }
+});
+
+// Source/Effect/Extension.ts
+import {
+  Context as Context8,
+  Effect as Effect9,
+  HashMap as HashMap2,
+  Layer as Layer7,
+  Option as Option2,
+  Ref as Ref2,
+  SubscriptionRef as SubscriptionRef2
+} from "effect";
+var ExtensionNotFoundError, ExtensionActivationError, ExtensionDeactivationError, ExtensionTag, Extension, ExtensionLive, makeMockExtension, ExtensionMock;
+var init_Extension = __esm({
+  "Source/Effect/Extension.ts"() {
+    "use strict";
+    init_Telemetry();
+    ExtensionNotFoundError = class extends Error {
+      constructor(extensionId) {
+        super(`Extension not found: ${extensionId}`);
+        this.extensionId = extensionId;
+      }
+      extensionId;
+      static {
+        __name(this, "ExtensionNotFoundError");
+      }
+      _tag = "ExtensionNotFoundError";
+    };
+    ExtensionActivationError = class extends Error {
+      constructor(extensionId, cause) {
+        super(
+          `Failed to activate extension '${extensionId}': ${String(cause)}`
+        );
+        this.extensionId = extensionId;
+        this.cause = cause;
+      }
+      extensionId;
+      cause;
+      static {
+        __name(this, "ExtensionActivationError");
+      }
+      _tag = "ExtensionActivationError";
+    };
+    ExtensionDeactivationError = class extends Error {
+      constructor(extensionId, cause) {
+        super(
+          `Failed to deactivate extension '${extensionId}': ${String(cause)}`
+        );
+        this.extensionId = extensionId;
+        this.cause = cause;
+      }
+      extensionId;
+      cause;
+      static {
+        __name(this, "ExtensionDeactivationError");
+      }
+      _tag = "ExtensionDeactivationError";
+    };
+    ExtensionTag = class extends Context8.Tag("Cocoon/Extension")() {
+      static {
+        __name(this, "ExtensionTag");
+      }
+    };
+    Extension = ExtensionTag;
+    ExtensionLive = Layer7.effect(
+      Extension,
+      Effect9.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const extensionsRef = yield* SubscriptionRef2.make(HashMap2.empty());
+        const getAll = Effect9.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          return Array.from(HashMap2.values(extensions));
+        });
+        const getById = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
+          }
+          return extension.value;
+        }), "getById");
+        const activate = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
+          const startTime = Date.now();
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
+          }
+          const current = extension.value;
+          if (current.state._tag === "Active") {
+            return {
+              extensionId: id2,
+              success: true,
+              activationTime: 0,
+              error: void 0
+            };
+          }
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(extensions, id2, {
+              ...current,
+              state: { _tag: "Activating", startTime }
+            })
+          );
+          telemetry.log(
+            "info",
+            `[Extension] Activating extension: ${id2}`
+          );
+          yield* Effect9.sleep("10 millis");
+          const activationTime = Date.now() - startTime;
+          const updatedExtensions = yield* extensionsRef.get;
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(updatedExtensions, id2, {
+              ...current,
+              state: { _tag: "Active", activatedAt: startTime },
+              activatedAt: startTime,
+              activationTime
+            })
+          );
+          telemetry.log(
+            "info",
+            `[Extension] Activated extension: ${id2} (${activationTime}ms)`
+          );
+          return {
+            extensionId: id2,
+            success: true,
+            activationTime,
+            error: void 0
+          };
+        }).pipe(
+          Effect9.catchAll(
+            (error) => Effect9.gen(function* () {
+              if (error instanceof ExtensionNotFoundError) {
+                return yield* Effect9.fail(error);
+              }
+              const extensions = yield* extensionsRef.get;
+              yield* Ref2.set(
+                extensionsRef,
+                HashMap2.set(extensions, id2, {
+                  ...HashMap2.get(extensions, id2).pipe(
+                    Option2.getOrElse(() => ({
+                      id: id2,
+                      manifest: {
+                        id: id2,
+                        name: "Unknown",
+                        version: "0.0.0",
+                        description: "",
+                        publisher: "",
+                        entryPoint: "",
+                        enabled: true,
+                        activationEvents: [],
+                        dependencies: [],
+                        contributes: {}
+                      },
+                      state: { _tag: "Idle" },
+                      activatedAt: void 0,
+                      activationTime: void 0
+                    }))
+                  ),
+                  state: { _tag: "Error", error: String(error) }
+                })
+              );
+              telemetry.log(
+                "error",
+                `[Extension] Failed to activate ${id2}: ${String(error)}`
+              );
+              return yield* Effect9.fail(
+                new ExtensionActivationError(id2, error)
+              );
+            })
+          )
+        ), "activate");
+        const deactivate = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
+          }
+          const current = extension.value;
+          if (current.state._tag === "Deactivated" || current.state._tag === "Idle") {
+            return {
+              extensionId: id2,
+              success: true,
+              error: void 0
+            };
+          }
+          telemetry.log(
+            "info",
+            `[Extension] Deactivating extension: ${id2}`
+          );
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(extensions, id2, {
+              ...current,
+              state: { _tag: "Deactivating" }
+            })
+          );
+          yield* Effect9.sleep("5 millis");
+          const updatedExtensions = yield* extensionsRef.get;
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(updatedExtensions, id2, {
+              ...current,
+              state: { _tag: "Deactivated" }
+            })
+          );
+          telemetry.log(
+            "info",
+            `[Extension] Deactivated extension: ${id2}`
+          );
+          return {
+            extensionId: id2,
+            success: true,
+            error: void 0
+          };
+        }).pipe(
+          Effect9.catchAll(
+            (error) => Effect9.gen(function* () {
+              if (error instanceof ExtensionNotFoundError) {
+                return yield* Effect9.fail(error);
+              }
+              telemetry.log(
+                "error",
+                `[Extension] Failed to deactivate ${id2}: ${String(error)}`
+              );
+              return yield* Effect9.fail(
+                new ExtensionDeactivationError(id2, error)
+              );
+            })
+          )
+        ), "deactivate");
+        const isActive = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return false;
+          }
+          return extension.value.state._tag === "Active";
+        }), "isActive");
+        const getActiveCount = Effect9.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const values = Array.from(HashMap2.values(extensions));
+          return values.filter((ext) => ext.state._tag === "Active").length;
+        });
+        const stateChanges = Effect9.map(extensionsRef.get, (extensions) => {
+          const result = {};
+          for (const [id2, host] of HashMap2.entries(extensions)) {
+            result[id2] = host.state;
+          }
+          return result;
+        });
+        return {
+          getAll,
+          getById,
+          activate,
+          deactivate,
+          isActive,
+          getActiveCount,
+          stateChanges
+        };
+      })
+    );
+    makeMockExtension = /* @__PURE__ */ __name((extensions = []) => {
+      const mockExtensions = extensions.map((manifest) => ({
+        id: manifest.id,
+        manifest,
+        state: { _tag: "Idle" },
+        activatedAt: void 0,
+        activationTime: void 0
+      }));
       return {
-        uri: {
-          scheme: "file",
-          path: FileName,
-          fsPath: FileName,
-          authority: "",
-          query: "",
-          fragment: "",
-          with: /* @__PURE__ */ __name(() => ({}), "with"),
-          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
-          toJSON: /* @__PURE__ */ __name(() => ({
-            scheme: "file",
-            path: FileName,
-            fsPath: FileName
-          }), "toJSON")
-        },
-        fileName: FileName,
-        languageId: ResolvedLanguage,
-        version: Version,
-        lineCount: Lines.length,
-        getText: /* @__PURE__ */ __name((Range3) => {
-          if (!Range3) return Content;
-          const StartLine = Range3?.start?.line ?? 0;
-          const StartCharacter = Range3?.start?.character ?? 0;
-          const EndLine = Range3?.end?.line ?? Lines.length - 1;
-          const EndCharacter = Range3?.end?.character ?? Lines[EndLine]?.length ?? 0;
-          if (StartLine === EndLine) {
-            return (Lines[StartLine] ?? "").substring(
-              StartCharacter,
-              EndCharacter
+        getAll: Effect9.succeed(mockExtensions),
+        getById: /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
+          const ext = mockExtensions.find((e) => e.id === id2);
+          if (!ext) {
+            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
+          }
+          return ext;
+        }), "getById"),
+        activate: /* @__PURE__ */ __name((id2) => Effect9.succeed({
+          extensionId: id2,
+          success: true,
+          activationTime: 10,
+          error: void 0
+        }), "activate"),
+        deactivate: /* @__PURE__ */ __name((id2) => Effect9.succeed({
+          extensionId: id2,
+          success: true,
+          error: void 0
+        }), "deactivate"),
+        isActive: /* @__PURE__ */ __name((id2) => Effect9.succeed(
+          mockExtensions.some(
+            (e) => e.id === id2 && e.state._tag === "Active"
+          )
+        ), "isActive"),
+        getActiveCount: Effect9.succeed(0),
+        stateChanges: Effect9.succeed({})
+      };
+    }, "makeMockExtension");
+    ExtensionMock = Layer7.effect(
+      Extension,
+      Effect9.succeed(makeMockExtension())
+    );
+  }
+});
+
+// Source/Effect/Health.ts
+import { Context as Context9, Effect as Effect10, Layer as Layer8, Schedule } from "effect";
+var HealthTag, createServiceHealth, makeHealthChecker, HealthLive, makeMockHealth, HealthMock;
+var init_Health = __esm({
+  "Source/Effect/Health.ts"() {
+    "use strict";
+    init_Telemetry();
+    HealthTag = class extends Context9.Tag("Cocoon/Health")() {
+      static {
+        __name(this, "HealthTag");
+      }
+    };
+    createServiceHealth = /* @__PURE__ */ __name((name, status2, message, responseTime, details) => ({
+      serviceName: name,
+      status: status2,
+      message,
+      lastChecked: Date.now(),
+      responseTime,
+      details
+    }), "createServiceHealth");
+    makeHealthChecker = /* @__PURE__ */ __name(() => ({
+      checkService: /* @__PURE__ */ __name((serviceName) => Effect10.gen(function* () {
+        const startTime = Date.now();
+        switch (serviceName.toLowerCase()) {
+          case "environment": {
+            const envTime = Date.now() - startTime;
+            return createServiceHealth(
+              "Environment",
+              "healthy",
+              "Environment service available",
+              envTime
             );
           }
-          const Result = [];
-          Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
-          for (let Index = StartLine + 1; Index < EndLine; Index++) {
-            Result.push(Lines[Index] ?? "");
+          case "telemetry": {
+            const telemetryService = yield* TelemetryTag;
+            const telemetryTime = Date.now() - startTime;
+            return yield* telemetryService.log("info", "[Health] Telemetry health check").pipe(
+              Effect10.map(
+                () => createServiceHealth(
+                  "Telemetry",
+                  "healthy",
+                  "Telemetry service available",
+                  telemetryTime
+                )
+              ),
+              Effect10.catchAll(
+                () => Effect10.succeed(
+                  createServiceHealth(
+                    "Telemetry",
+                    "unhealthy",
+                    "Telemetry service error",
+                    telemetryTime
+                  )
+                )
+              )
+            );
           }
-          Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
-          return Result.join("\n");
-        }, "getText"),
-        lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
-          const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
-          const Text = Lines[LineNumber] ?? "";
-          return {
-            text: Text,
-            lineNumber: LineNumber,
-            range: {
-              start: { line: LineNumber, character: 0 },
-              end: { line: LineNumber, character: Text.length }
-            },
-            isEmptyOrWhitespace: Text.trim().length === 0
-          };
-        }, "lineAt"),
-        isUntitled: false,
-        isDirty: false,
-        isClosed: false,
-        eol: 1,
-        // EndOfLine.LF
-        offsetAt: /* @__PURE__ */ __name((Position3) => {
-          let Offset = 0;
-          for (let Index = 0; Index < Position3.line && Index < Lines.length; Index++) {
-            Offset += (Lines[Index]?.length ?? 0) + 1;
+          case "grpc": {
+            const grpcTime = Date.now() - startTime;
+            return createServiceHealth(
+              "gRPC",
+              "healthy",
+              "gRPC service available",
+              grpcTime
+            );
           }
-          return Offset + Position3.character;
-        }, "offsetAt"),
-        positionAt: /* @__PURE__ */ __name((Offset) => {
-          let Remaining = Offset;
-          for (let Index = 0; Index < Lines.length; Index++) {
-            const LineLength = (Lines[Index]?.length ?? 0) + 1;
-            if (Remaining < LineLength) {
-              return { line: Index, character: Remaining };
-            }
-            Remaining -= LineLength;
+          case "extension": {
+            const extensionTime = Date.now() - startTime;
+            return createServiceHealth(
+              "Extension",
+              "healthy",
+              "Extension service available",
+              extensionTime
+            );
           }
-          return {
-            line: Lines.length - 1,
-            character: Lines[Lines.length - 1]?.length ?? 0
-          };
-        }, "positionAt"),
-        validateRange: /* @__PURE__ */ __name((Range3) => Range3, "validateRange"),
-        validatePosition: /* @__PURE__ */ __name((Position3) => Position3, "validatePosition"),
-        getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
-        save: /* @__PURE__ */ __name(async () => false, "save")
-      };
-    }, "BuildTextDocument");
-    DocumentVersionMap = /* @__PURE__ */ new Map();
-    HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      let Uri2;
-      let EventData;
-      if (Array.isArray(Parameters) && Parameters.length >= 2) {
-        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
-        EventData = Parameters[1];
-      } else {
-        Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
-        EventData = Parameters;
-      }
-      const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
-      if (Uri2 && Content !== void 0) {
-        DocumentContentCache.set(Uri2, Content);
-      } else if (Uri2 && (EventData?.changes || Parameters?.changes)) {
-        const Existing = DocumentContentCache.get(Uri2) ?? "";
-        let Updated = Existing;
-        const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
-        const Sorted = [...Changes].sort(
-          (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
-        );
-        for (const Change of Sorted) {
-          const Offset = Change.rangeOffset ?? 0;
-          const Length = Change.rangeLength ?? 0;
-          const Text = Change.text ?? "";
-          Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+          default:
+            return createServiceHealth(
+              serviceName,
+              "unknown",
+              `Unknown service: ${serviceName}`,
+              0
+            );
         }
-        DocumentContentCache.set(Uri2, Updated);
+      }), "checkService"),
+      checkAllServices: /* @__PURE__ */ __name(() => Effect10.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const services = [
+          "environment",
+          "telemetry",
+          "grpc",
+          "extension"
+        ];
+        const healthChecker = makeHealthChecker();
+        telemetry.log(
+          "info",
+          "[Health] Running health checks for all services..."
+        );
+        const healthResults = yield* Effect10.all(
+          services.map((service) => healthChecker.checkService(service))
+        );
+        const unhealthyCount = healthResults.filter(
+          (h) => h.status === "unhealthy"
+        ).length;
+        const degradedCount = healthResults.filter(
+          (h) => h.status === "degraded"
+        ).length;
+        let overallStatus = "healthy";
+        if (unhealthyCount > 0) {
+          overallStatus = "unhealthy";
+        } else if (degradedCount > 0) {
+          overallStatus = "degraded";
+        }
+        return {
+          overallStatus,
+          services: healthResults,
+          systemInfo: {
+            platform: process.platform,
+            architecture: process.arch,
+            nodeVersion: process.version,
+            upSince: Date.now()
+          },
+          lastChecked: Date.now()
+        };
+      }), "checkAllServices"),
+      getOverallStatus: /* @__PURE__ */ __name(() => Effect10.gen(function* () {
+        const healthChecker = makeHealthChecker();
+        const systemHealth = yield* healthChecker.checkAllServices();
+        return systemHealth.overallStatus;
+      }), "getOverallStatus"),
+      monitorService: /* @__PURE__ */ __name((serviceName, intervalMs) => Effect10.gen(function* () {
+        yield* makeHealthChecker().checkService(serviceName).pipe(Effect10.repeat(Schedule.spaced(`${intervalMs} millis`)));
+      }), "monitorService")
+    }), "makeHealthChecker");
+    HealthLive = Layer8.effect(
+      HealthTag,
+      Effect10.succeed(makeHealthChecker())
+    );
+    makeMockHealth = /* @__PURE__ */ __name((overrides) => ({
+      checkService: /* @__PURE__ */ __name((serviceName) => Effect10.gen(function* () {
+        const defaultStatus = "healthy";
+        const status2 = overrides?.[serviceName] ?? defaultStatus;
+        return createServiceHealth(
+          serviceName,
+          status2,
+          status2 === "healthy" ? "Mock service healthy" : "Mock service unhealthy",
+          0
+        );
+      }), "checkService"),
+      checkAllServices: /* @__PURE__ */ __name(() => Effect10.gen(function* () {
+        const services = ["environment", "telemetry", "grpc", "extension"];
+        const results = services.map(
+          (name) => createServiceHealth(
+            name,
+            overrides?.[name] ?? "healthy",
+            "Mock service check",
+            0
+          )
+        );
+        return {
+          overallStatus: "healthy",
+          services: results,
+          systemInfo: {
+            platform: "mock",
+            architecture: "mock",
+            nodeVersion: "mock",
+            upSince: Date.now()
+          },
+          lastChecked: Date.now()
+        };
+      }), "checkAllServices"),
+      getOverallStatus: /* @__PURE__ */ __name(() => Effect10.succeed("healthy"), "getOverallStatus"),
+      monitorService: /* @__PURE__ */ __name(() => Effect10.void, "monitorService")
+    }), "makeMockHealth");
+    HealthMock = Layer8.effect(
+      HealthTag,
+      Effect10.succeed(makeMockHealth())
+    );
+  }
+});
+
+// Source/Effect/ModuleInterceptor.ts
+import {
+  Context as Context10,
+  Effect as Effect11,
+  HashMap as HashMap3,
+  Layer as Layer9,
+  Ref as Ref3,
+  SubscriptionRef as SubscriptionRef3
+} from "effect";
+var SecurityLevel2, ModuleNotFoundError, ModuleAccessDeniedError, SecurityPolicyNotFoundError, ModuleInterceptorTag, ModuleInterceptor, defaultSecurityPolicy, ModuleInterceptorLive, makeMockModuleInterceptor, ModuleInterceptorMock;
+var init_ModuleInterceptor = __esm({
+  "Source/Effect/ModuleInterceptor.ts"() {
+    "use strict";
+    init_Telemetry();
+    SecurityLevel2 = /* @__PURE__ */ ((SecurityLevel4) => {
+      SecurityLevel4["TRUSTED"] = "TRUSTED";
+      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
+      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
+      SecurityLevel4["BLOCKED"] = "BLOCKED";
+      return SecurityLevel4;
+    })(SecurityLevel2 || {});
+    ModuleNotFoundError = class extends Error {
+      constructor(moduleId, extensionId) {
+        super(`Module not found: ${moduleId} for extension ${extensionId}`);
+        this.moduleId = moduleId;
+        this.extensionId = extensionId;
       }
-      if (Uri2 && WorkspaceEventEmitter) {
-        const CurrentVersion = (DocumentVersionMap.get(Uri2) ?? 1) + 1;
-        DocumentVersionMap.set(Uri2, CurrentVersion);
-        const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-        const Document = BuildTextDocument(Uri2, CachedContent, CurrentVersion);
-        WorkspaceEventEmitter.emit("didChangeTextDocument", {
-          document: Document,
-          contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
-          reason: void 0
+      moduleId;
+      extensionId;
+      static {
+        __name(this, "ModuleNotFoundError");
+      }
+      _tag = "ModuleNotFoundError";
+    };
+    ModuleAccessDeniedError = class extends Error {
+      constructor(moduleId, reason) {
+        super(`Module access denied: ${moduleId} - ${reason}`);
+        this.moduleId = moduleId;
+        this.reason = reason;
+      }
+      moduleId;
+      reason;
+      static {
+        __name(this, "ModuleAccessDeniedError");
+      }
+      _tag = "ModuleAccessDeniedError";
+    };
+    SecurityPolicyNotFoundError = class extends Error {
+      constructor(extensionId) {
+        super(`Security policy not found for extension: ${extensionId}`);
+        this.extensionId = extensionId;
+      }
+      extensionId;
+      static {
+        __name(this, "SecurityPolicyNotFoundError");
+      }
+      _tag = "SecurityPolicyNotFoundError";
+    };
+    ModuleInterceptorTag = class extends Context10.Tag(
+      "Cocoon/ModuleInterceptor"
+    )() {
+      static {
+        __name(this, "ModuleInterceptorTag");
+      }
+    };
+    ModuleInterceptor = ModuleInterceptorTag;
+    defaultSecurityPolicy = {
+      allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
+      blockedModules: [
+        "fs",
+        "child_process",
+        "net",
+        "http",
+        "https",
+        "os",
+        "crypto"
+      ],
+      securityLevel: "SANDBOXED" /* SANDBOXED */,
+      maxMemoryUsage: 128 * 1024 * 1024,
+      // 128MB
+      maxExecutionTime: 5e3
+      // 5 seconds
+    };
+    ModuleInterceptorLive = Layer9.effect(
+      ModuleInterceptor,
+      Effect11.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const policiesRef = yield* SubscriptionRef3.make(HashMap3.empty());
+        const moduleCacheRef = yield* SubscriptionRef3.make(HashMap3.empty());
+        const statsRef = yield* SubscriptionRef3.make({
+          totalInterceptions: 0,
+          blockedModules: 0,
+          averageResolutionTime: 0,
+          securityViolations: 0
+        });
+        const resolutionTimes = [];
+        const isNodeBuiltin = /* @__PURE__ */ __name((moduleId) => {
+          const builtins = [
+            "fs",
+            "path",
+            "os",
+            "net",
+            "http",
+            "https",
+            "child_process",
+            "crypto",
+            "util",
+            "events",
+            "stream",
+            "buffer",
+            "url",
+            "querystring"
+          ];
+          return builtins.includes(moduleId);
+        }, "isNodeBuiltin");
+        const initialize = Effect11.gen(function* () {
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Initializing module interceptor service..."
+          );
+          yield* Effect11.sleep("5 millis");
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Module interceptor service initialized"
+          );
+        });
+        const vscodeAPIRegistry = /* @__PURE__ */ new Map();
+        const install = Effect11.gen(function* () {
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Installing Node.js Module._load hook..."
+          );
+          const { default: NodeModule } = yield* Effect11.tryPromise({
+            try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
+            catch: /* @__PURE__ */ __name((Err) => new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`), "catch")
+          });
+          const OriginalLoad = NodeModule._load;
+          NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
+            if (Request === "vscode") {
+              const ParentFilename = Parent?.filename ?? Parent?.id ?? "";
+              for (const [ExtensionId, API] of vscodeAPIRegistry) {
+                if (ParentFilename.includes(ExtensionId)) {
+                  return API;
+                }
+              }
+              if (vscodeAPIRegistry.size > 0) {
+                const LastAPI = [...vscodeAPIRegistry.values()].pop();
+                return LastAPI;
+              }
+              const GlobalAPI = globalThis.__cocoonVscodeAPI;
+              if (GlobalAPI) {
+                return GlobalAPI;
+              }
+              console.warn(
+                `[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`
+              );
+              return {};
+            }
+            return OriginalLoad.apply(this, [Request, Parent, IsMain]);
+          }, "PatchedLoad");
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted"
+          );
+        });
+        const interceptRequire = /* @__PURE__ */ __name((request) => Effect11.gen(function* () {
+          const startTime = Date.now();
+          const currentStats = yield* statsRef.get;
+          yield* Ref3.set(statsRef, {
+            ...currentStats,
+            totalInterceptions: currentStats.totalInterceptions + 1
+          });
+          const policyOpt = HashMap3.get(
+            yield* policiesRef.get,
+            request.extensionId
+          );
+          if (policyOpt._tag === "None") {
+            yield* telemetry.log(
+              "warn",
+              `[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`
+            );
+          }
+          const policy = policyOpt._tag === "Some" ? policyOpt.value : {
+            ...defaultSecurityPolicy,
+            extensionId: request.extensionId
+          };
+          if (policy.blockedModules.includes(request.moduleId)) {
+            yield* telemetry.log(
+              "warn",
+              `[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`
+            );
+            const statsAfter2 = yield* statsRef.get;
+            yield* Ref3.set(statsRef, {
+              ...statsAfter2,
+              blockedModules: statsAfter2.blockedModules + 1,
+              securityViolations: statsAfter2.securityViolations + 1
+            });
+            return {
+              success: false,
+              error: `Module access denied: ${request.moduleId}`,
+              securityLevel: "BLOCKED" /* BLOCKED */
+            };
+          }
+          if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
+            yield* telemetry.log(
+              "warn",
+              `[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`
+            );
+            const statsAfter2 = yield* statsRef.get;
+            yield* Ref3.set(statsRef, {
+              ...statsAfter2,
+              blockedModules: statsAfter2.blockedModules + 1,
+              securityViolations: statsAfter2.securityViolations + 1
+            });
+            return {
+              success: false,
+              error: `Module not in allowlist: ${request.moduleId}`,
+              securityLevel: "RESTRICTED" /* RESTRICTED */
+            };
+          }
+          const cacheKey = `${request.extensionId}:${request.moduleId}`;
+          const cachedModule = HashMap3.get(
+            yield* moduleCacheRef.get,
+            cacheKey
+          );
+          if (cachedModule._tag === "Some") {
+            const duration2 = Date.now() - startTime;
+            resolutionTimes.push(duration2);
+            const allTimes2 = [...resolutionTimes];
+            const avgTime2 = allTimes2.reduce((a, b) => a + b, 0) / allTimes2.length;
+            const statsAfter2 = yield* statsRef.get;
+            yield* Ref3.set(statsRef, {
+              ...statsAfter2,
+              averageResolutionTime: avgTime2
+            });
+            telemetry.log(
+              "debug",
+              `[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration2}ms)`
+            );
+            return {
+              success: true,
+              module: cachedModule.value,
+              securityLevel: policy.securityLevel
+            };
+          }
+          yield* Effect11.sleep("5 millis");
+          telemetry.log(
+            "info",
+            `[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`
+          );
+          const module = { module: request.moduleId };
+          const currentCache = yield* moduleCacheRef.get;
+          yield* Ref3.set(
+            moduleCacheRef,
+            HashMap3.set(currentCache, cacheKey, module)
+          );
+          const duration = Date.now() - startTime;
+          resolutionTimes.push(duration);
+          const allTimes = [...resolutionTimes];
+          const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+          const statsAfter = yield* statsRef.get;
+          yield* Ref3.set(statsRef, {
+            ...statsAfter,
+            averageResolutionTime: avgTime
+          });
+          return {
+            success: true,
+            module,
+            securityLevel: policy.securityLevel
+          };
+        }), "interceptRequire");
+        const resolveModule = /* @__PURE__ */ __name((extensionId, modulePath) => Effect11.gen(function* () {
+          yield* Effect11.sleep("5 millis");
+          if (!modulePath) {
+            return yield* Effect11.fail(
+              new ModuleNotFoundError(modulePath, extensionId)
+            );
+          }
+          const resolvedPath = `/node_modules/${modulePath}/index.js`;
+          return resolvedPath;
+        }), "resolveModule");
+        const setSecurityPolicy = /* @__PURE__ */ __name((policy) => Effect11.gen(function* () {
+          const currentPolicies = yield* policiesRef.get;
+          yield* Ref3.set(
+            policiesRef,
+            HashMap3.set(currentPolicies, policy.extensionId, policy)
+          );
+          telemetry.log(
+            "info",
+            `[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`
+          );
+        }), "setSecurityPolicy");
+        const getSecurityPolicy = /* @__PURE__ */ __name((extensionId) => Effect11.gen(function* () {
+          const policies = yield* policiesRef.get;
+          const policy = HashMap3.get(policies, extensionId);
+          if (policy._tag === "None") {
+            return yield* Effect11.fail(
+              new SecurityPolicyNotFoundError(extensionId)
+            );
+          }
+          return policy.value;
+        }), "getSecurityPolicy");
+        const validateModuleSecurity = /* @__PURE__ */ __name((extensionId, moduleId) => Effect11.gen(function* () {
+          const policies = yield* policiesRef.get;
+          const policyOpt = HashMap3.get(policies, extensionId);
+          if (policyOpt._tag === "None") {
+            const policy2 = { ...defaultSecurityPolicy, extensionId };
+            return !policy2.blockedModules.includes(moduleId) || policy2.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
+          }
+          const policy = policyOpt.value;
+          return !policy.blockedModules.includes(moduleId) || policy.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
+        }), "validateModuleSecurity");
+        const getStatistics = Effect11.gen(function* () {
+          return yield* statsRef.get;
+        });
+        const registerVscodeAPI = /* @__PURE__ */ __name((extensionId, api) => Effect11.gen(function* () {
+          vscodeAPIRegistry.set(extensionId, api);
+          telemetry.log(
+            "info",
+            `[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`
+          );
+        }), "registerVscodeAPI");
+        return {
+          initialize,
+          install,
+          registerVscodeAPI,
+          interceptRequire,
+          resolveModule,
+          setSecurityPolicy,
+          getSecurityPolicy,
+          validateModuleSecurity,
+          getStatistics
+        };
+      })
+    );
+    makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
+      initialize: Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+      }),
+      install: Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+      }),
+      registerVscodeAPI: /* @__PURE__ */ __name((_extensionId, _api) => Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+      }), "registerVscodeAPI"),
+      interceptRequire: /* @__PURE__ */ __name((request) => Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+        return {
+          success: true,
+          module: { mock: true, moduleId: request.moduleId },
+          securityLevel: "SANDBOXED" /* SANDBOXED */
+        };
+      }), "interceptRequire"),
+      resolveModule: /* @__PURE__ */ __name((extensionId, modulePath) => Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+        return `/node_modules/${modulePath}/index.js`;
+      }), "resolveModule"),
+      setSecurityPolicy: /* @__PURE__ */ __name((policy) => Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+      }), "setSecurityPolicy"),
+      getSecurityPolicy: /* @__PURE__ */ __name((extensionId) => Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+        return {
+          extensionId,
+          allowedModules: ["path", "util"],
+          blockedModules: ["fs"],
+          securityLevel: "SANDBOXED" /* SANDBOXED */
+        };
+      }), "getSecurityPolicy"),
+      validateModuleSecurity: /* @__PURE__ */ __name((extensionId, moduleId) => Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+        return true;
+      }), "validateModuleSecurity"),
+      getStatistics: Effect11.gen(function* () {
+        yield* Effect11.sleep("1 millis");
+        return {
+          totalInterceptions: 100,
+          blockedModules: 5,
+          averageResolutionTime: 2.5,
+          securityViolations: 3
+        };
+      })
+    }), "makeMockModuleInterceptor");
+    ModuleInterceptorMock = Layer9.effect(
+      ModuleInterceptor,
+      Effect11.succeed(makeMockModuleInterceptor())
+    );
+  }
+});
+
+// Source/Effect/MountainClient.ts
+import { Context as Context11, Effect as Effect12, Layer as Layer10, Ref as Ref4, SubscriptionRef as SubscriptionRef4 } from "effect";
+var ConnectionError, RPCError2, DisconnectionError, MountainClientTag, MountainClient, MountainClientLive, makeMockMountainClient, MountainClientMock;
+var init_MountainClient = __esm({
+  "Source/Effect/MountainClient.ts"() {
+    "use strict";
+    init_MountainClientService();
+    init_Telemetry();
+    ConnectionError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "ConnectionError");
+      }
+      _tag = "ConnectionError";
+    };
+    RPCError2 = class extends Error {
+      constructor(method, message, cause) {
+        super(message);
+        this.method = method;
+        this.message = message;
+        this.cause = cause;
+      }
+      method;
+      message;
+      cause;
+      static {
+        __name(this, "RPCError");
+      }
+      _tag = "RPCError";
+      method;
+    };
+    DisconnectionError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "DisconnectionError");
+      }
+      _tag = "DisconnectionError";
+    };
+    MountainClientTag = class extends Context11.Tag("Cocoon/MountainClient")() {
+      static {
+        __name(this, "MountainClientTag");
+      }
+    };
+    MountainClient = MountainClientTag;
+    MountainClientLive = Layer10.effect(
+      MountainClient,
+      Effect12.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const stateRef = yield* SubscriptionRef4.make({
+          _tag: "Disconnected"
+        });
+        let realClient;
+        let currentConfig;
+        let metrics = {
+          totalRequests: 0,
+          successfulRequests: 0,
+          failedRequests: 0,
+          averageLatency: 0,
+          lastRequestTime: 0
+        };
+        const latencies = [];
+        let serverVersion = "";
+        const connect = /* @__PURE__ */ __name((config) => Effect12.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag === "Connected") {
+            telemetry.log(
+              "warn",
+              "[MountainClient] Already connected to Mountain"
+            );
+            return;
+          }
+          currentConfig = config ?? {
+            host: "localhost",
+            port: 50052,
+            timeout: 5e3,
+            maxRetries: 3,
+            retryDelay: 1e3,
+            enableCompression: true,
+            enableMetrics: true
+          };
+          telemetry.log(
+            "info",
+            `[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`
+          );
+          yield* Ref4.set(stateRef, {
+            _tag: "Connecting",
+            attempt: 1
+          });
+          try {
+            realClient = new MountainClientService();
+            realClient.mountainHost = currentConfig.host;
+            realClient.mountainPort = currentConfig.port;
+            yield* Effect12.promise(() => realClient.connect());
+            serverVersion = "1.0.0";
+          } catch (error) {
+            yield* Ref4.set(stateRef, {
+              _tag: "Error",
+              error: String(error)
+            });
+            telemetry.log(
+              "error",
+              `[MountainClient] Failed to connect to Mountain: ${String(error)}`
+            );
+            return yield* Effect12.fail(
+              new ConnectionError(
+                "Failed to connect to Mountain backend",
+                error
+              )
+            );
+          }
+          yield* Ref4.set(stateRef, {
+            _tag: "Connected",
+            serverVersion,
+            connectedAt: Date.now()
+          });
+          telemetry.log(
+            "info",
+            `[MountainClient] Connected to Mountain (v${serverVersion})`
+          );
+        }), "connect");
+        const disconnect = Effect12.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") {
+            telemetry.log(
+              "warn",
+              "[MountainClient] Not connected to Mountain"
+            );
+            return;
+          }
+          yield* Ref4.set(stateRef, {
+            _tag: "Disconnecting"
+          });
+          telemetry.log(
+            "info",
+            "[MountainClient] Disconnecting from Mountain..."
+          );
+          if (realClient) {
+            yield* Effect12.promise(() => realClient.disconnect());
+            realClient = void 0;
+          }
+          yield* Ref4.set(stateRef, {
+            _tag: "Disconnected"
+          });
+          metrics = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            failedRequests: 0,
+            averageLatency: 0,
+            lastRequestTime: 0
+          };
+          latencies.length = 0;
+          telemetry.log(
+            "info",
+            "[MountainClient] Disconnected from Mountain"
+          );
+        }).pipe(
+          Effect12.catchAll(
+            (error) => Effect12.gen(function* () {
+              yield* Ref4.set(stateRef, {
+                _tag: "Error",
+                error: String(error)
+              });
+              telemetry.log(
+                "error",
+                `[MountainClient] Failed to disconnect: ${String(error)}`
+              );
+              return yield* Effect12.fail(
+                new DisconnectionError("Failed to disconnect", error)
+              );
+            })
+          )
+        );
+        const rpc = /* @__PURE__ */ __name((method) => (params) => Effect12.gen(function* () {
+          const requestStartTime = Date.now();
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") {
+            metrics.failedRequests++;
+            return yield* Effect12.fail(
+              new RPCError2(method, "Not connected to Mountain")
+            );
+          }
+          telemetry.log(
+            "debug",
+            `[MountainClient] RPC call: ${method}`,
+            params
+          );
+          metrics.totalRequests++;
+          try {
+            if (!realClient) {
+              return yield* Effect12.fail(
+                new RPCError2(
+                  method,
+                  "Not connected to Mountain"
+                )
+              );
+            }
+            const Result = yield* Effect12.promise(
+              () => realClient.sendRequest(method, params)
+            );
+            const processingTime = Date.now() - requestStartTime;
+            latencies.push(processingTime);
+            if (latencies.length > 100) latencies.shift();
+            metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
+            metrics.lastRequestTime = Date.now();
+            metrics.successfulRequests++;
+            telemetry.log(
+              "debug",
+              `[MountainClient] RPC success: ${method} (${processingTime}ms)`
+            );
+            return Result;
+          } catch (error) {
+            metrics.failedRequests++;
+            telemetry.log(
+              "error",
+              `[MountainClient] RPC failed: ${method} (${String(error)})`
+            );
+            return yield* Effect12.fail(
+              new RPCError2(
+                method,
+                `RPC call failed: ${String(error)}`,
+                error
+              )
+            );
+          }
+        }), "rpc");
+        const version = Effect12.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") {
+            return yield* Effect12.fail(
+              new ConnectionError("Not connected to Mountain")
+            );
+          }
+          return currentState.serverVersion;
+        });
+        const HealthCheckTimeoutMs = 1e3;
+        const healthCheck = Effect12.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") return false;
+          if (!realClient) return false;
+          const Outcome = yield* Effect12.promise(
+            () => Promise.race([
+              realClient.sendRequest("FileSystem.Stat", ["/"]).then(() => ({ Kind: "ok" })).catch((Err) => ({
+                Kind: "app-error",
+                Message: Err instanceof Error ? Err.message : String(Err)
+              })),
+              new Promise(
+                (Resolve) => setTimeout(
+                  () => Resolve({ Kind: "timeout" }),
+                  HealthCheckTimeoutMs
+                )
+              )
+            ])
+          );
+          if (Outcome.Kind === "timeout") {
+            yield* Ref4.set(stateRef, {
+              _tag: "Error",
+              error: `Health check timed out after ${HealthCheckTimeoutMs}ms`
+            });
+            telemetry.log(
+              "warn",
+              `[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`
+            );
+            return false;
+          }
+          if (Outcome.Kind === "app-error") {
+            const LooksLikeTransport = /UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
+              Outcome.Message
+            );
+            if (LooksLikeTransport) {
+              yield* Ref4.set(stateRef, {
+                _tag: "Error",
+                error: Outcome.Message
+              });
+              telemetry.log(
+                "warn",
+                `[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`
+              );
+              return false;
+            }
+          }
+          return true;
+        });
+        const getMetrics = Effect12.succeed({ ...metrics });
+        return {
+          connectionState: stateRef.get,
+          connectionChanges: Effect12.map(stateRef.get, (state) => [state]),
+          connect,
+          disconnect,
+          rpc,
+          version,
+          healthCheck,
+          getMetrics
+        };
+      })
+    );
+    makeMockMountainClient = /* @__PURE__ */ __name(() => {
+      const mockState = {
+        _tag: "Connected",
+        serverVersion: "1.0.0",
+        connectedAt: Date.now()
+      };
+      return {
+        connectionState: Effect12.succeed(mockState),
+        connectionChanges: Effect12.succeed([mockState]),
+        connect: /* @__PURE__ */ __name(() => Effect12.succeed(void 0), "connect"),
+        disconnect: /* @__PURE__ */ __name(() => Effect12.succeed(void 0), "disconnect"),
+        rpc: /* @__PURE__ */ __name((method) => (params) => Effect12.succeed({
+          success: true,
+          data: { method, params, mock: true }
+        }), "rpc"),
+        version: Effect12.succeed("1.0.0"),
+        healthCheck: Effect12.succeed(true),
+        getMetrics: Effect12.succeed({
+          totalRequests: 0,
+          successfulRequests: 0,
+          failedRequests: 0,
+          averageLatency: 0,
+          lastRequestTime: 0
+        })
+      };
+    }, "makeMockMountainClient");
+    MountainClientMock = Layer10.effect(
+      MountainClient,
+      Effect12.succeed(makeMockMountainClient())
+    );
+  }
+});
+
+// Source/Effect/RPCServer.ts
+import { Context as Context12, Effect as Effect13, Layer as Layer11, Ref as Ref5, SubscriptionRef as SubscriptionRef5 } from "effect";
+var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
+var init_RPCServer = __esm({
+  async "Source/Effect/RPCServer.ts"() {
+    "use strict";
+    await init_GRPCServerService();
+    init_Telemetry();
+    ServerStartError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "ServerStartError");
+      }
+      _tag = "ServerStartError";
+    };
+    ServerStopError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "ServerStopError");
+      }
+      _tag = "ServerStopError";
+    };
+    ServerNotRunningError = class extends Error {
+      static {
+        __name(this, "ServerNotRunningError");
+      }
+      _tag = "ServerNotRunningError";
+      constructor() {
+        super("Server is not running");
+      }
+    };
+    RPCServerTag = class extends Context12.Tag("Cocoon/RPCServer")() {
+      static {
+        __name(this, "RPCServerTag");
+      }
+    };
+    RPCServer = RPCServerTag;
+    RPCServerLive = Layer11.effect(
+      RPCServer,
+      Effect13.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const stateRef = yield* SubscriptionRef5.make({
+          _tag: "Idle"
+        });
+        let grpcServer;
+        let currentConfig;
+        let metrics = {
+          uptime: 0,
+          connections: 0,
+          requestsHandled: 0,
+          errors: 0,
+          averageLatency: 0
+        };
+        let startTime = 0;
+        const latencies = [];
+        const start = /* @__PURE__ */ __name((config) => Effect13.gen(function* () {
+          const startTimeMs = Date.now();
+          const currentState = yield* stateRef.get;
+          if (currentState._tag === "Running") {
+            telemetry.log("warn", "[RPCServer] Server already running");
+            return;
+          }
+          const CocoonPort = parseInt(
+            process.env["COCOON_GRPC_PORT"] || "50052",
+            10
+          );
+          currentConfig = config ?? {
+            host: "0.0.0.0",
+            port: CocoonPort,
+            maxConnections: 100,
+            enableCompression: true,
+            enableTls: false
+          };
+          yield* Ref5.set(stateRef, {
+            _tag: "Starting",
+            startTime: startTimeMs
+          });
+          console.log(
+            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
+          );
+          telemetry.log(
+            "info",
+            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
+          );
+          try {
+            grpcServer = new GRPCServerService();
+            grpcServer.port = currentConfig.port;
+            yield* Effect13.promise(() => grpcServer.start());
+            startTime = Date.now();
+            metrics = {
+              uptime: 0,
+              connections: 0,
+              requestsHandled: 0,
+              errors: 0,
+              averageLatency: 0
+            };
+            yield* Ref5.set(stateRef, {
+              _tag: "Running",
+              address: currentConfig.host,
+              port: currentConfig.port,
+              startedAt: startTime
+            });
+            telemetry.log(
+              "info",
+              `[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`
+            );
+          } catch (error) {
+            yield* Ref5.set(stateRef, {
+              _tag: "Error",
+              error: String(error)
+            });
+            telemetry.log(
+              "error",
+              `[RPCServer] Failed to start gRPC server: ${String(error)}`
+            );
+            return yield* Effect13.fail(
+              new ServerStartError(
+                "Failed to start gRPC server",
+                error
+              )
+            );
+          }
+        }), "start");
+        const stop = Effect13.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Running") {
+            telemetry.log("warn", "[RPCServer] Server is not running");
+            return yield* Effect13.fail(new ServerNotRunningError());
+          }
+          yield* Ref5.set(stateRef, {
+            _tag: "Stopping"
+          });
+          telemetry.log("info", "[RPCServer] Stopping gRPC server...");
+          if (grpcServer) {
+            yield* Effect13.promise(() => grpcServer.stop());
+            grpcServer = void 0;
+          }
+          yield* Ref5.set(stateRef, {
+            _tag: "Stopped"
+          });
+          telemetry.log("info", "[RPCServer] Server stopped successfully");
+        });
+        const handleRequest = /* @__PURE__ */ __name((request) => Effect13.gen(function* () {
+          const requestStartTime = Date.now();
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Running") {
+            return {
+              requestId: request.requestId,
+              success: false,
+              data: null,
+              error: "Server not running",
+              timestamp: Date.now()
+            };
+          }
+          telemetry.log(
+            "debug",
+            `[RPCServer] Handling request: ${request.method} (${request.requestId})`
+          );
+          metrics.requestsHandled = metrics.requestsHandled + 1;
+          yield* Effect13.sleep("5 millis");
+          const processingTime = Date.now() - requestStartTime;
+          latencies.push(processingTime);
+          if (latencies.length > 100) {
+            latencies.shift();
+          }
+          metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
+          telemetry.log(
+            "debug",
+            `[RPCServer] Request completed: ${request.method} (${processingTime}ms)`
+          );
+          return {
+            requestId: request.requestId,
+            success: true,
+            data: {
+              method: request.method,
+              result: "ok"
+            },
+            timestamp: Date.now()
+          };
+        }).pipe(
+          Effect13.catchAll(
+            (error) => Effect13.gen(function* () {
+              metrics.errors = metrics.errors + 1;
+              telemetry.log(
+                "error",
+                `[RPCServer] Request failed: ${request.method} (${error})`
+              );
+              return {
+                requestId: request.requestId,
+                success: false,
+                data: null,
+                error: String(error),
+                timestamp: Date.now()
+              };
+            })
+          )
+        ), "handleRequest");
+        const getMetrics = Effect13.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Running") {
+            return yield* Effect13.fail(new ServerNotRunningError());
+          }
+          metrics.uptime = Date.now() - startTime;
+          return { ...metrics };
+        });
+        return {
+          state: stateRef.get,
+          stateChanges: Effect13.map(
+            stateRef.get,
+            (state) => [state]
+          ),
+          start,
+          stop,
+          handleRequest,
+          getMetrics
+        };
+      })
+    );
+    makeMockRPCServer = /* @__PURE__ */ __name(() => {
+      const mockStateRef = { _tag: "Idle" };
+      return {
+        state: Effect13.succeed(mockStateRef),
+        stateChanges: Effect13.succeed([mockStateRef]),
+        start: /* @__PURE__ */ __name(() => Effect13.succeed(void 0), "start"),
+        stop: Effect13.succeed(void 0),
+        handleRequest: /* @__PURE__ */ __name((request) => Effect13.succeed({
+          requestId: request.requestId,
+          success: true,
+          data: { method: request.method, result: "mock" },
+          timestamp: Date.now()
+        }), "handleRequest"),
+        getMetrics: Effect13.succeed({
+          uptime: 0,
+          connections: 0,
+          requestsHandled: 0,
+          errors: 0,
+          averageLatency: 0
+        })
+      };
+    }, "makeMockRPCServer");
+    RPCServerMock = Layer11.effect(
+      RPCServer,
+      Effect13.succeed(makeMockRPCServer())
+    );
+  }
+});
+
+// Source/Effect/Bootstrap.ts
+import { createConnection } from "node:net";
+import { Context as Context13, Duration, Effect as Effect14, Layer as Layer12, Schedule as Schedule4 } from "effect";
+var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
+var init_Bootstrap = __esm({
+  async "Source/Effect/Bootstrap.ts"() {
+    "use strict";
+    init_DevLog();
+    init_LandFixLog();
+    init_Extension();
+    init_Health();
+    init_ModuleInterceptor();
+    init_MountainClient();
+    await init_RPCServer();
+    init_Telemetry();
+    ProbeTcp = /* @__PURE__ */ __name((Host, Port, TimeoutMs) => Effect14.async((Resume) => {
+      let Settled = false;
+      const Settle = /* @__PURE__ */ __name((Value) => {
+        if (Settled) return;
+        Settled = true;
+        try {
+          Socket.destroy();
+        } catch {
+        }
+        Resume(Effect14.succeed(Value));
+      }, "Settle");
+      const Socket = createConnection({ host: Host, port: Port });
+      const Timer = setTimeout(() => Settle(false), TimeoutMs);
+      Socket.once("connect", () => {
+        clearTimeout(Timer);
+        Settle(true);
+      });
+      Socket.once("error", () => {
+        clearTimeout(Timer);
+        Settle(false);
+      });
+      return Effect14.sync(() => {
+        clearTimeout(Timer);
+        try {
+          Socket.destroy();
+        } catch {
+        }
+      });
+    }), "ProbeTcp");
+    BootstrapTag = class extends Context13.Tag("Cocoon/Bootstrap")() {
+      static {
+        __name(this, "BootstrapTag");
+      }
+    };
+    stage1_Environment = withSpan(
+      "stage1_environment",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const StageStart = Date.now();
+        CocoonDevLog("bootstrap-stage", "[Bootstrap] stage=Environment event=start");
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 1: Detecting environment..."
+        );
+        const nodeVersion = process.version;
+        const platform3 = process.platform;
+        const arch2 = process.arch;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform3}/${arch2}`
+        );
+        CocoonDevLog(
+          "bootstrap-stage",
+          `[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform3}/${arch2} duration_ms=${Date.now() - StageStart}`
+        );
+        return {
+          stageName: "Environment",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage2_Configuration = withSpan(
+      "stage2_configuration",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const StageStart = Date.now();
+        CocoonDevLog(
+          "bootstrap-stage",
+          "[Bootstrap] stage=Configuration event=start"
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 2: Loading configuration..."
+        );
+        const ParsePort = /* @__PURE__ */ __name((Raw2, Fallback) => {
+          if (Raw2 === void 0) return Fallback;
+          const Value = parseInt(Raw2, 10);
+          return Number.isFinite(Value) && Value > 0 && Value < 65536 ? Value : Fallback;
+        }, "ParsePort");
+        const ResolvedConfig = {
+          MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
+          CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
+          NodeEnv: process.env["NODE_ENV"] ?? "production",
+          DevLog: process.env["LAND_DEV_LOG"] ?? "",
+          DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true"
+        };
+        globalThis.__cocoonBootstrapConfig = ResolvedConfig;
+        LandFixLog_default.Info(
+          "Bootstrap",
+          `Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`
+        );
+        telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
+        CocoonDevLog(
+          "bootstrap-stage",
+          `[Bootstrap] stage=Configuration event=ok mountain_port=${ResolvedConfig.MountainPort} cocoon_port=${ResolvedConfig.CocoonPort} node_env=${ResolvedConfig.NodeEnv} duration_ms=${Date.now() - StageStart}`
+        );
+        return {
+          stageName: "Configuration",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    MountainProbeTimeoutMs = 250;
+    MountainProbeMaxAttempts = 15;
+    MountainProbeDelayMs = 200;
+    MountainConnectMaxAttempts = 20;
+    stage3_MountainConnection = withSpan(
+      "stage3_mountain_connection",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const mountainClient = yield* MountainClientTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 3: Connecting to Mountain..."
+        );
+        const MountainPort = parseInt(
+          process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+          10
+        );
+        const MountainHost = "localhost";
+        let ProbeAttempt = 0;
+        let Listening = false;
+        while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
+          ProbeAttempt++;
+          Listening = yield* ProbeTcp(
+            MountainHost,
+            MountainPort,
+            MountainProbeTimeoutMs
+          );
+          if (Listening) {
+            LandFixLog_default.Info(
+              "Bootstrap",
+              `Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`
+            );
+            break;
+          }
+          yield* Effect14.sleep(Duration.millis(MountainProbeDelayMs));
+        }
+        if (!Listening) {
+          LandFixLog_default.Warn(
+            "Bootstrap",
+            `Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`
+          );
+        }
+        const AttemptRef = { value: 0 };
+        const Connect = Effect14.gen(function* () {
+          AttemptRef.value++;
+          yield* mountainClient.connect({
+            host: MountainHost,
+            port: MountainPort
+          });
+        }).pipe(
+          Effect14.tapError(
+            (Failure) => Effect14.sync(() => {
+              const Message = Failure instanceof Error ? Failure.message : String(Failure);
+              LandFixLog_default.Warn(
+                "Bootstrap",
+                `MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`
+              );
+            })
+          ),
+          Effect14.retry(
+            Schedule4.exponential(Duration.millis(500)).pipe(
+              Schedule4.union(Schedule4.spaced(Duration.seconds(5))),
+              Schedule4.intersect(
+                Schedule4.recurs(MountainConnectMaxAttempts - 1)
+              )
+            )
+          )
+        );
+        yield* Connect;
+        const version = yield* mountainClient.version;
+        LandFixLog_default.Info(
+          "Bootstrap",
+          `MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Connected to Mountain (v${version})`
+        );
+        return {
+          stageName: "MountainConnection",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage4_ModuleInterceptor = withSpan(
+      "stage4_module_interceptor",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const moduleInterceptor = yield* ModuleInterceptorTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 4: Setting up module interceptor..."
+        );
+        yield* moduleInterceptor.initialize;
+        yield* moduleInterceptor.install;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Module interceptor installed successfully"
+        );
+        return {
+          stageName: "ModuleInterceptor",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage5_RPCServer = withSpan(
+      "stage5_rpc_server",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const rpcServer = yield* RPCServerTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 5: Starting gRPC server..."
+        );
+        const CocoonPort = parseInt(
+          process.env["COCOON_GRPC_PORT"] || "50052",
+          10
+        );
+        console.log(
+          `[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`
+        );
+        yield* rpcServer.start({
+          host: "0.0.0.0",
+          port: CocoonPort
+        });
+        telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
+        return {
+          stageName: "RPCServer",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage6_Extensions = withSpan(
+      "stage6_extensions",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const extension = yield* ExtensionTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 6: Initializing extensions..."
+        );
+        const extensions = yield* extension.getAll;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Found ${extensions.length} extensions`
+        );
+        const EligibleExtensions = extensions.filter(
+          (Ext) => Ext.manifest.enabled
+        );
+        const ActivationAttempts = yield* Effect14.forEach(
+          EligibleExtensions,
+          (Ext) => extension.activate(Ext.id).pipe(
+            Effect14.map(() => ({ Id: Ext.id, Ok: true })),
+            Effect14.catchAll((Failure) => {
+              const Message = Failure instanceof Error ? Failure.message : String(Failure);
+              telemetry.log(
+                "warn",
+                `[Cocoon Bootstrap] Extension ${Ext.id} activation failed: ${Message}`
+              );
+              return Effect14.succeed({
+                Id: Ext.id,
+                Ok: false,
+                Error: Message
+              });
+            })
+          ),
+          { concurrency: 8 }
+        );
+        const Successful = ActivationAttempts.filter((R) => R.Ok).length;
+        const FailedCount = ActivationAttempts.length - Successful;
+        const activeCount = yield* extension.getActiveCount;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Activated ${activeCount} extensions (${Successful} this stage, ${FailedCount} failed)`
+        );
+        return {
+          stageName: "Extensions",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage7_HealthCheck = withSpan(
+      "stage7_healthcheck",
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const health = yield* HealthTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 7: Running health checks..."
+        );
+        const systemHealth = yield* health.checkAllServices();
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Health check result: ${systemHealth.overallStatus}`
+        );
+        if (systemHealth.overallStatus === "unhealthy") {
+          telemetry.log(
+            "error",
+            "[Cocoon Bootstrap] Some services are unhealthy!"
+          );
+        }
+        return {
+          stageName: "HealthCheck",
+          success: systemHealth.overallStatus !== "unhealthy",
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    makeBootstrap = /* @__PURE__ */ __name(() => ({
+      run: /* @__PURE__ */ __name((options) => Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const startTime = Date.now();
+        const { skipHealthCheck = false, debugMode = false } = options ?? {};
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Cocoon Extension Host Bootstrap"
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Debug mode: ${debugMode}`
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        const stages = [
+          ["Environment", stage1_Environment],
+          ["Configuration", stage2_Configuration],
+          ["MountainConnection", stage3_MountainConnection],
+          ["ModuleInterceptor", stage4_ModuleInterceptor],
+          ["RPCServer", stage5_RPCServer],
+          ["Extensions", stage6_Extensions],
+          ...skipHealthCheck ? [] : [["HealthCheck", stage7_HealthCheck]]
+        ];
+        const results = [];
+        for (const [StageName, stage] of stages) {
+          const stageStartTime = Date.now();
+          const SafeStage = Effect14.suspend(() => stage).pipe(
+            Effect14.catchAllCause((Cause) => {
+              const Message = String(Cause).slice(0, 300);
+              process.stdout.write(
+                `[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}
+`
+              );
+              return Effect14.succeed({
+                stageName: StageName,
+                success: false,
+                duration: Date.now() - stageStartTime,
+                error: new Error(Message)
+              });
+            })
+          );
+          const result = yield* SafeStage;
+          if (result?.success === false) {
+            process.stdout.write(
+              `[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${result.error?.message ?? "<no message>"}
+`
+            );
+          } else {
+            process.stdout.write(
+              `[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms
+`
+            );
+          }
+          results.push({
+            ...result,
+            duration: Date.now() - stageStartTime
+          });
+        }
+        const endTime = Date.now();
+        const totalDuration = endTime - startTime;
+        const allSuccess = results.every((r) => r.success);
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] ${allSuccess ? "\u2713 Bootstrap completed successfully" : "\u2717 Bootstrap failed"}`
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Total duration: ${totalDuration}ms`
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        if (!allSuccess) {
+          const failedStages = results.filter((r) => !r.success);
+          telemetry.log("error", "[Cocoon Bootstrap] Failed stages:");
+          for (const failed of failedStages) {
+            telemetry.log(
+              "error",
+              `[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`
+            );
+          }
+        }
+        return {
+          success: allSuccess,
+          totalDuration,
+          stages: results,
+          error: allSuccess ? void 0 : new Error("Bootstrap failed")
+        };
+      }), "run")
+    }), "makeBootstrap");
+    BootstrapLive = Layer12.effect(
+      BootstrapTag,
+      Effect14.succeed(makeBootstrap())
+    );
+    makeMockBootstrap = /* @__PURE__ */ __name(() => ({
+      run: /* @__PURE__ */ __name((options) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+        return {
+          success: true,
+          totalDuration: 1,
+          stages: [
+            {
+              stageName: "Environment",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "Configuration",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "MountainConnection",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "RPCServer",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "Extensions",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            ...options?.skipHealthCheck ? [] : [
+              {
+                stageName: "HealthCheck",
+                success: true,
+                duration: 0,
+                error: void 0
+              }
+            ]
+          ],
+          error: void 0
+        };
+      }), "run")
+    }), "makeMockBootstrap");
+    BootstrapMock = Layer12.effect(
+      BootstrapTag,
+      Effect14.succeed(makeMockBootstrap())
+    );
+    runBootstrap = /* @__PURE__ */ __name((options) => Effect14.gen(function* () {
+      const bootstrap = yield* BootstrapTag;
+      return yield* bootstrap.run(options);
+    }).pipe(Effect14.provide(BootstrapLive)), "runBootstrap");
+  }
+});
+
+// Source/Effect/index.ts
+var init_Effect = __esm({
+  async "Source/Effect/index.ts"() {
+    "use strict";
+    await init_Bootstrap();
+    init_Extension();
+    init_Health();
+    init_ModuleInterceptor();
+    init_MountainClient();
+    await init_RPCServer();
+    init_Telemetry();
+  }
+});
+
+// Source/Services/Configuration.ts
+import { Effect as Effect15, Layer as Layer13 } from "effect";
+var ConfigurationScope2, Configuration, ConfigurationLayer, ConfigurationLive;
+var init_Configuration = __esm({
+  "Source/Services/Configuration.ts"() {
+    "use strict";
+    init_IConfigurationService();
+    init_IMountainClientService();
+    ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
+      ConfigurationScope3["APPLICATION"] = "APPLICATION";
+      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
+      ConfigurationScope3["PROFILE"] = "PROFILE";
+      return ConfigurationScope3;
+    })(ConfigurationScope2 || {});
+    Configuration = class {
+      static {
+        __name(this, "Configuration");
+      }
+      _serviceBrand;
+      configuration;
+      mountainClient;
+      listeners;
+      constructor(mountainClient) {
+        this._serviceBrand = void 0;
+        this.mountainClient = mountainClient;
+        this.configuration = /* @__PURE__ */ new Map();
+        this.listeners = /* @__PURE__ */ new Map();
+        console.log(
+          "[ConfigurationService] Initializing configuration service with Universal Spine"
+        );
+      }
+      /**
+       * Initialize the configuration service by fetching from Mountain
+       */
+      async initialize() {
+        console.log(
+          "[ConfigurationService] Loading initial configuration from Spine..."
+        );
+        try {
+          const configData = await this.mountainClient.sendRequest(
+            "config.reload",
+            {}
+          );
+          if (configData?.application) {
+            this.configuration.set(
+              "APPLICATION" /* APPLICATION */,
+              configData.application
+            );
+          }
+          if (configData?.workspace) {
+            this.configuration.set(
+              "WORKSPACE" /* WORKSPACE */,
+              configData.workspace
+            );
+          }
+          if (configData?.profile) {
+            this.configuration.set(
+              "PROFILE" /* PROFILE */,
+              configData.profile
+            );
+          }
+          console.log(
+            "[ConfigurationService] Configuration loaded from Spine",
+            configData
+          );
+        } catch (error) {
+          console.error(
+            "[ConfigurationService] Failed to load initial configuration from Spine:",
+            error
+          );
+          this.configuration.set("APPLICATION" /* APPLICATION */, {
+            _version: 1,
+            _timestamp: Date.now(),
+            window: {
+              zoomLevel: 0,
+              theme: "dark"
+            },
+            editor: {
+              fontSize: 14,
+              lineNumbers: "on"
+            }
+          });
+          this.configuration.set("WORKSPACE" /* WORKSPACE */, {
+            _version: 1,
+            _timestamp: Date.now()
+          });
+          this.configuration.set("PROFILE" /* PROFILE */, {
+            _version: 1,
+            _timestamp: Date.now()
+          });
+        }
+      }
+      /**
+       * Get configuration value
+       */
+      getValue(key, scope = "APPLICATION" /* APPLICATION */, defaultValue) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return defaultValue;
+        }
+        const value = this.getNestedValue(scopeConfig, key);
+        return value !== void 0 ? value : defaultValue;
+      }
+      /**
+       * Set configuration value
+       */
+      async setValue(key, value, scope) {
+        if (!this.validateConfigurationKey(key)) {
+          throw new Error(`Invalid configuration key: ${key}`);
+        }
+        if (!this.validateConfigurationValue(key, value)) {
+          throw new Error(
+            `Invalid configuration value for key ${key}: ${value}`
+          );
+        }
+        let scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          scopeConfig = {};
+          this.configuration.set(scope, scopeConfig);
+        }
+        const oldValue = this.getNestedValue(scopeConfig, key);
+        if (oldValue !== value) {
+          this.setNestedValue(scopeConfig, key, value);
+          scopeConfig._timestamp = Date.now();
+          scopeConfig._version = (scopeConfig._version || 0) + 1;
+          try {
+            let spineScope = 0;
+            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
+            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
+            await this.mountainClient.sendRequest("config.update", {
+              key,
+              value,
+              scope: spineScope
+            });
+            console.log(
+              `[ConfigurationService] Configuration updated: ${key} = ${value}`
+            );
+            this.notifyConfigurationChange([key], scope);
+          } catch (error) {
+            console.error(
+              `[ConfigurationService] Failed to update configuration: ${key}`,
+              error
+            );
+            await this.handleConfigurationConflict(
+              error,
+              key,
+              value,
+              scope
+            );
+          }
+        }
+      }
+      /**
+       * Validate configuration key
+       */
+      validateConfigurationKey(key) {
+        if (!key || key.trim().length === 0) {
+          return false;
+        }
+        const invalidChars = /[^a-zA-Z0-9._-]/;
+        if (invalidChars.test(key)) {
+          return false;
+        }
+        if (key.startsWith(".") || key.endsWith(".")) {
+          return false;
+        }
+        if (key.includes("..")) {
+          return false;
+        }
+        return true;
+      }
+      /**
+       * Validate configuration value
+       */
+      validateConfigurationValue(key, value) {
+        if (value === void 0) {
+          return false;
+        }
+        if (key.includes("zoomLevel") || key.includes("fontSize")) {
+          if (typeof value !== "number" || !isFinite(value)) {
+            return false;
+          }
+          if (key.includes("zoomLevel")) {
+            return value >= -8 && value <= 9;
+          }
+          if (key.includes("fontSize")) {
+            return value >= 6 && value <= 100;
+          }
+        }
+        if (key.includes("enable") || key.includes("show") || key.includes("visible")) {
+          return typeof value === "boolean";
+        }
+        if (typeof value === "string") {
+          return value.trim().length > 0;
+        }
+        return true;
+      }
+      /**
+       * Validate entire configuration scope
+       */
+      validateScopeConfiguration(scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return true;
+        }
+        const keys = [];
+        this.collectKeys(scopeConfig, "", keys);
+        for (const key of keys) {
+          const value = this.getNestedValue(scopeConfig, key);
+          if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
+            return false;
+          }
+        }
+        return true;
+      }
+      /**
+       * Update configuration value
+       */
+      async updateValue(key, updateFn, scope) {
+        const currentValue = this.getValue(key, scope);
+        const newValue = updateFn(currentValue);
+        await this.setValue(key, newValue, scope);
+      }
+      /**
+       * Check if configuration key exists
+       */
+      hasKey(key, scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return false;
+        }
+        const value = this.getNestedValue(scopeConfig, key);
+        return value !== void 0;
+      }
+      /**
+       * Get all configuration keys for a scope
+       */
+      getConfigurationKeys(scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return [];
+        }
+        const keys = [];
+        this.collectKeys(scopeConfig, "", keys);
+        return keys;
+      }
+      /**
+       * Get all configuration values for a scope
+       */
+      async getAllValues(scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return {};
+        }
+        const result = {};
+        this.collectKeys(scopeConfig, "", Object.keys(result));
+        for (const key of Object.keys(result)) {
+          result[key] = this.getNestedValue(scopeConfig, key);
+        }
+        return result;
+      }
+      /**
+       * Inspect configuration value
+       */
+      inspect(key, scope = "APPLICATION" /* APPLICATION */) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return { key };
+        }
+        const value = this.getNestedValue(scopeConfig, key);
+        return {
+          key,
+          value
+        };
+      }
+      /**
+       * Listen for configuration changes
+       */
+      onDidChangeConfiguration(callback) {
+        console.log(
+          "[ConfigurationService] Registering configuration change listener"
+        );
+        const listenerId = `listener_${Date.now()}_${Math.random()}`;
+        let globalListeners = this.listeners.get("*");
+        if (!globalListeners) {
+          globalListeners = [];
+          this.listeners.set("*", globalListeners);
+        }
+        globalListeners.push(callback);
+        console.log(
+          `[ConfigurationService] Configuration change listener registered: ${listenerId}`
+        );
+      }
+      /**
+       * Reload configuration from Mountain
+       */
+      async reloadConfiguration() {
+        console.log(
+          "[ConfigurationService] Reloading configuration from Mountain"
+        );
+        try {
+          this.listeners.clear();
+          await this.initialize();
+          console.log(
+            "[ConfigurationService] Configuration reloaded successfully"
+          );
+        } catch (error) {
+          console.error(
+            "[ConfigurationService] Failed to reload configuration:",
+            error
+          );
+          throw error;
+        }
+      }
+      /**
+       * Handle configuration conflicts with retry logic
+       */
+      async handleConfigurationConflict(error, key, value, scope) {
+        console.warn(
+          "[ConfigurationService] Configuration conflict detected, implementing retry logic"
+        );
+        const maxRetries = 3;
+        const baseDelay = 100;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(
+            `[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`
+          );
+          await new Promise((resolve2) => setTimeout(resolve2, delay));
+          try {
+            await this.initialize();
+            let scopeConfig = this.configuration.get(scope);
+            if (!scopeConfig) {
+              scopeConfig = {};
+              this.configuration.set(scope, scopeConfig);
+            }
+            this.setNestedValue(scopeConfig, key, value);
+            scopeConfig._timestamp = Date.now();
+            scopeConfig._version = (scopeConfig._version || 0) + 1;
+            let spineScope = 0;
+            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
+            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
+            await this.mountainClient.sendRequest("config.update", {
+              key,
+              value,
+              scope: spineScope
+            });
+            console.log(
+              "[ConfigurationService] Configuration saved successfully after retry"
+            );
+            return;
+          } catch (retryError) {
+            console.error(
+              `[ConfigurationService] Retry attempt ${attempt} failed:`,
+              retryError
+            );
+            if (attempt === maxRetries) {
+              console.error(
+                "[ConfigurationService] All retry attempts failed, configuration may be out of sync"
+              );
+              throw new Error(
+                `Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`
+              );
+            }
+          }
+        }
+      }
+      /**
+       * Cleanup configuration service
+       */
+      async cleanup() {
+        console.log("[ConfigurationService] Cleaning up configuration service");
+        this.listeners.clear();
+        this.configuration.clear();
+        console.log("[ConfigurationService] Configuration service cleaned up");
+      }
+      /**
+       * Get nested value from configuration object
+       */
+      getNestedValue(obj, key) {
+        const keys = key.split(".");
+        let current = obj;
+        for (const k of keys) {
+          if (current && typeof current === "object" && k in current) {
+            current = current[k];
+          } else {
+            return void 0;
+          }
+        }
+        return current;
+      }
+      /**
+       * Set nested value in configuration object
+       */
+      setNestedValue(obj, key, value) {
+        const keys = key.split(".");
+        let current = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+          const k = keys[i];
+          if (!k) continue;
+          if (!(k in current) || typeof current[k] !== "object") {
+            current[k] = {};
+          }
+          current = current[k];
+        }
+        const lastKey = keys[keys.length - 1];
+        if (lastKey) {
+          current[lastKey] = value;
+        }
+      }
+      /**
+       * Collect all configuration keys
+       */
+      collectKeys(obj, prefix, keys) {
+        for (const key in obj) {
+          if (key.startsWith("_")) continue;
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (typeof obj[key] === "object" && obj[key] !== null) {
+            this.collectKeys(obj[key], fullKey, keys);
+          } else {
+            keys.push(fullKey);
+          }
+        }
+      }
+      /**
+       * Notify configuration change listeners
+       */
+      notifyConfigurationChange(keys, scope) {
+        for (const key of keys) {
+          const eventKey = `${scope}.${key}`;
+          const listeners = this.listeners.get(eventKey);
+          const globalListeners = this.listeners.get("*");
+          const allListeners = [
+            ...listeners || [],
+            ...globalListeners || []
+          ];
+          if (allListeners.length > 0) {
+            for (const listener of allListeners) {
+              try {
+                listener([{ key, scope }]);
+              } catch (error) {
+                console.error(
+                  `[ConfigurationService] Error in listener for ${eventKey}:`,
+                  error
+                );
+              }
+            }
+          }
+        }
+      }
+    };
+    ConfigurationLayer = Layer13.effect(
+      IConfigurationService,
+      Effect15.gen(function* () {
+        const mountainClient = yield* IMountainClientService;
+        const configService = new Configuration(mountainClient);
+        yield* Effect15.promise(() => configService.initialize());
+        return configService;
+      })
+    );
+    ConfigurationLive = ConfigurationLayer;
+  }
+});
+
+// Source/Services/ModuleInterceptorService.ts
+import * as acorn from "acorn";
+import * as walk from "acorn-walk";
+import { Effect as Effect16, Layer as Layer14 } from "effect";
+var ModuleInterceptorService, ModuleInterceptorServiceLayer, ModuleInterceptorServiceLive, ModuleInterceptorService_default;
+var init_ModuleInterceptorService = __esm({
+  "Source/Services/ModuleInterceptorService.ts"() {
+    "use strict";
+    init_IModuleInterceptorService();
+    ModuleInterceptorService = class {
+      static {
+        __name(this, "ModuleInterceptorService");
+      }
+      _serviceBrand;
+      config;
+      moduleCache;
+      securitySandbox;
+      constructor() {
+        console.log(
+          "[ModuleInterceptorService] Initializing module interceptor"
+        );
+        this.config = this.loadDefaultConfig();
+        this.moduleCache = /* @__PURE__ */ new Map();
+        this.securitySandbox = this.createSecuritySandbox();
+        console.log(
+          "[ModuleInterceptorService] Module interceptor initialized"
+        );
+      }
+      /**
+       * Load default configuration
+       */
+      loadDefaultConfig() {
+        return {
+          allowNodeBuiltins: true,
+          allowFileSystemAccess: false,
+          allowNetworkAccess: false,
+          allowedModules: [
+            "path",
+            "url",
+            "util",
+            "events",
+            "stream",
+            "buffer"
+          ],
+          blockedModules: [
+            "fs",
+            "child_process",
+            "net",
+            "http",
+            "https",
+            "os",
+            "crypto"
+          ]
+        };
+      }
+      /**
+       * Create security sandbox with safe functions
+       */
+      createSecuritySandbox() {
+        const sandbox = /* @__PURE__ */ new Map();
+        sandbox.set("console.log", console.log.bind(console));
+        sandbox.set("console.error", console.error.bind(console));
+        sandbox.set("console.warn", console.warn.bind(console));
+        sandbox.set("setTimeout", setTimeout.bind(global));
+        sandbox.set("setInterval", setInterval.bind(global));
+        sandbox.set("clearTimeout", clearTimeout.bind(global));
+        sandbox.set("clearInterval", clearInterval.bind(global));
+        sandbox.set("JSON.parse", JSON.parse);
+        sandbox.set("JSON.stringify", JSON.stringify);
+        return sandbox;
+      }
+      /**
+       * Intercept module require calls
+       */
+      interceptRequire(modulePath, parentPath) {
+        console.log(
+          `[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`
+        );
+        if (this.moduleCache.has(modulePath)) {
+          return this.moduleCache.get(modulePath);
+        }
+        if (!this.validateModuleAccess(modulePath, parentPath)) {
+          throw new Error(`Module access denied: ${modulePath}`);
+        }
+        const moduleSecurity = this.analyzeModuleSecurity(modulePath);
+        if (!moduleSecurity.isSafe) {
+          throw new Error(
+            `Module security violation: ${modulePath} - ${moduleSecurity.reason}`
+          );
+        }
+        const interceptedModule = this.loadAndInterceptModule(modulePath);
+        this.moduleCache.set(modulePath, interceptedModule);
+        console.log(
+          `[ModuleInterceptorService] Module ${modulePath} intercepted successfully`
+        );
+        return interceptedModule;
+      }
+      /**
+       * Validate module access permissions
+       */
+      validateModuleAccess(modulePath, parentPath) {
+        if (this.config.blockedModules.includes(modulePath)) {
+          console.warn(
+            `[ModuleInterceptorService] Blocked module access: ${modulePath}`
+          );
+          return false;
+        }
+        if (this.config.allowedModules.includes(modulePath)) {
+          return true;
+        }
+        if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
+          console.warn(
+            `[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`
+          );
+          return false;
+        }
+        return true;
+      }
+      /**
+       * Check if module is Node.js built-in
+       */
+      isNodeBuiltin(modulePath) {
+        const builtins = [
+          "fs",
+          "path",
+          "os",
+          "net",
+          "http",
+          "https",
+          "child_process",
+          "crypto",
+          "util",
+          "events",
+          "stream",
+          "buffer",
+          "url",
+          "querystring"
+        ];
+        return builtins.includes(modulePath);
+      }
+      /**
+       * Analyze module security using advanced AST parsing
+       */
+      analyzeModuleSecurity(modulePath) {
+        try {
+          console.log(
+            `[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`
+          );
+          const fs = __require("fs");
+          const path = __require("path");
+          const resolvedPath = __require.resolve(modulePath);
+          const sourceCode = fs.readFileSync(resolvedPath, "utf8");
+          const ast = acorn.parse(sourceCode, {
+            ecmaVersion: "latest",
+            sourceType: "module",
+            allowAwaitOutsideFunction: true,
+            allowImportExportEverywhere: true,
+            allowReturnOutsideFunction: true,
+            ranges: true,
+            locations: true
+          });
+          const securityIssues = [];
+          const securityWarnings = [];
+          walk.simple(
+            ast,
+            {
+              CallExpression(node) {
+                const callee = node.callee;
+                if (callee.type === "Identifier") {
+                  const functionName = callee.name;
+                  if (this.isCriticalDangerousFunction(functionName)) {
+                    securityIssues.push(
+                      `CRITICAL: Dangerous function call: ${functionName}`
+                    );
+                  } else if (this.isDangerousFunction(functionName)) {
+                    securityWarnings.push(
+                      `WARNING: Dangerous function call: ${functionName}`
+                    );
+                  }
+                }
+                if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "eval" && callee.property.type === "Identifier" && callee.property.name === "constructor") {
+                  securityIssues.push(
+                    `CRITICAL: Dynamic code execution via eval constructor`
+                  );
+                }
+              },
+              MemberExpression(node) {
+                if (node.object.type === "Identifier" && node.property.type === "Identifier") {
+                  const objectName = node.object.name;
+                  const propertyName = node.property.name;
+                  if (this.isCriticalDangerousPropertyAccess(
+                    objectName,
+                    propertyName
+                  )) {
+                    securityIssues.push(
+                      `CRITICAL: Dangerous property access: ${objectName}.${propertyName}`
+                    );
+                  } else if (this.isDangerousPropertyAccess(
+                    objectName,
+                    propertyName
+                  )) {
+                    securityWarnings.push(
+                      `WARNING: Dangerous property access: ${objectName}.${propertyName}`
+                    );
+                  }
+                }
+              },
+              AssignmentExpression(node) {
+                if (node.left.type === "MemberExpression") {
+                  const left = node.left;
+                  if (left.object.type === "Identifier" && left.property.type === "Identifier") {
+                    const objectName = left.object.name;
+                    const propertyName = left.property.name;
+                    if (this.isCriticalDangerousAssignment(
+                      objectName,
+                      propertyName
+                    )) {
+                      securityIssues.push(
+                        `CRITICAL: Dangerous assignment: ${objectName}.${propertyName}`
+                      );
+                    } else if (this.isDangerousAssignment(
+                      objectName,
+                      propertyName
+                    )) {
+                      securityWarnings.push(
+                        `WARNING: Dangerous assignment: ${objectName}.${propertyName}`
+                      );
+                    }
+                  }
+                }
+              },
+              ImportDeclaration(node) {
+                const importSource = node.source.value;
+                if (this.isDangerousImport(importSource)) {
+                  securityIssues.push(
+                    `CRITICAL: Dangerous import: ${importSource}`
+                  );
+                }
+              },
+              NewExpression(node) {
+                if (node.callee.type === "Identifier") {
+                  const constructorName = node.callee.name;
+                  if (this.isDangerousConstructor(constructorName)) {
+                    securityIssues.push(
+                      `CRITICAL: Dangerous constructor: ${constructorName}`
+                    );
+                  }
+                }
+              }
+            },
+            this
+          );
+          this.performPatternAnalysis(
+            sourceCode,
+            securityIssues,
+            securityWarnings
+          );
+          const allIssues = [...securityIssues, ...securityWarnings];
+          const isSafe = securityIssues.length === 0;
+          const reason = allIssues.length > 0 ? `Security analysis: ${allIssues.join(", ")}` : "Advanced AST security analysis passed all checks";
+          console.log(
+            `[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`
+          );
+          return {
+            isSafe,
+            reason
+          };
+        } catch (error) {
+          console.error(
+            `[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
+            error
+          );
+          return {
+            isSafe: false,
+            reason: `Advanced security analysis error: ${error}`
+          };
+        }
+      }
+      /**
+       * Check if function is critically dangerous (block immediately)
+       */
+      isCriticalDangerousFunction(functionName) {
+        const criticalFunctions = [
+          "eval",
+          "Function",
+          "exec",
+          "spawn",
+          "execFile",
+          "fork",
+          "require",
+          "import",
+          "process.binding",
+          "vm.runInContext"
+        ];
+        return criticalFunctions.includes(functionName);
+      }
+      /**
+       * Check if function is dangerous (warning level)
+       */
+      isDangerousFunction(functionName) {
+        const dangerousFunctions = [
+          "setTimeout",
+          "setInterval",
+          "setImmediate",
+          "require.cache",
+          "module.constructor",
+          "global.eval"
+        ];
+        return dangerousFunctions.includes(functionName);
+      }
+      /**
+       * Check if property access is critically dangerous
+       */
+      isCriticalDangerousPropertyAccess(objectName, propertyName) {
+        const criticalAccesses = [
+          { object: "process", property: "env" },
+          { object: "global", property: "process" },
+          { object: "window", property: "location" },
+          { object: "process", property: "mainModule" },
+          { object: "process", property: "binding" }
+        ];
+        return criticalAccesses.some(
+          (access) => access.object === objectName && access.property === propertyName
+        );
+      }
+      /**
+       * Check if property access is dangerous
+       */
+      isDangerousPropertyAccess(objectName, propertyName) {
+        const dangerousAccesses = [
+          { object: "global", property: "eval" },
+          { object: "window", property: "eval" },
+          { object: "process", property: "argv" },
+          { object: "process", property: "cwd" }
+        ];
+        return dangerousAccesses.some(
+          (access) => access.object === objectName && access.property === propertyName
+        );
+      }
+      /**
+       * Check if property access is dangerous
+       */
+      isDangerousPropertyAccess(objectName, propertyName) {
+        const dangerousAccesses = [
+          { object: "process", property: "env" },
+          { object: "global", property: "process" },
+          { object: "window", property: "location" }
+        ];
+        return dangerousAccesses.some(
+          (access) => access.object === objectName && access.property === propertyName
+        );
+      }
+      /**
+       * Check if assignment is critically dangerous
+       */
+      isCriticalDangerousAssignment(objectName, propertyName) {
+        const criticalAssignments = [
+          { object: "process", property: "env" },
+          { object: "global", property: "process" },
+          { object: "require", property: "cache" },
+          { object: "module", property: "exports" }
+        ];
+        return criticalAssignments.some(
+          (assignment) => assignment.object === objectName && assignment.property === propertyName
+        );
+      }
+      /**
+       * Check if assignment is dangerous
+       */
+      isDangerousAssignment(objectName, propertyName) {
+        const dangerousAssignments = [
+          { object: "global", property: "eval" },
+          { object: "window", property: "eval" }
+        ];
+        return dangerousAssignments.some(
+          (assignment) => assignment.object === objectName && assignment.property === propertyName
+        );
+      }
+      /**
+       * Check if import is dangerous
+       */
+      isDangerousImport(importSource) {
+        const dangerousImports = [
+          "fs",
+          "child_process",
+          "net",
+          "http",
+          "https",
+          "os",
+          "crypto",
+          "vm",
+          "module",
+          "process",
+          "sys"
+        ];
+        return dangerousImports.includes(importSource);
+      }
+      /**
+       * Check if constructor is dangerous
+       */
+      isDangerousConstructor(constructorName) {
+        const dangerousConstructors = [
+          "Function",
+          "eval",
+          "process",
+          "require"
+        ];
+        return dangerousConstructors.includes(constructorName);
+      }
+      /**
+       * Perform pattern-based security analysis
+       */
+      performPatternAnalysis(sourceCode, securityIssues, securityWarnings) {
+        const dangerousPatterns = [
+          { pattern: /eval\s*\(/, description: "Direct eval call" },
+          { pattern: /Function\s*\(/, description: "Function constructor" },
+          {
+            pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,
+            description: "Dynamic require"
+          },
+          {
+            pattern: /process\.binding/,
+            description: "Process binding access"
+          },
+          {
+            pattern: /vm\.runInContext/,
+            description: "VM context execution"
+          },
+          {
+            pattern: /child_process\.spawn/,
+            description: "Child process spawning"
+          }
+        ];
+        for (const { pattern, description } of dangerousPatterns) {
+          if (pattern.test(sourceCode)) {
+            securityIssues.push(`CRITICAL: ${description} detected`);
+          }
+        }
+      }
+      /**
+       * Load and intercept module with security wrappers
+       */
+      loadAndInterceptModule(modulePath) {
+        try {
+          const originalModule = __require(modulePath);
+          const interceptedModule = this.createSecurityWrapper(
+            originalModule,
+            modulePath
+          );
+          return interceptedModule;
+        } catch (error) {
+          console.error(
+            `[ModuleInterceptorService] Failed to load module ${modulePath}:`,
+            error
+          );
+          throw error;
+        }
+      }
+      /**
+       * Create security wrapper for module
+       */
+      createSecurityWrapper(originalModule, modulePath) {
+        const wrapper = {};
+        for (const key of Object.keys(originalModule)) {
+          const originalValue = originalModule[key];
+          if (typeof originalValue === "function") {
+            wrapper[key] = this.wrapFunction(
+              originalValue,
+              modulePath,
+              key
+            );
+          } else {
+            wrapper[key] = originalValue;
+          }
+        }
+        return wrapper;
+      }
+      /**
+       * Wrap function with security checks
+       */
+      wrapFunction(originalFn, modulePath, functionName) {
+        return (...args) => {
+          console.log(
+            `[ModuleInterceptorService] Calling ${modulePath}.${functionName}`
+          );
+          return originalFn.apply(null, args);
+        };
+      }
+      /**
+       * Resolve module path
+       */
+      resolveModule(modulePath, parentPath) {
+        console.log(
+          `[ModuleInterceptorService] Resolving module: ${modulePath} from ${parentPath}`
+        );
+        try {
+          const resolvedPath = __require.resolve(modulePath, {
+            paths: [parentPath]
+          });
+          console.log(
+            `[ModuleInterceptorService] Resolved ${modulePath} to ${resolvedPath}`
+          );
+          return resolvedPath;
+        } catch (error) {
+          console.error(
+            `[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
+            error
+          );
+          throw error;
+        }
+      }
+      /**
+       * Create extension context with isolated environment
+       */
+      createExtensionContext(extensionId) {
+        console.log(
+          `[ModuleInterceptorService] Creating extension context for ${extensionId}`
+        );
+        const context = {
+          extensionId,
+          globalState: /* @__PURE__ */ new Map(),
+          workspaceState: /* @__PURE__ */ new Map(),
+          subscriptions: [],
+          asAbsolutePath: /* @__PURE__ */ __name((relativePath2) => {
+            return `/extensions/${extensionId}/${relativePath2}`;
+          }, "asAbsolutePath")
+        };
+        console.log(
+          `[ModuleInterceptorService] Extension context created for ${extensionId}`
+        );
+        return context;
+      }
+      /**
+       * Update configuration
+       */
+      updateConfig(newConfig) {
+        console.log("[ModuleInterceptorService] Updating configuration");
+        this.config = { ...this.config, ...newConfig };
+        this.moduleCache.clear();
+        console.log("[ModuleInterceptorService] Configuration updated");
+      }
+      /**
+       * Get service status
+       */
+      getStatus() {
+        return {
+          cacheSize: this.moduleCache.size,
+          config: this.config,
+          securityRules: this.config.allowedModules.length + this.config.blockedModules.length
+        };
+      }
+    };
+    ModuleInterceptorServiceLayer = Layer14.effect(
+      IModuleInterceptorService,
+      Effect16.sync(() => new ModuleInterceptorService())
+    );
+    ModuleInterceptorServiceLive = Layer14.effect(
+      IModuleInterceptorService,
+      Effect16.sync(() => new ModuleInterceptorService())
+    );
+    ModuleInterceptorService_default = ModuleInterceptorService;
+  }
+});
+
+// Source/Services/Logger.ts
+import { Context as Context15, Effect as Effect17, Ref as Ref6 } from "effect";
+var Logger, LoggerService;
+var init_Logger = __esm({
+  "Source/Services/Logger.ts"() {
+    "use strict";
+    Logger = Context15.Tag("Service/Logger");
+    LoggerService = class extends Effect17.Service()(
+      "Service/Logger",
+      {
+        effect: Effect17.gen(function* () {
+          const ExtensionIdRef = yield* Ref6.make(
+            void 0
+          );
+          const LogLevelRef = yield* Ref6.make("info");
+          const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
+            const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
+            const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+            return `${Timestamp} ${Prefix} ${Message}`;
+          }, "FormatMessage");
+          const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
+            const LogLevel = yield* Ref6.get(LogLevelRef);
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            if (LogLevel === "trace") {
+              const FormattedMessage = FormatMessage(
+                Message,
+                "trace",
+                ExtensionId
+              );
+              return yield* Effect17.logTrace(Message).pipe(
+                Effect17.annotateLogs({
+                  extensionId: ExtensionId,
+                  data: Data.length === 1 ? Data[0] : Data
+                })
+              );
+            }
+          }), "Trace");
+          const Debug2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
+            const LogLevel = yield* Ref6.get(LogLevelRef);
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            if (LogLevel === "trace" || LogLevel === "debug") {
+              const FormattedMessage = FormatMessage(
+                Message,
+                "debug",
+                ExtensionId
+              );
+              return yield* Effect17.logDebug(Message).pipe(
+                Effect17.annotateLogs({
+                  extensionId: ExtensionId,
+                  data: Data.length === 1 ? Data[0] : Data
+                })
+              );
+            }
+          }), "Debug");
+          const Info2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            const FormattedMessage = FormatMessage(
+              Message,
+              "info",
+              ExtensionId
+            );
+            return yield* Effect17.logInfo(Message).pipe(
+              Effect17.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Info");
+          const Warn2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return yield* Effect17.logWarning(Message).pipe(
+              Effect17.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Warn");
+          const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return yield* Effect17.logError(Message).pipe(
+              Effect17.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Error");
+          const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return yield* Effect17.logFatal(Message).pipe(
+              Effect17.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Fatal");
+          const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect17.gen(function* () {
+            yield* Ref6.set(ExtensionIdRef, ExtensionId);
+          }), "SetExtensionId");
+          const GetExtensionId = /* @__PURE__ */ __name(() => Effect17.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return ExtensionId ?? "cocoon-core";
+          }), "GetExtensionId");
+          const ServiceImplementation = {
+            Trace,
+            Debug: Debug2,
+            Info: Info2,
+            Warn: Warn2,
+            Error: Error2,
+            Fatal,
+            SetExtensionId,
+            GetExtensionId
+          };
+          return ServiceImplementation;
+        })
+      }
+    ) {
+      static {
+        __name(this, "LoggerService");
+      }
+    };
+  }
+});
+
+// Source/Services/MountainGRPCClient.ts
+import { Context as Context16, Effect as Effect18, Layer as Layer15 } from "effect";
+var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
+var init_MountainGRPCClient = __esm({
+  "Source/Services/MountainGRPCClient.ts"() {
+    "use strict";
+    init_IMountainClientService();
+    init_Logger();
+    MountainGRPCClientService = Context16.GenericTag("Service/MountainGRPCClient");
+    MountainGRPCClientLive = Layer15.effect(
+      MountainGRPCClientService,
+      Effect18.gen(function* () {
+        const mountainClient = yield* IMountainClientService;
+        const logger = yield* Logger.Logger;
+        const service = {
+          _serviceBrand: void 0,
+          // ==================== Window Operations ====================
+          showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showTextDocument: ${uri}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
+                uri: { value: uri },
+                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+                // Convert ViewColumn enum (1-based to 0-based)
+                preserveFocus: options.preserveFocus ?? true
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error(`Failed to show text document: ${uri}`)
+              );
+            }
+            return;
+          }), "showTextDocument"),
+          showInformationMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showInformationMessage: ${message}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
+                message
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error(
+                  `Failed to show information message: ${message}`
+                )
+              );
+            }
+            return;
+          }), "showInformationMessage"),
+          showWarningMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showWarningMessage: ${message}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
+                message
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error(
+                  `Failed to show warning message: ${message}`
+                )
+              );
+            }
+            return;
+          }), "showWarningMessage"),
+          showErrorMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showErrorMessage: ${message}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
+                message
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error(
+                  `Failed to show error message: ${message}`
+                )
+              );
+            }
+            return;
+          }), "showErrorMessage"),
+          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] createStatusBarItem: ${options.id}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
+                id: options.id,
+                text: options.text,
+                tooltip: options.tooltip ?? ""
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.itemId) {
+              return yield* Effect18.fail(
+                new Error(
+                  `Failed to create status bar item: ${options.id}`
+                )
+              );
+            }
+            return result.itemId;
+          }), "createStatusBarItem"),
+          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
+                itemId,
+                text
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "setStatusBarText"),
+          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
+                viewType: options.viewType,
+                title: options.title,
+                iconPath: options.iconPath ?? "",
+                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+                preserveFocus: options.preserveFocus ?? false,
+                enableFindWidget: options.enableFindWidget ?? true,
+                retainContextWhenHidden: options.retainContextWhenHidden ?? false,
+                localResourceRoots: options.localResourceRoots ?? []
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (result?.handle === void 0) {
+              return yield* Effect18.fail(
+                new Error(
+                  `Failed to create webview panel: ${options.viewType}`
+                )
+              );
+            }
+            return result.handle;
+          }), "createWebviewPanel"),
+          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
+                handle,
+                html
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "setWebviewHtml"),
+          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
+            );
+            const isString2 = typeof message === "string";
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+                "onDidReceiveMessage",
+                {
+                  handle,
+                  stringMessage: isString2 ? message : void 0,
+                  bytesMessage: isString2 ? void 0 : message
+                }
+              ), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "postWebviewMessage"),
+          // ==================== Workspace Operations ====================
+          findFiles: /* @__PURE__ */ __name((pattern, include) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] findFiles: ${pattern}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
+                pattern,
+                include: include ?? true
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.uris ?? [];
+          }), "findFiles"),
+          findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] findTextInFiles: ${pattern}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
+                pattern,
+                include: include ?? [],
+                exclude: exclude ?? []
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.matches ?? [];
+          }), "findTextInFiles"),
+          openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] openDocument: ${uri}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
+                uri: { value: uri },
+                viewColumn: viewColumn ? viewColumn - 2 : void 0
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error(`Failed to open document: ${uri}`)
+              );
+            }
+            return;
+          }), "openDocument"),
+          saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
+                includeUntitled
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error("Failed to save all documents")
+              );
+            }
+            return;
+          }), "saveAll"),
+          applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] applyEdit: ${uri}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
+                uri: { value: uri },
+                edits: edits.map((edit) => ({
+                  range: {
+                    start: {
+                      line: edit.range.start.line,
+                      character: edit.range.start.character
+                    },
+                    end: {
+                      line: edit.range.end.line,
+                      character: edit.range.end.character
+                    }
+                  },
+                  newText: edit.newText
+                }))
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect18.fail(
+                new Error(`Failed to apply edit to: ${uri}`)
+              );
+            }
+            return;
+          }), "applyEdit"),
+          // ==================== Command Operations ====================
+          registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] registerCommand: ${commandId}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
+                commandId,
+                extensionId,
+                title
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "registerCommand"),
+          executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] executeCommand: ${commandId}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
+                commandId,
+                arguments: args.map((arg) => {
+                  if (typeof arg === "string") {
+                    return { stringValue: arg };
+                  }
+                  if (typeof arg === "number") {
+                    return { intValue: arg };
+                  }
+                  if (typeof arg === "boolean") {
+                    return { boolValue: arg };
+                  }
+                  if (arg instanceof Uint8Array) {
+                    return { bytesValue: arg };
+                  }
+                  return { stringValue: String(arg) };
+                })
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (result?.error) {
+              return yield* Effect18.fail(
+                new Error(
+                  `Command execution failed: ${result.error.Message}`
+                )
+              );
+            }
+            return result?.value;
+          }), "executeCommand"),
+          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] unregisterCommand: ${commandId}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+                "unregisterCommand",
+                {
+                  commandId
+                }
+              ), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "unregisterCommand"),
+          // ==================== Secret Storage ====================
+          getSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] getSecret: ${key}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.value;
+          }), "getSecret"),
+          storeSecret: /* @__PURE__ */ __name((key, value) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] storeSecret: ${key}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
+                key,
+                value
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "storeSecret"),
+          deleteSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] deleteSecret: ${key}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
+                key
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "deleteSecret"),
+          // ==================== File System Operations ====================
+          readFile: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] readFile: ${uri}`
+            );
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
+                uri: { value: uri }
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.content) {
+              return yield* Effect18.fail(
+                new Error(`Failed to read file: ${uri}`)
+              );
+            }
+            return result.content;
+          }), "readFile"),
+          writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] writeFile: ${uri}`
+            );
+            yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
+                uri: { value: uri },
+                content,
+                encoding
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "writeFile"),
+          stat: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
+                uri: { value: uri }
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result) {
+              return yield* Effect18.fail(
+                new Error(`Failed to stat file: ${uri}`)
+              );
+            }
+            return result;
+          }), "stat"),
+          readdir: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
+            const result = yield* Effect18.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
+                uri: { value: uri }
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.entries ?? [];
+          }), "readdir")
+        };
+        return service;
+      })
+    );
+    MountainGRPCClientMock = Layer15.effect(
+      MountainGRPCClientService,
+      Effect18.gen(function* () {
+        const logger = yield* Logger.Logger;
+        const mockSecrets = /* @__PURE__ */ new Map();
+        const mockStatusBarItems = /* @__PURE__ */ new Map();
+        const mockWebviewPanels = /* @__PURE__ */ new Map();
+        let mockWebviewHandleCounter = 0;
+        const service = {
+          _serviceBrand: void 0,
+          // Window Operations
+          showTextDocument: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showTextDocument: ${uri}`
+            );
+            return;
+          }), "showTextDocument"),
+          showInformationMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showInformationMessage: ${message}`
+            );
+            return;
+          }), "showInformationMessage"),
+          showWarningMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showWarningMessage: ${message}`
+            );
+            return;
+          }), "showWarningMessage"),
+          showErrorMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showErrorMessage: ${message}`
+            );
+            return;
+          }), "showErrorMessage"),
+          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
+            );
+            const itemId = `status-${options.id}`;
+            mockStatusBarItems.set(itemId, options.text);
+            return itemId;
+          }), "createStatusBarItem"),
+          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
+            );
+            mockStatusBarItems.set(itemId, text);
+            return;
+          }), "setStatusBarText"),
+          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
+            );
+            const handle = mockWebviewHandleCounter++;
+            mockWebviewPanels.set(handle, { html: options.html ?? "" });
+            return handle;
+          }), "createWebviewPanel"),
+          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
+            );
+            const panel = mockWebviewPanels.get(handle);
+            if (panel) {
+              panel.html = html;
+            }
+            return;
+          }), "setWebviewHtml"),
+          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
+            );
+            return;
+          }), "postWebviewMessage"),
+          // Workspace Operations
+          findFiles: /* @__PURE__ */ __name((pattern) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] findFiles: ${pattern}`
+            );
+            return [];
+          }), "findFiles"),
+          findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
+            );
+            return [];
+          }), "findTextInFiles"),
+          openDocument: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] openDocument: ${uri}`
+            );
+            return;
+          }), "openDocument"),
+          saveAll: /* @__PURE__ */ __name(() => Effect18.gen(function* () {
+            yield* logger.debug("[MountainGRPCClientMock] saveAll");
+            return;
+          }), "saveAll"),
+          applyEdit: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] applyEdit: ${uri}`
+            );
+            return;
+          }), "applyEdit"),
+          // Command Operations
+          registerCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] registerCommand: ${commandId}`
+            );
+            return;
+          }), "registerCommand"),
+          executeCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] executeCommand: ${commandId}`
+            );
+            return void 0;
+          }), "executeCommand"),
+          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
+            );
+            return;
+          }), "unregisterCommand"),
+          // Secret Storage
+          getSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] getSecret: ${key}`
+            );
+            return mockSecrets.get(key);
+          }), "getSecret"),
+          storeSecret: /* @__PURE__ */ __name((key, value) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] storeSecret: ${key}`
+            );
+            mockSecrets.set(key, value);
+            return;
+          }), "storeSecret"),
+          deleteSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] deleteSecret: ${key}`
+            );
+            mockSecrets.delete(key);
+            return;
+          }), "deleteSecret"),
+          // File System Operations
+          readFile: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] readFile: ${uri}`
+            );
+            return new Uint8Array(0);
+          }), "readFile"),
+          writeFile: /* @__PURE__ */ __name((uri, content) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] writeFile: ${uri}`
+            );
+            return;
+          }), "writeFile"),
+          stat: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] stat: ${uri}`
+            );
+            return {
+              isFile: true,
+              isDirectory: false,
+              size: 0,
+              mtime: Date.now()
+            };
+          }), "stat"),
+          readdir: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] readdir: ${uri}`
+            );
+            return [];
+          }), "readdir")
+        };
+        return service;
+      })
+    );
+    MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
+      Layer15.provide(IMountainClientService)
+    );
+    MountainGRPCClientMockLayer = MountainGRPCClientMock;
+  }
+});
+
+// Source/Services/SecurityService.ts
+import { Effect as Effect19, Layer as Layer16 } from "effect";
+var SecurityService, SecurityServiceLayer, SecurityServiceLive;
+var init_SecurityService = __esm({
+  "Source/Services/SecurityService.ts"() {
+    "use strict";
+    SecurityService = class {
+      static {
+        __name(this, "SecurityService");
+      }
+      policies = /* @__PURE__ */ new Map();
+      auditLog = [];
+      incidents = [];
+      constructor() {
+        console.log("[SecurityService] Initializing security service");
+        this.loadDefaultPolicies();
+      }
+      /**
+       * Initialize security service
+       */
+      async initialize() {
+        console.log("[SecurityService] Starting security service");
+        try {
+          await this.loadSecurityPolicies();
+          await this.initializeAuditLogging();
+          await this.initializeIncidentResponse();
+          this.securityActive = true;
+          console.log("[SecurityService] Security service started");
+        } catch (error) {
+          console.error("[SecurityService] Failed to initialize:", error);
+          throw error;
+        }
+      }
+      /**
+       * Load default security policies
+       */
+      loadDefaultPolicies() {
+        const defaultPolicy = {
+          extensionId: "default",
+          allowedModules: ["path", "url", "util", "events"],
+          blockedModules: [
+            "fs",
+            "child_process",
+            "net",
+            "http",
+            "https",
+            "os",
+            "crypto"
+          ],
+          maxMemoryUsage: 100,
+          // MB
+          maxExecutionTime: 3e4,
+          // 30 seconds
+          allowedAPIs: ["commands", "window", "workspace"],
+          blockedAPIs: ["debug", "terminal", "scm"],
+          networkAccess: false,
+          fileSystemAccess: false,
+          requireAuthentication: true
+        };
+        this.policies.set("default", defaultPolicy);
+        console.log("[SecurityService] Default security policy loaded");
+      }
+      /**
+       * Load security policies from Mountain with advanced features
+       */
+      async loadSecurityPolicies() {
+        try {
+          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
+          const mountainClient = new MountainClientService2();
+          const policiesResponse = await mountainClient.sendRequest(
+            "security.policies.get",
+            {
+              includeDefaults: true,
+              timestamp: Date.now()
+            }
+          );
+          if (policiesResponse && policiesResponse.policies) {
+            for (const policy of policiesResponse.policies) {
+              this.policies.set(policy.extensionId, {
+                extensionId: policy.extensionId,
+                allowedModules: policy.allowedModules || [],
+                blockedModules: policy.blockedModules || [],
+                maxMemoryUsage: policy.maxMemoryUsage || 100,
+                maxExecutionTime: policy.maxExecutionTime || 3e4,
+                allowedAPIs: policy.allowedAPIs || [],
+                blockedAPIs: policy.blockedAPIs || [],
+                networkAccess: policy.networkAccess || false,
+                fileSystemAccess: policy.fileSystemAccess || false,
+                requireAuthentication: policy.requireAuthentication || true
+              });
+            }
+            console.log(
+              `[SecurityService] Loaded ${policiesResponse.policies.length} security policies from Mountain`
+            );
+          } else {
+            console.warn(
+              "[SecurityService] No security policies received from Mountain, using defaults"
+            );
+          }
+        } catch (error) {
+          console.error(
+            "[SecurityService] Failed to load security policies from Mountain:",
+            error
+          );
+          console.log(
+            "[SecurityService] Continuing with default security policies"
+          );
+        }
+      }
+      /**
+       * Initialize advanced audit logging system
+       */
+      async initializeAuditLogging() {
+        try {
+          this.auditLog = [];
+          setInterval(() => {
+            this.rotateAuditLog();
+          }, 36e5);
+          console.log(
+            "[SecurityService] Advanced audit logging initialized with hourly rotation"
+          );
+        } catch (error) {
+          console.error(
+            "[SecurityService] Failed to initialize audit logging:",
+            error
+          );
+          throw error;
+        }
+      }
+      /**
+       * Rotate audit log to prevent memory bloat
+       */
+      rotateAuditLog() {
+        const maxLogSize = 1e4;
+        if (this.auditLog.length > maxLogSize) {
+          this.auditLog = this.auditLog.slice(-maxLogSize);
+          console.log(
+            `[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`
+          );
+        }
+      }
+      /**
+       * Initialize advanced incident response system
+       */
+      async initializeIncidentResponse() {
+        try {
+          this.incidents = [];
+          setInterval(() => {
+            this.escalateCriticalIncidents();
+          }, 3e5);
+          console.log(
+            "[SecurityService] Advanced incident response system initialized"
+          );
+        } catch (error) {
+          console.error(
+            "[SecurityService] Failed to initialize incident response:",
+            error
+          );
+          throw error;
+        }
+      }
+      /**
+       * Escalate critical incidents automatically
+       */
+      escalateCriticalIncidents() {
+        const criticalIncidents = this.incidents.filter(
+          (incident) => incident.severity === "critical" && incident.status === "open" && Date.now() - incident.timestamp > 3e5
+          // 5 minutes
+        );
+        if (criticalIncidents.length > 0) {
+          console.warn(
+            `[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`
+          );
+          criticalIncidents.forEach((incident) => {
+            incident.actions.push("Automatically escalated due to timeout");
+            this.sendIncidentToMountain(incident);
+          });
+        }
+      }
+      /**
+       * Send incident to Mountain for centralized tracking
+       */
+      async sendIncidentToMountain(incident) {
+        try {
+          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
+          const mountainClient = new MountainClientService2();
+          await mountainClient.sendNotification("security.incident", {
+            incidentId: incident.id,
+            severity: incident.severity,
+            description: incident.description,
+            timestamp: incident.timestamp,
+            actions: incident.actions
+          });
+          console.log(
+            `[SecurityService] Incident ${incident.id} sent to Mountain`
+          );
+        } catch (error) {
+          console.warn(
+            `[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
+            error
+          );
+        }
+      }
+      /**
+       * Check module access permission
+       */
+      async checkModuleAccess(extensionId, moduleId) {
+        const policy = this.getExtensionPolicy(extensionId);
+        if (policy.blockedModules.includes(moduleId)) {
+          await this.logSecurityEvent({
+            id: `module-access-${Date.now()}`,
+            type: "violation",
+            severity: "high",
+            extensionId,
+            action: "module_access",
+            resource: moduleId,
+            outcome: "blocked",
+            timestamp: Date.now(),
+            details: { reason: "Module blocked by security policy" }
+          });
+          return false;
+        }
+        if (policy.allowedModules.includes(moduleId)) {
+          await this.logSecurityEvent({
+            id: `module-access-${Date.now()}`,
+            type: "access",
+            severity: "low",
+            extensionId,
+            action: "module_access",
+            resource: moduleId,
+            outcome: "allowed",
+            timestamp: Date.now(),
+            details: {}
+          });
+          return true;
+        }
+        await this.logSecurityEvent({
+          id: `module-access-${Date.now()}`,
+          type: "violation",
+          severity: "medium",
+          extensionId,
+          action: "module_access",
+          resource: moduleId,
+          outcome: "denied",
+          timestamp: Date.now(),
+          details: { reason: "Module not explicitly allowed" }
+        });
+        return false;
+      }
+      /**
+       * Check API access permission
+       */
+      async checkAPIAccess(extensionId, apiName) {
+        const policy = this.getExtensionPolicy(extensionId);
+        if (policy.blockedAPIs.includes(apiName)) {
+          await this.logSecurityEvent({
+            id: `api-access-${Date.now()}`,
+            type: "violation",
+            severity: "high",
+            extensionId,
+            action: "api_access",
+            resource: apiName,
+            outcome: "blocked",
+            timestamp: Date.now(),
+            details: { reason: "API blocked by security policy" }
+          });
+          return false;
+        }
+        if (policy.allowedAPIs.includes(apiName)) {
+          await this.logSecurityEvent({
+            id: `api-access-${Date.now()}`,
+            type: "access",
+            severity: "low",
+            extensionId,
+            action: "api_access",
+            resource: apiName,
+            outcome: "allowed",
+            timestamp: Date.now(),
+            details: {}
+          });
+          return true;
+        }
+        await this.logSecurityEvent({
+          id: `api-access-${Date.now()}`,
+          type: "violation",
+          severity: "medium",
+          extensionId,
+          action: "api_access",
+          resource: apiName,
+          outcome: "denied",
+          timestamp: Date.now(),
+          details: { reason: "API not explicitly allowed" }
+        });
+        return false;
+      }
+      /**
+       * Check network access permission
+       */
+      async checkNetworkAccess(extensionId) {
+        const policy = this.getExtensionPolicy(extensionId);
+        if (!policy.networkAccess) {
+          await this.logSecurityEvent({
+            id: `network-access-${Date.now()}`,
+            type: "violation",
+            severity: "critical",
+            extensionId,
+            action: "network_access",
+            resource: "network",
+            outcome: "denied",
+            timestamp: Date.now(),
+            details: { reason: "Network access not allowed" }
+          });
+          return false;
+        }
+        await this.logSecurityEvent({
+          id: `network-access-${Date.now()}`,
+          type: "access",
+          severity: "medium",
+          extensionId,
+          action: "network_access",
+          resource: "network",
+          outcome: "allowed",
+          timestamp: Date.now(),
+          details: {}
+        });
+        return true;
+      }
+      /**
+       * Check file system access permission
+       */
+      async checkFileSystemAccess(extensionId) {
+        const policy = this.getExtensionPolicy(extensionId);
+        if (!policy.fileSystemAccess) {
+          await this.logSecurityEvent({
+            id: `filesystem-access-${Date.now()}`,
+            type: "violation",
+            severity: "high",
+            extensionId,
+            action: "filesystem_access",
+            resource: "filesystem",
+            outcome: "denied",
+            timestamp: Date.now(),
+            details: { reason: "File system access not allowed" }
+          });
+          return false;
+        }
+        await this.logSecurityEvent({
+          id: `filesystem-access-${Date.now()}`,
+          type: "access",
+          severity: "medium",
+          extensionId,
+          action: "filesystem_access",
+          resource: "filesystem",
+          outcome: "allowed",
+          timestamp: Date.now(),
+          details: {}
+        });
+        return true;
+      }
+      /**
+       * Get extension security policy
+       */
+      getExtensionPolicy(extensionId) {
+        if (this.policies.has(extensionId)) {
+          return this.policies.get(extensionId);
+        }
+        return this.policies.get("default");
+      }
+      /**
+       * Log security event with advanced threat detection
+       */
+      async logSecurityEvent(event) {
+        this.auditLog.push(event);
+        await this.detectThreatPatterns(event);
+        if (event.severity === "critical" || event.severity === "high") {
+          await this.escalateIncident(event);
+        }
+        console.log(
+          `[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`
+        );
+      }
+      /**
+       * Detect threat patterns in real-time
+       */
+      async detectThreatPatterns(event) {
+        const recentEvents = this.auditLog.filter(
+          (e) => Date.now() - e.timestamp < 6e4 && // Last minute
+          e.extensionId === event.extensionId
+        );
+        if (recentEvents.length >= 10) {
+          const threatEvent = {
+            id: `threat-detection-${Date.now()}`,
+            type: "violation",
+            severity: "critical",
+            extensionId: event.extensionId,
+            action: "threat_detection",
+            resource: "security_system",
+            outcome: "detected",
+            timestamp: Date.now(),
+            details: {
+              pattern: "rapid_fire_violations",
+              eventCount: recentEvents.length,
+              timeWindow: "1 minute"
+            }
+          };
+          this.auditLog.push(threatEvent);
+          await this.escalateIncident(threatEvent);
+          console.warn(
+            `[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`
+          );
+        }
+      }
+      /**
+       * Escalate security incident
+       */
+      async escalateIncident(event) {
+        const incident = {
+          id: `incident-${Date.now()}`,
+          severity: event.severity,
+          description: `Security ${event.type}: ${event.action} by extension ${event.extensionId}`,
+          actions: [
+            "Investigate security event",
+            "Notify security team",
+            "Review extension permissions"
+          ],
+          status: "open",
+          timestamp: Date.now()
+        };
+        this.incidents.push(incident);
+        console.warn(
+          `[SecurityService] Security incident escalated: ${incident.description}`
+        );
+      }
+      /**
+       * Set security policy for extension
+       */
+      async setSecurityPolicy(extensionId, policy) {
+        this.policies.set(extensionId, policy);
+        await this.logSecurityEvent({
+          id: `policy-update-${Date.now()}`,
+          type: "authorization",
+          severity: "low",
+          extensionId,
+          action: "policy_update",
+          resource: "security_policy",
+          outcome: "allowed",
+          timestamp: Date.now(),
+          details: { policy }
+        });
+        console.log(
+          `[SecurityService] Security policy updated for extension: ${extensionId}`
+        );
+      }
+      /**
+       * Get security policy for extension
+       */
+      async getSecurityPolicy(extensionId) {
+        return this.policies.get(extensionId);
+      }
+      /**
+       * Get audit log
+       */
+      getAuditLog() {
+        const violations = this.auditLog.filter(
+          (event) => event.outcome === "denied" || event.outcome === "blocked"
+        );
+        const authenticationFailures = this.auditLog.filter(
+          (event) => event.type === "authentication" && event.outcome === "denied"
+        );
+        const authorizationFailures = this.auditLog.filter(
+          (event) => event.type === "authorization" && event.outcome === "denied"
+        );
+        return {
+          events: [...this.auditLog],
+          summary: {
+            totalEvents: this.auditLog.length,
+            violations: violations.length,
+            authenticationFailures: authenticationFailures.length,
+            authorizationFailures: authorizationFailures.length,
+            lastUpdated: Date.now()
+          }
+        };
+      }
+      /**
+       * Get active incidents
+       */
+      getActiveIncidents() {
+        return this.incidents.filter(
+          (incident) => incident.status === "open" || incident.status === "investigating"
+        );
+      }
+      /**
+       * Resolve incident
+       */
+      async resolveIncident(incidentId, resolution) {
+        const incident = this.incidents.find((inc) => inc.id === incidentId);
+        if (incident) {
+          incident.status = "resolved";
+          incident.resolutionTime = Date.now() - incident.timestamp;
+          await this.logSecurityEvent({
+            id: `incident-resolve-${Date.now()}`,
+            type: "authorization",
+            severity: "low",
+            extensionId: "security-service",
+            action: "incident_resolution",
+            resource: incidentId,
+            outcome: "allowed",
+            timestamp: Date.now(),
+            details: { resolution }
+          });
+          console.log(`[SecurityService] Incident resolved: ${incidentId}`);
+        }
+      }
+      /**
+       * Generate security report
+       */
+      generateSecurityReport() {
+        const recommendations = [];
+        const auditLog = this.getAuditLog();
+        if (auditLog.summary.violations > 10) {
+          recommendations.push(
+            "Review security policies for frequent violations"
+          );
+        }
+        if (auditLog.summary.authenticationFailures > 5) {
+          recommendations.push("Investigate authentication failures");
+        }
+        if (this.getActiveIncidents().length > 0) {
+          recommendations.push("Address active security incidents");
+        }
+        return {
+          policies: this.policies.size,
+          auditLog,
+          activeIncidents: this.getActiveIncidents(),
+          recommendations
+        };
+      }
+      /**
+       * Stop security service
+       */
+      async stop() {
+        console.log("[SecurityService] Stopping security service");
+        this.securityActive = false;
+        await this.saveSecurityState();
+        console.log("[SecurityService] Security service stopped");
+      }
+      /**
+       * Save security state
+       */
+      async saveSecurityState() {
+        console.log("[SecurityService] Security state saved");
+      }
+    };
+    SecurityServiceLayer = Layer16.effect(
+      "SecurityService",
+      Effect19.sync(() => new SecurityService())
+    );
+    SecurityServiceLive = Layer16.effect(
+      "SecurityService",
+      Effect19.sync(() => new SecurityService())
+    );
+  }
+});
+
+// Source/Services/TerminalService.ts
+import { Context as Context17, Effect as Effect20, Layer as Layer17 } from "effect";
+var ITerminalService2, TerminalService, TerminalServiceLayer;
+var init_TerminalService = __esm({
+  "Source/Services/TerminalService.ts"() {
+    "use strict";
+    init_IMountainClientService();
+    ITerminalService2 = Context17.Tag("ITerminalService")();
+    TerminalService = class {
+      constructor(mountainClient) {
+        this.mountainClient = mountainClient;
+      }
+      mountainClient;
+      static {
+        __name(this, "TerminalService");
+      }
+      async createTerminal(name, shellPath, cwd2) {
+        console.log(`[Terminal] Creating terminal: ${name}`);
+        const terminalId = await this.mountainClient.sendRequest(
+          "terminal.create",
+          {
+            name,
+            shell_path: shellPath,
+            cwd: cwd2
+          }
+        );
+        return terminalId;
+      }
+      async sendText(terminalId, text) {
+        await this.mountainClient.sendRequest("terminal.write", {
+          id: terminalId,
+          data: text
         });
       }
-    }, "HandleDocumentChange");
-    HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Model of Models) {
-        const Uri2 = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
-        const Lines = Model?.Lines ?? Model?.lines;
-        const EOL = Model?.EOL ?? Model?.eol ?? "\n";
-        let Content;
-        if (Array.isArray(Lines)) {
-          Content = Lines.join(EOL);
-        } else {
-          Content = Model?.content ?? Model?.Content ?? Model?.text;
-        }
-        const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
-        if (Uri2 && Content !== void 0) {
-          DocumentContentCache.set(Uri2, Content);
-          DocumentVersionMap.set(Uri2, 1);
-          console.log(
-            `[DocumentContentHandler] Document opened: ${Uri2.slice(-60)} (${Content.length} chars)`
-          );
-          if (WorkspaceEventEmitter) {
-            const Document = BuildTextDocument(
-              Uri2,
-              Content,
-              1,
-              LanguageIdentifier
-            );
-            WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
-          }
-        }
+      async resize(terminalId, cols, rows) {
+        console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
       }
-    }, "HandleDocumentOpen");
-    HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Item of Items) {
-        const Uri2 = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
-        if (Uri2) {
-          if (WorkspaceEventEmitter) {
-            const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-            const Version = DocumentVersionMap.get(Uri2) ?? 1;
-            const Document = BuildTextDocument(Uri2, CachedContent, Version);
-            WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
-          }
-          DocumentContentCache.delete(Uri2);
-          DocumentVersionMap.delete(Uri2);
-        }
+      async kill(terminalId) {
+        console.log(`[Terminal] Kill ${terminalId}`);
       }
-    }, "HandleDocumentClose");
-    HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      if (!WorkspaceEventEmitter) return;
-      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Item of Items) {
-        const Uri2 = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
-        if (Uri2) {
-          const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-          const Version = DocumentVersionMap.get(Uri2) ?? 1;
-          const Document = BuildTextDocument(Uri2, CachedContent, Version);
-          WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
-        }
+    };
+    TerminalServiceLayer = Layer17.effect(
+      ITerminalService2,
+      Effect20.gen(function* () {
+        const mountainClient = yield* IMountainClientService;
+        return new TerminalService(mountainClient);
+      })
+    );
+  }
+});
+
+// Source/ServiceMapping.ts
+var ServiceMapping_exports = {};
+__export(ServiceMapping_exports, {
+  EffectServices: () => EffectServices,
+  OldStyleServices: () => OldStyleServices,
+  ServiceMapping: () => ServiceMapping
+});
+import { Layer as Layer18 } from "effect";
+var OldStyleServices, EffectServices, ServiceMapping;
+var init_ServiceMapping = __esm({
+  async "Source/ServiceMapping.ts"() {
+    "use strict";
+    await init_Effect();
+    await init_APIFactoryService();
+    init_Configuration();
+    init_ErrorHandlingService();
+    await init_ExtensionHostService();
+    init_ModuleInterceptorService();
+    init_MountainClientService();
+    init_MountainGRPCClient();
+    init_PerformanceMonitoringService();
+    init_SecurityService();
+    init_TerminalService();
+    OldStyleServices = {
+      /**
+       * Validate dependencies for old-style services
+       */
+      validateDependencies: /* @__PURE__ */ __name(() => Layer18.mergeAll(
+        MountainClientServiceLayer,
+        ConfigurationLayer,
+        ModuleInterceptorServiceLayer,
+        ExtensionHostLayer,
+        APIFactoryLayer,
+        TerminalServiceLayer,
+        SecurityServiceLive,
+        PerformanceMonitoringServiceLive,
+        ErrorHandlingServiceLive
+      ), "validateDependencies"),
+      /**
+       * Compose application layer for old-style services
+       */
+      composeAppLayer: /* @__PURE__ */ __name(() => {
+        const Base = Layer18.mergeAll(
+          MountainClientServiceLayer,
+          MountainGRPCClientLayer,
+          SecurityServiceLive,
+          PerformanceMonitoringServiceLive,
+          ErrorHandlingServiceLive
+        );
+        const Config = ConfigurationLayer.pipe(Layer18.provide(Base));
+        const Terminal = TerminalServiceLayer.pipe(Layer18.provide(Base));
+        const ModuleInt = ModuleInterceptorServiceLayer.pipe(
+          Layer18.provide(Base)
+        );
+        const API = APIFactoryLayer.pipe(
+          Layer18.provide(Base),
+          Layer18.provide(Config),
+          Layer18.provide(Terminal),
+          Layer18.provide(ModuleInt)
+        );
+        const ExtHost = ExtensionHostLayer.pipe(
+          Layer18.provide(Base),
+          Layer18.provide(Config),
+          Layer18.provide(API),
+          Layer18.provide(ModuleInt)
+        );
+        return Layer18.mergeAll(Base, Config, Terminal, API, ExtHost, ModuleInt);
+      }, "composeAppLayer")
+    };
+    EffectServices = {
+      /**
+       * Compose the main Effect-TS application layer
+       *
+       * Layer dependencies:
+       * - Telemetry (base, no dependencies)
+       * - Health (depends on Telemetry)
+       * - MountainClient (depends on Telemetry)
+       * - ModuleInterceptor (depends on Telemetry)
+       * - Extension (depends on Telemetry)
+       * - RPCServer (depends on Telemetry)
+       * - Bootstrap (depends on all above)
+       */
+      composeAppLayer: /* @__PURE__ */ __name(() => {
+        const Telemetry2 = TelemetryLive;
+        const Health = HealthLive.pipe(Layer18.provide(Telemetry2));
+        const MountainClient2 = MountainClientLive.pipe(
+          Layer18.provide(Telemetry2)
+        );
+        const ModuleInterceptor2 = ModuleInterceptorLive.pipe(
+          Layer18.provide(Telemetry2)
+        );
+        const Extension2 = ExtensionLive.pipe(Layer18.provide(Telemetry2));
+        const RPCServer2 = RPCServerLive.pipe(Layer18.provide(Telemetry2));
+        const Bootstrap = BootstrapLive.pipe(
+          Layer18.provide(Telemetry2),
+          Layer18.provide(Health),
+          Layer18.provide(MountainClient2),
+          Layer18.provide(ModuleInterceptor2),
+          Layer18.provide(Extension2),
+          Layer18.provide(RPCServer2)
+        );
+        return Layer18.mergeAll(
+          Telemetry2,
+          Health,
+          MountainClient2,
+          ModuleInterceptor2,
+          Extension2,
+          RPCServer2,
+          Bootstrap
+        );
+      }, "composeAppLayer"),
+      /**
+       * Get individual service layers for fine-grained composition
+       */
+      getTelemetry: /* @__PURE__ */ __name(() => TelemetryLive, "getTelemetry"),
+      getHealth: /* @__PURE__ */ __name(() => HealthLive, "getHealth"),
+      getMountainClient: /* @__PURE__ */ __name(() => MountainClientLive, "getMountainClient"),
+      getModuleInterceptor: /* @__PURE__ */ __name(() => ModuleInterceptorLive, "getModuleInterceptor"),
+      getExtension: /* @__PURE__ */ __name(() => ExtensionLive, "getExtension"),
+      getRPCServer: /* @__PURE__ */ __name(() => RPCServerLive, "getRPCServer"),
+      getBootstrap: /* @__PURE__ */ __name(() => BootstrapLive, "getBootstrap")
+    };
+    ServiceMapping = class {
+      static {
+        __name(this, "ServiceMapping");
       }
-    }, "HandleDocumentSave");
-    GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
-      return DocumentContentCache.get(Uri2) ?? null;
-    }, "GetDocumentContent");
-    DocumentContentHandler_default = {
-      HandleDocumentChange,
-      HandleDocumentOpen,
-      HandleDocumentClose,
-      HandleDocumentSave,
-      GetDocumentContent,
-      BuildTextDocument
+      /**
+       * Validate dependencies
+       */
+      static validateDependencies = /* @__PURE__ */ __name(() => OldStyleServices.validateDependencies(), "validateDependencies");
+      /**
+       * Compose application layer
+       */
+      static composeAppLayer = /* @__PURE__ */ __name(() => {
+        return OldStyleServices.composeAppLayer();
+      }, "composeAppLayer");
     };
   }
 });
@@ -24280,6 +28929,547 @@ var init_WindowNamespace = __esm({
   }
 });
 
+// Source/Interfaces/IPerformanceMonitoringService.ts
+var IPerformanceMonitoringService_exports = {};
+__export(IPerformanceMonitoringService_exports, {
+  IPerformanceMonitoringService: () => IPerformanceMonitoringService2
+});
+import { Context as Context18 } from "effect";
+var IPerformanceMonitoringService2;
+var init_IPerformanceMonitoringService = __esm({
+  "Source/Interfaces/IPerformanceMonitoringService.ts"() {
+    "use strict";
+    IPerformanceMonitoringService2 = Context18.Tag("IPerformanceMonitoringService");
+  }
+});
+
+// Source/Interfaces/ISecurityService.ts
+var ISecurityService_exports = {};
+__export(ISecurityService_exports, {
+  ISecurityService: () => ISecurityService2
+});
+import { Context as Context19 } from "effect";
+var ISecurityService2;
+var init_ISecurityService = __esm({
+  "Source/Interfaces/ISecurityService.ts"() {
+    "use strict";
+    ISecurityService2 = Context19.Tag("ISecurityService");
+  }
+});
+
+// Source/Services/Handler/RequestRoutingHandler.ts
+var RequestRoutingHandler_exports = {};
+__export(RequestRoutingHandler_exports, {
+  default: () => RequestRoutingHandler_default
+});
+var RouteRequest, RequestRoutingHandler_default;
+var init_RequestRoutingHandler = __esm({
+  "Source/Services/Handler/RequestRoutingHandler.ts"() {
+    "use strict";
+    RouteRequest = /* @__PURE__ */ __name(async (Method, Parameters) => {
+      console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
+      const RoutePatterns = {
+        "extension.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { IExtensionHostService: IExtensionHostService3 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
+          switch (Method2) {
+            case "extension.activate": {
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
+              return await ExtensionHostService2.activateExtension(
+                Params.extensionId,
+                Params.reason
+              );
+            }
+            case "extension.deactivate": {
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
+              await ExtensionHostService2.deactivateExtension(
+                Params.extensionId
+              );
+              return { success: true };
+            }
+            case "extension.get": {
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
+              return ExtensionHostService2.getActivatedExtension(
+                Params.extensionId
+              );
+            }
+            default:
+              throw new Error(`Unknown extension method: ${Method2}`);
+          }
+        }, "extension.\\w+"),
+        "configuration.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { IConfigurationService: IConfigurationService3 } = await Promise.resolve().then(() => (init_IConfigurationService(), IConfigurationService_exports));
+          switch (Method2) {
+            case "configuration.get": {
+              const ConfigService = await ServiceMapping2.getService(
+                IConfigurationService3
+              );
+              return await ConfigService.getValue(
+                Params.key,
+                Params.scope
+              );
+            }
+            case "configuration.set": {
+              const ConfigService = await ServiceMapping2.getService(
+                IConfigurationService3
+              );
+              await ConfigService.setValue(
+                Params.key,
+                Params.value,
+                Params.scope
+              );
+              return { success: true };
+            }
+            case "configuration.update": {
+              const ConfigService = await ServiceMapping2.getService(
+                IConfigurationService3
+              );
+              await ConfigService.updateValue(
+                Params.key,
+                Params.updater,
+                Params.scope
+              );
+              return { success: true };
+            }
+            default:
+              throw new Error(`Unknown configuration method: ${Method2}`);
+          }
+        }, "configuration.\\w+"),
+        // Mountain → Cocoon tree-children round-trip keyed on `viewId`.
+        // Emitted by `Mountain/Source/RPC/CocoonService/TreeView.rs::
+        // GetTreeChildren`. Unlike the `tree.*` legacy path that keys on the
+        // Cocoon-side `treeDataProvider:N` handle, this variant identifies
+        // providers by the same viewId the extension declared in its
+        // contributes.views manifest - the only stable key Mountain has.
+        "^\\$provideTreeChildren$": /* @__PURE__ */ __name(async (_Method, Params) => {
+          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const ViewId = Params?.viewId ?? Params?.[0];
+          const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
+          const Provider = TreeDataProvidersByViewId2.get(String(ViewId));
+          if (!Provider) {
+            return { items: [] };
+          }
+          const Element = ItemHandle ? ItemHandle : void 0;
+          const Children = await Provider.getChildren?.(Element) ?? [];
+          const Items = await Promise.all(
+            (Array.isArray(Children) ? Children : []).map(
+              async (Child, Index) => {
+                const Item = await Provider.getTreeItem?.(Child) ?? Child;
+                const Raw2 = Item;
+                const Label = typeof Raw2.label === "string" ? Raw2.label : Raw2.label?.label ?? "";
+                const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
+                const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
+                const CollapsibleState = Raw2.collapsibleState ?? 0;
+                return {
+                  handle: String(
+                    Raw2.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`
+                  ),
+                  label: Label,
+                  isCollapsed: CollapsibleState === 1,
+                  icon: String(Icon)
+                };
+              }
+            )
+          );
+          return { items: Items };
+        }, "^\\$provideTreeChildren$"),
+        "tree\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const Handle = Params?.handle ?? Params?.[0];
+          const Provider = TreeDataProviders2.get(String(Handle));
+          if (!Provider) {
+            throw new Error(
+              `TreeDataProvider handle not registered: ${Handle}`
+            );
+          }
+          switch (Method2) {
+            case "tree.getChildren": {
+              const Element = Params?.element ?? Params?.[1];
+              const Children = await Provider.getChildren?.(Element) ?? [];
+              return Array.isArray(Children) ? Children : [];
+            }
+            case "tree.getTreeItem": {
+              const Element = Params?.element ?? Params?.[1];
+              return await Provider.getTreeItem?.(Element) ?? null;
+            }
+            case "tree.getParent": {
+              const Element = Params?.element ?? Params?.[1];
+              return await Provider.getParent?.(Element) ?? null;
+            }
+            case "tree.resolveTreeItem": {
+              const Item = Params?.item ?? Params?.[1];
+              const Element = Params?.element ?? Params?.[2];
+              return await Provider.resolveTreeItem?.(Item, Element) ?? Item;
+            }
+            default:
+              throw new Error(`Unknown tree method: ${Method2}`);
+          }
+        }, "tree\\.\\w+"),
+        "webview\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { WebviewPanels: WebviewPanels2, WebviewViewProviders: WebviewViewProviders2, CustomEditorProviders: CustomEditorProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const Handle = Params?.handle ?? Params?.[0];
+          switch (Method2) {
+            case "webview.resolveView": {
+              const Provider = WebviewViewProviders2.get(String(Handle));
+              if (!Provider) {
+                throw new Error(
+                  `WebviewViewProvider handle not registered: ${Handle}`
+                );
+              }
+              const View = Params?.view ?? Params?.[1];
+              const Ctx = Params?.context ?? Params?.[2];
+              return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
+            }
+            case "webview.resolveCustomEditor": {
+              const Provider = CustomEditorProviders2.get(String(Handle));
+              if (!Provider) {
+                throw new Error(
+                  `CustomEditorProvider handle not registered: ${Handle}`
+                );
+              }
+              const Document = Params?.document ?? Params?.[1];
+              const Panel = Params?.panel ?? Params?.[2];
+              return await Provider.resolveCustomEditor?.(
+                Document,
+                Panel,
+                { asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath") }
+              ) ?? null;
+            }
+            default: {
+              const Panel = WebviewPanels2.get(String(Handle));
+              if (!Panel) return null;
+              return null;
+            }
+          }
+        }, "webview\\.\\w+"),
+        "performance.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { IPerformanceMonitoringService: IPerformanceMonitoringService3 } = await Promise.resolve().then(() => (init_IPerformanceMonitoringService(), IPerformanceMonitoringService_exports));
+          switch (Method2) {
+            case "performance.metrics": {
+              const PerfService = await ServiceMapping2.getService(
+                IPerformanceMonitoringService3
+              );
+              return PerfService.getMetrics();
+            }
+            case "performance.alerts": {
+              const PerfService = await ServiceMapping2.getService(
+                IPerformanceMonitoringService3
+              );
+              return PerfService.getAlerts();
+            }
+            case "performance.report": {
+              const PerfService = await ServiceMapping2.getService(
+                IPerformanceMonitoringService3
+              );
+              return PerfService.generateReport();
+            }
+            default:
+              throw new Error(`Unknown performance method: ${Method2}`);
+          }
+        }, "performance.\\w+"),
+        "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
+          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
+          const { ISecurityService: ISecurityService3 } = await Promise.resolve().then(() => (init_ISecurityService(), ISecurityService_exports));
+          switch (Method2) {
+            case "security.policy": {
+              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
+              return await SecurityService2.getSecurityPolicy(
+                Params.extensionId
+              );
+            }
+            case "security.audit": {
+              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
+              return SecurityService2.getAuditLog();
+            }
+            case "security.incidents": {
+              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
+              return SecurityService2.getActiveIncidents();
+            }
+            default:
+              throw new Error(`Unknown security method: ${Method2}`);
+          }
+        }, "security.\\w+")
+      };
+      for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
+        const Regex = new RegExp(Pattern);
+        if (Regex.test(Method)) {
+          return Handler(Method, Parameters);
+        }
+      }
+      return void 0;
+    }, "RouteRequest");
+    RequestRoutingHandler_default = RouteRequest;
+  }
+});
+
+// Source/Interfaces/IGRPCServerService.ts
+import { Context as Context20 } from "effect";
+var IGRPCServerService;
+var init_IGRPCServerService = __esm({
+  "Source/Interfaces/IGRPCServerService.ts"() {
+    "use strict";
+    IGRPCServerService = Context20.GenericTag("IGRPCServerService");
+  }
+});
+
+// Source/Services/Handler/DocumentContentHandler.ts
+var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
+var init_DocumentContentHandler = __esm({
+  "Source/Services/Handler/DocumentContentHandler.ts"() {
+    "use strict";
+    InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
+      const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
+      if (!ExtensionMatch?.[1]) return "plaintext";
+      const Extension2 = ExtensionMatch[1].toLowerCase();
+      const LanguageMap = {
+        ts: "typescript",
+        tsx: "typescriptreact",
+        js: "javascript",
+        jsx: "javascriptreact",
+        json: "json",
+        jsonc: "jsonc",
+        md: "markdown",
+        html: "html",
+        htm: "html",
+        css: "css",
+        scss: "scss",
+        less: "less",
+        xml: "xml",
+        yaml: "yaml",
+        yml: "yaml",
+        toml: "toml",
+        rs: "rust",
+        py: "python",
+        rb: "ruby",
+        go: "go",
+        java: "java",
+        c: "c",
+        cpp: "cpp",
+        h: "c",
+        hpp: "cpp",
+        cs: "csharp",
+        swift: "swift",
+        sh: "shellscript",
+        bash: "shellscript",
+        zsh: "shellscript",
+        ps1: "powershell",
+        sql: "sql",
+        graphql: "graphql",
+        proto: "proto3",
+        dockerfile: "dockerfile",
+        vue: "vue",
+        svelte: "svelte",
+        astro: "astro",
+        txt: "plaintext"
+      };
+      return LanguageMap[Extension2] ?? "plaintext";
+    }, "InferLanguageIdentifier");
+    BuildTextDocument = /* @__PURE__ */ __name((Uri2, Content, Version = 1, LanguageIdentifier) => {
+      const Lines = Content.split(/\r?\n/);
+      const FileName = Uri2.replace(/^file:\/\//, "");
+      const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri2);
+      return {
+        uri: {
+          scheme: "file",
+          path: FileName,
+          fsPath: FileName,
+          authority: "",
+          query: "",
+          fragment: "",
+          with: /* @__PURE__ */ __name(() => ({}), "with"),
+          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
+          toJSON: /* @__PURE__ */ __name(() => ({
+            scheme: "file",
+            path: FileName,
+            fsPath: FileName
+          }), "toJSON")
+        },
+        fileName: FileName,
+        languageId: ResolvedLanguage,
+        version: Version,
+        lineCount: Lines.length,
+        getText: /* @__PURE__ */ __name((Range3) => {
+          if (!Range3) return Content;
+          const StartLine = Range3?.start?.line ?? 0;
+          const StartCharacter = Range3?.start?.character ?? 0;
+          const EndLine = Range3?.end?.line ?? Lines.length - 1;
+          const EndCharacter = Range3?.end?.character ?? Lines[EndLine]?.length ?? 0;
+          if (StartLine === EndLine) {
+            return (Lines[StartLine] ?? "").substring(
+              StartCharacter,
+              EndCharacter
+            );
+          }
+          const Result = [];
+          Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
+          for (let Index = StartLine + 1; Index < EndLine; Index++) {
+            Result.push(Lines[Index] ?? "");
+          }
+          Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
+          return Result.join("\n");
+        }, "getText"),
+        lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
+          const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
+          const Text = Lines[LineNumber] ?? "";
+          return {
+            text: Text,
+            lineNumber: LineNumber,
+            range: {
+              start: { line: LineNumber, character: 0 },
+              end: { line: LineNumber, character: Text.length }
+            },
+            isEmptyOrWhitespace: Text.trim().length === 0
+          };
+        }, "lineAt"),
+        isUntitled: false,
+        isDirty: false,
+        isClosed: false,
+        eol: 1,
+        // EndOfLine.LF
+        offsetAt: /* @__PURE__ */ __name((Position3) => {
+          let Offset = 0;
+          for (let Index = 0; Index < Position3.line && Index < Lines.length; Index++) {
+            Offset += (Lines[Index]?.length ?? 0) + 1;
+          }
+          return Offset + Position3.character;
+        }, "offsetAt"),
+        positionAt: /* @__PURE__ */ __name((Offset) => {
+          let Remaining = Offset;
+          for (let Index = 0; Index < Lines.length; Index++) {
+            const LineLength = (Lines[Index]?.length ?? 0) + 1;
+            if (Remaining < LineLength) {
+              return { line: Index, character: Remaining };
+            }
+            Remaining -= LineLength;
+          }
+          return {
+            line: Lines.length - 1,
+            character: Lines[Lines.length - 1]?.length ?? 0
+          };
+        }, "positionAt"),
+        validateRange: /* @__PURE__ */ __name((Range3) => Range3, "validateRange"),
+        validatePosition: /* @__PURE__ */ __name((Position3) => Position3, "validatePosition"),
+        getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+        save: /* @__PURE__ */ __name(async () => false, "save")
+      };
+    }, "BuildTextDocument");
+    DocumentVersionMap = /* @__PURE__ */ new Map();
+    HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      let Uri2;
+      let EventData;
+      if (Array.isArray(Parameters) && Parameters.length >= 2) {
+        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+        EventData = Parameters[1];
+      } else {
+        Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+        EventData = Parameters;
+      }
+      const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
+      if (Uri2 && Content !== void 0) {
+        DocumentContentCache.set(Uri2, Content);
+      } else if (Uri2 && (EventData?.changes || Parameters?.changes)) {
+        const Existing = DocumentContentCache.get(Uri2) ?? "";
+        let Updated = Existing;
+        const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
+        const Sorted = [...Changes].sort(
+          (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
+        );
+        for (const Change of Sorted) {
+          const Offset = Change.rangeOffset ?? 0;
+          const Length = Change.rangeLength ?? 0;
+          const Text = Change.text ?? "";
+          Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+        }
+        DocumentContentCache.set(Uri2, Updated);
+      }
+      if (Uri2 && WorkspaceEventEmitter) {
+        const CurrentVersion = (DocumentVersionMap.get(Uri2) ?? 1) + 1;
+        DocumentVersionMap.set(Uri2, CurrentVersion);
+        const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+        const Document = BuildTextDocument(Uri2, CachedContent, CurrentVersion);
+        WorkspaceEventEmitter.emit("didChangeTextDocument", {
+          document: Document,
+          contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
+          reason: void 0
+        });
+      }
+    }, "HandleDocumentChange");
+    HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Model of Models) {
+        const Uri2 = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
+        const Lines = Model?.Lines ?? Model?.lines;
+        const EOL = Model?.EOL ?? Model?.eol ?? "\n";
+        let Content;
+        if (Array.isArray(Lines)) {
+          Content = Lines.join(EOL);
+        } else {
+          Content = Model?.content ?? Model?.Content ?? Model?.text;
+        }
+        const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
+        if (Uri2 && Content !== void 0) {
+          DocumentContentCache.set(Uri2, Content);
+          DocumentVersionMap.set(Uri2, 1);
+          console.log(
+            `[DocumentContentHandler] Document opened: ${Uri2.slice(-60)} (${Content.length} chars)`
+          );
+          if (WorkspaceEventEmitter) {
+            const Document = BuildTextDocument(
+              Uri2,
+              Content,
+              1,
+              LanguageIdentifier
+            );
+            WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
+          }
+        }
+      }
+    }, "HandleDocumentOpen");
+    HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Item of Items) {
+        const Uri2 = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+        if (Uri2) {
+          if (WorkspaceEventEmitter) {
+            const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+            const Version = DocumentVersionMap.get(Uri2) ?? 1;
+            const Document = BuildTextDocument(Uri2, CachedContent, Version);
+            WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
+          }
+          DocumentContentCache.delete(Uri2);
+          DocumentVersionMap.delete(Uri2);
+        }
+      }
+    }, "HandleDocumentClose");
+    HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      if (!WorkspaceEventEmitter) return;
+      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Item of Items) {
+        const Uri2 = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+        if (Uri2) {
+          const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+          const Version = DocumentVersionMap.get(Uri2) ?? 1;
+          const Document = BuildTextDocument(Uri2, CachedContent, Version);
+          WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
+        }
+      }
+    }, "HandleDocumentSave");
+    GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
+      return DocumentContentCache.get(Uri2) ?? null;
+    }, "GetDocumentContent");
+    DocumentContentHandler_default = {
+      HandleDocumentChange,
+      HandleDocumentOpen,
+      HandleDocumentClose,
+      HandleDocumentSave,
+      GetDocumentContent,
+      BuildTextDocument
+    };
+  }
+});
+
 // Source/Utility/GlobToRegex.ts
 var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
 var init_GlobToRegex = __esm({
@@ -24641,107 +29831,6 @@ var init_FindFiles = __esm({
   }
 });
 
-// Source/Utility/LandFixLog.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
-var init_LandFixLog = __esm({
-  "Source/Utility/LandFixLog.ts"() {
-    "use strict";
-    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
-    Enabled = Mode !== "off";
-    Long = Mode === "long";
-    DebugEnabled = Long;
-    AllowList = (() => {
-      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw2 || Raw2.trim().length === 0) return void 0;
-      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
-      return Tags.length === 0 ? void 0 : new Set(Tags);
-    })();
-    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
-    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
-    FormatTimestamp = /* @__PURE__ */ __name(() => {
-      const Now = /* @__PURE__ */ new Date();
-      if (Long) return Now.toISOString();
-      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
-        Now.getSeconds()
-      )}.${PadThree(Now.getMilliseconds())}`;
-    }, "FormatTimestamp");
-    SerializeContext = /* @__PURE__ */ __name((Context21) => {
-      const Seen = /* @__PURE__ */ new WeakSet();
-      try {
-        return JSON.stringify(Context21, (_Key, Value) => {
-          if (Value instanceof Error) {
-            return { name: Value.name, message: Value.message };
-          }
-          if (typeof Value === "bigint") return String(Value);
-          if (typeof Value === "function") return "[Function]";
-          if (typeof Value === "object" && Value !== null) {
-            if (Seen.has(Value)) return "[Circular]";
-            Seen.add(Value);
-          }
-          return Value;
-        });
-      } catch {
-        return '"[Unserializable]"';
-      }
-    }, "SerializeContext");
-    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
-    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context21) => {
-      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
-      if (!Context21) return `${Head}
-`;
-      return `${Head} ${SerializeContext(Context21)}
-`;
-    }, "FormatLine");
-    Emit = /* @__PURE__ */ __name((Stream2, Level, Tag, Message, Context21) => {
-      if (!Enabled) return;
-      if (AllowList && !AllowList.has(Tag)) return;
-      try {
-        Stream2.write(FormatLine(Level, Tag, Message, Context21));
-      } catch {
-      }
-    }, "Emit");
-    Info = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      Emit(process.stdout, "info", Tag, Message, Context21);
-    }, "Info");
-    Warn = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      Emit(process.stdout, "warn", Tag, Message, Context21);
-    }, "Warn");
-    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      Emit(process.stderr, "error", Tag, Message, Context21);
-    }, "ErrorLog");
-    Debug = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      if (!DebugEnabled) return;
-      Emit(process.stdout, "debug", Tag, Message, Context21);
-    }, "Debug");
-    SeenOnce = /* @__PURE__ */ new Set();
-    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context21) => {
-      if (!DebugEnabled) return;
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "debug", Tag, Message, Context21);
-    }, "DebugOnce");
-    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context21) => {
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "info", Tag, Message, Context21);
-    }, "InfoOnce");
-    LandFixLog = {
-      Info,
-      InfoOnce,
-      Warn,
-      Error: ErrorLog,
-      Debug,
-      DebugOnce,
-      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
-      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
-      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
-    };
-    LandFixLog_default = LandFixLog;
-  }
-});
-
 // Source/Utility/Tier.ts
 var Injected, Pick, Tier, Tier_default;
 var init_Tier = __esm({
@@ -24894,7 +29983,7 @@ var init_FileSystemWatcher = __esm({
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
 var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
-var init_Configuration = __esm({
+var init_Configuration2 = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
     "use strict";
     init_DevLog();
@@ -25409,7 +30498,7 @@ var init_Index = __esm({
     "use strict";
     init_FindFiles();
     init_FileSystemWatcher();
-    init_Configuration();
+    init_Configuration2();
     init_TextDocument();
     init_Providers();
     init_FileSystemNamespace();
@@ -28811,5091 +33900,6 @@ var init_NotificationHandler = __esm({
   }
 });
 
-// Source/Effect/Telemetry.ts
-import {
-  Context as Context8,
-  Effect as Effect8,
-  HashMap,
-  Layer as Layer6,
-  Option,
-  Ref,
-  Stream,
-  SubscriptionRef
-} from "effect";
-var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
-var init_Telemetry = __esm({
-  "Source/Effect/Telemetry.ts"() {
-    "use strict";
-    TelemetryCollectionError = class extends Error {
-      constructor(operation, cause) {
-        super(
-          `Telemetry collection failed for '${operation}': ${String(cause)}`
-        );
-        this.operation = operation;
-        this.cause = cause;
-      }
-      operation;
-      cause;
-      static {
-        __name(this, "TelemetryCollectionError");
-      }
-      _tag = "TelemetryCollectionError";
-    };
-    TelemetryTag = class extends Context8.Tag("Cocoon/Telemetry")() {
-      static {
-        __name(this, "TelemetryTag");
-      }
-    };
-    Telemetry = TelemetryTag;
-    TelemetryLive = Layer6.effect(
-      Telemetry,
-      Effect8.gen(function* () {
-        const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
-        const spansRef = yield* SubscriptionRef.make(HashMap.empty());
-        const eventsRef = yield* SubscriptionRef.make([]);
-        const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect8.gen(function* () {
-          const metric = {
-            name,
-            value,
-            timestamp: Date.now(),
-            labels
-          };
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            {
-              type: "metric",
-              timestamp: metric.timestamp,
-              data: metric
-            }
-          ]);
-          const currentMetrics = yield* metricsRef.get;
-          const nameMetrics = HashMap.get(currentMetrics, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          yield* Ref.set(
-            metricsRef,
-            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
-          );
-        }), "recordMetric");
-        const startSpan = /* @__PURE__ */ __name((name, labels) => Effect8.gen(function* () {
-          const startTime = Date.now();
-          const span = {
-            name,
-            startTime,
-            success: false,
-            labels: labels ?? {}
-          };
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "span", timestamp: startTime, data: span }
-          ]);
-          return {
-            end: /* @__PURE__ */ __name((success, error) => Effect8.gen(function* () {
-              const endTime = Date.now();
-              const completedSpan = {
-                ...span,
-                endTime,
-                duration: endTime - startTime,
-                success,
-                error
-              };
-              const events2 = yield* eventsRef.get;
-              yield* Ref.set(eventsRef, [
-                ...events2,
-                {
-                  type: "span",
-                  timestamp: endTime,
-                  data: completedSpan
-                }
-              ]);
-              const currentSpans = yield* spansRef.get;
-              const nameSpans = HashMap.get(
-                currentSpans,
-                name
-              ).pipe(Option.getOrElse(() => []));
-              yield* Ref.set(
-                spansRef,
-                HashMap.set(currentSpans, name, [
-                  ...nameSpans,
-                  completedSpan
-                ])
-              );
-            }), "end")
-          };
-        }), "startSpan");
-        const log = /* @__PURE__ */ __name((level, message, context) => Effect8.gen(function* () {
-          const logEntry = {
-            level,
-            message,
-            context
-          };
-          const timestamp = Date.now();
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "log", timestamp, data: logEntry }
-          ]);
-          const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-          let ContextText = "";
-          if (context && Object.keys(context).length > 0) {
-            try {
-              ContextText = ` ${JSON.stringify(context)}`;
-            } catch {
-              ContextText = " [unserializable-context]";
-            }
-          }
-          const Line = `${Prefix} ${message}${ContextText}
-`;
-          const Stream2 = level === "error" ? process.stderr : process.stdout;
-          try {
-            Stream2.write(Line);
-          } catch {
-          }
-        }), "log");
-        const getMetrics = /* @__PURE__ */ __name((name) => Effect8.gen(function* () {
-          const metrics = yield* metricsRef.get;
-          return HashMap.get(metrics, name).pipe(
-            Option.getOrElse(() => [])
-          );
-        }), "getMetrics");
-        const getAverageDuration = /* @__PURE__ */ __name((name) => Effect8.gen(function* () {
-          const spans = yield* spansRef.get;
-          const nameSpans = HashMap.get(spans, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          if (nameSpans.length === 0) {
-            return 0;
-          }
-          const totalDuration = nameSpans.reduce(
-            (sum2, span) => {
-              return sum2 + (span.duration ?? 0);
-            },
-            0
-          );
-          return totalDuration / nameSpans.length;
-        }), "getAverageDuration");
-        const getSuccessRate = /* @__PURE__ */ __name((name) => Effect8.gen(function* () {
-          const spans = yield* spansRef.get;
-          const nameSpans = HashMap.get(spans, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          if (nameSpans.length === 0) {
-            return 1;
-          }
-          const successCount = nameSpans.filter(
-            (span) => span.success
-          ).length;
-          return successCount / nameSpans.length;
-        }), "getSuccessRate");
-        const flush = Effect8.gen(function* () {
-          yield* Ref.set(metricsRef, HashMap.empty());
-          yield* Ref.set(spansRef, HashMap.empty());
-          yield* Ref.set(eventsRef, []);
-        });
-        return {
-          recordMetric,
-          startSpan,
-          log,
-          events: eventsRef.changes,
-          getMetrics,
-          getAverageDuration,
-          getSuccessRate,
-          flush
-        };
-      })
-    );
-    makeMockTelemetry = /* @__PURE__ */ __name(() => ({
-      recordMetric: /* @__PURE__ */ __name(() => Effect8.void, "recordMetric"),
-      startSpan: /* @__PURE__ */ __name(() => Effect8.succeed({
-        end: /* @__PURE__ */ __name(() => Effect8.void, "end")
-      }), "startSpan"),
-      log: /* @__PURE__ */ __name((level, message, context) => Effect8.sync(() => {
-        const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-        let ContextText = "";
-        if (context && Object.keys(context).length > 0) {
-          try {
-            ContextText = ` ${JSON.stringify(context)}`;
-          } catch {
-            ContextText = " [unserializable-context]";
-          }
-        }
-        const Stream2 = level === "error" ? process.stderr : process.stdout;
-        try {
-          Stream2.write(`${Prefix} ${message}${ContextText}
-`);
-        } catch {
-        }
-      }), "log"),
-      events: Stream.empty,
-      getMetrics: /* @__PURE__ */ __name(() => Effect8.succeed([]), "getMetrics"),
-      getAverageDuration: /* @__PURE__ */ __name(() => Effect8.succeed(0), "getAverageDuration"),
-      getSuccessRate: /* @__PURE__ */ __name(() => Effect8.succeed(1), "getSuccessRate"),
-      flush: Effect8.void
-    }), "makeMockTelemetry");
-    TelemetryMock = Layer6.effect(
-      Telemetry,
-      Effect8.succeed(makeMockTelemetry())
-    );
-    withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect8.gen(function* () {
-      const telemetry = yield* Telemetry;
-      const span = yield* telemetry.startSpan(name, labels);
-      const result = yield* effect.pipe(
-        Effect8.catchAll(
-          (error) => Effect8.gen(function* () {
-            yield* span.end(false, String(error));
-            return yield* Effect8.fail(error);
-          })
-        )
-      );
-      yield* span.end(true);
-      return result;
-    }), "withSpan");
-  }
-});
-
-// Source/Effect/Extension.ts
-import {
-  Context as Context9,
-  Effect as Effect9,
-  HashMap as HashMap2,
-  Layer as Layer7,
-  Option as Option2,
-  Ref as Ref2,
-  SubscriptionRef as SubscriptionRef2
-} from "effect";
-var ExtensionNotFoundError, ExtensionActivationError, ExtensionDeactivationError, ExtensionTag, Extension, ExtensionLive, makeMockExtension, ExtensionMock;
-var init_Extension = __esm({
-  "Source/Effect/Extension.ts"() {
-    "use strict";
-    init_Telemetry();
-    ExtensionNotFoundError = class extends Error {
-      constructor(extensionId) {
-        super(`Extension not found: ${extensionId}`);
-        this.extensionId = extensionId;
-      }
-      extensionId;
-      static {
-        __name(this, "ExtensionNotFoundError");
-      }
-      _tag = "ExtensionNotFoundError";
-    };
-    ExtensionActivationError = class extends Error {
-      constructor(extensionId, cause) {
-        super(
-          `Failed to activate extension '${extensionId}': ${String(cause)}`
-        );
-        this.extensionId = extensionId;
-        this.cause = cause;
-      }
-      extensionId;
-      cause;
-      static {
-        __name(this, "ExtensionActivationError");
-      }
-      _tag = "ExtensionActivationError";
-    };
-    ExtensionDeactivationError = class extends Error {
-      constructor(extensionId, cause) {
-        super(
-          `Failed to deactivate extension '${extensionId}': ${String(cause)}`
-        );
-        this.extensionId = extensionId;
-        this.cause = cause;
-      }
-      extensionId;
-      cause;
-      static {
-        __name(this, "ExtensionDeactivationError");
-      }
-      _tag = "ExtensionDeactivationError";
-    };
-    ExtensionTag = class extends Context9.Tag("Cocoon/Extension")() {
-      static {
-        __name(this, "ExtensionTag");
-      }
-    };
-    Extension = ExtensionTag;
-    ExtensionLive = Layer7.effect(
-      Extension,
-      Effect9.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const extensionsRef = yield* SubscriptionRef2.make(HashMap2.empty());
-        const getAll = Effect9.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          return Array.from(HashMap2.values(extensions));
-        });
-        const getById = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
-          }
-          return extension.value;
-        }), "getById");
-        const activate = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
-          const startTime = Date.now();
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
-          }
-          const current = extension.value;
-          if (current.state._tag === "Active") {
-            return {
-              extensionId: id2,
-              success: true,
-              activationTime: 0,
-              error: void 0
-            };
-          }
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(extensions, id2, {
-              ...current,
-              state: { _tag: "Activating", startTime }
-            })
-          );
-          telemetry.log(
-            "info",
-            `[Extension] Activating extension: ${id2}`
-          );
-          yield* Effect9.sleep("10 millis");
-          const activationTime = Date.now() - startTime;
-          const updatedExtensions = yield* extensionsRef.get;
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(updatedExtensions, id2, {
-              ...current,
-              state: { _tag: "Active", activatedAt: startTime },
-              activatedAt: startTime,
-              activationTime
-            })
-          );
-          telemetry.log(
-            "info",
-            `[Extension] Activated extension: ${id2} (${activationTime}ms)`
-          );
-          return {
-            extensionId: id2,
-            success: true,
-            activationTime,
-            error: void 0
-          };
-        }).pipe(
-          Effect9.catchAll(
-            (error) => Effect9.gen(function* () {
-              if (error instanceof ExtensionNotFoundError) {
-                return yield* Effect9.fail(error);
-              }
-              const extensions = yield* extensionsRef.get;
-              yield* Ref2.set(
-                extensionsRef,
-                HashMap2.set(extensions, id2, {
-                  ...HashMap2.get(extensions, id2).pipe(
-                    Option2.getOrElse(() => ({
-                      id: id2,
-                      manifest: {
-                        id: id2,
-                        name: "Unknown",
-                        version: "0.0.0",
-                        description: "",
-                        publisher: "",
-                        entryPoint: "",
-                        enabled: true,
-                        activationEvents: [],
-                        dependencies: [],
-                        contributes: {}
-                      },
-                      state: { _tag: "Idle" },
-                      activatedAt: void 0,
-                      activationTime: void 0
-                    }))
-                  ),
-                  state: { _tag: "Error", error: String(error) }
-                })
-              );
-              telemetry.log(
-                "error",
-                `[Extension] Failed to activate ${id2}: ${String(error)}`
-              );
-              return yield* Effect9.fail(
-                new ExtensionActivationError(id2, error)
-              );
-            })
-          )
-        ), "activate");
-        const deactivate = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
-          }
-          const current = extension.value;
-          if (current.state._tag === "Deactivated" || current.state._tag === "Idle") {
-            return {
-              extensionId: id2,
-              success: true,
-              error: void 0
-            };
-          }
-          telemetry.log(
-            "info",
-            `[Extension] Deactivating extension: ${id2}`
-          );
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(extensions, id2, {
-              ...current,
-              state: { _tag: "Deactivating" }
-            })
-          );
-          yield* Effect9.sleep("5 millis");
-          const updatedExtensions = yield* extensionsRef.get;
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(updatedExtensions, id2, {
-              ...current,
-              state: { _tag: "Deactivated" }
-            })
-          );
-          telemetry.log(
-            "info",
-            `[Extension] Deactivated extension: ${id2}`
-          );
-          return {
-            extensionId: id2,
-            success: true,
-            error: void 0
-          };
-        }).pipe(
-          Effect9.catchAll(
-            (error) => Effect9.gen(function* () {
-              if (error instanceof ExtensionNotFoundError) {
-                return yield* Effect9.fail(error);
-              }
-              telemetry.log(
-                "error",
-                `[Extension] Failed to deactivate ${id2}: ${String(error)}`
-              );
-              return yield* Effect9.fail(
-                new ExtensionDeactivationError(id2, error)
-              );
-            })
-          )
-        ), "deactivate");
-        const isActive = /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return false;
-          }
-          return extension.value.state._tag === "Active";
-        }), "isActive");
-        const getActiveCount = Effect9.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const values = Array.from(HashMap2.values(extensions));
-          return values.filter((ext) => ext.state._tag === "Active").length;
-        });
-        const stateChanges = Effect9.map(extensionsRef.get, (extensions) => {
-          const result = {};
-          for (const [id2, host] of HashMap2.entries(extensions)) {
-            result[id2] = host.state;
-          }
-          return result;
-        });
-        return {
-          getAll,
-          getById,
-          activate,
-          deactivate,
-          isActive,
-          getActiveCount,
-          stateChanges
-        };
-      })
-    );
-    makeMockExtension = /* @__PURE__ */ __name((extensions = []) => {
-      const mockExtensions = extensions.map((manifest) => ({
-        id: manifest.id,
-        manifest,
-        state: { _tag: "Idle" },
-        activatedAt: void 0,
-        activationTime: void 0
-      }));
-      return {
-        getAll: Effect9.succeed(mockExtensions),
-        getById: /* @__PURE__ */ __name((id2) => Effect9.gen(function* () {
-          const ext = mockExtensions.find((e) => e.id === id2);
-          if (!ext) {
-            return yield* Effect9.fail(new ExtensionNotFoundError(id2));
-          }
-          return ext;
-        }), "getById"),
-        activate: /* @__PURE__ */ __name((id2) => Effect9.succeed({
-          extensionId: id2,
-          success: true,
-          activationTime: 10,
-          error: void 0
-        }), "activate"),
-        deactivate: /* @__PURE__ */ __name((id2) => Effect9.succeed({
-          extensionId: id2,
-          success: true,
-          error: void 0
-        }), "deactivate"),
-        isActive: /* @__PURE__ */ __name((id2) => Effect9.succeed(
-          mockExtensions.some(
-            (e) => e.id === id2 && e.state._tag === "Active"
-          )
-        ), "isActive"),
-        getActiveCount: Effect9.succeed(0),
-        stateChanges: Effect9.succeed({})
-      };
-    }, "makeMockExtension");
-    ExtensionMock = Layer7.effect(
-      Extension,
-      Effect9.succeed(makeMockExtension())
-    );
-  }
-});
-
-// Source/Effect/Health.ts
-import { Context as Context10, Effect as Effect10, Layer as Layer8, Schedule } from "effect";
-var HealthTag, createServiceHealth, makeHealthChecker, HealthLive, makeMockHealth, HealthMock;
-var init_Health = __esm({
-  "Source/Effect/Health.ts"() {
-    "use strict";
-    init_Telemetry();
-    HealthTag = class extends Context10.Tag("Cocoon/Health")() {
-      static {
-        __name(this, "HealthTag");
-      }
-    };
-    createServiceHealth = /* @__PURE__ */ __name((name, status2, message, responseTime, details) => ({
-      serviceName: name,
-      status: status2,
-      message,
-      lastChecked: Date.now(),
-      responseTime,
-      details
-    }), "createServiceHealth");
-    makeHealthChecker = /* @__PURE__ */ __name(() => ({
-      checkService: /* @__PURE__ */ __name((serviceName) => Effect10.gen(function* () {
-        const startTime = Date.now();
-        switch (serviceName.toLowerCase()) {
-          case "environment": {
-            const envTime = Date.now() - startTime;
-            return createServiceHealth(
-              "Environment",
-              "healthy",
-              "Environment service available",
-              envTime
-            );
-          }
-          case "telemetry": {
-            const telemetryService = yield* TelemetryTag;
-            const telemetryTime = Date.now() - startTime;
-            return yield* telemetryService.log("info", "[Health] Telemetry health check").pipe(
-              Effect10.map(
-                () => createServiceHealth(
-                  "Telemetry",
-                  "healthy",
-                  "Telemetry service available",
-                  telemetryTime
-                )
-              ),
-              Effect10.catchAll(
-                () => Effect10.succeed(
-                  createServiceHealth(
-                    "Telemetry",
-                    "unhealthy",
-                    "Telemetry service error",
-                    telemetryTime
-                  )
-                )
-              )
-            );
-          }
-          case "grpc": {
-            const grpcTime = Date.now() - startTime;
-            return createServiceHealth(
-              "gRPC",
-              "healthy",
-              "gRPC service available",
-              grpcTime
-            );
-          }
-          case "extension": {
-            const extensionTime = Date.now() - startTime;
-            return createServiceHealth(
-              "Extension",
-              "healthy",
-              "Extension service available",
-              extensionTime
-            );
-          }
-          default:
-            return createServiceHealth(
-              serviceName,
-              "unknown",
-              `Unknown service: ${serviceName}`,
-              0
-            );
-        }
-      }), "checkService"),
-      checkAllServices: /* @__PURE__ */ __name(() => Effect10.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const services = [
-          "environment",
-          "telemetry",
-          "grpc",
-          "extension"
-        ];
-        const healthChecker = makeHealthChecker();
-        telemetry.log(
-          "info",
-          "[Health] Running health checks for all services..."
-        );
-        const healthResults = yield* Effect10.all(
-          services.map((service) => healthChecker.checkService(service))
-        );
-        const unhealthyCount = healthResults.filter(
-          (h) => h.status === "unhealthy"
-        ).length;
-        const degradedCount = healthResults.filter(
-          (h) => h.status === "degraded"
-        ).length;
-        let overallStatus = "healthy";
-        if (unhealthyCount > 0) {
-          overallStatus = "unhealthy";
-        } else if (degradedCount > 0) {
-          overallStatus = "degraded";
-        }
-        return {
-          overallStatus,
-          services: healthResults,
-          systemInfo: {
-            platform: process.platform,
-            architecture: process.arch,
-            nodeVersion: process.version,
-            upSince: Date.now()
-          },
-          lastChecked: Date.now()
-        };
-      }), "checkAllServices"),
-      getOverallStatus: /* @__PURE__ */ __name(() => Effect10.gen(function* () {
-        const healthChecker = makeHealthChecker();
-        const systemHealth = yield* healthChecker.checkAllServices();
-        return systemHealth.overallStatus;
-      }), "getOverallStatus"),
-      monitorService: /* @__PURE__ */ __name((serviceName, intervalMs) => Effect10.gen(function* () {
-        yield* makeHealthChecker().checkService(serviceName).pipe(Effect10.repeat(Schedule.spaced(`${intervalMs} millis`)));
-      }), "monitorService")
-    }), "makeHealthChecker");
-    HealthLive = Layer8.effect(
-      HealthTag,
-      Effect10.succeed(makeHealthChecker())
-    );
-    makeMockHealth = /* @__PURE__ */ __name((overrides) => ({
-      checkService: /* @__PURE__ */ __name((serviceName) => Effect10.gen(function* () {
-        const defaultStatus = "healthy";
-        const status2 = overrides?.[serviceName] ?? defaultStatus;
-        return createServiceHealth(
-          serviceName,
-          status2,
-          status2 === "healthy" ? "Mock service healthy" : "Mock service unhealthy",
-          0
-        );
-      }), "checkService"),
-      checkAllServices: /* @__PURE__ */ __name(() => Effect10.gen(function* () {
-        const services = ["environment", "telemetry", "grpc", "extension"];
-        const results = services.map(
-          (name) => createServiceHealth(
-            name,
-            overrides?.[name] ?? "healthy",
-            "Mock service check",
-            0
-          )
-        );
-        return {
-          overallStatus: "healthy",
-          services: results,
-          systemInfo: {
-            platform: "mock",
-            architecture: "mock",
-            nodeVersion: "mock",
-            upSince: Date.now()
-          },
-          lastChecked: Date.now()
-        };
-      }), "checkAllServices"),
-      getOverallStatus: /* @__PURE__ */ __name(() => Effect10.succeed("healthy"), "getOverallStatus"),
-      monitorService: /* @__PURE__ */ __name(() => Effect10.void, "monitorService")
-    }), "makeMockHealth");
-    HealthMock = Layer8.effect(
-      HealthTag,
-      Effect10.succeed(makeMockHealth())
-    );
-  }
-});
-
-// Source/Effect/ModuleInterceptor.ts
-import {
-  Context as Context11,
-  Effect as Effect11,
-  HashMap as HashMap3,
-  Layer as Layer9,
-  Ref as Ref3,
-  SubscriptionRef as SubscriptionRef3
-} from "effect";
-var SecurityLevel2, ModuleNotFoundError, ModuleAccessDeniedError, SecurityPolicyNotFoundError, ModuleInterceptorTag, ModuleInterceptor, defaultSecurityPolicy, ModuleInterceptorLive, makeMockModuleInterceptor, ModuleInterceptorMock;
-var init_ModuleInterceptor = __esm({
-  "Source/Effect/ModuleInterceptor.ts"() {
-    "use strict";
-    init_Telemetry();
-    SecurityLevel2 = /* @__PURE__ */ ((SecurityLevel4) => {
-      SecurityLevel4["TRUSTED"] = "TRUSTED";
-      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
-      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
-      SecurityLevel4["BLOCKED"] = "BLOCKED";
-      return SecurityLevel4;
-    })(SecurityLevel2 || {});
-    ModuleNotFoundError = class extends Error {
-      constructor(moduleId, extensionId) {
-        super(`Module not found: ${moduleId} for extension ${extensionId}`);
-        this.moduleId = moduleId;
-        this.extensionId = extensionId;
-      }
-      moduleId;
-      extensionId;
-      static {
-        __name(this, "ModuleNotFoundError");
-      }
-      _tag = "ModuleNotFoundError";
-    };
-    ModuleAccessDeniedError = class extends Error {
-      constructor(moduleId, reason) {
-        super(`Module access denied: ${moduleId} - ${reason}`);
-        this.moduleId = moduleId;
-        this.reason = reason;
-      }
-      moduleId;
-      reason;
-      static {
-        __name(this, "ModuleAccessDeniedError");
-      }
-      _tag = "ModuleAccessDeniedError";
-    };
-    SecurityPolicyNotFoundError = class extends Error {
-      constructor(extensionId) {
-        super(`Security policy not found for extension: ${extensionId}`);
-        this.extensionId = extensionId;
-      }
-      extensionId;
-      static {
-        __name(this, "SecurityPolicyNotFoundError");
-      }
-      _tag = "SecurityPolicyNotFoundError";
-    };
-    ModuleInterceptorTag = class extends Context11.Tag(
-      "Cocoon/ModuleInterceptor"
-    )() {
-      static {
-        __name(this, "ModuleInterceptorTag");
-      }
-    };
-    ModuleInterceptor = ModuleInterceptorTag;
-    defaultSecurityPolicy = {
-      allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
-      blockedModules: [
-        "fs",
-        "child_process",
-        "net",
-        "http",
-        "https",
-        "os",
-        "crypto"
-      ],
-      securityLevel: "SANDBOXED" /* SANDBOXED */,
-      maxMemoryUsage: 128 * 1024 * 1024,
-      // 128MB
-      maxExecutionTime: 5e3
-      // 5 seconds
-    };
-    ModuleInterceptorLive = Layer9.effect(
-      ModuleInterceptor,
-      Effect11.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const policiesRef = yield* SubscriptionRef3.make(HashMap3.empty());
-        const moduleCacheRef = yield* SubscriptionRef3.make(HashMap3.empty());
-        const statsRef = yield* SubscriptionRef3.make({
-          totalInterceptions: 0,
-          blockedModules: 0,
-          averageResolutionTime: 0,
-          securityViolations: 0
-        });
-        const resolutionTimes = [];
-        const isNodeBuiltin = /* @__PURE__ */ __name((moduleId) => {
-          const builtins = [
-            "fs",
-            "path",
-            "os",
-            "net",
-            "http",
-            "https",
-            "child_process",
-            "crypto",
-            "util",
-            "events",
-            "stream",
-            "buffer",
-            "url",
-            "querystring"
-          ];
-          return builtins.includes(moduleId);
-        }, "isNodeBuiltin");
-        const initialize = Effect11.gen(function* () {
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Initializing module interceptor service..."
-          );
-          yield* Effect11.sleep("5 millis");
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Module interceptor service initialized"
-          );
-        });
-        const vscodeAPIRegistry = /* @__PURE__ */ new Map();
-        const install = Effect11.gen(function* () {
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Installing Node.js Module._load hook..."
-          );
-          const { default: NodeModule } = yield* Effect11.tryPromise({
-            try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
-            catch: /* @__PURE__ */ __name((Err) => new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`), "catch")
-          });
-          const OriginalLoad = NodeModule._load;
-          NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
-            if (Request === "vscode") {
-              const ParentFilename = Parent?.filename ?? Parent?.id ?? "";
-              for (const [ExtensionId, API] of vscodeAPIRegistry) {
-                if (ParentFilename.includes(ExtensionId)) {
-                  return API;
-                }
-              }
-              if (vscodeAPIRegistry.size > 0) {
-                const LastAPI = [...vscodeAPIRegistry.values()].pop();
-                return LastAPI;
-              }
-              const GlobalAPI = globalThis.__cocoonVscodeAPI;
-              if (GlobalAPI) {
-                return GlobalAPI;
-              }
-              console.warn(
-                `[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`
-              );
-              return {};
-            }
-            return OriginalLoad.apply(this, [Request, Parent, IsMain]);
-          }, "PatchedLoad");
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted"
-          );
-        });
-        const interceptRequire = /* @__PURE__ */ __name((request) => Effect11.gen(function* () {
-          const startTime = Date.now();
-          const currentStats = yield* statsRef.get;
-          yield* Ref3.set(statsRef, {
-            ...currentStats,
-            totalInterceptions: currentStats.totalInterceptions + 1
-          });
-          const policyOpt = HashMap3.get(
-            yield* policiesRef.get,
-            request.extensionId
-          );
-          if (policyOpt._tag === "None") {
-            yield* telemetry.log(
-              "warn",
-              `[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`
-            );
-          }
-          const policy = policyOpt._tag === "Some" ? policyOpt.value : {
-            ...defaultSecurityPolicy,
-            extensionId: request.extensionId
-          };
-          if (policy.blockedModules.includes(request.moduleId)) {
-            yield* telemetry.log(
-              "warn",
-              `[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`
-            );
-            const statsAfter2 = yield* statsRef.get;
-            yield* Ref3.set(statsRef, {
-              ...statsAfter2,
-              blockedModules: statsAfter2.blockedModules + 1,
-              securityViolations: statsAfter2.securityViolations + 1
-            });
-            return {
-              success: false,
-              error: `Module access denied: ${request.moduleId}`,
-              securityLevel: "BLOCKED" /* BLOCKED */
-            };
-          }
-          if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
-            yield* telemetry.log(
-              "warn",
-              `[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`
-            );
-            const statsAfter2 = yield* statsRef.get;
-            yield* Ref3.set(statsRef, {
-              ...statsAfter2,
-              blockedModules: statsAfter2.blockedModules + 1,
-              securityViolations: statsAfter2.securityViolations + 1
-            });
-            return {
-              success: false,
-              error: `Module not in allowlist: ${request.moduleId}`,
-              securityLevel: "RESTRICTED" /* RESTRICTED */
-            };
-          }
-          const cacheKey = `${request.extensionId}:${request.moduleId}`;
-          const cachedModule = HashMap3.get(
-            yield* moduleCacheRef.get,
-            cacheKey
-          );
-          if (cachedModule._tag === "Some") {
-            const duration2 = Date.now() - startTime;
-            resolutionTimes.push(duration2);
-            const allTimes2 = [...resolutionTimes];
-            const avgTime2 = allTimes2.reduce((a, b) => a + b, 0) / allTimes2.length;
-            const statsAfter2 = yield* statsRef.get;
-            yield* Ref3.set(statsRef, {
-              ...statsAfter2,
-              averageResolutionTime: avgTime2
-            });
-            telemetry.log(
-              "debug",
-              `[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration2}ms)`
-            );
-            return {
-              success: true,
-              module: cachedModule.value,
-              securityLevel: policy.securityLevel
-            };
-          }
-          yield* Effect11.sleep("5 millis");
-          telemetry.log(
-            "info",
-            `[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`
-          );
-          const module = { module: request.moduleId };
-          const currentCache = yield* moduleCacheRef.get;
-          yield* Ref3.set(
-            moduleCacheRef,
-            HashMap3.set(currentCache, cacheKey, module)
-          );
-          const duration = Date.now() - startTime;
-          resolutionTimes.push(duration);
-          const allTimes = [...resolutionTimes];
-          const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
-          const statsAfter = yield* statsRef.get;
-          yield* Ref3.set(statsRef, {
-            ...statsAfter,
-            averageResolutionTime: avgTime
-          });
-          return {
-            success: true,
-            module,
-            securityLevel: policy.securityLevel
-          };
-        }), "interceptRequire");
-        const resolveModule = /* @__PURE__ */ __name((extensionId, modulePath) => Effect11.gen(function* () {
-          yield* Effect11.sleep("5 millis");
-          if (!modulePath) {
-            return yield* Effect11.fail(
-              new ModuleNotFoundError(modulePath, extensionId)
-            );
-          }
-          const resolvedPath = `/node_modules/${modulePath}/index.js`;
-          return resolvedPath;
-        }), "resolveModule");
-        const setSecurityPolicy = /* @__PURE__ */ __name((policy) => Effect11.gen(function* () {
-          const currentPolicies = yield* policiesRef.get;
-          yield* Ref3.set(
-            policiesRef,
-            HashMap3.set(currentPolicies, policy.extensionId, policy)
-          );
-          telemetry.log(
-            "info",
-            `[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`
-          );
-        }), "setSecurityPolicy");
-        const getSecurityPolicy = /* @__PURE__ */ __name((extensionId) => Effect11.gen(function* () {
-          const policies = yield* policiesRef.get;
-          const policy = HashMap3.get(policies, extensionId);
-          if (policy._tag === "None") {
-            return yield* Effect11.fail(
-              new SecurityPolicyNotFoundError(extensionId)
-            );
-          }
-          return policy.value;
-        }), "getSecurityPolicy");
-        const validateModuleSecurity = /* @__PURE__ */ __name((extensionId, moduleId) => Effect11.gen(function* () {
-          const policies = yield* policiesRef.get;
-          const policyOpt = HashMap3.get(policies, extensionId);
-          if (policyOpt._tag === "None") {
-            const policy2 = { ...defaultSecurityPolicy, extensionId };
-            return !policy2.blockedModules.includes(moduleId) || policy2.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
-          }
-          const policy = policyOpt.value;
-          return !policy.blockedModules.includes(moduleId) || policy.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
-        }), "validateModuleSecurity");
-        const getStatistics = Effect11.gen(function* () {
-          return yield* statsRef.get;
-        });
-        const registerVscodeAPI = /* @__PURE__ */ __name((extensionId, api) => Effect11.gen(function* () {
-          vscodeAPIRegistry.set(extensionId, api);
-          telemetry.log(
-            "info",
-            `[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`
-          );
-        }), "registerVscodeAPI");
-        return {
-          initialize,
-          install,
-          registerVscodeAPI,
-          interceptRequire,
-          resolveModule,
-          setSecurityPolicy,
-          getSecurityPolicy,
-          validateModuleSecurity,
-          getStatistics
-        };
-      })
-    );
-    makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
-      initialize: Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-      }),
-      install: Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-      }),
-      registerVscodeAPI: /* @__PURE__ */ __name((_extensionId, _api) => Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-      }), "registerVscodeAPI"),
-      interceptRequire: /* @__PURE__ */ __name((request) => Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-        return {
-          success: true,
-          module: { mock: true, moduleId: request.moduleId },
-          securityLevel: "SANDBOXED" /* SANDBOXED */
-        };
-      }), "interceptRequire"),
-      resolveModule: /* @__PURE__ */ __name((extensionId, modulePath) => Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-        return `/node_modules/${modulePath}/index.js`;
-      }), "resolveModule"),
-      setSecurityPolicy: /* @__PURE__ */ __name((policy) => Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-      }), "setSecurityPolicy"),
-      getSecurityPolicy: /* @__PURE__ */ __name((extensionId) => Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-        return {
-          extensionId,
-          allowedModules: ["path", "util"],
-          blockedModules: ["fs"],
-          securityLevel: "SANDBOXED" /* SANDBOXED */
-        };
-      }), "getSecurityPolicy"),
-      validateModuleSecurity: /* @__PURE__ */ __name((extensionId, moduleId) => Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-        return true;
-      }), "validateModuleSecurity"),
-      getStatistics: Effect11.gen(function* () {
-        yield* Effect11.sleep("1 millis");
-        return {
-          totalInterceptions: 100,
-          blockedModules: 5,
-          averageResolutionTime: 2.5,
-          securityViolations: 3
-        };
-      })
-    }), "makeMockModuleInterceptor");
-    ModuleInterceptorMock = Layer9.effect(
-      ModuleInterceptor,
-      Effect11.succeed(makeMockModuleInterceptor())
-    );
-  }
-});
-
-// Source/Effect/MountainClient.ts
-import { Context as Context12, Effect as Effect12, Layer as Layer10, Ref as Ref4, SubscriptionRef as SubscriptionRef4 } from "effect";
-var ConnectionError, RPCError2, DisconnectionError, MountainClientTag, MountainClient, MountainClientLive, makeMockMountainClient, MountainClientMock;
-var init_MountainClient = __esm({
-  "Source/Effect/MountainClient.ts"() {
-    "use strict";
-    init_MountainClientService();
-    init_Telemetry();
-    ConnectionError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "ConnectionError");
-      }
-      _tag = "ConnectionError";
-    };
-    RPCError2 = class extends Error {
-      constructor(method, message, cause) {
-        super(message);
-        this.method = method;
-        this.message = message;
-        this.cause = cause;
-      }
-      method;
-      message;
-      cause;
-      static {
-        __name(this, "RPCError");
-      }
-      _tag = "RPCError";
-      method;
-    };
-    DisconnectionError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "DisconnectionError");
-      }
-      _tag = "DisconnectionError";
-    };
-    MountainClientTag = class extends Context12.Tag("Cocoon/MountainClient")() {
-      static {
-        __name(this, "MountainClientTag");
-      }
-    };
-    MountainClient = MountainClientTag;
-    MountainClientLive = Layer10.effect(
-      MountainClient,
-      Effect12.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const stateRef = yield* SubscriptionRef4.make({
-          _tag: "Disconnected"
-        });
-        let realClient;
-        let currentConfig;
-        let metrics = {
-          totalRequests: 0,
-          successfulRequests: 0,
-          failedRequests: 0,
-          averageLatency: 0,
-          lastRequestTime: 0
-        };
-        const latencies = [];
-        let serverVersion = "";
-        const connect = /* @__PURE__ */ __name((config) => Effect12.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag === "Connected") {
-            telemetry.log(
-              "warn",
-              "[MountainClient] Already connected to Mountain"
-            );
-            return;
-          }
-          currentConfig = config ?? {
-            host: "localhost",
-            port: 50052,
-            timeout: 5e3,
-            maxRetries: 3,
-            retryDelay: 1e3,
-            enableCompression: true,
-            enableMetrics: true
-          };
-          telemetry.log(
-            "info",
-            `[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`
-          );
-          yield* Ref4.set(stateRef, {
-            _tag: "Connecting",
-            attempt: 1
-          });
-          try {
-            realClient = new MountainClientService();
-            realClient.mountainHost = currentConfig.host;
-            realClient.mountainPort = currentConfig.port;
-            yield* Effect12.promise(() => realClient.connect());
-            serverVersion = "1.0.0";
-          } catch (error) {
-            yield* Ref4.set(stateRef, {
-              _tag: "Error",
-              error: String(error)
-            });
-            telemetry.log(
-              "error",
-              `[MountainClient] Failed to connect to Mountain: ${String(error)}`
-            );
-            return yield* Effect12.fail(
-              new ConnectionError(
-                "Failed to connect to Mountain backend",
-                error
-              )
-            );
-          }
-          yield* Ref4.set(stateRef, {
-            _tag: "Connected",
-            serverVersion,
-            connectedAt: Date.now()
-          });
-          telemetry.log(
-            "info",
-            `[MountainClient] Connected to Mountain (v${serverVersion})`
-          );
-        }), "connect");
-        const disconnect = Effect12.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") {
-            telemetry.log(
-              "warn",
-              "[MountainClient] Not connected to Mountain"
-            );
-            return;
-          }
-          yield* Ref4.set(stateRef, {
-            _tag: "Disconnecting"
-          });
-          telemetry.log(
-            "info",
-            "[MountainClient] Disconnecting from Mountain..."
-          );
-          if (realClient) {
-            yield* Effect12.promise(() => realClient.disconnect());
-            realClient = void 0;
-          }
-          yield* Ref4.set(stateRef, {
-            _tag: "Disconnected"
-          });
-          metrics = {
-            totalRequests: 0,
-            successfulRequests: 0,
-            failedRequests: 0,
-            averageLatency: 0,
-            lastRequestTime: 0
-          };
-          latencies.length = 0;
-          telemetry.log(
-            "info",
-            "[MountainClient] Disconnected from Mountain"
-          );
-        }).pipe(
-          Effect12.catchAll(
-            (error) => Effect12.gen(function* () {
-              yield* Ref4.set(stateRef, {
-                _tag: "Error",
-                error: String(error)
-              });
-              telemetry.log(
-                "error",
-                `[MountainClient] Failed to disconnect: ${String(error)}`
-              );
-              return yield* Effect12.fail(
-                new DisconnectionError("Failed to disconnect", error)
-              );
-            })
-          )
-        );
-        const rpc = /* @__PURE__ */ __name((method) => (params) => Effect12.gen(function* () {
-          const requestStartTime = Date.now();
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") {
-            metrics.failedRequests++;
-            return yield* Effect12.fail(
-              new RPCError2(method, "Not connected to Mountain")
-            );
-          }
-          telemetry.log(
-            "debug",
-            `[MountainClient] RPC call: ${method}`,
-            params
-          );
-          metrics.totalRequests++;
-          try {
-            if (!realClient) {
-              return yield* Effect12.fail(
-                new RPCError2(
-                  method,
-                  "Not connected to Mountain"
-                )
-              );
-            }
-            const Result = yield* Effect12.promise(
-              () => realClient.sendRequest(method, params)
-            );
-            const processingTime = Date.now() - requestStartTime;
-            latencies.push(processingTime);
-            if (latencies.length > 100) latencies.shift();
-            metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
-            metrics.lastRequestTime = Date.now();
-            metrics.successfulRequests++;
-            telemetry.log(
-              "debug",
-              `[MountainClient] RPC success: ${method} (${processingTime}ms)`
-            );
-            return Result;
-          } catch (error) {
-            metrics.failedRequests++;
-            telemetry.log(
-              "error",
-              `[MountainClient] RPC failed: ${method} (${String(error)})`
-            );
-            return yield* Effect12.fail(
-              new RPCError2(
-                method,
-                `RPC call failed: ${String(error)}`,
-                error
-              )
-            );
-          }
-        }), "rpc");
-        const version = Effect12.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") {
-            return yield* Effect12.fail(
-              new ConnectionError("Not connected to Mountain")
-            );
-          }
-          return currentState.serverVersion;
-        });
-        const HealthCheckTimeoutMs = 1e3;
-        const healthCheck = Effect12.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") return false;
-          if (!realClient) return false;
-          const Outcome = yield* Effect12.promise(
-            () => Promise.race([
-              realClient.sendRequest("FileSystem.Stat", ["/"]).then(() => ({ Kind: "ok" })).catch((Err) => ({
-                Kind: "app-error",
-                Message: Err instanceof Error ? Err.message : String(Err)
-              })),
-              new Promise(
-                (Resolve) => setTimeout(
-                  () => Resolve({ Kind: "timeout" }),
-                  HealthCheckTimeoutMs
-                )
-              )
-            ])
-          );
-          if (Outcome.Kind === "timeout") {
-            yield* Ref4.set(stateRef, {
-              _tag: "Error",
-              error: `Health check timed out after ${HealthCheckTimeoutMs}ms`
-            });
-            telemetry.log(
-              "warn",
-              `[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`
-            );
-            return false;
-          }
-          if (Outcome.Kind === "app-error") {
-            const LooksLikeTransport = /UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
-              Outcome.Message
-            );
-            if (LooksLikeTransport) {
-              yield* Ref4.set(stateRef, {
-                _tag: "Error",
-                error: Outcome.Message
-              });
-              telemetry.log(
-                "warn",
-                `[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`
-              );
-              return false;
-            }
-          }
-          return true;
-        });
-        const getMetrics = Effect12.succeed({ ...metrics });
-        return {
-          connectionState: stateRef.get,
-          connectionChanges: Effect12.map(stateRef.get, (state) => [state]),
-          connect,
-          disconnect,
-          rpc,
-          version,
-          healthCheck,
-          getMetrics
-        };
-      })
-    );
-    makeMockMountainClient = /* @__PURE__ */ __name(() => {
-      const mockState = {
-        _tag: "Connected",
-        serverVersion: "1.0.0",
-        connectedAt: Date.now()
-      };
-      return {
-        connectionState: Effect12.succeed(mockState),
-        connectionChanges: Effect12.succeed([mockState]),
-        connect: /* @__PURE__ */ __name(() => Effect12.succeed(void 0), "connect"),
-        disconnect: /* @__PURE__ */ __name(() => Effect12.succeed(void 0), "disconnect"),
-        rpc: /* @__PURE__ */ __name((method) => (params) => Effect12.succeed({
-          success: true,
-          data: { method, params, mock: true }
-        }), "rpc"),
-        version: Effect12.succeed("1.0.0"),
-        healthCheck: Effect12.succeed(true),
-        getMetrics: Effect12.succeed({
-          totalRequests: 0,
-          successfulRequests: 0,
-          failedRequests: 0,
-          averageLatency: 0,
-          lastRequestTime: 0
-        })
-      };
-    }, "makeMockMountainClient");
-    MountainClientMock = Layer10.effect(
-      MountainClient,
-      Effect12.succeed(makeMockMountainClient())
-    );
-  }
-});
-
-// Source/Effect/RPCServer.ts
-import { Context as Context13, Effect as Effect13, Layer as Layer11, Ref as Ref5, SubscriptionRef as SubscriptionRef5 } from "effect";
-var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
-var init_RPCServer = __esm({
-  async "Source/Effect/RPCServer.ts"() {
-    "use strict";
-    await init_GRPCServerService();
-    init_Telemetry();
-    ServerStartError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "ServerStartError");
-      }
-      _tag = "ServerStartError";
-    };
-    ServerStopError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "ServerStopError");
-      }
-      _tag = "ServerStopError";
-    };
-    ServerNotRunningError = class extends Error {
-      static {
-        __name(this, "ServerNotRunningError");
-      }
-      _tag = "ServerNotRunningError";
-      constructor() {
-        super("Server is not running");
-      }
-    };
-    RPCServerTag = class extends Context13.Tag("Cocoon/RPCServer")() {
-      static {
-        __name(this, "RPCServerTag");
-      }
-    };
-    RPCServer = RPCServerTag;
-    RPCServerLive = Layer11.effect(
-      RPCServer,
-      Effect13.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const stateRef = yield* SubscriptionRef5.make({
-          _tag: "Idle"
-        });
-        let grpcServer;
-        let currentConfig;
-        let metrics = {
-          uptime: 0,
-          connections: 0,
-          requestsHandled: 0,
-          errors: 0,
-          averageLatency: 0
-        };
-        let startTime = 0;
-        const latencies = [];
-        const start = /* @__PURE__ */ __name((config) => Effect13.gen(function* () {
-          const startTimeMs = Date.now();
-          const currentState = yield* stateRef.get;
-          if (currentState._tag === "Running") {
-            telemetry.log("warn", "[RPCServer] Server already running");
-            return;
-          }
-          const CocoonPort = parseInt(
-            process.env["COCOON_GRPC_PORT"] || "50052",
-            10
-          );
-          currentConfig = config ?? {
-            host: "0.0.0.0",
-            port: CocoonPort,
-            maxConnections: 100,
-            enableCompression: true,
-            enableTls: false
-          };
-          yield* Ref5.set(stateRef, {
-            _tag: "Starting",
-            startTime: startTimeMs
-          });
-          console.log(
-            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
-          );
-          telemetry.log(
-            "info",
-            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
-          );
-          try {
-            grpcServer = new GRPCServerService();
-            grpcServer.port = currentConfig.port;
-            yield* Effect13.promise(() => grpcServer.start());
-            startTime = Date.now();
-            metrics = {
-              uptime: 0,
-              connections: 0,
-              requestsHandled: 0,
-              errors: 0,
-              averageLatency: 0
-            };
-            yield* Ref5.set(stateRef, {
-              _tag: "Running",
-              address: currentConfig.host,
-              port: currentConfig.port,
-              startedAt: startTime
-            });
-            telemetry.log(
-              "info",
-              `[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`
-            );
-          } catch (error) {
-            yield* Ref5.set(stateRef, {
-              _tag: "Error",
-              error: String(error)
-            });
-            telemetry.log(
-              "error",
-              `[RPCServer] Failed to start gRPC server: ${String(error)}`
-            );
-            return yield* Effect13.fail(
-              new ServerStartError(
-                "Failed to start gRPC server",
-                error
-              )
-            );
-          }
-        }), "start");
-        const stop = Effect13.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Running") {
-            telemetry.log("warn", "[RPCServer] Server is not running");
-            return yield* Effect13.fail(new ServerNotRunningError());
-          }
-          yield* Ref5.set(stateRef, {
-            _tag: "Stopping"
-          });
-          telemetry.log("info", "[RPCServer] Stopping gRPC server...");
-          if (grpcServer) {
-            yield* Effect13.promise(() => grpcServer.stop());
-            grpcServer = void 0;
-          }
-          yield* Ref5.set(stateRef, {
-            _tag: "Stopped"
-          });
-          telemetry.log("info", "[RPCServer] Server stopped successfully");
-        });
-        const handleRequest = /* @__PURE__ */ __name((request) => Effect13.gen(function* () {
-          const requestStartTime = Date.now();
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Running") {
-            return {
-              requestId: request.requestId,
-              success: false,
-              data: null,
-              error: "Server not running",
-              timestamp: Date.now()
-            };
-          }
-          telemetry.log(
-            "debug",
-            `[RPCServer] Handling request: ${request.method} (${request.requestId})`
-          );
-          metrics.requestsHandled = metrics.requestsHandled + 1;
-          yield* Effect13.sleep("5 millis");
-          const processingTime = Date.now() - requestStartTime;
-          latencies.push(processingTime);
-          if (latencies.length > 100) {
-            latencies.shift();
-          }
-          metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
-          telemetry.log(
-            "debug",
-            `[RPCServer] Request completed: ${request.method} (${processingTime}ms)`
-          );
-          return {
-            requestId: request.requestId,
-            success: true,
-            data: {
-              method: request.method,
-              result: "ok"
-            },
-            timestamp: Date.now()
-          };
-        }).pipe(
-          Effect13.catchAll(
-            (error) => Effect13.gen(function* () {
-              metrics.errors = metrics.errors + 1;
-              telemetry.log(
-                "error",
-                `[RPCServer] Request failed: ${request.method} (${error})`
-              );
-              return {
-                requestId: request.requestId,
-                success: false,
-                data: null,
-                error: String(error),
-                timestamp: Date.now()
-              };
-            })
-          )
-        ), "handleRequest");
-        const getMetrics = Effect13.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Running") {
-            return yield* Effect13.fail(new ServerNotRunningError());
-          }
-          metrics.uptime = Date.now() - startTime;
-          return { ...metrics };
-        });
-        return {
-          state: stateRef.get,
-          stateChanges: Effect13.map(
-            stateRef.get,
-            (state) => [state]
-          ),
-          start,
-          stop,
-          handleRequest,
-          getMetrics
-        };
-      })
-    );
-    makeMockRPCServer = /* @__PURE__ */ __name(() => {
-      const mockStateRef = { _tag: "Idle" };
-      return {
-        state: Effect13.succeed(mockStateRef),
-        stateChanges: Effect13.succeed([mockStateRef]),
-        start: /* @__PURE__ */ __name(() => Effect13.succeed(void 0), "start"),
-        stop: Effect13.succeed(void 0),
-        handleRequest: /* @__PURE__ */ __name((request) => Effect13.succeed({
-          requestId: request.requestId,
-          success: true,
-          data: { method: request.method, result: "mock" },
-          timestamp: Date.now()
-        }), "handleRequest"),
-        getMetrics: Effect13.succeed({
-          uptime: 0,
-          connections: 0,
-          requestsHandled: 0,
-          errors: 0,
-          averageLatency: 0
-        })
-      };
-    }, "makeMockRPCServer");
-    RPCServerMock = Layer11.effect(
-      RPCServer,
-      Effect13.succeed(makeMockRPCServer())
-    );
-  }
-});
-
-// Source/Effect/Bootstrap.ts
-import { createConnection } from "node:net";
-import { Context as Context14, Duration, Effect as Effect14, Layer as Layer12, Schedule as Schedule4 } from "effect";
-var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
-var init_Bootstrap = __esm({
-  async "Source/Effect/Bootstrap.ts"() {
-    "use strict";
-    init_DevLog();
-    init_LandFixLog();
-    init_Extension();
-    init_Health();
-    init_ModuleInterceptor();
-    init_MountainClient();
-    await init_RPCServer();
-    init_Telemetry();
-    ProbeTcp = /* @__PURE__ */ __name((Host, Port, TimeoutMs) => Effect14.async((Resume) => {
-      let Settled = false;
-      const Settle = /* @__PURE__ */ __name((Value) => {
-        if (Settled) return;
-        Settled = true;
-        try {
-          Socket.destroy();
-        } catch {
-        }
-        Resume(Effect14.succeed(Value));
-      }, "Settle");
-      const Socket = createConnection({ host: Host, port: Port });
-      const Timer = setTimeout(() => Settle(false), TimeoutMs);
-      Socket.once("connect", () => {
-        clearTimeout(Timer);
-        Settle(true);
-      });
-      Socket.once("error", () => {
-        clearTimeout(Timer);
-        Settle(false);
-      });
-      return Effect14.sync(() => {
-        clearTimeout(Timer);
-        try {
-          Socket.destroy();
-        } catch {
-        }
-      });
-    }), "ProbeTcp");
-    BootstrapTag = class extends Context14.Tag("Cocoon/Bootstrap")() {
-      static {
-        __name(this, "BootstrapTag");
-      }
-    };
-    stage1_Environment = withSpan(
-      "stage1_environment",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const StageStart = Date.now();
-        CocoonDevLog("bootstrap-stage", "[Bootstrap] stage=Environment event=start");
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 1: Detecting environment..."
-        );
-        const nodeVersion = process.version;
-        const platform3 = process.platform;
-        const arch2 = process.arch;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform3}/${arch2}`
-        );
-        CocoonDevLog(
-          "bootstrap-stage",
-          `[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform3}/${arch2} duration_ms=${Date.now() - StageStart}`
-        );
-        return {
-          stageName: "Environment",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage2_Configuration = withSpan(
-      "stage2_configuration",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const StageStart = Date.now();
-        CocoonDevLog(
-          "bootstrap-stage",
-          "[Bootstrap] stage=Configuration event=start"
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 2: Loading configuration..."
-        );
-        const ParsePort = /* @__PURE__ */ __name((Raw2, Fallback) => {
-          if (Raw2 === void 0) return Fallback;
-          const Value = parseInt(Raw2, 10);
-          return Number.isFinite(Value) && Value > 0 && Value < 65536 ? Value : Fallback;
-        }, "ParsePort");
-        const ResolvedConfig = {
-          MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
-          CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
-          NodeEnv: process.env["NODE_ENV"] ?? "production",
-          DevLog: process.env["LAND_DEV_LOG"] ?? "",
-          DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true"
-        };
-        globalThis.__cocoonBootstrapConfig = ResolvedConfig;
-        LandFixLog_default.Info(
-          "Bootstrap",
-          `Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`
-        );
-        telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
-        CocoonDevLog(
-          "bootstrap-stage",
-          `[Bootstrap] stage=Configuration event=ok mountain_port=${ResolvedConfig.MountainPort} cocoon_port=${ResolvedConfig.CocoonPort} node_env=${ResolvedConfig.NodeEnv} duration_ms=${Date.now() - StageStart}`
-        );
-        return {
-          stageName: "Configuration",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    MountainProbeTimeoutMs = 250;
-    MountainProbeMaxAttempts = 15;
-    MountainProbeDelayMs = 200;
-    MountainConnectMaxAttempts = 20;
-    stage3_MountainConnection = withSpan(
-      "stage3_mountain_connection",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const mountainClient = yield* MountainClientTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 3: Connecting to Mountain..."
-        );
-        const MountainPort = parseInt(
-          process.env["MOUNTAIN_GRPC_PORT"] || "50051",
-          10
-        );
-        const MountainHost = "localhost";
-        let ProbeAttempt = 0;
-        let Listening = false;
-        while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
-          ProbeAttempt++;
-          Listening = yield* ProbeTcp(
-            MountainHost,
-            MountainPort,
-            MountainProbeTimeoutMs
-          );
-          if (Listening) {
-            LandFixLog_default.Info(
-              "Bootstrap",
-              `Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`
-            );
-            break;
-          }
-          yield* Effect14.sleep(Duration.millis(MountainProbeDelayMs));
-        }
-        if (!Listening) {
-          LandFixLog_default.Warn(
-            "Bootstrap",
-            `Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`
-          );
-        }
-        const AttemptRef = { value: 0 };
-        const Connect = Effect14.gen(function* () {
-          AttemptRef.value++;
-          yield* mountainClient.connect({
-            host: MountainHost,
-            port: MountainPort
-          });
-        }).pipe(
-          Effect14.tapError(
-            (Failure) => Effect14.sync(() => {
-              const Message = Failure instanceof Error ? Failure.message : String(Failure);
-              LandFixLog_default.Warn(
-                "Bootstrap",
-                `MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`
-              );
-            })
-          ),
-          Effect14.retry(
-            Schedule4.exponential(Duration.millis(500)).pipe(
-              Schedule4.union(Schedule4.spaced(Duration.seconds(5))),
-              Schedule4.intersect(
-                Schedule4.recurs(MountainConnectMaxAttempts - 1)
-              )
-            )
-          )
-        );
-        yield* Connect;
-        const version = yield* mountainClient.version;
-        LandFixLog_default.Info(
-          "Bootstrap",
-          `MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Connected to Mountain (v${version})`
-        );
-        return {
-          stageName: "MountainConnection",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage4_ModuleInterceptor = withSpan(
-      "stage4_module_interceptor",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const moduleInterceptor = yield* ModuleInterceptorTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 4: Setting up module interceptor..."
-        );
-        yield* moduleInterceptor.initialize;
-        yield* moduleInterceptor.install;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Module interceptor installed successfully"
-        );
-        return {
-          stageName: "ModuleInterceptor",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage5_RPCServer = withSpan(
-      "stage5_rpc_server",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const rpcServer = yield* RPCServerTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 5: Starting gRPC server..."
-        );
-        const CocoonPort = parseInt(
-          process.env["COCOON_GRPC_PORT"] || "50052",
-          10
-        );
-        console.log(
-          `[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`
-        );
-        yield* rpcServer.start({
-          host: "0.0.0.0",
-          port: CocoonPort
-        });
-        telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
-        return {
-          stageName: "RPCServer",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage6_Extensions = withSpan(
-      "stage6_extensions",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const extension = yield* ExtensionTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 6: Initializing extensions..."
-        );
-        const extensions = yield* extension.getAll;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Found ${extensions.length} extensions`
-        );
-        const EligibleExtensions = extensions.filter(
-          (Ext) => Ext.manifest.enabled
-        );
-        const ActivationAttempts = yield* Effect14.forEach(
-          EligibleExtensions,
-          (Ext) => extension.activate(Ext.id).pipe(
-            Effect14.map(() => ({ Id: Ext.id, Ok: true })),
-            Effect14.catchAll((Failure) => {
-              const Message = Failure instanceof Error ? Failure.message : String(Failure);
-              telemetry.log(
-                "warn",
-                `[Cocoon Bootstrap] Extension ${Ext.id} activation failed: ${Message}`
-              );
-              return Effect14.succeed({
-                Id: Ext.id,
-                Ok: false,
-                Error: Message
-              });
-            })
-          ),
-          { concurrency: 8 }
-        );
-        const Successful = ActivationAttempts.filter((R) => R.Ok).length;
-        const FailedCount = ActivationAttempts.length - Successful;
-        const activeCount = yield* extension.getActiveCount;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Activated ${activeCount} extensions (${Successful} this stage, ${FailedCount} failed)`
-        );
-        return {
-          stageName: "Extensions",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage7_HealthCheck = withSpan(
-      "stage7_healthcheck",
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const health = yield* HealthTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 7: Running health checks..."
-        );
-        const systemHealth = yield* health.checkAllServices();
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Health check result: ${systemHealth.overallStatus}`
-        );
-        if (systemHealth.overallStatus === "unhealthy") {
-          telemetry.log(
-            "error",
-            "[Cocoon Bootstrap] Some services are unhealthy!"
-          );
-        }
-        return {
-          stageName: "HealthCheck",
-          success: systemHealth.overallStatus !== "unhealthy",
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    makeBootstrap = /* @__PURE__ */ __name(() => ({
-      run: /* @__PURE__ */ __name((options) => Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const startTime = Date.now();
-        const { skipHealthCheck = false, debugMode = false } = options ?? {};
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Cocoon Extension Host Bootstrap"
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Debug mode: ${debugMode}`
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        const stages = [
-          ["Environment", stage1_Environment],
-          ["Configuration", stage2_Configuration],
-          ["MountainConnection", stage3_MountainConnection],
-          ["ModuleInterceptor", stage4_ModuleInterceptor],
-          ["RPCServer", stage5_RPCServer],
-          ["Extensions", stage6_Extensions],
-          ...skipHealthCheck ? [] : [["HealthCheck", stage7_HealthCheck]]
-        ];
-        const results = [];
-        for (const [StageName, stage] of stages) {
-          const stageStartTime = Date.now();
-          const SafeStage = Effect14.suspend(() => stage).pipe(
-            Effect14.catchAllCause((Cause) => {
-              const Message = String(Cause).slice(0, 300);
-              process.stdout.write(
-                `[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}
-`
-              );
-              return Effect14.succeed({
-                stageName: StageName,
-                success: false,
-                duration: Date.now() - stageStartTime,
-                error: new Error(Message)
-              });
-            })
-          );
-          const result = yield* SafeStage;
-          if (result?.success === false) {
-            process.stdout.write(
-              `[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${result.error?.message ?? "<no message>"}
-`
-            );
-          } else {
-            process.stdout.write(
-              `[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms
-`
-            );
-          }
-          results.push({
-            ...result,
-            duration: Date.now() - stageStartTime
-          });
-        }
-        const endTime = Date.now();
-        const totalDuration = endTime - startTime;
-        const allSuccess = results.every((r) => r.success);
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] ${allSuccess ? "\u2713 Bootstrap completed successfully" : "\u2717 Bootstrap failed"}`
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Total duration: ${totalDuration}ms`
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        if (!allSuccess) {
-          const failedStages = results.filter((r) => !r.success);
-          telemetry.log("error", "[Cocoon Bootstrap] Failed stages:");
-          for (const failed of failedStages) {
-            telemetry.log(
-              "error",
-              `[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`
-            );
-          }
-        }
-        return {
-          success: allSuccess,
-          totalDuration,
-          stages: results,
-          error: allSuccess ? void 0 : new Error("Bootstrap failed")
-        };
-      }), "run")
-    }), "makeBootstrap");
-    BootstrapLive = Layer12.effect(
-      BootstrapTag,
-      Effect14.succeed(makeBootstrap())
-    );
-    makeMockBootstrap = /* @__PURE__ */ __name(() => ({
-      run: /* @__PURE__ */ __name((options) => Effect14.gen(function* () {
-        yield* Effect14.sleep("1 millis");
-        return {
-          success: true,
-          totalDuration: 1,
-          stages: [
-            {
-              stageName: "Environment",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "Configuration",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "MountainConnection",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "RPCServer",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "Extensions",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            ...options?.skipHealthCheck ? [] : [
-              {
-                stageName: "HealthCheck",
-                success: true,
-                duration: 0,
-                error: void 0
-              }
-            ]
-          ],
-          error: void 0
-        };
-      }), "run")
-    }), "makeMockBootstrap");
-    BootstrapMock = Layer12.effect(
-      BootstrapTag,
-      Effect14.succeed(makeMockBootstrap())
-    );
-    runBootstrap = /* @__PURE__ */ __name((options) => Effect14.gen(function* () {
-      const bootstrap = yield* BootstrapTag;
-      return yield* bootstrap.run(options);
-    }).pipe(Effect14.provide(BootstrapLive)), "runBootstrap");
-  }
-});
-
-// Source/Effect/index.ts
-var init_Effect = __esm({
-  async "Source/Effect/index.ts"() {
-    "use strict";
-    await init_Bootstrap();
-    init_Extension();
-    init_Health();
-    init_ModuleInterceptor();
-    init_MountainClient();
-    await init_RPCServer();
-    init_Telemetry();
-  }
-});
-
-// Source/Services/Configuration.ts
-import { Effect as Effect15, Layer as Layer13 } from "effect";
-var ConfigurationScope2, Configuration, ConfigurationLayer, ConfigurationLive;
-var init_Configuration2 = __esm({
-  "Source/Services/Configuration.ts"() {
-    "use strict";
-    init_IConfigurationService();
-    init_IMountainClientService();
-    ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
-      ConfigurationScope3["APPLICATION"] = "APPLICATION";
-      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
-      ConfigurationScope3["PROFILE"] = "PROFILE";
-      return ConfigurationScope3;
-    })(ConfigurationScope2 || {});
-    Configuration = class {
-      static {
-        __name(this, "Configuration");
-      }
-      _serviceBrand;
-      configuration;
-      mountainClient;
-      listeners;
-      constructor(mountainClient) {
-        this._serviceBrand = void 0;
-        this.mountainClient = mountainClient;
-        this.configuration = /* @__PURE__ */ new Map();
-        this.listeners = /* @__PURE__ */ new Map();
-        console.log(
-          "[ConfigurationService] Initializing configuration service with Universal Spine"
-        );
-      }
-      /**
-       * Initialize the configuration service by fetching from Mountain
-       */
-      async initialize() {
-        console.log(
-          "[ConfigurationService] Loading initial configuration from Spine..."
-        );
-        try {
-          const configData = await this.mountainClient.sendRequest(
-            "config.reload",
-            {}
-          );
-          if (configData?.application) {
-            this.configuration.set(
-              "APPLICATION" /* APPLICATION */,
-              configData.application
-            );
-          }
-          if (configData?.workspace) {
-            this.configuration.set(
-              "WORKSPACE" /* WORKSPACE */,
-              configData.workspace
-            );
-          }
-          if (configData?.profile) {
-            this.configuration.set(
-              "PROFILE" /* PROFILE */,
-              configData.profile
-            );
-          }
-          console.log(
-            "[ConfigurationService] Configuration loaded from Spine",
-            configData
-          );
-        } catch (error) {
-          console.error(
-            "[ConfigurationService] Failed to load initial configuration from Spine:",
-            error
-          );
-          this.configuration.set("APPLICATION" /* APPLICATION */, {
-            _version: 1,
-            _timestamp: Date.now(),
-            window: {
-              zoomLevel: 0,
-              theme: "dark"
-            },
-            editor: {
-              fontSize: 14,
-              lineNumbers: "on"
-            }
-          });
-          this.configuration.set("WORKSPACE" /* WORKSPACE */, {
-            _version: 1,
-            _timestamp: Date.now()
-          });
-          this.configuration.set("PROFILE" /* PROFILE */, {
-            _version: 1,
-            _timestamp: Date.now()
-          });
-        }
-      }
-      /**
-       * Get configuration value
-       */
-      getValue(key, scope = "APPLICATION" /* APPLICATION */, defaultValue) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return defaultValue;
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return value !== void 0 ? value : defaultValue;
-      }
-      /**
-       * Set configuration value
-       */
-      async setValue(key, value, scope) {
-        if (!this.validateConfigurationKey(key)) {
-          throw new Error(`Invalid configuration key: ${key}`);
-        }
-        if (!this.validateConfigurationValue(key, value)) {
-          throw new Error(
-            `Invalid configuration value for key ${key}: ${value}`
-          );
-        }
-        let scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          scopeConfig = {};
-          this.configuration.set(scope, scopeConfig);
-        }
-        const oldValue = this.getNestedValue(scopeConfig, key);
-        if (oldValue !== value) {
-          this.setNestedValue(scopeConfig, key, value);
-          scopeConfig._timestamp = Date.now();
-          scopeConfig._version = (scopeConfig._version || 0) + 1;
-          try {
-            let spineScope = 0;
-            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
-            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
-            await this.mountainClient.sendRequest("config.update", {
-              key,
-              value,
-              scope: spineScope
-            });
-            console.log(
-              `[ConfigurationService] Configuration updated: ${key} = ${value}`
-            );
-            this.notifyConfigurationChange([key], scope);
-          } catch (error) {
-            console.error(
-              `[ConfigurationService] Failed to update configuration: ${key}`,
-              error
-            );
-            await this.handleConfigurationConflict(
-              error,
-              key,
-              value,
-              scope
-            );
-          }
-        }
-      }
-      /**
-       * Validate configuration key
-       */
-      validateConfigurationKey(key) {
-        if (!key || key.trim().length === 0) {
-          return false;
-        }
-        const invalidChars = /[^a-zA-Z0-9._-]/;
-        if (invalidChars.test(key)) {
-          return false;
-        }
-        if (key.startsWith(".") || key.endsWith(".")) {
-          return false;
-        }
-        if (key.includes("..")) {
-          return false;
-        }
-        return true;
-      }
-      /**
-       * Validate configuration value
-       */
-      validateConfigurationValue(key, value) {
-        if (value === void 0) {
-          return false;
-        }
-        if (key.includes("zoomLevel") || key.includes("fontSize")) {
-          if (typeof value !== "number" || !isFinite(value)) {
-            return false;
-          }
-          if (key.includes("zoomLevel")) {
-            return value >= -8 && value <= 9;
-          }
-          if (key.includes("fontSize")) {
-            return value >= 6 && value <= 100;
-          }
-        }
-        if (key.includes("enable") || key.includes("show") || key.includes("visible")) {
-          return typeof value === "boolean";
-        }
-        if (typeof value === "string") {
-          return value.trim().length > 0;
-        }
-        return true;
-      }
-      /**
-       * Validate entire configuration scope
-       */
-      validateScopeConfiguration(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return true;
-        }
-        const keys = [];
-        this.collectKeys(scopeConfig, "", keys);
-        for (const key of keys) {
-          const value = this.getNestedValue(scopeConfig, key);
-          if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      /**
-       * Update configuration value
-       */
-      async updateValue(key, updateFn, scope) {
-        const currentValue = this.getValue(key, scope);
-        const newValue = updateFn(currentValue);
-        await this.setValue(key, newValue, scope);
-      }
-      /**
-       * Check if configuration key exists
-       */
-      hasKey(key, scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return false;
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return value !== void 0;
-      }
-      /**
-       * Get all configuration keys for a scope
-       */
-      getConfigurationKeys(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return [];
-        }
-        const keys = [];
-        this.collectKeys(scopeConfig, "", keys);
-        return keys;
-      }
-      /**
-       * Get all configuration values for a scope
-       */
-      async getAllValues(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return {};
-        }
-        const result = {};
-        this.collectKeys(scopeConfig, "", Object.keys(result));
-        for (const key of Object.keys(result)) {
-          result[key] = this.getNestedValue(scopeConfig, key);
-        }
-        return result;
-      }
-      /**
-       * Inspect configuration value
-       */
-      inspect(key, scope = "APPLICATION" /* APPLICATION */) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return { key };
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return {
-          key,
-          value
-        };
-      }
-      /**
-       * Listen for configuration changes
-       */
-      onDidChangeConfiguration(callback) {
-        console.log(
-          "[ConfigurationService] Registering configuration change listener"
-        );
-        const listenerId = `listener_${Date.now()}_${Math.random()}`;
-        let globalListeners = this.listeners.get("*");
-        if (!globalListeners) {
-          globalListeners = [];
-          this.listeners.set("*", globalListeners);
-        }
-        globalListeners.push(callback);
-        console.log(
-          `[ConfigurationService] Configuration change listener registered: ${listenerId}`
-        );
-      }
-      /**
-       * Reload configuration from Mountain
-       */
-      async reloadConfiguration() {
-        console.log(
-          "[ConfigurationService] Reloading configuration from Mountain"
-        );
-        try {
-          this.listeners.clear();
-          await this.initialize();
-          console.log(
-            "[ConfigurationService] Configuration reloaded successfully"
-          );
-        } catch (error) {
-          console.error(
-            "[ConfigurationService] Failed to reload configuration:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Handle configuration conflicts with retry logic
-       */
-      async handleConfigurationConflict(error, key, value, scope) {
-        console.warn(
-          "[ConfigurationService] Configuration conflict detected, implementing retry logic"
-        );
-        const maxRetries = 3;
-        const baseDelay = 100;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          const delay = baseDelay * Math.pow(2, attempt - 1);
-          console.log(
-            `[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`
-          );
-          await new Promise((resolve2) => setTimeout(resolve2, delay));
-          try {
-            await this.initialize();
-            let scopeConfig = this.configuration.get(scope);
-            if (!scopeConfig) {
-              scopeConfig = {};
-              this.configuration.set(scope, scopeConfig);
-            }
-            this.setNestedValue(scopeConfig, key, value);
-            scopeConfig._timestamp = Date.now();
-            scopeConfig._version = (scopeConfig._version || 0) + 1;
-            let spineScope = 0;
-            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
-            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
-            await this.mountainClient.sendRequest("config.update", {
-              key,
-              value,
-              scope: spineScope
-            });
-            console.log(
-              "[ConfigurationService] Configuration saved successfully after retry"
-            );
-            return;
-          } catch (retryError) {
-            console.error(
-              `[ConfigurationService] Retry attempt ${attempt} failed:`,
-              retryError
-            );
-            if (attempt === maxRetries) {
-              console.error(
-                "[ConfigurationService] All retry attempts failed, configuration may be out of sync"
-              );
-              throw new Error(
-                `Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`
-              );
-            }
-          }
-        }
-      }
-      /**
-       * Cleanup configuration service
-       */
-      async cleanup() {
-        console.log("[ConfigurationService] Cleaning up configuration service");
-        this.listeners.clear();
-        this.configuration.clear();
-        console.log("[ConfigurationService] Configuration service cleaned up");
-      }
-      /**
-       * Get nested value from configuration object
-       */
-      getNestedValue(obj, key) {
-        const keys = key.split(".");
-        let current = obj;
-        for (const k of keys) {
-          if (current && typeof current === "object" && k in current) {
-            current = current[k];
-          } else {
-            return void 0;
-          }
-        }
-        return current;
-      }
-      /**
-       * Set nested value in configuration object
-       */
-      setNestedValue(obj, key, value) {
-        const keys = key.split(".");
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-          const k = keys[i];
-          if (!k) continue;
-          if (!(k in current) || typeof current[k] !== "object") {
-            current[k] = {};
-          }
-          current = current[k];
-        }
-        const lastKey = keys[keys.length - 1];
-        if (lastKey) {
-          current[lastKey] = value;
-        }
-      }
-      /**
-       * Collect all configuration keys
-       */
-      collectKeys(obj, prefix, keys) {
-        for (const key in obj) {
-          if (key.startsWith("_")) continue;
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (typeof obj[key] === "object" && obj[key] !== null) {
-            this.collectKeys(obj[key], fullKey, keys);
-          } else {
-            keys.push(fullKey);
-          }
-        }
-      }
-      /**
-       * Notify configuration change listeners
-       */
-      notifyConfigurationChange(keys, scope) {
-        for (const key of keys) {
-          const eventKey = `${scope}.${key}`;
-          const listeners = this.listeners.get(eventKey);
-          const globalListeners = this.listeners.get("*");
-          const allListeners = [
-            ...listeners || [],
-            ...globalListeners || []
-          ];
-          if (allListeners.length > 0) {
-            for (const listener of allListeners) {
-              try {
-                listener([{ key, scope }]);
-              } catch (error) {
-                console.error(
-                  `[ConfigurationService] Error in listener for ${eventKey}:`,
-                  error
-                );
-              }
-            }
-          }
-        }
-      }
-    };
-    ConfigurationLayer = Layer13.effect(
-      IConfigurationService,
-      Effect15.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const configService = new Configuration(mountainClient);
-        yield* Effect15.promise(() => configService.initialize());
-        return configService;
-      })
-    );
-    ConfigurationLive = ConfigurationLayer;
-  }
-});
-
-// Source/Services/ModuleInterceptorService.ts
-import * as acorn from "acorn";
-import * as walk from "acorn-walk";
-import { Effect as Effect16, Layer as Layer14 } from "effect";
-var ModuleInterceptorService, ModuleInterceptorServiceLayer, ModuleInterceptorServiceLive, ModuleInterceptorService_default;
-var init_ModuleInterceptorService = __esm({
-  "Source/Services/ModuleInterceptorService.ts"() {
-    "use strict";
-    init_IModuleInterceptorService();
-    ModuleInterceptorService = class {
-      static {
-        __name(this, "ModuleInterceptorService");
-      }
-      _serviceBrand;
-      config;
-      moduleCache;
-      securitySandbox;
-      constructor() {
-        console.log(
-          "[ModuleInterceptorService] Initializing module interceptor"
-        );
-        this.config = this.loadDefaultConfig();
-        this.moduleCache = /* @__PURE__ */ new Map();
-        this.securitySandbox = this.createSecuritySandbox();
-        console.log(
-          "[ModuleInterceptorService] Module interceptor initialized"
-        );
-      }
-      /**
-       * Load default configuration
-       */
-      loadDefaultConfig() {
-        return {
-          allowNodeBuiltins: true,
-          allowFileSystemAccess: false,
-          allowNetworkAccess: false,
-          allowedModules: [
-            "path",
-            "url",
-            "util",
-            "events",
-            "stream",
-            "buffer"
-          ],
-          blockedModules: [
-            "fs",
-            "child_process",
-            "net",
-            "http",
-            "https",
-            "os",
-            "crypto"
-          ]
-        };
-      }
-      /**
-       * Create security sandbox with safe functions
-       */
-      createSecuritySandbox() {
-        const sandbox = /* @__PURE__ */ new Map();
-        sandbox.set("console.log", console.log.bind(console));
-        sandbox.set("console.error", console.error.bind(console));
-        sandbox.set("console.warn", console.warn.bind(console));
-        sandbox.set("setTimeout", setTimeout.bind(global));
-        sandbox.set("setInterval", setInterval.bind(global));
-        sandbox.set("clearTimeout", clearTimeout.bind(global));
-        sandbox.set("clearInterval", clearInterval.bind(global));
-        sandbox.set("JSON.parse", JSON.parse);
-        sandbox.set("JSON.stringify", JSON.stringify);
-        return sandbox;
-      }
-      /**
-       * Intercept module require calls
-       */
-      interceptRequire(modulePath, parentPath) {
-        console.log(
-          `[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`
-        );
-        if (this.moduleCache.has(modulePath)) {
-          return this.moduleCache.get(modulePath);
-        }
-        if (!this.validateModuleAccess(modulePath, parentPath)) {
-          throw new Error(`Module access denied: ${modulePath}`);
-        }
-        const moduleSecurity = this.analyzeModuleSecurity(modulePath);
-        if (!moduleSecurity.isSafe) {
-          throw new Error(
-            `Module security violation: ${modulePath} - ${moduleSecurity.reason}`
-          );
-        }
-        const interceptedModule = this.loadAndInterceptModule(modulePath);
-        this.moduleCache.set(modulePath, interceptedModule);
-        console.log(
-          `[ModuleInterceptorService] Module ${modulePath} intercepted successfully`
-        );
-        return interceptedModule;
-      }
-      /**
-       * Validate module access permissions
-       */
-      validateModuleAccess(modulePath, parentPath) {
-        if (this.config.blockedModules.includes(modulePath)) {
-          console.warn(
-            `[ModuleInterceptorService] Blocked module access: ${modulePath}`
-          );
-          return false;
-        }
-        if (this.config.allowedModules.includes(modulePath)) {
-          return true;
-        }
-        if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
-          console.warn(
-            `[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`
-          );
-          return false;
-        }
-        return true;
-      }
-      /**
-       * Check if module is Node.js built-in
-       */
-      isNodeBuiltin(modulePath) {
-        const builtins = [
-          "fs",
-          "path",
-          "os",
-          "net",
-          "http",
-          "https",
-          "child_process",
-          "crypto",
-          "util",
-          "events",
-          "stream",
-          "buffer",
-          "url",
-          "querystring"
-        ];
-        return builtins.includes(modulePath);
-      }
-      /**
-       * Analyze module security using advanced AST parsing
-       */
-      analyzeModuleSecurity(modulePath) {
-        try {
-          console.log(
-            `[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`
-          );
-          const fs = __require("fs");
-          const path = __require("path");
-          const resolvedPath = __require.resolve(modulePath);
-          const sourceCode = fs.readFileSync(resolvedPath, "utf8");
-          const ast = acorn.parse(sourceCode, {
-            ecmaVersion: "latest",
-            sourceType: "module",
-            allowAwaitOutsideFunction: true,
-            allowImportExportEverywhere: true,
-            allowReturnOutsideFunction: true,
-            ranges: true,
-            locations: true
-          });
-          const securityIssues = [];
-          const securityWarnings = [];
-          walk.simple(
-            ast,
-            {
-              CallExpression(node) {
-                const callee = node.callee;
-                if (callee.type === "Identifier") {
-                  const functionName = callee.name;
-                  if (this.isCriticalDangerousFunction(functionName)) {
-                    securityIssues.push(
-                      `CRITICAL: Dangerous function call: ${functionName}`
-                    );
-                  } else if (this.isDangerousFunction(functionName)) {
-                    securityWarnings.push(
-                      `WARNING: Dangerous function call: ${functionName}`
-                    );
-                  }
-                }
-                if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "eval" && callee.property.type === "Identifier" && callee.property.name === "constructor") {
-                  securityIssues.push(
-                    `CRITICAL: Dynamic code execution via eval constructor`
-                  );
-                }
-              },
-              MemberExpression(node) {
-                if (node.object.type === "Identifier" && node.property.type === "Identifier") {
-                  const objectName = node.object.name;
-                  const propertyName = node.property.name;
-                  if (this.isCriticalDangerousPropertyAccess(
-                    objectName,
-                    propertyName
-                  )) {
-                    securityIssues.push(
-                      `CRITICAL: Dangerous property access: ${objectName}.${propertyName}`
-                    );
-                  } else if (this.isDangerousPropertyAccess(
-                    objectName,
-                    propertyName
-                  )) {
-                    securityWarnings.push(
-                      `WARNING: Dangerous property access: ${objectName}.${propertyName}`
-                    );
-                  }
-                }
-              },
-              AssignmentExpression(node) {
-                if (node.left.type === "MemberExpression") {
-                  const left = node.left;
-                  if (left.object.type === "Identifier" && left.property.type === "Identifier") {
-                    const objectName = left.object.name;
-                    const propertyName = left.property.name;
-                    if (this.isCriticalDangerousAssignment(
-                      objectName,
-                      propertyName
-                    )) {
-                      securityIssues.push(
-                        `CRITICAL: Dangerous assignment: ${objectName}.${propertyName}`
-                      );
-                    } else if (this.isDangerousAssignment(
-                      objectName,
-                      propertyName
-                    )) {
-                      securityWarnings.push(
-                        `WARNING: Dangerous assignment: ${objectName}.${propertyName}`
-                      );
-                    }
-                  }
-                }
-              },
-              ImportDeclaration(node) {
-                const importSource = node.source.value;
-                if (this.isDangerousImport(importSource)) {
-                  securityIssues.push(
-                    `CRITICAL: Dangerous import: ${importSource}`
-                  );
-                }
-              },
-              NewExpression(node) {
-                if (node.callee.type === "Identifier") {
-                  const constructorName = node.callee.name;
-                  if (this.isDangerousConstructor(constructorName)) {
-                    securityIssues.push(
-                      `CRITICAL: Dangerous constructor: ${constructorName}`
-                    );
-                  }
-                }
-              }
-            },
-            this
-          );
-          this.performPatternAnalysis(
-            sourceCode,
-            securityIssues,
-            securityWarnings
-          );
-          const allIssues = [...securityIssues, ...securityWarnings];
-          const isSafe = securityIssues.length === 0;
-          const reason = allIssues.length > 0 ? `Security analysis: ${allIssues.join(", ")}` : "Advanced AST security analysis passed all checks";
-          console.log(
-            `[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`
-          );
-          return {
-            isSafe,
-            reason
-          };
-        } catch (error) {
-          console.error(
-            `[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
-            error
-          );
-          return {
-            isSafe: false,
-            reason: `Advanced security analysis error: ${error}`
-          };
-        }
-      }
-      /**
-       * Check if function is critically dangerous (block immediately)
-       */
-      isCriticalDangerousFunction(functionName) {
-        const criticalFunctions = [
-          "eval",
-          "Function",
-          "exec",
-          "spawn",
-          "execFile",
-          "fork",
-          "require",
-          "import",
-          "process.binding",
-          "vm.runInContext"
-        ];
-        return criticalFunctions.includes(functionName);
-      }
-      /**
-       * Check if function is dangerous (warning level)
-       */
-      isDangerousFunction(functionName) {
-        const dangerousFunctions = [
-          "setTimeout",
-          "setInterval",
-          "setImmediate",
-          "require.cache",
-          "module.constructor",
-          "global.eval"
-        ];
-        return dangerousFunctions.includes(functionName);
-      }
-      /**
-       * Check if property access is critically dangerous
-       */
-      isCriticalDangerousPropertyAccess(objectName, propertyName) {
-        const criticalAccesses = [
-          { object: "process", property: "env" },
-          { object: "global", property: "process" },
-          { object: "window", property: "location" },
-          { object: "process", property: "mainModule" },
-          { object: "process", property: "binding" }
-        ];
-        return criticalAccesses.some(
-          (access) => access.object === objectName && access.property === propertyName
-        );
-      }
-      /**
-       * Check if property access is dangerous
-       */
-      isDangerousPropertyAccess(objectName, propertyName) {
-        const dangerousAccesses = [
-          { object: "global", property: "eval" },
-          { object: "window", property: "eval" },
-          { object: "process", property: "argv" },
-          { object: "process", property: "cwd" }
-        ];
-        return dangerousAccesses.some(
-          (access) => access.object === objectName && access.property === propertyName
-        );
-      }
-      /**
-       * Check if property access is dangerous
-       */
-      isDangerousPropertyAccess(objectName, propertyName) {
-        const dangerousAccesses = [
-          { object: "process", property: "env" },
-          { object: "global", property: "process" },
-          { object: "window", property: "location" }
-        ];
-        return dangerousAccesses.some(
-          (access) => access.object === objectName && access.property === propertyName
-        );
-      }
-      /**
-       * Check if assignment is critically dangerous
-       */
-      isCriticalDangerousAssignment(objectName, propertyName) {
-        const criticalAssignments = [
-          { object: "process", property: "env" },
-          { object: "global", property: "process" },
-          { object: "require", property: "cache" },
-          { object: "module", property: "exports" }
-        ];
-        return criticalAssignments.some(
-          (assignment) => assignment.object === objectName && assignment.property === propertyName
-        );
-      }
-      /**
-       * Check if assignment is dangerous
-       */
-      isDangerousAssignment(objectName, propertyName) {
-        const dangerousAssignments = [
-          { object: "global", property: "eval" },
-          { object: "window", property: "eval" }
-        ];
-        return dangerousAssignments.some(
-          (assignment) => assignment.object === objectName && assignment.property === propertyName
-        );
-      }
-      /**
-       * Check if import is dangerous
-       */
-      isDangerousImport(importSource) {
-        const dangerousImports = [
-          "fs",
-          "child_process",
-          "net",
-          "http",
-          "https",
-          "os",
-          "crypto",
-          "vm",
-          "module",
-          "process",
-          "sys"
-        ];
-        return dangerousImports.includes(importSource);
-      }
-      /**
-       * Check if constructor is dangerous
-       */
-      isDangerousConstructor(constructorName) {
-        const dangerousConstructors = [
-          "Function",
-          "eval",
-          "process",
-          "require"
-        ];
-        return dangerousConstructors.includes(constructorName);
-      }
-      /**
-       * Perform pattern-based security analysis
-       */
-      performPatternAnalysis(sourceCode, securityIssues, securityWarnings) {
-        const dangerousPatterns = [
-          { pattern: /eval\s*\(/, description: "Direct eval call" },
-          { pattern: /Function\s*\(/, description: "Function constructor" },
-          {
-            pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,
-            description: "Dynamic require"
-          },
-          {
-            pattern: /process\.binding/,
-            description: "Process binding access"
-          },
-          {
-            pattern: /vm\.runInContext/,
-            description: "VM context execution"
-          },
-          {
-            pattern: /child_process\.spawn/,
-            description: "Child process spawning"
-          }
-        ];
-        for (const { pattern, description } of dangerousPatterns) {
-          if (pattern.test(sourceCode)) {
-            securityIssues.push(`CRITICAL: ${description} detected`);
-          }
-        }
-      }
-      /**
-       * Load and intercept module with security wrappers
-       */
-      loadAndInterceptModule(modulePath) {
-        try {
-          const originalModule = __require(modulePath);
-          const interceptedModule = this.createSecurityWrapper(
-            originalModule,
-            modulePath
-          );
-          return interceptedModule;
-        } catch (error) {
-          console.error(
-            `[ModuleInterceptorService] Failed to load module ${modulePath}:`,
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Create security wrapper for module
-       */
-      createSecurityWrapper(originalModule, modulePath) {
-        const wrapper = {};
-        for (const key of Object.keys(originalModule)) {
-          const originalValue = originalModule[key];
-          if (typeof originalValue === "function") {
-            wrapper[key] = this.wrapFunction(
-              originalValue,
-              modulePath,
-              key
-            );
-          } else {
-            wrapper[key] = originalValue;
-          }
-        }
-        return wrapper;
-      }
-      /**
-       * Wrap function with security checks
-       */
-      wrapFunction(originalFn, modulePath, functionName) {
-        return (...args) => {
-          console.log(
-            `[ModuleInterceptorService] Calling ${modulePath}.${functionName}`
-          );
-          return originalFn.apply(null, args);
-        };
-      }
-      /**
-       * Resolve module path
-       */
-      resolveModule(modulePath, parentPath) {
-        console.log(
-          `[ModuleInterceptorService] Resolving module: ${modulePath} from ${parentPath}`
-        );
-        try {
-          const resolvedPath = __require.resolve(modulePath, {
-            paths: [parentPath]
-          });
-          console.log(
-            `[ModuleInterceptorService] Resolved ${modulePath} to ${resolvedPath}`
-          );
-          return resolvedPath;
-        } catch (error) {
-          console.error(
-            `[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Create extension context with isolated environment
-       */
-      createExtensionContext(extensionId) {
-        console.log(
-          `[ModuleInterceptorService] Creating extension context for ${extensionId}`
-        );
-        const context = {
-          extensionId,
-          globalState: /* @__PURE__ */ new Map(),
-          workspaceState: /* @__PURE__ */ new Map(),
-          subscriptions: [],
-          asAbsolutePath: /* @__PURE__ */ __name((relativePath2) => {
-            return `/extensions/${extensionId}/${relativePath2}`;
-          }, "asAbsolutePath")
-        };
-        console.log(
-          `[ModuleInterceptorService] Extension context created for ${extensionId}`
-        );
-        return context;
-      }
-      /**
-       * Update configuration
-       */
-      updateConfig(newConfig) {
-        console.log("[ModuleInterceptorService] Updating configuration");
-        this.config = { ...this.config, ...newConfig };
-        this.moduleCache.clear();
-        console.log("[ModuleInterceptorService] Configuration updated");
-      }
-      /**
-       * Get service status
-       */
-      getStatus() {
-        return {
-          cacheSize: this.moduleCache.size,
-          config: this.config,
-          securityRules: this.config.allowedModules.length + this.config.blockedModules.length
-        };
-      }
-    };
-    ModuleInterceptorServiceLayer = Layer14.effect(
-      IModuleInterceptorService,
-      Effect16.sync(() => new ModuleInterceptorService())
-    );
-    ModuleInterceptorServiceLive = Layer14.effect(
-      IModuleInterceptorService,
-      Effect16.sync(() => new ModuleInterceptorService())
-    );
-    ModuleInterceptorService_default = ModuleInterceptorService;
-  }
-});
-
-// Source/Services/Logger.ts
-import { Context as Context16, Effect as Effect17, Ref as Ref6 } from "effect";
-var Logger, LoggerService;
-var init_Logger = __esm({
-  "Source/Services/Logger.ts"() {
-    "use strict";
-    Logger = Context16.Tag("Service/Logger");
-    LoggerService = class extends Effect17.Service()(
-      "Service/Logger",
-      {
-        effect: Effect17.gen(function* () {
-          const ExtensionIdRef = yield* Ref6.make(
-            void 0
-          );
-          const LogLevelRef = yield* Ref6.make("info");
-          const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
-            const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
-            const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
-            return `${Timestamp} ${Prefix} ${Message}`;
-          }, "FormatMessage");
-          const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
-            const LogLevel = yield* Ref6.get(LogLevelRef);
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            if (LogLevel === "trace") {
-              const FormattedMessage = FormatMessage(
-                Message,
-                "trace",
-                ExtensionId
-              );
-              return yield* Effect17.logTrace(Message).pipe(
-                Effect17.annotateLogs({
-                  extensionId: ExtensionId,
-                  data: Data.length === 1 ? Data[0] : Data
-                })
-              );
-            }
-          }), "Trace");
-          const Debug2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
-            const LogLevel = yield* Ref6.get(LogLevelRef);
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            if (LogLevel === "trace" || LogLevel === "debug") {
-              const FormattedMessage = FormatMessage(
-                Message,
-                "debug",
-                ExtensionId
-              );
-              return yield* Effect17.logDebug(Message).pipe(
-                Effect17.annotateLogs({
-                  extensionId: ExtensionId,
-                  data: Data.length === 1 ? Data[0] : Data
-                })
-              );
-            }
-          }), "Debug");
-          const Info2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            const FormattedMessage = FormatMessage(
-              Message,
-              "info",
-              ExtensionId
-            );
-            return yield* Effect17.logInfo(Message).pipe(
-              Effect17.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Info");
-          const Warn2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect17.logWarning(Message).pipe(
-              Effect17.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Warn");
-          const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect17.logError(Message).pipe(
-              Effect17.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Error");
-          const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect17.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect17.logFatal(Message).pipe(
-              Effect17.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Fatal");
-          const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect17.gen(function* () {
-            yield* Ref6.set(ExtensionIdRef, ExtensionId);
-          }), "SetExtensionId");
-          const GetExtensionId = /* @__PURE__ */ __name(() => Effect17.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return ExtensionId ?? "cocoon-core";
-          }), "GetExtensionId");
-          const ServiceImplementation = {
-            Trace,
-            Debug: Debug2,
-            Info: Info2,
-            Warn: Warn2,
-            Error: Error2,
-            Fatal,
-            SetExtensionId,
-            GetExtensionId
-          };
-          return ServiceImplementation;
-        })
-      }
-    ) {
-      static {
-        __name(this, "LoggerService");
-      }
-    };
-  }
-});
-
-// Source/Services/MountainGRPCClient.ts
-import { Context as Context17, Effect as Effect18, Layer as Layer15 } from "effect";
-var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
-var init_MountainGRPCClient = __esm({
-  "Source/Services/MountainGRPCClient.ts"() {
-    "use strict";
-    init_IMountainClientService();
-    init_Logger();
-    MountainGRPCClientService = Context17.GenericTag("Service/MountainGRPCClient");
-    MountainGRPCClientLive = Layer15.effect(
-      MountainGRPCClientService,
-      Effect18.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const logger = yield* Logger.Logger;
-        const service = {
-          _serviceBrand: void 0,
-          // ==================== Window Operations ====================
-          showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showTextDocument: ${uri}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
-                uri: { value: uri },
-                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
-                // Convert ViewColumn enum (1-based to 0-based)
-                preserveFocus: options.preserveFocus ?? true
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error(`Failed to show text document: ${uri}`)
-              );
-            }
-            return;
-          }), "showTextDocument"),
-          showInformationMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showInformationMessage: ${message}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error(
-                  `Failed to show information message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showInformationMessage"),
-          showWarningMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showWarningMessage: ${message}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error(
-                  `Failed to show warning message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showWarningMessage"),
-          showErrorMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showErrorMessage: ${message}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error(
-                  `Failed to show error message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showErrorMessage"),
-          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] createStatusBarItem: ${options.id}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
-                id: options.id,
-                text: options.text,
-                tooltip: options.tooltip ?? ""
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.itemId) {
-              return yield* Effect18.fail(
-                new Error(
-                  `Failed to create status bar item: ${options.id}`
-                )
-              );
-            }
-            return result.itemId;
-          }), "createStatusBarItem"),
-          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
-                itemId,
-                text
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "setStatusBarText"),
-          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
-                viewType: options.viewType,
-                title: options.title,
-                iconPath: options.iconPath ?? "",
-                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
-                preserveFocus: options.preserveFocus ?? false,
-                enableFindWidget: options.enableFindWidget ?? true,
-                retainContextWhenHidden: options.retainContextWhenHidden ?? false,
-                localResourceRoots: options.localResourceRoots ?? []
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (result?.handle === void 0) {
-              return yield* Effect18.fail(
-                new Error(
-                  `Failed to create webview panel: ${options.viewType}`
-                )
-              );
-            }
-            return result.handle;
-          }), "createWebviewPanel"),
-          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
-                handle,
-                html
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "setWebviewHtml"),
-          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
-            );
-            const isString2 = typeof message === "string";
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
-                "onDidReceiveMessage",
-                {
-                  handle,
-                  stringMessage: isString2 ? message : void 0,
-                  bytesMessage: isString2 ? void 0 : message
-                }
-              ), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "postWebviewMessage"),
-          // ==================== Workspace Operations ====================
-          findFiles: /* @__PURE__ */ __name((pattern, include) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] findFiles: ${pattern}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
-                pattern,
-                include: include ?? true
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.uris ?? [];
-          }), "findFiles"),
-          findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] findTextInFiles: ${pattern}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
-                pattern,
-                include: include ?? [],
-                exclude: exclude ?? []
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.matches ?? [];
-          }), "findTextInFiles"),
-          openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] openDocument: ${uri}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
-                uri: { value: uri },
-                viewColumn: viewColumn ? viewColumn - 2 : void 0
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error(`Failed to open document: ${uri}`)
-              );
-            }
-            return;
-          }), "openDocument"),
-          saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
-                includeUntitled
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error("Failed to save all documents")
-              );
-            }
-            return;
-          }), "saveAll"),
-          applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] applyEdit: ${uri}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
-                uri: { value: uri },
-                edits: edits.map((edit) => ({
-                  range: {
-                    start: {
-                      line: edit.range.start.line,
-                      character: edit.range.start.character
-                    },
-                    end: {
-                      line: edit.range.end.line,
-                      character: edit.range.end.character
-                    }
-                  },
-                  newText: edit.newText
-                }))
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect18.fail(
-                new Error(`Failed to apply edit to: ${uri}`)
-              );
-            }
-            return;
-          }), "applyEdit"),
-          // ==================== Command Operations ====================
-          registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] registerCommand: ${commandId}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
-                commandId,
-                extensionId,
-                title
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "registerCommand"),
-          executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] executeCommand: ${commandId}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
-                commandId,
-                arguments: args.map((arg) => {
-                  if (typeof arg === "string") {
-                    return { stringValue: arg };
-                  }
-                  if (typeof arg === "number") {
-                    return { intValue: arg };
-                  }
-                  if (typeof arg === "boolean") {
-                    return { boolValue: arg };
-                  }
-                  if (arg instanceof Uint8Array) {
-                    return { bytesValue: arg };
-                  }
-                  return { stringValue: String(arg) };
-                })
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (result?.error) {
-              return yield* Effect18.fail(
-                new Error(
-                  `Command execution failed: ${result.error.Message}`
-                )
-              );
-            }
-            return result?.value;
-          }), "executeCommand"),
-          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] unregisterCommand: ${commandId}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
-                "unregisterCommand",
-                {
-                  commandId
-                }
-              ), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "unregisterCommand"),
-          // ==================== Secret Storage ====================
-          getSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] getSecret: ${key}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.value;
-          }), "getSecret"),
-          storeSecret: /* @__PURE__ */ __name((key, value) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] storeSecret: ${key}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
-                key,
-                value
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "storeSecret"),
-          deleteSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] deleteSecret: ${key}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
-                key
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "deleteSecret"),
-          // ==================== File System Operations ====================
-          readFile: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] readFile: ${uri}`
-            );
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.content) {
-              return yield* Effect18.fail(
-                new Error(`Failed to read file: ${uri}`)
-              );
-            }
-            return result.content;
-          }), "readFile"),
-          writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] writeFile: ${uri}`
-            );
-            yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
-                uri: { value: uri },
-                content,
-                encoding
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "writeFile"),
-          stat: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result) {
-              return yield* Effect18.fail(
-                new Error(`Failed to stat file: ${uri}`)
-              );
-            }
-            return result;
-          }), "stat"),
-          readdir: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
-            const result = yield* Effect18.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.entries ?? [];
-          }), "readdir")
-        };
-        return service;
-      })
-    );
-    MountainGRPCClientMock = Layer15.effect(
-      MountainGRPCClientService,
-      Effect18.gen(function* () {
-        const logger = yield* Logger.Logger;
-        const mockSecrets = /* @__PURE__ */ new Map();
-        const mockStatusBarItems = /* @__PURE__ */ new Map();
-        const mockWebviewPanels = /* @__PURE__ */ new Map();
-        let mockWebviewHandleCounter = 0;
-        const service = {
-          _serviceBrand: void 0,
-          // Window Operations
-          showTextDocument: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showTextDocument: ${uri}`
-            );
-            return;
-          }), "showTextDocument"),
-          showInformationMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showInformationMessage: ${message}`
-            );
-            return;
-          }), "showInformationMessage"),
-          showWarningMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showWarningMessage: ${message}`
-            );
-            return;
-          }), "showWarningMessage"),
-          showErrorMessage: /* @__PURE__ */ __name((message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showErrorMessage: ${message}`
-            );
-            return;
-          }), "showErrorMessage"),
-          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
-            );
-            const itemId = `status-${options.id}`;
-            mockStatusBarItems.set(itemId, options.text);
-            return itemId;
-          }), "createStatusBarItem"),
-          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
-            );
-            mockStatusBarItems.set(itemId, text);
-            return;
-          }), "setStatusBarText"),
-          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
-            );
-            const handle = mockWebviewHandleCounter++;
-            mockWebviewPanels.set(handle, { html: options.html ?? "" });
-            return handle;
-          }), "createWebviewPanel"),
-          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
-            );
-            const panel = mockWebviewPanels.get(handle);
-            if (panel) {
-              panel.html = html;
-            }
-            return;
-          }), "setWebviewHtml"),
-          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
-            );
-            return;
-          }), "postWebviewMessage"),
-          // Workspace Operations
-          findFiles: /* @__PURE__ */ __name((pattern) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] findFiles: ${pattern}`
-            );
-            return [];
-          }), "findFiles"),
-          findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
-            );
-            return [];
-          }), "findTextInFiles"),
-          openDocument: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] openDocument: ${uri}`
-            );
-            return;
-          }), "openDocument"),
-          saveAll: /* @__PURE__ */ __name(() => Effect18.gen(function* () {
-            yield* logger.debug("[MountainGRPCClientMock] saveAll");
-            return;
-          }), "saveAll"),
-          applyEdit: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] applyEdit: ${uri}`
-            );
-            return;
-          }), "applyEdit"),
-          // Command Operations
-          registerCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] registerCommand: ${commandId}`
-            );
-            return;
-          }), "registerCommand"),
-          executeCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] executeCommand: ${commandId}`
-            );
-            return void 0;
-          }), "executeCommand"),
-          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
-            );
-            return;
-          }), "unregisterCommand"),
-          // Secret Storage
-          getSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] getSecret: ${key}`
-            );
-            return mockSecrets.get(key);
-          }), "getSecret"),
-          storeSecret: /* @__PURE__ */ __name((key, value) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] storeSecret: ${key}`
-            );
-            mockSecrets.set(key, value);
-            return;
-          }), "storeSecret"),
-          deleteSecret: /* @__PURE__ */ __name((key) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] deleteSecret: ${key}`
-            );
-            mockSecrets.delete(key);
-            return;
-          }), "deleteSecret"),
-          // File System Operations
-          readFile: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] readFile: ${uri}`
-            );
-            return new Uint8Array(0);
-          }), "readFile"),
-          writeFile: /* @__PURE__ */ __name((uri, content) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] writeFile: ${uri}`
-            );
-            return;
-          }), "writeFile"),
-          stat: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] stat: ${uri}`
-            );
-            return {
-              isFile: true,
-              isDirectory: false,
-              size: 0,
-              mtime: Date.now()
-            };
-          }), "stat"),
-          readdir: /* @__PURE__ */ __name((uri) => Effect18.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] readdir: ${uri}`
-            );
-            return [];
-          }), "readdir")
-        };
-        return service;
-      })
-    );
-    MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
-      Layer15.provide(IMountainClientService)
-    );
-    MountainGRPCClientMockLayer = MountainGRPCClientMock;
-  }
-});
-
-// Source/Services/SecurityService.ts
-import { Effect as Effect19, Layer as Layer16 } from "effect";
-var SecurityService, SecurityServiceLayer, SecurityServiceLive;
-var init_SecurityService = __esm({
-  "Source/Services/SecurityService.ts"() {
-    "use strict";
-    SecurityService = class {
-      static {
-        __name(this, "SecurityService");
-      }
-      policies = /* @__PURE__ */ new Map();
-      auditLog = [];
-      incidents = [];
-      constructor() {
-        console.log("[SecurityService] Initializing security service");
-        this.loadDefaultPolicies();
-      }
-      /**
-       * Initialize security service
-       */
-      async initialize() {
-        console.log("[SecurityService] Starting security service");
-        try {
-          await this.loadSecurityPolicies();
-          await this.initializeAuditLogging();
-          await this.initializeIncidentResponse();
-          this.securityActive = true;
-          console.log("[SecurityService] Security service started");
-        } catch (error) {
-          console.error("[SecurityService] Failed to initialize:", error);
-          throw error;
-        }
-      }
-      /**
-       * Load default security policies
-       */
-      loadDefaultPolicies() {
-        const defaultPolicy = {
-          extensionId: "default",
-          allowedModules: ["path", "url", "util", "events"],
-          blockedModules: [
-            "fs",
-            "child_process",
-            "net",
-            "http",
-            "https",
-            "os",
-            "crypto"
-          ],
-          maxMemoryUsage: 100,
-          // MB
-          maxExecutionTime: 3e4,
-          // 30 seconds
-          allowedAPIs: ["commands", "window", "workspace"],
-          blockedAPIs: ["debug", "terminal", "scm"],
-          networkAccess: false,
-          fileSystemAccess: false,
-          requireAuthentication: true
-        };
-        this.policies.set("default", defaultPolicy);
-        console.log("[SecurityService] Default security policy loaded");
-      }
-      /**
-       * Load security policies from Mountain with advanced features
-       */
-      async loadSecurityPolicies() {
-        try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
-          const mountainClient = new MountainClientService2();
-          const policiesResponse = await mountainClient.sendRequest(
-            "security.policies.get",
-            {
-              includeDefaults: true,
-              timestamp: Date.now()
-            }
-          );
-          if (policiesResponse && policiesResponse.policies) {
-            for (const policy of policiesResponse.policies) {
-              this.policies.set(policy.extensionId, {
-                extensionId: policy.extensionId,
-                allowedModules: policy.allowedModules || [],
-                blockedModules: policy.blockedModules || [],
-                maxMemoryUsage: policy.maxMemoryUsage || 100,
-                maxExecutionTime: policy.maxExecutionTime || 3e4,
-                allowedAPIs: policy.allowedAPIs || [],
-                blockedAPIs: policy.blockedAPIs || [],
-                networkAccess: policy.networkAccess || false,
-                fileSystemAccess: policy.fileSystemAccess || false,
-                requireAuthentication: policy.requireAuthentication || true
-              });
-            }
-            console.log(
-              `[SecurityService] Loaded ${policiesResponse.policies.length} security policies from Mountain`
-            );
-          } else {
-            console.warn(
-              "[SecurityService] No security policies received from Mountain, using defaults"
-            );
-          }
-        } catch (error) {
-          console.error(
-            "[SecurityService] Failed to load security policies from Mountain:",
-            error
-          );
-          console.log(
-            "[SecurityService] Continuing with default security policies"
-          );
-        }
-      }
-      /**
-       * Initialize advanced audit logging system
-       */
-      async initializeAuditLogging() {
-        try {
-          this.auditLog = [];
-          setInterval(() => {
-            this.rotateAuditLog();
-          }, 36e5);
-          console.log(
-            "[SecurityService] Advanced audit logging initialized with hourly rotation"
-          );
-        } catch (error) {
-          console.error(
-            "[SecurityService] Failed to initialize audit logging:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Rotate audit log to prevent memory bloat
-       */
-      rotateAuditLog() {
-        const maxLogSize = 1e4;
-        if (this.auditLog.length > maxLogSize) {
-          this.auditLog = this.auditLog.slice(-maxLogSize);
-          console.log(
-            `[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`
-          );
-        }
-      }
-      /**
-       * Initialize advanced incident response system
-       */
-      async initializeIncidentResponse() {
-        try {
-          this.incidents = [];
-          setInterval(() => {
-            this.escalateCriticalIncidents();
-          }, 3e5);
-          console.log(
-            "[SecurityService] Advanced incident response system initialized"
-          );
-        } catch (error) {
-          console.error(
-            "[SecurityService] Failed to initialize incident response:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Escalate critical incidents automatically
-       */
-      escalateCriticalIncidents() {
-        const criticalIncidents = this.incidents.filter(
-          (incident) => incident.severity === "critical" && incident.status === "open" && Date.now() - incident.timestamp > 3e5
-          // 5 minutes
-        );
-        if (criticalIncidents.length > 0) {
-          console.warn(
-            `[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`
-          );
-          criticalIncidents.forEach((incident) => {
-            incident.actions.push("Automatically escalated due to timeout");
-            this.sendIncidentToMountain(incident);
-          });
-        }
-      }
-      /**
-       * Send incident to Mountain for centralized tracking
-       */
-      async sendIncidentToMountain(incident) {
-        try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
-          const mountainClient = new MountainClientService2();
-          await mountainClient.sendNotification("security.incident", {
-            incidentId: incident.id,
-            severity: incident.severity,
-            description: incident.description,
-            timestamp: incident.timestamp,
-            actions: incident.actions
-          });
-          console.log(
-            `[SecurityService] Incident ${incident.id} sent to Mountain`
-          );
-        } catch (error) {
-          console.warn(
-            `[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
-            error
-          );
-        }
-      }
-      /**
-       * Check module access permission
-       */
-      async checkModuleAccess(extensionId, moduleId) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (policy.blockedModules.includes(moduleId)) {
-          await this.logSecurityEvent({
-            id: `module-access-${Date.now()}`,
-            type: "violation",
-            severity: "high",
-            extensionId,
-            action: "module_access",
-            resource: moduleId,
-            outcome: "blocked",
-            timestamp: Date.now(),
-            details: { reason: "Module blocked by security policy" }
-          });
-          return false;
-        }
-        if (policy.allowedModules.includes(moduleId)) {
-          await this.logSecurityEvent({
-            id: `module-access-${Date.now()}`,
-            type: "access",
-            severity: "low",
-            extensionId,
-            action: "module_access",
-            resource: moduleId,
-            outcome: "allowed",
-            timestamp: Date.now(),
-            details: {}
-          });
-          return true;
-        }
-        await this.logSecurityEvent({
-          id: `module-access-${Date.now()}`,
-          type: "violation",
-          severity: "medium",
-          extensionId,
-          action: "module_access",
-          resource: moduleId,
-          outcome: "denied",
-          timestamp: Date.now(),
-          details: { reason: "Module not explicitly allowed" }
-        });
-        return false;
-      }
-      /**
-       * Check API access permission
-       */
-      async checkAPIAccess(extensionId, apiName) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (policy.blockedAPIs.includes(apiName)) {
-          await this.logSecurityEvent({
-            id: `api-access-${Date.now()}`,
-            type: "violation",
-            severity: "high",
-            extensionId,
-            action: "api_access",
-            resource: apiName,
-            outcome: "blocked",
-            timestamp: Date.now(),
-            details: { reason: "API blocked by security policy" }
-          });
-          return false;
-        }
-        if (policy.allowedAPIs.includes(apiName)) {
-          await this.logSecurityEvent({
-            id: `api-access-${Date.now()}`,
-            type: "access",
-            severity: "low",
-            extensionId,
-            action: "api_access",
-            resource: apiName,
-            outcome: "allowed",
-            timestamp: Date.now(),
-            details: {}
-          });
-          return true;
-        }
-        await this.logSecurityEvent({
-          id: `api-access-${Date.now()}`,
-          type: "violation",
-          severity: "medium",
-          extensionId,
-          action: "api_access",
-          resource: apiName,
-          outcome: "denied",
-          timestamp: Date.now(),
-          details: { reason: "API not explicitly allowed" }
-        });
-        return false;
-      }
-      /**
-       * Check network access permission
-       */
-      async checkNetworkAccess(extensionId) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (!policy.networkAccess) {
-          await this.logSecurityEvent({
-            id: `network-access-${Date.now()}`,
-            type: "violation",
-            severity: "critical",
-            extensionId,
-            action: "network_access",
-            resource: "network",
-            outcome: "denied",
-            timestamp: Date.now(),
-            details: { reason: "Network access not allowed" }
-          });
-          return false;
-        }
-        await this.logSecurityEvent({
-          id: `network-access-${Date.now()}`,
-          type: "access",
-          severity: "medium",
-          extensionId,
-          action: "network_access",
-          resource: "network",
-          outcome: "allowed",
-          timestamp: Date.now(),
-          details: {}
-        });
-        return true;
-      }
-      /**
-       * Check file system access permission
-       */
-      async checkFileSystemAccess(extensionId) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (!policy.fileSystemAccess) {
-          await this.logSecurityEvent({
-            id: `filesystem-access-${Date.now()}`,
-            type: "violation",
-            severity: "high",
-            extensionId,
-            action: "filesystem_access",
-            resource: "filesystem",
-            outcome: "denied",
-            timestamp: Date.now(),
-            details: { reason: "File system access not allowed" }
-          });
-          return false;
-        }
-        await this.logSecurityEvent({
-          id: `filesystem-access-${Date.now()}`,
-          type: "access",
-          severity: "medium",
-          extensionId,
-          action: "filesystem_access",
-          resource: "filesystem",
-          outcome: "allowed",
-          timestamp: Date.now(),
-          details: {}
-        });
-        return true;
-      }
-      /**
-       * Get extension security policy
-       */
-      getExtensionPolicy(extensionId) {
-        if (this.policies.has(extensionId)) {
-          return this.policies.get(extensionId);
-        }
-        return this.policies.get("default");
-      }
-      /**
-       * Log security event with advanced threat detection
-       */
-      async logSecurityEvent(event) {
-        this.auditLog.push(event);
-        await this.detectThreatPatterns(event);
-        if (event.severity === "critical" || event.severity === "high") {
-          await this.escalateIncident(event);
-        }
-        console.log(
-          `[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`
-        );
-      }
-      /**
-       * Detect threat patterns in real-time
-       */
-      async detectThreatPatterns(event) {
-        const recentEvents = this.auditLog.filter(
-          (e) => Date.now() - e.timestamp < 6e4 && // Last minute
-          e.extensionId === event.extensionId
-        );
-        if (recentEvents.length >= 10) {
-          const threatEvent = {
-            id: `threat-detection-${Date.now()}`,
-            type: "violation",
-            severity: "critical",
-            extensionId: event.extensionId,
-            action: "threat_detection",
-            resource: "security_system",
-            outcome: "detected",
-            timestamp: Date.now(),
-            details: {
-              pattern: "rapid_fire_violations",
-              eventCount: recentEvents.length,
-              timeWindow: "1 minute"
-            }
-          };
-          this.auditLog.push(threatEvent);
-          await this.escalateIncident(threatEvent);
-          console.warn(
-            `[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`
-          );
-        }
-      }
-      /**
-       * Escalate security incident
-       */
-      async escalateIncident(event) {
-        const incident = {
-          id: `incident-${Date.now()}`,
-          severity: event.severity,
-          description: `Security ${event.type}: ${event.action} by extension ${event.extensionId}`,
-          actions: [
-            "Investigate security event",
-            "Notify security team",
-            "Review extension permissions"
-          ],
-          status: "open",
-          timestamp: Date.now()
-        };
-        this.incidents.push(incident);
-        console.warn(
-          `[SecurityService] Security incident escalated: ${incident.description}`
-        );
-      }
-      /**
-       * Set security policy for extension
-       */
-      async setSecurityPolicy(extensionId, policy) {
-        this.policies.set(extensionId, policy);
-        await this.logSecurityEvent({
-          id: `policy-update-${Date.now()}`,
-          type: "authorization",
-          severity: "low",
-          extensionId,
-          action: "policy_update",
-          resource: "security_policy",
-          outcome: "allowed",
-          timestamp: Date.now(),
-          details: { policy }
-        });
-        console.log(
-          `[SecurityService] Security policy updated for extension: ${extensionId}`
-        );
-      }
-      /**
-       * Get security policy for extension
-       */
-      async getSecurityPolicy(extensionId) {
-        return this.policies.get(extensionId);
-      }
-      /**
-       * Get audit log
-       */
-      getAuditLog() {
-        const violations = this.auditLog.filter(
-          (event) => event.outcome === "denied" || event.outcome === "blocked"
-        );
-        const authenticationFailures = this.auditLog.filter(
-          (event) => event.type === "authentication" && event.outcome === "denied"
-        );
-        const authorizationFailures = this.auditLog.filter(
-          (event) => event.type === "authorization" && event.outcome === "denied"
-        );
-        return {
-          events: [...this.auditLog],
-          summary: {
-            totalEvents: this.auditLog.length,
-            violations: violations.length,
-            authenticationFailures: authenticationFailures.length,
-            authorizationFailures: authorizationFailures.length,
-            lastUpdated: Date.now()
-          }
-        };
-      }
-      /**
-       * Get active incidents
-       */
-      getActiveIncidents() {
-        return this.incidents.filter(
-          (incident) => incident.status === "open" || incident.status === "investigating"
-        );
-      }
-      /**
-       * Resolve incident
-       */
-      async resolveIncident(incidentId, resolution) {
-        const incident = this.incidents.find((inc) => inc.id === incidentId);
-        if (incident) {
-          incident.status = "resolved";
-          incident.resolutionTime = Date.now() - incident.timestamp;
-          await this.logSecurityEvent({
-            id: `incident-resolve-${Date.now()}`,
-            type: "authorization",
-            severity: "low",
-            extensionId: "security-service",
-            action: "incident_resolution",
-            resource: incidentId,
-            outcome: "allowed",
-            timestamp: Date.now(),
-            details: { resolution }
-          });
-          console.log(`[SecurityService] Incident resolved: ${incidentId}`);
-        }
-      }
-      /**
-       * Generate security report
-       */
-      generateSecurityReport() {
-        const recommendations = [];
-        const auditLog = this.getAuditLog();
-        if (auditLog.summary.violations > 10) {
-          recommendations.push(
-            "Review security policies for frequent violations"
-          );
-        }
-        if (auditLog.summary.authenticationFailures > 5) {
-          recommendations.push("Investigate authentication failures");
-        }
-        if (this.getActiveIncidents().length > 0) {
-          recommendations.push("Address active security incidents");
-        }
-        return {
-          policies: this.policies.size,
-          auditLog,
-          activeIncidents: this.getActiveIncidents(),
-          recommendations
-        };
-      }
-      /**
-       * Stop security service
-       */
-      async stop() {
-        console.log("[SecurityService] Stopping security service");
-        this.securityActive = false;
-        await this.saveSecurityState();
-        console.log("[SecurityService] Security service stopped");
-      }
-      /**
-       * Save security state
-       */
-      async saveSecurityState() {
-        console.log("[SecurityService] Security state saved");
-      }
-    };
-    SecurityServiceLayer = Layer16.effect(
-      "SecurityService",
-      Effect19.sync(() => new SecurityService())
-    );
-    SecurityServiceLive = Layer16.effect(
-      "SecurityService",
-      Effect19.sync(() => new SecurityService())
-    );
-  }
-});
-
-// Source/Services/TerminalService.ts
-import { Context as Context18, Effect as Effect20, Layer as Layer17 } from "effect";
-var ITerminalService2, TerminalService, TerminalServiceLayer;
-var init_TerminalService = __esm({
-  "Source/Services/TerminalService.ts"() {
-    "use strict";
-    init_IMountainClientService();
-    ITerminalService2 = Context18.Tag("ITerminalService")();
-    TerminalService = class {
-      constructor(mountainClient) {
-        this.mountainClient = mountainClient;
-      }
-      mountainClient;
-      static {
-        __name(this, "TerminalService");
-      }
-      async createTerminal(name, shellPath, cwd2) {
-        console.log(`[Terminal] Creating terminal: ${name}`);
-        const terminalId = await this.mountainClient.sendRequest(
-          "terminal.create",
-          {
-            name,
-            shell_path: shellPath,
-            cwd: cwd2
-          }
-        );
-        return terminalId;
-      }
-      async sendText(terminalId, text) {
-        await this.mountainClient.sendRequest("terminal.write", {
-          id: terminalId,
-          data: text
-        });
-      }
-      async resize(terminalId, cols, rows) {
-        console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
-      }
-      async kill(terminalId) {
-        console.log(`[Terminal] Kill ${terminalId}`);
-      }
-    };
-    TerminalServiceLayer = Layer17.effect(
-      ITerminalService2,
-      Effect20.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        return new TerminalService(mountainClient);
-      })
-    );
-  }
-});
-
-// Source/ServiceMapping.ts
-var ServiceMapping_exports = {};
-__export(ServiceMapping_exports, {
-  EffectServices: () => EffectServices,
-  OldStyleServices: () => OldStyleServices,
-  ServiceMapping: () => ServiceMapping
-});
-import { Layer as Layer18 } from "effect";
-var OldStyleServices, EffectServices, ServiceMapping;
-var init_ServiceMapping = __esm({
-  async "Source/ServiceMapping.ts"() {
-    "use strict";
-    await init_Effect();
-    await init_APIFactoryService();
-    init_Configuration2();
-    init_ErrorHandlingService();
-    await init_ExtensionHostService();
-    init_ModuleInterceptorService();
-    init_MountainClientService();
-    init_MountainGRPCClient();
-    init_PerformanceMonitoringService();
-    init_SecurityService();
-    init_TerminalService();
-    OldStyleServices = {
-      /**
-       * Validate dependencies for old-style services
-       */
-      validateDependencies: /* @__PURE__ */ __name(() => Layer18.mergeAll(
-        MountainClientServiceLayer,
-        ConfigurationLayer,
-        ModuleInterceptorServiceLayer,
-        ExtensionHostLayer,
-        APIFactoryLayer,
-        TerminalServiceLayer,
-        SecurityServiceLive,
-        PerformanceMonitoringServiceLive,
-        ErrorHandlingServiceLive
-      ), "validateDependencies"),
-      /**
-       * Compose application layer for old-style services
-       */
-      composeAppLayer: /* @__PURE__ */ __name(() => {
-        const Base = Layer18.mergeAll(
-          MountainClientServiceLayer,
-          MountainGRPCClientLayer,
-          SecurityServiceLive,
-          PerformanceMonitoringServiceLive,
-          ErrorHandlingServiceLive
-        );
-        const Config = ConfigurationLayer.pipe(Layer18.provide(Base));
-        const Terminal = TerminalServiceLayer.pipe(Layer18.provide(Base));
-        const ModuleInt = ModuleInterceptorServiceLayer.pipe(
-          Layer18.provide(Base)
-        );
-        const API = APIFactoryLayer.pipe(
-          Layer18.provide(Base),
-          Layer18.provide(Config),
-          Layer18.provide(Terminal),
-          Layer18.provide(ModuleInt)
-        );
-        const ExtHost = ExtensionHostLayer.pipe(
-          Layer18.provide(Base),
-          Layer18.provide(Config),
-          Layer18.provide(API),
-          Layer18.provide(ModuleInt)
-        );
-        return Layer18.mergeAll(Base, Config, Terminal, API, ExtHost, ModuleInt);
-      }, "composeAppLayer")
-    };
-    EffectServices = {
-      /**
-       * Compose the main Effect-TS application layer
-       *
-       * Layer dependencies:
-       * - Telemetry (base, no dependencies)
-       * - Health (depends on Telemetry)
-       * - MountainClient (depends on Telemetry)
-       * - ModuleInterceptor (depends on Telemetry)
-       * - Extension (depends on Telemetry)
-       * - RPCServer (depends on Telemetry)
-       * - Bootstrap (depends on all above)
-       */
-      composeAppLayer: /* @__PURE__ */ __name(() => {
-        const Telemetry2 = TelemetryLive;
-        const Health = HealthLive.pipe(Layer18.provide(Telemetry2));
-        const MountainClient2 = MountainClientLive.pipe(
-          Layer18.provide(Telemetry2)
-        );
-        const ModuleInterceptor2 = ModuleInterceptorLive.pipe(
-          Layer18.provide(Telemetry2)
-        );
-        const Extension2 = ExtensionLive.pipe(Layer18.provide(Telemetry2));
-        const RPCServer2 = RPCServerLive.pipe(Layer18.provide(Telemetry2));
-        const Bootstrap = BootstrapLive.pipe(
-          Layer18.provide(Telemetry2),
-          Layer18.provide(Health),
-          Layer18.provide(MountainClient2),
-          Layer18.provide(ModuleInterceptor2),
-          Layer18.provide(Extension2),
-          Layer18.provide(RPCServer2)
-        );
-        return Layer18.mergeAll(
-          Telemetry2,
-          Health,
-          MountainClient2,
-          ModuleInterceptor2,
-          Extension2,
-          RPCServer2,
-          Bootstrap
-        );
-      }, "composeAppLayer"),
-      /**
-       * Get individual service layers for fine-grained composition
-       */
-      getTelemetry: /* @__PURE__ */ __name(() => TelemetryLive, "getTelemetry"),
-      getHealth: /* @__PURE__ */ __name(() => HealthLive, "getHealth"),
-      getMountainClient: /* @__PURE__ */ __name(() => MountainClientLive, "getMountainClient"),
-      getModuleInterceptor: /* @__PURE__ */ __name(() => ModuleInterceptorLive, "getModuleInterceptor"),
-      getExtension: /* @__PURE__ */ __name(() => ExtensionLive, "getExtension"),
-      getRPCServer: /* @__PURE__ */ __name(() => RPCServerLive, "getRPCServer"),
-      getBootstrap: /* @__PURE__ */ __name(() => BootstrapLive, "getBootstrap")
-    };
-    ServiceMapping = class {
-      static {
-        __name(this, "ServiceMapping");
-      }
-      /**
-       * Validate dependencies
-       */
-      static validateDependencies = /* @__PURE__ */ __name(() => OldStyleServices.validateDependencies(), "validateDependencies");
-      /**
-       * Compose application layer
-       */
-      static composeAppLayer = /* @__PURE__ */ __name(() => {
-        return OldStyleServices.composeAppLayer();
-      }, "composeAppLayer");
-    };
-  }
-});
-
-// Source/Interfaces/IPerformanceMonitoringService.ts
-var IPerformanceMonitoringService_exports = {};
-__export(IPerformanceMonitoringService_exports, {
-  IPerformanceMonitoringService: () => IPerformanceMonitoringService2
-});
-import { Context as Context19 } from "effect";
-var IPerformanceMonitoringService2;
-var init_IPerformanceMonitoringService = __esm({
-  "Source/Interfaces/IPerformanceMonitoringService.ts"() {
-    "use strict";
-    IPerformanceMonitoringService2 = Context19.Tag("IPerformanceMonitoringService");
-  }
-});
-
-// Source/Interfaces/ISecurityService.ts
-var ISecurityService_exports = {};
-__export(ISecurityService_exports, {
-  ISecurityService: () => ISecurityService2
-});
-import { Context as Context20 } from "effect";
-var ISecurityService2;
-var init_ISecurityService = __esm({
-  "Source/Interfaces/ISecurityService.ts"() {
-    "use strict";
-    ISecurityService2 = Context20.Tag("ISecurityService");
-  }
-});
-
-// Source/Services/Handler/RequestRoutingHandler.ts
-var RouteRequest, RequestRoutingHandler_default;
-var init_RequestRoutingHandler = __esm({
-  "Source/Services/Handler/RequestRoutingHandler.ts"() {
-    "use strict";
-    RouteRequest = /* @__PURE__ */ __name(async (Method, Parameters) => {
-      console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
-      const RoutePatterns = {
-        "extension.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IExtensionHostService: IExtensionHostService3 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
-          switch (Method2) {
-            case "extension.activate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
-              return await ExtensionHostService2.activateExtension(
-                Params.extensionId,
-                Params.reason
-              );
-            }
-            case "extension.deactivate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
-              await ExtensionHostService2.deactivateExtension(
-                Params.extensionId
-              );
-              return { success: true };
-            }
-            case "extension.get": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
-              return ExtensionHostService2.getActivatedExtension(
-                Params.extensionId
-              );
-            }
-            default:
-              throw new Error(`Unknown extension method: ${Method2}`);
-          }
-        }, "extension.\\w+"),
-        "configuration.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IConfigurationService: IConfigurationService3 } = await Promise.resolve().then(() => (init_IConfigurationService(), IConfigurationService_exports));
-          switch (Method2) {
-            case "configuration.get": {
-              const ConfigService = await ServiceMapping2.getService(
-                IConfigurationService3
-              );
-              return await ConfigService.getValue(
-                Params.key,
-                Params.scope
-              );
-            }
-            case "configuration.set": {
-              const ConfigService = await ServiceMapping2.getService(
-                IConfigurationService3
-              );
-              await ConfigService.setValue(
-                Params.key,
-                Params.value,
-                Params.scope
-              );
-              return { success: true };
-            }
-            case "configuration.update": {
-              const ConfigService = await ServiceMapping2.getService(
-                IConfigurationService3
-              );
-              await ConfigService.updateValue(
-                Params.key,
-                Params.updater,
-                Params.scope
-              );
-              return { success: true };
-            }
-            default:
-              throw new Error(`Unknown configuration method: ${Method2}`);
-          }
-        }, "configuration.\\w+"),
-        // Mountain → Cocoon tree-children round-trip keyed on `viewId`.
-        // Emitted by `Mountain/Source/RPC/CocoonService/TreeView.rs::
-        // GetTreeChildren`. Unlike the `tree.*` legacy path that keys on the
-        // Cocoon-side `treeDataProvider:N` handle, this variant identifies
-        // providers by the same viewId the extension declared in its
-        // contributes.views manifest - the only stable key Mountain has.
-        "^\\$provideTreeChildren$": /* @__PURE__ */ __name(async (_Method, Params) => {
-          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
-          const ViewId = Params?.viewId ?? Params?.[0];
-          const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
-          const Provider = TreeDataProvidersByViewId2.get(String(ViewId));
-          if (!Provider) {
-            return { items: [] };
-          }
-          const Element = ItemHandle ? ItemHandle : void 0;
-          const Children = await Provider.getChildren?.(Element) ?? [];
-          const Items = await Promise.all(
-            (Array.isArray(Children) ? Children : []).map(
-              async (Child, Index) => {
-                const Item = await Provider.getTreeItem?.(Child) ?? Child;
-                const Raw2 = Item;
-                const Label = typeof Raw2.label === "string" ? Raw2.label : Raw2.label?.label ?? "";
-                const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
-                const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
-                const CollapsibleState = Raw2.collapsibleState ?? 0;
-                return {
-                  handle: String(
-                    Raw2.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`
-                  ),
-                  label: Label,
-                  isCollapsed: CollapsibleState === 1,
-                  icon: String(Icon)
-                };
-              }
-            )
-          );
-          return { items: Items };
-        }, "^\\$provideTreeChildren$"),
-        "tree\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
-          const Handle = Params?.handle ?? Params?.[0];
-          const Provider = TreeDataProviders2.get(String(Handle));
-          if (!Provider) {
-            throw new Error(
-              `TreeDataProvider handle not registered: ${Handle}`
-            );
-          }
-          switch (Method2) {
-            case "tree.getChildren": {
-              const Element = Params?.element ?? Params?.[1];
-              const Children = await Provider.getChildren?.(Element) ?? [];
-              return Array.isArray(Children) ? Children : [];
-            }
-            case "tree.getTreeItem": {
-              const Element = Params?.element ?? Params?.[1];
-              return await Provider.getTreeItem?.(Element) ?? null;
-            }
-            case "tree.getParent": {
-              const Element = Params?.element ?? Params?.[1];
-              return await Provider.getParent?.(Element) ?? null;
-            }
-            case "tree.resolveTreeItem": {
-              const Item = Params?.item ?? Params?.[1];
-              const Element = Params?.element ?? Params?.[2];
-              return await Provider.resolveTreeItem?.(Item, Element) ?? Item;
-            }
-            default:
-              throw new Error(`Unknown tree method: ${Method2}`);
-          }
-        }, "tree\\.\\w+"),
-        "webview\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { WebviewPanels: WebviewPanels2, WebviewViewProviders: WebviewViewProviders2, CustomEditorProviders: CustomEditorProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
-          const Handle = Params?.handle ?? Params?.[0];
-          switch (Method2) {
-            case "webview.resolveView": {
-              const Provider = WebviewViewProviders2.get(String(Handle));
-              if (!Provider) {
-                throw new Error(
-                  `WebviewViewProvider handle not registered: ${Handle}`
-                );
-              }
-              const View = Params?.view ?? Params?.[1];
-              const Ctx = Params?.context ?? Params?.[2];
-              return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
-            }
-            case "webview.resolveCustomEditor": {
-              const Provider = CustomEditorProviders2.get(String(Handle));
-              if (!Provider) {
-                throw new Error(
-                  `CustomEditorProvider handle not registered: ${Handle}`
-                );
-              }
-              const Document = Params?.document ?? Params?.[1];
-              const Panel = Params?.panel ?? Params?.[2];
-              return await Provider.resolveCustomEditor?.(
-                Document,
-                Panel,
-                { asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath") }
-              ) ?? null;
-            }
-            default: {
-              const Panel = WebviewPanels2.get(String(Handle));
-              if (!Panel) return null;
-              return null;
-            }
-          }
-        }, "webview\\.\\w+"),
-        "performance.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IPerformanceMonitoringService: IPerformanceMonitoringService3 } = await Promise.resolve().then(() => (init_IPerformanceMonitoringService(), IPerformanceMonitoringService_exports));
-          switch (Method2) {
-            case "performance.metrics": {
-              const PerfService = await ServiceMapping2.getService(
-                IPerformanceMonitoringService3
-              );
-              return PerfService.getMetrics();
-            }
-            case "performance.alerts": {
-              const PerfService = await ServiceMapping2.getService(
-                IPerformanceMonitoringService3
-              );
-              return PerfService.getAlerts();
-            }
-            case "performance.report": {
-              const PerfService = await ServiceMapping2.getService(
-                IPerformanceMonitoringService3
-              );
-              return PerfService.generateReport();
-            }
-            default:
-              throw new Error(`Unknown performance method: ${Method2}`);
-          }
-        }, "performance.\\w+"),
-        "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { ISecurityService: ISecurityService3 } = await Promise.resolve().then(() => (init_ISecurityService(), ISecurityService_exports));
-          switch (Method2) {
-            case "security.policy": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
-              return await SecurityService2.getSecurityPolicy(
-                Params.extensionId
-              );
-            }
-            case "security.audit": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
-              return SecurityService2.getAuditLog();
-            }
-            case "security.incidents": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService3);
-              return SecurityService2.getActiveIncidents();
-            }
-            default:
-              throw new Error(`Unknown security method: ${Method2}`);
-          }
-        }, "security.\\w+")
-      };
-      for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
-        const Regex = new RegExp(Pattern);
-        if (Regex.test(Method)) {
-          return Handler(Method, Parameters);
-        }
-      }
-      return void 0;
-    }, "RouteRequest");
-    RequestRoutingHandler_default = RouteRequest;
-  }
-});
-
 // Source/Services/GRPCServerService.ts
 var GRPCServerService_exports = {};
 __export(GRPCServerService_exports, {
@@ -34363,6 +34367,10 @@ var init_GRPCServerService = __esm({
             Context21,
             parameters
           );
+        }
+        if (method === "$provideTreeChildren") {
+          const RequestRoutingHandler = (await Promise.resolve().then(() => (init_RequestRoutingHandler(), RequestRoutingHandler_exports))).default;
+          return RequestRoutingHandler(method, parameters);
         }
         if (/^\$provide[A-Z]/.test(method)) {
           return LanguageProviderHandler_default(

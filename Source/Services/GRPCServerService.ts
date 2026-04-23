@@ -637,6 +637,20 @@ export class GRPCServerService
 			);
 		}
 
+		// `$provideTreeChildren` shares the `$provide*` prefix but has
+		// nothing to do with language-feature providers. It routes to the
+		// tree-data provider registry keyed on viewId, not to
+		// `LanguageProviderHandler` (which would `throw` on an unknown
+		// provider kind). Dispatch explicitly through
+		// `RequestRoutingHandler` before the generic `$provide[A-Z]` regex
+		// below catches it.
+		if (method === "$provideTreeChildren") {
+			const RequestRoutingHandler = (
+				await import("./Handler/RequestRoutingHandler.js")
+			).default;
+			return RequestRoutingHandler(method, parameters);
+		}
+
 		// Language feature provider invocation: "$provideHover", "$provideCompletions", etc.
 		// Mountain calls these when Sky's Monaco editor requests language intelligence.
 		// parameters = [handle, uriObject, position?, context?]
