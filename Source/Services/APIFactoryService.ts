@@ -323,22 +323,46 @@ const createVSCodeAPI = (
 						return Local(...args);
 					}
 					// Delegate to Mountain's CommandRegistry
-					const Result = await mountainClient.sendRequest(
-						"executeCommand",
-						{
-							commandId: command,
-							arguments: args.map((Arg) => {
-								if (typeof Arg === "string")
-									return { stringValue: Arg };
-								if (typeof Arg === "number")
-									return { intValue: Arg };
-								if (typeof Arg === "boolean")
-									return { boolValue: Arg };
-								return { stringValue: JSON.stringify(Arg) };
-							}),
-						},
-					);
-					return Result?.result;
+					try {
+						const Result = await mountainClient.sendRequest(
+							"executeCommand",
+							{
+								commandId: command,
+								arguments: args.map((Arg) => {
+									if (typeof Arg === "string")
+										return { stringValue: Arg };
+									if (typeof Arg === "number")
+										return { intValue: Arg };
+									if (typeof Arg === "boolean")
+										return { boolValue: Arg };
+									return { stringValue: JSON.stringify(Arg) };
+								}),
+							},
+						);
+						return Result?.result;
+					} catch (Error: any) {
+						// Many extensions call executeCommand on their own
+						// extension-namespaced commands at activation as a
+						// signalling pattern (e.g. roo-cline.activationCompleted,
+						// claude-vscode.openWalkthrough). Until the
+						// registerCommand → Mountain CommandRegistry pipeline
+						// is fixed (separate issue - no registerCommand
+						// notifications reach Mountain in current builds),
+						// swallow "not found" errors on extension-namespaced
+						// commands. Real native-command typos still surface -
+						// they lack the `<extension-id>.<command>` shape.
+						const Message = String(Error?.message ?? Error);
+						const IsNotFound = Message.includes("not found") ||
+							Message.includes("Command not found");
+						const IsExtensionNamespaced = command.includes(".") &&
+							!command.startsWith("vscode.") &&
+							!command.startsWith("workbench.") &&
+							!command.startsWith("editor.");
+						if (IsNotFound && IsExtensionNamespaced) {
+							return undefined;
+						}
+						throw Error;
+					}
 				},
 				getCommands: async () => {
 					const Result = await mountainClient

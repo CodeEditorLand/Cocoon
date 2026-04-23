@@ -627,6 +627,36 @@ const EnsureVscodeAPIRegistered = async (
 			7: "Full",
 		};
 
+		// UIKind: declared in
+		// `vs/workbench/services/extensions/common/extensionHostProtocol.ts`
+		// (NOT extHostTypes) - the spread misses it. gitlens reads
+		// `vscode.UIKind.Web`, yaml/java/rust-analyzer read `UIKind.Desktop`
+		// - undefined crashes activation.
+		const UIKind: Record<string | number, string | number> = {
+			Desktop: 1,
+			Web: 2,
+			1: "Desktop",
+			2: "Web",
+		};
+
+		// TextEditorCursorStyle: declared in
+		// `vs/editor/common/config/editorOptions.ts` - also not in
+		// extHostTypes. vscodevim reads `vscode.TextEditorCursorStyle.Line`.
+		const TextEditorCursorStyle: Record<string | number, string | number> = {
+			Line: 1,
+			Block: 2,
+			Underline: 3,
+			LineThin: 4,
+			BlockOutline: 5,
+			UnderlineThin: 6,
+			1: "Line",
+			2: "Block",
+			3: "Underline",
+			4: "LineThin",
+			5: "BlockOutline",
+			6: "UnderlineThin",
+		};
+
 		const API: Record<string, unknown> = {
 			...(VsCodeTypes as unknown as Record<string, unknown>),
 			// Atom I5: read from process.env - single source is .env.Land
@@ -639,6 +669,8 @@ const EnsureVscodeAPIRegistered = async (
 			EventEmitter: Emitter,
 			LogLevel: LogLevelEnum,
 			OverviewRulerLane,
+			UIKind,
+			TextEditorCursorStyle,
 			// Namespaces - each in its own file under VscodeAPI/
 			window: (await import("./VscodeAPI/WindowNamespace.js")).default(
 				Context,

@@ -22064,6 +22064,21 @@ var init_APIFactoryService = __esm({
         ConfigurationTarget: VsCodeTypes.ConfigurationTarget,
         DecorationRangeBehavior: VsCodeTypes.DecorationRangeBehavior,
         TextDocumentSaveReason: VsCodeTypes.TextDocumentSaveReason,
+        // These enums are declared in vs/editor/common/config/editorOptions.ts
+        // and vs/workbench/services/extensions/common/extensionHostProtocol.ts
+        // respectively, but extHostTypes.js doesn't re-export them. Extensions
+        // (vscodevim, gitlens) crash at activation reading .Line / .Web off
+        // undefined. Inline the literal enum values so the API surface matches
+        // what extensions expect. Keep in sync with the upstream enums.
+        TextEditorCursorStyle: {
+          Line: 1,
+          Block: 2,
+          Underline: 3,
+          LineThin: 4,
+          BlockOutline: 5,
+          UnderlineThin: 6
+        },
+        UIKind: { Desktop: 1, Web: 2 },
         // URI is exposed as 'Uri' to match the vscode API surface
         Uri: URI2,
         CancellationTokenSource: CancellationTokenSource2,
@@ -22149,7 +22164,25 @@ var init_APIFactoryService = __esm({
           withProgress: /* @__PURE__ */ __name(async (options, task) => {
             return task({ report: /* @__PURE__ */ __name((value) => {
             }, "report") });
-          }, "withProgress")
+          }, "withProgress"),
+          // Terminal shell-integration events. Land doesn't track shell
+          // integration, so extensions (openai.chatgpt) that subscribe get
+          // a never-firing event that still registers/disposes cleanly.
+          // Must be a function returning IDisposable - not just an object -
+          // because `vscode.window.onDidChangeTerminalShellIntegration(cb)`
+          // is called as a function by the extension.
+          onDidChangeTerminalShellIntegration: /* @__PURE__ */ __name((_Listener) => ({
+            dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose")
+          }), "onDidChangeTerminalShellIntegration"),
+          onDidStartTerminalShellExecution: /* @__PURE__ */ __name((_Listener) => ({
+            dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose")
+          }), "onDidStartTerminalShellExecution"),
+          onDidEndTerminalShellExecution: /* @__PURE__ */ __name((_Listener) => ({
+            dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose")
+          }), "onDidEndTerminalShellExecution")
         },
         // --- Workspace Namespace ---
         workspace: {
@@ -22220,22 +22253,32 @@ var init_APIFactoryService = __esm({
               if (Local !== void 0) {
                 return Local(...args);
               }
-              const Result = await mountainClient.sendRequest(
-                "executeCommand",
-                {
-                  commandId: command,
-                  arguments: args.map((Arg) => {
-                    if (typeof Arg === "string")
-                      return { stringValue: Arg };
-                    if (typeof Arg === "number")
-                      return { intValue: Arg };
-                    if (typeof Arg === "boolean")
-                      return { boolValue: Arg };
-                    return { stringValue: JSON.stringify(Arg) };
-                  })
+              try {
+                const Result = await mountainClient.sendRequest(
+                  "executeCommand",
+                  {
+                    commandId: command,
+                    arguments: args.map((Arg) => {
+                      if (typeof Arg === "string")
+                        return { stringValue: Arg };
+                      if (typeof Arg === "number")
+                        return { intValue: Arg };
+                      if (typeof Arg === "boolean")
+                        return { boolValue: Arg };
+                      return { stringValue: JSON.stringify(Arg) };
+                    })
+                  }
+                );
+                return Result?.result;
+              } catch (Error2) {
+                const Message = String(Error2?.message ?? Error2);
+                const IsNotFound = Message.includes("not found") || Message.includes("Command not found");
+                const IsExtensionNamespaced = command.includes(".") && !command.startsWith("vscode.") && !command.startsWith("workbench.") && !command.startsWith("editor.");
+                if (IsNotFound && IsExtensionNamespaced) {
+                  return void 0;
                 }
-              );
-              return Result?.result;
+                throw Error2;
+              }
             }, "executeCommand"),
             getCommands: /* @__PURE__ */ __name(async () => {
               const Result = await mountainClient.sendRequest("executeCommand", {
