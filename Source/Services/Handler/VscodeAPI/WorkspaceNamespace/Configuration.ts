@@ -29,6 +29,17 @@ export type ConfigurationState = {
 	ConfigListeners: Set<(Event: ConfigurationChangeEvent) => void>;
 	FireConfigChange: (ChangedKey: string) => void;
 	PrimeConfig: (Key: string) => void;
+	/**
+	 * Walk `contributes.configuration.properties` on the given extension
+	 * manifest and seed the cache with each declared default. Extensions
+	 * (GitLens, rust-analyzer, vscodevim, …) reach into sub-sections
+	 * synchronously during `activate()` via
+	 * `workspace.getConfiguration('gitlens').blame.format` - without the
+	 * declared defaults the first reads hit empty cache → `undefined`
+	 * → `TypeError: Cannot read properties of undefined`. Priming on
+	 * activate prevents that entire class of failure.
+	 */
+	PrePopulateFromManifest: (PackageJSON: unknown) => void;
 };
 
 export const CreateConfigurationState = (
@@ -83,6 +94,53 @@ export const CreateConfigurationState = (
 		});
 	};
 
+	const PrePopulateFromManifest = (PackageJSON: unknown): void => {
+		const Manifest = (PackageJSON ?? {}) as {
+			contributes?: {
+				configuration?:
+					| {
+							properties?: Record<
+								string,
+								{ default?: unknown }
+							>;
+					  }
+					| Array<{
+							properties?: Record<
+								string,
+								{ default?: unknown }
+							>;
+					  }>;
+			};
+		};
+		const Contributed = Manifest.contributes?.configuration;
+		if (!Contributed) return;
+		// `contributes.configuration` may be either a single object or an
+		// array of objects, both with a `properties` map keyed on the full
+		// dotted path (e.g. `gitlens.blame.format`).
+		const Sections = Array.isArray(Contributed)
+			? Contributed
+			: [Contributed];
+		for (const Section of Sections) {
+			const Properties = Section?.properties;
+			if (!Properties) continue;
+			for (const [DottedKey, Declaration] of Object.entries(
+				Properties,
+			)) {
+				// Only seed keys that don't already have a cached value -
+				// a user override (workspace or global settings) always
+				// wins over the manifest default.
+				if (ConfigCache.has(DottedKey)) continue;
+				if (
+					Declaration !== null &&
+					typeof Declaration === "object" &&
+					"default" in Declaration
+				) {
+					ConfigCache.set(DottedKey, Declaration.default);
+				}
+			}
+		}
+	};
+
 	// Listen for Mountain-side `configuration.change` notifications (routed
 	// through NotificationHandler into `configurationChanged` on the main
 	// Context.Emitter). When a user edits settings.json outside the extension
@@ -112,7 +170,55 @@ export const CreateConfigurationState = (
 		}
 	});
 
-	return { ConfigCache, ConfigInFlight, ConfigListeners, FireConfigChange, PrimeConfig };
+	return {
+		ConfigCache,
+		ConfigInFlight,
+		ConfigListeners,
+		FireConfigChange,
+		PrimeConfig,
+		PrePopulateFromManifest,
+	};
+};
+
+/**
+ * Synthesise a nested configuration object from the cache for callers
+ * that ask for a branch rather than a leaf. Example: with
+ * `gitlens.blame.format` and `gitlens.blame.enabled` in the cache,
+ * `SynthesiseSubtree(Cache, "gitlens.blame")` returns
+ * `{ format: "...", enabled: true }`. Returns `undefined` when no
+ * sub-keys exist so callers can fall back to `DefaultValue`. This is
+ * what stock VS Code's ConfigurationService does internally via its
+ * `ConfigurationModel` tree; we re-derive it on demand from the flat
+ * cache.
+ */
+const SynthesiseSubtree = (
+	Cache: Map<string, unknown>,
+	Full: string,
+): Record<string, unknown> | undefined => {
+	const Prefix = `${Full}.`;
+	const Subtree: Record<string, unknown> = {};
+	let Matched = false;
+	for (const [CachedKey, CachedValue] of Cache.entries()) {
+		if (!CachedKey.startsWith(Prefix)) continue;
+		Matched = true;
+		const Local = CachedKey.slice(Prefix.length);
+		const Parts = Local.split(".");
+		let Current: Record<string, unknown> = Subtree;
+		for (let I = 0; I < Parts.length - 1; I++) {
+			const Segment = Parts[I]!;
+			const Existing = Current[Segment];
+			if (
+				Existing === undefined ||
+				Existing === null ||
+				typeof Existing !== "object"
+			) {
+				Current[Segment] = {};
+			}
+			Current = Current[Segment] as Record<string, unknown>;
+		}
+		Current[Parts[Parts.length - 1]!] = CachedValue;
+	}
+	return Matched ? Subtree : undefined;
 };
 
 export const BuildGetConfiguration = (
@@ -123,8 +229,25 @@ export const BuildGetConfiguration = (
 	get: <T>(Key: string, DefaultValue?: T): T | undefined => {
 		const Full = Section ? `${Section}.${Key}` : Key;
 		if (State.ConfigCache.has(Full)) {
-			return State.ConfigCache.get(Full) as T;
+			const Cached = State.ConfigCache.get(Full);
+			// When Mountain's inspector reports a branch key as
+			// `null`/`undefined` (no user override), prefer the
+			// synthesised object built from cached leaves. Without this
+			// guard, a cached `null` for `gitlens.codeLens` would
+			// shadow the leaf defaults and the extension's
+			// `cfg.codeLens.enabled` read would throw on `null`.
+			if (Cached === null || Cached === undefined) {
+				const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+				if (Subtree !== undefined) return Subtree as T;
+			}
+			return Cached as T;
 		}
+		// Branch key (`getConfiguration('gitlens').get('blame')`) -
+		// synthesise `{ format, enabled, ... }` from cached leaves so
+		// extensions that do `cfg.blame.format` get the expected shape
+		// rather than `TypeError: Cannot read properties of undefined`.
+		const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+		if (Subtree !== undefined) return Subtree as T;
 		State.PrimeConfig(Full);
 		return DefaultValue;
 	},
@@ -153,16 +276,26 @@ export const BuildGetConfiguration = (
 	has: (Key: string): boolean => {
 		const Full = Section ? `${Section}.${Key}` : Key;
 		if (State.ConfigCache.has(Full)) return true;
+		// Branch key: treat as present if any cached leaf lives under it.
+		if (SynthesiseSubtree(State.ConfigCache, Full) !== undefined) {
+			return true;
+		}
 		State.PrimeConfig(Full);
 		return false;
 	},
 	inspect: <T>(Key: string) => {
 		const Full = Section ? `${Section}.${Key}` : Key;
-		if (!State.ConfigCache.has(Full)) {
-			State.PrimeConfig(Full);
-			return undefined;
+		let Cached: T | undefined;
+		if (State.ConfigCache.has(Full)) {
+			Cached = State.ConfigCache.get(Full) as T;
+		} else {
+			const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+			if (Subtree === undefined) {
+				State.PrimeConfig(Full);
+				return undefined;
+			}
+			Cached = Subtree as T;
 		}
-		const Cached = State.ConfigCache.get(Full) as T;
 		return {
 			key: Full,
 			defaultValue: undefined,

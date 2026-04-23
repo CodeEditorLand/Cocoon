@@ -68,6 +68,14 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	};
 
 	const ConfigState = CreateConfigurationState(Context);
+	// Expose the shared Configuration cache + priming helpers on the
+	// globalThis so `ExtensionHostHandler.ActivateExtension` can seed
+	// `contributes.configuration.properties` defaults before the
+	// extension's `activate()` synchronously reaches into nested config
+	// paths (GitLens, rust-analyzer, vscodevim all do this). One state
+	// instance per process, same as the shim itself.
+	(globalThis as { __cocoonConfigState?: typeof ConfigState }).__cocoonConfigState =
+		ConfigState;
 
 	return {
 		get workspaceFolders() {

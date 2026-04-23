@@ -22297,7 +22297,7 @@ var init_FileSystemWatcher = __esm({
 });
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
-var CreateConfigurationState, BuildGetConfiguration, BuildOnDidChangeConfiguration;
+var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
 var init_Configuration = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
     "use strict";
@@ -22335,6 +22335,24 @@ var init_Configuration = __esm({
           if (Prior !== Resolved) FireConfigChange(Key);
         });
       }, "PrimeConfig");
+      const PrePopulateFromManifest = /* @__PURE__ */ __name((PackageJSON) => {
+        const Manifest = PackageJSON ?? {};
+        const Contributed = Manifest.contributes?.configuration;
+        if (!Contributed) return;
+        const Sections = Array.isArray(Contributed) ? Contributed : [Contributed];
+        for (const Section of Sections) {
+          const Properties = Section?.properties;
+          if (!Properties) continue;
+          for (const [DottedKey, Declaration] of Object.entries(
+            Properties
+          )) {
+            if (ConfigCache.has(DottedKey)) continue;
+            if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
+              ConfigCache.set(DottedKey, Declaration.default);
+            }
+          }
+        }
+      }, "PrePopulateFromManifest");
       Context.Emitter.on("configurationChanged", (Payload) => {
         const Shape = Payload ?? {};
         const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
@@ -22351,14 +22369,50 @@ var init_Configuration = __esm({
           PrimeConfig(Key);
         }
       });
-      return { ConfigCache, ConfigInFlight, ConfigListeners, FireConfigChange, PrimeConfig };
+      return {
+        ConfigCache,
+        ConfigInFlight,
+        ConfigListeners,
+        FireConfigChange,
+        PrimeConfig,
+        PrePopulateFromManifest
+      };
     }, "CreateConfigurationState");
+    SynthesiseSubtree = /* @__PURE__ */ __name((Cache3, Full) => {
+      const Prefix = `${Full}.`;
+      const Subtree = {};
+      let Matched = false;
+      for (const [CachedKey, CachedValue] of Cache3.entries()) {
+        if (!CachedKey.startsWith(Prefix)) continue;
+        Matched = true;
+        const Local = CachedKey.slice(Prefix.length);
+        const Parts = Local.split(".");
+        let Current = Subtree;
+        for (let I = 0; I < Parts.length - 1; I++) {
+          const Segment = Parts[I];
+          const Existing = Current[Segment];
+          if (Existing === void 0 || Existing === null || typeof Existing !== "object") {
+            Current[Segment] = {};
+          }
+          Current = Current[Segment];
+        }
+        Current[Parts[Parts.length - 1]] = CachedValue;
+      }
+      return Matched ? Subtree : void 0;
+    }, "SynthesiseSubtree");
     BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section, _Scope) => ({
       get: /* @__PURE__ */ __name((Key, DefaultValue) => {
         const Full = Section ? `${Section}.${Key}` : Key;
         if (State.ConfigCache.has(Full)) {
-          return State.ConfigCache.get(Full);
+          const Cached = State.ConfigCache.get(Full);
+          if (Cached === null || Cached === void 0) {
+            const Subtree2 = SynthesiseSubtree(State.ConfigCache, Full);
+            if (Subtree2 !== void 0) return Subtree2;
+          }
+          return Cached;
         }
+        const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+        if (Subtree !== void 0) return Subtree;
         State.PrimeConfig(Full);
         return DefaultValue;
       }, "get"),
@@ -22377,16 +22431,25 @@ var init_Configuration = __esm({
       has: /* @__PURE__ */ __name((Key) => {
         const Full = Section ? `${Section}.${Key}` : Key;
         if (State.ConfigCache.has(Full)) return true;
+        if (SynthesiseSubtree(State.ConfigCache, Full) !== void 0) {
+          return true;
+        }
         State.PrimeConfig(Full);
         return false;
       }, "has"),
       inspect: /* @__PURE__ */ __name((Key) => {
         const Full = Section ? `${Section}.${Key}` : Key;
-        if (!State.ConfigCache.has(Full)) {
-          State.PrimeConfig(Full);
-          return void 0;
+        let Cached;
+        if (State.ConfigCache.has(Full)) {
+          Cached = State.ConfigCache.get(Full);
+        } else {
+          const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+          if (Subtree === void 0) {
+            State.PrimeConfig(Full);
+            return void 0;
+          }
+          Cached = Subtree;
         }
-        const Cached = State.ConfigCache.get(Full);
         return {
           key: Full,
           defaultValue: void 0,
@@ -22737,6 +22800,7 @@ var init_Index = __esm({
         return Live.name ?? InitWorkspace.name;
       }, "ReadName");
       const ConfigState = CreateConfigurationState(Context);
+      globalThis.__cocoonConfigState = ConfigState;
       return {
         get workspaceFolders() {
           return ReadFolders();
@@ -24978,6 +25042,23 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
   console.log(
     `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
   );
+  try {
+    const Manifest = await (async () => {
+      try {
+        const { readFile } = await import("node:fs/promises");
+        const Raw = await readFile(
+          `${ExtensionPath}/package.json`,
+          "utf8"
+        );
+        return JSON.parse(Raw);
+      } catch {
+        return Extension;
+      }
+    })();
+    const ConfigState = globalThis.__cocoonConfigState;
+    ConfigState?.PrePopulateFromManifest(Manifest);
+  } catch {
+  }
   try {
     let ExtModule;
     if (IsESM) {

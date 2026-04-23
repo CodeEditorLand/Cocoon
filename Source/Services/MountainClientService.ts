@@ -704,9 +704,25 @@ message RPCDataPayload {
 					method === "FileSystem.Stat" ||
 					method === "FileSystem.ReadDirectory") &&
 				/resource not found|ENOENT|not found/i.test(ErrorMessage);
+			// `Command.Execute` rejections for extension-registered commands
+			// that were never registered are equally benign - the
+			// `CommandsNamespace.executeCommand` catch converts them to
+			// `undefined`, matching extensions' expectations for optional
+			// cross-extension dependencies (Shopify.ruby-lsp probing
+			// `getTelemetrySenderObject`, TypeScript plugin probing
+			// `_typescript.configurePlugin`, roo-cline probing its own
+			// `activationCompleted`, etc.). Counting these against the
+			// breaker would trip it and block real commands.
+			const IsBenignMissingCommand =
+				method === "Command.Execute" &&
+				/Command '[^']+' not found/i.test(ErrorMessage);
 			if (IsBenignNotFound) {
 				process.stdout.write(
 					`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}\n`,
+				);
+			} else if (IsBenignMissingCommand) {
+				process.stdout.write(
+					`[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}\n`,
 				);
 			} else {
 				this.circuitBreakerFailureCount++;
@@ -1082,7 +1098,7 @@ message RPCDataPayload {
 			);
 
 			// Trigger reconnection if not connected
-			if (!this.isConnected) {
+			if (this.connectionState !== ConnectionState.Connected) {
 				console.log(
 					"[MountainClientService] Connection lost, attempting reconnect",
 				);
@@ -1100,7 +1116,10 @@ message RPCDataPayload {
 	 * Send notification to Mountain
 	 */
 	async sendNotification(method: string, parameters: any): Promise<void> {
-		if (!this.isConnected || !this.client) {
+		if (
+			this.connectionState !== ConnectionState.Connected ||
+			!this.client
+		) {
 			throw new Error("Not connected to Mountain");
 		}
 
@@ -1166,7 +1185,10 @@ message RPCDataPayload {
 		requestIdentifier: number,
 		reason: string,
 	): Promise<void> {
-		if (!this.isConnected || !this.client) {
+		if (
+			this.connectionState !== ConnectionState.Connected ||
+			!this.client
+		) {
 			throw new Error("Not connected to Mountain");
 		}
 
@@ -1231,8 +1253,13 @@ message RPCDataPayload {
 	 * Disconnect from Mountain
 	 */
 	async disconnect(): Promise<void> {
-		if (!this.isConnected || !this.client) {
-			console.warn("[MountainClientService] Not connected to Mountain");
+		if (
+			this.connectionState !== ConnectionState.Connected ||
+			!this.client
+		) {
+			console.warn(
+				"[MountainClientService] Not connected to Mountain (already disconnected)",
+			);
 			return;
 		}
 
@@ -1242,7 +1269,7 @@ message RPCDataPayload {
 		this.stopHealthMonitoring();
 
 		this.client = null;
-		this.isConnected = false;
+		this.connectionState = ConnectionState.Disconnected;
 
 		console.log("[MountainClientService] Disconnected from Mountain");
 	}
@@ -1272,12 +1299,14 @@ message RPCDataPayload {
 		circuitBreakerFailureCount: number;
 		lastHealthCheck?: Date;
 	} {
+		const IsConnected =
+			this.connectionState === ConnectionState.Connected;
 		return {
-			connected: this.isConnected,
+			connected: IsConnected,
 			mountainHost: this.mountainHost,
 			mountainPort: this.mountainPort,
 			errorCount: this.errorCount,
-			...(this.isConnected
+			...(IsConnected
 				? { uptime: Date.now() - this.connectionStartTime }
 				: {}),
 			circuitBreakerState: this.circuitBreakerState,

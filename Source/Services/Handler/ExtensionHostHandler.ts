@@ -1015,6 +1015,40 @@ const ActivateExtension = async (
 		`[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`,
 	);
 
+	// Seed the workspace configuration cache with this extension's declared
+	// `contributes.configuration.properties` defaults BEFORE its `activate()`
+	// runs. Extensions like GitLens read `workspace.getConfiguration('gitlens')
+	// .blame.format` synchronously at activation; if the cache is empty they
+	// get `undefined` and throw `TypeError: Cannot read properties of undefined
+	// (reading 'format')`. Priming from the manifest ensures the declared
+	// defaults are already in the cache, so nested access succeeds from the
+	// first call. `WorkspaceNamespace/Index.ts` stashes the ConfigurationState
+	// on `globalThis.__cocoonConfigState` for exactly this hook.
+	try {
+		const Manifest = await (async () => {
+			try {
+				const { readFile } = await import("node:fs/promises");
+				const Raw = await readFile(
+					`${ExtensionPath}/package.json`,
+					"utf8",
+				);
+				return JSON.parse(Raw) as unknown;
+			} catch {
+				return Extension as unknown;
+			}
+		})();
+		const ConfigState = (
+			globalThis as {
+				__cocoonConfigState?: {
+					PrePopulateFromManifest: (Manifest: unknown) => void;
+				};
+			}
+		).__cocoonConfigState;
+		ConfigState?.PrePopulateFromManifest(Manifest);
+	} catch {
+		// PrePopulate is best-effort; never block activation on it.
+	}
+
 	try {
 		let ExtModule: { activate?: (ctx: unknown) => unknown };
 
