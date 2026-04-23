@@ -170,13 +170,18 @@ var BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section,
     };
   }, "inspect")
 }), "BuildGetConfiguration");
-var BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener) => {
-  State.ConfigListeners.add(Listener);
-  return {
+var BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener, ThisArg, Disposables) => {
+  const Bound = ThisArg === void 0 ? Listener : Listener.bind(ThisArg);
+  State.ConfigListeners.add(Bound);
+  const Subscription = {
     dispose: /* @__PURE__ */ __name(() => {
-      State.ConfigListeners.delete(Listener);
+      State.ConfigListeners.delete(Bound);
     }, "dispose")
   };
+  if (Disposables && typeof Disposables.push === "function") {
+    Disposables.push(Subscription);
+  }
+  return Subscription;
 }, "BuildOnDidChangeConfiguration");
 export {
   BuildGetConfiguration,

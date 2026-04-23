@@ -671,13 +671,18 @@ var BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section,
     };
   }, "inspect")
 }), "BuildGetConfiguration");
-var BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener) => {
-  State.ConfigListeners.add(Listener);
-  return {
+var BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener, ThisArg, Disposables) => {
+  const Bound = ThisArg === void 0 ? Listener : Listener.bind(ThisArg);
+  State.ConfigListeners.add(Bound);
+  const Subscription = {
     dispose: /* @__PURE__ */ __name(() => {
-      State.ConfigListeners.delete(Listener);
+      State.ConfigListeners.delete(Bound);
     }, "dispose")
   };
+  if (Disposables && typeof Disposables.push === "function") {
+    Disposables.push(Subscription);
+  }
+  return Subscription;
 }, "BuildOnDidChangeConfiguration");
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts
@@ -885,11 +890,19 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
   readFile: /* @__PURE__ */ __name(async (Uri) => {
     const UriString = String(Uri);
     try {
-      const Text = await Context.MountainClient?.sendRequest(
+      const Raw = await Context.MountainClient?.sendRequest(
         "FileSystem.ReadFile",
         [UriString]
       );
-      return new TextEncoder().encode(Text ?? "");
+      if (Raw == null) return new Uint8Array();
+      if (Array.isArray(Raw)) {
+        return Uint8Array.from(
+          Raw,
+          (N) => Number(N) & 255
+        );
+      }
+      if (Raw instanceof Uint8Array) return Raw;
+      return new TextEncoder().encode(String(Raw));
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
       const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);

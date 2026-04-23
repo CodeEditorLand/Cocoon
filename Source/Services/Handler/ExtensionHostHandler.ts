@@ -464,6 +464,8 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 				"DebugAdapterInlineImplementation",
 				"DebugAdapterNamedPipeServer",
 				"DebugAdapterServer",
+				"DebugConfigurationProviderTriggerKind",
+				"IndentAction",
 				"Breakpoint",
 				"FunctionBreakpoint",
 				"SourceBreakpoint",
@@ -657,6 +659,31 @@ const EnsureVscodeAPIRegistered = async (
 			6: "UnderlineThin",
 		};
 
+		// DebugConfigurationProviderTriggerKind: from
+		// `vs/workbench/contrib/debug/common/debug.ts` - not in extHostTypes.
+		// DEVSENSE.phptools-vscode reads `.Initial` at activation.
+		const DebugConfigurationProviderTriggerKind: Record<string | number, string | number> = {
+			Initial: 1,
+			Dynamic: 2,
+			1: "Initial",
+			2: "Dynamic",
+		};
+
+		// IndentAction: from
+		// `vs/editor/common/languages/languageConfiguration.ts` - not in
+		// extHostTypes. rust-analyzer reads `IndentAction.None` (= 0) when
+		// registering its onEnterRules.
+		const IndentAction: Record<string | number, string | number> = {
+			None: 0,
+			Indent: 1,
+			IndentOutdent: 2,
+			Outdent: 3,
+			0: "None",
+			1: "Indent",
+			2: "IndentOutdent",
+			3: "Outdent",
+		};
+
 		const API: Record<string, unknown> = {
 			...(VsCodeTypes as unknown as Record<string, unknown>),
 			// Atom I5: read from process.env - single source is .env.Land
@@ -671,6 +698,8 @@ const EnsureVscodeAPIRegistered = async (
 			OverviewRulerLane,
 			UIKind,
 			TextEditorCursorStyle,
+			DebugConfigurationProviderTriggerKind,
+			IndentAction,
 			// Namespaces - each in its own file under VscodeAPI/
 			window: (await import("./VscodeAPI/WindowNamespace.js")).default(
 				Context,

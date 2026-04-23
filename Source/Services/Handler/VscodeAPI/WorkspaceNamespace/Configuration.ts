@@ -183,11 +183,24 @@ export const BuildOnDidChangeConfiguration = (
 ) =>
 (
 	Listener: (Event: ConfigurationChangeEvent) => void,
+	ThisArg?: unknown,
+	Disposables?: { push: (D: { dispose: () => void }) => unknown },
 ) => {
-	State.ConfigListeners.add(Listener);
-	return {
+	// VS Code's event contract is `(listener, thisArg?, disposables?)` -
+	// ours ignored both. rust-analyzer passes `this` as ThisArg and
+	// relies on the bound callback, so
+	// `this.onDidChangeConfiguration(evt)` accesses its own class members.
+	// Without the bind, `this` is undefined in the callback and
+	// `this.refreshLogging()` throws.
+	const Bound = ThisArg === undefined ? Listener : Listener.bind(ThisArg);
+	State.ConfigListeners.add(Bound);
+	const Subscription = {
 		dispose: () => {
-			State.ConfigListeners.delete(Listener);
+			State.ConfigListeners.delete(Bound);
 		},
 	};
+	if (Disposables && typeof Disposables.push === "function") {
+		Disposables.push(Subscription);
+	}
+	return Subscription;
 };

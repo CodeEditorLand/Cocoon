@@ -83,11 +83,19 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
   readFile: /* @__PURE__ */ __name(async (Uri) => {
     const UriString = String(Uri);
     try {
-      const Text = await Context.MountainClient?.sendRequest(
+      const Raw = await Context.MountainClient?.sendRequest(
         "FileSystem.ReadFile",
         [UriString]
       );
-      return new TextEncoder().encode(Text ?? "");
+      if (Raw == null) return new Uint8Array();
+      if (Array.isArray(Raw)) {
+        return Uint8Array.from(
+          Raw,
+          (N) => Number(N) & 255
+        );
+      }
+      if (Raw instanceof Uint8Array) return Raw;
+      return new TextEncoder().encode(String(Raw));
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
       const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);

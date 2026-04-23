@@ -259,6 +259,23 @@ const CreateLanguagesNamespace = (
 			Selector,
 			Provider,
 		),
+	// Range-variant of the semantic tokens API. DEVSENSE.phptools calls it
+	// at activation; missing function crashes the provider registration
+	// loop. Route through the same provider channel as the document-wide
+	// variant - the Land side can't yet distinguish range vs full, so the
+	// worst case is the provider computes tokens for the whole document.
+	registerDocumentRangeSemanticTokensProvider: (
+		Selector: any,
+		Provider: any,
+		_Legend: any,
+	) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_semantic_tokens_provider",
+			Selector,
+			Provider,
+		),
 	registerInlayHintsProvider: (Selector: any, Provider: any) =>
 		RegisterProvider(
 			Context,
@@ -368,6 +385,17 @@ const CreateLanguagesNamespace = (
 			languageId: LanguageId,
 		}).catch(() => {});
 		return Document;
+	},
+	// Per-language configuration (auto-closing pairs, comments, onEnterRules,
+	// wordPattern, indentation). rust-analyzer calls this at activation with
+	// its Rust-specific IndentAction rules. Land doesn't wire these through
+	// Mountain yet; return a disposable so activation completes and the
+	// contributed LSP still provides completions.
+	setLanguageConfiguration: (
+		_LanguageId: string,
+		_Configuration: unknown,
+	): { dispose: () => void } => {
+		return { dispose: () => {} };
 	},
 	match: (Selector: any, Document: any): number => {
 		// Implements VS Code's `languages.match(selector, document)` contract -

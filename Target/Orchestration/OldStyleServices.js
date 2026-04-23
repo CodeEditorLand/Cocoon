@@ -24339,13 +24339,18 @@ var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProvider
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
-    MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback) => {
-      Context21.Emitter.on(EventName, Callback);
-      return {
+    MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback, ThisArg, Disposables) => {
+      const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
+      Context21.Emitter.on(EventName, Bound);
+      const Subscription = {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.off(EventName, Callback);
+          Context21.Emitter.off(EventName, Bound);
         }, "dispose")
       };
+      if (Disposables && typeof Disposables.push === "function") {
+        Disposables.push(Subscription);
+      }
+      return Subscription;
     }, "MakeEventSubscriber");
     OutputChannelCounter = 0;
     TerminalCounter = 0;
@@ -25215,6 +25220,21 @@ var init_WindowNamespace = __esm({
           Context21,
           "terminalData"
         ),
+        // Shell-integration events added for openai.chatgpt activation;
+        // Land doesn't track shell integration yet so these fire never.
+        // Must be a subscribable function, not a plain object.
+        onDidChangeTerminalShellIntegration: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTerminalShellIntegration"
+        ),
+        onDidStartTerminalShellExecution: MakeEventSubscriber(
+          Context21,
+          "window.didStartTerminalShellExecution"
+        ),
+        onDidEndTerminalShellExecution: MakeEventSubscriber(
+          Context21,
+          "window.didEndTerminalShellExecution"
+        ),
         onDidChangeWindowState: MakeEventSubscriber(
           Context21,
           "window.didChangeWindowState"
@@ -25947,13 +25967,18 @@ var init_Configuration2 = __esm({
         };
       }, "inspect")
     }), "BuildGetConfiguration");
-    BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener) => {
-      State.ConfigListeners.add(Listener);
-      return {
+    BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener, ThisArg, Disposables) => {
+      const Bound = ThisArg === void 0 ? Listener : Listener.bind(ThisArg);
+      State.ConfigListeners.add(Bound);
+      const Subscription = {
         dispose: /* @__PURE__ */ __name(() => {
-          State.ConfigListeners.delete(Listener);
+          State.ConfigListeners.delete(Bound);
         }, "dispose")
       };
+      if (Disposables && typeof Disposables.push === "function") {
+        Disposables.push(Subscription);
+      }
+      return Subscription;
     }, "BuildOnDidChangeConfiguration");
   }
 });
@@ -26181,11 +26206,19 @@ var init_FileSystemNamespace = __esm({
       readFile: /* @__PURE__ */ __name(async (Uri2) => {
         const UriString = String(Uri2);
         try {
-          const Text = await Context21.MountainClient?.sendRequest(
+          const Raw = await Context21.MountainClient?.sendRequest(
             "FileSystem.ReadFile",
             [UriString]
           );
-          return new TextEncoder().encode(Text ?? "");
+          if (Raw == null) return new Uint8Array();
+          if (Array.isArray(Raw)) {
+            return Uint8Array.from(
+              Raw,
+              (N) => Number(N) & 255
+            );
+          }
+          if (Raw instanceof Uint8Array) return Raw;
+          return new TextEncoder().encode(String(Raw));
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
           const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
@@ -26656,6 +26689,18 @@ var init_LanguagesNamespace = __esm({
         Selector,
         Provider
       ), "registerDocumentSemanticTokensProvider"),
+      // Range-variant of the semantic tokens API. DEVSENSE.phptools calls it
+      // at activation; missing function crashes the provider registration
+      // loop. Route through the same provider channel as the document-wide
+      // variant - the Land side can't yet distinguish range vs full, so the
+      // worst case is the provider computes tokens for the whole document.
+      registerDocumentRangeSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_semantic_tokens_provider",
+        Selector,
+        Provider
+      ), "registerDocumentRangeSemanticTokensProvider"),
       registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
         Context21,
         LanguageProviderRegistry,
@@ -26757,6 +26802,15 @@ var init_LanguagesNamespace = __esm({
         });
         return Document;
       }, "setTextDocumentLanguage"),
+      // Per-language configuration (auto-closing pairs, comments, onEnterRules,
+      // wordPattern, indentation). rust-analyzer calls this at activation with
+      // its Rust-specific IndentAction rules. Land doesn't wire these through
+      // Mountain yet; return a disposable so activation completes and the
+      // contributed LSP still provides completions.
+      setLanguageConfiguration: /* @__PURE__ */ __name((_LanguageId, _Configuration) => {
+        return { dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") };
+      }, "setLanguageConfiguration"),
       match: /* @__PURE__ */ __name((Selector, Document) => {
         const DocLanguage = typeof Document?.languageId === "string" ? Document.languageId : "";
         const DocScheme = typeof Document?.uri?.scheme === "string" ? Document.uri.scheme : "";
@@ -27962,6 +28016,8 @@ ${Stack}`
             "DebugAdapterInlineImplementation",
             "DebugAdapterNamedPipeServer",
             "DebugAdapterServer",
+            "DebugConfigurationProviderTriggerKind",
+            "IndentAction",
             "Breakpoint",
             "FunctionBreakpoint",
             "SourceBreakpoint",
@@ -28085,6 +28141,42 @@ ${Stack}`
           4: "Right",
           7: "Full"
         };
+        const UIKind = {
+          Desktop: 1,
+          Web: 2,
+          1: "Desktop",
+          2: "Web"
+        };
+        const TextEditorCursorStyle = {
+          Line: 1,
+          Block: 2,
+          Underline: 3,
+          LineThin: 4,
+          BlockOutline: 5,
+          UnderlineThin: 6,
+          1: "Line",
+          2: "Block",
+          3: "Underline",
+          4: "LineThin",
+          5: "BlockOutline",
+          6: "UnderlineThin"
+        };
+        const DebugConfigurationProviderTriggerKind = {
+          Initial: 1,
+          Dynamic: 2,
+          1: "Initial",
+          2: "Dynamic"
+        };
+        const IndentAction = {
+          None: 0,
+          Indent: 1,
+          IndentOutdent: 2,
+          Outdent: 3,
+          0: "None",
+          1: "Indent",
+          2: "IndentOutdent",
+          3: "Outdent"
+        };
         const API = {
           ...VsCodeTypes2,
           // Atom I5: read from process.env - single source is .env.Land
@@ -28097,6 +28189,10 @@ ${Stack}`
           EventEmitter: Emitter3,
           LogLevel: LogLevelEnum,
           OverviewRulerLane,
+          UIKind,
+          TextEditorCursorStyle,
+          DebugConfigurationProviderTriggerKind,
+          IndentAction,
           // Namespaces - each in its own file under VscodeAPI/
           window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
             Context21

@@ -13,13 +13,30 @@ type Listener<T> = (Event: T) => unknown;
 
 const MakeEventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
-	(Callback: Listener<unknown>) => {
-		Context.Emitter.on(EventName, Callback);
-		return {
+	(
+		Callback: Listener<unknown>,
+		ThisArg?: unknown,
+		Disposables?: { push: (D: { dispose: () => void }) => unknown },
+	) => {
+		// Honour VS Code's `(listener, thisArg?, disposables?)` event
+		// contract. Extensions (rust-analyzer, gitlens, ...) bind class
+		// methods via ThisArg and rely on the listener being bound; an
+		// unbound call surfaces as `TypeError: Cannot read properties of
+		// undefined (reading '<member>')` inside the listener.
+		const Bound =
+			ThisArg === undefined
+				? Callback
+				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg);
+		Context.Emitter.on(EventName, Bound as Listener<unknown>);
+		const Subscription = {
 			dispose: () => {
-				Context.Emitter.off(EventName, Callback);
+				Context.Emitter.off(EventName, Bound as Listener<unknown>);
 			},
 		};
+		if (Disposables && typeof Disposables.push === "function") {
+			Disposables.push(Subscription);
+		}
+		return Subscription;
 	};
 
 let OutputChannelCounter = 0;
@@ -928,6 +945,21 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		onDidWriteTerminalData: MakeEventSubscriber(
 			Context,
 			"terminalData",
+		),
+		// Shell-integration events added for openai.chatgpt activation;
+		// Land doesn't track shell integration yet so these fire never.
+		// Must be a subscribable function, not a plain object.
+		onDidChangeTerminalShellIntegration: MakeEventSubscriber(
+			Context,
+			"window.didChangeTerminalShellIntegration",
+		),
+		onDidStartTerminalShellExecution: MakeEventSubscriber(
+			Context,
+			"window.didStartTerminalShellExecution",
+		),
+		onDidEndTerminalShellExecution: MakeEventSubscriber(
+			Context,
+			"window.didEndTerminalShellExecution",
 		),
 		onDidChangeWindowState: MakeEventSubscriber(
 			Context,

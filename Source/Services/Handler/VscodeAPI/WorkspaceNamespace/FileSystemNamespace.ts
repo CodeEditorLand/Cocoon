@@ -27,13 +27,30 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		// own try/catch handles cleanly instead of the previous
 		// empty-bytes-then-SyntaxError chain (see terminal-suggest on
 		// first run).
+		//
+		// Mountain's `FileSystem.ReadFile` effect returns the file bytes
+		// as `json!(Vec<u8>)` which serde serialises as a JSON NUMBER
+		// array `[123, 34, ...]`, not a string. The previous TextEncoder
+		// path stringified that to `"123,34,..."` and `JSON.parse` of an
+		// extension's package.json then threw "Unexpected non-whitespace
+		// character after JSON at position 2" (redhat.java). Accept
+		// both shapes: number array → Uint8Array byte-for-byte; string →
+		// UTF-8 encode.
 		const UriString = String(Uri);
 		try {
-			const Text = (await Context.MountainClient?.sendRequest(
+			const Raw = await Context.MountainClient?.sendRequest(
 				"FileSystem.ReadFile",
 				[UriString],
-			)) as string | undefined;
-			return new TextEncoder().encode(Text ?? "");
+			);
+			if (Raw == null) return new Uint8Array();
+			if (Array.isArray(Raw)) {
+				return Uint8Array.from(
+					Raw as readonly number[],
+					(N) => Number(N) & 0xff,
+				);
+			}
+			if (Raw instanceof Uint8Array) return Raw;
+			return new TextEncoder().encode(String(Raw));
 		} catch (Err: unknown) {
 			const Message =
 				Err instanceof Error ? Err.message : String(Err);

@@ -2,13 +2,18 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Services/Handler/VscodeAPI/WindowNamespace.ts
-var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback) => {
-  Context.Emitter.on(EventName, Callback);
-  return {
+var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
+  const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
+  Context.Emitter.on(EventName, Bound);
+  const Subscription = {
     dispose: /* @__PURE__ */ __name(() => {
-      Context.Emitter.off(EventName, Callback);
+      Context.Emitter.off(EventName, Bound);
     }, "dispose")
   };
+  if (Disposables && typeof Disposables.push === "function") {
+    Disposables.push(Subscription);
+  }
+  return Subscription;
 }, "MakeEventSubscriber");
 var OutputChannelCounter = 0;
 var TerminalCounter = 0;
@@ -877,6 +882,21 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     onDidWriteTerminalData: MakeEventSubscriber(
       Context,
       "terminalData"
+    ),
+    // Shell-integration events added for openai.chatgpt activation;
+    // Land doesn't track shell integration yet so these fire never.
+    // Must be a subscribable function, not a plain object.
+    onDidChangeTerminalShellIntegration: MakeEventSubscriber(
+      Context,
+      "window.didChangeTerminalShellIntegration"
+    ),
+    onDidStartTerminalShellExecution: MakeEventSubscriber(
+      Context,
+      "window.didStartTerminalShellExecution"
+    ),
+    onDidEndTerminalShellExecution: MakeEventSubscriber(
+      Context,
+      "window.didEndTerminalShellExecution"
     ),
     onDidChangeWindowState: MakeEventSubscriber(
       Context,
