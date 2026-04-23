@@ -23,6 +23,7 @@ var WebviewViewCounter = 0;
 var CustomEditorCounter = 0;
 var ProgressCounter = 0;
 var TreeDataProviders = /* @__PURE__ */ new Map();
+var TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
 var WebviewViewProviders = /* @__PURE__ */ new Map();
 var CustomEditorProviders = /* @__PURE__ */ new Map();
 var WebviewPanels = /* @__PURE__ */ new Map();
@@ -574,6 +575,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       if (Provider) {
         const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
         TreeDataProviders.set(Handle, Provider);
+        TreeDataProvidersByViewId.set(Id, Provider);
         const SerializableOptions = {
           showCollapseAll: Options?.showCollapseAll === true,
           canSelectMany: Options?.canSelectMany === true,
@@ -590,6 +592,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         reveal: /* @__PURE__ */ __name(async () => {
         }, "reveal"),
         dispose: /* @__PURE__ */ __name(() => {
+          TreeDataProvidersByViewId.delete(Id);
           Context.MountainClient?.sendRequest("tree.dispose", [
             Id
           ]).catch(() => {
@@ -616,6 +619,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
       const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
       TreeDataProviders.set(Handle, Provider);
+      TreeDataProvidersByViewId.set(ViewId, Provider);
       Context.MountainClient?.sendRequest("tree.register", [
         Handle,
         ViewId,
@@ -625,6 +629,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return {
         dispose: /* @__PURE__ */ __name(() => {
           TreeDataProviders.delete(Handle);
+          TreeDataProvidersByViewId.delete(ViewId);
           Context.MountainClient?.sendRequest("tree.unregister", [
             Handle
           ]).catch(() => {
@@ -913,6 +918,7 @@ var WindowNamespace_default = CreateWindowNamespace;
 export {
   CustomEditorProviders,
   TreeDataProviders,
+  TreeDataProvidersByViewId,
   WebviewPanels,
   WebviewViewProviders,
   WindowNamespace_default as default

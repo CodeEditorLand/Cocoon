@@ -24383,11 +24383,12 @@ var WindowNamespace_exports = {};
 __export(WindowNamespace_exports, {
   CustomEditorProviders: () => CustomEditorProviders,
   TreeDataProviders: () => TreeDataProviders,
+  TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
   WebviewPanels: () => WebviewPanels,
   WebviewViewProviders: () => WebviewViewProviders,
   default: () => WindowNamespace_default
 });
-var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
+var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
@@ -24412,6 +24413,7 @@ var init_WindowNamespace = __esm({
     CustomEditorCounter = 0;
     ProgressCounter = 0;
     TreeDataProviders = /* @__PURE__ */ new Map();
+    TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
     WebviewViewProviders = /* @__PURE__ */ new Map();
     CustomEditorProviders = /* @__PURE__ */ new Map();
     WebviewPanels = /* @__PURE__ */ new Map();
@@ -24963,6 +24965,7 @@ var init_WindowNamespace = __esm({
           if (Provider) {
             const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
             TreeDataProviders.set(Handle, Provider);
+            TreeDataProvidersByViewId.set(Id, Provider);
             const SerializableOptions = {
               showCollapseAll: Options?.showCollapseAll === true,
               canSelectMany: Options?.canSelectMany === true,
@@ -24979,6 +24982,7 @@ var init_WindowNamespace = __esm({
             reveal: /* @__PURE__ */ __name(async () => {
             }, "reveal"),
             dispose: /* @__PURE__ */ __name(() => {
+              TreeDataProvidersByViewId.delete(Id);
               Context21.MountainClient?.sendRequest("tree.dispose", [
                 Id
               ]).catch(() => {
@@ -25005,6 +25009,7 @@ var init_WindowNamespace = __esm({
         registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
           const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
           TreeDataProviders.set(Handle, Provider);
+          TreeDataProvidersByViewId.set(ViewId, Provider);
           Context21.MountainClient?.sendRequest("tree.register", [
             Handle,
             ViewId,
@@ -25014,6 +25019,7 @@ var init_WindowNamespace = __esm({
           return {
             dispose: /* @__PURE__ */ __name(() => {
               TreeDataProviders.delete(Handle);
+              TreeDataProvidersByViewId.delete(ViewId);
               Context21.MountainClient?.sendRequest("tree.unregister", [
                 Handle
               ]).catch(() => {
@@ -31558,6 +31564,7 @@ var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainPr
 var init_Bootstrap = __esm({
   async "Source/Effect/Bootstrap.ts"() {
     "use strict";
+    init_DevLog();
     init_LandFixLog();
     init_Extension();
     init_Health();
@@ -31603,6 +31610,8 @@ var init_Bootstrap = __esm({
       "stage1_environment",
       Effect16.gen(function* () {
         const telemetry = yield* TelemetryTag;
+        const StageStart = Date.now();
+        CocoonDevLog("bootstrap-stage", "[Bootstrap] stage=Environment event=start");
         telemetry.log(
           "info",
           "[Cocoon Bootstrap] Stage 1: Detecting environment..."
@@ -31613,6 +31622,10 @@ var init_Bootstrap = __esm({
         telemetry.log(
           "info",
           `[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform3}/${arch2}`
+        );
+        CocoonDevLog(
+          "bootstrap-stage",
+          `[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform3}/${arch2} duration_ms=${Date.now() - StageStart}`
         );
         return {
           stageName: "Environment",
@@ -31626,6 +31639,11 @@ var init_Bootstrap = __esm({
       "stage2_configuration",
       Effect16.gen(function* () {
         const telemetry = yield* TelemetryTag;
+        const StageStart = Date.now();
+        CocoonDevLog(
+          "bootstrap-stage",
+          "[Bootstrap] stage=Configuration event=start"
+        );
         telemetry.log(
           "info",
           "[Cocoon Bootstrap] Stage 2: Loading configuration..."
@@ -31648,6 +31666,10 @@ var init_Bootstrap = __esm({
           `Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`
         );
         telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
+        CocoonDevLog(
+          "bootstrap-stage",
+          `[Bootstrap] stage=Configuration event=ok mountain_port=${ResolvedConfig.MountainPort} cocoon_port=${ResolvedConfig.CocoonPort} node_env=${ResolvedConfig.NodeEnv} duration_ms=${Date.now() - StageStart}`
+        );
         return {
           stageName: "Configuration",
           success: true,
@@ -33706,6 +33728,44 @@ var init_RequestRoutingHandler = __esm({
               throw new Error(`Unknown configuration method: ${Method2}`);
           }
         }, "configuration.\\w+"),
+        // Mountain → Cocoon tree-children round-trip keyed on `viewId`.
+        // Emitted by `Mountain/Source/RPC/CocoonService/TreeView.rs::
+        // GetTreeChildren`. Unlike the `tree.*` legacy path that keys on the
+        // Cocoon-side `treeDataProvider:N` handle, this variant identifies
+        // providers by the same viewId the extension declared in its
+        // contributes.views manifest - the only stable key Mountain has.
+        "^\\$provideTreeChildren$": /* @__PURE__ */ __name(async (_Method, Params) => {
+          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const ViewId = Params?.viewId ?? Params?.[0];
+          const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
+          const Provider = TreeDataProvidersByViewId2.get(String(ViewId));
+          if (!Provider) {
+            return { items: [] };
+          }
+          const Element = ItemHandle ? ItemHandle : void 0;
+          const Children = await Provider.getChildren?.(Element) ?? [];
+          const Items = await Promise.all(
+            (Array.isArray(Children) ? Children : []).map(
+              async (Child, Index) => {
+                const Item = await Provider.getTreeItem?.(Child) ?? Child;
+                const Raw2 = Item;
+                const Label = typeof Raw2.label === "string" ? Raw2.label : Raw2.label?.label ?? "";
+                const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
+                const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
+                const CollapsibleState = Raw2.collapsibleState ?? 0;
+                return {
+                  handle: String(
+                    Raw2.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`
+                  ),
+                  label: Label,
+                  isCollapsed: CollapsibleState === 1,
+                  icon: String(Icon)
+                };
+              }
+            )
+          );
+          return { items: Items };
+        }, "^\\$provideTreeChildren$"),
         "tree\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
           const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
           const Handle = Params?.handle ?? Params?.[0];

@@ -56,6 +56,16 @@ let ProgressCounter = 0;
 export const TreeDataProviders = new Map<string, any>();
 
 /**
+ * Parallel index keyed by the viewId the extension passed to
+ * `createTreeView` / `registerTreeDataProvider`. Mountain's
+ * `$provideTreeChildren` lookup keys on viewId (not the ephemeral
+ * `treeDataProvider:N` handle) because the u32 Mountain-side handle is
+ * derived from viewId, not from the Cocoon-side counter. Kept in lockstep
+ * with `TreeDataProviders` in both the register and dispose paths.
+ */
+export const TreeDataProvidersByViewId = new Map<string, any>();
+
+/**
  * Per-extension-ViewType webview providers. Same lookup pattern as the
  * tree registry.
  */
@@ -643,6 +653,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			if (Provider) {
 				const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
 				TreeDataProviders.set(Handle, Provider);
+				TreeDataProvidersByViewId.set(Id, Provider);
 				// Send ONLY the serialisable primitive options to Mountain.
 				// The previous version forwarded `Options` verbatim, which
 				// included the `treeDataProvider` itself - the provider's
@@ -665,6 +676,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return {
 				reveal: async () => {},
 				dispose: () => {
+					TreeDataProvidersByViewId.delete(Id);
 					Context.MountainClient?.sendRequest("tree.dispose", [
 						Id,
 					]).catch(() => {});
@@ -686,6 +698,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		registerTreeDataProvider: (ViewId: string, Provider: any) => {
 			const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
 			TreeDataProviders.set(Handle, Provider);
+			TreeDataProvidersByViewId.set(ViewId, Provider);
 			Context.MountainClient?.sendRequest("tree.register", [
 				Handle,
 				ViewId,
@@ -694,6 +707,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return {
 				dispose: () => {
 					TreeDataProviders.delete(Handle);
+					TreeDataProvidersByViewId.delete(ViewId);
 					Context.MountainClient?.sendRequest("tree.unregister", [
 						Handle,
 					]).catch(() => {});

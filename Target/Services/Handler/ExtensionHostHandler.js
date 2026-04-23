@@ -20765,11 +20765,12 @@ var WindowNamespace_exports = {};
 __export(WindowNamespace_exports, {
   CustomEditorProviders: () => CustomEditorProviders,
   TreeDataProviders: () => TreeDataProviders,
+  TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
   WebviewPanels: () => WebviewPanels,
   WebviewViewProviders: () => WebviewViewProviders,
   default: () => WindowNamespace_default
 });
-var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
+var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
@@ -20794,6 +20795,7 @@ var init_WindowNamespace = __esm({
     CustomEditorCounter = 0;
     ProgressCounter = 0;
     TreeDataProviders = /* @__PURE__ */ new Map();
+    TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
     WebviewViewProviders = /* @__PURE__ */ new Map();
     CustomEditorProviders = /* @__PURE__ */ new Map();
     WebviewPanels = /* @__PURE__ */ new Map();
@@ -21345,6 +21347,7 @@ var init_WindowNamespace = __esm({
           if (Provider) {
             const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
             TreeDataProviders.set(Handle, Provider);
+            TreeDataProvidersByViewId.set(Id, Provider);
             const SerializableOptions = {
               showCollapseAll: Options?.showCollapseAll === true,
               canSelectMany: Options?.canSelectMany === true,
@@ -21361,6 +21364,7 @@ var init_WindowNamespace = __esm({
             reveal: /* @__PURE__ */ __name(async () => {
             }, "reveal"),
             dispose: /* @__PURE__ */ __name(() => {
+              TreeDataProvidersByViewId.delete(Id);
               Context.MountainClient?.sendRequest("tree.dispose", [
                 Id
               ]).catch(() => {
@@ -21387,6 +21391,7 @@ var init_WindowNamespace = __esm({
         registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
           const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
           TreeDataProviders.set(Handle, Provider);
+          TreeDataProvidersByViewId.set(ViewId, Provider);
           Context.MountainClient?.sendRequest("tree.register", [
             Handle,
             ViewId,
@@ -21396,6 +21401,7 @@ var init_WindowNamespace = __esm({
           return {
             dispose: /* @__PURE__ */ __name(() => {
               TreeDataProviders.delete(Handle);
+              TreeDataProvidersByViewId.delete(ViewId);
               Context.MountainClient?.sendRequest("tree.unregister", [
                 Handle
               ]).catch(() => {

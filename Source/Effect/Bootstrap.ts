@@ -17,6 +17,7 @@ import { createConnection } from "node:net";
 
 import { Context, Duration, Effect, Layer, Schedule } from "effect";
 
+import { CocoonDevLog } from "../Services/DevLog.js";
 import LandFixLog from "../Utility/LandFixLog.js";
 import { ExtensionTag } from "./Extension.js";
 import { HealthTag } from "./Health.js";
@@ -112,6 +113,8 @@ const stage1_Environment = withSpan(
 	"stage1_environment",
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
+		const StageStart = Date.now();
+		CocoonDevLog("bootstrap-stage", "[Bootstrap] stage=Environment event=start");
 
 		telemetry.log(
 			"info",
@@ -127,6 +130,10 @@ const stage1_Environment = withSpan(
 			`[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform}/${arch}`,
 		);
 
+		CocoonDevLog(
+			"bootstrap-stage",
+			`[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform}/${arch} duration_ms=${Date.now() - StageStart}`,
+		);
 		return {
 			stageName: "Environment",
 			success: true as boolean,
@@ -140,6 +147,11 @@ const stage2_Configuration = withSpan(
 	"stage2_configuration",
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
+		const StageStart = Date.now();
+		CocoonDevLog(
+			"bootstrap-stage",
+			"[Bootstrap] stage=Configuration event=start",
+		);
 
 		telemetry.log(
 			"info",
@@ -186,6 +198,10 @@ const stage2_Configuration = withSpan(
 		);
 		telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
 
+		CocoonDevLog(
+			"bootstrap-stage",
+			`[Bootstrap] stage=Configuration event=ok mountain_port=${ResolvedConfig.MountainPort} cocoon_port=${ResolvedConfig.CocoonPort} node_env=${ResolvedConfig.NodeEnv} duration_ms=${Date.now() - StageStart}`,
+		);
 		return {
 			stageName: "Configuration",
 			success: true as boolean,

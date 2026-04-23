@@ -128,6 +128,62 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			}
 		},
 
+		// Mountain → Cocoon tree-children round-trip keyed on `viewId`.
+		// Emitted by `Mountain/Source/RPC/CocoonService/TreeView.rs::
+		// GetTreeChildren`. Unlike the `tree.*` legacy path that keys on the
+		// Cocoon-side `treeDataProvider:N` handle, this variant identifies
+		// providers by the same viewId the extension declared in its
+		// contributes.views manifest - the only stable key Mountain has.
+		"^\\$provideTreeChildren$": async (_Method: string, Params: any) => {
+			const { TreeDataProvidersByViewId } = await import(
+				"./VscodeAPI/WindowNamespace.js"
+			);
+			const ViewId = Params?.viewId ?? Params?.[0];
+			const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
+			const Provider = TreeDataProvidersByViewId.get(String(ViewId));
+			if (!Provider) {
+				return { items: [] };
+			}
+			// `itemHandle` is the caller-chosen token for an element the
+			// provider previously returned; for root calls it is empty.
+			// We only have the handle string (Mountain doesn't yet mint
+			// structured element objects), so pass undefined for the root
+			// and the string otherwise - extensions that round-trip their
+			// own handles accept the string opaquely.
+			const Element = ItemHandle ? ItemHandle : undefined;
+			const Children = (await Provider.getChildren?.(Element)) ?? [];
+			const Items = await Promise.all(
+				(Array.isArray(Children) ? Children : []).map(
+					async (Child: unknown, Index: number) => {
+						const Item = (await Provider.getTreeItem?.(Child)) ?? Child;
+						const Raw = Item as Record<string, unknown>;
+						const Label =
+							typeof Raw.label === "string"
+								? Raw.label
+								: ((Raw.label as { label?: string } | undefined)?.label ??
+									"");
+						const IconValue = Raw.iconPath ?? Raw.icon ?? "";
+						const Icon =
+							typeof IconValue === "string"
+								? IconValue
+								: ((IconValue as { id?: string } | undefined)?.id ?? "");
+						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded
+						const CollapsibleState =
+							(Raw.collapsibleState as number | undefined) ?? 0;
+						return {
+							handle: String(
+								Raw.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`,
+							),
+							label: Label,
+							isCollapsed: CollapsibleState === 1,
+							icon: String(Icon),
+						};
+					},
+				),
+			);
+			return { items: Items };
+		},
+
 		"tree\\.\\w+": async (Method: string, Params: any) => {
 			// Mountain asks Cocoon for tree data; route to the registered
 			// TreeDataProvider for the handle and serialise the response.
