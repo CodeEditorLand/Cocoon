@@ -50,6 +50,16 @@ export interface HandlerContext {
 
 	/** Connect to Mountain gRPC server */
 	ConnectToMountain(): Promise<void>;
+
+	/**
+	 * Fire-and-forget activation event dispatcher. Assigned by the
+	 * GRPCServerService when it registers the routing table so
+	 * shim code (eg. the workspace `openTextDocument` path) can
+	 * trigger `onLanguage:X` / `onFileSystem:X` activations without
+	 * importing `HandleActivateByEvent` directly (avoiding a
+	 * circular import between handler modules and the router).
+	 */
+	ActivateByEvent?(Event: string): Promise<void>;
 }
 
 export default HandlerContext;

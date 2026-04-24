@@ -11,6 +11,10 @@ import { promises as FsPromises } from "node:fs";
 
 import { Call, EventSubscriber } from "./Helpers.js";
 import { ExtractFsPath, Route } from "./FileSystemRoute.js";
+import {
+	DeriveLanguageIdFromUri,
+	FireOnLanguageActivation,
+} from "./LanguageActivation.js";
 
 export const BuildOpenTextDocument =
 	(Context: HandlerContext) => async (UriOrPath: any) => {
@@ -63,10 +67,23 @@ export const BuildOpenTextDocument =
 			}
 		}
 
+		// Derive languageId from the URI so Monaco's tokeniser, the
+		// language-features extensions, and the `onLanguage:<id>`
+		// activation-event dispatcher all see the real language
+		// instead of a blanket `plaintext`. Fire the matching
+		// activation event in the background so language-gated
+		// extensions (vscode.typescript-language-features,
+		// redhat.vscode-yaml, rust-analyzer, …) activate on document
+		// open just like they do in stock VS Code.
+		const LanguageId = DeriveLanguageIdFromUri(UriString);
+		if (LanguageId !== "plaintext") {
+			FireOnLanguageActivation(Context, LanguageId);
+		}
+
 		return {
 			uri: UriOrPath,
 			fileName: UriString,
-			languageId: "plaintext",
+			languageId: LanguageId,
 			isDirty: false,
 			isClosed: false,
 			isUntitled: false,

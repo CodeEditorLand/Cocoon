@@ -177,6 +177,16 @@ export class GRPCServerService
 				SendToMountain: (Method: string, Parameters: any) =>
 					this.SendToMountain(Method, Parameters),
 				ConnectToMountain: () => this.ConnectToMountain(),
+				// Expose the `$activateByEvent` handler so shim code
+				// (workspace `openTextDocument`, custom file-system
+				// providers, etc.) can fire lazy activation events
+				// without importing `ExtensionHostHandler` directly.
+				ActivateByEvent: async (Event: string) => {
+					await ExtensionHostHandler.HandleActivateByEvent(
+						Self.GetHandlerContext(),
+						{ activationEvent: Event },
+					);
+				},
 			} as HandlerContext,
 			{
 				ExtensionHostInitData: {
