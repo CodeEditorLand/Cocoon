@@ -273,7 +273,14 @@ var Tier = {
   FileSystem: Pick("FileSystem", "Layer2"),
   FindFiles: Pick("FindFiles", "Layer3"),
   Glob: Pick("Glob", "JavaScript"),
-  FileWatcher: Pick("FileWatcher", "Stub"),
+  // Default Layer4 so `createFileSystemWatcher` forwards to Mountain's
+  // native `notify`-crate implementation in `Environment/FileWatcherProvider.rs`.
+  // Stub mode drops every watch registration, leaving every extension that
+  // relies on file-change events (eslint, typescript, tailwind, most
+  // language servers) blind to disk mutations. Override with
+  // `TierFileWatcher=Stub` at launch to restore the old drop behaviour
+  // for debugging.
+  FileWatcher: Pick("FileWatcher", "Layer4"),
   SchemeAssets: Pick("SchemeAssets", "Embedded"),
   Configuration: Pick("Configuration", "Cache"),
   Diagnostics: Pick("Diagnostics", "Full"),

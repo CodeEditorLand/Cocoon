@@ -60,7 +60,7 @@ declare const __LandTier_Telemetry__: string;
 	FileWatcher:
 		typeof __LandTier_FileWatcher__ === "string"
 			? __LandTier_FileWatcher__
-			: (process.env["TierFileWatcher"] ?? "Stub"),
+			: (process.env["TierFileWatcher"] ?? "Layer4"),
 	SchemeAssets:
 		typeof __LandTier_SchemeAssets__ === "string"
 			? __LandTier_SchemeAssets__
