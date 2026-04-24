@@ -29406,7 +29406,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T23:29:29Z"
+      generatedAt: "2026-04-24T23:38:40Z"
     };
   }
 });
@@ -33830,31 +33830,74 @@ var init_Index = __esm({
         textDocuments: [],
         notebookDocuments: [],
         getConfiguration: BuildGetConfiguration(Context21, ConfigState),
-        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => FindFilesLocal(Context21, ReadFolders(), Include, Exclude, MaxResults), "findFiles"),
-        // `findFiles2` - VS Code 1.90+ multi-pattern search API. Extensions
-        // (copilot, vim, markdown-language-features) upgraded to this
-        // signature. Map the first pattern through the same FindFilesLocal
-        // glob engine the legacy `findFiles` uses so behaviour matches.
+        // `findFiles` / `findFiles2` now follow the same Mountain-first
+        // dual-track as `findTextInFiles`. Mountain's `findFiles` effect
+        // route (`Track/Effect/CreateEffectForRequest/Search.rs`) walks
+        // the workspace via `ignore::WalkBuilder::build_parallel()` -
+        // gitignore-aware, OS-thread parallel, ~3-5× faster than
+        // Cocoon's single-event-loop `FsPromises.readdir` walker.
+        // Falls back to `FindFilesLocal` (Node) when Mountain rejects
+        // `unknown method` - manifest drift is the only path where the
+        // fallback runs in steady state.
+        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => TryMountainThenNode(
+          Context21,
+          "findFiles",
+          // Mountain's effect route accepts either
+          // `[pattern, options]` (object form) or
+          // `{ pattern, options }` (named form). We send the
+          // object form so `maxResults` propagates correctly.
+          [
+            Include,
+            {
+              exclude: Exclude,
+              maxResults: MaxResults
+            }
+          ],
+          async ([I, _O]) => {
+            const Opts = _O;
+            return FindFilesLocal(
+              Context21,
+              ReadFolders(),
+              I,
+              Opts?.exclude,
+              Opts?.maxResults
+            );
+          }
+        ), "findFiles"),
+        // `findFiles2` - VS Code 1.90+ multi-pattern signature.
+        // Extensions (copilot, vim, markdown-language-features) use
+        // this. We forward the first pattern through the same Mountain
+        // dual-track as `findFiles`; multi-pattern semantics fold to
+        // the union, which Mountain's globset matcher already supports
+        // natively via comma-separated brace patterns.
         findFiles2: /* @__PURE__ */ __name(async (FilePatterns, Options) => {
           const Include = Array.isArray(FilePatterns) ? FilePatterns[0] : FilePatterns;
-          return FindFilesLocal(
+          return TryMountainThenNode(
             Context21,
-            ReadFolders(),
-            Include,
-            Options?.exclude,
-            Options?.maxResults
+            "findFiles",
+            [Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
+            async ([I, _O]) => {
+              const Opts = _O;
+              return FindFilesLocal(
+                Context21,
+                ReadFolders(),
+                I,
+                Opts?.exclude,
+                Opts?.maxResults
+              );
+            }
           );
         }, "findFiles2"),
-        // `findTextInFiles` / `findTextInFiles2` - dual-track: try
-        // Mountain's `Workspace.FindTextInFiles` first (ripgrep-backed,
-        // fast); fall back to Cocoon's Node implementation when Mountain
-        // doesn't have the handler. This keeps the API functional today
-        // while leaving the Rust performance path open for Mountain to
-        // land later - no Cocoon change needed when it does, the
-        // fallback just goes quiet.
+        // `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
+        // (ripgrep-backed via `grep-searcher` + `ignore`) first, Node
+        // fallback second. The method name `findTextInFiles` is the
+        // canonical entry in `RouteManifest::MountainMethods`; the
+        // previous `Workspace.FindTextInFiles` form was missing from
+        // the manifest, so the manifest short-circuit always routed
+        // to the Node fallback - the Mountain ripgrep path was dead.
         findTextInFiles: /* @__PURE__ */ __name(async (Query, Options, Callback, _Token) => TryMountainThenNode(
           Context21,
-          "Workspace.FindTextInFiles",
+          "findTextInFiles",
           [Query, Options],
           async ([Q, O]) => FindTextInFilesNodeFallback(
             Context21,
@@ -33866,7 +33909,7 @@ var init_Index = __esm({
         ), "findTextInFiles"),
         findTextInFiles2: /* @__PURE__ */ __name(async (Query, Options, Callback, _Token) => TryMountainThenNode(
           Context21,
-          "Workspace.FindTextInFiles2",
+          "findTextInFiles",
           [Query, Options],
           async ([Q, O]) => FindTextInFilesNodeFallback(
             Context21,
