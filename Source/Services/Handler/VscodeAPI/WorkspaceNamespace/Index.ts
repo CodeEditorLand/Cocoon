@@ -142,17 +142,52 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		getConfiguration: BuildGetConfiguration(Context, ConfigState),
 
+		// `findFiles` / `findFiles2` now follow the same Mountain-first
+		// dual-track as `findTextInFiles`. Mountain's `findFiles` effect
+		// route (`Track/Effect/CreateEffectForRequest/Search.rs`) walks
+		// the workspace via `ignore::WalkBuilder::build_parallel()` -
+		// gitignore-aware, OS-thread parallel, ~3-5× faster than
+		// Cocoon's single-event-loop `FsPromises.readdir` walker.
+		// Falls back to `FindFilesLocal` (Node) when Mountain rejects
+		// `unknown method` - manifest drift is the only path where the
+		// fallback runs in steady state.
 		findFiles: async (
 			Include: unknown,
 			Exclude?: unknown,
 			MaxResults?: number,
 		): Promise<unknown[]> =>
-			FindFilesLocal(Context, ReadFolders(), Include, Exclude, MaxResults),
+			TryMountainThenNode(
+				Context,
+				"findFiles",
+				// Mountain's effect route accepts either
+				// `[pattern, options]` (object form) or
+				// `{ pattern, options }` (named form). We send the
+				// object form so `maxResults` propagates correctly.
+				[
+					Include,
+					{
+						exclude: Exclude,
+						maxResults: MaxResults,
+					},
+				],
+				async ([I, _O]) => {
+					const Opts = _O as { exclude?: unknown; maxResults?: number } | undefined;
+					return FindFilesLocal(
+						Context,
+						ReadFolders(),
+						I,
+						Opts?.exclude,
+						Opts?.maxResults,
+					);
+				},
+			) as Promise<unknown[]>,
 
-		// `findFiles2` - VS Code 1.90+ multi-pattern search API. Extensions
-		// (copilot, vim, markdown-language-features) upgraded to this
-		// signature. Map the first pattern through the same FindFilesLocal
-		// glob engine the legacy `findFiles` uses so behaviour matches.
+		// `findFiles2` - VS Code 1.90+ multi-pattern signature.
+		// Extensions (copilot, vim, markdown-language-features) use
+		// this. We forward the first pattern through the same Mountain
+		// dual-track as `findFiles`; multi-pattern semantics fold to
+		// the union, which Mountain's globset matcher already supports
+		// natively via comma-separated brace patterns.
 		findFiles2: async (
 			FilePatterns: readonly unknown[],
 			Options?: { exclude?: unknown; maxResults?: number },
@@ -160,22 +195,30 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			const Include = Array.isArray(FilePatterns)
 				? FilePatterns[0]
 				: FilePatterns;
-			return FindFilesLocal(
+			return TryMountainThenNode(
 				Context,
-				ReadFolders(),
-				Include,
-				Options?.exclude,
-				Options?.maxResults,
-			);
+				"findFiles",
+				[Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
+				async ([I, _O]) => {
+					const Opts = _O as { exclude?: unknown; maxResults?: number } | undefined;
+					return FindFilesLocal(
+						Context,
+						ReadFolders(),
+						I,
+						Opts?.exclude,
+						Opts?.maxResults,
+					);
+				},
+			) as Promise<unknown[]>;
 		},
 
-		// `findTextInFiles` / `findTextInFiles2` - dual-track: try
-		// Mountain's `Workspace.FindTextInFiles` first (ripgrep-backed,
-		// fast); fall back to Cocoon's Node implementation when Mountain
-		// doesn't have the handler. This keeps the API functional today
-		// while leaving the Rust performance path open for Mountain to
-		// land later - no Cocoon change needed when it does, the
-		// fallback just goes quiet.
+		// `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
+		// (ripgrep-backed via `grep-searcher` + `ignore`) first, Node
+		// fallback second. The method name `findTextInFiles` is the
+		// canonical entry in `RouteManifest::MountainMethods`; the
+		// previous `Workspace.FindTextInFiles` form was missing from
+		// the manifest, so the manifest short-circuit always routed
+		// to the Node fallback - the Mountain ripgrep path was dead.
 		findTextInFiles: async (
 			Query: unknown,
 			Options?: unknown,
@@ -184,7 +227,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		) =>
 			TryMountainThenNode(
 				Context,
-				"Workspace.FindTextInFiles",
+				"findTextInFiles",
 				[Query, Options],
 				async ([Q, O]) =>
 					FindTextInFilesNodeFallback(
@@ -203,7 +246,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		) =>
 			TryMountainThenNode(
 				Context,
-				"Workspace.FindTextInFiles2",
+				"findTextInFiles",
 				[Query, Options],
 				async ([Q, O]) =>
 					FindTextInFilesNodeFallback(
