@@ -58,6 +58,7 @@ __export(Type_exports, {
   ChatResponseExternalEditPart: () => ChatResponseExternalEditPart,
   ChatResponseFileTreePart: () => ChatResponseFileTreePart,
   ChatResponseHookPart: () => ChatResponseHookPart,
+  ChatResponseInfoPart: () => ChatResponseInfoPart,
   ChatResponseMarkdownPart: () => ChatResponseMarkdownPart,
   ChatResponseMarkdownWithVulnerabilitiesPart: () => ChatResponseMarkdownWithVulnerabilitiesPart,
   ChatResponseMovePart: () => ChatResponseMovePart,
@@ -19400,6 +19401,20 @@ var ChatResponseWarningPart = class {
   }
   static {
     __name58(this, "ChatResponseWarningPart");
+  }
+  constructor(value) {
+    if (typeof value !== "string" && value.isTrusted === true) {
+      throw new Error("The boolean form of MarkdownString.isTrusted is NOT supported for chat participants.");
+    }
+    this.value = typeof value === "string" ? new MarkdownString2(value) : value;
+  }
+};
+var ChatResponseInfoPart = class {
+  static {
+    __name(this, "ChatResponseInfoPart");
+  }
+  static {
+    __name58(this, "ChatResponseInfoPart");
   }
   constructor(value) {
     if (typeof value !== "string" && value.isTrusted === true) {
