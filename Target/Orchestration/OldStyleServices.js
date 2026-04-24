@@ -29689,7 +29689,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T20:47:43Z"
+      generatedAt: "2026-04-24T21:17:49Z"
     };
   }
 });
@@ -38103,10 +38103,17 @@ var init_GRPCServerService = __esm({
           return response;
         } catch (error) {
           this.errorCount++;
-          console.error(
-            `[GRPCServerService] Error processing request ${request.Method}:`,
-            error
-          );
+          const IsExtensionProvidedHandler = request.Method.startsWith("$provide") || request.Method.startsWith("$resolve") || request.Method.startsWith("$get");
+          if (IsExtensionProvidedHandler) {
+            console.warn(
+              `[GRPCServerService] Extension handler ${request.Method} rejected: ${error instanceof Error ? error.message : String(error)}`
+            );
+          } else {
+            console.error(
+              `[GRPCServerService] Error processing request ${request.Method}:`,
+              error
+            );
+          }
           this.activeRequests.delete(request.RequestIdentifier);
           const response = {
             RequestIdentifier: request.RequestIdentifier,
