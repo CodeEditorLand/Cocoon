@@ -13,6 +13,7 @@ import { TryMountainThenNode } from "../../../DualTrack.js";
 import {
 	IsEqualOrParent as StockIsEqualOrParent,
 	RelativePath as StockRelativePath,
+	ToUri as StockToUri,
 } from "../StockLift.js";
 import { FindFilesLocal } from "./FindFiles.js";
 import { FindTextInFilesNodeFallback } from "./FindTextInFilesFallback.js";
@@ -53,6 +54,44 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	// re-read the namespace. `Context.ExtensionHostInitData.workspace.folders`
 	// is updated in place by NotificationHandler when a delta arrives, so a
 	// live getter on the returned shim always returns the latest array.
+	//
+	// Each folder's `uri` must be a real `vscode.Uri` instance (with the
+	// `fsPath` / `toString` getters), not the raw `UriComponents` wire
+	// object. The stock built-in extensions (`git`, `gulp`, `grunt`, `jake`,
+	// `npm`, `merge-conflict`, most task detectors) call `folder.uri.fsPath`
+	// straight into `path.join(…)` or `Uri.file(…)`. Without hydration
+	// `fsPath` is `undefined` and the call throws:
+	//
+	//   TypeError [ERR_INVALID_ARG_TYPE]: The "path" argument must be of
+	//   type string. Received undefined
+	//     at Object.join (node:path)
+	//     at findGulpCommand / findGruntCommand / findJakeCommand / …
+	//
+	// or, for git specifically:
+	//
+	//   TypeError: Cannot read properties of undefined (reading '0')
+	//     at URI.file (…/CocoonMain.js)
+	//     at Model.openRepository (…/git/out/model.js:532)
+	//
+	// Hydrate per read via `StockLift.ToUri` (which handles both
+	// UriComponents objects and pre-hydrated Uri instances, returning the
+	// same instance in the latter case). The same hydration runs inside
+	// `NotificationHandler.$deltaWorkspaceFolders`; doing it here too
+	// covers the initial-boot read that fires before any delta arrives.
+	const HydrateFolder = (
+		Raw: { uri: unknown; name?: string; index?: number },
+		FallbackIndex: number,
+	): { uri: unknown; name: string; index: number } | null => {
+		const Hydrated = StockToUri(Raw?.uri);
+		if (!Hydrated) return null;
+		const Name =
+			typeof Raw?.name === "string" && Raw.name.length > 0
+				? Raw.name
+				: (Hydrated.fsPath.split(/[\\/]/).pop() ?? "");
+		const Index =
+			typeof Raw?.index === "number" ? Raw.index : FallbackIndex;
+		return { uri: Hydrated, name: Name, index: Index };
+	};
 	const ReadFolders = (): Array<{
 		uri: unknown;
 		name: string;
@@ -61,9 +100,15 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		const Live = (Context.ExtensionHostInitData?.workspace ??
 			Context.ExtensionHostInitData?.workspaceData ??
 			{}) as {
-			folders?: Array<{ uri: unknown; name: string; index: number }>;
+			folders?: Array<{ uri: unknown; name?: string; index?: number }>;
 		};
-		return Live.folders ?? [];
+		const Raw = Live.folders ?? [];
+		const Out: Array<{ uri: unknown; name: string; index: number }> = [];
+		for (let I = 0; I < Raw.length; I++) {
+			const Hydrated = HydrateFolder(Raw[I] as any, I);
+			if (Hydrated) Out.push(Hydrated);
+		}
+		return Out;
 	};
 
 	const ReadName = (): string | undefined => {

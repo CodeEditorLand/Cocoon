@@ -24795,7 +24795,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T15:29:03Z"
+      generatedAt: "2026-04-24T16:38:47Z"
     };
   }
 });
@@ -28988,9 +28988,22 @@ var init_Index = __esm({
     init_FileSystemNamespace();
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context21) => {
       const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+      const HydrateFolder = /* @__PURE__ */ __name((Raw2, FallbackIndex) => {
+        const Hydrated = ToUri(Raw2?.uri);
+        if (!Hydrated) return null;
+        const Name = typeof Raw2?.name === "string" && Raw2.name.length > 0 ? Raw2.name : Hydrated.fsPath.split(/[\\/]/).pop() ?? "";
+        const Index = typeof Raw2?.index === "number" ? Raw2.index : FallbackIndex;
+        return { uri: Hydrated, name: Name, index: Index };
+      }, "HydrateFolder");
       const ReadFolders = /* @__PURE__ */ __name(() => {
         const Live = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
-        return Live.folders ?? [];
+        const Raw2 = Live.folders ?? [];
+        const Out = [];
+        for (let I = 0; I < Raw2.length; I++) {
+          const Hydrated = HydrateFolder(Raw2[I], I);
+          if (Hydrated) Out.push(Hydrated);
+        }
+        return Out;
       }, "ReadFolders");
       const ReadName = /* @__PURE__ */ __name(() => {
         const Live = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
