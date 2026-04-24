@@ -978,8 +978,109 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			"window.didChangeWindowState",
 		),
 
+		// `vscode.git`'s `init()` subscribes to this at
+		// `extensions/git/out/main.js` (via the diff decoration pipeline
+		// it registers post-activation). Stock `extHostWindow.ts`
+		// exposes this event; our shim didn't, so git activate() threw
+		// `TypeError: …onDidChangeTextEditorDiffInformation is not a
+		// function` and never reached `scm.createSourceControl`, leaving
+		// the Source Control panel showing "No source control providers
+		// registered". No Mountain-side event source yet; stub with the
+		// disposable contract so subscription is a no-op. Real wiring
+		// would route Mountain's diff-decoration change stream into a
+		// `window.didChangeTextEditorDiffInformation` emit.
+		onDidChangeTextEditorDiffInformation: MakeEventSubscriber(
+			Context,
+			"window.didChangeTextEditorDiffInformation",
+		),
+
+		// Preemptive stubs for adjacent window event APIs stock VS Code
+		// ships. Each is wired to a Tauri event channel Mountain may
+		// populate later; until then the subscribe is a safe no-op.
+		// Added in bulk because the `vscode.git` failure above is the
+		// third whack-a-mole on the `vscode.window` namespace in this
+		// session, and extensions subscribe to these events defensively
+		// at activation time.
+		onDidChangeTextEditorSelection: MakeEventSubscriber(
+			Context,
+			"window.didChangeTextEditorSelection",
+		),
+		onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
+			Context,
+			"window.didChangeTextEditorVisibleRanges",
+		),
+		onDidChangeTextEditorOptions: MakeEventSubscriber(
+			Context,
+			"window.didChangeTextEditorOptions",
+		),
+		onDidChangeTextEditorViewColumn: MakeEventSubscriber(
+			Context,
+			"window.didChangeTextEditorViewColumn",
+		),
+		onDidChangeActiveNotebookEditor: MakeEventSubscriber(
+			Context,
+			"window.didChangeActiveNotebookEditor",
+		),
+		onDidChangeVisibleNotebookEditors: MakeEventSubscriber(
+			Context,
+			"window.didChangeVisibleNotebookEditors",
+		),
+		onDidChangeNotebookEditorSelection: MakeEventSubscriber(
+			Context,
+			"window.didChangeNotebookEditorSelection",
+		),
+		onDidChangeNotebookEditorVisibleRanges: MakeEventSubscriber(
+			Context,
+			"window.didChangeNotebookEditorVisibleRanges",
+		),
+		onDidChangeActiveColorTheme: MakeEventSubscriber(
+			Context,
+			"window.didChangeActiveColorTheme",
+		),
+		onDidChangeTerminalState: MakeEventSubscriber(
+			Context,
+			"window.didChangeTerminalState",
+		),
+		onDidOpenTerminal: MakeEventSubscriber(Context, "window.didOpenTerminal"),
+		onDidCloseTerminal: MakeEventSubscriber(Context, "window.didCloseTerminal"),
+		onDidChangeActiveTerminal: MakeEventSubscriber(
+			Context,
+			"window.didChangeActiveTerminal",
+		),
+		onDidWriteTerminalData: MakeEventSubscriber(
+			Context,
+			"window.didWriteTerminalData",
+		),
+		onDidExecuteTerminalCommand: MakeEventSubscriber(
+			Context,
+			"window.didExecuteTerminalCommand",
+		),
+		onDidChangeTerminalShellIntegration: MakeEventSubscriber(
+			Context,
+			"window.didChangeTerminalShellIntegration",
+		),
+		onDidStartTerminalShellExecution: MakeEventSubscriber(
+			Context,
+			"window.didStartTerminalShellExecution",
+		),
+		onDidEndTerminalShellExecution: MakeEventSubscriber(
+			Context,
+			"window.didEndTerminalShellExecution",
+		),
+
 		activeTextEditor: undefined,
+		activeColorTheme: { kind: 2 /* Dark */ },
 		visibleTextEditors: [] as unknown[],
+		visibleNotebookEditors: [] as unknown[],
+		activeNotebookEditor: undefined,
+		notebookEditors: [] as unknown[],
+		tabGroups: {
+			all: [] as unknown[],
+			activeTabGroup: { tabs: [] as unknown[] },
+			onDidChangeTabGroups: (() => ({ dispose: () => {} })) as unknown,
+			onDidChangeTabs: (() => ({ dispose: () => {} })) as unknown,
+			close: async () => false,
+		},
 		terminals: [] as unknown[],
 		activeTerminal: undefined,
 		state: { focused: true, active: true },

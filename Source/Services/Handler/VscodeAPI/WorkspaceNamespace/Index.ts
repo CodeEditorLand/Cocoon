@@ -9,7 +9,13 @@
  */
 
 import type { HandlerContext } from "../../HandlerContext.js";
+import { TryMountainThenNode } from "../../../DualTrack.js";
+import {
+	IsEqualOrParent as StockIsEqualOrParent,
+	RelativePath as StockRelativePath,
+} from "../StockLift.js";
 import { FindFilesLocal } from "./FindFiles.js";
+import { FindTextInFilesNodeFallback } from "./FindTextInFilesFallback.js";
 import { CreateFileSystemWatcher } from "./FileSystemWatcher.js";
 import {
 	CreateConfigurationState,
@@ -118,23 +124,51 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			);
 		},
 
-		// `findTextInFiles` / `findTextInFiles2` - ripgrep-backed text
-		// search. Mountain has `Search.TextSearch` in Track/Effect but no
-		// Cocoon caller today. Stub with an empty Progress + Promise until
-		// the text-search round-trip is wired; matches VS Code's "no hits"
-		// return shape so callers (eslint, search-extensions) don't crash.
+		// `findTextInFiles` / `findTextInFiles2` - dual-track: try
+		// Mountain's `Workspace.FindTextInFiles` first (ripgrep-backed,
+		// fast); fall back to Cocoon's Node implementation when Mountain
+		// doesn't have the handler. This keeps the API functional today
+		// while leaving the Rust performance path open for Mountain to
+		// land later - no Cocoon change needed when it does, the
+		// fallback just goes quiet.
 		findTextInFiles: async (
-			_Query: unknown,
-			_Options?: unknown,
-			_Callback?: (Result: unknown) => void,
+			Query: unknown,
+			Options?: unknown,
+			Callback?: (Result: unknown) => void,
 			_Token?: unknown,
-		): Promise<{ limitHit: boolean }> => ({ limitHit: false }),
+		) =>
+			TryMountainThenNode(
+				Context,
+				"Workspace.FindTextInFiles",
+				[Query, Options],
+				async ([Q, O]) =>
+					FindTextInFilesNodeFallback(
+						Context,
+						ReadFolders(),
+						Q,
+						O,
+						Callback,
+					),
+			),
 		findTextInFiles2: async (
-			_Query: unknown,
-			_Options?: unknown,
-			_Callback?: (Result: unknown) => void,
+			Query: unknown,
+			Options?: unknown,
+			Callback?: (Result: unknown) => void,
 			_Token?: unknown,
-		): Promise<{ limitHit: boolean }> => ({ limitHit: false }),
+		) =>
+			TryMountainThenNode(
+				Context,
+				"Workspace.FindTextInFiles2",
+				[Query, Options],
+				async ([Q, O]) =>
+					FindTextInFilesNodeFallback(
+						Context,
+						ReadFolders(),
+						Q,
+						O,
+						Callback,
+					),
+			),
 
 		openTextDocument: BuildOpenTextDocument(Context),
 
@@ -157,24 +191,27 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		saveAll: BuildSaveAll(Context),
 		applyEdit: BuildApplyEdit(Context),
+		// `asRelativePath` - lifts stock VS Code's `resources.relativePath`
+		// from `@codeeditorland/output/vs/base/common/resources.js`
+		// rather than hand-rolling prefix matching. Stock handles Windows
+		// drive-letter casing, authority comparison, and trailing-slash
+		// normalisation that our previous `.startsWith()` missed. Falls
+		// back to the raw input when the URI can't be coerced (matches
+		// stock VS Code's own behaviour at the workspace boundary).
 		asRelativePath: (PathOrUri: unknown, IncludeWorkspaceFolder?: boolean) => {
 			const Raw =
 				typeof PathOrUri === "string"
 					? PathOrUri
-					: (PathOrUri as { fsPath?: string; path?: string })?.fsPath ??
-						(PathOrUri as { fsPath?: string; path?: string })?.path ??
-						String(PathOrUri);
+					: ((PathOrUri as { fsPath?: string; path?: string })
+							?.fsPath ??
+						(PathOrUri as { fsPath?: string; path?: string })
+							?.path ??
+						String(PathOrUri));
+
 			const Folders = ReadFolders();
 			for (const Folder of Folders) {
-				const FolderPath =
-					(Folder.uri as { fsPath?: string; path?: string })?.fsPath ??
-					(Folder.uri as { fsPath?: string; path?: string })?.path ??
-					"";
-				if (FolderPath && Raw.startsWith(FolderPath)) {
-					const Relative = Raw.slice(FolderPath.length).replace(
-						/^\/+/,
-						"",
-					);
+				const Relative = StockRelativePath(Folder.uri, PathOrUri);
+				if (Relative !== undefined) {
 					if (IncludeWorkspaceFolder && Folders.length > 1) {
 						return `${Folder.name}/${Relative}`;
 					}
@@ -184,29 +221,20 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			return Raw;
 		},
 
-		// `getWorkspaceFolder(uri)` - single-folder lookup. THE most-called
-		// workspace API: every extension that handles a URI does
-		// `workspace.getWorkspaceFolder(uri).name` / `.uri` / `.index` to
-		// find the containing folder. Missing this crashes any URI-handling
-		// extension with `cannot read 'name' of undefined`. Delegates to
-		// prefix match on folder URIs - exactly what VS Code does before
-		// calling its `resolveWorkspaceFolder` RPC.
+		// `getWorkspaceFolder(uri)` - THE most-called workspace API:
+		// every URI-handling extension does
+		// `workspace.getWorkspaceFolder(uri).name/uri/index`. Lifts
+		// stock `resources.isEqualOrParent` (from
+		// `@codeeditorland/output/vs/base/common/resources.js`) which
+		// handles URI authority, casing, and path-separator edge cases
+		// correctly - our previous `.startsWith()` missed e.g. Windows
+		// case-insensitive file URIs and URIs with query/fragment parts.
 		getWorkspaceFolder: (
 			Uri: unknown,
 		): { uri: unknown; name: string; index: number } | undefined => {
-			const Raw =
-				typeof Uri === "string"
-					? Uri
-					: (Uri as { fsPath?: string; path?: string })?.fsPath ??
-						(Uri as { fsPath?: string; path?: string })?.path ??
-						"";
-			if (!Raw) return undefined;
+			if (Uri == null) return undefined;
 			for (const Folder of ReadFolders()) {
-				const FolderPath =
-					(Folder.uri as { fsPath?: string; path?: string })?.fsPath ??
-					(Folder.uri as { fsPath?: string; path?: string })?.path ??
-					"";
-				if (FolderPath && Raw.startsWith(FolderPath)) {
+				if (StockIsEqualOrParent(Uri, Folder.uri)) {
 					return Folder;
 				}
 			}

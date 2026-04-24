@@ -2,17 +2,48 @@
  * @module Handler/VscodeAPI/WorkspaceNamespace/FindFiles
  * @description
  * Local filesystem walk implementing `vscode.workspace.findFiles`. Filters
- * by include/exclude glob patterns using GlobToRegex, with hard caps on
- * depth, result count, and wall-clock time to keep the walk bounded.
+ * by include/exclude glob patterns using stock VS Code's `glob.parse`
+ * (lifted via `StockLift.GlobParsePattern`), with hard caps on depth,
+ * result count, and wall-clock time to keep the walk bounded.
+ *
+ * Tier-2 glob semantics (stock VS Code): brace expansion `{a,b}`,
+ * path-segment `**` boundaries, relative `**` anchoring, `!` negation.
+ * Prior hand-rolled `GlobToRegex` is kept as a fallback when stock's
+ * parser throws on an unusual pattern - strictly additive to the old
+ * path, never worse.
  */
 
 import GlobToRegex from "../../../../Utility/GlobToRegex.js";
 import type { HandlerContext } from "../../HandlerContext.js";
+import { GlobParsePattern } from "../StockLift.js";
 import {
 	DefaultExcludeSegments,
 	ExtractGlobPattern,
 	FolderToFsPath,
 } from "./Helpers.js";
+
+type GlobMatcher = (Path: string) => boolean;
+
+/**
+ * Compile a glob pattern into a predicate. Prefers stock VS Code's
+ * `glob.parse`; on failure falls back to `GlobToRegex`. Returns
+ * `undefined` when both paths fail so callers can short-circuit with
+ * an empty result set.
+ */
+function CompileGlob(Pattern: string): GlobMatcher | undefined {
+	try {
+		const Parsed = GlobParsePattern(Pattern);
+		if (typeof Parsed === "function") return Parsed;
+	} catch {
+		// Fall through to the legacy regex path.
+	}
+	try {
+		const Regex = GlobToRegex(Pattern);
+		return (Path: string) => Regex.test(Path);
+	} catch {
+		return undefined;
+	}
+}
 
 export const FindFilesLocal = async (
 	_Context: HandlerContext,
@@ -37,25 +68,16 @@ export const FindFilesLocal = async (
 		return [];
 	}
 
-	let IncludeRegex: RegExp;
-	try {
-		IncludeRegex = GlobToRegex(IncludePattern);
-	} catch (CaughtError: unknown) {
-		const Message =
-			CaughtError instanceof globalThis.Error
-				? CaughtError.message
-				: String(CaughtError);
+	const IncludeMatcher = CompileGlob(IncludePattern);
+	if (!IncludeMatcher) {
 		process.stdout.write(
-			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Message}\n`,
+			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)\n`,
 		);
 		return [];
 	}
-	let ExcludeRegex: RegExp | undefined;
-	if (ExcludePattern) {
-		try {
-			ExcludeRegex = GlobToRegex(ExcludePattern);
-		} catch {}
-	}
+	const ExcludeMatcher = ExcludePattern
+		? CompileGlob(ExcludePattern)
+		: undefined;
 
 	const { readdir } = await import("node:fs/promises");
 	const { join, relative, sep } = await import("node:path");
@@ -132,8 +154,8 @@ export const FindFilesLocal = async (
 				SubDirectories.push(Full);
 				continue;
 			}
-			if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
-			if (!IncludeRegex.test(RelativeFromRoot)) continue;
+			if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
+			if (!IncludeMatcher(RelativeFromRoot)) continue;
 			Results.push({ scheme: "file", path: Full, fsPath: Full });
 		}
 
