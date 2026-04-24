@@ -506,10 +506,31 @@ export class GRPCServerService
 			return response;
 		} catch (error) {
 			this.errorCount++;
-			console.error(
-				`[GRPCServerService] Error processing request ${request.Method}:`,
-				error,
-			);
+
+			// Errors inside `$provide*` / `$resolve*` / `$get*` methods are
+			// thrown by extension-provided handlers, not by Cocoon. Dumping
+			// the full stack trace to stderr surfaces as a Mountain `warn:
+			// Cocoon stderr` spam even though the fault lives in the
+			// extension's own code (see e.g. the npm extension's
+			// `getScripts` throwing on malformed package.json). Downgrade
+			// these to a single-line warn with just the message; the IPC
+			// response still carries the error payload back to the caller.
+			const IsExtensionProvidedHandler =
+				request.Method.startsWith("$provide") ||
+				request.Method.startsWith("$resolve") ||
+				request.Method.startsWith("$get");
+			if (IsExtensionProvidedHandler) {
+				console.warn(
+					`[GRPCServerService] Extension handler ${request.Method} rejected: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			} else {
+				console.error(
+					`[GRPCServerService] Error processing request ${request.Method}:`,
+					error,
+				);
+			}
 
 			// Remove from active requests
 			this.activeRequests.delete(request.RequestIdentifier);
