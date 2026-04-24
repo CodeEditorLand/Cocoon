@@ -557,12 +557,18 @@ export class GRPCServerService
 	}
 
 	/**
-	 * Serialize response data to buffer
+	 * Serialize response data to buffer. `undefined` is a valid resolved
+	 * value for VS Code command handlers (e.g. `workbench.action.open*`
+	 * returns `undefined` on success); `JSON.stringify(undefined)` itself
+	 * returns `undefined`, which `Buffer.from` then rejects with
+	 * ERR_INVALID_ARG_TYPE. Normalise to `null` so the wire payload is a
+	 * well-formed JSON literal Mountain can deserialize.
 	 */
 	private SerializeResponseData(data: any): Buffer {
 		try {
-			const serialized = JSON.stringify(data);
-			return Buffer.from(serialized, "utf8");
+			const Normalised = data === undefined ? null : data;
+			const serialized = JSON.stringify(Normalised);
+			return Buffer.from(serialized ?? "null", "utf8");
 		} catch (error) {
 			console.error(
 				"[GRPCServerService] Failed to serialize response:",
@@ -694,6 +700,19 @@ export class GRPCServerService
 		// own once the gRPC server closes.
 		if (method === "$shutdown") {
 			return { ok: true };
+		}
+
+		// ExtHostAuthentication surface. Extensions call
+		// `authentication.getSession(providerId, scopes, options)` during
+		// activation; until we have a real provider registry wired through
+		// Mountain, the honest answer is "no session". Returning `undefined`
+		// (serialised as `null`) matches stock VS Code's behaviour when the
+		// user dismisses a sign-in prompt and keeps the extension from
+		// throwing during boot. Other `ExtHostAuthentication$*` methods
+		// (registerProvider, removeSession, ...) return `null` for the same
+		// reason - better than a hard `Unknown method` throw.
+		if (/^ExtHostAuthentication\$/.test(method)) {
+			return null;
 		}
 
 		throw new Error(`Unknown method: ${method}`);

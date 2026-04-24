@@ -1,2 +1,26 @@
-var r=process.env.LAND_DEV_LOG??"",n=r.split(",").map(t=>t.trim().toLowerCase()).filter(t=>t.length>0),s=new Set(n),a=s.has("short"),i=s.has("all"),c=t=>s.size===0?!1:i||a?!0:s.has(t.toLowerCase()),l=(t,e)=>{if(!c(t))return;let o=t.toUpperCase();process.stdout.write(`[DEV:${o}] ${e}
-`)},p=l;export{l as CocoonDevLog,p as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/DevLog.ts
+var Raw = process.env["LAND_DEV_LOG"] ?? "";
+var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+var TagSet = new Set(ParsedTags);
+var IsShort = TagSet.has("short");
+var HasAll = TagSet.has("all");
+var IsEnabled = /* @__PURE__ */ __name((Tag) => {
+  if (TagSet.size === 0) return false;
+  if (HasAll || IsShort) return true;
+  return TagSet.has(Tag.toLowerCase());
+}, "IsEnabled");
+var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+  if (!IsEnabled(Tag)) return;
+  const TagUpper = Tag.toUpperCase();
+  process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+}, "CocoonDevLog");
+var DevLog_default = CocoonDevLog;
+export {
+  CocoonDevLog,
+  DevLog_default as default
+};
+//# sourceMappingURL=DevLog.js.map

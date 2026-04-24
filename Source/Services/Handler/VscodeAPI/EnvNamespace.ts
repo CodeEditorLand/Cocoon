@@ -84,8 +84,13 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			(Env["sessionId"] as string) ??
 			`land-session-${Date.now().toString(36)}`,
 		isNewAppInstall: false,
+		isAppPortable: false,
 		isTelemetryEnabled: false,
 		onDidChangeTelemetryEnabled: () => ({ dispose: () => {} }),
+		// Land's bundled shell is fixed for the session; there's no UI to
+		// switch it, so this event can never fire. Stub preserves the
+		// disposable contract extensions rely on at activation time.
+		onDidChangeShell: () => ({ dispose: () => {} }),
 		uriScheme: (Env["uriScheme"] as string) ?? "vscode",
 		shell: (Env["shell"] as string) ?? process.env["SHELL"] ?? "",
 		remoteName: undefined,

@@ -913,6 +913,48 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return { dispose: () => {} };
 		},
 
+		// `showWorkspaceFolderPick` - stable API. Stock routes through
+		// `MainThreadMessageService` to open a quick pick seeded with the
+		// current `workspace.workspaceFolders`. Land's folder list lives
+		// in `ExtensionHostInitData.workspace.folders`; pick the first by
+		// default (no picker UI yet). Extensions only use this when a
+		// command has to choose a folder for multi-root; degrading to
+		// "auto-pick first folder" keeps those flows functional until the
+		// picker is wired to Sky.
+		showWorkspaceFolderPick: async (
+			_Options?: unknown,
+		): Promise<unknown | undefined> => {
+			const Folders =
+				(Context.ExtensionHostInitData?.workspace as {
+					folders?: unknown[];
+				} | undefined)?.folders ?? [];
+			return Folders[0];
+		},
+
+		// `withScmProgress` - deprecated in `vscode.d.ts` but still present
+		// for extensions that never migrated to `withProgress`. Run the
+		// task with a no-op number-progress channel and surface its return
+		// value. Stock extHost implementation does the same degradation
+		// path.
+		withScmProgress: async <R>(
+			Task: (Progress: { report: (Value: number) => void }) => PromiseLike<R>,
+		): Promise<R> =>
+			Task({
+				report: () => {},
+			}),
+
+		// `registerQuickDiffProvider` - proposed API used by SCM-adjacent
+		// extensions to overlay a diff gutter. Stub-as-disposable lets
+		// opt-in extensions activate until Land wires a real quick-diff
+		// channel to Mountain's git surface.
+		registerQuickDiffProvider: (
+			_Selector: unknown,
+			_Provider: unknown,
+			_Id: string,
+			_Label: string,
+			_RootUri?: unknown,
+		) => ({ dispose: () => {} }),
+
 		// Events sourced from Mountain gRPC notifications → Context.Emitter
 		onDidChangeActiveTextEditor: MakeEventSubscriber(
 			Context,

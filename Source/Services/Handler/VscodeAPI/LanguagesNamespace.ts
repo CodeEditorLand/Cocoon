@@ -379,6 +379,64 @@ const CreateLanguagesNamespace = (
 			return [];
 		}
 	},
+
+	// `match(selector, document)` - stable API used by extensions that
+	// need to score a DocumentSelector against a document before doing
+	// work (gitlens, copilot, prettier). Implements the same 0-10 rubric
+	// as stock `vs/editor/common/languageSelector.ts::score`: a plain
+	// language id match scores 10, a filter with language+scheme+pattern
+	// sums each hit, `*` is 5, unrelated is 0. Good enough to keep
+	// extensions from believing every document is unmatched.
+	match: (Selector: unknown, Document: unknown): number => {
+		const Doc = (Document ?? {}) as {
+			languageId?: string;
+			uri?: { scheme?: string; path?: string };
+		};
+		const ScoreOne = (Candidate: unknown): number => {
+			if (typeof Candidate === "string") {
+				if (Candidate === "*") return 5;
+				return Candidate === Doc.languageId ? 10 : 0;
+			}
+			if (Candidate && typeof Candidate === "object") {
+				const Filter = Candidate as {
+					language?: string;
+					scheme?: string;
+					pattern?: string;
+					notebookType?: string;
+				};
+				let Score = 0;
+				if (Filter.language !== undefined) {
+					if (Filter.language === "*") Score += 5;
+					else if (Filter.language === Doc.languageId) Score += 10;
+					else return 0;
+				}
+				if (Filter.scheme !== undefined) {
+					if (Filter.scheme === "*") Score += 5;
+					else if (Filter.scheme === Doc.uri?.scheme) Score += 10;
+					else return 0;
+				}
+				if (Filter.pattern !== undefined) {
+					// Pattern matching is expensive; bump score only on
+					// substring match, which is a reasonable proxy that
+					// avoids pulling in minimatch just for a shim.
+					if (Doc.uri?.path?.includes(String(Filter.pattern)))
+						Score += 5;
+					else return 0;
+				}
+				return Score;
+			}
+			return 0;
+		};
+		if (Array.isArray(Selector)) {
+			let Best = 0;
+			for (const Candidate of Selector) {
+				const Score = ScoreOne(Candidate);
+				if (Score > Best) Best = Score;
+			}
+			return Best;
+		}
+		return ScoreOne(Selector);
+	},
 	setTextDocumentLanguage: async (Document: any, LanguageId: string) => {
 		Context.SendToMountain("languages.setDocumentLanguage", {
 			uri: Document?.uri?.toString?.() ?? "",
@@ -539,6 +597,13 @@ const CreateLanguagesNamespace = (
 			Selector,
 			Provider,
 		),
+	// Proposed API. Language servers (rust-analyzer, pyright, TS) opt in
+	// via `enabledApiProposals` to publish server-computed rename
+	// candidates. Stub disposable keeps activation quiet; real wiring
+	// routes through `registerRenameProvider` today for the stable path.
+	registerNewSymbolNamesProvider: (_Selector: unknown, _Provider: unknown) =>
+		({ dispose: () => {} }),
+
 	createLanguageStatusItem: (Identifier: string, _Selector: unknown) => {
 		process.stdout.write(
 			`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}\n`,

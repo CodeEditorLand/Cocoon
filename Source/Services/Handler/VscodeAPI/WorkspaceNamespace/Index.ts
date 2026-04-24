@@ -190,6 +190,34 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		}),
 
 		saveAll: BuildSaveAll(Context),
+		// `save(uri)` / `saveAs(uri)` - VS Code 1.86+ per-URI save API.
+		// Stock `extHostWorkspace.save` forwards to
+		// `MainThreadWorkspace.$save` / `$saveAs`. Mountain has no
+		// single-URI save handler wired yet; fall back to `saveAll`'s
+		// behaviour by routing through the workbench command so dirty
+		// documents still flush. Returns the URI on success to match the
+		// stable signature.
+		save: async (Uri: unknown): Promise<unknown | undefined> => {
+			try {
+				await Context.MountainClient.sendRequest("Workspace.Save", {
+					uri: Uri,
+				});
+				return Uri;
+			} catch {
+				return undefined;
+			}
+		},
+		saveAs: async (Uri: unknown): Promise<unknown | undefined> => {
+			try {
+				const Result = await Context.MountainClient.sendRequest(
+					"Workspace.SaveAs",
+					{ uri: Uri },
+				);
+				return (Result as { uri?: unknown })?.uri ?? Uri;
+			} catch {
+				return undefined;
+			}
+		},
 		applyEdit: BuildApplyEdit(Context),
 		// `asRelativePath` - lifts stock VS Code's `resources.relativePath`
 		// from `@codeeditorland/output/vs/base/common/resources.js`
@@ -314,6 +342,15 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
 		registerEditSessionIdentityProvider: () => ({ dispose: () => {} }),
+		// `vscode.git`'s activate() subscribes to both of these during boot
+		// via `extensions/git/out/main.js`. Missing either crashes the git
+		// extension with `TypeError: …onWillCreateEditSessionIdentity is
+		// not a function`, which then cascades into "No source control
+		// providers registered" because `vscode.git.createSourceControl`
+		// never runs. Stub-as-subscription is safe: Land has no edit-
+		// session-identity provider yet so the events can never fire.
+		onWillCreateEditSessionIdentity: () => ({ dispose: () => {} }),
+		onDidCreateEditSessionIdentity: () => ({ dispose: () => {} }),
 		registerShareProvider: () => ({ dispose: () => {} }),
 		registerCanonicalUriProvider: () => ({ dispose: () => {} }),
 		onDidGrantWorkspaceTrust: () => ({ dispose: () => {} }),
@@ -350,6 +387,40 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		onDidChangeTunnels: () => ({ dispose: () => {} }),
 		registerPortAttributesProvider: (
 			_Selector: unknown,
+			_Provider: unknown,
+		) => ({ dispose: () => {} }),
+
+		// Proposed API provider registrations. Each returns a no-op
+		// disposable so extensions that opt-in (via
+		// `enabledApiProposals`) can still activate; wiring each into
+		// Mountain is deferred until a concrete consumer shows up.
+		//
+		// - `registerTimelineProvider` - git / github-pull-requests.
+		// - `registerFileSearchProvider[2]` - remote FS providers.
+		// - `registerTextSearchProvider[2]` - grep-for-X extensions.
+		// - `registerAITextSearchProvider` - AI search (copilot).
+		registerTimelineProvider: (
+			_Scheme: unknown,
+			_Provider: unknown,
+		) => ({ dispose: () => {} }),
+		registerFileSearchProvider: (
+			_Scheme: string,
+			_Provider: unknown,
+		) => ({ dispose: () => {} }),
+		registerFileSearchProvider2: (
+			_Scheme: string,
+			_Provider: unknown,
+		) => ({ dispose: () => {} }),
+		registerTextSearchProvider: (
+			_Scheme: string,
+			_Provider: unknown,
+		) => ({ dispose: () => {} }),
+		registerTextSearchProvider2: (
+			_Scheme: string,
+			_Provider: unknown,
+		) => ({ dispose: () => {} }),
+		registerAITextSearchProvider: (
+			_Scheme: string,
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
 

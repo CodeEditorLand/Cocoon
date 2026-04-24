@@ -31,6 +31,8 @@
  * - LOW: Implement extension migration on version changes
  */
 
+import { mkdirSync } from "node:fs";
+
 import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
@@ -400,13 +402,32 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 						`[ExtensionContext] Creating context for extension: ${ExtensionId}`,
 					);
 
-					// Create storage paths
+					// Create storage paths. Both dirs are pre-created on the
+					// filesystem so extensions that `fs.readFile(<path>)` on
+					// activation (e.g. `vscodevim.vim` reading `.registers`
+					// from its globalStorage) don't blow up with ENOENT on
+					// the parent directory. The file inside is still the
+					// extension's responsibility to create on first write;
+					// ensuring the directory exists is the stock VS Code
+					// extension-host contract (extHost keys on per-ext
+					// global/workspace storage URIs and mkdirp's them during
+					// activator setup).
 					const ExtensionPath =
 						ExtensionDescription.extensionLocation.fsPath;
 					const StoragePath = `${ExtensionPath}/.storage`;
-					const GlobalStoragePath =
+					const GlobalStorageRoot =
 						process.env.VSCODE_COCOON_GLOBAL_STORAGE ??
-						`${process.env.HOME ?? "."}/cocoon/global-storage`;
+						`${process.env.HOME ?? "."}/.land/globalStorage`;
+					const GlobalStoragePath = `${GlobalStorageRoot}/${ExtensionId}`;
+					try {
+						mkdirSync(GlobalStoragePath, { recursive: true });
+						mkdirSync(StoragePath, { recursive: true });
+					} catch {
+						// Storage dirs are best-effort - if mkdir fails
+						// (read-only mount, perms, ...) extensions will see
+						// ENOENT on read, which matches stock behaviour on
+						// the same failure. Swallow so activation continues.
+					}
 
 					// Create mementos for state management
 					const WorkspaceStateRef = yield* Ref.make(

@@ -151,7 +151,27 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// and the string otherwise - extensions that round-trip their
 			// own handles accept the string opaquely.
 			const Element = ItemHandle ? ItemHandle : undefined;
-			const Children = (await Provider.getChildren?.(Element)) ?? [];
+			// Some extensions (e.g. `vscode.references-view`) register a
+			// `TreeDataProviderDelegate` eagerly and set the real provider
+			// later. Calling `getChildren` before that second step throws
+			// `Error: MISSING provider` from inside the delegate's
+			// `_assertProvider`. Stock VS Code hides this by only querying
+			// the tree once the extension fires its own refresh event -
+			// Mountain currently polls unconditionally, so we catch the
+			// throw here and return an empty root until the provider is
+			// wired up. Still surface non-"MISSING provider" errors so real
+			// bugs don't get swallowed.
+			let Children: unknown;
+			try {
+				Children = (await Provider.getChildren?.(Element)) ?? [];
+			} catch (Reason) {
+				const Message =
+					Reason instanceof Error ? Reason.message : String(Reason);
+				if (/MISSING provider|provider is not set/i.test(Message)) {
+					return { items: [] };
+				}
+				throw Reason;
+			}
 			const Items = await Promise.all(
 				(Array.isArray(Children) ? Children : []).map(
 					async (Child: unknown, Index: number) => {

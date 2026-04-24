@@ -64,6 +64,20 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 
 	registerDebugAdapterTrackerFactory: () => ({ dispose: () => {} }),
 
+	// Proposed API (`vscode.proposed.debugVisualization.d.ts`). Custom
+	// debug-variable renderers (e.g. Microsoft's JS debugger providing
+	// rich object views) opt in via `enabledApiProposals`. Stub until a
+	// renderer consumer lands - real wiring routes through Mountain's
+	// DebugService.
+	registerDebugVisualizationProvider: (
+		_Id: string,
+		_Provider: unknown,
+	) => ({ dispose: () => {} }),
+	registerDebugVisualizationTreeProvider: (
+		_Id: string,
+		_Provider: unknown,
+	) => ({ dispose: () => {} }),
+
 	startDebugging: async (
 		Folder: unknown,
 		NameOrConfig: unknown,
@@ -139,6 +153,16 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 		},
 	},
 	breakpoints: [] as unknown[],
+
+	// Stable 1.88+ surface: current selected debug stack item. Land's
+	// debug service doesn't track per-frame selection yet, so this reads
+	// as undefined and the associated event never fires. Real subscribe
+	// path is still a proper disposable so the extension teardown works.
+	activeStackItem: undefined as unknown,
+	onDidChangeActiveStackItem: EventSubscriber(
+		Context,
+		"debug.didChangeActiveStackItem",
+	),
 });
 
 export default CreateDebugNamespace;

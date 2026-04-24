@@ -1,3 +1,1214 @@
-import{Context as U,Effect as h,Ref as w}from"effect";import{Context as H,Effect as t,Layer as A}from"effect";import*as R from"effect/Effect";var I=R.Service()("Service/MountainClient",{effect:R.gen(function*(){return{}})});import{Context as N,Effect as E,Ref as F}from"effect";var G=N.Tag("Service/Logger"),O=class extends E.Service()("Service/Logger",{effect:E.gen(function*(){let s=yield*F.make(void 0),x=yield*F.make("info"),n=(p,g,S)=>{let T=new Date().toISOString(),k=`[${g.toUpperCase()}${S?`:${S}`:""}]`;return`${T} ${k} ${p}`};return{Trace:(p,...g)=>E.gen(function*(){let S=yield*F.get(x),T=yield*F.get(s);if(S==="trace"){let k=n(p,"trace",T);return yield*E.logTrace(p).pipe(E.annotateLogs({extensionId:T,data:g.length===1?g[0]:g}))}}),Debug:(p,...g)=>E.gen(function*(){let S=yield*F.get(x),T=yield*F.get(s);if(S==="trace"||S==="debug"){let k=n(p,"debug",T);return yield*E.logDebug(p).pipe(E.annotateLogs({extensionId:T,data:g.length===1?g[0]:g}))}}),Info:(p,...g)=>E.gen(function*(){let S=yield*F.get(s),T=n(p,"info",S);return yield*E.logInfo(p).pipe(E.annotateLogs({extensionId:S,data:g.length===1?g[0]:g}))}),Warn:(p,...g)=>E.gen(function*(){let S=yield*F.get(s);return yield*E.logWarning(p).pipe(E.annotateLogs({extensionId:S,data:g.length===1?g[0]:g}))}),Error:(p,...g)=>E.gen(function*(){let S=yield*F.get(s);return yield*E.logError(p).pipe(E.annotateLogs({extensionId:S,data:g.length===1?g[0]:g}))}),Fatal:(p,...g)=>E.gen(function*(){let S=yield*F.get(s);return yield*E.logFatal(p).pipe(E.annotateLogs({extensionId:S,data:g.length===1?g[0]:g}))}),SetExtensionId:p=>E.gen(function*(){yield*F.set(s,p)}),GetExtensionId:()=>E.gen(function*(){return(yield*F.get(s))??"cocoon-core"})}})}){};var V=H.GenericTag("Service/MountainGRPCClient"),j=A.effect(V,t.gen(function*(){let a=yield*I,s=yield*G.Logger;return{_serviceBrand:void 0,showTextDocument:(n,i={})=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showTextDocument: ${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("showTextDocument",{uri:{value:n},viewColumn:i.viewColumn?i.viewColumn-2:void 0,preserveFocus:i.preserveFocus??!0}),catch:e=>new Error(`Failed to show text document: ${e instanceof Error?e.message:String(e)}`)}))?.success)return yield*t.fail(new Error(`Failed to show text document: ${n}`))}),showInformationMessage:n=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showInformationMessage: ${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("showInformation",{message:n}),catch:r=>new Error(`Failed to show information message: ${r instanceof Error?r.message:String(r)}`)}))?.success)return yield*t.fail(new Error(`Failed to show information message: ${n}`))}),showWarningMessage:n=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showWarningMessage: ${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("showWarning",{message:n}),catch:r=>new Error(`Failed to show warning message: ${r instanceof Error?r.message:String(r)}`)}))?.success)return yield*t.fail(new Error(`Failed to show warning message: ${n}`))}),showErrorMessage:n=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showErrorMessage: ${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("showError",{message:n}),catch:r=>new Error(`Failed to show error message: ${r instanceof Error?r.message:String(r)}`)}))?.success)return yield*t.fail(new Error(`Failed to show error message: ${n}`))}),createStatusBarItem:n=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] createStatusBarItem: ${n.id}`);let i=yield*t.tryPromise({try:()=>a.sendRequest("createStatusBarItem",{id:n.id,text:n.text,tooltip:n.tooltip??""}),catch:r=>new Error(`Failed to create status bar item: ${r instanceof Error?r.message:String(r)}`)});return i?.itemId?i.itemId:yield*t.fail(new Error(`Failed to create status bar item: ${n.id}`))}),setStatusBarText:(n,i)=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] setStatusBarText: ${n} = ${i}`),yield*t.tryPromise({try:()=>a.sendRequest("setStatusBarText",{itemId:n,text:i}),catch:r=>new Error(`Failed to set status bar text: ${r instanceof Error?r.message:String(r)}`)})}),createWebviewPanel:n=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] createWebviewPanel: ${n.viewType}`);let i=yield*t.tryPromise({try:()=>a.sendRequest("createWebviewPanel",{viewType:n.viewType,title:n.title,iconPath:n.iconPath??"",viewColumn:n.viewColumn?n.viewColumn-2:void 0,preserveFocus:n.preserveFocus??!1,enableFindWidget:n.enableFindWidget??!0,retainContextWhenHidden:n.retainContextWhenHidden??!1,localResourceRoots:n.localResourceRoots??[]}),catch:r=>new Error(`Failed to create webview panel: ${r instanceof Error?r.message:String(r)}`)});return i?.handle===void 0?yield*t.fail(new Error(`Failed to create webview panel: ${n.viewType}`)):i.handle}),setWebviewHtml:(n,i)=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] setWebviewHtml: handle=${n}`),yield*t.tryPromise({try:()=>a.sendRequest("setWebviewHtml",{handle:n,html:i}),catch:r=>new Error(`Failed to set webview HTML: ${r instanceof Error?r.message:String(r)}`)})}),postWebviewMessage:(n,i)=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] postWebviewMessage: handle=${n}`);let r=typeof i=="string";yield*t.tryPromise({try:()=>a.sendNotification("onDidReceiveMessage",{handle:n,stringMessage:r?i:void 0,bytesMessage:r?void 0:i}),catch:e=>new Error(`Failed to post webview message: ${e instanceof Error?e.message:String(e)}`)})}),findFiles:(n,i)=>t.gen(function*(){return yield*s.debug(`[MountainGRPCClient] findFiles: ${n}`),(yield*t.tryPromise({try:()=>a.sendRequest("findFiles",{pattern:n,include:i??!0}),catch:e=>new Error(`Failed to find files: ${e instanceof Error?e.message:String(e)}`)}))?.uris??[]}),findTextInFiles:(n,i,r)=>t.gen(function*(){return yield*s.debug(`[MountainGRPCClient] findTextInFiles: ${n}`),(yield*t.tryPromise({try:()=>a.sendRequest("findTextInFiles",{pattern:n,include:i??[],exclude:r??[]}),catch:C=>new Error(`Failed to find text in files: ${C instanceof Error?C.message:String(C)}`)}))?.matches??[]}),openDocument:(n,i)=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] openDocument: ${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("openDocument",{uri:{value:n},viewColumn:i?i-2:void 0}),catch:e=>new Error(`Failed to open document: ${e instanceof Error?e.message:String(e)}`)}))?.success)return yield*t.fail(new Error(`Failed to open document: ${n}`))}),saveAll:(n=!1)=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] saveAll: includeUntitled=${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("saveAll",{includeUntitled:n}),catch:r=>new Error(`Failed to save all: ${r instanceof Error?r.message:String(r)}`)}))?.success)return yield*t.fail(new Error("Failed to save all documents"))}),applyEdit:(n,i)=>t.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] applyEdit: ${n}`),!(yield*t.tryPromise({try:()=>a.sendRequest("applyEdit",{uri:{value:n},edits:i.map(e=>({range:{start:{line:e.range.start.line,character:e.range.start.character},end:{line:e.range.end.line,character:e.range.end.character}},newText:e.newText}))}),catch:e=>new Error(`Failed to apply edit: ${e instanceof Error?e.message:String(e)}`)}))?.success)return yield*t.fail(new Error(`Failed to apply edit to: ${n}`))}),registerCommand:(n,i,r)=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] registerCommand: ${n}`),yield*t.tryPromise({try:()=>a.sendNotification("registerCommand",{commandId:n,extensionId:i,title:r}),catch:e=>new Error(`Failed to register command: ${e instanceof Error?e.message:String(e)}`)})}),executeCommand:(n,...i)=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] executeCommand: ${n}`);let r=yield*t.tryPromise({try:()=>a.sendRequest("executeCommand",{commandId:n,arguments:i.map(e=>typeof e=="string"?{stringValue:e}:typeof e=="number"?{intValue:e}:typeof e=="boolean"?{boolValue:e}:e instanceof Uint8Array?{bytesValue:e}:{stringValue:String(e)})}),catch:e=>new Error(`Failed to execute command: ${e instanceof Error?e.message:String(e)}`)});return r?.error?yield*t.fail(new Error(`Command execution failed: ${r.error.Message}`)):r?.value}),unregisterCommand:n=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] unregisterCommand: ${n}`),yield*t.tryPromise({try:()=>a.sendNotification("unregisterCommand",{commandId:n}),catch:i=>new Error(`Failed to unregister command: ${i instanceof Error?i.message:String(i)}`)})}),getSecret:n=>t.gen(function*(){return yield*s.debug(`[MountainGRPCClient] getSecret: ${n}`),(yield*t.tryPromise({try:()=>a.sendRequest("getSecret",{key:n}),catch:r=>new Error(`Failed to get secret: ${r instanceof Error?r.message:String(r)}`)}))?.value}),storeSecret:(n,i)=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] storeSecret: ${n}`),yield*t.tryPromise({try:()=>a.sendNotification("storeSecret",{key:n,value:i}),catch:r=>new Error(`Failed to store secret: ${r instanceof Error?r.message:String(r)}`)})}),deleteSecret:n=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] deleteSecret: ${n}`),yield*t.tryPromise({try:()=>a.sendNotification("deleteSecret",{key:n}),catch:i=>new Error(`Failed to delete secret: ${i instanceof Error?i.message:String(i)}`)})}),readFile:n=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] readFile: ${n}`);let i=yield*t.tryPromise({try:()=>a.sendRequest("readFile",{uri:{value:n}}),catch:r=>new Error(`Failed to read file: ${r instanceof Error?r.message:String(r)}`)});return i?.content?i.content:yield*t.fail(new Error(`Failed to read file: ${n}`))}),writeFile:(n,i,r="utf8")=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] writeFile: ${n}`),yield*t.tryPromise({try:()=>a.sendNotification("writeFile",{uri:{value:n},content:i,encoding:r}),catch:e=>new Error(`Failed to write file: ${e instanceof Error?e.message:String(e)}`)})}),stat:n=>t.gen(function*(){yield*s.debug(`[MountainGRPCClient] stat: ${n}`);let i=yield*t.tryPromise({try:()=>a.sendRequest("stat",{uri:{value:n}}),catch:r=>new Error(`Failed to stat file: ${r instanceof Error?r.message:String(r)}`)});return i||(yield*t.fail(new Error(`Failed to stat file: ${n}`)))}),readdir:n=>t.gen(function*(){return yield*s.debug(`[MountainGRPCClient] readdir: ${n}`),(yield*t.tryPromise({try:()=>a.sendRequest("readdir",{uri:{value:n}}),catch:r=>new Error(`Failed to read directory: ${r instanceof Error?r.message:String(r)}`)}))?.entries??[]})}})),se=A.effect(V,t.gen(function*(){let a=yield*G.Logger,s=new Map,x=new Map,n=new Map,i=0;return{_serviceBrand:void 0,showTextDocument:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] showTextDocument: ${e}`)}),showInformationMessage:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] showInformationMessage: ${e}`)}),showWarningMessage:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] showWarningMessage: ${e}`)}),showErrorMessage:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] showErrorMessage: ${e}`)}),createStatusBarItem:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] createStatusBarItem: ${e.id}`);let C=`status-${e.id}`;return x.set(C,e.text),C}),setStatusBarText:(e,C)=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] setStatusBarText: ${e}`),x.set(e,C)}),createWebviewPanel:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] createWebviewPanel: ${e.viewType}`);let C=i++;return n.set(C,{html:e.html??""}),C}),setWebviewHtml:(e,C)=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] setWebviewHtml: ${e}`);let P=n.get(e);P&&(P.html=C)}),postWebviewMessage:(e,C)=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] postWebviewMessage: ${e}`)}),findFiles:e=>t.gen(function*(){return yield*a.debug(`[MountainGRPCClientMock] findFiles: ${e}`),[]}),findTextInFiles:e=>t.gen(function*(){return yield*a.debug(`[MountainGRPCClientMock] findTextInFiles: ${e}`),[]}),openDocument:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] openDocument: ${e}`)}),saveAll:()=>t.gen(function*(){yield*a.debug("[MountainGRPCClientMock] saveAll")}),applyEdit:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] applyEdit: ${e}`)}),registerCommand:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] registerCommand: ${e}`)}),executeCommand:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] executeCommand: ${e}`)}),unregisterCommand:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] unregisterCommand: ${e}`)}),getSecret:e=>t.gen(function*(){return yield*a.debug(`[MountainGRPCClientMock] getSecret: ${e}`),s.get(e)}),storeSecret:(e,C)=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] storeSecret: ${e}`),s.set(e,C)}),deleteSecret:e=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] deleteSecret: ${e}`),s.delete(e)}),readFile:e=>t.gen(function*(){return yield*a.debug(`[MountainGRPCClientMock] readFile: ${e}`),new Uint8Array(0)}),writeFile:(e,C)=>t.gen(function*(){yield*a.debug(`[MountainGRPCClientMock] writeFile: ${e}`)}),stat:e=>t.gen(function*(){return yield*a.debug(`[MountainGRPCClientMock] stat: ${e}`),{isFile:!0,isDirectory:!1,size:0,mtime:Date.now()}}),readdir:e=>t.gen(function*(){return yield*a.debug(`[MountainGRPCClientMock] readdir: ${e}`),[]})}})),de=j.pipe(A.provide(I));var q=class extends h.Service()("Service/Workspace",{effect:h.gen(function*(){let s=yield*U.Tag("Service/Configuration"),x=yield*U.Tag("Service/Logger"),n=yield*w.make(void 0),i=yield*w.make(new Map),r=yield*w.make(void 0),e=yield*w.make([]),C=new Set,P=new Set,$=new Set,W=new Set,D=new Set,B=o=>h.gen(function*(){let c=yield*w.get(n),l=(o.folders??[]).map((d,u)=>({uri:VSCode.Uri.parse(typeof d=="string"?d:d.uri??d.path??d),name:d.name??(typeof d=="string"?d.split("/").pop()??"":""),index:d.index??u})),f={ID:o.id,Name:o.name,Folders:l,Configuration:o.configuration?VSCode.Uri.parse(o.configuration):void 0};yield*w.set(n,f),x.Info(`[WorkspaceService] Workspace updated: ${f.Name} with ${l.length} folders`);let m=c?.Folders??[],v=l.filter(d=>!m.some(u=>u.uri.toString()===d.uri.toString())),y=m.filter(d=>!l.some(u=>d.uri.toString()===d.uri.toString()));if(v.length>0||y.length>0){let d={added:v,removed:y};C.forEach(u=>u(d))}}),p=(o,c)=>h.gen(function*(){let l=yield*w.get(i),f=yield*w.get(r),m=o?l.get(o):void 0;yield*w.set(r,m),f!==m&&(x.Debug(`[WorkspaceService] Active text editor changed: ${m?.document.uri.toString()??"none"}`),P.forEach(y=>y(m)));let v=c.map(y=>l.get(y)).filter(y=>y!==void 0);yield*w.set(e,v),$.forEach(y=>y(v))});return{get name(){return h.runSync(w.get(n))?.Name},get workspaceFile(){return h.runSync(w.get(n))?.Configuration},get workspaceFolders(){return h.runSync(w.get(n))?.Folders},get isTrusted(){return!0},get activeTextEditor(){return h.runSync(w.get(r))},get visibleTextEditors(){return h.runSync(w.get(e))},GetWorkspaceFolder:o=>{let c=h.runSync(w.get(n));if(!c)return;let l=o.toString();return c.Folders.find(f=>{let m=f.uri.toString();return l.startsWith(m)})},FindFiles:(o,c,l)=>h.gen(function*(){x.Debug(`[WorkspaceService] Finding files: ${o}${c?`, excluding: ${c}`:""}`+(l?`, maxResults: ${l}`:""));let f=yield*V,m=typeof o=="string"?o:o.pattern,v=c?typeof c=="string"?[c]:c.pattern:void 0;return(yield*f.findFiles(m,v)).map(d=>({scheme:"file",authority:"",path:d,query:"",fragment:"",fsPath:d,with:()=>({scheme:"file",path:d}),toString:()=>d}))}),FindTextInFiles:(o,c)=>h.gen(function*(){x.Debug("[WorkspaceService] Finding text in files");let l=yield*V,f=o.pattern,m=c?.include?Array.isArray(c.include)?c.include.map(d=>typeof d=="string"?d:d.pattern):[typeof c.include=="string"?c.include:c.include.pattern]:void 0,v=c?.exclude?Array.isArray(c.exclude)?c.exclude.map(d=>typeof d=="string"?d:d.pattern):[typeof c.exclude=="string"?c.exclude:c.exclude.pattern]:void 0,y=yield*l.findTextInFiles(f,m,v);return y.length>0?y.map(d=>({scheme:"file",authority:"",path:d.uri,query:"",fragment:"",fsPath:d.uri,with:()=>({scheme:"file",path:d.uri}),toString:()=>d.uri})):null}),OpenTextDocument:o=>h.gen(function*(){let c,l,f;if(o)"uri"in o?c=o:(c=VSCode.Uri.parse(`untitled:${l}-${Date.now()}`),l=o.language,f=o.content);else{let u=yield*w.get(r);return u?u.document:yield*h.fail(new Error("[WorkspaceService] No active text editor to open"))}x.Debug(`[WorkspaceService] Opening text document: ${c}`);let m=yield*V;yield*m.openDocument(c.toString());let v=f??"",y=l??"plaintext";if(c.scheme==="file"){let u=yield*h.either(m.readFile(c.toString()));if(u._tag==="Right"){v=new TextDecoder().decode(u.right);let b=c.fsPath.split(".").pop()??"";y=l??{ts:"typescript",tsx:"typescriptreact",js:"javascript",jsx:"javascriptreact",rs:"rust",py:"python",json:"json",md:"markdown",toml:"toml",yaml:"yaml",yml:"yaml",css:"css",html:"html",sh:"shellscript"}[b]??"plaintext"}}let d=v.split(`
-`);return{uri:c,languageId:y,version:1,isDirty:!1,isClosed:!1,getText:u=>u?d.slice(u.start.line,u.end.line+1).join(`
-`):v,lineCount:d.length,lineAt:u=>{let b=typeof u=="number"?u:u.line,M=d[b]??"";return{lineNumber:b,text:M,range:{start:{line:b,character:0},end:{line:b,character:M.length}},firstNonWhitespaceCharacterIndex:M.search(/\S|$/)}},offsetAt:u=>d.slice(0,u.line).reduce((b,M)=>b+M.length+1,0)+u.character,positionAt:u=>{let b=u;for(let M=0;M<d.length;M++){let L=d[M].length+1;if(b<L)return{line:M,character:b};b-=L}return{line:d.length-1,character:0}},getWordRangeAtPosition:()=>{},validateRange:u=>u,validatePosition:u=>u,save:()=>Promise.resolve(!0),eol:1}}),SaveAll:o=>h.gen(function*(){return x.Debug(`[WorkspaceService] Saving all documents${o?" (including untitled)":""}`),yield*(yield*V).saveAll(o??!1),!0}),ApplyEdit:o=>h.gen(function*(){x.Info(`[WorkspaceService] Applying workspace edit with ${o.entries()?.length??0} changes`);let c=yield*V;for(let l of o.entries()??[]){let[f,m]=l,v=m.map(y=>({range:{start:{line:y.range.start.line,character:y.range.start.character},end:{line:y.range.end.line,character:y.range.end.character}},newText:y.newText}));yield*c.applyEdit(f.toString(),v)}return!0}),GetConfiguration:(o,c)=>({get:(l,f)=>{let m=o?l?`${o}.${l}`:o:l??"";return s.getValue(m,1,f)},has:l=>{let f=o?`${o}.${l}`:l;return s.hasKey(f,1)},update:(l,f,m)=>{let v=o?`${o}.${l}`:l;s.updateValue(v,f,1)},inspect:l=>{let f=o?l?`${o}.${l}`:o:l??"";return{key:f,defaultValue:s.getValue(f,0,void 0),globalValue:s.getValue(f,1,void 0),workspaceValue:s.getValue(f,2,void 0),workspaceFolderValue:void 0}}}),OnDidChangeWorkspaceFolders:o=>(C.add(o),{dispose:()=>{C.delete(o)}}),OnDidChangeActiveTextEditor:o=>(P.add(o),{dispose:()=>{P.delete(o)}}),OnDidChangeVisibleTextEditors:o=>($.add(o),{dispose:()=>{$.delete(o)}}),OnDidChangeTextDocument:o=>(W.add(o),{dispose:()=>{W.delete(o)}}),OnDidChangeConfiguration:o=>(D.add(o),{dispose:()=>{D.delete(o)}})}})}){};export{q as WorkspaceService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/Logger.ts
+import { Context, Effect as Effect2, Ref } from "effect";
+var Logger = Context.Tag("Service/Logger");
+var LoggerService = class extends Effect2.Service()(
+  "Service/Logger",
+  {
+    effect: Effect2.gen(function* () {
+      const ExtensionIdRef = yield* Ref.make(
+        void 0
+      );
+      const LogLevelRef = yield* Ref.make("info");
+      const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
+        const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
+        const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+        return `${Timestamp} ${Prefix} ${Message}`;
+      }, "FormatMessage");
+      const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const LogLevel = yield* Ref.get(LogLevelRef);
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        if (LogLevel === "trace") {
+          const FormattedMessage = FormatMessage(
+            Message,
+            "trace",
+            ExtensionId
+          );
+          return yield* Effect2.logTrace(Message).pipe(
+            Effect2.annotateLogs({
+              extensionId: ExtensionId,
+              data: Data.length === 1 ? Data[0] : Data
+            })
+          );
+        }
+      }), "Trace");
+      const Debug = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const LogLevel = yield* Ref.get(LogLevelRef);
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        if (LogLevel === "trace" || LogLevel === "debug") {
+          const FormattedMessage = FormatMessage(
+            Message,
+            "debug",
+            ExtensionId
+          );
+          return yield* Effect2.logDebug(Message).pipe(
+            Effect2.annotateLogs({
+              extensionId: ExtensionId,
+              data: Data.length === 1 ? Data[0] : Data
+            })
+          );
+        }
+      }), "Debug");
+      const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        const FormattedMessage = FormatMessage(
+          Message,
+          "info",
+          ExtensionId
+        );
+        return yield* Effect2.logInfo(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Info");
+      const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect2.logWarning(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Warn");
+      const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect2.logError(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Error");
+      const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect2.logFatal(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Fatal");
+      const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect2.gen(function* () {
+        yield* Ref.set(ExtensionIdRef, ExtensionId);
+      }), "SetExtensionId");
+      const GetExtensionId = /* @__PURE__ */ __name(() => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return ExtensionId ?? "cocoon-core";
+      }), "GetExtensionId");
+      const ServiceImplementation = {
+        Trace,
+        Debug,
+        Info,
+        Warn,
+        Error: Error2,
+        Fatal,
+        SetExtensionId,
+        GetExtensionId
+      };
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "LoggerService");
+  }
+};
+
+// Source/Services/MountainGRPCClient.ts
+import { Context as Context2, Effect as Effect3, Layer } from "effect";
+var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
+var MountainGRPCClientLive = Layer.effect(
+  MountainGRPCClientService,
+  Effect3.gen(function* () {
+    const mountainClient = yield* IMountainClientService;
+    const logger = yield* Logger.Logger;
+    const service = {
+      _serviceBrand: void 0,
+      // ==================== Window Operations ====================
+      showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showTextDocument: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
+            uri: { value: uri },
+            viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+            // Convert ViewColumn enum (1-based to 0-based)
+            preserveFocus: options.preserveFocus ?? true
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(`Failed to show text document: ${uri}`)
+          );
+        }
+        return;
+      }), "showTextDocument"),
+      showInformationMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showInformationMessage: ${message}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to show information message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showInformationMessage"),
+      showWarningMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showWarningMessage: ${message}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to show warning message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showWarningMessage"),
+      showErrorMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showErrorMessage: ${message}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to show error message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showErrorMessage"),
+      createStatusBarItem: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] createStatusBarItem: ${options.id}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
+            id: options.id,
+            text: options.text,
+            tooltip: options.tooltip ?? ""
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.itemId) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to create status bar item: ${options.id}`
+            )
+          );
+        }
+        return result.itemId;
+      }), "createStatusBarItem"),
+      setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
+            itemId,
+            text
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "setStatusBarText"),
+      createWebviewPanel: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
+            viewType: options.viewType,
+            title: options.title,
+            iconPath: options.iconPath ?? "",
+            viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+            preserveFocus: options.preserveFocus ?? false,
+            enableFindWidget: options.enableFindWidget ?? true,
+            retainContextWhenHidden: options.retainContextWhenHidden ?? false,
+            localResourceRoots: options.localResourceRoots ?? []
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (result?.handle === void 0) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to create webview panel: ${options.viewType}`
+            )
+          );
+        }
+        return result.handle;
+      }), "createWebviewPanel"),
+      setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
+            handle,
+            html
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "setWebviewHtml"),
+      postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
+        );
+        const isString = typeof message === "string";
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+            "onDidReceiveMessage",
+            {
+              handle,
+              stringMessage: isString ? message : void 0,
+              bytesMessage: isString ? void 0 : message
+            }
+          ), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "postWebviewMessage"),
+      // ==================== Workspace Operations ====================
+      findFiles: /* @__PURE__ */ __name((pattern, include) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] findFiles: ${pattern}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
+            pattern,
+            include: include ?? true
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.uris ?? [];
+      }), "findFiles"),
+      findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] findTextInFiles: ${pattern}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
+            pattern,
+            include: include ?? [],
+            exclude: exclude ?? []
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.matches ?? [];
+      }), "findTextInFiles"),
+      openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] openDocument: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
+            uri: { value: uri },
+            viewColumn: viewColumn ? viewColumn - 2 : void 0
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(`Failed to open document: ${uri}`)
+          );
+        }
+        return;
+      }), "openDocument"),
+      saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
+            includeUntitled
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error("Failed to save all documents")
+          );
+        }
+        return;
+      }), "saveAll"),
+      applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] applyEdit: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
+            uri: { value: uri },
+            edits: edits.map((edit) => ({
+              range: {
+                start: {
+                  line: edit.range.start.line,
+                  character: edit.range.start.character
+                },
+                end: {
+                  line: edit.range.end.line,
+                  character: edit.range.end.character
+                }
+              },
+              newText: edit.newText
+            }))
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(`Failed to apply edit to: ${uri}`)
+          );
+        }
+        return;
+      }), "applyEdit"),
+      // ==================== Command Operations ====================
+      registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] registerCommand: ${commandId}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
+            commandId,
+            extensionId,
+            title
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "registerCommand"),
+      executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] executeCommand: ${commandId}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
+            commandId,
+            arguments: args.map((arg) => {
+              if (typeof arg === "string") {
+                return { stringValue: arg };
+              }
+              if (typeof arg === "number") {
+                return { intValue: arg };
+              }
+              if (typeof arg === "boolean") {
+                return { boolValue: arg };
+              }
+              if (arg instanceof Uint8Array) {
+                return { bytesValue: arg };
+              }
+              return { stringValue: String(arg) };
+            })
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (result?.error) {
+          return yield* Effect3.fail(
+            new Error(
+              `Command execution failed: ${result.error.Message}`
+            )
+          );
+        }
+        return result?.value;
+      }), "executeCommand"),
+      unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] unregisterCommand: ${commandId}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+            "unregisterCommand",
+            {
+              commandId
+            }
+          ), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "unregisterCommand"),
+      // ==================== Secret Storage ====================
+      getSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] getSecret: ${key}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.value;
+      }), "getSecret"),
+      storeSecret: /* @__PURE__ */ __name((key, value) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] storeSecret: ${key}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
+            key,
+            value
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "storeSecret"),
+      deleteSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] deleteSecret: ${key}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
+            key
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "deleteSecret"),
+      // ==================== File System Operations ====================
+      readFile: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] readFile: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.content) {
+          return yield* Effect3.fail(
+            new Error(`Failed to read file: ${uri}`)
+          );
+        }
+        return result.content;
+      }), "readFile"),
+      writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] writeFile: ${uri}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
+            uri: { value: uri },
+            content,
+            encoding
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "writeFile"),
+      stat: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result) {
+          return yield* Effect3.fail(
+            new Error(`Failed to stat file: ${uri}`)
+          );
+        }
+        return result;
+      }), "stat"),
+      readdir: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.entries ?? [];
+      }), "readdir")
+    };
+    return service;
+  })
+);
+var MountainGRPCClientMock = Layer.effect(
+  MountainGRPCClientService,
+  Effect3.gen(function* () {
+    const logger = yield* Logger.Logger;
+    const mockSecrets = /* @__PURE__ */ new Map();
+    const mockStatusBarItems = /* @__PURE__ */ new Map();
+    const mockWebviewPanels = /* @__PURE__ */ new Map();
+    let mockWebviewHandleCounter = 0;
+    const service = {
+      _serviceBrand: void 0,
+      // Window Operations
+      showTextDocument: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showTextDocument: ${uri}`
+        );
+        return;
+      }), "showTextDocument"),
+      showInformationMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showInformationMessage: ${message}`
+        );
+        return;
+      }), "showInformationMessage"),
+      showWarningMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showWarningMessage: ${message}`
+        );
+        return;
+      }), "showWarningMessage"),
+      showErrorMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showErrorMessage: ${message}`
+        );
+        return;
+      }), "showErrorMessage"),
+      createStatusBarItem: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
+        );
+        const itemId = `status-${options.id}`;
+        mockStatusBarItems.set(itemId, options.text);
+        return itemId;
+      }), "createStatusBarItem"),
+      setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
+        );
+        mockStatusBarItems.set(itemId, text);
+        return;
+      }), "setStatusBarText"),
+      createWebviewPanel: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
+        );
+        const handle = mockWebviewHandleCounter++;
+        mockWebviewPanels.set(handle, { html: options.html ?? "" });
+        return handle;
+      }), "createWebviewPanel"),
+      setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
+        );
+        const panel = mockWebviewPanels.get(handle);
+        if (panel) {
+          panel.html = html;
+        }
+        return;
+      }), "setWebviewHtml"),
+      postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
+        );
+        return;
+      }), "postWebviewMessage"),
+      // Workspace Operations
+      findFiles: /* @__PURE__ */ __name((pattern) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] findFiles: ${pattern}`
+        );
+        return [];
+      }), "findFiles"),
+      findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
+        );
+        return [];
+      }), "findTextInFiles"),
+      openDocument: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] openDocument: ${uri}`
+        );
+        return;
+      }), "openDocument"),
+      saveAll: /* @__PURE__ */ __name(() => Effect3.gen(function* () {
+        yield* logger.debug("[MountainGRPCClientMock] saveAll");
+        return;
+      }), "saveAll"),
+      applyEdit: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] applyEdit: ${uri}`
+        );
+        return;
+      }), "applyEdit"),
+      // Command Operations
+      registerCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] registerCommand: ${commandId}`
+        );
+        return;
+      }), "registerCommand"),
+      executeCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] executeCommand: ${commandId}`
+        );
+        return void 0;
+      }), "executeCommand"),
+      unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
+        );
+        return;
+      }), "unregisterCommand"),
+      // Secret Storage
+      getSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] getSecret: ${key}`
+        );
+        return mockSecrets.get(key);
+      }), "getSecret"),
+      storeSecret: /* @__PURE__ */ __name((key, value) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] storeSecret: ${key}`
+        );
+        mockSecrets.set(key, value);
+        return;
+      }), "storeSecret"),
+      deleteSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] deleteSecret: ${key}`
+        );
+        mockSecrets.delete(key);
+        return;
+      }), "deleteSecret"),
+      // File System Operations
+      readFile: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] readFile: ${uri}`
+        );
+        return new Uint8Array(0);
+      }), "readFile"),
+      writeFile: /* @__PURE__ */ __name((uri, content) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] writeFile: ${uri}`
+        );
+        return;
+      }), "writeFile"),
+      stat: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] stat: ${uri}`
+        );
+        return {
+          isFile: true,
+          isDirectory: false,
+          size: 0,
+          mtime: Date.now()
+        };
+      }), "stat"),
+      readdir: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] readdir: ${uri}`
+        );
+        return [];
+      }), "readdir")
+    };
+    return service;
+  })
+);
+var MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
+  Layer.provide(IMountainClientService)
+);
+var MountainGRPCClientMockLayer = MountainGRPCClientMock;
+
+// Source/Services/Workspace.ts
+import { Context as Context3, Effect as Effect4, Ref as Ref2 } from "effect";
+var WorkspaceService = class extends Effect4.Service()(
+  "Service/Workspace",
+  {
+    effect: Effect4.gen(function* () {
+      const Configuration = yield* Context3.Tag(
+        "Service/Configuration"
+      );
+      const Logger2 = yield* Context3.Tag("Service/Logger");
+      const InternalWorkspaceRef = yield* Ref2.make(void 0);
+      const TextEditorsMapRef = yield* Ref2.make(
+        /* @__PURE__ */ new Map()
+      );
+      const ActiveTextEditorRef = yield* Ref2.make(void 0);
+      const VisibleTextEditorsRef = yield* Ref2.make([]);
+      const OnDidChangeWorkspaceFoldersListeners = /* @__PURE__ */ new Set();
+      const OnDidChangeActiveTextEditorListeners = /* @__PURE__ */ new Set();
+      const OnDidChangeVisibleTextEditorsListeners = /* @__PURE__ */ new Set();
+      const OnDidChangeTextDocumentListeners = /* @__PURE__ */ new Set();
+      const OnDidChangeConfigurationListeners = /* @__PURE__ */ new Set();
+      const AcceptWorkspaceData = /* @__PURE__ */ __name((Data) => Effect4.gen(function* () {
+        const OldWorkspace = yield* Ref2.get(InternalWorkspaceRef);
+        const Folders = (Data.folders ?? []).map((F, Index) => ({
+          uri: VSCode.Uri.parse(
+            typeof F === "string" ? F : F.uri ?? F.path ?? F
+          ),
+          name: F.name ?? (typeof F === "string" ? F.split("/").pop() ?? "" : ""),
+          index: F.index ?? Index
+        }));
+        const NewWorkspace = {
+          ID: Data.id,
+          Name: Data.name,
+          Folders,
+          Configuration: Data.configuration ? VSCode.Uri.parse(Data.configuration) : void 0
+        };
+        yield* Ref2.set(InternalWorkspaceRef, NewWorkspace);
+        Logger2.Info(
+          `[WorkspaceService] Workspace updated: ${NewWorkspace.Name} with ${Folders.length} folders`
+        );
+        const OldFolders = OldWorkspace?.Folders ?? [];
+        const AddedFolders = Folders.filter(
+          (Folder) => !OldFolders.some(
+            (OldFolder) => OldFolder.uri.toString() === Folder.uri.toString()
+          )
+        );
+        const RemovedFolders = OldFolders.filter(
+          (OldFolder) => !Folders.some(
+            (Folder) => OldFolder.uri.toString() === OldFolder.uri.toString()
+          )
+        );
+        if (AddedFolders.length > 0 || RemovedFolders.length > 0) {
+          const Event = {
+            added: AddedFolders,
+            removed: RemovedFolders
+          };
+          OnDidChangeWorkspaceFoldersListeners.forEach(
+            (listener) => listener(Event)
+          );
+        }
+      }), "AcceptWorkspaceData");
+      const AcceptEditorState = /* @__PURE__ */ __name((ActiveEditorId, VisibleEditorIds) => Effect4.gen(function* () {
+        const TextEditorsMap = yield* Ref2.get(TextEditorsMapRef);
+        const OldActiveEditor = yield* Ref2.get(ActiveTextEditorRef);
+        const NewActiveEditor = ActiveEditorId ? TextEditorsMap.get(ActiveEditorId) : void 0;
+        yield* Ref2.set(ActiveTextEditorRef, NewActiveEditor);
+        if (OldActiveEditor !== NewActiveEditor) {
+          Logger2.Debug(
+            `[WorkspaceService] Active text editor changed: ${NewActiveEditor?.document.uri.toString() ?? "none"}`
+          );
+          OnDidChangeActiveTextEditorListeners.forEach(
+            (listener) => listener(NewActiveEditor)
+          );
+        }
+        const NewVisibleEditors = VisibleEditorIds.map(
+          (id) => TextEditorsMap.get(id)
+        ).filter(
+          (editor) => editor !== void 0
+        );
+        yield* Ref2.set(VisibleTextEditorsRef, NewVisibleEditors);
+        OnDidChangeVisibleTextEditorsListeners.forEach(
+          (listener) => listener(NewVisibleEditors)
+        );
+      }), "AcceptEditorState");
+      const GetWorkspaceFolder = /* @__PURE__ */ __name((uri) => {
+        const Workspace = Effect4.runSync(Ref2.get(InternalWorkspaceRef));
+        if (!Workspace) {
+          return void 0;
+        }
+        const UriString = uri.toString();
+        return Workspace.Folders.find((folder) => {
+          const FolderUri = folder.uri.toString();
+          return UriString.startsWith(FolderUri);
+        });
+      }, "GetWorkspaceFolder");
+      const FindFiles = /* @__PURE__ */ __name((include, exclude, maxResults) => Effect4.gen(function* () {
+        Logger2.Debug(
+          `[WorkspaceService] Finding files: ${include}${exclude ? `, excluding: ${exclude}` : ""}` + (maxResults ? `, maxResults: ${maxResults}` : "")
+        );
+        const mountainClient = yield* MountainGRPCClientService;
+        const pattern = typeof include === "string" ? include : include.pattern;
+        const excludePatterns = exclude ? typeof exclude === "string" ? [exclude] : exclude.pattern : void 0;
+        const files = yield* mountainClient.findFiles(
+          pattern,
+          excludePatterns
+        );
+        return files.map((uri) => ({
+          scheme: "file",
+          authority: "",
+          path: uri,
+          query: "",
+          fragment: "",
+          fsPath: uri,
+          with: /* @__PURE__ */ __name(() => ({ scheme: "file", path: uri }), "with"),
+          toString: /* @__PURE__ */ __name(() => uri, "toString")
+        }));
+      }), "FindFiles");
+      const FindTextInFiles = /* @__PURE__ */ __name((query, options) => Effect4.gen(function* () {
+        Logger2.Debug(`[WorkspaceService] Finding text in files`);
+        const mountainClient = yield* MountainGRPCClientService;
+        const pattern = query.pattern;
+        const includePatterns = options?.include ? Array.isArray(options.include) ? options.include.map(
+          (p) => typeof p === "string" ? p : p.pattern
+        ) : [
+          typeof options.include === "string" ? options.include : options.include.pattern
+        ] : void 0;
+        const excludePatterns = options?.exclude ? Array.isArray(options.exclude) ? options.exclude.map(
+          (p) => typeof p === "string" ? p : p.pattern
+        ) : [
+          typeof options.exclude === "string" ? options.exclude : options.exclude.pattern
+        ] : void 0;
+        const matches = yield* mountainClient.findTextInFiles(
+          pattern,
+          includePatterns,
+          excludePatterns
+        );
+        return matches.length > 0 ? matches.map((m) => ({
+          scheme: "file",
+          authority: "",
+          path: m.uri,
+          query: "",
+          fragment: "",
+          fsPath: m.uri,
+          with: /* @__PURE__ */ __name(() => ({ scheme: "file", path: m.uri }), "with"),
+          toString: /* @__PURE__ */ __name(() => m.uri, "toString")
+        })) : null;
+      }), "FindTextInFiles");
+      const OpenTextDocument = /* @__PURE__ */ __name((uriOrOptions) => Effect4.gen(function* () {
+        let Uri;
+        let Language;
+        let Content;
+        if (uriOrOptions) {
+          if ("uri" in uriOrOptions) {
+            Uri = uriOrOptions;
+          } else {
+            Uri = VSCode.Uri.parse(
+              `untitled:${Language}-${Date.now()}`
+            );
+            Language = uriOrOptions.language;
+            Content = uriOrOptions.content;
+          }
+        } else {
+          const ActiveEditor = yield* Ref2.get(ActiveTextEditorRef);
+          if (!ActiveEditor) {
+            return yield* Effect4.fail(
+              new Error(
+                "[WorkspaceService] No active text editor to open"
+              )
+            );
+          }
+          return ActiveEditor.document;
+        }
+        Logger2.Debug(
+          `[WorkspaceService] Opening text document: ${Uri}`
+        );
+        const mountainClient = yield* MountainGRPCClientService;
+        yield* mountainClient.openDocument(Uri.toString());
+        let DocumentContent = Content ?? "";
+        let DocumentLanguage = Language ?? "plaintext";
+        if (Uri.scheme === "file") {
+          const FileBytes = yield* Effect4.either(
+            mountainClient.readFile(Uri.toString())
+          );
+          if (FileBytes._tag === "Right") {
+            DocumentContent = new TextDecoder().decode(
+              FileBytes.right
+            );
+            const Ext = Uri.fsPath.split(".").pop() ?? "";
+            const ExtMap = {
+              ts: "typescript",
+              tsx: "typescriptreact",
+              js: "javascript",
+              jsx: "javascriptreact",
+              rs: "rust",
+              py: "python",
+              json: "json",
+              md: "markdown",
+              toml: "toml",
+              yaml: "yaml",
+              yml: "yaml",
+              css: "css",
+              html: "html",
+              sh: "shellscript"
+            };
+            DocumentLanguage = Language ?? ExtMap[Ext] ?? "plaintext";
+          }
+        }
+        const DocumentLines = DocumentContent.split("\n");
+        return {
+          uri: Uri,
+          languageId: DocumentLanguage,
+          version: 1,
+          isDirty: false,
+          isClosed: false,
+          getText: /* @__PURE__ */ __name((Range) => {
+            if (!Range) return DocumentContent;
+            return DocumentLines.slice(
+              Range.start.line,
+              Range.end.line + 1
+            ).join("\n");
+          }, "getText"),
+          lineCount: DocumentLines.length,
+          lineAt: /* @__PURE__ */ __name((LineOrPos) => {
+            const Num = typeof LineOrPos === "number" ? LineOrPos : LineOrPos.line;
+            const Text = DocumentLines[Num] ?? "";
+            return {
+              lineNumber: Num,
+              text: Text,
+              range: {
+                start: { line: Num, character: 0 },
+                end: { line: Num, character: Text.length }
+              },
+              firstNonWhitespaceCharacterIndex: Text.search(/\S|$/)
+            };
+          }, "lineAt"),
+          offsetAt: /* @__PURE__ */ __name((Pos) => DocumentLines.slice(0, Pos.line).reduce(
+            (Sum, L) => Sum + L.length + 1,
+            0
+          ) + Pos.character, "offsetAt"),
+          positionAt: /* @__PURE__ */ __name((Offset) => {
+            let Remaining = Offset;
+            for (let I = 0; I < DocumentLines.length; I++) {
+              const Len = DocumentLines[I].length + 1;
+              if (Remaining < Len)
+                return { line: I, character: Remaining };
+              Remaining -= Len;
+            }
+            return {
+              line: DocumentLines.length - 1,
+              character: 0
+            };
+          }, "positionAt"),
+          getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+          validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
+          validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
+          save: /* @__PURE__ */ __name(() => Promise.resolve(true), "save"),
+          eol: 1
+        };
+      }), "OpenTextDocument");
+      const SaveAll = /* @__PURE__ */ __name((includeUntitled) => Effect4.gen(function* () {
+        Logger2.Debug(
+          `[WorkspaceService] Saving all documents${includeUntitled ? " (including untitled)" : ""}`
+        );
+        const mountainClient = yield* MountainGRPCClientService;
+        yield* mountainClient.saveAll(includeUntitled ?? false);
+        return true;
+      }), "SaveAll");
+      const ApplyEdit = /* @__PURE__ */ __name((edit) => Effect4.gen(function* () {
+        Logger2.Info(
+          `[WorkspaceService] Applying workspace edit with ${edit.entries()?.length ?? 0} changes`
+        );
+        const mountainClient = yield* MountainGRPCClientService;
+        for (const entry of edit.entries() ?? []) {
+          const [uri, edits] = entry;
+          const textEdits = edits.map((e) => ({
+            range: {
+              start: {
+                line: e.range.start.line,
+                character: e.range.start.character
+              },
+              end: {
+                line: e.range.end.line,
+                character: e.range.end.character
+              }
+            },
+            newText: e.newText
+          }));
+          yield* mountainClient.applyEdit(
+            uri.toString(),
+            textEdits
+          );
+        }
+        return true;
+      }), "ApplyEdit");
+      const GetConfiguration = /* @__PURE__ */ __name((section, _scope) => {
+        return {
+          get: /* @__PURE__ */ __name((key, defaultValue) => {
+            const FullKey = section ? key ? `${section}.${key}` : section : key ?? "";
+            return Configuration.getValue(
+              FullKey,
+              1,
+              defaultValue
+            );
+          }, "get"),
+          has: /* @__PURE__ */ __name((HasKey) => {
+            const FullKey = section ? `${section}.${HasKey}` : HasKey;
+            return Configuration.hasKey(FullKey, 1);
+          }, "has"),
+          update: /* @__PURE__ */ __name((key, value, _configurationTarget) => {
+            const FullKey = section ? `${section}.${key}` : key;
+            Configuration.updateValue(FullKey, value, 1);
+          }, "update"),
+          inspect: /* @__PURE__ */ __name((InspectKey) => {
+            const FullKey = section ? InspectKey ? `${section}.${InspectKey}` : section : InspectKey ?? "";
+            return {
+              key: FullKey,
+              defaultValue: Configuration.getValue(
+                FullKey,
+                0,
+                void 0
+              ),
+              globalValue: Configuration.getValue(
+                FullKey,
+                1,
+                void 0
+              ),
+              workspaceValue: Configuration.getValue(
+                FullKey,
+                2,
+                void 0
+              ),
+              workspaceFolderValue: void 0
+            };
+          }, "inspect")
+        };
+      }, "GetConfiguration");
+      const OnDidChangeWorkspaceFolders = /* @__PURE__ */ __name((listener) => {
+        OnDidChangeWorkspaceFoldersListeners.add(listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            OnDidChangeWorkspaceFoldersListeners.delete(listener);
+          }, "dispose")
+        };
+      }, "OnDidChangeWorkspaceFolders");
+      const OnDidChangeActiveTextEditor = /* @__PURE__ */ __name((listener) => {
+        OnDidChangeActiveTextEditorListeners.add(listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            OnDidChangeActiveTextEditorListeners.delete(listener);
+          }, "dispose")
+        };
+      }, "OnDidChangeActiveTextEditor");
+      const OnDidChangeVisibleTextEditors = /* @__PURE__ */ __name((listener) => {
+        OnDidChangeVisibleTextEditorsListeners.add(listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            OnDidChangeVisibleTextEditorsListeners.delete(listener);
+          }, "dispose")
+        };
+      }, "OnDidChangeVisibleTextEditors");
+      const OnDidChangeTextDocument = /* @__PURE__ */ __name((listener) => {
+        OnDidChangeTextDocumentListeners.add(listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            OnDidChangeTextDocumentListeners.delete(listener);
+          }, "dispose")
+        };
+      }, "OnDidChangeTextDocument");
+      const OnDidChangeConfiguration = /* @__PURE__ */ __name((listener) => {
+        OnDidChangeConfigurationListeners.add(listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            OnDidChangeConfigurationListeners.delete(listener);
+          }, "dispose")
+        };
+      }, "OnDidChangeConfiguration");
+      const ServiceImplementation = {
+        get name() {
+          return Effect4.runSync(Ref2.get(InternalWorkspaceRef))?.Name;
+        },
+        get workspaceFile() {
+          return Effect4.runSync(Ref2.get(InternalWorkspaceRef))?.Configuration;
+        },
+        get workspaceFolders() {
+          return Effect4.runSync(Ref2.get(InternalWorkspaceRef))?.Folders;
+        },
+        get isTrusted() {
+          return true;
+        },
+        get activeTextEditor() {
+          return Effect4.runSync(Ref2.get(ActiveTextEditorRef));
+        },
+        get visibleTextEditors() {
+          return Effect4.runSync(Ref2.get(VisibleTextEditorsRef));
+        },
+        GetWorkspaceFolder,
+        FindFiles,
+        FindTextInFiles,
+        OpenTextDocument,
+        SaveAll,
+        ApplyEdit,
+        GetConfiguration,
+        OnDidChangeWorkspaceFolders,
+        OnDidChangeActiveTextEditor,
+        OnDidChangeVisibleTextEditors,
+        OnDidChangeTextDocument,
+        OnDidChangeConfiguration
+      };
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "WorkspaceService");
+  }
+};
+export {
+  WorkspaceService
+};
+//# sourceMappingURL=Workspace.js.map

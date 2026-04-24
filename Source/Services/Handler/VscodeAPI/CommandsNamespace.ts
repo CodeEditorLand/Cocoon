@@ -120,6 +120,31 @@ const CreateCommandsNamespace = (
 	onDidExecuteCommand: (
 		_Listener: (Event: { command: string; arguments: unknown[] }) => unknown,
 	) => ({ dispose: () => {} }),
+
+	// Proposed API (`vscode.proposed.diffCommand.d.ts`). Extensions can
+	// register a command that receives `LineChange[]` alongside the usual
+	// args when invoked from a diff editor's toolbar. We delegate to
+	// `registerCommand` - the extension only ever sees the standard args
+	// until the diff editor is wired to prepend line-change data. Still
+	// returns a real disposable so subscriptions dispose cleanly.
+	registerDiffInformationCommand: (
+		Command: string,
+		Callback: (...Arguments: unknown[]) => unknown,
+	) => {
+		LanguageProviderRegistry.RegisterCommand(Command, Callback);
+		Context.SendToMountain("registerCommand", {
+			commandId: Command,
+			kind: "diffInformation",
+		}).catch(() => {});
+		return {
+			dispose: () => {
+				LanguageProviderRegistry.UnregisterCommand(Command);
+				Context.SendToMountain("unregisterCommand", {
+					commandId: Command,
+				}).catch(() => {});
+			},
+		};
+	},
 });
 
 export default CreateCommandsNamespace;

@@ -787,12 +787,41 @@ const EnsureVscodeAPIRegistered = async (
 				onDidChangeNotebookCellExecutionState: () => ({
 					dispose: () => {},
 				}),
+				// Proposed API (`vscode.proposed.notebookKernelSource.d.ts`).
+				// Jupyter extension uses this to advertise additional
+				// kernel discovery entries.
+				registerKernelSourceActionProvider: () => ({
+					dispose: () => {},
+				}),
+				createNotebookControllerDetectionTask: () => ({
+					dispose: () => {},
+				}),
 			},
 			lm: {
 				registerTool: () => ({ dispose: () => {} }),
 				invokeTool: async () => ({ content: [] }),
 				selectChatModels: async () => [] as unknown[],
+				// Stable API name (1.96+). Legacy `registerChatModelProvider`
+				// kept below for extensions that haven't migrated yet.
+				registerLanguageModelChatProvider: () => ({
+					dispose: () => {},
+				}),
 				registerChatModelProvider: () => ({ dispose: () => {} }),
+				// Stable 1.99+ MCP tool registration. GitHub Copilot's
+				// `@mcp` participant reaches for this at activation; stub
+				// disposable keeps the extension loading.
+				registerMcpServerDefinitionProvider: () => ({
+					dispose: () => {},
+				}),
+				// Proposed (`vscode.proposed.embeddings.d.ts`). Copilot-Chat
+				// registers embedding models on activate. Empty bundle +
+				// no-op disposable keep the flow non-throwing.
+				embeddingModels: [] as string[],
+				registerEmbeddingsProvider: () => ({ dispose: () => {} }),
+				registerEmbeddingVectorProvider: () => ({
+					dispose: () => {},
+				}),
+				computeEmbeddings: async () => [] as unknown[],
 				tools: [] as unknown[],
 				onDidChangeChatModels: () => ({ dispose: () => {} }),
 			},
@@ -873,6 +902,24 @@ const EnsureVscodeAPIRegistered = async (
 					dispose: () => {},
 				}),
 				transferActiveChat: async () => {},
+			},
+			// Proposed top-level namespaces. Each behaves as "empty
+			// registry" so opt-in extensions activate but surface no
+			// results until Mountain routes the corresponding channel.
+			ai: {
+				getRelatedInformation: async () => [] as unknown[],
+				registerRelatedInformationProvider: () => ({
+					dispose: () => {},
+				}),
+				registerSettingsSearchProvider: () => ({
+					dispose: () => {},
+				}),
+			},
+			speech: {
+				registerSpeechProvider: () => ({ dispose: () => {} }),
+				onDidChangeSpeechRecognitionAvailability: () => ({
+					dispose: () => {},
+				}),
 			},
 		};
 
