@@ -587,9 +587,19 @@ message RPCDataPayload {
 			startTime,
 		});
 
-		console.log(
-			`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`,
-		);
+		// Request send-log is also per-call spam (FileSystem.ReadFile alone
+		// fires 14k+ times during svelte/extension activation). Gate behind
+		// `grpc-verbose`. Failures / cancellations still log unconditionally
+		// via the existing catch / timeout paths.
+		if (
+			typeof process !== "undefined" &&
+			typeof process.env["LAND_DEV_LOG"] === "string" &&
+			process.env["LAND_DEV_LOG"].includes("grpc-verbose")
+		) {
+			console.log(
+				`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`,
+			);
+		}
 
 		try {
 			// Check for cancellation before making the request
@@ -609,8 +619,13 @@ message RPCDataPayload {
 			// and on final registration; diffing surfaces whether the
 			// 700 ms observed in debug-electron boots is spent in gRPC
 			// transport, Track dispatch, or inside the provider body.
-			// Scoped to tree.register to keep unrelated RPCs quiet.
-			if (method === "tree.register" && typeof process !== "undefined") {
+			// Scoped to tree.register and gated under `tree-latency` so
+			// regular runs don't print one line per tree view.
+			if (
+				method === "tree.register" &&
+				typeof process !== "undefined" &&
+				process.env["LAND_DEV_LOG"]?.includes("tree-latency")
+			) {
 				try {
 					const Timestamp = process.hrtime.bigint().toString();
 					const Correlation =
@@ -670,9 +685,19 @@ message RPCDataPayload {
 			// Parse response data from Result field with validation
 			const responseData = this.DeserializeResponse(response.Result);
 
-			console.log(
-				`[MountainClientService] Request ${method} completed successfully in ${duration}ms`,
-			);
+			// Success completion is per-call and FileSystem.ReadFile alone
+			// fires 14k+ times in a long session. Gate the success line
+			// behind `LAND_DEV_LOG=grpc-verbose`; errors / timeouts still
+			// log unconditionally via the catch block below.
+			if (
+				typeof process !== "undefined" &&
+				typeof process.env["LAND_DEV_LOG"] === "string" &&
+				process.env["LAND_DEV_LOG"].includes("grpc-verbose")
+			) {
+				console.log(
+					`[MountainClientService] Request ${method} completed successfully in ${duration}ms`,
+				);
+			}
 
 			// Track comprehensive performance metrics
 			this.trackRequestMetrics(method, duration, true);
@@ -717,14 +742,26 @@ message RPCDataPayload {
 			const IsBenignMissingCommand =
 				method === "Command.Execute" &&
 				/Command '[^']+' not found/i.test(ErrorMessage);
+			// Benign-404 and benign-missing-command both fire per-call
+			// (65+ hits per session from extensions probing for optional
+			// files / cross-extension commands). The fact that they're
+			// benign is now settled; gate behind `mountain-client-verbose`
+			// so the default log stays clean. Real failures take the
+			// `else` branch and log unconditionally.
+			const TraceMountainClient =
+				process.env["LAND_DEV_LOG"]?.includes("mountain-client-verbose");
 			if (IsBenignNotFound) {
-				process.stdout.write(
-					`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}\n`,
-				);
+				if (TraceMountainClient) {
+					process.stdout.write(
+						`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}\n`,
+					);
+				}
 			} else if (IsBenignMissingCommand) {
-				process.stdout.write(
-					`[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}\n`,
-				);
+				if (TraceMountainClient) {
+					process.stdout.write(
+						`[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}\n`,
+					);
+				}
 			} else {
 				this.circuitBreakerFailureCount++;
 				this.UpdateCircuitBreaker(false, error);
@@ -795,9 +832,20 @@ message RPCDataPayload {
 		this.maxResponseTime = Math.max(this.maxResponseTime, duration);
 		this.minResponseTime = Math.min(this.minResponseTime, duration);
 
-		console.log(
-			`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`,
-		);
+		// Metrics line fires once per completed request - 14k+ hits in
+		// long sessions alongside the completion banner above. Gate
+		// behind `grpc-verbose`; the aggregate metrics (avg/max/min
+		// response time) still accumulate on `this.*` so in-memory
+		// diagnostics via a debug command still see them.
+		if (
+			typeof process !== "undefined" &&
+			typeof process.env["LAND_DEV_LOG"] === "string" &&
+			process.env["LAND_DEV_LOG"].includes("grpc-verbose")
+		) {
+			console.log(
+				`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`,
+			);
+		}
 
 		// TODO: FUTURE: Integrate with PerformanceMonitoringService for distributed tracing
 		// Specification: MOUNTAIN-MONITORING.md (Metrics Integration)
@@ -1137,9 +1185,22 @@ message RPCDataPayload {
 			throw new Error("Not connected to Mountain");
 		}
 
-		console.log(
-			`[MountainClientService] Sending notification to Mountain: ${method}`,
-		);
+		// Noise control: the send/success pair runs per-notification (e.g.
+		// `progress.report` fires hundreds of times during a single
+		// activation pass), flooding the log with no diagnostic value
+		// unless a notification *fails*. Gate both under
+		// `LAND_DEV_LOG=grpc-verbose` so the quiet path is silent and the
+		// noisy path is one env var away. The existing failure `console.error`
+		// below stays unconditional.
+		const TraceGrpcVerbose =
+			typeof process !== "undefined" &&
+			typeof process.env["LAND_DEV_LOG"] === "string" &&
+			process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+		if (TraceGrpcVerbose) {
+			console.log(
+				`[MountainClientService] Sending notification to Mountain: ${method}`,
+			);
+		}
 
 		try {
 			const notification: GenericNotification = {
@@ -1149,9 +1210,11 @@ message RPCDataPayload {
 
 			await this.makeNotification(notification);
 
-			console.log(
-				`[MountainClientService] Notification ${method} sent successfully`,
-			);
+			if (TraceGrpcVerbose) {
+				console.log(
+					`[MountainClientService] Notification ${method} sent successfully`,
+				);
+			}
 		} catch (error) {
 			this.errorCount++;
 			console.error(

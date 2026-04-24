@@ -1741,9 +1741,11 @@ message RPCDataPayload {
           method,
           startTime
         });
-        console.log(
-          `[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`
-        );
+        if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+          console.log(
+            `[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`
+          );
+        }
         try {
           if (cancellationToken?.isCancellationRequested) {
             throw new Error("Request cancelled before execution");
@@ -1753,7 +1755,7 @@ message RPCDataPayload {
             Method: method,
             Parameter: this.SerializeParameters(parameters)
           };
-          if (method === "tree.register" && typeof process !== "undefined") {
+          if (method === "tree.register" && typeof process !== "undefined" && process.env["LAND_DEV_LOG"]?.includes("tree-latency")) {
             try {
               const Timestamp = process.hrtime.bigint().toString();
               const Correlation = parameters?.[0]?.viewId ?? `req-${requestIdentifier}`;
@@ -1790,9 +1792,11 @@ message RPCDataPayload {
             throw error;
           }
           const responseData = this.DeserializeResponse(response.Result);
-          console.log(
-            `[MountainClientService] Request ${method} completed successfully in ${duration}ms`
-          );
+          if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+            console.log(
+              `[MountainClientService] Request ${method} completed successfully in ${duration}ms`
+            );
+          }
           this.trackRequestMetrics(method, duration, true);
           this.UpdateCircuitBreaker(true);
           return responseData;
@@ -1802,16 +1806,21 @@ message RPCDataPayload {
           const ErrorMessage = error instanceof Error ? error.message : String(error);
           const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
+          const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes("mountain-client-verbose");
           if (IsBenignNotFound) {
-            process.stdout.write(
-              `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}
+            if (TraceMountainClient) {
+              process.stdout.write(
+                `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}
 `
-            );
+              );
+            }
           } else if (IsBenignMissingCommand) {
-            process.stdout.write(
-              `[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}
+            if (TraceMountainClient) {
+              process.stdout.write(
+                `[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}
 `
-            );
+              );
+            }
           } else {
             this.circuitBreakerFailureCount++;
             this.UpdateCircuitBreaker(false, error);
@@ -1865,9 +1874,11 @@ message RPCDataPayload {
         this.averageResponseTime = (this.averageResponseTime * (this.totalRequests - 1) + duration) / this.totalRequests;
         this.maxResponseTime = Math.max(this.maxResponseTime, duration);
         this.minResponseTime = Math.min(this.minResponseTime, duration);
-        console.log(
-          `[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`
-        );
+        if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+          console.log(
+            `[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`
+          );
+        }
       }
       /**
        * Check if error is a connection error with comprehensive pattern matching
@@ -2134,18 +2145,23 @@ message RPCDataPayload {
         if (this.connectionState !== "CONNECTED" /* Connected */ || !this.client) {
           throw new Error("Not connected to Mountain");
         }
-        console.log(
-          `[MountainClientService] Sending notification to Mountain: ${method}`
-        );
+        const TraceGrpcVerbose = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+        if (TraceGrpcVerbose) {
+          console.log(
+            `[MountainClientService] Sending notification to Mountain: ${method}`
+          );
+        }
         try {
           const notification = {
             Method: method,
             Parameter: Buffer.from(JSON.stringify(parameters))
           };
           await this.makeNotification(notification);
-          console.log(
-            `[MountainClientService] Notification ${method} sent successfully`
-          );
+          if (TraceGrpcVerbose) {
+            console.log(
+              `[MountainClientService] Notification ${method} sent successfully`
+            );
+          }
         } catch (error) {
           this.errorCount++;
           console.error(
@@ -29720,13 +29736,26 @@ var init_RequestRoutingHandler = __esm({
                 const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
                 const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
                 const CollapsibleState = Raw2.collapsibleState ?? 0;
+                const Description = typeof Raw2.description === "string" ? Raw2.description : void 0;
+                const Tooltip = typeof Raw2.tooltip === "string" ? Raw2.tooltip : Raw2.tooltip?.value;
+                const ResourceUri = Raw2.resourceUri;
+                const ContextValue = typeof Raw2.contextValue === "string" ? Raw2.contextValue : void 0;
+                const Command = Raw2.command;
+                const AccessibilityInformation = Raw2.accessibilityInformation;
                 return {
                   handle: String(
                     Raw2.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`
                   ),
                   label: Label,
+                  collapsibleState: CollapsibleState,
                   isCollapsed: CollapsibleState === 1,
-                  icon: String(Icon)
+                  icon: String(Icon),
+                  description: Description,
+                  tooltip: Tooltip,
+                  resourceUri: ResourceUri,
+                  contextValue: ContextValue,
+                  command: Command,
+                  accessibilityInformation: AccessibilityInformation
                 };
               }
             )
@@ -30141,7 +30170,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T17:03:52Z"
+      generatedAt: "2026-04-24T20:33:33Z"
     };
   }
 });
@@ -33203,19 +33232,19 @@ var init_FindFiles = __esm({
       const IncludePattern = ExtractGlobPattern(Include);
       const ExcludePattern = ExtractGlobPattern(Exclude);
       const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-      process.stdout.write(
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
         `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
 `
       );
       if (!IncludePattern) {
-        process.stdout.write(
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
           "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
         );
         return [];
       }
       const IncludeMatcher = CompileGlob(IncludePattern);
       if (!IncludeMatcher) {
-        process.stdout.write(
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
           `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
 `
         );
@@ -33286,7 +33315,7 @@ var init_FindFiles = __esm({
       for (const Folder of Folders) {
         const FsPath = FolderToFsPath(Folder?.uri);
         if (!FsPath) {
-          process.stdout.write(
+          if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
             `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
 `
           );
@@ -33295,12 +33324,12 @@ var init_FindFiles = __esm({
         await Walk(FsPath, FsPath, 0);
       }
       if (Truncated) {
-        process.stdout.write(
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
           `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
 `
         );
       }
-      process.stdout.write(
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
         `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
 `
       );
@@ -34136,7 +34165,8 @@ var init_FileSystemNamespace = __esm({
       SymbolicLink: 64
     };
     LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
-      if (!process.env["LAND_DEV_LOG"]) return;
+      const Enabled2 = process.env["LAND_DEV_LOG"];
+      if (!Enabled2 || !Enabled2.includes("fs-route")) return;
       process.stdout.write(
         `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
 `
@@ -34204,11 +34234,14 @@ var init_FileSystemNamespace = __esm({
           return Buffer.from(String(Raw2), "utf8");
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
+          const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
           if (/resource not found|ENOENT|not found/i.test(Message)) {
-            process.stdout.write(
-              `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+            if (TraceFsRead) {
+              process.stdout.write(
+                `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
 `
-            );
+              );
+            }
             ThrowFileNotFound(Uri2);
           }
           process.stdout.write(
@@ -34688,7 +34721,7 @@ var init_CommandsRoute = __esm({
     "use strict";
     __name(Route2, "Route");
     LogRoute2 = /* @__PURE__ */ __name((CommandId, Decision) => {
-      if (!process.env["LAND_DEV_LOG"]) return;
+      if (!process.env["LAND_DEV_LOG"]?.includes("cmd-route")) return;
       process.stdout.write(
         `[DEV:CMD-ROUTE] cmd=${CommandId} route=${Decision}
 `
@@ -36990,10 +37023,12 @@ ${Stack}`
           );
           return;
         }
-        process.stdout.write(
-          `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
+        if (process.env["LAND_DEV_LOG"]?.includes("preflight")) {
+          process.stdout.write(
+            `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
 `
-        );
+          );
+        }
       } catch (Err) {
         process.stdout.write(
           `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}

@@ -484,9 +484,11 @@ message RPCDataPayload {
       method,
       startTime
     });
-    console.log(
-      `[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`
-    );
+    if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+      console.log(
+        `[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`
+      );
+    }
     try {
       if (cancellationToken?.isCancellationRequested) {
         throw new Error("Request cancelled before execution");
@@ -496,7 +498,7 @@ message RPCDataPayload {
         Method: method,
         Parameter: this.SerializeParameters(parameters)
       };
-      if (method === "tree.register" && typeof process !== "undefined") {
+      if (method === "tree.register" && typeof process !== "undefined" && process.env["LAND_DEV_LOG"]?.includes("tree-latency")) {
         try {
           const Timestamp = process.hrtime.bigint().toString();
           const Correlation = parameters?.[0]?.viewId ?? `req-${requestIdentifier}`;
@@ -533,9 +535,11 @@ message RPCDataPayload {
         throw error;
       }
       const responseData = this.DeserializeResponse(response.Result);
-      console.log(
-        `[MountainClientService] Request ${method} completed successfully in ${duration}ms`
-      );
+      if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+        console.log(
+          `[MountainClientService] Request ${method} completed successfully in ${duration}ms`
+        );
+      }
       this.trackRequestMetrics(method, duration, true);
       this.UpdateCircuitBreaker(true);
       return responseData;
@@ -545,16 +549,21 @@ message RPCDataPayload {
       const ErrorMessage = error instanceof Error ? error.message : String(error);
       const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
       const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
+      const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes("mountain-client-verbose");
       if (IsBenignNotFound) {
-        process.stdout.write(
-          `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}
+        if (TraceMountainClient) {
+          process.stdout.write(
+            `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}
 `
-        );
+          );
+        }
       } else if (IsBenignMissingCommand) {
-        process.stdout.write(
-          `[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}
+        if (TraceMountainClient) {
+          process.stdout.write(
+            `[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}
 `
-        );
+          );
+        }
       } else {
         this.circuitBreakerFailureCount++;
         this.UpdateCircuitBreaker(false, error);
@@ -608,9 +617,11 @@ message RPCDataPayload {
     this.averageResponseTime = (this.averageResponseTime * (this.totalRequests - 1) + duration) / this.totalRequests;
     this.maxResponseTime = Math.max(this.maxResponseTime, duration);
     this.minResponseTime = Math.min(this.minResponseTime, duration);
-    console.log(
-      `[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`
-    );
+    if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+      console.log(
+        `[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`
+      );
+    }
   }
   /**
    * Check if error is a connection error with comprehensive pattern matching
@@ -877,18 +888,23 @@ message RPCDataPayload {
     if (this.connectionState !== "CONNECTED" /* Connected */ || !this.client) {
       throw new Error("Not connected to Mountain");
     }
-    console.log(
-      `[MountainClientService] Sending notification to Mountain: ${method}`
-    );
+    const TraceGrpcVerbose = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+    if (TraceGrpcVerbose) {
+      console.log(
+        `[MountainClientService] Sending notification to Mountain: ${method}`
+      );
+    }
     try {
       const notification = {
         Method: method,
         Parameter: Buffer.from(JSON.stringify(parameters))
       };
       await this.makeNotification(notification);
-      console.log(
-        `[MountainClientService] Notification ${method} sent successfully`
-      );
+      if (TraceGrpcVerbose) {
+        console.log(
+          `[MountainClientService] Notification ${method} sent successfully`
+        );
+      }
     } catch (error) {
       this.errorCount++;
       console.error(
@@ -1080,12 +1096,17 @@ var MountainClient = class {
         "MountainClient not initialized. Call initialize() first."
       );
     }
-    console.log(`[MountainClient] Sending notification: ${method}`);
+    const TraceGrpcVerbose = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+    if (TraceGrpcVerbose) {
+      console.log(`[MountainClient] Sending notification: ${method}`);
+    }
     try {
       await this.clientService.sendNotification(method, data || {});
-      console.log(
-        `[MountainClient] Notification ${method} sent successfully`
-      );
+      if (TraceGrpcVerbose) {
+        console.log(
+          `[MountainClient] Notification ${method} sent successfully`
+        );
+      }
     } catch (error) {
       console.error(
         `[MountainClient] Notification ${method} failed:`,

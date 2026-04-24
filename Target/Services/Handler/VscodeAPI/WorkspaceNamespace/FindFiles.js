@@ -12262,19 +12262,19 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   const IncludePattern = ExtractGlobPattern(Include);
   const ExcludePattern = ExtractGlobPattern(Exclude);
   const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-  process.stdout.write(
+  if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
     `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
 `
   );
   if (!IncludePattern) {
-    process.stdout.write(
+    if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
       "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
     );
     return [];
   }
   const IncludeMatcher = CompileGlob(IncludePattern);
   if (!IncludeMatcher) {
-    process.stdout.write(
+    if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
       `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
 `
     );
@@ -12345,7 +12345,7 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   for (const Folder of Folders) {
     const FsPath = FolderToFsPath(Folder?.uri);
     if (!FsPath) {
-      process.stdout.write(
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
         `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
 `
       );
@@ -12354,12 +12354,12 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
     await Walk(FsPath, FsPath, 0);
   }
   if (Truncated) {
-    process.stdout.write(
+    if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
       `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
 `
     );
   }
-  process.stdout.write(
+  if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
     `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
 `
   );

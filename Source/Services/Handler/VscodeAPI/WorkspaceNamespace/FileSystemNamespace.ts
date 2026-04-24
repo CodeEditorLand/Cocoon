@@ -122,11 +122,13 @@ const FileType = {
 } as const;
 
 const LogRoute = (Operation: string, Uri: unknown, Decision: FileSystemRoute): void => {
-	// Guarded with env var so release builds stay silent on the default
-	// `LAND_DEV_LOG=` setup. Mountain's stdout tail already tags this
-	// under `[DEV:COCOON]`; adding a stable `[DEV:FS-ROUTE]` prefix makes
-	// grep patterns (route=native / route=mountain) trivial.
-	if (!process.env["LAND_DEV_LOG"]) return;
+	// Per-call route decision - 14k+ lines per session under a normal
+	// extension activation (svelte's `detect` alone reads thousands of
+	// files). Gate under the explicit `fs-route` tag so the default
+	// `short` / empty setting stays quiet. The IPC side already logs
+	// FileSystem.ReadFile round-trip timing, so nothing useful is lost.
+	const Enabled = process.env["LAND_DEV_LOG"];
+	if (!Enabled || !Enabled.includes("fs-route")) return;
 	process.stdout.write(
 		`[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${UriToString(Uri)}\n`,
 	);
@@ -211,12 +213,21 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			return Buffer.from(String(Raw), "utf8");
 		} catch (Err: unknown) {
 			const Message = Err instanceof Error ? Err.message : String(Err);
+			const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
 			if (/resource not found|ENOENT|not found/i.test(Message)) {
-				process.stdout.write(
-					`[LandFix:FsRead] 404 → FileNotFound for ${UriString}\n`,
-				);
+				// 404 is the expected path for extensions probing for
+				// optional files (terminal-suggest cache, Gemfile.lock,
+				// composer.json, rust-toolchain.toml). Silent by default;
+				// `LAND_DEV_LOG=fs-read` re-enables the trace.
+				if (TraceFsRead) {
+					process.stdout.write(
+						`[LandFix:FsRead] 404 → FileNotFound for ${UriString}\n`,
+					);
+				}
 				ThrowFileNotFound(Uri);
 			}
+			// Non-404 failures surface unconditionally - these indicate
+			// genuine IO / permission / protocol problems.
 			process.stdout.write(
 				`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}\n`,
 			);

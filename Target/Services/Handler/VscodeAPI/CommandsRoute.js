@@ -7,7 +7,7 @@ function Route(CommandId, Registry) {
 }
 __name(Route, "Route");
 var LogRoute = /* @__PURE__ */ __name((CommandId, Decision) => {
-  if (!process.env["LAND_DEV_LOG"]) return;
+  if (!process.env["LAND_DEV_LOG"]?.includes("cmd-route")) return;
   process.stdout.write(
     `[DEV:CMD-ROUTE] cmd=${CommandId} route=${Decision}
 `

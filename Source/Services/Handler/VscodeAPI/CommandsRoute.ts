@@ -78,7 +78,11 @@ export function Route(
 }
 
 export const LogRoute = (CommandId: string, Decision: CommandsRoute): void => {
-	if (!process.env["LAND_DEV_LOG"]) return;
+	// Per-command dispatch is noisy (every `setContext` / workbench action
+	// / native boot command logs a line). Gate under `cmd-route` so the
+	// trace stays available when diagnosing routing decisions but doesn't
+	// clutter the default log.
+	if (!process.env["LAND_DEV_LOG"]?.includes("cmd-route")) return;
 	process.stdout.write(
 		`[DEV:CMD-ROUTE] cmd=${CommandId} route=${Decision}\n`,
 	);

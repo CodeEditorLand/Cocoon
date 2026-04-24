@@ -57,12 +57,12 @@ export const FindFilesLocal = async (
 	const Cap =
 		typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 10_000;
 
-	process.stdout.write(
+	if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
 		`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}\n`,
 	);
 
 	if (!IncludePattern) {
-		process.stdout.write(
+		if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
 			"[LandFix:WsNs] findFiles: no include pattern → []\n",
 		);
 		return [];
@@ -70,7 +70,7 @@ export const FindFilesLocal = async (
 
 	const IncludeMatcher = CompileGlob(IncludePattern);
 	if (!IncludeMatcher) {
-		process.stdout.write(
+		if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
 			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)\n`,
 		);
 		return [];
@@ -189,7 +189,7 @@ export const FindFilesLocal = async (
 	for (const Folder of Folders) {
 		const FsPath = FolderToFsPath(Folder?.uri);
 		if (!FsPath) {
-			process.stdout.write(
+			if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
 				`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})\n`,
 			);
 			continue;
@@ -197,12 +197,12 @@ export const FindFilesLocal = async (
 		await Walk(FsPath, FsPath, 0);
 	}
 	if (Truncated) {
-		process.stdout.write(
+		if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
 			`[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)\n`,
 		);
 	}
 
-	process.stdout.write(
+	if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
 		`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}\n`,
 	);
 	return Results;

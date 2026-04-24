@@ -187,16 +187,54 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							typeof IconValue === "string"
 								? IconValue
 								: ((IconValue as { id?: string } | undefined)?.id ?? "");
-						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded
+						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded.
+						// Pass the raw enum numeric through so Sky can
+						// faithfully tell "Expanded" from "Collapsed" -
+						// previous `isCollapsed: boolean` collapsed
+						// Expanded down to "not collapsed" (false) and
+						// the workbench tree renderer then treated the
+						// item as a leaf. Keep the legacy boolean alongside
+						// for any observer that already reads it.
 						const CollapsibleState =
 							(Raw.collapsibleState as number | undefined) ?? 0;
+						// Pass through the rest of the fields the workbench's
+						// TreeRenderer reads so GitLens / debug / tasks /
+						// NPM tree panes render with full fidelity:
+						// - description (trailing grey text after label)
+						// - tooltip (hover content)
+						// - resourceUri (triggers file-based icon + decoration)
+						// - contextValue (drives per-item menu contribution)
+						// - command (click handler)
+						// - accessibilityInformation (screen reader label)
+						const Description =
+							typeof Raw.description === "string"
+								? Raw.description
+								: undefined;
+						const Tooltip =
+							typeof Raw.tooltip === "string"
+								? Raw.tooltip
+								: (Raw.tooltip as { value?: string } | undefined)?.value;
+						const ResourceUri = Raw.resourceUri;
+						const ContextValue =
+							typeof Raw.contextValue === "string"
+								? Raw.contextValue
+								: undefined;
+						const Command = Raw.command;
+						const AccessibilityInformation = Raw.accessibilityInformation;
 						return {
 							handle: String(
 								Raw.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`,
 							),
 							label: Label,
+							collapsibleState: CollapsibleState,
 							isCollapsed: CollapsibleState === 1,
 							icon: String(Icon),
+							description: Description,
+							tooltip: Tooltip,
+							resourceUri: ResourceUri,
+							contextValue: ContextValue,
+							command: Command,
+							accessibilityInformation: AccessibilityInformation,
 						};
 					},
 				),

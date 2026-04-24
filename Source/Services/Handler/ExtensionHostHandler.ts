@@ -1094,14 +1094,19 @@ const ActivateExtension = async (
 			} catch {}
 		}
 		if (!Exists) {
+			// Skipping-an-extension is a real event; always log.
 			process.stdout.write(
 				`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})\n`,
 			);
 			return;
 		}
-		process.stdout.write(
-			`[LandFix:Preflight] ${ExtensionId} main resolved → ${Resolved}\n`,
-		);
+		// Successful-resolve runs per extension (~40 lines per boot) and
+		// is only useful when actively debugging module resolution. Gate.
+		if (process.env["LAND_DEV_LOG"]?.includes("preflight")) {
+			process.stdout.write(
+				`[LandFix:Preflight] ${ExtensionId} main resolved → ${Resolved}\n`,
+			);
+		}
 	} catch (Err: unknown) {
 		// If `node:fs/promises` is unavailable for any reason, fall through
 		// to the normal require/import path and let it surface the error.

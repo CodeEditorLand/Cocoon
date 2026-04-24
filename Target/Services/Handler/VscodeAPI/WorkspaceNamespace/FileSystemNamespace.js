@@ -12494,7 +12494,8 @@ var FileType = {
   SymbolicLink: 64
 };
 var LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
-  if (!process.env["LAND_DEV_LOG"]) return;
+  const Enabled2 = process.env["LAND_DEV_LOG"];
+  if (!Enabled2 || !Enabled2.includes("fs-route")) return;
   process.stdout.write(
     `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
 `
@@ -12562,11 +12563,14 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       return Buffer.from(String(Raw), "utf8");
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
+      const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
       if (/resource not found|ENOENT|not found/i.test(Message)) {
-        process.stdout.write(
-          `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+        if (TraceFsRead) {
+          process.stdout.write(
+            `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
 `
-        );
+          );
+        }
         ThrowFileNotFound(Uri2);
       }
       process.stdout.write(

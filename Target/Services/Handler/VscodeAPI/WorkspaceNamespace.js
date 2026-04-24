@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 80,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-24T17:03:52Z"
+  generatedAt: "2026-04-24T20:33:33Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -12347,19 +12347,19 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   const IncludePattern = ExtractGlobPattern(Include);
   const ExcludePattern = ExtractGlobPattern(Exclude);
   const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-  process.stdout.write(
+  if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
     `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
 `
   );
   if (!IncludePattern) {
-    process.stdout.write(
+    if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
       "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
     );
     return [];
   }
   const IncludeMatcher = CompileGlob(IncludePattern);
   if (!IncludeMatcher) {
-    process.stdout.write(
+    if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
       `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
 `
     );
@@ -12430,7 +12430,7 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   for (const Folder of Folders) {
     const FsPath = FolderToFsPath(Folder?.uri);
     if (!FsPath) {
-      process.stdout.write(
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
         `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
 `
       );
@@ -12439,12 +12439,12 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
     await Walk(FsPath, FsPath, 0);
   }
   if (Truncated) {
-    process.stdout.write(
+    if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
       `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
 `
     );
   }
-  process.stdout.write(
+  if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
     `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
 `
   );
@@ -13390,7 +13390,8 @@ var FileType = {
   SymbolicLink: 64
 };
 var LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
-  if (!process.env["LAND_DEV_LOG"]) return;
+  const Enabled2 = process.env["LAND_DEV_LOG"];
+  if (!Enabled2 || !Enabled2.includes("fs-route")) return;
   process.stdout.write(
     `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
 `
@@ -13458,11 +13459,14 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       return Buffer.from(String(Raw2), "utf8");
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
+      const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
       if (/resource not found|ENOENT|not found/i.test(Message)) {
-        process.stdout.write(
-          `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+        if (TraceFsRead) {
+          process.stdout.write(
+            `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
 `
-        );
+          );
+        }
         ThrowFileNotFound(Uri2);
       }
       process.stdout.write(

@@ -80,13 +80,25 @@ export class MountainClient {
 			);
 		}
 
-		console.log(`[MountainClient] Sending notification: ${method}`);
+		// Gated under `LAND_DEV_LOG=grpc-verbose` - see sibling comment in
+		// `Services/MountainClientService.ts::sendNotification`. The quiet
+		// default drops the per-call send/success pair; failures stay
+		// logged unconditionally below.
+		const TraceGrpcVerbose =
+			typeof process !== "undefined" &&
+			typeof process.env["LAND_DEV_LOG"] === "string" &&
+			process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+		if (TraceGrpcVerbose) {
+			console.log(`[MountainClient] Sending notification: ${method}`);
+		}
 
 		try {
 			await this.clientService.sendNotification(method, data || {});
-			console.log(
-				`[MountainClient] Notification ${method} sent successfully`,
-			);
+			if (TraceGrpcVerbose) {
+				console.log(
+					`[MountainClient] Notification ${method} sent successfully`,
+				);
+			}
 		} catch (error) {
 			console.error(
 				`[MountainClient] Notification ${method} failed:`,
