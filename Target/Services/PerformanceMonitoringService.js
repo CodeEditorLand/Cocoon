@@ -22067,7 +22067,7 @@ __export(APIFactoryService_exports, {
   IAPIFactoryService: () => IAPIFactoryService
 });
 import { Context as Context6, Effect as Effect5, Layer as Layer3 } from "effect";
-var VsCodeTypes, URI2, CancellationTokenSource2, CancellationToken2, Emitter2, IAPIFactoryService, createVSCodeAPI, APIFactoryService, APIFactoryLayer;
+var VsCodeTypes, URI2, CancellationTokenSource2, CancellationToken2, Emitter2, StockRelativePattern, HydrateBase, PatchedRelativePattern, IAPIFactoryService, createVSCodeAPI, APIFactoryService, APIFactoryLayer;
 var init_APIFactoryService = __esm({
   async "Source/Services/APIFactoryService.ts"() {
     "use strict";
@@ -22081,6 +22081,26 @@ var init_APIFactoryService = __esm({
     ({ URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
     ({ CancellationTokenSource: CancellationTokenSource2, CancellationToken: CancellationToken2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports)));
     ({ Emitter: Emitter2 } = await Promise.resolve().then(() => (init_event(), event_exports)));
+    StockRelativePattern = VsCodeTypes.RelativePattern;
+    HydrateBase = /* @__PURE__ */ __name((Base) => {
+      if (Base == null) return Base;
+      if (typeof Base === "string") return Base;
+      if (Base instanceof URI2) return Base;
+      if (typeof Base.uri !== "undefined") {
+        const Uri2 = Base.uri;
+        if (Uri2 instanceof URI2) return Base;
+        const Revived2 = typeof Uri2 === "string" ? URI2.parse(Uri2) : URI2.revive(Uri2);
+        return { ...Base, uri: Revived2 };
+      }
+      const Revived = URI2.revive(Base);
+      return Revived ?? Base;
+    }, "HydrateBase");
+    PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
+      const Safe = HydrateBase(Base);
+      return Reflect.construct(StockRelativePattern, [Safe, Pattern], PatchedRelativePattern);
+    }, "RelativePattern");
+    PatchedRelativePattern.prototype = StockRelativePattern.prototype;
+    Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
     IAPIFactoryService = Context6.Tag();
     createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsService, terminalService) => {
       return {
@@ -22127,7 +22147,7 @@ var init_APIFactoryService = __esm({
         SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
         SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
         SemanticTokens: VsCodeTypes.SemanticTokens,
-        RelativePattern: VsCodeTypes.RelativePattern,
+        RelativePattern: PatchedRelativePattern,
         Disposable: VsCodeTypes.Disposable,
         StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
         ThemeColor: VsCodeTypes.ThemeColor,
@@ -29640,7 +29660,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T16:38:47Z"
+      generatedAt: "2026-04-24T17:03:52Z"
     };
   }
 });
@@ -32766,7 +32786,7 @@ var init_FindFiles = __esm({
           }
           if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
           if (!IncludeMatcher(RelativeFromRoot)) continue;
-          Results.push({ scheme: "file", path: Full, fsPath: Full });
+          Results.push(URI.file(Full));
         }
         const Concurrency = 4;
         for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
@@ -33592,12 +33612,42 @@ var init_TextDocument = __esm({
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
 import { promises as FsPromises3 } from "node:fs";
 import { dirname as PathDirname } from "node:path";
-var FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
+var UriToString, FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
 var init_FileSystemNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
     "use strict";
+    init_StockLift();
     init_Helpers();
     init_FileSystemRoute();
+    UriToString = /* @__PURE__ */ __name((Value) => {
+      if (Value == null) return "";
+      if (typeof Value === "string") {
+        if (Value.startsWith("/")) return `file://${Value}`;
+        return Value;
+      }
+      if (typeof Value === "object") {
+        const WithToString = Value;
+        if (typeof WithToString.toString === "function" && WithToString.toString !== Object.prototype.toString) {
+          const Rendered = WithToString.toString();
+          if (Rendered && Rendered !== "[object Object]") return Rendered;
+        }
+        const Hydrated = ToUri(Value);
+        if (Hydrated) return Hydrated.toString();
+        const WithParts = Value;
+        if (typeof WithParts.scheme === "string") {
+          const Scheme = WithParts.scheme;
+          const Authority = typeof WithParts.authority === "string" ? WithParts.authority : "";
+          const PathPart = typeof WithParts.path === "string" ? WithParts.path : "";
+          const Query = typeof WithParts.query === "string" && WithParts.query.length > 0 ? `?${WithParts.query}` : "";
+          const Fragment = typeof WithParts.fragment === "string" && WithParts.fragment.length > 0 ? `#${WithParts.fragment}` : "";
+          return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
+        }
+        if (typeof WithParts.fsPath === "string") {
+          return `file://${WithParts.fsPath}`;
+        }
+      }
+      return String(Value);
+    }, "UriToString");
     FileType2 = {
       Unknown: 0,
       File: 1,
@@ -33607,7 +33657,7 @@ var init_FileSystemNamespace = __esm({
     LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
       if (!process.env["LAND_DEV_LOG"]) return;
       process.stdout.write(
-        `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${String(Uri2)}
+        `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
 `
       );
     }, "LogRoute");
@@ -33616,7 +33666,7 @@ var init_FileSystemNamespace = __esm({
       const FileNotFound = Api?.FileSystemError?.FileNotFound;
       if (typeof FileNotFound === "function") throw FileNotFound(Uri2);
       const Synthetic = new Error(
-        `EntryNotFound (FileSystemError): ${String(Uri2)}`
+        `EntryNotFound (FileSystemError): ${UriToString(Uri2)}`
       );
       Synthetic.code = "FileNotFound";
       Synthetic.name = "FileSystemError";
@@ -33642,7 +33692,7 @@ var init_FileSystemNamespace = __esm({
             throw Err;
           }
         }
-        return await Call(Context21, "FileSystem.Stat", [String(Uri2)]) ?? {
+        return await Call(Context21, "FileSystem.Stat", [UriToString(Uri2)]) ?? {
           type: FileType2.File,
           size: 0,
           ctime: 0,
@@ -33661,7 +33711,7 @@ var init_FileSystemNamespace = __esm({
             throw Err;
           }
         }
-        const UriString = String(Uri2);
+        const UriString = UriToString(Uri2);
         try {
           const Raw2 = await Context21.MountainClient?.sendRequest(
             "FileSystem.ReadFile",
@@ -33703,7 +33753,7 @@ var init_FileSystemNamespace = __esm({
           return;
         }
         const Text = new TextDecoder().decode(Content);
-        await Call(Context21, "FileSystem.WriteFile", [String(Uri2), Text]);
+        await Call(Context21, "FileSystem.WriteFile", [UriToString(Uri2), Text]);
       }, "writeFile"),
       readDirectory: /* @__PURE__ */ __name(async (Uri2) => {
         const Decision = Route(Uri2);
@@ -33726,7 +33776,7 @@ var init_FileSystemNamespace = __esm({
         return await Call(
           Context21,
           "FileSystem.ReadDirectory",
-          [String(Uri2)]
+          [UriToString(Uri2)]
         ) ?? [];
       }, "readDirectory"),
       createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
@@ -33737,7 +33787,7 @@ var init_FileSystemNamespace = __esm({
           await FsPromises3.mkdir(Path, { recursive: true });
           return;
         }
-        await Call(Context21, "FileSystem.CreateDirectory", [String(Uri2)]);
+        await Call(Context21, "FileSystem.CreateDirectory", [UriToString(Uri2)]);
       }, "createDirectory"),
       delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
         const Decision = Route(Uri2);
@@ -33756,7 +33806,7 @@ var init_FileSystemNamespace = __esm({
           }
         }
         await Call(Context21, "FileSystem.Delete", [
-          String(Uri2),
+          UriToString(Uri2),
           Options?.recursive ?? false
         ]);
       }, "delete"),
@@ -33777,8 +33827,8 @@ var init_FileSystemNamespace = __esm({
           }
         }
         await Call(Context21, "FileSystem.Rename", [
-          String(Source),
-          String(Target)
+          UriToString(Source),
+          UriToString(Target)
         ]);
       }, "rename"),
       copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
@@ -33805,8 +33855,8 @@ var init_FileSystemNamespace = __esm({
           }
         }
         await Call(Context21, "FileSystem.Copy", [
-          String(Source),
-          String(Target)
+          UriToString(Source),
+          UriToString(Target)
         ]);
       }, "copy"),
       isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
@@ -34284,11 +34334,26 @@ var LanguagesNamespace_exports = {};
 __export(LanguagesNamespace_exports, {
   default: () => LanguagesNamespace_default
 });
-var RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
+var UriKey, RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
 var init_LanguagesNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts"() {
     "use strict";
     init_GlobToRegex();
+    init_StockLift();
+    UriKey = /* @__PURE__ */ __name((Value) => {
+      if (Value == null) return "";
+      if (typeof Value === "string") return Value;
+      const Hydrated = ToUri(Value);
+      if (Hydrated) return Hydrated.toString();
+      const Rendered = String(Value);
+      if (Rendered && Rendered !== "[object Object]") return Rendered;
+      const WithParts = Value;
+      if (typeof WithParts.scheme === "string" && typeof WithParts.path === "string") {
+        return `${WithParts.scheme}://${WithParts.path}`;
+      }
+      if (typeof WithParts.fsPath === "string") return `file://${WithParts.fsPath}`;
+      return Rendered;
+    }, "UriKey");
     RegisterProvider = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry, MethodName, Selector, Provider) => {
       const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
       const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
@@ -34524,10 +34589,10 @@ var init_LanguagesNamespace = __esm({
             if (Array.isArray(UriOrEntries) && Diagnostics === void 0) {
               const Entries = UriOrEntries;
               for (const [Uri2, D] of Entries) {
-                Store.set(String(Uri2), D ?? []);
+                Store.set(UriKey(Uri2), D ?? []);
               }
             } else {
-              Store.set(String(UriOrEntries), Diagnostics ?? []);
+              Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
             }
             Context21.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
@@ -34539,7 +34604,7 @@ var init_LanguagesNamespace = __esm({
             });
           }, "set"),
           delete: /* @__PURE__ */ __name((Uri2) => {
-            Store.delete(String(Uri2));
+            Store.delete(UriKey(Uri2));
             Context21.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
               [...Store.entries()].map(([U, D]) => ({
@@ -34563,8 +34628,8 @@ var init_LanguagesNamespace = __esm({
               Callback(Uri2, Diagnostics, Self);
             }
           }, "forEach"),
-          get: /* @__PURE__ */ __name((Uri2) => Store.get(String(Uri2)) ?? [], "get"),
-          has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
+          get: /* @__PURE__ */ __name((Uri2) => Store.get(UriKey(Uri2)) ?? [], "get"),
+          has: /* @__PURE__ */ __name((Uri2) => Store.has(UriKey(Uri2)), "has"),
           dispose: /* @__PURE__ */ __name(() => {
             if (Disposed) return;
             Disposed = true;
@@ -35979,6 +36044,30 @@ ${Stack}`
         const { URI: URI3 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
         const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
         const { Emitter: Emitter3 } = await Promise.resolve().then(() => (init_event(), event_exports));
+        const StockRelativePattern2 = VsCodeTypes2.RelativePattern;
+        const HydrateRelativePatternBase = /* @__PURE__ */ __name((Base) => {
+          if (Base == null) return Base;
+          if (typeof Base === "string") return Base;
+          if (Base instanceof URI3) return Base;
+          const WithUri = Base;
+          if (typeof WithUri.uri !== "undefined") {
+            if (WithUri.uri instanceof URI3) return Base;
+            const ReviveInput = typeof WithUri.uri === "string" ? URI3.parse(WithUri.uri) : URI3.revive(WithUri.uri);
+            return { ...Base, uri: ReviveInput };
+          }
+          const Revived = URI3.revive(Base);
+          return Revived ?? Base;
+        }, "HydrateRelativePatternBase");
+        const PatchedRelativePattern2 = /* @__PURE__ */ __name(function RelativePattern4(Base, Pattern) {
+          const Safe = HydrateRelativePatternBase(Base);
+          return Reflect.construct(
+            StockRelativePattern2,
+            [Safe, Pattern],
+            PatchedRelativePattern2
+          );
+        }, "RelativePattern");
+        PatchedRelativePattern2.prototype = StockRelativePattern2.prototype;
+        Object.setPrototypeOf(PatchedRelativePattern2, StockRelativePattern2);
         const LogLevelEnum = {
           Off: 0,
           Trace: 1,
@@ -36054,6 +36143,9 @@ ${Stack}`
           // propagated by Maintain/Script/TierEnvironment.sh. Fallback
           // tracks the VS Code base from Dependency/.../Editor/package.json.
           version: process.env["ProductVersion"] ?? "1.118.0",
+          // Override the spread's raw `RelativePattern` with the
+          // POJO-tolerant wrapper defined above.
+          RelativePattern: PatchedRelativePattern2,
           Uri: URI3,
           CancellationTokenSource: CancellationTokenSource3,
           CancellationError: CancellationError2,

@@ -20953,6 +20953,26 @@ var VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHo
 var { URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
 var { CancellationTokenSource: CancellationTokenSource2, CancellationToken: CancellationToken2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
 var { Emitter: Emitter2 } = await Promise.resolve().then(() => (init_event(), event_exports));
+var StockRelativePattern = VsCodeTypes.RelativePattern;
+var HydrateBase = /* @__PURE__ */ __name((Base) => {
+  if (Base == null) return Base;
+  if (typeof Base === "string") return Base;
+  if (Base instanceof URI2) return Base;
+  if (typeof Base.uri !== "undefined") {
+    const Uri2 = Base.uri;
+    if (Uri2 instanceof URI2) return Base;
+    const Revived2 = typeof Uri2 === "string" ? URI2.parse(Uri2) : URI2.revive(Uri2);
+    return { ...Base, uri: Revived2 };
+  }
+  const Revived = URI2.revive(Base);
+  return Revived ?? Base;
+}, "HydrateBase");
+var PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
+  const Safe = HydrateBase(Base);
+  return Reflect.construct(StockRelativePattern, [Safe, Pattern], PatchedRelativePattern);
+}, "RelativePattern");
+PatchedRelativePattern.prototype = StockRelativePattern.prototype;
+Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 var IAPIFactoryService = Context5.Tag();
 var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsService, terminalService) => {
   return {
@@ -20999,7 +21019,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
     SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
     SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
     SemanticTokens: VsCodeTypes.SemanticTokens,
-    RelativePattern: VsCodeTypes.RelativePattern,
+    RelativePattern: PatchedRelativePattern,
     Disposable: VsCodeTypes.Disposable,
     StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
     ThemeColor: VsCodeTypes.ThemeColor,

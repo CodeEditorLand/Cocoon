@@ -12326,7 +12326,7 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
       }
       if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
       if (!IncludeMatcher(RelativeFromRoot)) continue;
-      Results.push({ scheme: "file", path: Full, fsPath: Full });
+      Results.push(URI.file(Full));
     }
     const Concurrency = 4;
     for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {

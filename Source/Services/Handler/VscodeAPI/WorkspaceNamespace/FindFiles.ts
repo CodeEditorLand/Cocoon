@@ -15,7 +15,7 @@
 
 import GlobToRegex from "../../../../Utility/GlobToRegex.js";
 import type { HandlerContext } from "../../HandlerContext.js";
-import { GlobParsePattern } from "../StockLift.js";
+import { GlobParsePattern, Uri as StockUri } from "../StockLift.js";
 import {
 	DefaultExcludeSegments,
 	ExtractGlobPattern,
@@ -156,7 +156,13 @@ export const FindFilesLocal = async (
 			}
 			if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
 			if (!IncludeMatcher(RelativeFromRoot)) continue;
-			Results.push({ scheme: "file", path: Full, fsPath: Full });
+			// Return real `vscode.Uri` instances, not POJOs. Extensions
+			// passing findFiles results to `workspace.fs.readFile`,
+			// `URI.joinPath`, or map keys via `.toString()` get the same
+			// behaviour as stock VS Code. A POJO `{scheme,path,fsPath}`
+			// serialises to `"[object Object]"`, which Mountain rejects
+			// as a sandbox denial.
+			Results.push(StockUri.file(Full));
 		}
 
 		// Bounded parallel descent: 4 concurrent readdir()s per level keeps

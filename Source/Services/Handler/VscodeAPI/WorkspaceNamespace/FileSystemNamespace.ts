@@ -25,6 +25,7 @@ import { promises as FsPromises } from "node:fs";
 import { dirname as PathDirname } from "node:path";
 
 import type { HandlerContext } from "../../HandlerContext.js";
+import { ToUri as StockToUri } from "../StockLift.js";
 import { Call } from "./Helpers.js";
 import {
 	ExtractFsPath,
@@ -32,6 +33,79 @@ import {
 	Route,
 	type FileSystemRoute,
 } from "./FileSystemRoute.js";
+
+/**
+ * Serialise any URI shape - real `vscode.Uri` instance, UriComponents
+ * POJO, plain string - into the canonical `scheme://authority/path`
+ * string Mountain's handlers expect.
+ *
+ * `String(uri)` returns `"[object Object]"` when `uri` is a POJO
+ * without a custom `toString`. Built-in extensions (findFiles results
+ * hydrated by the workbench, `workspace.fs.stat(uri)` calls with wire
+ * UriComponents, etc.) sometimes pass such POJOs into the shim - the
+ * PostHog `[object Object]` sandbox denials in the last run trace
+ * directly to this.
+ *
+ * Resolution order:
+ *   1. Real `vscode.Uri` instance → `.toString()` (mangler-safe, handles
+ *      percent-encoding and slash normalisation).
+ *   2. POJO with `scheme` → hydrate via `StockLift.ToUri` then
+ *      `.toString()`.
+ *   3. Plain string that looks like a URL → return verbatim.
+ *   4. Path string starting with `/` → prefix with `file://`.
+ *   5. Anything else → `String(value)` (last-resort; won't panic but
+ *      Mountain will reject "[object Object]" with a clear error).
+ */
+const UriToString = (Value: unknown): string => {
+	if (Value == null) return "";
+	if (typeof Value === "string") {
+		if (Value.startsWith("/")) return `file://${Value}`;
+		return Value;
+	}
+	if (typeof Value === "object") {
+		const WithToString = Value as { toString?: () => string };
+		if (
+			typeof WithToString.toString === "function" &&
+			WithToString.toString !== Object.prototype.toString
+		) {
+			const Rendered = WithToString.toString();
+			if (Rendered && Rendered !== "[object Object]") return Rendered;
+		}
+		const Hydrated = StockToUri(Value);
+		if (Hydrated) return Hydrated.toString();
+		const WithParts = Value as {
+			scheme?: unknown;
+			authority?: unknown;
+			path?: unknown;
+			query?: unknown;
+			fragment?: unknown;
+			fsPath?: unknown;
+		};
+		if (typeof WithParts.scheme === "string") {
+			const Scheme = WithParts.scheme;
+			const Authority =
+				typeof WithParts.authority === "string"
+					? WithParts.authority
+					: "";
+			const PathPart =
+				typeof WithParts.path === "string" ? WithParts.path : "";
+			const Query =
+				typeof WithParts.query === "string" && WithParts.query.length > 0
+					? `?${WithParts.query}`
+					: "";
+			const Fragment =
+				typeof WithParts.fragment === "string" &&
+				WithParts.fragment.length > 0
+					? `#${WithParts.fragment}`
+					: "";
+			return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
+		}
+		if (typeof WithParts.fsPath === "string") {
+			return `file://${WithParts.fsPath}`;
+		}
+	}
+	return String(Value);
+};
 
 type StatShape = {
 	readonly type: number;
@@ -54,7 +128,7 @@ const LogRoute = (Operation: string, Uri: unknown, Decision: FileSystemRoute): v
 	// grep patterns (route=native / route=mountain) trivial.
 	if (!process.env["LAND_DEV_LOG"]) return;
 	process.stdout.write(
-		`[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${String(Uri)}\n`,
+		`[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${UriToString(Uri)}\n`,
 	);
 };
 
@@ -63,7 +137,7 @@ const ThrowFileNotFound = (Uri: unknown): never => {
 	const FileNotFound = Api?.FileSystemError?.FileNotFound;
 	if (typeof FileNotFound === "function") throw FileNotFound(Uri);
 	const Synthetic: any = new Error(
-		`EntryNotFound (FileSystemError): ${String(Uri)}`,
+		`EntryNotFound (FileSystemError): ${UriToString(Uri)}`,
 	);
 	Synthetic.code = "FileNotFound";
 	Synthetic.name = "FileSystemError";
@@ -98,7 +172,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			}
 		}
 		return (
-			(await Call<StatShape>(Context, "FileSystem.Stat", [String(Uri)])) ?? {
+			(await Call<StatShape>(Context, "FileSystem.Stat", [UriToString(Uri)])) ?? {
 				type: FileType.File,
 				size: 0,
 				ctime: 0,
@@ -125,7 +199,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		// be able to pass directly to `JSON.parse(...)` - a plain
 		// `Uint8Array` fails because its `.toString()` is comma-joined.
 		// Node `Buffer` extends `Uint8Array` and decodes UTF-8 by default.
-		const UriString = String(Uri);
+		const UriString = UriToString(Uri);
 		try {
 			const Raw = await Context.MountainClient?.sendRequest(
 				"FileSystem.ReadFile",
@@ -170,7 +244,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			return;
 		}
 		const Text = new TextDecoder().decode(Content);
-		await Call<void>(Context, "FileSystem.WriteFile", [String(Uri), Text]);
+		await Call<void>(Context, "FileSystem.WriteFile", [UriToString(Uri), Text]);
 	},
 
 	readDirectory: async (Uri: any): Promise<Array<[string, number]>> => {
@@ -199,7 +273,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			((await Call<Array<[string, number]>>(
 				Context,
 				"FileSystem.ReadDirectory",
-				[String(Uri)],
+				[UriToString(Uri)],
 			)) ?? []) as Array<[string, number]>
 		);
 	},
@@ -212,7 +286,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			await FsPromises.mkdir(Path, { recursive: true });
 			return;
 		}
-		await Call<void>(Context, "FileSystem.CreateDirectory", [String(Uri)]);
+		await Call<void>(Context, "FileSystem.CreateDirectory", [UriToString(Uri)]);
 	},
 
 	delete: async (
@@ -235,7 +309,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			}
 		}
 		await Call<void>(Context, "FileSystem.Delete", [
-			String(Uri),
+			UriToString(Uri),
 			Options?.recursive ?? false,
 		]);
 	},
@@ -267,8 +341,8 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			}
 		}
 		await Call<void>(Context, "FileSystem.Rename", [
-			String(Source),
-			String(Target),
+			UriToString(Source),
+			UriToString(Target),
 		]);
 	},
 
@@ -303,8 +377,8 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			}
 		}
 		await Call<void>(Context, "FileSystem.Copy", [
-			String(Source),
-			String(Target),
+			UriToString(Source),
+			UriToString(Target),
 		]);
 	},
 

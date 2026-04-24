@@ -23,6 +23,55 @@ const { CancellationTokenSource, CancellationToken } =
 	await import("@codeeditorland/output/vs/base/common/cancellation");
 const { Emitter } = await import("@codeeditorland/output/vs/base/common/event");
 
+// Defensive RelativePattern wrapper.
+//
+// Stock `RelativePattern(base, pattern)` in extHostTypes.ts:1914 does:
+//   if (!base || !URI.isUri(base) && !URI.isUri(base.uri)) throw illegalArgument('base');
+//
+// `URI.isUri` is strict: instance-check first, then duck-type that
+// requires `.with` method + `.toString` override + `.fsPath` getter
+// returning a string. Any URI that reached the extension as a plain
+// `{scheme,path}` POJO (missing-hydration corners, custom extension
+// wire transports, older Cocoon paths) trips this check - the caller
+// gets a cryptic `Illegal argument: base` with no stack. Shopify.ruby-lsp
+// hits this during activation when it builds a FileSystemWatcher from
+// `new RelativePattern(workspaceFolder, '**/*.rb')`.
+//
+// Wrap the stock class so POJO inputs are silently hydrated via
+// `URI.revive` / `URI.from` before the strict check. A string base
+// passes through untouched; a real URI instance passes through
+// untouched; a WorkspaceFolder-shape with a POJO `.uri` gets a real
+// URI stamped onto it. Fully transparent to extensions - the wrapped
+// result is an instance of the stock class, so any `instanceof` check
+// downstream still matches.
+const StockRelativePattern:any = VsCodeTypes.RelativePattern;
+const HydrateBase = (Base:unknown):unknown => {
+	if (Base == null) return Base;
+	if (typeof Base === "string") return Base;
+	if (Base instanceof URI) return Base;
+	if (typeof (Base as { uri?: unknown }).uri !== "undefined") {
+		const Uri = (Base as { uri?: unknown }).uri;
+		if (Uri instanceof URI) return Base;
+		const Revived =
+			typeof Uri === "string" ? URI.parse(Uri) : URI.revive(Uri as any);
+		return { ...(Base as object), uri: Revived };
+	}
+	const Revived = URI.revive(Base as any);
+	return Revived ?? Base;
+};
+const PatchedRelativePattern:any = function RelativePattern(
+	this:unknown,
+	Base:unknown,
+	Pattern:string,
+) {
+	const Safe = HydrateBase(Base);
+	// Forward to the stock constructor. `Reflect.construct` preserves
+	// prototype chain so `instanceof vscode.RelativePattern` still works.
+	return Reflect.construct(StockRelativePattern, [Safe, Pattern], PatchedRelativePattern);
+};
+PatchedRelativePattern.prototype = StockRelativePattern.prototype;
+Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
+
 // --- API Service Interface ---
 
 export interface IAPIFactoryService {
@@ -100,7 +149,7 @@ const createVSCodeAPI = (
 		SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
 		SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
 		SemanticTokens: VsCodeTypes.SemanticTokens,
-		RelativePattern: VsCodeTypes.RelativePattern,
+		RelativePattern: PatchedRelativePattern,
 		Disposable: VsCodeTypes.Disposable,
 		StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
 		ThemeColor: VsCodeTypes.ThemeColor,

@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 80,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-24T16:38:47Z"
+  generatedAt: "2026-04-24T17:03:52Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -12411,7 +12411,7 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
       }
       if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
       if (!IncludeMatcher(RelativeFromRoot)) continue;
-      Results.push({ scheme: "file", path: Full, fsPath: Full });
+      Results.push(URI.file(Full));
     }
     const Concurrency = 4;
     for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
@@ -13354,6 +13354,35 @@ var BuildDocumentEventMembers = /* @__PURE__ */ __name((Context) => ({
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
 import { promises as FsPromises3 } from "node:fs";
 import { dirname as PathDirname } from "node:path";
+var UriToString = /* @__PURE__ */ __name((Value) => {
+  if (Value == null) return "";
+  if (typeof Value === "string") {
+    if (Value.startsWith("/")) return `file://${Value}`;
+    return Value;
+  }
+  if (typeof Value === "object") {
+    const WithToString = Value;
+    if (typeof WithToString.toString === "function" && WithToString.toString !== Object.prototype.toString) {
+      const Rendered = WithToString.toString();
+      if (Rendered && Rendered !== "[object Object]") return Rendered;
+    }
+    const Hydrated = ToUri(Value);
+    if (Hydrated) return Hydrated.toString();
+    const WithParts = Value;
+    if (typeof WithParts.scheme === "string") {
+      const Scheme = WithParts.scheme;
+      const Authority = typeof WithParts.authority === "string" ? WithParts.authority : "";
+      const PathPart = typeof WithParts.path === "string" ? WithParts.path : "";
+      const Query = typeof WithParts.query === "string" && WithParts.query.length > 0 ? `?${WithParts.query}` : "";
+      const Fragment = typeof WithParts.fragment === "string" && WithParts.fragment.length > 0 ? `#${WithParts.fragment}` : "";
+      return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
+    }
+    if (typeof WithParts.fsPath === "string") {
+      return `file://${WithParts.fsPath}`;
+    }
+  }
+  return String(Value);
+}, "UriToString");
 var FileType = {
   Unknown: 0,
   File: 1,
@@ -13363,7 +13392,7 @@ var FileType = {
 var LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
   if (!process.env["LAND_DEV_LOG"]) return;
   process.stdout.write(
-    `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${String(Uri2)}
+    `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
 `
   );
 }, "LogRoute");
@@ -13372,7 +13401,7 @@ var ThrowFileNotFound = /* @__PURE__ */ __name((Uri2) => {
   const FileNotFound = Api?.FileSystemError?.FileNotFound;
   if (typeof FileNotFound === "function") throw FileNotFound(Uri2);
   const Synthetic = new Error(
-    `EntryNotFound (FileSystemError): ${String(Uri2)}`
+    `EntryNotFound (FileSystemError): ${UriToString(Uri2)}`
   );
   Synthetic.code = "FileNotFound";
   Synthetic.name = "FileSystemError";
@@ -13398,7 +13427,7 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
         throw Err;
       }
     }
-    return await Call(Context, "FileSystem.Stat", [String(Uri2)]) ?? {
+    return await Call(Context, "FileSystem.Stat", [UriToString(Uri2)]) ?? {
       type: FileType.File,
       size: 0,
       ctime: 0,
@@ -13417,7 +13446,7 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
         throw Err;
       }
     }
-    const UriString = String(Uri2);
+    const UriString = UriToString(Uri2);
     try {
       const Raw2 = await Context.MountainClient?.sendRequest(
         "FileSystem.ReadFile",
@@ -13459,7 +13488,7 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       return;
     }
     const Text = new TextDecoder().decode(Content);
-    await Call(Context, "FileSystem.WriteFile", [String(Uri2), Text]);
+    await Call(Context, "FileSystem.WriteFile", [UriToString(Uri2), Text]);
   }, "writeFile"),
   readDirectory: /* @__PURE__ */ __name(async (Uri2) => {
     const Decision = Route(Uri2);
@@ -13482,7 +13511,7 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
     return await Call(
       Context,
       "FileSystem.ReadDirectory",
-      [String(Uri2)]
+      [UriToString(Uri2)]
     ) ?? [];
   }, "readDirectory"),
   createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
@@ -13493,7 +13522,7 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       await FsPromises3.mkdir(Path, { recursive: true });
       return;
     }
-    await Call(Context, "FileSystem.CreateDirectory", [String(Uri2)]);
+    await Call(Context, "FileSystem.CreateDirectory", [UriToString(Uri2)]);
   }, "createDirectory"),
   delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
     const Decision = Route(Uri2);
@@ -13512,7 +13541,7 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       }
     }
     await Call(Context, "FileSystem.Delete", [
-      String(Uri2),
+      UriToString(Uri2),
       Options?.recursive ?? false
     ]);
   }, "delete"),
@@ -13533,8 +13562,8 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       }
     }
     await Call(Context, "FileSystem.Rename", [
-      String(Source),
-      String(Target)
+      UriToString(Source),
+      UriToString(Target)
     ]);
   }, "rename"),
   copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
@@ -13561,8 +13590,8 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       }
     }
     await Call(Context, "FileSystem.Copy", [
-      String(Source),
-      String(Target)
+      UriToString(Source),
+      UriToString(Target)
     ]);
   }, "copy"),
   isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {

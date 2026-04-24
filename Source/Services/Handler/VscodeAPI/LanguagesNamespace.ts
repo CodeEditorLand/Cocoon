@@ -8,6 +8,32 @@
 
 import GlobToRegex from "../../../Utility/GlobToRegex.js";
 import type { HandlerContext } from "../HandlerContext.js";
+import { ToUri as StockToUri } from "./StockLift.js";
+
+/**
+ * Serialise a URI-shape (real instance / POJO / string) to a stable
+ * string key. Without this, POJO URIs collapse to `"[object Object]"`
+ * under `String(uri)` and every diagnostic collection key collides,
+ * silently merging errors across files.
+ */
+const UriKey = (Value: unknown): string => {
+	if (Value == null) return "";
+	if (typeof Value === "string") return Value;
+	const Hydrated = StockToUri(Value);
+	if (Hydrated) return Hydrated.toString();
+	const Rendered = String(Value);
+	if (Rendered && Rendered !== "[object Object]") return Rendered;
+	const WithParts = Value as {
+		scheme?: unknown;
+		path?: unknown;
+		fsPath?: unknown;
+	};
+	if (typeof WithParts.scheme === "string" && typeof WithParts.path === "string") {
+		return `${WithParts.scheme}://${WithParts.path}`;
+	}
+	if (typeof WithParts.fsPath === "string") return `file://${WithParts.fsPath}`;
+	return Rendered;
+};
 
 /**
  * Helper: register a language provider with auto-handle,
@@ -312,10 +338,10 @@ const CreateLanguagesNamespace = (
 				if (Array.isArray(UriOrEntries) && Diagnostics === undefined) {
 					const Entries = UriOrEntries as Array<[unknown, unknown[]]>;
 					for (const [Uri, D] of Entries) {
-						Store.set(String(Uri), D ?? []);
+						Store.set(UriKey(Uri), D ?? []);
 					}
 				} else {
-					Store.set(String(UriOrEntries), Diagnostics ?? []);
+					Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
 				}
 				// Single-shot Diagnostic.Set over the whole collection.
 				Context.MountainClient?.sendRequest("Diagnostic.Set", [
@@ -327,7 +353,7 @@ const CreateLanguagesNamespace = (
 				]).catch(() => {});
 			},
 			delete: (Uri: unknown) => {
-				Store.delete(String(Uri));
+				Store.delete(UriKey(Uri));
 				Context.MountainClient?.sendRequest("Diagnostic.Set", [
 					Owner,
 					[...Store.entries()].map(([U, D]) => ({
@@ -355,8 +381,8 @@ const CreateLanguagesNamespace = (
 					Callback(Uri, Diagnostics, Self);
 				}
 			},
-			get: (Uri: unknown): unknown[] => Store.get(String(Uri)) ?? [],
-			has: (Uri: unknown): boolean => Store.has(String(Uri)),
+			get: (Uri: unknown): unknown[] => Store.get(UriKey(Uri)) ?? [],
+			has: (Uri: unknown): boolean => Store.has(UriKey(Uri)),
 			dispose: () => {
 				if (Disposed) return;
 				Disposed = true;

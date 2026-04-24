@@ -580,6 +580,51 @@ const EnsureVscodeAPIRegistered = async (
 		const { Emitter } =
 			await import("@codeeditorland/output/vs/base/common/event");
 
+		// Defensive RelativePattern wrapper. Stock `extHostTypes.RelativePattern`
+		// (extHostTypes.ts:1914) throws `Illegal argument: base` unless the
+		// `base` argument passes a strict `URI.isUri` duck-type check -
+		// instance brand OR all 8 of { authority, fragment, path, query,
+		// scheme, fsPath, with, toString } as the expected types. Any URI
+		// that reached an extension as a `{scheme, path}` POJO (missing
+		// hydration corners on custom wire transports) trips the check,
+		// producing a cryptic no-stack activation failure. Shopify.ruby-lsp
+		// hits this during `new RelativePattern(workspaceFolder, '**/*.rb')`.
+		//
+		// Wrap so POJO / string / WorkspaceFolder-with-POJO-uri shapes get
+		// `URI.revive`-hydrated first. Instance checks downstream still
+		// match because `Reflect.construct` preserves the prototype chain.
+		const StockRelativePattern:any = (VsCodeTypes as any).RelativePattern;
+		const HydrateRelativePatternBase = (Base:unknown):unknown => {
+			if (Base == null) return Base;
+			if (typeof Base === "string") return Base;
+			if (Base instanceof URI) return Base;
+			const WithUri = Base as { uri?: unknown };
+			if (typeof WithUri.uri !== "undefined") {
+				if (WithUri.uri instanceof URI) return Base;
+				const ReviveInput =
+					typeof WithUri.uri === "string"
+						? URI.parse(WithUri.uri)
+						: URI.revive(WithUri.uri as any);
+				return { ...(Base as object), uri: ReviveInput };
+			}
+			const Revived = URI.revive(Base as any);
+			return Revived ?? Base;
+		};
+		const PatchedRelativePattern:any = function RelativePattern(
+			this:unknown,
+			Base:unknown,
+			Pattern:string,
+		) {
+			const Safe = HydrateRelativePatternBase(Base);
+			return Reflect.construct(
+				StockRelativePattern,
+				[Safe, Pattern],
+				PatchedRelativePattern,
+			);
+		};
+		PatchedRelativePattern.prototype = StockRelativePattern.prototype;
+		Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
+
 		// Spread every named export from extHostTypes - classes, enums,
 		// constants - so extensions that do `class X extends vscode.Y`
 		// or `vscode.SomeEnum.Value` find the symbol. Explicit overrides
@@ -691,6 +736,9 @@ const EnsureVscodeAPIRegistered = async (
 			// propagated by Maintain/Script/TierEnvironment.sh. Fallback
 			// tracks the VS Code base from Dependency/.../Editor/package.json.
 			version: process.env["ProductVersion"] ?? "1.118.0",
+			// Override the spread's raw `RelativePattern` with the
+			// POJO-tolerant wrapper defined above.
+			RelativePattern: PatchedRelativePattern,
 			Uri: URI,
 			CancellationTokenSource,
 			CancellationError,
