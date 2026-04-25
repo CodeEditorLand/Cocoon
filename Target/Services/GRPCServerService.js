@@ -30170,7 +30170,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T23:38:40Z"
+      generatedAt: "2026-04-25T00:06:35Z"
     };
   }
 });
@@ -34544,7 +34544,7 @@ var init_FileSystemNamespace = __esm({
 });
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
-var CreateWorkspaceNamespace, Index_default;
+var HydrateUriResults, CreateWorkspaceNamespace, Index_default;
 var init_Index = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts"() {
     "use strict";
@@ -34557,6 +34557,23 @@ var init_Index = __esm({
     init_TextDocument();
     init_Providers();
     init_FileSystemNamespace();
+    HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
+      if (!Array.isArray(Raw2)) return [];
+      return Raw2.map((Item) => {
+        if (typeof Item === "string") {
+          try {
+            return URI.parse(Item);
+          } catch {
+            return Item;
+          }
+        }
+        if (Item && typeof Item === "object") {
+          const Hydrated = ToUri(Item);
+          if (Hydrated) return Hydrated;
+        }
+        return Item;
+      });
+    }, "HydrateUriResults");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context21) => {
       const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
       const HydrateFolder = /* @__PURE__ */ __name((Raw2, FallbackIndex) => {
@@ -34603,31 +34620,30 @@ var init_Index = __esm({
         // Falls back to `FindFilesLocal` (Node) when Mountain rejects
         // `unknown method` - manifest drift is the only path where the
         // fallback runs in steady state.
-        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => TryMountainThenNode(
-          Context21,
-          "findFiles",
-          // Mountain's effect route accepts either
-          // `[pattern, options]` (object form) or
-          // `{ pattern, options }` (named form). We send the
-          // object form so `maxResults` propagates correctly.
-          [
-            Include,
-            {
-              exclude: Exclude,
-              maxResults: MaxResults
+        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
+          const Raw2 = await TryMountainThenNode(
+            Context21,
+            "findFiles",
+            [
+              Include,
+              {
+                exclude: Exclude,
+                maxResults: MaxResults
+              }
+            ],
+            async ([I, _O]) => {
+              const Opts = _O;
+              return FindFilesLocal(
+                Context21,
+                ReadFolders(),
+                I,
+                Opts?.exclude,
+                Opts?.maxResults
+              );
             }
-          ],
-          async ([I, _O]) => {
-            const Opts = _O;
-            return FindFilesLocal(
-              Context21,
-              ReadFolders(),
-              I,
-              Opts?.exclude,
-              Opts?.maxResults
-            );
-          }
-        ), "findFiles"),
+          );
+          return HydrateUriResults(Raw2);
+        }, "findFiles"),
         // `findFiles2` - VS Code 1.90+ multi-pattern signature.
         // Extensions (copilot, vim, markdown-language-features) use
         // this. We forward the first pattern through the same Mountain
@@ -34636,7 +34652,7 @@ var init_Index = __esm({
         // natively via comma-separated brace patterns.
         findFiles2: /* @__PURE__ */ __name(async (FilePatterns, Options) => {
           const Include = Array.isArray(FilePatterns) ? FilePatterns[0] : FilePatterns;
-          return TryMountainThenNode(
+          const Raw2 = await TryMountainThenNode(
             Context21,
             "findFiles",
             [Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
@@ -34651,6 +34667,7 @@ var init_Index = __esm({
               );
             }
           );
+          return HydrateUriResults(Raw2);
         }, "findFiles2"),
         // `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
         // (ripgrep-backed via `grep-searcher` + `ignore`) first, Node
@@ -37942,7 +37959,7 @@ __export(WorkspaceContainsActivator_exports, {
   ActivateWorkspaceContainsExtensions: () => ActivateWorkspaceContainsExtensions,
   default: () => WorkspaceContainsActivator_default
 });
-var WORKSPACE_CONTAINS_PREFIX, UriToFsPath, FolderContainsGlob, GetActivationEvents, GetWorkspaceContainsGlobs, ActivateWorkspaceContainsExtensions, WorkspaceContainsActivator_default;
+var WORKSPACE_CONTAINS_PREFIX, UriToFsPath, FolderContainsGlobViaMountain, FolderContainsGlob, GetActivationEvents, GetWorkspaceContainsGlobs, ActivateWorkspaceContainsExtensions, WorkspaceContainsActivator_default;
 var init_WorkspaceContainsActivator = __esm({
   "Source/Services/Handler/WorkspaceContainsActivator.ts"() {
     "use strict";
@@ -37960,6 +37977,20 @@ var init_WorkspaceContainsActivator = __esm({
       }
       return Raw2;
     }, "UriToFsPath");
+    FolderContainsGlobViaMountain = /* @__PURE__ */ __name(async (Context21, Glob) => {
+      const Client = Context21.MountainClient;
+      if (!Client || typeof Client.sendRequest !== "function") return void 0;
+      try {
+        const Result = await Client.sendRequest("findFiles", [
+          Glob,
+          { maxResults: 1 }
+        ]);
+        if (Array.isArray(Result)) return Result.length > 0;
+        return void 0;
+      } catch {
+        return void 0;
+      }
+    }, "FolderContainsGlobViaMountain");
     FolderContainsGlob = /* @__PURE__ */ __name(async (FsPath, Glob) => {
       const { stat, readdir } = await import("node:fs/promises");
       const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
@@ -38059,7 +38090,19 @@ var init_WorkspaceContainsActivator = __esm({
         let MatchingFolder;
         for (const Folder of FolderPaths) {
           for (const Glob of Globs) {
-            if (await FolderContainsGlob(Folder.FsPath, Glob)) {
+            const IsLiteral = !/[*?[\]]/.test(Glob);
+            let Hit = false;
+            if (IsLiteral) {
+              Hit = await FolderContainsGlob(Folder.FsPath, Glob);
+            } else {
+              const Mountain = await FolderContainsGlobViaMountain(Context21, Glob);
+              if (typeof Mountain === "boolean") {
+                Hit = Mountain;
+              } else {
+                Hit = await FolderContainsGlob(Folder.FsPath, Glob);
+              }
+            }
+            if (Hit) {
               MatchingGlob = Glob;
               MatchingFolder = Folder.FsPath;
               break;

@@ -21920,7 +21920,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-24T23:38:40Z"
+      generatedAt: "2026-04-25T00:06:35Z"
     };
   }
 });
@@ -26420,7 +26420,7 @@ var init_FileSystemNamespace = __esm({
 });
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
-var CreateWorkspaceNamespace, Index_default;
+var HydrateUriResults, CreateWorkspaceNamespace, Index_default;
 var init_Index = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts"() {
     "use strict";
@@ -26433,6 +26433,23 @@ var init_Index = __esm({
     init_TextDocument();
     init_Providers();
     init_FileSystemNamespace();
+    HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
+      if (!Array.isArray(Raw2)) return [];
+      return Raw2.map((Item) => {
+        if (typeof Item === "string") {
+          try {
+            return URI.parse(Item);
+          } catch {
+            return Item;
+          }
+        }
+        if (Item && typeof Item === "object") {
+          const Hydrated = ToUri(Item);
+          if (Hydrated) return Hydrated;
+        }
+        return Item;
+      });
+    }, "HydrateUriResults");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
       const HydrateFolder = /* @__PURE__ */ __name((Raw2, FallbackIndex) => {
@@ -26479,31 +26496,30 @@ var init_Index = __esm({
         // Falls back to `FindFilesLocal` (Node) when Mountain rejects
         // `unknown method` - manifest drift is the only path where the
         // fallback runs in steady state.
-        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => TryMountainThenNode(
-          Context,
-          "findFiles",
-          // Mountain's effect route accepts either
-          // `[pattern, options]` (object form) or
-          // `{ pattern, options }` (named form). We send the
-          // object form so `maxResults` propagates correctly.
-          [
-            Include,
-            {
-              exclude: Exclude,
-              maxResults: MaxResults
+        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
+          const Raw2 = await TryMountainThenNode(
+            Context,
+            "findFiles",
+            [
+              Include,
+              {
+                exclude: Exclude,
+                maxResults: MaxResults
+              }
+            ],
+            async ([I, _O]) => {
+              const Opts = _O;
+              return FindFilesLocal(
+                Context,
+                ReadFolders(),
+                I,
+                Opts?.exclude,
+                Opts?.maxResults
+              );
             }
-          ],
-          async ([I, _O]) => {
-            const Opts = _O;
-            return FindFilesLocal(
-              Context,
-              ReadFolders(),
-              I,
-              Opts?.exclude,
-              Opts?.maxResults
-            );
-          }
-        ), "findFiles"),
+          );
+          return HydrateUriResults(Raw2);
+        }, "findFiles"),
         // `findFiles2` - VS Code 1.90+ multi-pattern signature.
         // Extensions (copilot, vim, markdown-language-features) use
         // this. We forward the first pattern through the same Mountain
@@ -26512,7 +26528,7 @@ var init_Index = __esm({
         // natively via comma-separated brace patterns.
         findFiles2: /* @__PURE__ */ __name(async (FilePatterns, Options) => {
           const Include = Array.isArray(FilePatterns) ? FilePatterns[0] : FilePatterns;
-          return TryMountainThenNode(
+          const Raw2 = await TryMountainThenNode(
             Context,
             "findFiles",
             [Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
@@ -26527,6 +26543,7 @@ var init_Index = __esm({
               );
             }
           );
+          return HydrateUriResults(Raw2);
         }, "findFiles2"),
         // `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
         // (ripgrep-backed via `grep-searcher` + `ignore`) first, Node
