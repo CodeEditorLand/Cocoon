@@ -9,7 +9,7 @@
  */
 
 import type { HandlerContext } from "../../HandlerContext.js";
-import { TryMountainThenNode } from "../../../DualTrack.js";
+import { TryMountainWithEmptyFallback } from "../../../DualTrack.js";
 import {
 	IsEqualOrParent as StockIsEqualOrParent,
 	RelativePath as StockRelativePath,
@@ -175,20 +175,21 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		getConfiguration: BuildGetConfiguration(Context, ConfigState),
 
 		// `findFiles` / `findFiles2` now follow the same Mountain-first
-		// dual-track as `findTextInFiles`. Mountain's `findFiles` effect
-		// route (`Track/Effect/CreateEffectForRequest/Search.rs`) walks
-		// the workspace via `ignore::WalkBuilder::build_parallel()` -
-		// gitignore-aware, OS-thread parallel, ~3-5× faster than
-		// Cocoon's single-event-loop `FsPromises.readdir` walker.
-		// Falls back to `FindFilesLocal` (Node) when Mountain rejects
-		// `unknown method` - manifest drift is the only path where the
-		// fallback runs in steady state.
+		// dual-track as `findTextInFiles`, AND additionally fall back to
+		// the Node walker when Mountain succeeds with an empty result.
+		// The empty-result fallback covers the case where Mountain's
+		// `WorkspaceFolders` state diverges from the renderer's URL
+		// (e.g. binary launched from `Target/debug/` so Mountain walks
+		// build artifacts) - users were seeing search return zero
+		// without any error to diagnose. Node always walks the same
+		// `ExtensionHostInitData.workspace.folders` Cocoon already has
+		// from the workbench, so it's resilient to that drift.
 		findFiles: async (
 			Include: unknown,
 			Exclude?: unknown,
 			MaxResults?: number,
 		): Promise<unknown[]> => {
-			const Raw = (await TryMountainThenNode(
+			const Raw = (await TryMountainWithEmptyFallback<unknown[]>(
 				Context,
 				"findFiles",
 				[
@@ -198,7 +199,8 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						maxResults: MaxResults,
 					},
 				],
-				async ([I, _O]) => {
+				async (Args) => {
+					const [I, _O] = Args;
 					const Opts = _O as { exclude?: unknown; maxResults?: number } | undefined;
 					return FindFilesLocal(
 						Context,
@@ -208,7 +210,8 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.maxResults,
 					);
 				},
-			)) as unknown[];
+				(R) => !Array.isArray(R) || R.length === 0,
+			));
 			return HydrateUriResults(Raw);
 		},
 
@@ -225,11 +228,12 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			const Include = Array.isArray(FilePatterns)
 				? FilePatterns[0]
 				: FilePatterns;
-			const Raw = (await TryMountainThenNode(
+			const Raw = (await TryMountainWithEmptyFallback<unknown[]>(
 				Context,
 				"findFiles",
 				[Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
-				async ([I, _O]) => {
+				async (Args) => {
+					const [I, _O] = Args;
 					const Opts = _O as { exclude?: unknown; maxResults?: number } | undefined;
 					return FindFilesLocal(
 						Context,
@@ -239,7 +243,8 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.maxResults,
 					);
 				},
-			)) as unknown[];
+				(R) => !Array.isArray(R) || R.length === 0,
+			));
 			return HydrateUriResults(Raw);
 		},
 
@@ -250,24 +255,40 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// previous `Workspace.FindTextInFiles` form was missing from
 		// the manifest, so the manifest short-circuit always routed
 		// to the Node fallback - the Mountain ripgrep path was dead.
+		// Same empty-result shadowing as `findFiles`: Mountain's
+		// ripgrep returning zero matches when the workspace folder is
+		// misconfigured falls through to Node so the search panel
+		// always shows real results.
 		findTextInFiles: async (
 			Query: unknown,
 			Options?: unknown,
 			Callback?: (Result: unknown) => void,
 			_Token?: unknown,
 		) =>
-			TryMountainThenNode(
+			TryMountainWithEmptyFallback<unknown>(
 				Context,
 				"findTextInFiles",
 				[Query, Options],
-				async ([Q, O]) =>
-					FindTextInFilesNodeFallback(
+				async (Args) => {
+					const [Q, O] = Args;
+					return FindTextInFilesNodeFallback(
 						Context,
 						ReadFolders(),
 						Q,
 						O,
 						Callback,
-					),
+					);
+				},
+				(R) => {
+					// Mountain text-search shape: `{ matches: TextSearchMatch[], complete: boolean }`
+					// or a bare array depending on the path. Treat both
+					// undefined and zero-match as empty so the Node
+					// fallback can shadow.
+					if (R == null) return true;
+					if (Array.isArray(R)) return R.length === 0;
+					const Matches = (R as { matches?: unknown[] }).matches;
+					return !Array.isArray(Matches) || Matches.length === 0;
+				},
 			),
 		findTextInFiles2: async (
 			Query: unknown,
@@ -275,18 +296,26 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			Callback?: (Result: unknown) => void,
 			_Token?: unknown,
 		) =>
-			TryMountainThenNode(
+			TryMountainWithEmptyFallback<unknown>(
 				Context,
 				"findTextInFiles",
 				[Query, Options],
-				async ([Q, O]) =>
-					FindTextInFilesNodeFallback(
+				async (Args) => {
+					const [Q, O] = Args;
+					return FindTextInFilesNodeFallback(
 						Context,
 						ReadFolders(),
 						Q,
 						O,
 						Callback,
-					),
+					);
+				},
+				(R) => {
+					if (R == null) return true;
+					if (Array.isArray(R)) return R.length === 0;
+					const Matches = (R as { matches?: unknown[] }).matches;
+					return !Array.isArray(Matches) || Matches.length === 0;
+				},
 			),
 
 		openTextDocument: BuildOpenTextDocument(Context),

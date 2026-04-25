@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 80,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-25T00:37:48Z"
+  generatedAt: "2026-04-25T01:20:57Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -73,6 +73,61 @@ async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
   }
 }
 __name(TryMountainThenNode, "TryMountainThenNode");
+async function TryMountainWithEmptyFallback(Context, Method, Arguments, NodeFallback, IsEmpty) {
+  if (!MountainMethods.has(Method)) {
+    LogDualTrack(Method, "node-fallback");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
+  let MountainResult;
+  let MountainSucceeded = false;
+  try {
+    MountainResult = await Context.MountainClient?.sendRequest(
+      Method,
+      Arguments
+    );
+    MountainSucceeded = true;
+    LogDualTrack(Method, "mountain");
+  } catch (Err) {
+    if (!IsUnknownMethodError(Err)) {
+      LogDualTrack(Method, "error");
+      throw Err;
+    }
+    LogDualTrack(Method, "node-fallback");
+  }
+  if (MountainSucceeded && MountainResult !== void 0 && IsEmpty(MountainResult)) {
+    try {
+      const NodeResult = await NodeFallback(Arguments);
+      const NodeIsEmpty = IsEmpty(NodeResult);
+      if (!NodeIsEmpty) {
+        if (process.env["LAND_DEV_LOG"]) {
+          process.stdout.write(
+            `[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)
+`
+          );
+        }
+        return NodeResult;
+      }
+      return MountainResult;
+    } catch {
+      return MountainResult;
+    }
+  }
+  if (MountainSucceeded && MountainResult !== void 0) {
+    return MountainResult;
+  }
+  try {
+    return await NodeFallback(Arguments);
+  } catch (NodeErr) {
+    LogDualTrack(Method, "error");
+    throw NodeErr;
+  }
+}
+__name(TryMountainWithEmptyFallback, "TryMountainWithEmptyFallback");
 function MarkUnavailable(Method) {
   LogDualTrack(Method, "unavailable");
   throw new NotImplementedError(Method);
@@ -90,6 +145,7 @@ export {
   LogDualTrack,
   MarkUnavailable,
   NotImplementedError,
-  TryMountainThenNode
+  TryMountainThenNode,
+  TryMountainWithEmptyFallback
 };
 //# sourceMappingURL=DualTrack.js.map

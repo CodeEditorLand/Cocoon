@@ -128,9 +128,32 @@ if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandl
 				Reason instanceof globalThis.Error
 					? Reason.stack?.split("\n").slice(0, 6).join(" | ")
 					: String(Reason);
-			process.stdout.write(
-				`[LandFix:UnhandledRejection] ${Stack ?? "unknown"}\n`,
-			);
+			// Benign first-boot probes: extensions read state files that
+			// don't exist on a fresh profile (vim's `.registers`, gitlens
+			// launchpad cache, copilot session state). The
+			// `[LandFix:UnhandledRejection]` log is intended for *real*
+			// crashes - downgrade per-extension lazy-creation ENOENTs to
+			// `landfix-rejection-verbose` so `LAND_DEV_LOG=short` runs
+			// only surface unexpected rejections.
+			const Text = Stack ?? "unknown";
+			const IsBenignEnoent =
+				Text.includes("ENOENT") &&
+				(Text.includes("/.registers") ||
+					Text.includes("/globalStorage/") ||
+					Text.includes("/workspaceStorage/") ||
+					Text.includes("/User/snippets") ||
+					Text.includes("/User/prompts") ||
+					Text.includes("/User/keybindings.json") ||
+					Text.includes("aiGeneratedWorkspaces.json") ||
+					Text.includes("languageDetectionWorkerCache.json"));
+			const Tag = IsBenignEnoent ? "LandFix:UnhandledRejection:Verbose" : "LandFix:UnhandledRejection";
+			if (
+				IsBenignEnoent &&
+				!process.env["LAND_DEV_LOG"]?.includes("landfix-rejection-verbose")
+			) {
+				return;
+			}
+			process.stdout.write(`[${Tag}] ${Text}\n`);
 		} catch {}
 	});
 	(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandlerInstalled = true;

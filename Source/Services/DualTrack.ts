@@ -197,6 +197,94 @@ export async function TryMountainThenNode<T>(
 }
 
 /**
+ * Variant of `TryMountainThenNode` that ALSO falls back to Node when
+ * Mountain returns a "looks empty" result. Some Mountain handlers
+ * succeed (no error) but legitimately return zero rows when their
+ * workspace-folder state is mis-seeded or their walker hits a
+ * filtered-out tree. The user-visible symptom is a search panel that
+ * appears to "work" but never returns matches.
+ *
+ * `IsEmpty` is the caller's predicate over the Mountain return value
+ * (e.g. `Array.isArray(R) && R.length === 0`). When it returns true
+ * AND the Node fallback returns more results, the Node result wins.
+ * Otherwise Mountain's result is preserved (avoids hiding intentional
+ * empty results from queries that genuinely should be empty).
+ *
+ * Use this for `findFiles`, `findTextInFiles`, `extensions:getInstalled`,
+ * and other dispatch points where "Mountain returned [] but Node would
+ * have returned matches" is a plausible failure mode worth shadowing.
+ */
+export async function TryMountainWithEmptyFallback<T>(
+	Context: HandlerContext,
+	Method: string,
+	Arguments: unknown[],
+	NodeFallback: (Arguments: unknown[]) => Promise<T>,
+	IsEmpty: (Result: T) => boolean,
+): Promise<T> {
+	if (!MountainMethods.has(Method)) {
+		LogDualTrack(Method, "node-fallback");
+		try {
+			return await NodeFallback(Arguments);
+		} catch (NodeErr: unknown) {
+			LogDualTrack(Method, "error");
+			throw NodeErr;
+		}
+	}
+
+	let MountainResult: T | undefined;
+	let MountainSucceeded = false;
+	try {
+		MountainResult = (await Context.MountainClient?.sendRequest(
+			Method,
+			Arguments,
+		)) as T;
+		MountainSucceeded = true;
+		LogDualTrack(Method, "mountain");
+	} catch (Err: unknown) {
+		if (!IsUnknownMethodError(Err)) {
+			LogDualTrack(Method, "error");
+			throw Err;
+		}
+		LogDualTrack(Method, "node-fallback");
+	}
+
+	// Empty-result guard: Mountain succeeded but the result looks empty.
+	// Race the Node fallback and use whichever has more rows. Empty
+	// from both is fine - we return Mountain's empty.
+	if (MountainSucceeded && MountainResult !== undefined && IsEmpty(MountainResult)) {
+		try {
+			const NodeResult = await NodeFallback(Arguments);
+			const NodeIsEmpty = IsEmpty(NodeResult);
+			if (!NodeIsEmpty) {
+				if (process.env["LAND_DEV_LOG"]) {
+					process.stdout.write(
+						`[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)\n`,
+					);
+				}
+				return NodeResult;
+			}
+			return MountainResult;
+		} catch {
+			// Fallback errored - keep Mountain's empty result, the call
+			// already "succeeded" from the extension's POV.
+			return MountainResult;
+		}
+	}
+
+	if (MountainSucceeded && MountainResult !== undefined) {
+		return MountainResult;
+	}
+
+	// Mountain rejected with "unknown method": run the fallback.
+	try {
+		return await NodeFallback(Arguments);
+	} catch (NodeErr: unknown) {
+		LogDualTrack(Method, "error");
+		throw NodeErr;
+	}
+}
+
+/**
  * Tier-4 guard: call from inside a Node fallback when no meaningful
  * implementation exists. Throws `NotImplementedError` which extensions
  * can catch explicitly. The error is also logged under `[DEV:DUAL-TRACK]
