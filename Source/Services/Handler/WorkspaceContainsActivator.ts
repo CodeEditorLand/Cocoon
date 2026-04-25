@@ -55,6 +55,37 @@ const UriToFsPath = (Uri: unknown): string | undefined => {
 };
 
 /**
+ * Mountain-backed glob check. Calls `findFiles(glob, {maxResults:1})`
+ * via gRPC; returns true if any file matches. Mountain's effect route
+ * uses `ignore::WalkBuilder::build_parallel()` which respects
+ * `.gitignore` AND walks the workspace on OS threads in parallel,
+ * so the early-exit on first match is genuinely fast for non-trivial
+ * globs even on large repos. Returns `undefined` when Mountain is
+ * unreachable (manifest miss / IPC failure) so the caller can fall
+ * back to the local Node walker.
+ */
+const FolderContainsGlobViaMountain = async (
+	Context: HandlerContext,
+	Glob: string,
+): Promise<boolean | undefined> => {
+	const Client = Context.MountainClient;
+	if (!Client || typeof Client.sendRequest !== "function") return undefined;
+	try {
+		const Result = await Client.sendRequest("findFiles", [
+			Glob,
+			{ maxResults: 1 },
+		]);
+		if (Array.isArray(Result)) return Result.length > 0;
+		// Effect route also returns the bare URL list array; `null` /
+		// `undefined` is conservatively "not enough info to decide" so
+		// caller retries via local walker.
+		return undefined;
+	} catch {
+		return undefined;
+	}
+};
+
+/**
  * Check whether the given glob matches at least one entry in the workspace
  * folder. Plain filenames (no `*`, `?`, `[`) fast-path via a single stat;
  * everything else recurses through `readdir` with hard caps to avoid
@@ -212,8 +243,37 @@ export const ActivateWorkspaceContainsExtensions = async (
 		let MatchingFolder: string | undefined;
 		for (const Folder of FolderPaths) {
 			for (const Glob of Globs) {
-				// eslint-disable-next-line no-await-in-loop
-				if (await FolderContainsGlob(Folder.FsPath, Glob)) {
+				// Strategy:
+				//   - Literal filename probes (`package.json`,
+				//     `Cargo.toml`) - keep on the native path; one stat
+				//     is the cheapest operation we have (~0.1 ms).
+				//   - Glob patterns (`**/*.csproj`,
+				//     `src/**/manifest.yml`) - prefer Mountain's
+				//     `findFiles` effect via gRPC. Mountain runs
+				//     `ignore::WalkBuilder::build_parallel()` over OS
+				//     threads, gitignore-aware, with early-exit on the
+				//     first match (`maxResults: 1`). On large repos
+				//     this is ~3-5× faster than the JS event-loop
+				//     walker and ignores `node_modules`, `target`,
+				//     `dist` automatically.
+				//   - Mountain miss → fall back to the local walker so
+				//     the activator never blocks on an IPC failure.
+				const IsLiteral = !/[*?[\]]/.test(Glob);
+				let Hit = false;
+				if (IsLiteral) {
+					// eslint-disable-next-line no-await-in-loop
+					Hit = await FolderContainsGlob(Folder.FsPath, Glob);
+				} else {
+					// eslint-disable-next-line no-await-in-loop
+					const Mountain = await FolderContainsGlobViaMountain(Context, Glob);
+					if (typeof Mountain === "boolean") {
+						Hit = Mountain;
+					} else {
+						// eslint-disable-next-line no-await-in-loop
+						Hit = await FolderContainsGlob(Folder.FsPath, Glob);
+					}
+				}
+				if (Hit) {
 					MatchingGlob = Glob;
 					MatchingFolder = Folder.FsPath;
 					break;

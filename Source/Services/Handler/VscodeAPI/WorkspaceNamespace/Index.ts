@@ -14,6 +14,7 @@ import {
 	IsEqualOrParent as StockIsEqualOrParent,
 	RelativePath as StockRelativePath,
 	ToUri as StockToUri,
+	Uri as StockUri,
 } from "../StockLift.js";
 import { FindFilesLocal } from "./FindFiles.js";
 import { FindTextInFilesNodeFallback } from "./FindTextInFilesFallback.js";
@@ -40,6 +41,37 @@ import {
 	BuildRegisterResourceLabelFormatter,
 } from "./Providers.js";
 import { BuildFileSystemNamespace } from "./FileSystemNamespace.js";
+
+/**
+ * Hydrate URI results coming back from Mountain (string URLs) or the
+ * Cocoon-local `FindFilesLocal` (already-real `vscode.Uri` instances)
+ * into a uniform array of real `vscode.Uri` objects. Extensions
+ * dispatched from the workbench expect `result[i].fsPath` / `.scheme`
+ * / `.with(...)` / `.toString()` to work; raw strings have none of
+ * these. Stock VS Code's `URI.parse(s)` returns a value with the full
+ * mangler-safe getter set.
+ *
+ * Keeps anything that already looks like a Uri (has `scheme` and
+ * `path` properties) intact - hydrating an already-hydrated value is
+ * a no-op via `URI.from()`.
+ */
+const HydrateUriResults = (Raw: unknown[]): unknown[] => {
+	if (!Array.isArray(Raw)) return [];
+	return Raw.map((Item) => {
+		if (typeof Item === "string") {
+			try {
+				return StockUri.parse(Item);
+			} catch {
+				return Item;
+			}
+		}
+		if (Item && typeof Item === "object") {
+			const Hydrated = StockToUri(Item);
+			if (Hydrated) return Hydrated;
+		}
+		return Item;
+	});
+};
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	const InitWorkspace = (Context.ExtensionHostInitData?.workspace ??
@@ -155,14 +187,10 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			Include: unknown,
 			Exclude?: unknown,
 			MaxResults?: number,
-		): Promise<unknown[]> =>
-			TryMountainThenNode(
+		): Promise<unknown[]> => {
+			const Raw = (await TryMountainThenNode(
 				Context,
 				"findFiles",
-				// Mountain's effect route accepts either
-				// `[pattern, options]` (object form) or
-				// `{ pattern, options }` (named form). We send the
-				// object form so `maxResults` propagates correctly.
 				[
 					Include,
 					{
@@ -180,7 +208,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.maxResults,
 					);
 				},
-			) as Promise<unknown[]>,
+			)) as unknown[];
+			return HydrateUriResults(Raw);
+		},
 
 		// `findFiles2` - VS Code 1.90+ multi-pattern signature.
 		// Extensions (copilot, vim, markdown-language-features) use
@@ -195,7 +225,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			const Include = Array.isArray(FilePatterns)
 				? FilePatterns[0]
 				: FilePatterns;
-			return TryMountainThenNode(
+			const Raw = (await TryMountainThenNode(
 				Context,
 				"findFiles",
 				[Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
@@ -209,7 +239,8 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.maxResults,
 					);
 				},
-			) as Promise<unknown[]>;
+			)) as unknown[];
+			return HydrateUriResults(Raw);
 		},
 
 		// `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
