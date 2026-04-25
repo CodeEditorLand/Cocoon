@@ -1,14 +1,1 @@
-// Source/IPC/Message/Types.ts
-var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
-  CompressionHint2["None"] = "none";
-  CompressionHint2["Fast"] = "fast";
-  CompressionHint2["Balanced"] = "balanced";
-  CompressionHint2["Maximum"] = "maximum";
-  return CompressionHint2;
-})(CompressionHint || {});
-var Types_default = {};
-export {
-  CompressionHint,
-  Types_default as default
-};
-//# sourceMappingURL=Types.js.map
+var a=(e=>(e.None="none",e.Fast="fast",e.Balanced="balanced",e.Maximum="maximum",e))(a||{}),r={};export{a as CompressionHint,r as default};
