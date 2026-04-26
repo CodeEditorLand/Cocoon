@@ -16,11 +16,12 @@
 
 import type { HandlerContext } from "../HandlerContext.js";
 import { LogRoute, Route } from "./CommandsRoute.js";
+import WrapCommandsNamespace from "./WrapCommandsNamespace.js";
 
 const CreateCommandsNamespace = (
 	Context: HandlerContext,
 	LanguageProviderRegistry: typeof import("../../LanguageProviderRegistry.js"),
-) => ({
+) => WrapCommandsNamespace({
 	registerCommand: (
 		Command: string,
 		Callback: (...Arguments: unknown[]) => unknown,

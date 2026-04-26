@@ -9,6 +9,7 @@
 
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
 import type { HandlerContext } from "../HandlerContext.js";
+import WrapWindowNamespace from "./WrapWindowNamespace.js";
 
 type Listener<T> = (Event: T) => unknown;
 
@@ -272,7 +273,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 		};
 
-	return {
+	const Concrete = {
 		showInformationMessage: ShowMessage("info"),
 		showErrorMessage: ShowMessage("error"),
 		showWarningMessage: ShowMessage("warn"),
@@ -1323,6 +1324,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		activeTerminal: undefined,
 		state: { focused: true, active: true },
 	};
+	return WrapWindowNamespace(Concrete);
 };
 
 export default CreateWindowNamespace;

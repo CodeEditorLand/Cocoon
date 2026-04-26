@@ -41,6 +41,7 @@ import {
 	BuildRegisterResourceLabelFormatter,
 } from "./Providers.js";
 import { BuildFileSystemNamespace } from "./FileSystemNamespace.js";
+import WrapWorkspaceNamespace from "./WrapWorkspaceNamespace.js";
 
 /**
  * Hydrate URI results coming back from Mountain (string URLs) or the
@@ -160,7 +161,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	(globalThis as { __cocoonConfigState?: typeof ConfigState }).__cocoonConfigState =
 		ConfigState;
 
-	return {
+	const Concrete = {
 		get workspaceFolders() {
 			return ReadFolders();
 		},
@@ -589,6 +590,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		fs: BuildFileSystemNamespace(Context),
 	};
+	return WrapWorkspaceNamespace(Concrete);
 };
 
 export default CreateWorkspaceNamespace;

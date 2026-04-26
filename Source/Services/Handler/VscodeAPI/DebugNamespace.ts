@@ -9,6 +9,7 @@
 
 import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import WrapDebugNamespace from "./WrapDebugNamespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -21,7 +22,7 @@ const EventSubscriber =
 		};
 	};
 
-const CreateDebugNamespace = (Context: HandlerContext) => ({
+const CreateDebugNamespace = (Context: HandlerContext) => WrapDebugNamespace({
 	registerDebugAdapterDescriptorFactory: (
 		DebugType: string,
 		_Factory: unknown,

@@ -9,6 +9,7 @@
 
 import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import WrapScmNamespace from "./WrapScmNamespace.js";
 
 /**
  * Mountain.dev.log diagnostic so SCM-side wiring failures are visible.
@@ -31,7 +32,7 @@ const ScmTrace = (Message:string):void => {
 	} catch {}
 };
 
-const CreateScmNamespace = (Context: HandlerContext) => ({
+const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 	createSourceControl: (Id: string, Label: string, RootUri?: unknown) => {
 		const Handle = NextProviderHandle();
 		const RootUriShape =
@@ -147,3 +148,4 @@ const CreateScmNamespace = (Context: HandlerContext) => ({
 });
 
 export default CreateScmNamespace;
+
