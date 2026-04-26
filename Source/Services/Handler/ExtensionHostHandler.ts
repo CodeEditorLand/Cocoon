@@ -605,8 +605,8 @@ const EnsureVscodeAPIRegistered = async (
 		// Wrap so POJO / string / WorkspaceFolder-with-POJO-uri shapes get
 		// `URI.revive`-hydrated first. Instance checks downstream still
 		// match because `Reflect.construct` preserves the prototype chain.
-		const StockRelativePattern:any = (VsCodeTypes as any).RelativePattern;
-		const HydrateRelativePatternBase = (Base:unknown):unknown => {
+		const StockRelativePattern: any = (VsCodeTypes as any).RelativePattern;
+		const HydrateRelativePatternBase = (Base: unknown): unknown => {
 			if (Base == null) return Base;
 			if (typeof Base === "string") return Base;
 			if (Base instanceof URI) return Base;
@@ -622,10 +622,10 @@ const EnsureVscodeAPIRegistered = async (
 			const Revived = URI.revive(Base as any);
 			return Revived ?? Base;
 		};
-		const PatchedRelativePattern:any = function RelativePattern(
-			this:unknown,
-			Base:unknown,
-			Pattern:string,
+		const PatchedRelativePattern: any = function RelativePattern(
+			this: unknown,
+			Base: unknown,
+			Pattern: string,
 		) {
 			const Safe = HydrateRelativePatternBase(Base);
 			return Reflect.construct(
@@ -702,25 +702,29 @@ const EnsureVscodeAPIRegistered = async (
 		// TextEditorCursorStyle: declared in
 		// `vs/editor/common/config/editorOptions.ts` - also not in
 		// extHostTypes. vscodevim reads `vscode.TextEditorCursorStyle.Line`.
-		const TextEditorCursorStyle: Record<string | number, string | number> = {
-			Line: 1,
-			Block: 2,
-			Underline: 3,
-			LineThin: 4,
-			BlockOutline: 5,
-			UnderlineThin: 6,
-			1: "Line",
-			2: "Block",
-			3: "Underline",
-			4: "LineThin",
-			5: "BlockOutline",
-			6: "UnderlineThin",
-		};
+		const TextEditorCursorStyle: Record<string | number, string | number> =
+			{
+				Line: 1,
+				Block: 2,
+				Underline: 3,
+				LineThin: 4,
+				BlockOutline: 5,
+				UnderlineThin: 6,
+				1: "Line",
+				2: "Block",
+				3: "Underline",
+				4: "LineThin",
+				5: "BlockOutline",
+				6: "UnderlineThin",
+			};
 
 		// DebugConfigurationProviderTriggerKind: from
 		// `vs/workbench/contrib/debug/common/debug.ts` - not in extHostTypes.
 		// DEVSENSE.phptools-vscode reads `.Initial` at activation.
-		const DebugConfigurationProviderTriggerKind: Record<string | number, string | number> = {
+		const DebugConfigurationProviderTriggerKind: Record<
+			string | number,
+			string | number
+		> = {
 			Initial: 1,
 			Dynamic: 2,
 			1: "Initial",
@@ -1222,10 +1226,102 @@ const ActivateExtension = async (
 				Extension,
 				ExtensionPath,
 			);
+			// Pre-activation snapshot - surfaces what `vscode.workspace.workspaceFolders`
+			// actually exposes to the extension at the moment its `activate(context)`
+			// is invoked. The git extension's `Model.doInitialScan()` reads this list
+			// and bails when empty, which is exactly the F6 mystery (vscode.git
+			// activates ok but never reaches `vscode.scm.createSourceControl`).
+			// Gated to specific extension IDs so the log doesn't spam for the 113
+			// scanned extensions; covers the Git family + npm/gulp/jake which all
+			// take the same shortcut. Fires under `LAND_DEV_LOG=ext-preactivate` or
+			// the implicit `=short` (we always emit on stdout via console.log).
+			const InstrumentedExtensions = [
+				"vscode.git",
+				"vscode.git-base",
+				"vscode.npm",
+				"vscode.gulp",
+				"vscode.grunt",
+				"vscode.jake",
+				"vscode.merge-conflict",
+			];
+			const SnapshotInitState = (Phase: string): void => {
+				try {
+					const InitWorkspace =
+						(Context.ExtensionHostInitData as any)?.workspace ??
+						(Context.ExtensionHostInitData as any)?.workspaceData ??
+						{};
+					const InitFolders = Array.isArray(InitWorkspace.folders)
+						? InitWorkspace.folders
+						: [];
+					const FolderShape = InitFolders.map((F: any, I: number) => {
+						const UriField = F?.uri;
+						const UriShape =
+							typeof UriField === "string"
+								? `string("${UriField.slice(0, 80)}")`
+								: typeof UriField === "object" &&
+									  UriField !== null
+									? `object(scheme=${UriField.scheme ?? "<missing>"} fsPath=${
+											typeof UriField.fsPath === "string"
+												? UriField.fsPath.slice(0, 80)
+												: "<not-a-string>"
+										})`
+									: typeof UriField;
+						return `[${I}] name=${F?.name ?? "?"} uri=${UriShape}`;
+					}).join(" | ");
+					// Surface the typed value the extension will read from
+					// `config.get('git.autoRepositoryDetection')` - vscode.git's
+					// `model.js:340` bails on `!== true && !== 'subFolders'`,
+					// so a value that arrives as `1` or `"true"` or wrapped in
+					// an object would silently kill the SCM scan even when
+					// the merge says the key is present.
+					const ConfigState = (
+						globalThis as {
+							__cocoonConfigState?: {
+								ConfigCache?: Map<string, unknown>;
+							};
+						}
+					).__cocoonConfigState;
+					const AutoDetect = ConfigState?.ConfigCache?.get?.(
+						"git.autoRepositoryDetection",
+					);
+					const Enabled =
+						ConfigState?.ConfigCache?.get?.("git.enabled");
+					const AutoDetectShape = `${typeof AutoDetect}=${
+						typeof AutoDetect === "object"
+							? JSON.stringify(AutoDetect).slice(0, 80)
+							: String(AutoDetect)
+					}`;
+					console.log(
+						`[ExtensionHostHandler] ${Phase} ${ExtensionId} folders.length=${InitFolders.length} | git.enabled=${Enabled} | git.autoRepositoryDetection=${AutoDetectShape} | ${FolderShape}`,
+					);
+				} catch (Err) {
+					console.log(
+						`[ExtensionHostHandler] ${Phase} ${ExtensionId} snapshot failed: ${
+							(Err as { message?: string })?.message ??
+							String(Err)
+						}`,
+					);
+				}
+			};
+			if (InstrumentedExtensions.includes(ExtensionId)) {
+				SnapshotInitState("PRE-ACTIVATE");
+			}
 			await ActivateFn(ExtContext);
 			console.log(
 				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`,
 			);
+			if (InstrumentedExtensions.includes(ExtensionId)) {
+				// Post-activate snapshot - vscode.git's `Model.doInitialScan`
+				// runs in `.finally(...)` (background) *after* `_activate`
+				// returns. Capture state right after activate() resolves so
+				// we can compare the pre/post difference - if folders or
+				// autoRepositoryDetection differ between the two ticks, the
+				// extension is reading a different snapshot than we instrumented.
+				SnapshotInitState("POST-ACTIVATE");
+				// Schedule one more snapshot 1s later to catch any state that
+				// landed via $deltaWorkspaceFolders during activation.
+				setTimeout(() => SnapshotInitState("DEFERRED-1S"), 1000);
+			}
 			CocoonDevLog(
 				"ext-activate",
 				`[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,

@@ -19329,13 +19329,14 @@ var init_LanguageProviderRegistry = __esm({
 var WindowNamespace_exports = {};
 __export(WindowNamespace_exports, {
   CustomEditorProviders: () => CustomEditorProviders,
+  CustomEditorProvidersByViewType: () => CustomEditorProvidersByViewType,
   TreeDataProviders: () => TreeDataProviders,
   TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
   WebviewPanels: () => WebviewPanels,
   WebviewViewProviders: () => WebviewViewProviders,
   default: () => WindowNamespace_default
 });
-var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, WebviewPanels, CreateWindowNamespace, WindowNamespace_default;
+var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels, RegisterCustomEditor, CreateWindowNamespace, WindowNamespace_default;
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
@@ -19357,7 +19358,93 @@ var init_WindowNamespace = __esm({
     TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
     WebviewViewProviders = /* @__PURE__ */ new Map();
     CustomEditorProviders = /* @__PURE__ */ new Map();
+    CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
     WebviewPanels = /* @__PURE__ */ new Map();
+    RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, Options, IsReadonly) => {
+      const Handle = NextProviderHandle();
+      CustomEditorProviders.set(String(Handle), Provider);
+      CustomEditorProvidersByViewType.set(ViewType, {
+        Provider,
+        Readonly: IsReadonly,
+        Handle
+      });
+      Context.MountainClient?.sendRequest("webview.registerCustomEditor", [
+        Handle,
+        ViewType,
+        {
+          readonly: IsReadonly,
+          supportsMultipleEditorsPerDocument: Options.supportsMultipleEditorsPerDocument ?? false,
+          webviewOptions: Options.webviewOptions ?? {}
+        }
+      ]).catch(() => {
+      });
+      const SafeAwait = /* @__PURE__ */ __name(async (Channel, MethodName, Payload) => {
+        const Entry = CustomEditorProvidersByViewType.get(
+          Payload?.viewType ?? ViewType
+        );
+        if (!Entry || Entry.Handle !== Handle) return void 0;
+        if (Entry.Readonly && MethodName !== "resolveCustomEditor")
+          return void 0;
+        const Method = Entry.Provider?.[MethodName];
+        if (typeof Method !== "function") return void 0;
+        try {
+          const Result = await Method.call(
+            Entry.Provider,
+            Payload?.document,
+            Payload?.context ?? Payload?.destination,
+            Payload?.token
+          );
+          return Result;
+        } catch (Error2) {
+          try {
+            process.stdout.write(
+              `[CustomEditor:${Channel}] provider for "${ViewType}" threw: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}
+`
+            );
+          } catch {
+          }
+          return void 0;
+        }
+      }, "SafeAwait");
+      const Listeners = [];
+      const Subscribe = /* @__PURE__ */ __name((Channel, MethodName) => {
+        const Listener = /* @__PURE__ */ __name((Payload) => {
+          void SafeAwait(Channel, MethodName, Payload);
+        }, "Listener");
+        Context.Emitter.on(Channel, Listener);
+        Listeners.push({ Channel, Listener });
+      }, "Subscribe");
+      Subscribe("customEditor.saveDocument", "saveCustomDocument");
+      Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
+      Subscribe("customEditor.revertCustomDocument", "revertCustomDocument");
+      Subscribe("customEditor.backupCustomDocument", "backupCustomDocument");
+      Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
+      Subscribe(
+        "customEditor.didChangeCustomDocument",
+        "didChangeCustomDocument"
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          for (const { Channel, Listener } of Listeners) {
+            Context.Emitter.off(
+              Channel,
+              Listener
+            );
+          }
+          Listeners.length = 0;
+          CustomEditorProviders.delete(String(Handle));
+          const ByViewType = CustomEditorProvidersByViewType.get(ViewType);
+          if (ByViewType && ByViewType.Handle === Handle) {
+            CustomEditorProvidersByViewType.delete(ViewType);
+          }
+          Context.MountainClient?.sendRequest(
+            "webview.unregisterCustomEditor",
+            [Handle]
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "RegisterCustomEditor");
     CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
         let Options = void 0;
@@ -19550,6 +19637,7 @@ var init_WindowNamespace = __esm({
             append: /* @__PURE__ */ __name((Value) => {
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: Value
               }).catch(() => {
               });
@@ -19557,6 +19645,7 @@ var init_WindowNamespace = __esm({
             appendLine: /* @__PURE__ */ __name((Value) => {
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: `${Value}
 `
               }).catch(() => {
@@ -19587,6 +19676,7 @@ var init_WindowNamespace = __esm({
               });
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: Value
               }).catch(() => {
               });
@@ -19609,6 +19699,7 @@ var init_WindowNamespace = __esm({
             trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: `[trace] ${Message}
 `
               }).catch(() => {
@@ -19617,6 +19708,7 @@ var init_WindowNamespace = __esm({
             debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: `[debug] ${Message}
 `
               }).catch(() => {
@@ -19625,6 +19717,7 @@ var init_WindowNamespace = __esm({
             info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: `[info] ${Message}
 `
               }).catch(() => {
@@ -19633,6 +19726,7 @@ var init_WindowNamespace = __esm({
             warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: `[warn] ${Message}
 `
               }).catch(() => {
@@ -19642,6 +19736,7 @@ var init_WindowNamespace = __esm({
               const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
               Context.SendToMountain("outputChannel.append", {
                 handle: Handle,
+                name: Name,
                 value: `[error] ${Text}
 `
               }).catch(() => {
@@ -19774,10 +19869,10 @@ var init_WindowNamespace = __esm({
               },
               set html(Value) {
                 CurrentHtml = Value;
-                Context.MountainClient?.sendRequest(
-                  "webview.setHtml",
-                  [Handle, Value]
-                ).catch(() => {
+                Context.MountainClient?.sendRequest("webview.setHtml", [
+                  Handle,
+                  Value
+                ]).catch(() => {
                 });
               },
               cspSource: "vscode-resource: vscode-webview-resource: https:",
@@ -19798,10 +19893,7 @@ var init_WindowNamespace = __esm({
                 Context.Emitter.on(Event2, Listener);
                 return {
                   dispose: /* @__PURE__ */ __name(() => {
-                    Context.Emitter.removeListener(
-                      Event2,
-                      Listener
-                    );
+                    Context.Emitter.removeListener(Event2, Listener);
                   }, "dispose")
                 };
               }, "onDidReceiveMessage")
@@ -19878,10 +19970,10 @@ var init_WindowNamespace = __esm({
           ),
           close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
             try {
-              await Context.MountainClient?.sendRequest("Command.Execute", [
-                "workbench.action.closeActiveEditor",
-                []
-              ]);
+              await Context.MountainClient?.sendRequest(
+                "Command.Execute",
+                ["workbench.action.closeActiveEditor", []]
+              );
               return true;
             } catch {
               return false;
@@ -19988,25 +20080,28 @@ var init_WindowNamespace = __esm({
             }, "dispose")
           };
         }, "registerWebviewViewProvider"),
-        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
-          const Handle = NextProviderHandle();
-          CustomEditorProviders.set(String(Handle), Provider);
-          Context.MountainClient?.sendRequest(
-            "webview.registerCustomEditor",
-            [Handle, ViewType]
-          ).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              CustomEditorProviders.delete(String(Handle));
-              Context.MountainClient?.sendRequest(
-                "webview.unregisterCustomEditor",
-                [Handle]
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerCustomEditorProvider"),
+        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+          Context,
+          ViewType,
+          Provider,
+          Options ?? {},
+          false
+        ), "registerCustomEditorProvider"),
+        // `vscode.window.registerCustomReadonlyEditorProvider(ViewType, Provider)`
+        // is the read-only variant: extensions implementing media viewers
+        // (image previews, hex dumps) register here. The wire flow is the
+        // same as `registerCustomEditorProvider`; only the
+        // `readonly: true` flag and the absence of `OnSave*` participants
+        // distinguishes them. We set the same `customEditor.*` listener
+        // registrations so the workbench-side lifecycle still runs the
+        // resolveCustomTextEditor / resolveCustomEditor path correctly.
+        registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+          Context,
+          ViewType,
+          Provider,
+          Options ?? {},
+          true
+        ), "registerCustomReadonlyEditorProvider"),
         registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
           const Handle = NextProviderHandle();
           Context.SendToMountain("register_file_decoration_provider", {
@@ -20112,10 +20207,9 @@ var init_WindowNamespace = __esm({
           });
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain(
-                "unregister_external_uri_opener",
-                { handle: Handle }
-              ).catch(() => {
+              Context.SendToMountain("unregister_external_uri_opener", {
+                handle: Handle
+              }).catch(() => {
               });
             }, "dispose")
           };
@@ -20241,10 +20335,7 @@ var init_WindowNamespace = __esm({
           Context,
           "window.didChangeTerminalState"
         ),
-        onDidWriteTerminalData: MakeEventSubscriber(
-          Context,
-          "terminalData"
-        ),
+        onDidWriteTerminalData: MakeEventSubscriber(Context, "terminalData"),
         // Shell-integration events added for openai.chatgpt activation;
         // Land doesn't track shell integration yet so these fire never.
         // Must be a subscribable function, not a plain object.
@@ -20326,8 +20417,14 @@ var init_WindowNamespace = __esm({
           Context,
           "window.didChangeTerminalState"
         ),
-        onDidOpenTerminal: MakeEventSubscriber(Context, "window.didOpenTerminal"),
-        onDidCloseTerminal: MakeEventSubscriber(Context, "window.didCloseTerminal"),
+        onDidOpenTerminal: MakeEventSubscriber(
+          Context,
+          "window.didOpenTerminal"
+        ),
+        onDidCloseTerminal: MakeEventSubscriber(
+          Context,
+          "window.didCloseTerminal"
+        ),
         onDidChangeActiveTerminal: MakeEventSubscriber(
           Context,
           "window.didChangeActiveTerminal"
@@ -20391,7 +20488,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-26T10:28:34Z"
+      generatedAt: "2026-04-26T16:12:40Z"
     };
   }
 });
@@ -27627,10 +27724,50 @@ ${Stack}`
             Extension,
             ExtensionPath
           );
+          const InstrumentedExtensions = [
+            "vscode.git",
+            "vscode.git-base",
+            "vscode.npm",
+            "vscode.gulp",
+            "vscode.grunt",
+            "vscode.jake",
+            "vscode.merge-conflict"
+          ];
+          const SnapshotInitState = /* @__PURE__ */ __name((Phase) => {
+            try {
+              const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+              const InitFolders = Array.isArray(InitWorkspace.folders) ? InitWorkspace.folders : [];
+              const FolderShape = InitFolders.map((F, I) => {
+                const UriField = F?.uri;
+                const UriShape = typeof UriField === "string" ? `string("${UriField.slice(0, 80)}")` : typeof UriField === "object" && UriField !== null ? `object(scheme=${UriField.scheme ?? "<missing>"} fsPath=${typeof UriField.fsPath === "string" ? UriField.fsPath.slice(0, 80) : "<not-a-string>"})` : typeof UriField;
+                return `[${I}] name=${F?.name ?? "?"} uri=${UriShape}`;
+              }).join(" | ");
+              const ConfigState = globalThis.__cocoonConfigState;
+              const AutoDetect = ConfigState?.ConfigCache?.get?.(
+                "git.autoRepositoryDetection"
+              );
+              const Enabled2 = ConfigState?.ConfigCache?.get?.("git.enabled");
+              const AutoDetectShape = `${typeof AutoDetect}=${typeof AutoDetect === "object" ? JSON.stringify(AutoDetect).slice(0, 80) : String(AutoDetect)}`;
+              console.log(
+                `[ExtensionHostHandler] ${Phase} ${ExtensionId} folders.length=${InitFolders.length} | git.enabled=${Enabled2} | git.autoRepositoryDetection=${AutoDetectShape} | ${FolderShape}`
+              );
+            } catch (Err) {
+              console.log(
+                `[ExtensionHostHandler] ${Phase} ${ExtensionId} snapshot failed: ${Err?.message ?? String(Err)}`
+              );
+            }
+          }, "SnapshotInitState");
+          if (InstrumentedExtensions.includes(ExtensionId)) {
+            SnapshotInitState("PRE-ACTIVATE");
+          }
           await ActivateFn(ExtContext);
           console.log(
             `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
           );
+          if (InstrumentedExtensions.includes(ExtensionId)) {
+            SnapshotInitState("POST-ACTIVATE");
+            setTimeout(() => SnapshotInitState("DEFERRED-1S"), 1e3);
+          }
           CocoonDevLog(
             "ext-activate",
             `[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`

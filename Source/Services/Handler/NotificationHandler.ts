@@ -11,7 +11,7 @@
  *
  * | Emitter                  | Events                                                         |
  * | ------------------------ | -------------------------------------------------------------- |
- * | `Emitter`                | `extensionChanged`, `configurationChanged`, `windowFocused`, `windowBlurred`, `systemShutdown`, `webview.message:<handle>`, `webview.dispose:<handle>`, `webview.viewState:<handle>`, `fileWatcher:<handle>`, `unknownNotification` |
+ * | `Emitter`                | `extensionChanged`, `configurationChanged`, `windowFocused`, `windowBlurred`, `systemShutdown`, `webview.message:<handle>`, `webview.dispose:<handle>`, `webview.viewState:<handle>`, `fileWatcher:<handle>`, `debug.didStartSession`, `debug.didTerminateSession`, `debug.didChangeActiveSession`, `debug.didReceiveCustomEvent`, `debug.didChangeBreakpoints`, `debug.didChangeActiveStackItem`, `customEditor.saveDocument`, `customEditor.saveDocumentAs`, `customEditor.revertCustomDocument`, `customEditor.backupCustomDocument`, `customEditor.willSaveCustomDocument`, `customEditor.didChangeCustomDocument`, `unknownNotification` |
  * | `WorkspaceEventEmitter`  | `didOpenTextDocument`, `didChangeTextDocument`, `didCloseTextDocument`, `didSaveTextDocument` |
  *
  * ## Why two emitters
@@ -68,9 +68,8 @@ type WorkspaceDeltaPayload = {
  * fan out to extension callbacks. One handler is enough - Node dedupes via
  * reference and we only register once per process.
  */
-const { URI: LazyURI } = await import(
-	"@codeeditorland/output/vs/base/common/uri"
-);
+const { URI: LazyURI } =
+	await import("@codeeditorland/output/vs/base/common/uri");
 type UriObject = {
 	scheme: string;
 	authority: string;
@@ -84,9 +83,9 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 	if (!Raw) return null;
 	if (typeof Raw === "string") {
 		try {
-			return (LazyURI as unknown as { parse: (s: string) => UriObject }).parse(
-				Raw,
-			);
+			return (
+				LazyURI as unknown as { parse: (s: string) => UriObject }
+			).parse(Raw);
 		} catch {
 			return null;
 		}
@@ -100,9 +99,9 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 	)
 		return Raw;
 	try {
-		return (LazyURI as unknown as { parse: (s: string) => UriObject }).parse(
-			Raw.toString(),
-		);
+		return (
+			LazyURI as unknown as { parse: (s: string) => UriObject }
+		).parse(Raw.toString());
 	} catch {
 		return null;
 	}
@@ -110,7 +109,10 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 
 // Register once at module load so any sync throw inside a listener chain
 // cannot nuke the extension host.
-if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandlerInstalled) {
+if (
+	!(process as { _landUncaughtHandlerInstalled?: boolean })
+		._landUncaughtHandlerInstalled
+) {
 	process.on("uncaughtException", (Error) => {
 		try {
 			const Stack =
@@ -164,7 +166,7 @@ if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandl
 			// segment so the filter survives extension version bumps.
 			const HasExtensionFrame =
 				Text.includes("/.land/extensions/") ||
-				Text.includes("/extensions/") &&
+				(Text.includes("/extensions/") &&
 					(Text.includes("DEVSENSE.phptools") ||
 						Text.includes("redhat.java") ||
 						Text.includes("redhat.vscode-yaml") ||
@@ -173,27 +175,37 @@ if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandl
 						Text.includes("RooVeterinaryInc.roo-cline") ||
 						Text.includes("eamodio.gitlens") ||
 						Text.includes("vscodevim.vim") ||
-						Text.includes("Dart-Code.dart-code"));
+						Text.includes("Dart-Code.dart-code")));
 			const IsBenignExtensionTypeError =
 				HasExtensionFrame &&
 				(Text.includes("TypeError: Cannot read properties of null") ||
-					Text.includes("TypeError: Cannot read properties of undefined") ||
+					Text.includes(
+						"TypeError: Cannot read properties of undefined",
+					) ||
 					Text.includes("TypeError: Cannot set properties of null") ||
-					Text.includes("TypeError: Cannot set properties of undefined") ||
+					Text.includes(
+						"TypeError: Cannot set properties of undefined",
+					) ||
 					Text.includes("is not a function") ||
 					Text.includes("is not iterable"));
 			const IsBenign = IsBenignEnoent || IsBenignExtensionTypeError;
-			const Tag = IsBenign ? "LandFix:UnhandledRejection:Verbose" : "LandFix:UnhandledRejection";
+			const Tag = IsBenign
+				? "LandFix:UnhandledRejection:Verbose"
+				: "LandFix:UnhandledRejection";
 			if (
 				IsBenign &&
-				!process.env["LAND_DEV_LOG"]?.includes("landfix-rejection-verbose")
+				!process.env["LAND_DEV_LOG"]?.includes(
+					"landfix-rejection-verbose",
+				)
 			) {
 				return;
 			}
 			process.stdout.write(`[${Tag}] ${Text}\n`);
 		} catch {}
 	});
-	(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandlerInstalled = true;
+	(
+		process as { _landUncaughtHandlerInstalled?: boolean }
+	)._landUncaughtHandlerInstalled = true;
 	try {
 		process.stdout.write(
 			"[LandFix:UncaughtHandlers] uncaughtException + unhandledRejection handlers installed at NotificationHandler module load\n",
@@ -219,7 +231,9 @@ const ApplyWorkspaceDelta = (
 	const Added = Payload?.added ?? [];
 	const Removed = Payload?.removed ?? [];
 	const RemovedUris = new Set<string>(
-		Removed.map((Folder) => Folder?.uri ?? "").filter((Uri) => Uri.length > 0),
+		Removed.map((Folder) => Folder?.uri ?? "").filter(
+			(Uri) => Uri.length > 0,
+		),
 	);
 
 	const Init = (Context.ExtensionHostInitData ??= {});
@@ -292,7 +306,7 @@ const SafeEmit = (
 			const Err = Caught as { message?: string; stack?: string };
 			const Summary =
 				typeof Err?.stack === "string"
-					? (Err.stack.split("\n").slice(0, 3).join(" | "))
+					? Err.stack.split("\n").slice(0, 3).join(" | ")
 					: typeof Err?.message === "string"
 						? Err.message
 						: String(Caught);
@@ -376,7 +390,9 @@ const HandleSpecificNotification = (
 			// module-init stays side-effect-free.
 			if (Context) {
 				const CapturedContext = Context;
-				const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+				const Models = Array.isArray(Parameters)
+					? Parameters
+					: [Parameters];
 				const LanguageIdentifiers = new Set<string>();
 				for (const Model of Models) {
 					const Id: string | undefined =
@@ -432,7 +448,10 @@ const HandleSpecificNotification = (
 				? Parameters[0]
 				: Parameters;
 			if (Payload?.handle) {
-				Emitter.emit(`webview.message:${Payload.handle}`, Payload.message);
+				Emitter.emit(
+					`webview.message:${Payload.handle}`,
+					Payload.message,
+				);
 			}
 			break;
 		}
@@ -506,15 +525,15 @@ const HandleSpecificNotification = (
 					index: typeof Wire.index === "number" ? Wire.index : Index,
 				};
 			};
-			const AddedHydrated = Added.map((W, I) => HydrateFolder(W, I)).filter(
-				(V): V is Exclude<typeof V, null> => V !== null,
-			);
-			const RemovedHydrated = Removed.map((W, I) => HydrateFolder(W, I)).filter(
-				(V): V is Exclude<typeof V, null> => V !== null,
-			);
-			const MergedHydrated = Merged.map((W, I) => HydrateFolder(W, I)).filter(
-				(V): V is Exclude<typeof V, null> => V !== null,
-			);
+			const AddedHydrated = Added.map((W, I) =>
+				HydrateFolder(W, I),
+			).filter((V): V is Exclude<typeof V, null> => V !== null);
+			const RemovedHydrated = Removed.map((W, I) =>
+				HydrateFolder(W, I),
+			).filter((V): V is Exclude<typeof V, null> => V !== null);
+			const MergedHydrated = Merged.map((W, I) =>
+				HydrateFolder(W, I),
+			).filter((V): V is Exclude<typeof V, null> => V !== null);
 			try {
 				process.stdout.write(
 					`[LandFix:WsDelta] hydrated +${AddedHydrated.length}/${Added.length} -${RemovedHydrated.length}/${Removed.length} folders=${MergedHydrated.length}/${Merged.length}\n`,
@@ -557,7 +576,9 @@ const HandleSpecificNotification = (
 			// payload is `[terminalId, data]`. Emit on Context.Emitter under
 			// a terminal-scoped channel so each extension's
 			// `onDidWriteTerminalData` listener gets only its own stream.
-			const Payload = Array.isArray(Parameters) ? Parameters : [Parameters];
+			const Payload = Array.isArray(Parameters)
+				? Parameters
+				: [Parameters];
 			const TerminalId = Payload[0];
 			const Data = Payload[1];
 			if (TerminalId !== undefined) {
@@ -570,7 +591,9 @@ const HandleSpecificNotification = (
 			// Mountain fires this when a PTY shell process exits. Payload is
 			// `[terminalId]`. Mirror the same pattern as data events so per-
 			// terminal subscribers dispose cleanly.
-			const Payload = Array.isArray(Parameters) ? Parameters : [Parameters];
+			const Payload = Array.isArray(Parameters)
+				? Parameters
+				: [Parameters];
 			const TerminalId = Payload[0];
 			if (TerminalId !== undefined) {
 				Emitter.emit(`terminal:exit:${TerminalId}`);
@@ -581,9 +604,9 @@ const HandleSpecificNotification = (
 		case "$fileWatcher:event":
 			// { handle, kind: "create"|"change"|"delete", path }
 			{
-				const Event = (Array.isArray(Parameters)
-					? Parameters[0]
-					: Parameters) as
+				const Event = (
+					Array.isArray(Parameters) ? Parameters[0] : Parameters
+				) as
 					| { handle?: string; kind?: string; path?: string }
 					| undefined;
 				if (Event?.handle && Event.kind && Event.path) {
@@ -594,6 +617,80 @@ const HandleSpecificNotification = (
 				}
 			}
 			break;
+		// Debug session lifecycle. Mountain emits these via
+		// `IPCProvider.SendNotificationToSideCar` from `DebugProvider.rs`
+		// whenever a debug adapter starts/stops or a DAP custom event
+		// arrives. The corresponding `vscode.debug.onDid*` listeners in
+		// `DebugNamespace.ts` subscribe to the channels emitted below,
+		// so re-emitting under the canonical short name is what makes
+		// the extension-facing event fire.
+		case "$onDidStartDebugSession": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			Emitter.emit("debug.didStartSession", Payload);
+			break;
+		}
+		case "$onDidTerminateDebugSession": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			Emitter.emit("debug.didTerminateSession", Payload);
+			break;
+		}
+		case "$onDidChangeActiveDebugSession": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			Emitter.emit("debug.didChangeActiveSession", Payload);
+			break;
+		}
+		case "$onDidReceiveDebugSessionCustomEvent": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			Emitter.emit("debug.didReceiveCustomEvent", Payload);
+			break;
+		}
+		case "$onDidChangeBreakpoints": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			Emitter.emit("debug.didChangeBreakpoints", Payload);
+			break;
+		}
+		case "$onDidChangeActiveStackItem": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			Emitter.emit("debug.didChangeActiveStackItem", Payload);
+			break;
+		}
+		// Custom-editor document lifecycle. Mountain forwards each
+		// workbench-side save / revert / backup request as one of the
+		// `$onSave*Document` / `$onRevertCustomDocument` reverse-RPCs.
+		// We re-emit on a `customEditor.*` channel so the matching
+		// provider in `CustomEditorProviders` can dispatch through the
+		// stored provider methods. The actual provider invocation is
+		// done by `WindowNamespace`'s `handleCustomDocumentLifecycle`
+		// helper which subscribes to these emitter channels.
+		case "$onSaveCustomDocument":
+		case "$onSaveCustomDocumentAs":
+		case "$onRevertCustomDocument":
+		case "$onBackupCustomDocument":
+		case "$onWillSaveCustomDocument":
+		case "$onDidChangeCustomDocument": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			// Method-suffix becomes channel suffix (camelCase): `onSaveCustomDocument`
+			// → `customEditor.saveDocument`, etc.
+			const Suffix = Method.startsWith("$on")
+				? Method.slice(3, 4).toLowerCase() + Method.slice(4)
+				: Method;
+			Emitter.emit(`customEditor.${Suffix}`, Payload);
+			break;
+		}
 		default:
 			// Generic handler for unknown notification types - survive
 			// esbuild's production `drop: ["console"]` so unknown routes are

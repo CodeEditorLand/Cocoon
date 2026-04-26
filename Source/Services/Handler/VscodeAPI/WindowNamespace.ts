@@ -7,8 +7,8 @@
  * Mountain pushes down via gRPC notifications.
  */
 
-import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import type { HandlerContext } from "../HandlerContext.js";
 
 type Listener<T> = (Event: T) => unknown;
 
@@ -69,8 +69,162 @@ export const TreeDataProvidersByViewId = new Map<string, any>();
  * tree registry.
  */
 export const WebviewViewProviders = new Map<string, any>();
+/**
+ * Custom editor provider registry. Indexed by both the numeric handle
+ * (for `webview.{register,unregister}CustomEditor` round-trips) and by
+ * the public `viewType` string so that workbench-side reverse-RPCs
+ * (`$onSaveCustomDocument`, `$onRevertCustomDocument`,
+ * `$onBackupCustomDocument`, `$onWillSaveCustomDocument`,
+ * `$onDidChangeCustomDocument`) can resolve the provider without
+ * threading the handle through every NotificationHandler payload.
+ *
+ * Each entry stores both the raw provider object and a `readonly`
+ * flag - readonly providers (`registerCustomReadonlyEditorProvider`)
+ * never receive save participants, so the lifecycle dispatcher
+ * silently no-ops save events for them rather than calling a missing
+ * method on the provider.
+ */
 export const CustomEditorProviders = new Map<string, any>();
+export const CustomEditorProvidersByViewType = new Map<
+	string,
+	{ Provider: any; Readonly: boolean; Handle: number }
+>();
 export const WebviewPanels = new Map<string, any>();
+
+/**
+ * Shared registration body for `registerCustomEditorProvider` and
+ * `registerCustomReadonlyEditorProvider`. Subscribes to the
+ * `customEditor.*` channels emitted by `NotificationHandler.ts` and
+ * dispatches the corresponding provider method when the workbench
+ * issues a reverse-RPC. The subscription lives on `Context.Emitter`
+ * scoped per-handle so dispose() cleans it up without affecting
+ * other registrations of the same `viewType`.
+ *
+ * Provider method shapes (per `vscode.d.ts`):
+ *
+ *   resolveCustomEditor(document, webviewPanel, token) - mandatory.
+ *   resolveCustomTextEditor(document, webviewPanel, token) - text variant.
+ *   saveCustomDocument(document, cancellation) - returns Thenable<void>.
+ *   saveCustomDocumentAs(document, destination, cancellation).
+ *   revertCustomDocument(document, cancellation).
+ *   backupCustomDocument(document, context, cancellation).
+ *
+ * Each method receives the document object the workbench sends in the
+ * reverse-RPC payload; we forward verbatim. The handler returns the
+ * provider's promise so the workbench-side awaiter resolves with the
+ * extension's result. Errors are caught and reported via `process.stdout`
+ * so a buggy provider never crashes the host - readonly providers
+ * silently skip the save participants.
+ */
+const RegisterCustomEditor = (
+	Context: HandlerContext,
+	ViewType: string,
+	Provider: any,
+	Options: {
+		supportsMultipleEditorsPerDocument?: boolean;
+		webviewOptions?: unknown;
+	},
+	IsReadonly: boolean,
+) => {
+	const Handle = NextProviderHandle();
+	CustomEditorProviders.set(String(Handle), Provider);
+	CustomEditorProvidersByViewType.set(ViewType, {
+		Provider,
+		Readonly: IsReadonly,
+		Handle,
+	});
+
+	Context.MountainClient?.sendRequest("webview.registerCustomEditor", [
+		Handle,
+		ViewType,
+		{
+			readonly: IsReadonly,
+			supportsMultipleEditorsPerDocument:
+				Options.supportsMultipleEditorsPerDocument ?? false,
+			webviewOptions: Options.webviewOptions ?? {},
+		},
+	]).catch(() => {});
+
+	const SafeAwait = async (
+		Channel: string,
+		MethodName: string,
+		Payload: any,
+	): Promise<unknown> => {
+		const Entry = CustomEditorProvidersByViewType.get(
+			Payload?.viewType ?? ViewType,
+		);
+		if (!Entry || Entry.Handle !== Handle) return undefined;
+		if (Entry.Readonly && MethodName !== "resolveCustomEditor")
+			return undefined;
+		const Method = (Entry.Provider as Record<string, unknown>)?.[
+			MethodName
+		];
+		if (typeof Method !== "function") return undefined;
+		try {
+			const Result = await (Method as (...A: unknown[]) => unknown).call(
+				Entry.Provider,
+				Payload?.document,
+				Payload?.context ?? Payload?.destination,
+				Payload?.token,
+			);
+			return Result;
+		} catch (Error) {
+			try {
+				process.stdout.write(
+					`[CustomEditor:${Channel}] provider for "${ViewType}" threw: ${
+						Error instanceof globalThis.Error
+							? Error.message
+							: String(Error)
+					}\n`,
+				);
+			} catch {}
+			return undefined;
+		}
+	};
+
+	const Listeners: Array<{
+		Channel: string;
+		Listener: (P: unknown) => void;
+	}> = [];
+	const Subscribe = (Channel: string, MethodName: string) => {
+		const Listener = (Payload: unknown) => {
+			void SafeAwait(Channel, MethodName, Payload);
+		};
+		Context.Emitter.on(Channel, Listener);
+		Listeners.push({ Channel, Listener });
+	};
+
+	Subscribe("customEditor.saveDocument", "saveCustomDocument");
+	Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
+	Subscribe("customEditor.revertCustomDocument", "revertCustomDocument");
+	Subscribe("customEditor.backupCustomDocument", "backupCustomDocument");
+	Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
+	Subscribe(
+		"customEditor.didChangeCustomDocument",
+		"didChangeCustomDocument",
+	);
+
+	return {
+		dispose: () => {
+			for (const { Channel, Listener } of Listeners) {
+				Context.Emitter.off(
+					Channel,
+					Listener as (..._A: unknown[]) => void,
+				);
+			}
+			Listeners.length = 0;
+			CustomEditorProviders.delete(String(Handle));
+			const ByViewType = CustomEditorProvidersByViewType.get(ViewType);
+			if (ByViewType && ByViewType.Handle === Handle) {
+				CustomEditorProvidersByViewType.delete(ViewType);
+			}
+			Context.MountainClient?.sendRequest(
+				"webview.unregisterCustomEditor",
+				[Handle],
+			).catch(() => {});
+		},
+	};
+};
 
 const CreateWindowNamespace = (Context: HandlerContext) => {
 	// User-interaction prompts need a *round-trip* (sendRequest) not a
@@ -301,14 +455,23 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Channel = {
 				name: Name,
 				append: (Value: string) => {
+					// Pass `name` alongside `handle` so Mountain's
+					// OutputChannelAppend handler can route `Git` /
+					// `Source Control` / `SCM` traffic to a visible
+					// dev_log tag - the F6 diagnostic depends on
+					// vscode.git's `logger.info('[Model][doInitialScan]
+					// …')` lines being readable in `LAND_DEV_LOG=short`
+					// runs.
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: Value,
 					}).catch(() => {});
 				},
 				appendLine: (Value: string) => {
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: `${Value}\n`,
 					}).catch(() => {});
 				},
@@ -333,6 +496,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					}).catch(() => {});
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: Value,
 					}).catch(() => {});
 				},
@@ -351,24 +515,28 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				trace: (Message: string, ..._Arguments: unknown[]) => {
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: `[trace] ${Message}\n`,
 					}).catch(() => {});
 				},
 				debug: (Message: string, ..._Arguments: unknown[]) => {
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: `[debug] ${Message}\n`,
 					}).catch(() => {});
 				},
 				info: (Message: string, ..._Arguments: unknown[]) => {
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: `[info] ${Message}\n`,
 					}).catch(() => {});
 				},
 				warn: (Message: string, ..._Arguments: unknown[]) => {
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: `[warn] ${Message}\n`,
 					}).catch(() => {});
 				},
@@ -379,6 +547,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							: String(MessageOrError);
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
+						name: Name,
 						value: `[error] ${Text}\n`,
 					}).catch(() => {});
 				},
@@ -505,10 +674,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					},
 					set html(Value: string) {
 						CurrentHtml = Value;
-						Context.MountainClient?.sendRequest(
-							"webview.setHtml",
-							[Handle, Value],
-						).catch(() => {});
+						Context.MountainClient?.sendRequest("webview.setHtml", [
+							Handle,
+							Value,
+						]).catch(() => {});
 					},
 					cspSource:
 						"vscode-resource: vscode-webview-resource: https:",
@@ -531,10 +700,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						Context.Emitter.on(Event, Listener);
 						return {
 							dispose: () => {
-								Context.Emitter.removeListener(
-									Event,
-									Listener,
-								);
+								Context.Emitter.removeListener(Event, Listener);
 							},
 						};
 					},
@@ -620,10 +786,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				// the workbench command `workbench.action.closeActiveEditor`
 				// covers the default case and is a registered native command.
 				try {
-					await Context.MountainClient?.sendRequest("Command.Execute", [
-						"workbench.action.closeActiveEditor",
-						[],
-					]);
+					await Context.MountainClient?.sendRequest(
+						"Command.Execute",
+						["workbench.action.closeActiveEditor", []],
+					);
 					return true;
 				} catch {
 					return false;
@@ -730,23 +896,45 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				},
 			};
 		},
-		registerCustomEditorProvider: (ViewType: string, Provider: any) => {
-			const Handle = NextProviderHandle();
-			CustomEditorProviders.set(String(Handle), Provider);
-			Context.MountainClient?.sendRequest(
-				"webview.registerCustomEditor",
-				[Handle, ViewType],
-			).catch(() => {});
-			return {
-				dispose: () => {
-					CustomEditorProviders.delete(String(Handle));
-					Context.MountainClient?.sendRequest(
-						"webview.unregisterCustomEditor",
-						[Handle],
-					).catch(() => {});
-				},
-			};
-		},
+		registerCustomEditorProvider: (
+			ViewType: string,
+			Provider: any,
+			Options?: {
+				supportsMultipleEditorsPerDocument?: boolean;
+				webviewOptions?: unknown;
+			},
+		) =>
+			RegisterCustomEditor(
+				Context,
+				ViewType,
+				Provider,
+				Options ?? {},
+				false,
+			),
+
+		// `vscode.window.registerCustomReadonlyEditorProvider(ViewType, Provider)`
+		// is the read-only variant: extensions implementing media viewers
+		// (image previews, hex dumps) register here. The wire flow is the
+		// same as `registerCustomEditorProvider`; only the
+		// `readonly: true` flag and the absence of `OnSave*` participants
+		// distinguishes them. We set the same `customEditor.*` listener
+		// registrations so the workbench-side lifecycle still runs the
+		// resolveCustomTextEditor / resolveCustomEditor path correctly.
+		registerCustomReadonlyEditorProvider: (
+			ViewType: string,
+			Provider: any,
+			Options?: {
+				supportsMultipleEditorsPerDocument?: boolean;
+				webviewOptions?: unknown;
+			},
+		) =>
+			RegisterCustomEditor(
+				Context,
+				ViewType,
+				Provider,
+				Options ?? {},
+				true,
+			),
 		registerFileDecorationProvider: (Provider: any) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_file_decoration_provider", {
@@ -848,10 +1036,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}).catch(() => {});
 			return {
 				dispose: () => {
-					Context.SendToMountain(
-						"unregister_external_uri_opener",
-						{ handle: Handle },
-					).catch(() => {});
+					Context.SendToMountain("unregister_external_uri_opener", {
+						handle: Handle,
+					}).catch(() => {});
 				},
 			};
 		},
@@ -925,9 +1112,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			_Options?: unknown,
 		): Promise<unknown | undefined> => {
 			const Folders =
-				(Context.ExtensionHostInitData?.workspace as {
-					folders?: unknown[];
-				} | undefined)?.folders ?? [];
+				(
+					Context.ExtensionHostInitData?.workspace as
+						| {
+								folders?: unknown[];
+						  }
+						| undefined
+				)?.folders ?? [];
 			return Folders[0];
 		},
 
@@ -937,7 +1128,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// value. Stock extHost implementation does the same degradation
 		// path.
 		withScmProgress: async <R>(
-			Task: (Progress: { report: (Value: number) => void }) => PromiseLike<R>,
+			Task: (Progress: {
+				report: (Value: number) => void;
+			}) => PromiseLike<R>,
 		): Promise<R> =>
 			Task({
 				report: () => {},
@@ -996,10 +1189,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Context,
 			"window.didChangeTerminalState",
 		),
-		onDidWriteTerminalData: MakeEventSubscriber(
-			Context,
-			"terminalData",
-		),
+		onDidWriteTerminalData: MakeEventSubscriber(Context, "terminalData"),
 		// Shell-integration events added for openai.chatgpt activation;
 		// Land doesn't track shell integration yet so these fire never.
 		// Must be a subscribable function, not a plain object.
@@ -1083,8 +1273,14 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Context,
 			"window.didChangeTerminalState",
 		),
-		onDidOpenTerminal: MakeEventSubscriber(Context, "window.didOpenTerminal"),
-		onDidCloseTerminal: MakeEventSubscriber(Context, "window.didCloseTerminal"),
+		onDidOpenTerminal: MakeEventSubscriber(
+			Context,
+			"window.didOpenTerminal",
+		),
+		onDidCloseTerminal: MakeEventSubscriber(
+			Context,
+			"window.didCloseTerminal",
+		),
 		onDidChangeActiveTerminal: MakeEventSubscriber(
 			Context,
 			"window.didChangeActiveTerminal",
