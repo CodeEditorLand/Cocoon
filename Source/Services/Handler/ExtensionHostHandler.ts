@@ -215,7 +215,19 @@ const HandleActivateByEvent = async (
 		ActivateExtension(Context, ExtId, ActivationEvent).catch(
 			(Err: unknown) => {
 				const Msg = Err instanceof Error ? Err.message : String(Err);
-				console.warn(
+				// Activation failures whose root cause is the
+				// extension's own internal logic (peer-dependency
+				// missing, semver parse on undefined, malformed
+				// schema in its bundle) are NOT Land bugs - the
+				// extension would fail on stock VS Code too if its
+				// declared dependency wasn't installed. Routing the
+				// log line to stdout keeps the diagnostic info but
+				// stops Mountain's stderr-classifier from elevating
+				// it to a `warn:` prefix that suggests Land is
+				// broken. Same downgrade pattern as
+				// `GRPCServerService` already uses for `$provide*`
+				// handler rejections.
+				console.log(
 					`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
 				);
 				// For `Class extends value undefined` errors, surface the top
@@ -232,7 +244,7 @@ const HandleActivateByEvent = async (
 						.split("\n")
 						.slice(0, 6)
 						.join("\n");
-					console.warn(
+					console.log(
 						`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
 					);
 				}

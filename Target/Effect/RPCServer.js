@@ -28382,7 +28382,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-26T09:52:33Z"
+      generatedAt: "2026-04-26T10:28:34Z"
     };
   }
 });
@@ -34692,12 +34692,12 @@ var init_ExtensionHostHandler = __esm({
         ActivateExtension(Context21, ExtId, ActivationEvent).catch(
           (Err) => {
             const Msg = Err instanceof Error ? Err.message : String(Err);
-            console.warn(
+            console.log(
               `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
             );
             if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
               const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
-              console.warn(
+              console.log(
                 `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
 ${Stack}`
               );
