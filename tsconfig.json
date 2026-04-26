@@ -48,6 +48,9 @@
 			"@codeeditorland/output/*": [
 				"../../Dependency/Microsoft/Dependency/Editor/out/*",
 				"../Output/Target/Microsoft/VSCode/*"
+			],
+			"vscode": [
+				"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
 			]
 		},
 

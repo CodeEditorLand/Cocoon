@@ -9,6 +9,7 @@
 
 import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import WrapTasksNamespace from "./WrapTasksNamespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -21,7 +22,7 @@ const EventSubscriber =
 		};
 	};
 
-const CreateTasksNamespace = (Context: HandlerContext) => ({
+const CreateTasksNamespace = (Context: HandlerContext) => WrapTasksNamespace({
 	registerTaskProvider: (TaskType: string, _Provider: unknown) => {
 		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_task_provider", {

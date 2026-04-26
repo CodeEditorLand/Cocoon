@@ -358,7 +358,7 @@ const EnforceMemoryLimit = Effect.gen(function* () {
 	const Service = yield* PatcherService;
 	const Policy = Service.GetSecurityPolicy();
 	if (Policy.MaxMemoryMB > 0) {
-		const MaxMemoryInBytes = Policy.MaxMemoryMB * 1024 * 1024;
+		void (Policy.MaxMemoryMB * 1024 * 1024);
 		// TODO: Implement actual memory limit enforcement via v8.setFlagsFromString
 		// Current JS heap size monitoring is limited, need native integration
 		yield* Effect.logDebug(

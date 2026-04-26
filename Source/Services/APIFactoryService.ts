@@ -189,7 +189,7 @@ const createVSCodeAPI = (
 		window: {
 			showInformationMessage: async (
 				message: string,
-				...items: string[]
+				..._items: string[]
 			) => {
 				await mountainClient.sendRequest("window.showMessage", {
 					title: "Information",
@@ -198,7 +198,7 @@ const createVSCodeAPI = (
 				});
 				return undefined;
 			},
-			showErrorMessage: async (message: string, ...items: string[]) => {
+			showErrorMessage: async (message: string, ..._items: string[]) => {
 				await mountainClient.sendRequest("window.showMessage", {
 					title: "Error",
 					message: message,
@@ -206,7 +206,7 @@ const createVSCodeAPI = (
 				});
 				return undefined;
 			},
-			showWarningMessage: async (message: string, ...items: string[]) => {
+			showWarningMessage: async (message: string, ..._items: string[]) => {
 				await mountainClient.sendRequest("window.showMessage", {
 					title: "Warning",
 					message: message,
@@ -242,7 +242,7 @@ const createVSCodeAPI = (
 					},
 				};
 			},
-			createStatusBarItem: (alignment?: any, priority?: number) => ({
+			createStatusBarItem: (_alignment?: any, _priority?: number) => ({
 				show: () => {},
 				hide: () => {},
 				dispose: () => {},
@@ -250,16 +250,16 @@ const createVSCodeAPI = (
 				tooltip: "",
 				command: undefined,
 			}),
-			createOutputChannel: (name: string) => ({
-				append: (value: string) => {},
-				appendLine: (value: string) => {},
+			createOutputChannel: (_name: string) => ({
+				append: (_value: string) => {},
+				appendLine: (_value: string) => {},
 				clear: () => {},
 				show: () => {},
 				hide: () => {},
 				dispose: () => {},
 			}),
-			withProgress: async (options: any, task: any) => {
-				return task({ report: (value: any) => {} });
+			withProgress: async (_options: any, task: any) => {
+				return task({ report: (_value: any) => {} });
 			},
 			// Terminal shell-integration events. Land doesn't track shell
 			// integration, so extensions (openai.chatgpt) that subscribe get
@@ -319,7 +319,7 @@ const createVSCodeAPI = (
 					options: { overwrite: boolean },
 				) => fsService.rename(source, target, options),
 			},
-			findFiles: async (include: string) => [],
+			findFiles: async (_include: string) => [],
 			openTextDocument: async (uri: any) => ({
 				getText: () => "",
 				uri,
@@ -456,7 +456,7 @@ const createVSCodeAPI = (
 
 		// --- Extensions Namespace ---
 		extensions: {
-			getExtension: (id: string) => undefined,
+			getExtension: (_id: string) => undefined,
 			all: [],
 		},
 
@@ -616,8 +616,8 @@ const createVSCodeAPI = (
 			activeDebugSession: undefined,
 		},
 		scm: {
-			createSourceControl: (id: string, label: string) => ({
-				createResourceGroup: (id: string, label: string) => ({
+			createSourceControl: (_id: string, _label: string) => ({
+				createResourceGroup: (_id: string, _label: string) => ({
 					resourceStates: [],
 				}),
 				dispose: () => {},

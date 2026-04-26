@@ -376,7 +376,7 @@ export function GetLanguage(): string {
 	if (Option.isSome(lcAll) && lcAll.value) {
 		const parts = lcAll.value.split(".");
 		if (parts.length > 0) {
-			const locale = parts[0].replace("_", "-");
+			const locale = parts[0]!.replace("_", "-");
 			return locale.split("-")[0] || DEFAULT_LANGUAGE;
 		}
 	}
@@ -385,7 +385,7 @@ export function GetLanguage(): string {
 	if (Option.isSome(lang) && lang.value) {
 		const parts = lang.value.split(".");
 		if (parts.length > 0) {
-			const locale = parts[0].replace("_", "-");
+			const locale = parts[0]!.replace("_", "-");
 			return locale.split("-")[0] || DEFAULT_LANGUAGE;
 		}
 	}
@@ -424,7 +424,7 @@ export function GetLocale(): string {
 	if (Option.isSome(lcAll) && lcAll.value) {
 		const parts = lcAll.value.split(".");
 		if (parts && parts.length > 0) {
-			return parts[0].replace("_", "-");
+			return parts[0]!.replace("_", "-");
 		}
 	}
 
@@ -432,7 +432,7 @@ export function GetLocale(): string {
 	if (Option.isSome(lang) && lang.value) {
 		const parts = lang.value.split(".");
 		if (parts && parts.length > 0) {
-			return parts[0].replace("_", "-");
+			return parts[0]!.replace("_", "-");
 		}
 	}
 

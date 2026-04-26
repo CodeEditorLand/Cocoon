@@ -578,7 +578,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						positionAt: (Offset: number) => {
 							let Remaining = Offset;
 							for (let I = 0; I < DocumentLines.length; I++) {
-								const Len = DocumentLines[I].length + 1;
+								const Len = DocumentLines[I]!.length + 1;
 								if (Remaining < Len)
 									return { line: I, character: Remaining };
 								Remaining -= Len;

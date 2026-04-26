@@ -324,7 +324,7 @@ function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
 	const locale =
 		env["LC_ALL"] || env["LC_MESSAGES"] || env["LANG"] || env["LANGUAGE"];
 	if (locale) {
-		_locale = locale.split(".")[0].replace("_", "-") || DEFAULT_LOCALE;
+		_locale = locale.split(".")[0]!.replace("_", "-") || DEFAULT_LOCALE;
 		_language = _locale.split("-")[0] || DEFAULT_LANGUAGE;
 		return;
 	}

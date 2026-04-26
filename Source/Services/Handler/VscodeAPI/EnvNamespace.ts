@@ -9,6 +9,7 @@
 
 import LandFixLog from "../../../Utility/LandFixLog.js";
 import type { HandlerContext } from "../HandlerContext.js";
+import WrapEnvNamespace from "./WrapEnvNamespace.js";
 
 const CreateEnvNamespace = (Context: HandlerContext) => {
 	const Env = (Context.ExtensionHostInitData?.environment ?? {}) as Record<
@@ -49,7 +50,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 				`appRoot URL parse failed; fallback ${Raw} → ${Fallback}`,
 				{
 					error:
-						Error instanceof Error ? Error.message : String(Error),
+						Error instanceof globalThis.Error ? Error.message : String(Error),
 				},
 			);
 			return Fallback;
@@ -70,7 +71,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		}
 	};
 
-	return {
+	const Concrete = {
 		appName: (Env["appName"] as string) ?? "CodeEditorLand",
 		appRoot: NormalizeAppRoot(Env["appRoot"]),
 		appHost: (Env["appHost"] as string) ?? "desktop",
@@ -244,6 +245,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		logLevel: 2,
 		onDidChangeLogLevel: () => ({ dispose: () => {} }),
 	};
+	return WrapEnvNamespace(Concrete);
 };
 
 export default CreateEnvNamespace;

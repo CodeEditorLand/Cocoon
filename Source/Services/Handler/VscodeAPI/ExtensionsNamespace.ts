@@ -9,6 +9,7 @@
 
 import LandFixLog from "../../../Utility/LandFixLog.js";
 import type { HandlerContext } from "../HandlerContext.js";
+import WrapExtensionsNamespace from "./WrapExtensionsNamespace.js";
 
 // When an extension reads `vscode.extensions.getExtension('X').exports`,
 // the caller expects the exporter's public API. For built-ins like
@@ -177,7 +178,7 @@ const NormalizeLocation = (
 			} catch (Error: unknown) {
 				LandFixLog.Warn(
 					"ExtNs",
-					`URL parse failed for ${Raw}: ${Error instanceof Error ? Error.message : String(Error)}; using fallback strip`,
+					`URL parse failed for ${Raw}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}; using fallback strip`,
 				);
 				Path = Raw.replace(/^file:\/\//, "");
 			}
@@ -230,7 +231,7 @@ const NormalizeLocation = (
 	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 };
 
-const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
+const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 	const Exports = MakePermissiveExports();
 	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
 		Raw?.extensionLocation,
@@ -292,7 +293,7 @@ const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
 // a bogus extension with empty path.
 const IsExtensionKey = (Key: string) => !Key.startsWith("__");
 
-const CreateExtensionsNamespace = (Context: HandlerContext) => ({
+const CreateExtensionsNamespace = (Context: HandlerContext) => WrapExtensionsNamespace({
 	getExtension: (Identifier: string) => {
 		if (!IsExtensionKey(Identifier)) return undefined;
 		const Raw = Context.ExtensionRegistry.get(Identifier);

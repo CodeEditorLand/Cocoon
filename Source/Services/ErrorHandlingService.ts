@@ -43,7 +43,7 @@ export interface ErrorHandlingResult<T> {
  * ErrorHandlingService implementation
  */
 export class ErrorHandlingService {
-	private readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined;
 
 	private circuitBreakers: Map<string, CircuitBreakerState> = new Map();
 	private config: ErrorHandlingConfig;

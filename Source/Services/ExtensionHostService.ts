@@ -152,7 +152,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
 			);
 			return {
-				activate: (context: any) => {
+				activate: (_context: any) => {
 					console.log(`[${extension.identifier}] activate() called`);
 				},
 				deactivate: () => {},

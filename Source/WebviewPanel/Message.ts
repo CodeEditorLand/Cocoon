@@ -270,7 +270,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 				Handler: MessageHandler,
 			): Effect.Effect<void, never> =>
 				Effect.sync(() => {
-					HandlersRef.current.set(Type, Handler);
+					(HandlersRef as { current: Map<string, MessageHandler> }).current.set(Type, Handler);
 				});
 
 			/**
@@ -280,7 +280,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 				Type: string,
 			): Effect.Effect<void, never> =>
 				Effect.sync(() => {
-					HandlersRef.current.delete(Type);
+					(HandlersRef as { current: Map<string, MessageHandler> }).current.delete(Type);
 				});
 
 			/**
@@ -290,7 +290,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 				Message: WebviewMessage,
 			): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
-					const Handlers = HandlersRef.current;
+					const Handlers = (HandlersRef as { current: Map<string, MessageHandler> }).current;
 					const Handler = Handlers.get(Message.Type);
 
 					if (!Handler) {

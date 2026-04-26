@@ -41,8 +41,6 @@
  * - **TBD**: Whitelisting mechanism for trusted extensions
  */
 
-import * as FileSystem from "node:fs";
-import * as Path from "node:path";
 import * as Process from "node:process";
 
 import { Data, Effect, Queue } from "effect";
@@ -172,7 +170,7 @@ class ValidationMetricsStore {
 
 const ProcessValidationStates = new Map<number, ProcessValidationState>();
 
-let ValidationAlertQueue: Queue.Queue<ValidationResult> | null = null;
+export let ValidationAlertQueue: Queue.Queue<ValidationResult> | null = null;
 
 // --- Validation Functions ---
 

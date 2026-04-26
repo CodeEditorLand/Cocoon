@@ -92,14 +92,14 @@ export class FileSystemService implements IFileSystemService {
 		await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
 	}
 
-	async delete(uri: any, options: { recursive: boolean }): Promise<void> {
+	async delete(uri: any, _options: { recursive: boolean }): Promise<void> {
 		await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
 	}
 
 	async rename(
 		source: any,
 		target: any,
-		options: { overwrite: boolean },
+		_options: { overwrite: boolean },
 	): Promise<void> {
 		// Note: 'overwrite' flag support depends on backend logic, ignoring for now
 		await this.mountainClient.sendRequest("fs.rename", {

@@ -136,7 +136,7 @@ function FireOnLanguageActivation(Context, LanguageId) {
   const Router = Context.ActivateByEvent;
   if (typeof Router === "function") {
     Router(Event).catch((Error2) => {
-      const Message = Error2 instanceof Error2 ? Error2.message : String(Error2);
+      const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
       console.warn(
         `[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`
       );

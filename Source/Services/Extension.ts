@@ -240,7 +240,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
-			const MountainClient = yield* IMountainClientService;
+			yield* IMountainClientService;
 			const Configuration = yield* Context.Tag<Configuration>(
 				"Service/Configuration",
 			);
@@ -262,9 +262,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			);
 
 			// Activation metrics tracking
-			const ActivationMetricsRef = yield* Ref.make(
-				new Map<string, ActivationMetrics>(),
-			);
+			yield* Ref.make(new Map<string, ActivationMetrics>());
 
 			// Change event listeners
 			const OnDidChangeListeners = new Set<() => void>();
@@ -295,10 +293,23 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					>();
 
 					// Process configured extensions
-					for (const [ExtensionId, ExtensionData] of Object.entries(
+					for (const [ExtensionId, ExtensionDataRaw] of Object.entries(
 						ExtensionsConfig,
 					)) {
 						try {
+							const ExtensionData = ExtensionDataRaw as
+								| string
+								| {
+										path: string;
+										displayName?: string;
+										version?: string;
+										publisher?: string;
+										description?: string;
+										activationEvents?: string[];
+										main?: string;
+										browser?: string;
+										contributes?: unknown;
+								  };
 							const ExtensionLocation =
 								typeof ExtensionData === "string"
 									? ExtensionData
@@ -560,6 +571,8 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				GetAllExtensions,
 				GetExtensionPath,
 				OnDidChange,
+				MarkActivated,
+				MarkDeactivated,
 			};
 
 			return ServiceImplementation;

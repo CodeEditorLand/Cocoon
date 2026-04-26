@@ -9,6 +9,7 @@
 import GlobToRegex from "../../../Utility/GlobToRegex.js";
 import type { HandlerContext } from "../HandlerContext.js";
 import { ToUri as StockToUri } from "./StockLift.js";
+import WrapLanguagesNamespace from "./WrapLanguagesNamespace.js";
 
 /**
  * Serialise a URI-shape (real instance / POJO / string) to a stable
@@ -60,7 +61,7 @@ const RegisterProvider = (
 const CreateLanguagesNamespace = (
 	Context: HandlerContext,
 	LanguageProviderRegistry: typeof import("../../LanguageProviderRegistry.js"),
-) => ({
+) => WrapLanguagesNamespace({
 	registerHoverProvider: (Selector: any, Provider: any) =>
 		RegisterProvider(
 			Context,

@@ -55,7 +55,7 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 		})
 			.then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`))
 			.catch((Error: unknown) => {
-				const Message = Error instanceof Error ? Error.message : String(Error);
+				const Message = Error instanceof globalThis.Error ? Error.message : String(Error);
 				ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
 			});
 
@@ -88,7 +88,7 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 				}).catch((Error: unknown) => {
 					ScmTrace(
 						`register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${
-							Error instanceof Error ? Error.message : String(Error)
+							Error instanceof globalThis.Error ? Error.message : String(Error)
 						}`,
 					);
 				});
@@ -113,7 +113,7 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 						}).catch((Error: unknown) => {
 							ScmTrace(
 								`update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${
-									Error instanceof Error ? Error.message : String(Error)
+									Error instanceof globalThis.Error ? Error.message : String(Error)
 								}`,
 							);
 						});

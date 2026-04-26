@@ -84,7 +84,7 @@ var VSBuffer = class _VSBuffer {
    * @param Encoding - Text encoding (default: utf-8)
    * @returns New VSBuffer instance containing the encoded string
    */
-  static FromString(String2, Encoding = "utf-8") {
+  static FromString(String2, _Encoding = "utf-8") {
     if (String2 === null || String2 === void 0) {
       return new _VSBuffer(new Uint8Array(0));
     }
@@ -436,7 +436,7 @@ var DeserializeMessage_default = /* @__PURE__ */ __name((Data) => {
       return {
         Success: false,
         Message: null,
-        Error: `Failed to parse metadata JSON: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}`,
+        Error: `Failed to parse metadata JSON: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`,
         Warnings
       };
     }
@@ -494,7 +494,7 @@ var DeserializeMessage_default = /* @__PURE__ */ __name((Data) => {
     return {
       Success: false,
       Message: null,
-      Error: Error2 instanceof Error2 ? Error2.message : String(Error2),
+      Error: Error2 instanceof globalThis.Error ? Error2.message : String(Error2),
       Warnings
     };
   }

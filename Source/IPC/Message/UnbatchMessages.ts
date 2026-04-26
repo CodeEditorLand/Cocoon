@@ -98,14 +98,13 @@ export default (
 		const MetadataBuffer = Buffer.slice(Offset, Offset + MetadataLength);
 		Offset += MetadataLength;
 
-		let BatchMetadata: IBatchMessage["BatchMetadata"];
 		try {
-			BatchMetadata = JSON.parse(MetadataBuffer.toString());
+			JSON.parse(MetadataBuffer.toString());
 		} catch (Error) {
 			return {
 				Success: false,
 				Message: null,
-				Error: `Failed to parse batch metadata JSON: ${Error instanceof Error ? Error.message : String(Error)}`,
+				Error: `Failed to parse batch metadata JSON: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 				Warnings,
 				Messages: [],
 			};
@@ -183,7 +182,7 @@ export default (
 		return {
 			Success: false,
 			Message: null,
-			Error: Error instanceof Error ? Error.message : String(Error),
+			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
 			Warnings,
 			Messages,
 		};

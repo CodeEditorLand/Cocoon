@@ -5,7 +5,7 @@
  * Manages the gRPC server for Mountain ← Cocoon communication.
  */
 
-import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
+import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
 
 import { GRPCServerService } from "../Services/GRPCServerService.js";
 import { TelemetryTag } from "./Telemetry.js";

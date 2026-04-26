@@ -101,13 +101,8 @@ var ValidateProcessStateDTO = /* @__PURE__ */ __name((DTO) => {
   return typeof DTO.Pid === "number" && typeof DTO.Ppid === "number" && typeof DTO.StartTime === "number" && typeof DTO.Uptime === "number" && typeof DTO.MemoryUsedMB === "number" && typeof DTO.MemoryLimitMB === "number" && typeof DTO.Platform === "string" && typeof DTO.Arch === "string" && typeof DTO.NodeVersion === "string" && Array.isArray(DTO.ExecArgv) && typeof DTO.Timestamp === "number";
 }, "ValidateProcessStateDTO");
 var ValidationStateToDTO = /* @__PURE__ */ __name((State) => {
-  const FileAccessTotal = Array.from(State.FileAccessCount.values()).reduce(
-    (a, b) => a + b,
-    0
-  );
-  const NetworkAccessTotal = Array.from(
-    State.NetworkAccessCount.values()
-  ).reduce((a, b) => a + b, 0);
+  const FileAccessTotal = Array.from(State.FileAccessCount.values()).reduce((a, b) => a + b, 0);
+  const NetworkAccessTotal = Array.from(State.NetworkAccessCount.values()).reduce((a, b) => a + b, 0);
   return {
     TotalValidations: FileAccessTotal + NetworkAccessTotal,
     FailedValidations: State.ViolationCount,
@@ -162,7 +157,7 @@ var SerializeDTO = /* @__PURE__ */ __name((DTO) => {
       throw new ConversionError({
         SourceType: typeof DTO,
         TargetType: "string",
-        Reason: Error2 instanceof Error2 ? Error2.message : String(Error2),
+        Reason: Error2 instanceof globalThis.Error ? Error2.message : String(Error2),
         Data: DTO
       });
     }, "catch")
@@ -175,7 +170,7 @@ var DeserializeDTO = /* @__PURE__ */ __name((JsonString, ExpectedType) => {
       throw new ConversionError({
         SourceType: "string",
         TargetType: ExpectedType,
-        Reason: Error2 instanceof Error2 ? Error2.message : String(Error2),
+        Reason: Error2 instanceof globalThis.Error ? Error2.message : String(Error2),
         Data: JsonString
       });
     }, "catch")

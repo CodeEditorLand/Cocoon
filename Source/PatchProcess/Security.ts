@@ -41,7 +41,6 @@
  * FUTURE: File ACLs - implement read-only/read-write modes
  */
 
-import * as FileSystem from "node:fs";
 import * as Path from "node:path";
 import * as URL from "node:url";
 
@@ -201,7 +200,7 @@ export class CpuLimitExceededError extends Data.TaggedError(
  */
 export const ValidatePathAccess = (
 	PathString: string,
-	Operation: "read" | "write" | "delete",
+	_Operation: "read" | "write" | "delete",
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
 	// Normalize the path
@@ -255,9 +254,8 @@ export const ValidateNetworkAccess = (
 	}
 
 	// Parse endpoint URL
-	let ParsedUrl: URL.URL;
 	try {
-		ParsedUrl = new URL.URL(Endpoint);
+		void new URL.URL(Endpoint);
 	} catch (Error) {
 		// Not a valid URL, try parsing as hostname:port
 		return true;
@@ -280,7 +278,7 @@ export const ValidateNetworkAccess = (
  */
 export const ValidateChildProcess = (
 	Command: string,
-	Arguments: readonly string[],
+	_Arguments: readonly string[],
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
 	if (!Policy.AllowChildProcesses) {

@@ -25,18 +25,7 @@ import {
 // OLD-STYLE SERVICE INTERFACES
 // ============================================================================
 
-import { IConfigurationService } from "./Interfaces/IConfigurationService.js";
-import { IErrorHandlingService } from "./Interfaces/IErrorHandlingService.js";
-import { IExtensionHostService } from "./Interfaces/IExtensionHostService.js";
-import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorService.js";
-import { IMountainClientService } from "./Interfaces/IMountainClientService.js";
-import { IPerformanceMonitoringService } from "./Interfaces/IPerformanceMonitoringService.js";
-import { ISecurityService } from "./Interfaces/ISecurityService.js";
-import { ITerminalService } from "./Interfaces/ITerminalService.js";
-import {
-	APIFactoryLayer,
-	IAPIFactoryService,
-} from "./Services/APIFactoryService.js";
+import { APIFactoryLayer } from "./Services/APIFactoryService.js";
 // ============================================================================
 // OLD-STYLE SERVICE LAYERS
 // ============================================================================

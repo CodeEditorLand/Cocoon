@@ -295,7 +295,7 @@ export class StateService extends Effect.Service<StateService>()(
 				Effect.gen(function* () {
 					yield* Effect.tryMap(
 						Effect.sync(() => {
-							StateCacheRef.current.set(
+							(StateCacheRef as { current: Map<string, PanelState> }).current.set(
 								PanelStateData.Handle,
 								PanelStateData,
 							);
@@ -316,7 +316,7 @@ export class StateService extends Effect.Service<StateService>()(
 				Handle: string,
 			): Effect.Effect<PanelState | null, Error> =>
 				Effect.gen(function* () {
-					const State = StateCacheRef.current.get(Handle);
+					const State = (StateCacheRef as { current: Map<string, PanelState> }).current.get(Handle);
 
 					if (!State) {
 						return null;
@@ -337,7 +337,7 @@ export class StateService extends Effect.Service<StateService>()(
 				Effect.gen(function* () {
 					yield* Effect.tryMap(
 						Effect.sync(() => {
-							StateCacheRef.current.delete(Handle);
+							(StateCacheRef as { current: Map<string, PanelState> }).current.delete(Handle);
 						}),
 						(error) =>
 							new Error(`Failed to delete panel state: ${error}`),
@@ -354,7 +354,7 @@ export class StateService extends Effect.Service<StateService>()(
 			): Effect.Effect<readonly PanelState[], Error> =>
 				Effect.gen(function* () {
 					const AllStates = Array.from(
-						StateCacheRef.current.values(),
+						(StateCacheRef as { current: Map<string, PanelState> }).current.values(),
 					);
 					return AllStates.filter(
 						(State) => State.ExtensionId === ExtensionId,
@@ -368,7 +368,7 @@ export class StateService extends Effect.Service<StateService>()(
 				Effect.gen(function* () {
 					yield* Effect.tryMap(
 						Effect.sync(() => {
-							StateCacheRef.current.clear();
+							(StateCacheRef as { current: Map<string, PanelState> }).current.clear();
 						}),
 						(error) =>
 							new Error(`Failed to clear panel states: ${error}`),

@@ -38,7 +38,6 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 
 /**
  * @interface Logger
@@ -82,7 +81,7 @@ export class Memento {
 	private readonly Storage: Ref.Ref<Map<string, unknown>>;
 	private readonly ExtensionId: string;
 	private readonly Logger: Logger;
-	private readonly MountainClient?: IMountainClientService;
+	public readonly _MountainClient: IMountainClientService | undefined;
 
 	constructor(
 		Storage: Ref.Ref<Map<string, unknown>>,
@@ -93,7 +92,7 @@ export class Memento {
 		this.Storage = Storage;
 		this.ExtensionId = ExtensionId;
 		this.Logger = Logger;
-		this.MountainClient = MountainClient;
+		this._MountainClient = MountainClient;
 
 		// MOUNTAIN-INTEGRATION: Load persisted state from Mountain on construction (MEDIUM)
 		Effect.runFork(
@@ -314,7 +313,7 @@ export class ExtensionSecretStorage {
 	 */
 	get onDidChange(): VSCode.Event<VSCode.SecretStorageChangeEvent> {
 		// TODO: MEDIUM: Implement secret change event from Mountain
-		return (Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
+		return (_Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
 			const Disposable = {
 				dispose: () => {
 					// Cleanup
@@ -374,9 +373,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
-			const Configuration = yield* Context.Tag<Configuration>(
-				"Service/Configuration",
-			);
+			yield* Context.Tag<Configuration>("Service/Configuration");
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
 			// Global subscription tracking for all extensions
@@ -468,18 +465,6 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					});
 
 					/**
-					 * Create disposable that tracks with extension context
-					 */
-					const CreateTrackedDisposable = (
-						Disposable: VSCode.Disposable,
-					): VSCode.Disposable => ({
-						dispose: () => {
-							Subscriptions.delete(Disposable);
-							Disposable.dispose();
-						},
-					});
-
-					/**
 					 * asAbsolutePath implementation
 					 * Resolves relative paths against extension location
 					 */
@@ -544,7 +529,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 			 *
 			 * TODO: Add cleanup method to clean up extension state on deactivation
 			 */
-			const DisposeExtension = (
+			void ((
 				ExtensionId: string,
 			): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
@@ -577,7 +562,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					Logger.Debug(
 						`[ExtensionContext] Extension ${ExtensionId} disposed`,
 					);
-				});
+				}));
 
 			// Return the service implementation with PascalCase methods
 			const ServiceImplementation: ExtensionContextService = {

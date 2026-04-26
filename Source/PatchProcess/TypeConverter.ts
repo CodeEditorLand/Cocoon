@@ -41,7 +41,6 @@
  * - **TBD**: DTO versioning support
  */
 
-import * as Path from "node:path";
 import * as Process from "node:process";
 
 import { Data, Effect } from "effect";
@@ -313,12 +312,11 @@ const ValidateProcessStateDTO = (DTO: ProcessStateDTO): boolean => {
 export const ValidationStateToDTO = (
 	State: ProcessValidationState,
 ): ValidationStateDTO => {
-	const FileAccessTotal = Array.from(State.FileAccessCount.values()).reduce(
-		(a, b) => a + b,
-		0,
-	);
-	const NetworkAccessTotal = Array.from(
-		State.NetworkAccessCount.values(),
+	const FileAccessTotal = (
+		Array.from(State.FileAccessCount.values()) as number[]
+	).reduce((a, b) => a + b, 0);
+	const NetworkAccessTotal = (
+		Array.from(State.NetworkAccessCount.values()) as number[]
 	).reduce((a, b) => a + b, 0);
 
 	return {
@@ -418,7 +416,7 @@ export const SerializeDTO = (
 			throw new ConversionError({
 				SourceType: typeof DTO,
 				TargetType: "string",
-				Reason: Error instanceof Error ? Error.message : String(Error),
+				Reason: Error instanceof globalThis.Error ? Error.message : String(Error),
 				Data: DTO,
 			});
 		},
@@ -438,7 +436,7 @@ export const DeserializeDTO = <T>(
 			throw new ConversionError({
 				SourceType: "string",
 				TargetType: ExpectedType,
-				Reason: Error instanceof Error ? Error.message : String(Error),
+				Reason: Error instanceof globalThis.Error ? Error.message : String(Error),
 				Data: JsonString,
 			});
 		},

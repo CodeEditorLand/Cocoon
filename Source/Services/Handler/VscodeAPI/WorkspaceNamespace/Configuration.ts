@@ -78,14 +78,21 @@ export const CreateConfigurationState = (
 		).then((Value) => {
 			ConfigInFlight.delete(Key);
 			if (Value === undefined) return;
-			// Mountain may return either the bare value or a
-			// `{ defaultValue, globalValue, workspaceValue }` shape.
-			// Prefer the most-specific override, fall through to defaults.
-			// Shape can be null when the key is not present in Mountain config.
+			// Mountain returns `InspectResultDataDTO` serialized with
+			// `#[serde(rename_all = "camelCase")]` - i.e. keys are
+			// `effectiveValue`, `workspaceFolderValue`, `workspaceValue`,
+			// `userValue`, `defaultValue`, etc. (matching VS Code's
+			// `WorkspaceConfiguration.inspect()` shape). The DTO already
+			// pre-cascades the merge order (workspaceFolder → workspace →
+			// user → default) into `effectiveValue`, so prefer that. The
+			// per-scope reads remain as a fallback for partial shapes
+			// (sentinel `null` on a particular scope).
 			const Shape = Value as Record<string, unknown> | null;
 			const Resolved =
+				Shape?.["effectiveValue"] ??
 				Shape?.["workspaceFolderValue"] ??
 				Shape?.["workspaceValue"] ??
+				Shape?.["userValue"] ??
 				Shape?.["globalValue"] ??
 				Shape?.["defaultValue"] ??
 				Value;
@@ -181,12 +188,20 @@ export const CreateConfigurationState = (
 				? (Shape.affected as string[])
 				: [];
 		if (Keys.length === 0) {
-			// Unknown affected keys - invalidate everything. Future reads
-			// re-prime lazily; listeners fire for each cached key.
-			for (const CachedKey of [...ConfigCache.keys()]) {
-				ConfigCache.delete(CachedKey);
-				FireConfigChange(CachedKey);
-			}
+			// Boot-time `configuration.change` broadcasts (e.g. the
+			// post-extension-scan re-merge) carry an empty keys list as a
+			// "configuration model rebuilt" signal. Wiping the entire
+			// cache here was destroying manifest-seeded defaults
+			// (`git.enabled = true`, `git.autoRepositoryDetection = true`)
+			// after every extension's `PrePopulateFromManifest` ran,
+			// causing vscode.git's `Model.openRepository` to short-circuit
+			// on `enabled !== true`. Treat empty-keys as a no-op: existing
+			// cached values remain valid (Mountain's merge never *removes*
+			// a default, only adds user/workspace overrides on top), and
+			// listeners can drive their own re-read on the next access.
+			//
+			// If a real wipe is ever required, the producer must send the
+			// affected keys explicitly.
 			return;
 		}
 		for (const Key of Keys) {

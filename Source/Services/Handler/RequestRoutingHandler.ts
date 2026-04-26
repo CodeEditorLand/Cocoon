@@ -330,7 +330,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			}
 		},
 
-		"performance.\\w+": async (Method: string, Params: any) => {
+		"performance.\\w+": async (Method: string, _Params: any) => {
 			// Route to PerformanceMonitoringService via ServiceMapping
 			const { ServiceMapping } = await import("../../ServiceMapping");
 			const { IPerformanceMonitoringService } =

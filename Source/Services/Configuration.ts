@@ -447,7 +447,7 @@ export class Configuration implements IConfigurationService {
 	 * Handle configuration conflicts with retry logic
 	 */
 	private async handleConfigurationConflict(
-		error: any,
+		_error: any,
 		key: string,
 		value: any,
 		scope: ConfigurationScope,

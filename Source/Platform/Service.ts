@@ -34,7 +34,7 @@
  * DOCUMENTATION: API docs - generate with TypeDoc
  */
 
-import { Array, Context, Effect, HashMap, Layer, Option } from "effect";
+import { Context, Effect, Layer, Option } from "effect";
 
 import * as EnvironmentModule from "./Environment.js";
 import * as OSModule from "./OS.js";
@@ -495,7 +495,7 @@ export function DetectPlatform(): Effect.Effect<
 	never,
 	IPlatformService
 > {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.detectPlatform(),
 	);
 }
@@ -508,7 +508,7 @@ export function GetOSInfo(): Effect.Effect<
 	never,
 	IPlatformService
 > {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.getOSInfo(),
 	);
 }
@@ -519,7 +519,7 @@ export function GetOSInfo(): Effect.Effect<
 export function NormalizePath(
 	path: string,
 ): Effect.Effect<string, never, IPlatformService> {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.normalizePath(path),
 	);
 }
@@ -530,7 +530,7 @@ export function NormalizePath(
 export function GetEnvironmentVariable(
 	name: string,
 ): Effect.Effect<Option.Option<string>, never, IPlatformService> {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.getEnvironmentVariable(name),
 	);
 }
@@ -542,7 +542,7 @@ export function SetEnvironmentVariable(
 	name: string,
 	value: string,
 ): Effect.Effect<void, never, IPlatformService> {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.setEnvironmentVariable(name, value),
 	);
 }
@@ -559,7 +559,7 @@ export function ExecuteCommand(
 	never,
 	IPlatformService
 > {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.executeCommand(command, args || [], options),
 	);
 }
@@ -572,7 +572,7 @@ export function SpawnProcess(
 	args: string[],
 	options: ProcessModule.ProcessSpawnOptions,
 ): Effect.Effect<ProcessModule.ProcessInfo | null, never, IPlatformService> {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.spawnProcess(command, args, options),
 	);
 }
@@ -589,7 +589,7 @@ export function GetHealthStatus(): Effect.Effect<
 	never,
 	IPlatformService
 > {
-	return Effect.flatMap(Effect.service(PlatformServiceTag), (service) =>
+	return Effect.flatMap(Effect.service(PlatformServiceTag), (service: IPlatformService) =>
 		service.getHealthStatus(),
 	);
 }

@@ -19259,18 +19259,18 @@ var IConfigurationService = Context.Tag(
 );
 
 // Source/Interfaces/IMountainClientService.ts
-import * as Effect2 from "effect/Effect";
-var IMountainClientService = Effect2.Service()(
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
   "Service/MountainClient",
   {
-    effect: Effect2.gen(function* () {
+    effect: Effect.gen(function* () {
       return {};
     })
   }
 );
 
 // Source/Services/FileSystemService.ts
-import { Context as Context2, Effect as Effect3, Layer } from "effect";
+import { Context as Context2, Effect as Effect2, Layer } from "effect";
 var IFileSystemService = Context2.Tag();
 var FileSystemService = class {
   constructor(mountainClient) {
@@ -19324,10 +19324,10 @@ var FileSystemService = class {
   async createDirectory(uri) {
     await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
   }
-  async delete(uri, options) {
+  async delete(uri, _options) {
     await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
   }
-  async rename(source, target, options) {
+  async rename(source, target, _options) {
     await this.mountainClient.sendRequest("fs.rename", {
       from: source.fsPath,
       to: target.fsPath
@@ -19336,7 +19336,7 @@ var FileSystemService = class {
 };
 var FileSystemServiceLayer = Layer.effect(
   IFileSystemService,
-  Effect3.gen(function* () {
+  Effect2.gen(function* () {
     const mountainClient = yield* IMountainClientService;
     return new FileSystemService(mountainClient);
   })
@@ -19419,7 +19419,7 @@ function ListHandles() {
 __name(ListHandles, "ListHandles");
 
 // Source/Services/APIFactoryService.ts
-import { Context as Context5, Effect as Effect4, Layer as Layer2 } from "effect";
+import { Context as Context5, Effect as Effect3, Layer as Layer2 } from "effect";
 var VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
 var { URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
 var { CancellationTokenSource: CancellationTokenSource2, CancellationToken: CancellationToken2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
@@ -19527,7 +19527,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
     EventEmitter: Emitter2,
     // --- Window Namespace ---
     window: {
-      showInformationMessage: /* @__PURE__ */ __name(async (message, ...items) => {
+      showInformationMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
         await mountainClient.sendRequest("window.showMessage", {
           title: "Information",
           message,
@@ -19535,7 +19535,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         });
         return void 0;
       }, "showInformationMessage"),
-      showErrorMessage: /* @__PURE__ */ __name(async (message, ...items) => {
+      showErrorMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
         await mountainClient.sendRequest("window.showMessage", {
           title: "Error",
           message,
@@ -19543,7 +19543,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         });
         return void 0;
       }, "showErrorMessage"),
-      showWarningMessage: /* @__PURE__ */ __name(async (message, ...items) => {
+      showWarningMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
         await mountainClient.sendRequest("window.showMessage", {
           title: "Warning",
           message,
@@ -19576,7 +19576,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
           }, "dispose")
         };
       }, "createTerminal"),
-      createStatusBarItem: /* @__PURE__ */ __name((alignment, priority) => ({
+      createStatusBarItem: /* @__PURE__ */ __name((_alignment, _priority) => ({
         show: /* @__PURE__ */ __name(() => {
         }, "show"),
         hide: /* @__PURE__ */ __name(() => {
@@ -19587,10 +19587,10 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         tooltip: "",
         command: void 0
       }), "createStatusBarItem"),
-      createOutputChannel: /* @__PURE__ */ __name((name) => ({
-        append: /* @__PURE__ */ __name((value) => {
+      createOutputChannel: /* @__PURE__ */ __name((_name) => ({
+        append: /* @__PURE__ */ __name((_value) => {
         }, "append"),
-        appendLine: /* @__PURE__ */ __name((value) => {
+        appendLine: /* @__PURE__ */ __name((_value) => {
         }, "appendLine"),
         clear: /* @__PURE__ */ __name(() => {
         }, "clear"),
@@ -19601,8 +19601,8 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         dispose: /* @__PURE__ */ __name(() => {
         }, "dispose")
       }), "createOutputChannel"),
-      withProgress: /* @__PURE__ */ __name(async (options, task) => {
-        return task({ report: /* @__PURE__ */ __name((value) => {
+      withProgress: /* @__PURE__ */ __name(async (_options, task) => {
+        return task({ report: /* @__PURE__ */ __name((_value) => {
         }, "report") });
       }, "withProgress"),
       // Terminal shell-integration events. Land doesn't track shell
@@ -19657,7 +19657,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         delete: /* @__PURE__ */ __name((uri, options) => fsService.delete(uri, options), "delete"),
         rename: /* @__PURE__ */ __name((source, target, options) => fsService.rename(source, target, options), "rename")
       },
-      findFiles: /* @__PURE__ */ __name(async (include) => [], "findFiles"),
+      findFiles: /* @__PURE__ */ __name(async (_include) => [], "findFiles"),
       openTextDocument: /* @__PURE__ */ __name(async (uri) => ({
         getText: /* @__PURE__ */ __name(() => "", "getText"),
         uri,
@@ -19758,7 +19758,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
     },
     // --- Extensions Namespace ---
     extensions: {
-      getExtension: /* @__PURE__ */ __name((id2) => void 0, "getExtension"),
+      getExtension: /* @__PURE__ */ __name((_id) => void 0, "getExtension"),
       all: []
     },
     // --- Languages Namespace ---
@@ -19847,8 +19847,8 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
       activeDebugSession: void 0
     },
     scm: {
-      createSourceControl: /* @__PURE__ */ __name((id2, label) => ({
-        createResourceGroup: /* @__PURE__ */ __name((id3, label2) => ({
+      createSourceControl: /* @__PURE__ */ __name((_id, _label) => ({
+        createResourceGroup: /* @__PURE__ */ __name((_id2, _label2) => ({
           resourceStates: []
         }), "createResourceGroup"),
         dispose: /* @__PURE__ */ __name(() => {
@@ -19893,7 +19893,7 @@ var APIFactoryService = class {
 };
 var APIFactoryLayer = Layer2.effect(
   IAPIFactoryService,
-  Effect4.gen(function* () {
+  Effect3.gen(function* () {
     const mountainClient = yield* IMountainClientService;
     const configService = yield* IConfigurationService;
     const fsService = yield* IFileSystemService;

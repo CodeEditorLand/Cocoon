@@ -6,7 +6,6 @@
  */
 
 import { Context } from "effect";
-import * as Effect from "effect/Effect";
 
 // API construction types
 export interface APIConstructionRequest {

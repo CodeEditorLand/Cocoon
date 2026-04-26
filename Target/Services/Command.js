@@ -979,14 +979,14 @@ var CommandService = class extends Effect4.Service()(
   "Service/Command",
   {
     effect: Effect4.gen(function* () {
-      const MountainClient = yield* IMountainClientService;
+      yield* IMountainClientService;
       const Logger2 = yield* Context3.Tag("Service/Logger");
       const Window = yield* Context3.Tag("Service/Window");
       const CommandRegistry = yield* Ref2.make(
         /* @__PURE__ */ new Map()
       );
-      const CommandConverterInstance = new Command(
-        (Global, Id, Callback, ThisArg) => {
+      void new Command(
+        (_Global, Id, Callback, ThisArg) => {
           const Disposable = { dispose: /* @__PURE__ */ __name(() => {
           }, "dispose") };
           Effect4.runSync(
@@ -1003,14 +1003,14 @@ var CommandService = class extends Effect4.Service()(
           );
           return Disposable;
         },
-        (Id, ...Arguments) => {
+        (_Id, ..._Arguments) => {
           return Promise.resolve(void 0);
         },
-        (Id) => void 0
+        (_Id) => void 0
       );
       const ExecuteLocalCommand = /* @__PURE__ */ __name((Command2, Arguments) => Effect4.gen(function* () {
         const StartTime = Date.now();
-        const { Callback, ThisArg, Extension, Id } = Command2;
+        const { Callback, ThisArg, Extension: _Extension, Id } = Command2;
         yield* Logger2.Trace(
           `[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`
         );
@@ -1151,7 +1151,7 @@ var CommandService = class extends Effect4.Service()(
         const Registry2 = yield* Ref2.get(CommandRegistry);
         const LocalCommandIds = Array.from(Registry2.keys());
         try {
-          const mountainClient = yield* MountainGRPCClientService;
+          yield* MountainGRPCClientService;
           const RemoteCommands = [];
           yield* Logger2.Info(
             `[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`

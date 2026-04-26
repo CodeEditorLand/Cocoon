@@ -233,7 +233,7 @@ var EnforceMemoryLimit = Effect2.gen(function* () {
   const Service = yield* PatcherService;
   const Policy = Service.GetSecurityPolicy();
   if (Policy.MaxMemoryMB > 0) {
-    const MaxMemoryInBytes = Policy.MaxMemoryMB * 1024 * 1024;
+    void (Policy.MaxMemoryMB * 1024 * 1024);
     yield* Effect2.logDebug(
       `Memory limit configured: ${Policy.MaxMemoryMB}MB`
     );
@@ -370,7 +370,7 @@ var CpuLimitExceededError = class extends Data2.TaggedError(
     __name(this, "CpuLimitExceededError");
   }
 };
-var ValidatePathAccess = /* @__PURE__ */ __name((PathString, Operation, Policy = DefaultSecurityPolicy) => {
+var ValidatePathAccess = /* @__PURE__ */ __name((PathString, _Operation, Policy = DefaultSecurityPolicy) => {
   const NormalizedPath = Path.normalize(PathString);
   const ResolvedPath = Path.resolve(NormalizedPath);
   for (const DeniedPath of Policy.DeniedPaths) {
@@ -397,9 +397,8 @@ var ValidateNetworkAccess = /* @__PURE__ */ __name((Endpoint, Policy = DefaultSe
   if (Policy.AllowedEndpoints.length === 0) {
     return true;
   }
-  let ParsedUrl;
   try {
-    ParsedUrl = new URL.URL(Endpoint);
+    void new URL.URL(Endpoint);
   } catch (Error2) {
     return true;
   }
@@ -411,7 +410,7 @@ var ValidateNetworkAccess = /* @__PURE__ */ __name((Endpoint, Policy = DefaultSe
   }
   return false;
 }, "ValidateNetworkAccess");
-var ValidateChildProcess = /* @__PURE__ */ __name((Command, Arguments, Policy = DefaultSecurityPolicy) => {
+var ValidateChildProcess = /* @__PURE__ */ __name((Command, _Arguments, Policy = DefaultSecurityPolicy) => {
   if (!Policy.AllowChildProcesses) {
     return false;
   }
@@ -868,7 +867,7 @@ var LoaderService = class extends Effect5.Service()(
   "PatchProcess/LoaderService",
   {
     effect: Effect5.gen(function* () {
-      const SecurityPolicy5 = yield* Config2.string("SecurityPolicy").pipe(
+      yield* Config2.string("SecurityPolicy").pipe(
         Effect5.catchTag(
           "MissingConfig",
           () => Effect5.succeed("default")
@@ -1129,13 +1128,8 @@ var ValidateProcessStateDTO = /* @__PURE__ */ __name((DTO) => {
   return typeof DTO.Pid === "number" && typeof DTO.Ppid === "number" && typeof DTO.StartTime === "number" && typeof DTO.Uptime === "number" && typeof DTO.MemoryUsedMB === "number" && typeof DTO.MemoryLimitMB === "number" && typeof DTO.Platform === "string" && typeof DTO.Arch === "string" && typeof DTO.NodeVersion === "string" && Array.isArray(DTO.ExecArgv) && typeof DTO.Timestamp === "number";
 }, "ValidateProcessStateDTO");
 var ValidationStateToDTO = /* @__PURE__ */ __name((State) => {
-  const FileAccessTotal = Array.from(State.FileAccessCount.values()).reduce(
-    (a, b) => a + b,
-    0
-  );
-  const NetworkAccessTotal = Array.from(
-    State.NetworkAccessCount.values()
-  ).reduce((a, b) => a + b, 0);
+  const FileAccessTotal = Array.from(State.FileAccessCount.values()).reduce((a, b) => a + b, 0);
+  const NetworkAccessTotal = Array.from(State.NetworkAccessCount.values()).reduce((a, b) => a + b, 0);
   return {
     TotalValidations: FileAccessTotal + NetworkAccessTotal,
     FailedValidations: State.ViolationCount,
@@ -1190,7 +1184,7 @@ var SerializeDTO = /* @__PURE__ */ __name((DTO) => {
       throw new ConversionError({
         SourceType: typeof DTO,
         TargetType: "string",
-        Reason: Error2 instanceof Error2 ? Error2.message : String(Error2),
+        Reason: Error2 instanceof globalThis.Error ? Error2.message : String(Error2),
         Data: DTO
       });
     }, "catch")
@@ -1203,7 +1197,7 @@ var DeserializeDTO = /* @__PURE__ */ __name((JsonString, ExpectedType) => {
       throw new ConversionError({
         SourceType: "string",
         TargetType: ExpectedType,
-        Reason: Error2 instanceof Error2 ? Error2.message : String(Error2),
+        Reason: Error2 instanceof globalThis.Error ? Error2.message : String(Error2),
         Data: JsonString
       });
     }, "catch")

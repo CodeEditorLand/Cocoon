@@ -66,7 +66,7 @@ var CpuLimitExceededError = class extends Data.TaggedError(
     __name(this, "CpuLimitExceededError");
   }
 };
-var ValidatePathAccess = /* @__PURE__ */ __name((PathString, Operation, Policy = DefaultSecurityPolicy) => {
+var ValidatePathAccess = /* @__PURE__ */ __name((PathString, _Operation, Policy = DefaultSecurityPolicy) => {
   const NormalizedPath = Path.normalize(PathString);
   const ResolvedPath = Path.resolve(NormalizedPath);
   for (const DeniedPath of Policy.DeniedPaths) {
@@ -93,9 +93,8 @@ var ValidateNetworkAccess = /* @__PURE__ */ __name((Endpoint, Policy = DefaultSe
   if (Policy.AllowedEndpoints.length === 0) {
     return true;
   }
-  let ParsedUrl;
   try {
-    ParsedUrl = new URL.URL(Endpoint);
+    void new URL.URL(Endpoint);
   } catch (Error2) {
     return true;
   }
@@ -107,7 +106,7 @@ var ValidateNetworkAccess = /* @__PURE__ */ __name((Endpoint, Policy = DefaultSe
   }
   return false;
 }, "ValidateNetworkAccess");
-var ValidateChildProcess = /* @__PURE__ */ __name((Command, Arguments, Policy = DefaultSecurityPolicy) => {
+var ValidateChildProcess = /* @__PURE__ */ __name((Command, _Arguments, Policy = DefaultSecurityPolicy) => {
   if (!Policy.AllowChildProcesses) {
     return false;
   }
@@ -569,6 +568,7 @@ export {
   ValidateFileSystemAccess,
   ValidateMemoryUsage,
   ValidateNetworkAccess2 as ValidateNetworkAccess,
+  ValidationAlertQueue,
   ValidationError
 };
 //# sourceMappingURL=Validator.js.map

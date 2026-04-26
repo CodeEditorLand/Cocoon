@@ -50,7 +50,7 @@ export const WindowStateLive = Effect.gen(function* () {
 				currentState.active !== newState.active
 			) {
 				yield* Logger.pipe(
-					Effect.map((logger) =>
+					Effect.map((logger: Logger) =>
 						logger.Info(
 							`[WindowState] State changed: focused=${newState.focused}, active=${newState.active}`,
 						),

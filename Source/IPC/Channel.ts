@@ -842,7 +842,7 @@ export class ChannelManager {
 	 * @param channel Channel to check
 	 * @returns true if rate limit allows
 	 */
-	private CheckRateLimit(channel: RegisteredChannel): boolean {
+	private CheckRateLimit(_channel: RegisteredChannel): boolean {
 		// Simple implementation - in production, use proper rate limiting
 		// with sliding window or token bucket algorithm
 		return true;

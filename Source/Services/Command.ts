@@ -146,7 +146,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
-			const MountainClient = yield* IMountainClientService;
+			yield* IMountainClientService;
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 			const Window = yield* Context.Tag<Window>("Service/Window");
 
@@ -156,9 +156,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 			);
 
 			// Command converter for marshalling
-			const CommandConverterInstance = new CommandConverter(
+			void new CommandConverter(
 				(
-					Global: boolean,
+					_Global: boolean,
 					Id: string,
 					Callback: (...Args: any[]) => any,
 					ThisArg?: unknown,
@@ -179,12 +179,12 @@ export class CommandService extends Effect.Service<CommandService>()(
 					return Disposable;
 				},
 				<T>(
-					Id: string,
-					...Arguments: any[]
+					_Id: string,
+					..._Arguments: any[]
 				): Promise<T | undefined> => {
 					return Promise.resolve(undefined);
 				},
-				(Id: string) => undefined,
+				(_Id: string) => undefined,
 			);
 
 			/**
@@ -203,7 +203,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			): Effect.Effect<unknown, Error> =>
 				Effect.gen(function* () {
 					const StartTime = Date.now();
-					const { Callback, ThisArg, Extension, Id } = Command;
+					const { Callback, ThisArg, Extension: _Extension, Id } = Command;
 
 					yield* Logger.Trace(
 						`[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`,
@@ -480,7 +480,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 					// Mountain gRPC integration for getting remote commands
 					try {
-						const mountainClient = yield* MountainGRPCClientService;
+						yield* MountainGRPCClientService;
 
 						// For now, just return local commands
 						// TODO: Implement getCommands in MountainGRPCClientService

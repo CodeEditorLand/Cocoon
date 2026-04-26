@@ -108,8 +108,7 @@ import { Effect } from "effect";
 
 // Import Tier dispatcher *after* __LandTiers is populated so the module's
 // top-level `LandFixLog.Info(...)` banner reports the resolved values.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import Tier from "../../Utility/Tier.js";
+import "../../Utility/Tier.js";
 
 // Effect services
 import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";

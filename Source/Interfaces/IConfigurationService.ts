@@ -6,7 +6,6 @@
  */
 
 import { Context } from "effect";
-import * as Effect from "effect/Effect";
 
 // Configuration scopes matching VSCode patterns
 export enum ConfigurationScope {

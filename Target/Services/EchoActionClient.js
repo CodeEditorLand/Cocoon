@@ -99,7 +99,7 @@ var CocoonEchoClient = class {
    */
   async connect() {
     this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`);
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       this.client = new EchoActionServiceClient(
         this.mountainUrl,
         credentials.createInsecure()

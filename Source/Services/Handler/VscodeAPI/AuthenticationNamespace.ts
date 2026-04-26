@@ -9,6 +9,7 @@
 
 import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import WrapAuthenticationNamespace from "./WrapAuthenticationNamespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -21,7 +22,7 @@ const EventSubscriber =
 		};
 	};
 
-const CreateAuthenticationNamespace = (Context: HandlerContext) => ({
+const CreateAuthenticationNamespace = (Context: HandlerContext) => WrapAuthenticationNamespace({
 	registerAuthenticationProvider: (
 		ProviderId: string,
 		Label: string,

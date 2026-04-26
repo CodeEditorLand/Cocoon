@@ -233,7 +233,7 @@ var EnforceMemoryLimit = Effect2.gen(function* () {
   const Service = yield* PatcherService;
   const Policy = Service.GetSecurityPolicy();
   if (Policy.MaxMemoryMB > 0) {
-    const MaxMemoryInBytes = Policy.MaxMemoryMB * 1024 * 1024;
+    void (Policy.MaxMemoryMB * 1024 * 1024);
     yield* Effect2.logDebug(
       `Memory limit configured: ${Policy.MaxMemoryMB}MB`
     );

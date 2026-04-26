@@ -85,13 +85,13 @@ export class GRPCServerService
 	> = new Set();
 
 	// Authentication configuration
-	private authToken: string | null = null;
+	public authToken: string | null = null;
 	private authEnabled: boolean = false;
 
 	// Keepalive configuration
 	private readonly keepaliveInterval: number = 10000; // 10 seconds
-	private readonly keepaliveTimeout: number = 5000; // 5 seconds
-	private keepaliveTimer: NodeJS.Timeout | null = null;
+	public readonly keepaliveTimeout: number = 5000; // 5 seconds
+	public keepaliveTimer: NodeJS.Timeout | null = null;
 
 	// Request tracking for cancellation
 	private activeRequests: Map<bigint, RequestTrackingEntry> = new Map();
@@ -338,7 +338,7 @@ export class GRPCServerService
 	 * Dependencies: Event marshaling, backpressure handling
 	 * Validation: Test with high-frequency event streams
 	 */
-	private startBidirectionalStreaming(
+	public startBidirectionalStreaming(
 		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
 	): void {
 		console.log(
@@ -449,7 +449,7 @@ export class GRPCServerService
 	/**
 	 * Broadcast event to all active streaming connections
 	 */
-	private BroadcastEvent(method: string, data: any): void {
+	public BroadcastEvent(_method: string, data: any): void {
 		const notification: GenericResponse = {
 			RequestIdentifier: BigInt(0),
 			Result: Buffer.from(JSON.stringify(data)),
@@ -876,7 +876,7 @@ export class GRPCServerService
 	 * Dependencies: CancellationService, operation context
 	 * Validation: Test with nested and parallel operations
 	 */
-	private registerCancelHandler(
+	public registerCancelHandler(
 		requestId: bigint,
 		handler: () => void,
 	): void {

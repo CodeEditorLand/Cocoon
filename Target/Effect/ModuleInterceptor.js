@@ -587,11 +587,11 @@ var makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
       securityLevel: "SANDBOXED" /* SANDBOXED */
     };
   }), "interceptRequire"),
-  resolveModule: /* @__PURE__ */ __name((extensionId, modulePath) => Effect2.gen(function* () {
+  resolveModule: /* @__PURE__ */ __name((_extensionId, modulePath) => Effect2.gen(function* () {
     yield* Effect2.sleep("1 millis");
     return `/node_modules/${modulePath}/index.js`;
   }), "resolveModule"),
-  setSecurityPolicy: /* @__PURE__ */ __name((policy) => Effect2.gen(function* () {
+  setSecurityPolicy: /* @__PURE__ */ __name((_policy) => Effect2.gen(function* () {
     yield* Effect2.sleep("1 millis");
   }), "setSecurityPolicy"),
   getSecurityPolicy: /* @__PURE__ */ __name((extensionId) => Effect2.gen(function* () {
@@ -603,7 +603,7 @@ var makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
       securityLevel: "SANDBOXED" /* SANDBOXED */
     };
   }), "getSecurityPolicy"),
-  validateModuleSecurity: /* @__PURE__ */ __name((extensionId, moduleId) => Effect2.gen(function* () {
+  validateModuleSecurity: /* @__PURE__ */ __name((_extensionId, _moduleId) => Effect2.gen(function* () {
     yield* Effect2.sleep("1 millis");
     return true;
   }), "validateModuleSecurity"),

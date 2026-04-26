@@ -5,7 +5,7 @@
  * Manages the gRPC client for Cocoon → Mountain communication.
  */
 
-import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
+import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
 
 import { MountainClientService as RealMountainClient } from "../Services/MountainClientService.js";
 import { TelemetryTag } from "./Telemetry.js";

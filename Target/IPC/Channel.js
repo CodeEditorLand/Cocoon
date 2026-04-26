@@ -458,7 +458,7 @@ var ChannelManager = class {
    * @param channel Channel to check
    * @returns true if rate limit allows
    */
-  CheckRateLimit(channel) {
+  CheckRateLimit(_channel) {
     return true;
   }
   /**

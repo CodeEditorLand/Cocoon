@@ -74,7 +74,7 @@ var VSBuffer = class _VSBuffer {
    * @param Encoding - Text encoding (default: utf-8)
    * @returns New VSBuffer instance containing the encoded string
    */
-  static FromString(String, Encoding = "utf-8") {
+  static FromString(String, _Encoding = "utf-8") {
     if (String === null || String === void 0) {
       return new _VSBuffer(new Uint8Array(0));
     }

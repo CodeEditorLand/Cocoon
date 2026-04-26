@@ -166,7 +166,7 @@ export default (
 		return {
 			Success: false,
 			Data: null,
-			Error: Error instanceof Error ? Error.message : String(Error),
+			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
 			OriginalSize,
 			FinalSize,
 		};

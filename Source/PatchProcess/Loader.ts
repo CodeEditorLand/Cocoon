@@ -43,7 +43,7 @@
 
 import * as Process from "node:process";
 
-import { Config, Context, Effect, Layer } from "effect";
+import { Config, Effect, Layer } from "effect";
 
 import { PatcherService, RunPatchProcess } from "./Patcher.js";
 import { PerformSecurityAudit, SecurityPolicy } from "./Security.js";
@@ -88,7 +88,7 @@ export class LoaderService extends Effect.Service<LoaderService>()(
 	"PatchProcess/LoaderService",
 	{
 		effect: Effect.gen(function* () {
-			const SecurityPolicy = yield* Config.string("SecurityPolicy").pipe(
+			yield* Config.string("SecurityPolicy").pipe(
 				Effect.catchTag("MissingConfig", () =>
 					Effect.succeed("default"),
 				),
@@ -316,7 +316,7 @@ export const InstallSecurityHooks = Effect.gen(function* () {
  * Set process resource limits
  * Applies OS-level resource restrictions
  */
-const SetResourceLimits = Effect.gen(function* () {
+export const SetResourceLimits = Effect.gen(function* () {
 	// TODO: Implement resource limit setting
 	// This requires native Node.js API calls to setrlimit
 	yield* Effect.logTrace(

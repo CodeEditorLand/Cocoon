@@ -22,12 +22,12 @@ var Memento = class {
   Storage;
   ExtensionId;
   Logger;
-  MountainClient;
+  _MountainClient;
   constructor(Storage, ExtensionId, Logger, MountainClient) {
     this.Storage = Storage;
     this.ExtensionId = ExtensionId;
     this.Logger = Logger;
-    this.MountainClient = MountainClient;
+    this._MountainClient = MountainClient;
     Effect2.runFork(
       Effect2.gen(function* () {
         try {
@@ -180,7 +180,7 @@ var ExtensionSecretStorage = class {
    * @returns Event that fires when secrets change
    */
   get onDidChange() {
-    return (Listener) => {
+    return (_Listener) => {
       const Disposable = {
         dispose: /* @__PURE__ */ __name(() => {
         }, "dispose")
@@ -194,9 +194,7 @@ var ExtensionContextService = class extends Effect2.Service()(
   {
     effect: Effect2.gen(function* () {
       const MountainClient = yield* IMountainClientService;
-      const Configuration = yield* Context.Tag(
-        "Service/Configuration"
-      );
+      yield* Context.Tag("Service/Configuration");
       const Logger = yield* Context.Tag("Service/Logger");
       const GlobalSubscriptionsRef = yield* Ref.make(
         /* @__PURE__ */ new Map()
@@ -245,12 +243,6 @@ var ExtensionContextService = class extends Effect2.Service()(
           }
           return NewMap;
         });
-        const CreateTrackedDisposable = /* @__PURE__ */ __name((Disposable) => ({
-          dispose: /* @__PURE__ */ __name(() => {
-            Subscriptions.delete(Disposable);
-            Disposable.dispose();
-          }, "dispose")
-        }), "CreateTrackedDisposable");
         const AsAbsolutePath = /* @__PURE__ */ __name((relativePath) => {
           const Uri = VSCode.Uri.joinPath(
             ExtensionDescription.extensionLocation,
@@ -290,7 +282,7 @@ var ExtensionContextService = class extends Effect2.Service()(
         );
         return ExtensionContext;
       }), "CreateExtensionContext");
-      const DisposeExtension = /* @__PURE__ */ __name((ExtensionId) => Effect2.gen(function* () {
+      void ((ExtensionId) => Effect2.gen(function* () {
         const GlobalSubscriptions = yield* Ref.get(
           GlobalSubscriptionsRef
         );
@@ -314,7 +306,7 @@ var ExtensionContextService = class extends Effect2.Service()(
         Logger.Debug(
           `[ExtensionContext] Extension ${ExtensionId} disposed`
         );
-      }), "DisposeExtension");
+      }));
       const ServiceImplementation = {
         CreateExtensionContext
       };

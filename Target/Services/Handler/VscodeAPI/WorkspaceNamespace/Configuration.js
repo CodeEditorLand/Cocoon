@@ -117,7 +117,7 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
       ConfigInFlight.delete(Key);
       if (Value === void 0) return;
       const Shape = Value;
-      const Resolved = Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
+      const Resolved = Shape?.["effectiveValue"] ?? Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["userValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
       const Prior = ConfigCache.get(Key);
       ConfigCache.set(Key, Resolved);
       if (Prior !== Resolved) FireConfigChange(Key);
@@ -160,10 +160,6 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
     const Shape = Payload ?? {};
     const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
     if (Keys.length === 0) {
-      for (const CachedKey of [...ConfigCache.keys()]) {
-        ConfigCache.delete(CachedKey);
-        FireConfigChange(CachedKey);
-      }
       return;
     }
     for (const Key of Keys) {

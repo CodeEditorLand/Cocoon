@@ -19325,6 +19325,451 @@ var init_LanguageProviderRegistry = __esm({
   }
 });
 
+// Source/Utility/LandFixLog.ts
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
+var init_LandFixLog = __esm({
+  "Source/Utility/LandFixLog.ts"() {
+    "use strict";
+    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+    Enabled = Mode !== "off";
+    Long = Mode === "long";
+    DebugEnabled = Long;
+    AllowList = (() => {
+      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw2 || Raw2.trim().length === 0) return void 0;
+      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      return Tags.length === 0 ? void 0 : new Set(Tags);
+    })();
+    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+    FormatTimestamp = /* @__PURE__ */ __name(() => {
+      const Now = /* @__PURE__ */ new Date();
+      if (Long) return Now.toISOString();
+      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+        Now.getSeconds()
+      )}.${PadThree(Now.getMilliseconds())}`;
+    }, "FormatTimestamp");
+    SerializeContext = /* @__PURE__ */ __name((Context) => {
+      const Seen = /* @__PURE__ */ new WeakSet();
+      try {
+        return JSON.stringify(Context, (_Key, Value) => {
+          if (Value instanceof Error) {
+            return { name: Value.name, message: Value.message };
+          }
+          if (typeof Value === "bigint") return String(Value);
+          if (typeof Value === "function") return "[Function]";
+          if (typeof Value === "object" && Value !== null) {
+            if (Seen.has(Value)) return "[Circular]";
+            Seen.add(Value);
+          }
+          return Value;
+        });
+      } catch {
+        return '"[Unserializable]"';
+      }
+    }, "SerializeContext");
+    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+      if (!Context) return `${Head}
+`;
+      return `${Head} ${SerializeContext(Context)}
+`;
+    }, "FormatLine");
+    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+      if (!Enabled) return;
+      if (AllowList && !AllowList.has(Tag)) return;
+      try {
+        Stream.write(FormatLine(Level, Tag, Message, Context));
+      } catch {
+      }
+    }, "Emit");
+    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stdout, "info", Tag, Message, Context);
+    }, "Info");
+    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stdout, "warn", Tag, Message, Context);
+    }, "Warn");
+    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stderr, "error", Tag, Message, Context);
+    }, "ErrorLog");
+    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      if (!DebugEnabled) return;
+      Emit(process.stdout, "debug", Tag, Message, Context);
+    }, "Debug");
+    SeenOnce = /* @__PURE__ */ new Set();
+    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+      if (!DebugEnabled) return;
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "debug", Tag, Message, Context);
+    }, "DebugOnce");
+    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "info", Tag, Message, Context);
+    }, "InfoOnce");
+    LandFixLog = {
+      Info,
+      InfoOnce,
+      Warn,
+      Error: ErrorLog,
+      Debug,
+      DebugOnce,
+      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+    };
+    LandFixLog_default = LandFixLog;
+  }
+});
+
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties, Create, Enrich, Event_default;
+var init_Event = __esm({
+  "Source/Telemetry/PostHog/Event.ts"() {
+    "use strict";
+    BaseProperties = {
+      $app: "land-editor",
+      $app_version: "0.0.1",
+      $build_mode: "debug",
+      $component: "cocoon",
+      $tier: "cocoon",
+      $lib: "cocoon-posthog-bridge"
+    };
+    Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+      Name,
+      Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      Properties
+    }), "Create");
+    Enrich = /* @__PURE__ */ __name((Properties) => ({
+      ...Properties,
+      ...BaseProperties,
+      $node_version: process.version
+    }), "Enrich");
+    Event_default = { Create, Enrich };
+  }
+});
+
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps from "node:https";
+var RequestTimeoutMilliseconds, Transport_default;
+var init_Transport = __esm({
+  "Source/Telemetry/PostHog/Transport.ts"() {
+    "use strict";
+    init_Event();
+    RequestTimeoutMilliseconds = 5e3;
+    Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+      if (Batch.length === 0) return;
+      const Payload = JSON.stringify({
+        api_key: Key,
+        batch: Batch.map((Entry) => ({
+          event: Entry.Name,
+          timestamp: Entry.Timestamp,
+          distinct_id: DistinctIdentifier2,
+          properties: Event_default.Enrich(Entry.Properties)
+        }))
+      });
+      try {
+        const Address = new URL("/batch/", Host);
+        const Request = NodeHttps.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || 443,
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: RequestTimeoutMilliseconds
+          },
+          (Response) => {
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+      }
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default;
+var init_Buffer = __esm({
+  "Source/Telemetry/PostHog/Buffer.ts"() {
+    "use strict";
+    init_Event();
+    init_Transport();
+    Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+      let Queue2 = [];
+      let FlushTimer;
+      const Send = /* @__PURE__ */ __name(() => {
+        if (Queue2.length === 0) return;
+        const Pending = Queue2;
+        Queue2 = [];
+        Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+      }, "Send");
+      const ScheduleFlush = /* @__PURE__ */ __name(() => {
+        if (FlushTimer) return;
+        FlushTimer = setTimeout(() => {
+          FlushTimer = void 0;
+          Send();
+        }, Config.BatchWindowMilliseconds);
+        FlushTimer.unref?.();
+      }, "ScheduleFlush");
+      return {
+        Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+          Queue2.push(Event_default.Create(Name, Properties));
+          if (Queue2.length >= Config.BatchMaximum) {
+            Send();
+            return;
+          }
+          ScheduleFlush();
+        }, "Enqueue"),
+        Drain: /* @__PURE__ */ __name(() => {
+          if (FlushTimer) {
+            clearTimeout(FlushTimer);
+            FlushTimer = void 0;
+          }
+          Send();
+        }, "Drain")
+      };
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey, DefaultHost, DefaultBatchWindowMilliseconds, DefaultBatchMaximum, ReadString, ReadBoolean, ReadNumber, Configuration_default;
+var init_Configuration = __esm({
+  "Source/Telemetry/PostHog/Configuration.ts"() {
+    "use strict";
+    DefaultKey = "";
+    DefaultHost = "https://eu.i.posthog.com";
+    DefaultBatchWindowMilliseconds = 3e3;
+    DefaultBatchMaximum = 50;
+    ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      return Value && Value.length > 0 ? Value : Fallback;
+    }, "ReadString");
+    ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      if (Value === void 0) return Fallback;
+      return !["false", "0", "off", ""].includes(Value.toLowerCase());
+    }, "ReadBoolean");
+    ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      const Parsed = Value ? Number(Value) : Number.NaN;
+      return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+    }, "ReadNumber");
+    Configuration_default = /* @__PURE__ */ __name(() => ({
+      Key: ReadString("LAND_POSTHOG_KEY", DefaultKey),
+      Host: ReadString("LAND_POSTHOG_HOST", DefaultHost),
+      Enabled: ReadBoolean("LAND_POSTHOG_COCOON_ENABLED", true) && process.env["NODE_ENV"] !== "production",
+      BatchWindowMilliseconds: ReadNumber(
+        "LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
+        DefaultBatchWindowMilliseconds
+      ),
+      BatchMaximum: ReadNumber(
+        "LAND_POSTHOG_COCOON_BATCH_MAX",
+        DefaultBatchMaximum
+      ),
+      DistinctIdentifierSeed: process.env["LAND_POSTHOG_DISTINCT_ID"] ?? ""
+    }), "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default;
+var init_Identifier = __esm({
+  "Source/Telemetry/PostHog/Identifier.ts"() {
+    "use strict";
+    Identifier_default = /* @__PURE__ */ __name((Seed) => {
+      if (Seed.length > 0) return Seed;
+      const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+      return `land-dev-${Username}`;
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHogBridge.ts
+var Configuration, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, PostHogBridge_default;
+var init_PostHogBridge = __esm({
+  "Source/Telemetry/PostHogBridge.ts"() {
+    "use strict";
+    init_Buffer();
+    init_Configuration();
+    init_Identifier();
+    Configuration = Configuration_default();
+    DistinctIdentifier = Identifier_default(
+      Configuration.DistinctIdentifierSeed
+    );
+    Initialized = false;
+    Buffered = /* @__PURE__ */ __name(() => {
+      if (!Configuration.Enabled) return void 0;
+      if (!ActiveBuffer) {
+        ActiveBuffer = Buffer_default(Configuration, DistinctIdentifier);
+      }
+      return ActiveBuffer;
+    }, "Buffered");
+    CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+      try {
+        Buffered()?.Enqueue(Name, Properties);
+      } catch {
+      }
+    }, "CaptureEvent");
+    CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      Bridge.Enqueue("cocoon:error", {
+        ...Extra,
+        error_tag: Tag,
+        error_message: Message
+      });
+      Bridge.Drain();
+    }, "CaptureError");
+    Initialize = /* @__PURE__ */ __name(() => {
+      if (Initialized) return;
+      Initialized = true;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+      process.once("exit", OnExit);
+      process.once("SIGINT", OnExit);
+      process.once("SIGTERM", OnExit);
+      CaptureEvent("cocoon:session:start", {
+        pid: process.pid,
+        platform: process.platform,
+        arch: process.arch
+      });
+    }, "Initialize");
+    PostHogBridge_default = { CaptureEvent, CaptureError, Initialize };
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts
+import { Effect } from "effect";
+var NoopDisposable, IsTrustFamily, ClassifyProperty, RecordGap, BuildHeuristicMethod, WrapNamespaceWithHeuristics, WrapNamespaceWithHeuristics_default;
+var init_WrapNamespaceWithHeuristics = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts"() {
+    "use strict";
+    init_LandFixLog();
+    init_PostHogBridge();
+    NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") };
+    IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
+    ClassifyProperty = /* @__PURE__ */ __name((Property) => {
+      if (IsTrustFamily(Property)) {
+        return {
+          Kind: "trust",
+          Sync: false,
+          Produce: /* @__PURE__ */ __name(() => true, "Produce")
+        };
+      }
+      if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+        return {
+          Kind: "event",
+          Sync: true,
+          Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+        };
+      }
+      if (Property.startsWith("register")) {
+        return {
+          Kind: "register",
+          Sync: true,
+          Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+        };
+      }
+      if (Property.startsWith("is") || Property.startsWith("has") || Property.startsWith("should")) {
+        return {
+          Kind: "bool-check",
+          Sync: false,
+          Produce: /* @__PURE__ */ __name(() => false, "Produce")
+        };
+      }
+      if (Property.startsWith("create") || Property.startsWith("get") || Property.startsWith("make")) {
+        return {
+          Kind: "factory",
+          Sync: true,
+          Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+        };
+      }
+      return {
+        Kind: "default",
+        Sync: false,
+        Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+      };
+    }, "ClassifyProperty");
+    RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
+      const Key = `${NamespaceName}.${Property}`;
+      LandFixLog_default.InfoOnce(
+        "VSCODE-API-GAP",
+        Key,
+        `${NamespaceName}.${Property} \u2192 ${Kind}`
+      );
+      CaptureEvent("cocoon:vscode_api_gap", {
+        namespace: NamespaceName,
+        method: Property,
+        kind: Kind
+      });
+    }, "RecordGap");
+    BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
+      const SpanName = `vscode.${NamespaceName}.${Property}`;
+      const Program = Effect.gen(function* () {
+        yield* Effect.sync(
+          () => RecordGap(NamespaceName, Property, Heuristic.Kind)
+        );
+        return Heuristic.Produce(...Arguments);
+      }).pipe(
+        Effect.withSpan(SpanName, {
+          attributes: {
+            "vscode.namespace": NamespaceName,
+            "vscode.method": Property,
+            "vscode.heuristic": Heuristic.Kind
+          }
+        })
+      );
+      return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+    }, "BuildHeuristicMethod");
+    WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
+      get(Target, Property) {
+        if (Reflect.has(Target, Property)) {
+          return Reflect.get(Target, Property);
+        }
+        if (typeof Property !== "string") return void 0;
+        if (Property === "then") return void 0;
+        const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+        return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
+      },
+      has(Target, Property) {
+        if (Reflect.has(Target, Property)) return true;
+        return typeof Property === "string" && Property !== "then";
+      }
+    }), "WrapNamespaceWithHeuristics");
+    WrapNamespaceWithHeuristics_default = WrapNamespaceWithHeuristics;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WrapWindowNamespace.ts
+var WrapWindowNamespace, WrapWindowNamespace_default;
+var init_WrapWindowNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapWindowNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapWindowNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("window", Concrete), "WrapWindowNamespace");
+    WrapWindowNamespace_default = WrapWindowNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/WindowNamespace.ts
 var WindowNamespace_exports = {};
 __export(WindowNamespace_exports, {
@@ -19341,6 +19786,7 @@ var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
+    init_WrapWindowNamespace();
     MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
       const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
       Context.Emitter.on(EventName, Bound);
@@ -19470,7 +19916,7 @@ var init_WindowNamespace = __esm({
           return void 0;
         }
       }, "ShowMessage");
-      return {
+      const Concrete = {
         showInformationMessage: ShowMessage("info"),
         showErrorMessage: ShowMessage("error"),
         showWarningMessage: ShowMessage("warn"),
@@ -20471,6 +20917,7 @@ var init_WindowNamespace = __esm({
         activeTerminal: void 0,
         state: { focused: true, active: true }
       };
+      return WrapWindowNamespace_default(Concrete);
     }, "CreateWindowNamespace");
     WindowNamespace_default = CreateWindowNamespace;
   }
@@ -20481,14 +20928,14 @@ var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummar
 var init_RouteManifest = __esm({
   "Source/Generated/RouteManifest.ts"() {
     "use strict";
-    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "Keybinding.GetResolved", "Languages.GetAll", "NativeHost.OpenExternal", "openDocument", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "warning", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog"]);
+    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "Keybinding.GetResolved", "Languages.GetAll", "NativeHost.OpenExternal", "openDocument", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "warning", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
     StockLiftExports = /* @__PURE__ */ new Set(["Basename", "Dirname", "Extname", "GlobIsEmpty", "GlobMatch", "GlobParsePattern", "IsEqualOrParent", "JoinPath", "RelativePath", "StockBasename", "StockDirname", "StockExtname", "StockGlobIsEmpty", "StockGlobMatch", "StockGlobParse", "StockIsEqualOrParent", "StockJoinPath", "StockRelativePath", "ToUri", "Uri", "URI"]);
     BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
     RouteManifestSummary = {
-      mountain: 80,
+      mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-26T16:12:40Z"
+      generatedAt: "2026-04-26T22:40:10Z"
     };
   }
 });
@@ -23673,107 +24120,6 @@ var init_FindTextInFilesFallback = __esm({
   }
 });
 
-// Source/Utility/LandFixLog.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
-var init_LandFixLog = __esm({
-  "Source/Utility/LandFixLog.ts"() {
-    "use strict";
-    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
-    Enabled = Mode !== "off";
-    Long = Mode === "long";
-    DebugEnabled = Long;
-    AllowList = (() => {
-      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw2 || Raw2.trim().length === 0) return void 0;
-      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
-      return Tags.length === 0 ? void 0 : new Set(Tags);
-    })();
-    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
-    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
-    FormatTimestamp = /* @__PURE__ */ __name(() => {
-      const Now = /* @__PURE__ */ new Date();
-      if (Long) return Now.toISOString();
-      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
-        Now.getSeconds()
-      )}.${PadThree(Now.getMilliseconds())}`;
-    }, "FormatTimestamp");
-    SerializeContext = /* @__PURE__ */ __name((Context) => {
-      const Seen = /* @__PURE__ */ new WeakSet();
-      try {
-        return JSON.stringify(Context, (_Key, Value) => {
-          if (Value instanceof Error) {
-            return { name: Value.name, message: Value.message };
-          }
-          if (typeof Value === "bigint") return String(Value);
-          if (typeof Value === "function") return "[Function]";
-          if (typeof Value === "object" && Value !== null) {
-            if (Seen.has(Value)) return "[Circular]";
-            Seen.add(Value);
-          }
-          return Value;
-        });
-      } catch {
-        return '"[Unserializable]"';
-      }
-    }, "SerializeContext");
-    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
-    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
-      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
-      if (!Context) return `${Head}
-`;
-      return `${Head} ${SerializeContext(Context)}
-`;
-    }, "FormatLine");
-    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
-      if (!Enabled) return;
-      if (AllowList && !AllowList.has(Tag)) return;
-      try {
-        Stream.write(FormatLine(Level, Tag, Message, Context));
-      } catch {
-      }
-    }, "Emit");
-    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "Info");
-    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "warn", Tag, Message, Context);
-    }, "Warn");
-    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stderr, "error", Tag, Message, Context);
-    }, "ErrorLog");
-    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      if (!DebugEnabled) return;
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "Debug");
-    SeenOnce = /* @__PURE__ */ new Set();
-    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
-      if (!DebugEnabled) return;
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "DebugOnce");
-    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "InfoOnce");
-    LandFixLog = {
-      Info,
-      InfoOnce,
-      Warn,
-      Error: ErrorLog,
-      Debug,
-      DebugOnce,
-      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
-      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
-      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
-    };
-    LandFixLog_default = LandFixLog;
-  }
-});
-
 // Source/Utility/Tier.ts
 var Injected, Pick, Tier, Tier_default;
 var init_Tier = __esm({
@@ -23958,7 +24304,7 @@ var init_DevLog = __esm({
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
 var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
-var init_Configuration = __esm({
+var init_Configuration2 = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
     "use strict";
     init_DevLog();
@@ -23990,7 +24336,7 @@ var init_Configuration = __esm({
           ConfigInFlight.delete(Key);
           if (Value === void 0) return;
           const Shape = Value;
-          const Resolved = Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
+          const Resolved = Shape?.["effectiveValue"] ?? Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["userValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
           const Prior = ConfigCache.get(Key);
           ConfigCache.set(Key, Resolved);
           if (Prior !== Resolved) FireConfigChange(Key);
@@ -24033,10 +24379,6 @@ var init_Configuration = __esm({
         const Shape = Payload ?? {};
         const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
         if (Keys.length === 0) {
-          for (const CachedKey of [...ConfigCache.keys()]) {
-            ConfigCache.delete(CachedKey);
-            FireConfigChange(CachedKey);
-          }
           return;
         }
         for (const Key of Keys) {
@@ -24400,7 +24742,7 @@ function FireOnLanguageActivation(Context, LanguageId) {
   const Router = Context.ActivateByEvent;
   if (typeof Router === "function") {
     Router(Event2).catch((Error2) => {
-      const Message = Error2 instanceof Error2 ? Error2.message : String(Error2);
+      const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
       console.warn(
         `[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`
       );
@@ -24901,6 +25243,17 @@ var init_FileSystemNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts
+var WrapWorkspaceNamespace, WrapWorkspaceNamespace_default;
+var init_WrapWorkspaceNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapWorkspaceNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("workspace", Concrete), "WrapWorkspaceNamespace");
+    WrapWorkspaceNamespace_default = WrapWorkspaceNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
 var HydrateUriResults, CreateWorkspaceNamespace, Index_default;
 var init_Index = __esm({
@@ -24911,10 +25264,11 @@ var init_Index = __esm({
     init_FindFiles();
     init_FindTextInFilesFallback();
     init_FileSystemWatcher();
-    init_Configuration();
+    init_Configuration2();
     init_TextDocument();
     init_Providers();
     init_FileSystemNamespace();
+    init_WrapWorkspaceNamespace();
     HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
       if (!Array.isArray(Raw2)) return [];
       return Raw2.map((Item) => {
@@ -24957,7 +25311,7 @@ var init_Index = __esm({
       }, "ReadName");
       const ConfigState = CreateConfigurationState(Context);
       globalThis.__cocoonConfigState = ConfigState;
-      return {
+      const Concrete = {
         get workspaceFolders() {
           return ReadFolders();
         },
@@ -25112,7 +25466,7 @@ var init_Index = __esm({
         // stable signature.
         save: /* @__PURE__ */ __name(async (Uri2) => {
           try {
-            await Context.MountainClient.sendRequest("Workspace.Save", {
+            await Context.MountainClient?.sendRequest("Workspace.Save", {
               uri: Uri2
             });
             return Uri2;
@@ -25122,7 +25476,7 @@ var init_Index = __esm({
         }, "save"),
         saveAs: /* @__PURE__ */ __name(async (Uri2) => {
           try {
-            const Result = await Context.MountainClient.sendRequest(
+            const Result = await Context.MountainClient?.sendRequest(
               "Workspace.SaveAs",
               { uri: Uri2 }
             );
@@ -25301,6 +25655,7 @@ var init_Index = __esm({
         ), "createFileSystemWatcher"),
         fs: BuildFileSystemNamespace(Context)
       };
+      return WrapWorkspaceNamespace_default(Concrete);
     }, "CreateWorkspaceNamespace");
     Index_default = CreateWorkspaceNamespace;
   }
@@ -25337,6 +25692,17 @@ var init_CommandsRoute = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapCommandsNamespace.ts
+var WrapCommandsNamespace, WrapCommandsNamespace_default;
+var init_WrapCommandsNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapCommandsNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapCommandsNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("commands", Concrete), "WrapCommandsNamespace");
+    WrapCommandsNamespace_default = WrapCommandsNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/CommandsNamespace.ts
 var CommandsNamespace_exports = {};
 __export(CommandsNamespace_exports, {
@@ -25347,7 +25713,8 @@ var init_CommandsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/CommandsNamespace.ts"() {
     "use strict";
     init_CommandsRoute();
-    CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => ({
+    init_WrapCommandsNamespace();
+    CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => WrapCommandsNamespace_default({
       registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
         Context.SendToMountain("registerCommand", { commandId: Command }).catch(
@@ -25450,6 +25817,17 @@ var init_CommandsNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapLanguagesNamespace.ts
+var WrapLanguagesNamespace, WrapLanguagesNamespace_default;
+var init_WrapLanguagesNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapLanguagesNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapLanguagesNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("languages", Concrete), "WrapLanguagesNamespace");
+    WrapLanguagesNamespace_default = WrapLanguagesNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts
 var LanguagesNamespace_exports = {};
 __export(LanguagesNamespace_exports, {
@@ -25461,6 +25839,7 @@ var init_LanguagesNamespace = __esm({
     "use strict";
     init_GlobToRegex();
     init_StockLift();
+    init_WrapLanguagesNamespace();
     UriKey = /* @__PURE__ */ __name((Value) => {
       if (Value == null) return "";
       if (typeof Value === "string") return Value;
@@ -25486,7 +25865,7 @@ var init_LanguagesNamespace = __esm({
       });
       return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
     }, "RegisterProvider");
-    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => ({
+    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => WrapLanguagesNamespace_default({
       registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
         Context,
         LanguageProviderRegistry,
@@ -25968,17 +26347,29 @@ var init_LanguagesNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapExtensionsNamespace.ts
+var WrapExtensionsNamespace, WrapExtensionsNamespace_default;
+var init_WrapExtensionsNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapExtensionsNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapExtensionsNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("extensions", Concrete), "WrapExtensionsNamespace");
+    WrapExtensionsNamespace_default = WrapExtensionsNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts
 var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var NoopDisposable, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
     init_LandFixLog();
-    NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+    init_WrapExtensionsNamespace();
+    NoopDisposable2 = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
     MakeMultiStub = /* @__PURE__ */ __name(() => {
       const StubTarget = /* @__PURE__ */ __name(function MultiStub() {
@@ -26047,10 +26438,10 @@ var init_ExtensionsNamespace = __esm({
           }
           if (Property === "then") return void 0;
           if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
-            return (_Listener) => NoopDisposable;
+            return (_Listener) => NoopDisposable2;
           }
           if (Property.startsWith("register")) {
-            return (..._Args) => NoopDisposable;
+            return (..._Args) => NoopDisposable2;
           }
           if (Property.startsWith("get") || Property.startsWith("create")) {
             return (..._Args) => MakePermissiveExports();
@@ -26090,7 +26481,7 @@ var init_ExtensionsNamespace = __esm({
           } catch (Error2) {
             LandFixLog_default.Warn(
               "ExtNs",
-              `URL parse failed for ${Raw2}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
+              `URL parse failed for ${Raw2}: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}; using fallback strip`
             );
             Path = Raw2.replace(/^file:\/\//, "");
           }
@@ -26135,7 +26526,7 @@ var init_ExtensionsNamespace = __esm({
       );
       return { ExtensionPath: "", ExtensionUri: MakeUri("") };
     }, "NormalizeLocation");
-    ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw2) => {
+    ToExtensionObject = /* @__PURE__ */ __name((_Context, Id, Raw2) => {
       const Exports = MakePermissiveExports();
       const { ExtensionPath, ExtensionUri } = NormalizeLocation(
         Raw2?.extensionLocation
@@ -26164,7 +26555,7 @@ var init_ExtensionsNamespace = __esm({
       };
     }, "ToExtensionObject");
     IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
-    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => ({
+    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => WrapExtensionsNamespace_default({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
         const Raw2 = Context.ExtensionRegistry.get(Identifier);
@@ -26192,6 +26583,17 @@ var init_ExtensionsNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapEnvNamespace.ts
+var WrapEnvNamespace, WrapEnvNamespace_default;
+var init_WrapEnvNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapEnvNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapEnvNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("env", Concrete), "WrapEnvNamespace");
+    WrapEnvNamespace_default = WrapEnvNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/EnvNamespace.ts
 var EnvNamespace_exports = {};
 __export(EnvNamespace_exports, {
@@ -26202,6 +26604,7 @@ var init_EnvNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
     "use strict";
     init_LandFixLog();
+    init_WrapEnvNamespace();
     CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
       const Env = Context.ExtensionHostInitData?.environment ?? {};
       const NormalizeAppRoot = /* @__PURE__ */ __name((Raw2) => {
@@ -26231,7 +26634,7 @@ var init_EnvNamespace = __esm({
             "EnvNs",
             `appRoot URL parse failed; fallback ${Raw2} \u2192 ${Fallback}`,
             {
-              error: Error2 instanceof Error2 ? Error2.message : String(Error2)
+              error: Error2 instanceof globalThis.Error ? Error2.message : String(Error2)
             }
           );
           return Fallback;
@@ -26247,7 +26650,7 @@ var init_EnvNamespace = __esm({
           return void 0;
         }
       }, "Call");
-      return {
+      const Concrete = {
         appName: Env["appName"] ?? "CodeEditorLand",
         appRoot: NormalizeAppRoot(Env["appRoot"]),
         appHost: Env["appHost"] ?? "desktop",
@@ -26403,8 +26806,20 @@ var init_EnvNamespace = __esm({
         onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "onDidChangeLogLevel")
       };
+      return WrapEnvNamespace_default(Concrete);
     }, "CreateEnvNamespace");
     EnvNamespace_default = CreateEnvNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WrapDebugNamespace.ts
+var WrapDebugNamespace, WrapDebugNamespace_default;
+var init_WrapDebugNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapDebugNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapDebugNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("debug", Concrete), "WrapDebugNamespace");
+    WrapDebugNamespace_default = WrapDebugNamespace;
   }
 });
 
@@ -26418,6 +26833,7 @@ var init_DebugNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/DebugNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
+    init_WrapDebugNamespace();
     EventSubscriber2 = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
       Context.Emitter.on(EventName, Listener);
       return {
@@ -26426,7 +26842,7 @@ var init_DebugNamespace = __esm({
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateDebugNamespace = /* @__PURE__ */ __name((Context) => ({
+    CreateDebugNamespace = /* @__PURE__ */ __name((Context) => WrapDebugNamespace_default({
       registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_debug_adapter", {
@@ -26553,6 +26969,17 @@ var init_DebugNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapTasksNamespace.ts
+var WrapTasksNamespace, WrapTasksNamespace_default;
+var init_WrapTasksNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapTasksNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapTasksNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("tasks", Concrete), "WrapTasksNamespace");
+    WrapTasksNamespace_default = WrapTasksNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/TasksNamespace.ts
 var TasksNamespace_exports = {};
 __export(TasksNamespace_exports, {
@@ -26563,6 +26990,7 @@ var init_TasksNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/TasksNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
+    init_WrapTasksNamespace();
     EventSubscriber3 = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
       Context.Emitter.on(EventName, Listener);
       return {
@@ -26571,7 +26999,7 @@ var init_TasksNamespace = __esm({
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateTasksNamespace = /* @__PURE__ */ __name((Context) => ({
+    CreateTasksNamespace = /* @__PURE__ */ __name((Context) => WrapTasksNamespace_default({
       registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_task_provider", {
@@ -26619,6 +27047,17 @@ var init_TasksNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapScmNamespace.ts
+var WrapScmNamespace, WrapScmNamespace_default;
+var init_WrapScmNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapScmNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapScmNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("scm", Concrete), "WrapScmNamespace");
+    WrapScmNamespace_default = WrapScmNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/ScmNamespace.ts
 var ScmNamespace_exports = {};
 __export(ScmNamespace_exports, {
@@ -26629,6 +27068,7 @@ var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
+    init_WrapScmNamespace();
     ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
     ScmTrace = /* @__PURE__ */ __name((Message) => {
       if (!ScmTraceEnabled) return;
@@ -26638,7 +27078,7 @@ var init_ScmNamespace = __esm({
       } catch {
       }
     }, "ScmTrace");
-    CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
+    CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_default({
       createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
         const Handle = NextProviderHandle();
         const RootUriShape = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
@@ -26652,7 +27092,7 @@ var init_ScmNamespace = __esm({
           root_uri: RootUri,
           extension_id: ""
         }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
-          const Message = Error2 instanceof Error2 ? Error2.message : String(Error2);
+          const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
           ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
         });
         const Groups = /* @__PURE__ */ new Map();
@@ -26679,7 +27119,7 @@ var init_ScmNamespace = __esm({
               label: GroupLabel
             }).catch((Error2) => {
               ScmTrace(
-                `register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+                `register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
               );
             });
             const State = { resourceStates: [] };
@@ -26700,7 +27140,7 @@ var init_ScmNamespace = __esm({
                   resource_states: Value
                 }).catch((Error2) => {
                   ScmTrace(
-                    `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+                    `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
                   );
                 });
               },
@@ -26737,6 +27177,17 @@ var init_ScmNamespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/WrapAuthenticationNamespace.ts
+var WrapAuthenticationNamespace, WrapAuthenticationNamespace_default;
+var init_WrapAuthenticationNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WrapAuthenticationNamespace.ts"() {
+    "use strict";
+    init_WrapNamespaceWithHeuristics();
+    WrapAuthenticationNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("authentication", Concrete), "WrapAuthenticationNamespace");
+    WrapAuthenticationNamespace_default = WrapAuthenticationNamespace;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts
 var AuthenticationNamespace_exports = {};
 __export(AuthenticationNamespace_exports, {
@@ -26747,6 +27198,7 @@ var init_AuthenticationNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
+    init_WrapAuthenticationNamespace();
     EventSubscriber4 = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
       Context.Emitter.on(EventName, Listener);
       return {
@@ -26755,7 +27207,7 @@ var init_AuthenticationNamespace = __esm({
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => ({
+    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => WrapAuthenticationNamespace_default({
       registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_authentication_provider", {
@@ -26946,7 +27398,7 @@ ${Stack}`
         activated: ToActivate.length
       };
     }, "HandleActivateByEvent");
-    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context, Parameters) => {
+    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context, _Parameters) => {
       console.log(
         `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`
       );

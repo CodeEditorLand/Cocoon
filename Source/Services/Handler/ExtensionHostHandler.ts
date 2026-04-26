@@ -270,7 +270,7 @@ const HandleActivateByEvent = async (
  */
 const HandleStartExtensionHost = async (
 	Context: HandlerContext,
-	Parameters: any,
+	_Parameters: any,
 ): Promise<any> => {
 	console.log(
 		`[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`,

@@ -42,7 +42,7 @@
  * @since 1.0.0
  */
 
-import { credentials, Client as grpcClient } from "@grpc/grpc-js";
+import { credentials } from "@grpc/grpc-js";
 import { v4 as uuidv4 } from "uuid";
 
 import {
@@ -50,7 +50,6 @@ import {
 	EchoActionResponse,
 	EchoActionServiceClient,
 	RegisterExtensionHostRequest,
-	RegisterExtensionHostResponse,
 } from "../../Proto/vine.js";
 import { Logger } from "../Platform/Logger.js";
 import { MetricsCollector } from "./MetricsCollector.js";
@@ -115,7 +114,7 @@ export class CocoonEchoClient {
 	async connect(): Promise<void> {
 		this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`);
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve, _reject) => {
 			this.client = new EchoActionServiceClient(
 				this.mountainUrl,
 				credentials.createInsecure(),

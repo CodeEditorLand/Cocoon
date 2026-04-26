@@ -67,10 +67,10 @@ var FileSystemService = class {
   async createDirectory(uri) {
     await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
   }
-  async delete(uri, options) {
+  async delete(uri, _options) {
     await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
   }
-  async rename(source, target, options) {
+  async rename(source, target, _options) {
     await this.mountainClient.sendRequest("fs.rename", {
       from: source.fsPath,
       to: target.fsPath

@@ -11,7 +11,6 @@ import {
 	Effect,
 	HashMap,
 	Layer,
-	Option,
 	Ref,
 	SubscriptionRef,
 } from "effect";
@@ -603,13 +602,13 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 			} satisfies ModuleInterceptionResult;
 		}),
 
-	resolveModule: (extensionId, modulePath) =>
+	resolveModule: (_extensionId, modulePath) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
 			return `/node_modules/${modulePath}/index.js`;
 		}),
 
-	setSecurityPolicy: (policy) =>
+	setSecurityPolicy: (_policy) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
 		}),
@@ -625,7 +624,7 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 			} satisfies SecurityPolicy;
 		}),
 
-	validateModuleSecurity: (extensionId, moduleId) =>
+	validateModuleSecurity: (_extensionId, _moduleId) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
 			return true;

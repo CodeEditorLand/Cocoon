@@ -14,18 +14,18 @@ var IConfigurationService = Context.Tag(
 );
 
 // Source/Interfaces/IMountainClientService.ts
-import * as Effect2 from "effect/Effect";
-var IMountainClientService = Effect2.Service()(
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
   "Service/MountainClient",
   {
-    effect: Effect2.gen(function* () {
+    effect: Effect.gen(function* () {
       return {};
     })
   }
 );
 
 // Source/Services/Configuration.ts
-import { Effect as Effect3, Layer } from "effect";
+import { Effect as Effect2, Layer } from "effect";
 var ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
   ConfigurationScope3["APPLICATION"] = "APPLICATION";
   ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
@@ -335,7 +335,7 @@ var Configuration = class {
   /**
    * Handle configuration conflicts with retry logic
    */
-  async handleConfigurationConflict(error, key, value, scope) {
+  async handleConfigurationConflict(_error, key, value, scope) {
     console.warn(
       "[ConfigurationService] Configuration conflict detected, implementing retry logic"
     );
@@ -471,10 +471,10 @@ var Configuration = class {
 };
 var ConfigurationLayer = Layer.effect(
   IConfigurationService,
-  Effect3.gen(function* () {
+  Effect2.gen(function* () {
     const mountainClient = yield* IMountainClientService;
     const configService = new Configuration(mountainClient);
-    yield* Effect3.promise(() => configService.initialize());
+    yield* Effect2.promise(() => configService.initialize());
     return configService;
   })
 );

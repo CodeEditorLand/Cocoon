@@ -122,7 +122,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 			return {
 				Success: false,
 				Message: null,
-				Error: `Failed to parse metadata JSON: ${Error instanceof Error ? Error.message : String(Error)}`,
+				Error: `Failed to parse metadata JSON: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 				Warnings,
 			};
 		}
@@ -193,7 +193,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		return {
 			Success: false,
 			Message: null,
-			Error: Error instanceof Error ? Error.message : String(Error),
+			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
 			Warnings,
 		};
 	}

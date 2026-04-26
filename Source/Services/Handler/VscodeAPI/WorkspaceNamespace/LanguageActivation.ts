@@ -195,7 +195,7 @@ export function FireOnLanguageActivation(
 	if (typeof Router === "function") {
 		Router(Event).catch((Error: unknown) => {
 			const Message =
-				Error instanceof Error ? Error.message : String(Error);
+				Error instanceof globalThis.Error ? Error.message : String(Error);
 			console.warn(
 				`[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`,
 			);

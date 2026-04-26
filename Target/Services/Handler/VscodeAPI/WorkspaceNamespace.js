@@ -2,14 +2,14 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Generated/RouteManifest.ts
-var MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "Keybinding.GetResolved", "Languages.GetAll", "NativeHost.OpenExternal", "openDocument", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "warning", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog"]);
+var MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "Keybinding.GetResolved", "Languages.GetAll", "NativeHost.OpenExternal", "openDocument", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "warning", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
 var StockLiftExports = /* @__PURE__ */ new Set(["Basename", "Dirname", "Extname", "GlobIsEmpty", "GlobMatch", "GlobParsePattern", "IsEqualOrParent", "JoinPath", "RelativePath", "StockBasename", "StockDirname", "StockExtname", "StockGlobIsEmpty", "StockGlobMatch", "StockGlobParse", "StockIsEqualOrParent", "StockJoinPath", "StockRelativePath", "ToUri", "Uri", "URI"]);
 var BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
 var RouteManifestSummary = {
-  mountain: 80,
+  mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-26T16:12:40Z"
+  generatedAt: "2026-04-26T22:40:10Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -12186,7 +12186,7 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
       ConfigInFlight.delete(Key);
       if (Value === void 0) return;
       const Shape = Value;
-      const Resolved = Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
+      const Resolved = Shape?.["effectiveValue"] ?? Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["userValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
       const Prior = ConfigCache.get(Key);
       ConfigCache.set(Key, Resolved);
       if (Prior !== Resolved) FireConfigChange(Key);
@@ -12229,10 +12229,6 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
     const Shape = Payload ?? {};
     const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
     if (Keys.length === 0) {
-      for (const CachedKey of [...ConfigCache.keys()]) {
-        ConfigCache.delete(CachedKey);
-        FireConfigChange(CachedKey);
-      }
       return;
     }
     for (const Key of Keys) {
@@ -12658,7 +12654,7 @@ function FireOnLanguageActivation(Context, LanguageId) {
   const Router = Context.ActivateByEvent;
   if (typeof Router === "function") {
     Router(Event2).catch((Error2) => {
-      const Message = Error2 instanceof Error2 ? Error2.message : String(Error2);
+      const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
       console.warn(
         `[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`
       );
@@ -13057,6 +13053,294 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
   }, "isWritableFileSystem")
 }), "BuildFileSystemNamespace");
 
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties = {
+  $app: "land-editor",
+  $app_version: "0.0.1",
+  $build_mode: "debug",
+  $component: "cocoon",
+  $tier: "cocoon",
+  $lib: "cocoon-posthog-bridge"
+};
+var Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+  Name,
+  Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+  Properties
+}), "Create");
+var Enrich = /* @__PURE__ */ __name((Properties) => ({
+  ...Properties,
+  ...BaseProperties,
+  $node_version: process.version
+}), "Enrich");
+var Event_default = { Create, Enrich };
+
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps from "node:https";
+var RequestTimeoutMilliseconds = 5e3;
+var Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+  if (Batch.length === 0) return;
+  const Payload = JSON.stringify({
+    api_key: Key,
+    batch: Batch.map((Entry) => ({
+      event: Entry.Name,
+      timestamp: Entry.Timestamp,
+      distinct_id: DistinctIdentifier2,
+      properties: Event_default.Enrich(Entry.Properties)
+    }))
+  });
+  try {
+    const Address = new URL("/batch/", Host);
+    const Request = NodeHttps.request(
+      {
+        method: "POST",
+        hostname: Address.hostname,
+        port: Address.port || 443,
+        path: Address.pathname,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(Payload)
+        },
+        timeout: RequestTimeoutMilliseconds
+      },
+      (Response) => {
+        Response.resume();
+      }
+    );
+    Request.on("error", () => {
+    });
+    Request.on("timeout", () => {
+      Request.destroy();
+    });
+    Request.write(Payload);
+    Request.end();
+  } catch {
+  }
+}, "default");
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+  let Queue2 = [];
+  let FlushTimer;
+  const Send = /* @__PURE__ */ __name(() => {
+    if (Queue2.length === 0) return;
+    const Pending = Queue2;
+    Queue2 = [];
+    Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+  }, "Send");
+  const ScheduleFlush = /* @__PURE__ */ __name(() => {
+    if (FlushTimer) return;
+    FlushTimer = setTimeout(() => {
+      FlushTimer = void 0;
+      Send();
+    }, Config.BatchWindowMilliseconds);
+    FlushTimer.unref?.();
+  }, "ScheduleFlush");
+  return {
+    Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+      Queue2.push(Event_default.Create(Name, Properties));
+      if (Queue2.length >= Config.BatchMaximum) {
+        Send();
+        return;
+      }
+      ScheduleFlush();
+    }, "Enqueue"),
+    Drain: /* @__PURE__ */ __name(() => {
+      if (FlushTimer) {
+        clearTimeout(FlushTimer);
+        FlushTimer = void 0;
+      }
+      Send();
+    }, "Drain")
+  };
+}, "default");
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey = "";
+var DefaultHost = "https://eu.i.posthog.com";
+var DefaultBatchWindowMilliseconds = 3e3;
+var DefaultBatchMaximum = 50;
+var ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  return Value && Value.length > 0 ? Value : Fallback;
+}, "ReadString");
+var ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  if (Value === void 0) return Fallback;
+  return !["false", "0", "off", ""].includes(Value.toLowerCase());
+}, "ReadBoolean");
+var ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  const Parsed = Value ? Number(Value) : Number.NaN;
+  return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+}, "ReadNumber");
+var Configuration_default = /* @__PURE__ */ __name(() => ({
+  Key: ReadString("LAND_POSTHOG_KEY", DefaultKey),
+  Host: ReadString("LAND_POSTHOG_HOST", DefaultHost),
+  Enabled: ReadBoolean("LAND_POSTHOG_COCOON_ENABLED", true) && process.env["NODE_ENV"] !== "production",
+  BatchWindowMilliseconds: ReadNumber(
+    "LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
+    DefaultBatchWindowMilliseconds
+  ),
+  BatchMaximum: ReadNumber(
+    "LAND_POSTHOG_COCOON_BATCH_MAX",
+    DefaultBatchMaximum
+  ),
+  DistinctIdentifierSeed: process.env["LAND_POSTHOG_DISTINCT_ID"] ?? ""
+}), "default");
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default = /* @__PURE__ */ __name((Seed) => {
+  if (Seed.length > 0) return Seed;
+  const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+  return `land-dev-${Username}`;
+}, "default");
+
+// Source/Telemetry/PostHogBridge.ts
+var Configuration = Configuration_default();
+var DistinctIdentifier = Identifier_default(
+  Configuration.DistinctIdentifierSeed
+);
+var ActiveBuffer;
+var Initialized = false;
+var Buffered = /* @__PURE__ */ __name(() => {
+  if (!Configuration.Enabled) return void 0;
+  if (!ActiveBuffer) {
+    ActiveBuffer = Buffer_default(Configuration, DistinctIdentifier);
+  }
+  return ActiveBuffer;
+}, "Buffered");
+var CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+  try {
+    Buffered()?.Enqueue(Name, Properties);
+  } catch {
+  }
+}, "CaptureEvent");
+var CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+  const Bridge = Buffered();
+  if (!Bridge) return;
+  Bridge.Enqueue("cocoon:error", {
+    ...Extra,
+    error_tag: Tag,
+    error_message: Message
+  });
+  Bridge.Drain();
+}, "CaptureError");
+var Initialize = /* @__PURE__ */ __name(() => {
+  if (Initialized) return;
+  Initialized = true;
+  const Bridge = Buffered();
+  if (!Bridge) return;
+  const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+  process.once("exit", OnExit);
+  process.once("SIGINT", OnExit);
+  process.once("SIGTERM", OnExit);
+  CaptureEvent("cocoon:session:start", {
+    pid: process.pid,
+    platform: process.platform,
+    arch: process.arch
+  });
+}, "Initialize");
+var PostHogBridge_default = { CaptureEvent, CaptureError, Initialize };
+
+// Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts
+import { Effect } from "effect";
+var NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+}, "dispose") };
+var IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
+var ClassifyProperty = /* @__PURE__ */ __name((Property) => {
+  if (IsTrustFamily(Property)) {
+    return {
+      Kind: "trust",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => true, "Produce")
+    };
+  }
+  if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+    return {
+      Kind: "event",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("register")) {
+    return {
+      Kind: "register",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("is") || Property.startsWith("has") || Property.startsWith("should")) {
+    return {
+      Kind: "bool-check",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => false, "Produce")
+    };
+  }
+  if (Property.startsWith("create") || Property.startsWith("get") || Property.startsWith("make")) {
+    return {
+      Kind: "factory",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+    };
+  }
+  return {
+    Kind: "default",
+    Sync: false,
+    Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+  };
+}, "ClassifyProperty");
+var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
+  const Key = `${NamespaceName}.${Property}`;
+  LandFixLog_default.InfoOnce(
+    "VSCODE-API-GAP",
+    Key,
+    `${NamespaceName}.${Property} \u2192 ${Kind}`
+  );
+  CaptureEvent("cocoon:vscode_api_gap", {
+    namespace: NamespaceName,
+    method: Property,
+    kind: Kind
+  });
+}, "RecordGap");
+var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
+  const SpanName = `vscode.${NamespaceName}.${Property}`;
+  const Program = Effect.gen(function* () {
+    yield* Effect.sync(
+      () => RecordGap(NamespaceName, Property, Heuristic.Kind)
+    );
+    return Heuristic.Produce(...Arguments);
+  }).pipe(
+    Effect.withSpan(SpanName, {
+      attributes: {
+        "vscode.namespace": NamespaceName,
+        "vscode.method": Property,
+        "vscode.heuristic": Heuristic.Kind
+      }
+    })
+  );
+  return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+}, "BuildHeuristicMethod");
+var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
+  get(Target, Property) {
+    if (Reflect.has(Target, Property)) {
+      return Reflect.get(Target, Property);
+    }
+    if (typeof Property !== "string") return void 0;
+    if (Property === "then") return void 0;
+    const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+    return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
+  },
+  has(Target, Property) {
+    if (Reflect.has(Target, Property)) return true;
+    return typeof Property === "string" && Property !== "then";
+  }
+}), "WrapNamespaceWithHeuristics");
+var WrapNamespaceWithHeuristics_default = WrapNamespaceWithHeuristics;
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts
+var WrapWorkspaceNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("workspace", Concrete), "WrapWorkspaceNamespace");
+var WrapWorkspaceNamespace_default = WrapWorkspaceNamespace;
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
 var HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
   if (!Array.isArray(Raw2)) return [];
@@ -13100,7 +13384,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
   }, "ReadName");
   const ConfigState = CreateConfigurationState(Context);
   globalThis.__cocoonConfigState = ConfigState;
-  return {
+  const Concrete = {
     get workspaceFolders() {
       return ReadFolders();
     },
@@ -13255,7 +13539,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     // stable signature.
     save: /* @__PURE__ */ __name(async (Uri2) => {
       try {
-        await Context.MountainClient.sendRequest("Workspace.Save", {
+        await Context.MountainClient?.sendRequest("Workspace.Save", {
           uri: Uri2
         });
         return Uri2;
@@ -13265,7 +13549,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     }, "save"),
     saveAs: /* @__PURE__ */ __name(async (Uri2) => {
       try {
-        const Result = await Context.MountainClient.sendRequest(
+        const Result = await Context.MountainClient?.sendRequest(
           "Workspace.SaveAs",
           { uri: Uri2 }
         );
@@ -13444,6 +13728,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     ), "createFileSystemWatcher"),
     fs: BuildFileSystemNamespace(Context)
   };
+  return WrapWorkspaceNamespace_default(Concrete);
 }, "CreateWorkspaceNamespace");
 var Index_default = CreateWorkspaceNamespace;
 export {

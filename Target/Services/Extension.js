@@ -18,7 +18,7 @@ var ExtensionService = class extends Effect2.Service()(
   "Service/Extension",
   {
     effect: Effect2.gen(function* () {
-      const MountainClient = yield* IMountainClientService;
+      yield* IMountainClientService;
       const Configuration = yield* Context.Tag(
         "Service/Configuration"
       );
@@ -32,9 +32,7 @@ var ExtensionService = class extends Effect2.Service()(
       const ExtensionExportsRef = yield* Ref.make(
         /* @__PURE__ */ new Map()
       );
-      const ActivationMetricsRef = yield* Ref.make(
-        /* @__PURE__ */ new Map()
-      );
+      yield* Ref.make(/* @__PURE__ */ new Map());
       const OnDidChangeListeners = /* @__PURE__ */ new Set();
       const DiscoverExtensions = /* @__PURE__ */ __name(() => Effect2.gen(function* () {
         Logger.Debug(
@@ -42,10 +40,11 @@ var ExtensionService = class extends Effect2.Service()(
         );
         const ExtensionsConfig = Configuration.GetValue("extensions", {});
         const NewRegistry = /* @__PURE__ */ new Map();
-        for (const [ExtensionId, ExtensionData] of Object.entries(
+        for (const [ExtensionId, ExtensionDataRaw] of Object.entries(
           ExtensionsConfig
         )) {
           try {
+            const ExtensionData = ExtensionDataRaw;
             const ExtensionLocation = typeof ExtensionData === "string" ? ExtensionData : ExtensionData.path;
             const Description = {
               identifier: ExtensionId,
@@ -179,7 +178,9 @@ var ExtensionService = class extends Effect2.Service()(
         GetExtension,
         GetAllExtensions,
         GetExtensionPath,
-        OnDidChange
+        OnDidChange,
+        MarkActivated,
+        MarkDeactivated
       };
       return ServiceImplementation;
     })

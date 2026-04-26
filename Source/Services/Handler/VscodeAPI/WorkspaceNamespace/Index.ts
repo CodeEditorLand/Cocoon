@@ -348,7 +348,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// stable signature.
 		save: async (Uri: unknown): Promise<unknown | undefined> => {
 			try {
-				await Context.MountainClient.sendRequest("Workspace.Save", {
+				await Context.MountainClient?.sendRequest("Workspace.Save", {
 					uri: Uri,
 				});
 				return Uri;
@@ -358,7 +358,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		},
 		saveAs: async (Uri: unknown): Promise<unknown | undefined> => {
 			try {
-				const Result = await Context.MountainClient.sendRequest(
+				const Result = await Context.MountainClient?.sendRequest(
 					"Workspace.SaveAs",
 					{ uri: Uri },
 				);

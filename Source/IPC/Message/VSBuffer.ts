@@ -73,7 +73,7 @@ export default class VSBuffer {
 	 */
 	public static FromString(
 		String: string,
-		Encoding: BufferEncoding = "utf-8",
+		_Encoding: BufferEncoding = "utf-8",
 	): VSBuffer {
 		if (String === null || String === undefined) {
 			return new VSBuffer(new Uint8Array(0));
@@ -236,10 +236,10 @@ export default class VSBuffer {
 			);
 		}
 		return (
-			(this.buffer[Offset] |
-				(this.buffer[Offset + 1] << 8) |
-				(this.buffer[Offset + 2] << 16) |
-				(this.buffer[Offset + 3] << 24)) >>>
+			(this.buffer[Offset]! |
+				(this.buffer[Offset + 1]! << 8) |
+				(this.buffer[Offset + 2]! << 16) |
+				(this.buffer[Offset + 3]! << 24)) >>>
 			0
 		);
 	}
