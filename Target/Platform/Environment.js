@@ -1,1 +1,492 @@
-import{Effect as c,Option as i}from"effect";var f="en",C="en-US",l=new Map,E=0,S=6e4;function a(){return typeof process=="object"&&typeof process.env=="object"?process.env:{}}function g(){l.clear(),E=Date.now()}function v(){Date.now()-E>S&&g()}function o(e){if(!e||typeof e!="string")return i.none();v();let t=l.get(e);if(t!==void 0)return i.some(t);let r=a()[e];return r!==void 0?(l.set(e,r),i.some(r)):i.none()}function p(e,t){return i.getOrElse(o(e),()=>t)}function d(e,t){if(!e||typeof e!="string"||t==null)return!1;let n=a();return n[e]=t,l.set(e,t),!0}function G(e){if(!e||typeof e!="string")return!1;let t=a();return delete t[e],l.delete(e),!0}function b(){return v(),a()}function V(e,t,n){if(n.required&&(!t||t.trim()===""))return{isValid:!1,value:"",error:`Environment variable ${e} is required but empty`};if(n.type)switch(n.type){case"number":if(isNaN(Number(t)))return{isValid:!1,value:t,error:`Environment variable ${e} must be a number`};break;case"boolean":if(!["true","false","1","0","yes","no"].includes(t.toLowerCase()))return{isValid:!1,value:t,error:`Environment variable ${e} must be a boolean value`};break;case"path":if(!t||t.trim()===""||!/^[a-zA-Z0-9_\-\.\s\\\/]+$/.test(t))return{isValid:!1,value:t,error:`Environment variable ${e} must be a valid path`};break;case"url":try{new URL(t)}catch{return{isValid:!1,value:t,error:`Environment variable ${e} must be a valid URL`}}break}if(n.pattern&&!n.pattern.test(t))return{isValid:!1,value:t,error:`Environment variable ${e} does not match required pattern`};if(n.min&&t.length<n.min)return{isValid:!1,value:t,error:`Environment variable ${e} must be at least ${n.min} characters`};if(n.max&&t.length>n.max)return{isValid:!1,value:t,error:`Environment variable ${e} must be at most ${n.max} characters`};if(n.allowedValues&&!n.allowedValues.includes(t))return{isValid:!1,value:t,error:`Environment variable ${e} must be one of: ${n.allowedValues.join(", ")}`};let r=t;return n.sanitize&&(r=n.sanitize(t)),{isValid:!0,value:r}}function N(e,t){let n=o(e);return i.isNone(n)?t.required?{isValid:!1,value:"",error:`Environment variable ${e} is required but not set`}:{isValid:!0,value:""}:V(e,n.value,t)}function x(){let e=o("VSCODE_NLS_CONFIG");if(i.isSome(e))try{let s=JSON.parse(e.value);if(s.resolvedLanguage)return s.resolvedLanguage;if(s.language)return s.language}catch{}let t=o("LC_ALL");if(i.isSome(t)&&t.value){let s=t.value.split(".");if(s.length>0)return s[0].replace("_","-").split("-")[0]||f}let n=o("LANG");if(i.isSome(n)&&n.value){let s=n.value.split(".");if(s.length>0)return s[0].replace("_","-").split("-")[0]||f}let r=o("LANGUAGE");return i.isSome(r)&&r.value&&r.value.split(":")[0].replace("_","-").split("-")[0]||f}function L(){let e=o("VSCODE_NLS_CONFIG");if(i.isSome(e))try{let r=JSON.parse(e.value);if(r.userLocale&&typeof r.userLocale=="string")return r.userLocale;if(r.osLocale&&typeof r.osLocale=="string")return r.osLocale}catch{}let t=o("LC_ALL");if(i.isSome(t)&&t.value){let r=t.value.split(".");if(r&&r.length>0)return r[0].replace("_","-")}let n=o("LANG");if(i.isSome(n)&&n.value){let r=n.value.split(".");if(r&&r.length>0)return r[0].replace("_","-")}return C}function u(){let e=a();return e.HOME?e.HOME:e.USERPROFILE?e.USERPROFILE:e.HOMEPATH&&e.HOMEDRIVE?e.HOMEDRIVE+e.HOMEPATH:"/tmp"}function D(){let e=a();return e.TEMP?e.TEMP:e.TMP?e.TMP:e.TMPDIR?e.TMPDIR:m()==="windows"?"\\temp":"/tmp"}function O(){let e=o("XDG_DATA_HOME");if(i.isSome(e)&&e.value)return e.value;let t=u();switch(m()){case"mac":return`${t}/Library/Application Support`;case"windows":let r=o("LOCALAPPDATA");return i.isSome(r)&&r.value?r.value:`${t}/AppData/Local`;default:return`${t}/.local/share`}}function A(){let e=u();switch(m()){case"mac":return`${e}/Library`;case"windows":return p("APPDATA",`${e}/AppData/Roaming`);default:return e}}function m(){let e=typeof process<"u"?process:void 0,t=e&&"platform"in e?e.platform:"";return t==="win32"?"windows":t==="darwin"?"mac":"linux"}function I(){let e=b(),t={};for(let[n,r]of Object.entries(e))r!==void 0&&(t[n]=r);return{variables:t,language:x(),locale:L(),homeDirectory:u(),tempDirectory:D(),userDataDirectory:O(),platformHome:A()}}function h(){let e=o("NODE_ENV");return i.isNone(e)?!1:["development","dev","test"].includes(e.value.toLowerCase())}function P(){let e=o("NODE_ENV");return i.isNone(e)?!0:e.value.toLowerCase()==="production"}function _(){let e=["CI","CONTINUOUS_INTEGRATION","GITHUB_ACTIONS","GITLAB_CI","JENKINS_URL","TRAVIS","CIRCLECI","APPVEYOR","BUILD_NUMBER","GITHUB_WORKSPACE"];for(let t of e){let n=o(t);if(i.isSome(n)&&n.value)return!0}return!1}function w(){let e=o("VSCODE_PID"),t=o("VSCODE_CWD");return i.isSome(e)||i.isSome(t)}function R(){return o("VSCODE_PATH")}function T(e){return e.replace(/[^a-zA-Z0-9_]/g,"").toUpperCase()}function $(e){return e.replace(/[\x00-\x1F\x7F]/g,"").trim()}function U(e){return c.sync(()=>o(e))}function M(e,t){return c.sync(()=>p(e,t))}function z(e,t){return e?c.sync(()=>{d(e,t)}):c.fail(new Error("Environment variable name cannot be empty"))}function F(){return c.sync(()=>I())}var k={GetEnvironmentVariable:o,GetEnvironmentVariableOr:p,SetEnvironmentVariable:d,DeleteEnvironmentVariable:G,GetAllEnvironmentVariables:b,ValidateEnvironmentVariable:V,GetValidatedEnvironmentVariable:N,GetLanguage:x,GetLocale:L,GetHomeDirectory:u,GetTempDirectory:D,GetUserDataDirectory:O,GetPlatformHome:A,GetEnvironmentInfo:I,IsDevelopment:h,IsProduction:P,IsCI:_,IsVSCode:w,GetVSCodePath:R,SanitizeName:T,SanitizeValue:$,ClearCache:g};export{g as ClearCache,f as DEFAULT_LANGUAGE,C as DEFAULT_LOCALE,G as DeleteEnvironmentVariable,k as Environment,b as GetAllEnvironmentVariables,I as GetEnvironmentInfo,F as GetEnvironmentInfoEffect,o as GetEnvironmentVariable,U as GetEnvironmentVariableEffect,p as GetEnvironmentVariableOr,M as GetEnvironmentVariableOrEffect,u as GetHomeDirectory,x as GetLanguage,L as GetLocale,A as GetPlatformHome,D as GetTempDirectory,O as GetUserDataDirectory,R as GetVSCodePath,N as GetValidatedEnvironmentVariable,_ as IsCI,h as IsDevelopment,P as IsProduction,w as IsVSCode,T as SanitizeName,$ as SanitizeValue,d as SetEnvironmentVariable,z as SetEnvironmentVariableEffect,V as ValidateEnvironmentVariable};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Platform/Environment.ts
+import { Effect, Option } from "effect";
+var DEFAULT_LANGUAGE = "en";
+var DEFAULT_LOCALE = "en-US";
+var EnvironmentCache = /* @__PURE__ */ new Map();
+var CacheTimestamp = 0;
+var CACHE_TTL = 6e4;
+function GetProcessEnvironment() {
+  if (typeof process === "object" && typeof process.env === "object") {
+    return process.env;
+  }
+  return {};
+}
+__name(GetProcessEnvironment, "GetProcessEnvironment");
+function ClearCache() {
+  EnvironmentCache.clear();
+  CacheTimestamp = Date.now();
+}
+__name(ClearCache, "ClearCache");
+function InvalidateCacheIfNeeded() {
+  if (Date.now() - CacheTimestamp > CACHE_TTL) {
+    ClearCache();
+  }
+}
+__name(InvalidateCacheIfNeeded, "InvalidateCacheIfNeeded");
+function GetEnvironmentVariable(name) {
+  if (!name || typeof name !== "string") {
+    return Option.none();
+  }
+  InvalidateCacheIfNeeded();
+  const cached = EnvironmentCache.get(name);
+  if (cached !== void 0) {
+    return Option.some(cached);
+  }
+  const env = GetProcessEnvironment();
+  const value = env[name];
+  if (value !== void 0) {
+    EnvironmentCache.set(name, value);
+    return Option.some(value);
+  }
+  return Option.none();
+}
+__name(GetEnvironmentVariable, "GetEnvironmentVariable");
+function GetEnvironmentVariableOr(name, defaultValue) {
+  return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue);
+}
+__name(GetEnvironmentVariableOr, "GetEnvironmentVariableOr");
+function SetEnvironmentVariable(name, value) {
+  if (!name || typeof name !== "string") {
+    return false;
+  }
+  if (value === void 0 || value === null) {
+    return false;
+  }
+  const env = GetProcessEnvironment();
+  env[name] = value;
+  EnvironmentCache.set(name, value);
+  return true;
+}
+__name(SetEnvironmentVariable, "SetEnvironmentVariable");
+function DeleteEnvironmentVariable(name) {
+  if (!name || typeof name !== "string") {
+    return false;
+  }
+  const env = GetProcessEnvironment();
+  delete env[name];
+  EnvironmentCache.delete(name);
+  return true;
+}
+__name(DeleteEnvironmentVariable, "DeleteEnvironmentVariable");
+function GetAllEnvironmentVariables() {
+  InvalidateCacheIfNeeded();
+  return GetProcessEnvironment();
+}
+__name(GetAllEnvironmentVariables, "GetAllEnvironmentVariables");
+function ValidateEnvironmentVariable(name, value, rule) {
+  if (rule.required && (!value || value.trim() === "")) {
+    return {
+      isValid: false,
+      value: "",
+      error: `Environment variable ${name} is required but empty`
+    };
+  }
+  if (rule.type) {
+    switch (rule.type) {
+      case "number":
+        if (isNaN(Number(value))) {
+          return {
+            isValid: false,
+            value,
+            error: `Environment variable ${name} must be a number`
+          };
+        }
+        break;
+      case "boolean":
+        if (!["true", "false", "1", "0", "yes", "no"].includes(
+          value.toLowerCase()
+        )) {
+          return {
+            isValid: false,
+            value,
+            error: `Environment variable ${name} must be a boolean value`
+          };
+        }
+        break;
+      case "path":
+        if (!value || value.trim() === "" || !/^[a-zA-Z0-9_\-\.\s\\\/]+$/.test(value)) {
+          return {
+            isValid: false,
+            value,
+            error: `Environment variable ${name} must be a valid path`
+          };
+        }
+        break;
+      case "url":
+        try {
+          new URL(value);
+        } catch {
+          return {
+            isValid: false,
+            value,
+            error: `Environment variable ${name} must be a valid URL`
+          };
+        }
+        break;
+    }
+  }
+  if (rule.pattern && !rule.pattern.test(value)) {
+    return {
+      isValid: false,
+      value,
+      error: `Environment variable ${name} does not match required pattern`
+    };
+  }
+  if (rule.min && value.length < rule.min) {
+    return {
+      isValid: false,
+      value,
+      error: `Environment variable ${name} must be at least ${rule.min} characters`
+    };
+  }
+  if (rule.max && value.length > rule.max) {
+    return {
+      isValid: false,
+      value,
+      error: `Environment variable ${name} must be at most ${rule.max} characters`
+    };
+  }
+  if (rule.allowedValues && !rule.allowedValues.includes(value)) {
+    return {
+      isValid: false,
+      value,
+      error: `Environment variable ${name} must be one of: ${rule.allowedValues.join(", ")}`
+    };
+  }
+  let sanitizedValue = value;
+  if (rule.sanitize) {
+    sanitizedValue = rule.sanitize(value);
+  }
+  return {
+    isValid: true,
+    value: sanitizedValue
+  };
+}
+__name(ValidateEnvironmentVariable, "ValidateEnvironmentVariable");
+function GetValidatedEnvironmentVariable(name, rule) {
+  const valueOption = GetEnvironmentVariable(name);
+  if (Option.isNone(valueOption)) {
+    if (rule.required) {
+      return {
+        isValid: false,
+        value: "",
+        error: `Environment variable ${name} is required but not set`
+      };
+    }
+    return {
+      isValid: true,
+      value: ""
+    };
+  }
+  return ValidateEnvironmentVariable(name, valueOption.value, rule);
+}
+__name(GetValidatedEnvironmentVariable, "GetValidatedEnvironmentVariable");
+function GetLanguage() {
+  const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG");
+  if (Option.isSome(nlsConfig)) {
+    try {
+      const config = JSON.parse(nlsConfig.value);
+      if (config.resolvedLanguage) {
+        return config.resolvedLanguage;
+      }
+      if (config.language) {
+        return config.language;
+      }
+    } catch {
+    }
+  }
+  const lcAll = GetEnvironmentVariable("LC_ALL");
+  if (Option.isSome(lcAll) && lcAll.value) {
+    const parts = lcAll.value.split(".");
+    if (parts.length > 0) {
+      const locale = parts[0].replace("_", "-");
+      return locale.split("-")[0] || DEFAULT_LANGUAGE;
+    }
+  }
+  const lang = GetEnvironmentVariable("LANG");
+  if (Option.isSome(lang) && lang.value) {
+    const parts = lang.value.split(".");
+    if (parts.length > 0) {
+      const locale = parts[0].replace("_", "-");
+      return locale.split("-")[0] || DEFAULT_LANGUAGE;
+    }
+  }
+  const language = GetEnvironmentVariable("LANGUAGE");
+  if (Option.isSome(language) && language.value) {
+    const parts = language.value.split(":")[0];
+    return parts.replace("_", "-").split("-")[0] || DEFAULT_LANGUAGE;
+  }
+  return DEFAULT_LANGUAGE;
+}
+__name(GetLanguage, "GetLanguage");
+function GetLocale() {
+  const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG");
+  if (Option.isSome(nlsConfig)) {
+    try {
+      const config = JSON.parse(nlsConfig.value);
+      if (config.userLocale && typeof config.userLocale === "string") {
+        return config.userLocale;
+      }
+      if (config.osLocale && typeof config.osLocale === "string") {
+        return config.osLocale;
+      }
+    } catch {
+    }
+  }
+  const lcAll = GetEnvironmentVariable("LC_ALL");
+  if (Option.isSome(lcAll) && lcAll.value) {
+    const parts = lcAll.value.split(".");
+    if (parts && parts.length > 0) {
+      return parts[0].replace("_", "-");
+    }
+  }
+  const lang = GetEnvironmentVariable("LANG");
+  if (Option.isSome(lang) && lang.value) {
+    const parts = lang.value.split(".");
+    if (parts && parts.length > 0) {
+      return parts[0].replace("_", "-");
+    }
+  }
+  return DEFAULT_LOCALE;
+}
+__name(GetLocale, "GetLocale");
+function GetHomeDirectory() {
+  const env = GetProcessEnvironment();
+  if (env.HOME) {
+    return env.HOME;
+  }
+  if (env.USERPROFILE) {
+    return env.USERPROFILE;
+  }
+  if (env.HOMEPATH && env.HOMEDRIVE) {
+    return env.HOMEDRIVE + env.HOMEPATH;
+  }
+  return "/tmp";
+}
+__name(GetHomeDirectory, "GetHomeDirectory");
+function GetTempDirectory() {
+  const env = GetProcessEnvironment();
+  if (env.TEMP) {
+    return env.TEMP;
+  }
+  if (env.TMP) {
+    return env.TMP;
+  }
+  if (env.TMPDIR) {
+    return env.TMPDIR;
+  }
+  const platform = GetPlatformType();
+  if (platform === "windows") {
+    return "\\temp";
+  }
+  return "/tmp";
+}
+__name(GetTempDirectory, "GetTempDirectory");
+function GetUserDataDirectory() {
+  const xdgDataHome = GetEnvironmentVariable("XDG_DATA_HOME");
+  if (Option.isSome(xdgDataHome) && xdgDataHome.value) {
+    return xdgDataHome.value;
+  }
+  const home = GetHomeDirectory();
+  const platform = GetPlatformType();
+  switch (platform) {
+    case "mac":
+      return `${home}/Library/Application Support`;
+    case "windows":
+      const localAppData = GetEnvironmentVariable("LOCALAPPDATA");
+      if (Option.isSome(localAppData) && localAppData.value) {
+        return localAppData.value;
+      }
+      return `${home}/AppData/Local`;
+    case "linux":
+    default:
+      return `${home}/.local/share`;
+  }
+}
+__name(GetUserDataDirectory, "GetUserDataDirectory");
+function GetPlatformHome() {
+  const home = GetHomeDirectory();
+  const platform = GetPlatformType();
+  switch (platform) {
+    case "mac":
+      return `${home}/Library`;
+    case "windows":
+      return GetEnvironmentVariableOr(
+        "APPDATA",
+        `${home}/AppData/Roaming`
+      );
+    case "linux":
+    default:
+      return home;
+  }
+}
+__name(GetPlatformHome, "GetPlatformHome");
+function GetPlatformType() {
+  const currentProcess = typeof process !== "undefined" ? process : void 0;
+  const platform = currentProcess && "platform" in currentProcess ? currentProcess.platform : "";
+  if (platform === "win32") {
+    return "windows";
+  }
+  if (platform === "darwin") {
+    return "mac";
+  }
+  return "linux";
+}
+__name(GetPlatformType, "GetPlatformType");
+function GetEnvironmentInfo() {
+  const envVars = GetAllEnvironmentVariables();
+  const safeEnvVars = {};
+  for (const [key, value] of Object.entries(envVars)) {
+    if (value !== void 0) {
+      safeEnvVars[key] = value;
+    }
+  }
+  return {
+    variables: safeEnvVars,
+    language: GetLanguage(),
+    locale: GetLocale(),
+    homeDirectory: GetHomeDirectory(),
+    tempDirectory: GetTempDirectory(),
+    userDataDirectory: GetUserDataDirectory(),
+    platformHome: GetPlatformHome()
+  };
+}
+__name(GetEnvironmentInfo, "GetEnvironmentInfo");
+function IsDevelopment() {
+  const nodeEnv = GetEnvironmentVariable("NODE_ENV");
+  if (Option.isNone(nodeEnv)) {
+    return false;
+  }
+  return ["development", "dev", "test"].includes(nodeEnv.value.toLowerCase());
+}
+__name(IsDevelopment, "IsDevelopment");
+function IsProduction() {
+  const nodeEnv = GetEnvironmentVariable("NODE_ENV");
+  if (Option.isNone(nodeEnv)) {
+    return true;
+  }
+  return nodeEnv.value.toLowerCase() === "production";
+}
+__name(IsProduction, "IsProduction");
+function IsCI() {
+  const ciVariables = [
+    "CI",
+    "CONTINUOUS_INTEGRATION",
+    "GITHUB_ACTIONS",
+    "GITLAB_CI",
+    "JENKINS_URL",
+    "TRAVIS",
+    "CIRCLECI",
+    "APPVEYOR",
+    "BUILD_NUMBER",
+    "GITHUB_WORKSPACE"
+  ];
+  for (const variable of ciVariables) {
+    const value = GetEnvironmentVariable(variable);
+    if (Option.isSome(value) && value.value) {
+      return true;
+    }
+  }
+  return false;
+}
+__name(IsCI, "IsCI");
+function IsVSCode() {
+  const codeEnv = GetEnvironmentVariable("VSCODE_PID");
+  const vscodeEnv = GetEnvironmentVariable("VSCODE_CWD");
+  return Option.isSome(codeEnv) || Option.isSome(vscodeEnv);
+}
+__name(IsVSCode, "IsVSCode");
+function GetVSCodePath() {
+  return GetEnvironmentVariable("VSCODE_PATH");
+}
+__name(GetVSCodePath, "GetVSCodePath");
+function SanitizeName(name) {
+  return name.replace(/[^a-zA-Z0-9_]/g, "").toUpperCase();
+}
+__name(SanitizeName, "SanitizeName");
+function SanitizeValue(value) {
+  return value.replace(/[\x00-\x1F\x7F]/g, "").trim();
+}
+__name(SanitizeValue, "SanitizeValue");
+function GetEnvironmentVariableEffect(name) {
+  return Effect.sync(() => GetEnvironmentVariable(name));
+}
+__name(GetEnvironmentVariableEffect, "GetEnvironmentVariableEffect");
+function GetEnvironmentVariableOrEffect(name, defaultValue) {
+  return Effect.sync(() => GetEnvironmentVariableOr(name, defaultValue));
+}
+__name(GetEnvironmentVariableOrEffect, "GetEnvironmentVariableOrEffect");
+function SetEnvironmentVariableEffect(name, value) {
+  if (!name) {
+    return Effect.fail(
+      new Error("Environment variable name cannot be empty")
+    );
+  }
+  return Effect.sync(() => {
+    SetEnvironmentVariable(name, value);
+  });
+}
+__name(SetEnvironmentVariableEffect, "SetEnvironmentVariableEffect");
+function GetEnvironmentInfoEffect() {
+  return Effect.sync(() => GetEnvironmentInfo());
+}
+__name(GetEnvironmentInfoEffect, "GetEnvironmentInfoEffect");
+var Environment = {
+  GetEnvironmentVariable,
+  GetEnvironmentVariableOr,
+  SetEnvironmentVariable,
+  DeleteEnvironmentVariable,
+  GetAllEnvironmentVariables,
+  ValidateEnvironmentVariable,
+  GetValidatedEnvironmentVariable,
+  GetLanguage,
+  GetLocale,
+  GetHomeDirectory,
+  GetTempDirectory,
+  GetUserDataDirectory,
+  GetPlatformHome,
+  GetEnvironmentInfo,
+  IsDevelopment,
+  IsProduction,
+  IsCI,
+  IsVSCode,
+  GetVSCodePath,
+  SanitizeName,
+  SanitizeValue,
+  ClearCache
+};
+export {
+  ClearCache,
+  DEFAULT_LANGUAGE,
+  DEFAULT_LOCALE,
+  DeleteEnvironmentVariable,
+  Environment,
+  GetAllEnvironmentVariables,
+  GetEnvironmentInfo,
+  GetEnvironmentInfoEffect,
+  GetEnvironmentVariable,
+  GetEnvironmentVariableEffect,
+  GetEnvironmentVariableOr,
+  GetEnvironmentVariableOrEffect,
+  GetHomeDirectory,
+  GetLanguage,
+  GetLocale,
+  GetPlatformHome,
+  GetTempDirectory,
+  GetUserDataDirectory,
+  GetVSCodePath,
+  GetValidatedEnvironmentVariable,
+  IsCI,
+  IsDevelopment,
+  IsProduction,
+  IsVSCode,
+  SanitizeName,
+  SanitizeValue,
+  SetEnvironmentVariable,
+  SetEnvironmentVariableEffect,
+  ValidateEnvironmentVariable
+};
+//# sourceMappingURL=Environment.js.map

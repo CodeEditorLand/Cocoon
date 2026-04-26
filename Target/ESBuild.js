@@ -1,1 +1,61 @@
-var s=process.env.Clean==="true",r=process.env.Meta==="true",e=process.env.NODE_ENV==="development"||process.env.TAURI_ENV_DEBUG==="true",a={color:!0,format:"esm",logLevel:e?"debug":"silent",metafile:r,minify:!e,outbase:"Source/Configuration",outdir:"Configuration",platform:"node",target:"esnext",tsconfig:"tsconfig.json",write:!0,legalComments:e?"inline":"none",bundle:!1,assetNames:"Asset/[name]-[hash]",sourcemap:e,drop:e?[]:["debugger"],ignoreAnnotations:!e,keepNames:e,plugins:[{name:"Target",setup({onStart:o,initialOptions:{outdir:t}}){!0===(s===!0)&&o(async()=>{try{t&&await(await import("node:fs/promises")).rm(t,{recursive:!0})}catch{}})}}],loader:{".json":"copy",".sh":"copy"}},{sep:i,posix:p}=await import("node:path");export{s as Clean,r as Meta,e as On,a as default,p as posix,i as sep};
+// Source/ESBuild.ts
+var Clean = process.env["Clean"] === "true";
+var Meta = process.env["Meta"] === "true";
+var On = process.env["NODE_ENV"] === "development" || process.env["TAURI_ENV_DEBUG"] === "true";
+var ESBuild_default = {
+  color: true,
+  format: "esm",
+  logLevel: On ? "debug" : "silent",
+  metafile: Meta,
+  minify: !On,
+  outbase: "Source/Configuration",
+  outdir: "Configuration",
+  platform: "node",
+  target: "esnext",
+  tsconfig: "tsconfig.json",
+  write: true,
+  legalComments: On ? "inline" : "none",
+  bundle: false,
+  assetNames: "Asset/[name]-[hash]",
+  sourcemap: On,
+  drop: On ? [] : ["debugger"],
+  ignoreAnnotations: !On,
+  keepNames: On,
+  plugins: [
+    {
+      name: "Target",
+      // @ts-ignore
+      setup({ onStart, initialOptions: { outdir } }) {
+        switch (true) {
+          case Clean === true:
+            onStart(async () => {
+              try {
+                outdir ? await (await import("node:fs/promises")).rm(outdir, {
+                  recursive: true
+                }) : {};
+              } catch (_Error) {
+                console.log(_Error);
+              }
+            });
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  ],
+  loader: {
+    ".json": "copy",
+    ".sh": "copy"
+  }
+};
+var { sep, posix } = await import("node:path");
+export {
+  Clean,
+  Meta,
+  On,
+  ESBuild_default as default,
+  posix,
+  sep
+};
+//# sourceMappingURL=ESBuild.js.map

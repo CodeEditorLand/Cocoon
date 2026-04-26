@@ -1,1 +1,249 @@
-import*as t from"node:process";import{Data as y,Effect as i}from"effect";var s=class extends y.TaggedError("ConversionError"){message;constructor(r){super(r),this.message=`Conversion failed from ${r.SourceType} to ${r.TargetType}: ${r.Reason}`}},d=(e,r="1.0.0")=>({AllowExit:e.AllowExit,MaxMemoryMB:e.MaxMemoryMB,MaxCpuPercent:e.MaxCpuPercent,AllowNetwork:e.AllowNetwork,AllowedEndpoints:Array.from(e.AllowedEndpoints),AllowChildProcesses:e.AllowChildProcesses,AllowedChildCommands:Array.from(e.AllowedChildCommands),AllowedPaths:Array.from(e.AllowedPaths),DeniedPaths:Array.from(e.DeniedPaths),MaxFileDescriptors:e.MaxFileDescriptors,MaxTimers:e.MaxTimers,Version:r,Timestamp:Date.now()}),u=e=>i.sync(()=>{if(!m(e))throw new s({SourceType:"SecurityPolicyDTO",TargetType:"SecurityPolicy",Reason:"Invalid DTO structure",Data:e});return{AllowExit:e.AllowExit,MaxMemoryMB:e.MaxMemoryMB,MaxCpuPercent:e.MaxCpuPercent,AllowNetwork:e.AllowNetwork,AllowedEndpoints:Object.freeze(e.AllowedEndpoints),AllowChildProcesses:e.AllowChildProcesses,AllowedChildCommands:Object.freeze(e.AllowedChildCommands),AllowedPaths:Object.freeze(e.AllowedPaths),DeniedPaths:Object.freeze(e.DeniedPaths),MaxFileDescriptors:e.MaxFileDescriptors,MaxTimers:e.MaxTimers}}),m=e=>typeof e.AllowExit=="boolean"&&typeof e.MaxMemoryMB=="number"&&typeof e.MaxCpuPercent=="number"&&typeof e.AllowNetwork=="boolean"&&Array.isArray(e.AllowedEndpoints)&&typeof e.AllowChildProcesses=="boolean"&&Array.isArray(e.AllowedChildCommands)&&Array.isArray(e.AllowedPaths)&&Array.isArray(e.DeniedPaths)&&typeof e.MaxFileDescriptors=="number"&&typeof e.MaxTimers=="number"&&typeof e.Version=="string"&&typeof e.Timestamp=="number",S=e=>{let r=t.memoryUsage(),o=t.cpuUsage(),n=t.uptime();return{Pid:t.pid,Ppid:t.ppid,StartTime:e.StartTime,Uptime:n,MemoryUsedMB:r.heapUsed/(1024*1024),MemoryLimitMB:e.SecurityPolicy.MaxMemoryMB,CpuUsageUser:o.user,CpuUsageSystem:o.system,Platform:t.platform,Arch:t.arch,NodeVersion:t.version,WorkingDirectory:t.cwd(),ExecArgv:t.execArgv,ValidationState:f(e),Timestamp:Date.now()}},w=e=>i.sync(()=>{if(!p(e))throw new s({SourceType:"ProcessStateDTO",TargetType:"ProcessValidationState",Reason:"Invalid DTO structure",Data:e});return{ProcessId:e.Pid,StartTime:e.StartTime}}),p=e=>typeof e.Pid=="number"&&typeof e.Ppid=="number"&&typeof e.StartTime=="number"&&typeof e.Uptime=="number"&&typeof e.MemoryUsedMB=="number"&&typeof e.MemoryLimitMB=="number"&&typeof e.Platform=="string"&&typeof e.Arch=="string"&&typeof e.NodeVersion=="string"&&Array.isArray(e.ExecArgv)&&typeof e.Timestamp=="number",f=e=>{let r=Array.from(e.FileAccessCount.values()).reduce((n,a)=>n+a,0),o=Array.from(e.NetworkAccessCount.values()).reduce((n,a)=>n+a,0);return{TotalValidations:r+o,FailedValidations:e.ViolationCount,LastValidationTime:Date.now(),AverageValidationTime:0,FileAccessCount:r,NetworkAccessCount:o,ChildProcessCount:e.ChildProcessCount,ViolationCount:e.ViolationCount,SecurityPolicyHash:g(e.SecurityPolicy)}},g=e=>{let r=JSON.stringify(e);return Buffer.from(r).toString("base64").slice(0,16)},C=(e,r,o,n)=>({ProcessId:e,ValidationType:r,Success:o.Valid,Reason:o.Reason,Severity:o.Severity,DurationMs:n,Timestamp:o.Timestamp}),x=e=>({Valid:e.Success,Reason:e.Reason,Severity:e.Severity,Timestamp:e.Timestamp}),M=(e,r,o,n={})=>({EventId:`evt_${Date.now()}_${Math.random().toString(36).slice(2,9)}`,EventType:e,Severity:r,ProcessId:t.pid,Message:o,Data:n,Timestamp:Date.now()}),b=e=>i.try({try:()=>JSON.stringify(e),catch:r=>{throw new s({SourceType:typeof e,TargetType:"string",Reason:r instanceof r?r.message:String(r),Data:e})}}),h=(e,r)=>i.try({try:()=>JSON.parse(e),catch:o=>{throw new s({SourceType:"string",TargetType:r,Reason:o instanceof o?o.message:String(o),Data:e})}}),P=e=>e.replace(/([a-z])([A-Z])/g,"$1_$2").split("_").map(r=>r.charAt(0).toUpperCase()+r.slice(1)).join(""),T=e=>e.replace(/([A-Z])/g,(r,o)=>o>0?r.toLowerCase():r),l=e=>{if(typeof e!="object"||e===null)return e;if(Array.isArray(e))return e.map(o=>l(o));let r={};for(let[o,n]of Object.entries(e)){let a=P(o);r[a]=l(n)}return r},c=e=>{if(typeof e!="object"||e===null)return e;if(Array.isArray(e))return e.map(o=>c(o));let r={};for(let[o,n]of Object.entries(e)){let a=T(o);r[a]=c(n)}return r},V=(e,r="1.0.0")=>e.map(o=>d(o,r)),v=e=>i.all(e.map(r=>u(r)),{concurrency:"unbounded"});export{v as BatchDTOsToSecurityPolicies,V as BatchSecurityPoliciesToDTO,P as CamelCaseToPascalCase,s as ConversionError,c as ConvertObjectKeysToCamelCase,l as ConvertObjectKeysToPascalCase,M as CreateSecurityEventDTO,w as DTOToProcessState,u as DTOToSecurityPolicy,x as DTOToValidationResult,h as DeserializeDTO,T as PascalCaseToCamelCase,S as ProcessStateToDTO,d as SecurityPolicyToDTO,b as SerializeDTO,C as ValidationResultToDTO,f as ValidationStateToDTO};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/PatchProcess/TypeConverter.ts
+import * as Process from "node:process";
+import { Data, Effect } from "effect";
+var ConversionError = class extends Data.TaggedError("ConversionError") {
+  static {
+    __name(this, "ConversionError");
+  }
+  message;
+  constructor(Properties) {
+    super(Properties);
+    this.message = `Conversion failed from ${Properties.SourceType} to ${Properties.TargetType}: ${Properties.Reason}`;
+  }
+};
+var SecurityPolicyToDTO = /* @__PURE__ */ __name((Policy, Version = "1.0.0") => {
+  return {
+    AllowExit: Policy.AllowExit,
+    MaxMemoryMB: Policy.MaxMemoryMB,
+    MaxCpuPercent: Policy.MaxCpuPercent,
+    AllowNetwork: Policy.AllowNetwork,
+    AllowedEndpoints: Array.from(Policy.AllowedEndpoints),
+    AllowChildProcesses: Policy.AllowChildProcesses,
+    AllowedChildCommands: Array.from(Policy.AllowedChildCommands),
+    AllowedPaths: Array.from(Policy.AllowedPaths),
+    DeniedPaths: Array.from(Policy.DeniedPaths),
+    MaxFileDescriptors: Policy.MaxFileDescriptors,
+    MaxTimers: Policy.MaxTimers,
+    Version,
+    Timestamp: Date.now()
+  };
+}, "SecurityPolicyToDTO");
+var DTOToSecurityPolicy = /* @__PURE__ */ __name((DTO) => {
+  return Effect.sync(() => {
+    if (!ValidateSecurityPolicyDTO(DTO)) {
+      throw new ConversionError({
+        SourceType: "SecurityPolicyDTO",
+        TargetType: "SecurityPolicy",
+        Reason: "Invalid DTO structure",
+        Data: DTO
+      });
+    }
+    return {
+      AllowExit: DTO.AllowExit,
+      MaxMemoryMB: DTO.MaxMemoryMB,
+      MaxCpuPercent: DTO.MaxCpuPercent,
+      AllowNetwork: DTO.AllowNetwork,
+      AllowedEndpoints: Object.freeze(DTO.AllowedEndpoints),
+      AllowChildProcesses: DTO.AllowChildProcesses,
+      AllowedChildCommands: Object.freeze(DTO.AllowedChildCommands),
+      AllowedPaths: Object.freeze(DTO.AllowedPaths),
+      DeniedPaths: Object.freeze(DTO.DeniedPaths),
+      MaxFileDescriptors: DTO.MaxFileDescriptors,
+      MaxTimers: DTO.MaxTimers
+    };
+  });
+}, "DTOToSecurityPolicy");
+var ValidateSecurityPolicyDTO = /* @__PURE__ */ __name((DTO) => {
+  return typeof DTO.AllowExit === "boolean" && typeof DTO.MaxMemoryMB === "number" && typeof DTO.MaxCpuPercent === "number" && typeof DTO.AllowNetwork === "boolean" && Array.isArray(DTO.AllowedEndpoints) && typeof DTO.AllowChildProcesses === "boolean" && Array.isArray(DTO.AllowedChildCommands) && Array.isArray(DTO.AllowedPaths) && Array.isArray(DTO.DeniedPaths) && typeof DTO.MaxFileDescriptors === "number" && typeof DTO.MaxTimers === "number" && typeof DTO.Version === "string" && typeof DTO.Timestamp === "number";
+}, "ValidateSecurityPolicyDTO");
+var ProcessStateToDTO = /* @__PURE__ */ __name((ValidationState) => {
+  const MemoryUsage = Process.memoryUsage();
+  const CpuUsage = Process.cpuUsage();
+  const Uptime = Process.uptime();
+  return {
+    Pid: Process.pid,
+    Ppid: Process.ppid,
+    StartTime: ValidationState.StartTime,
+    Uptime,
+    MemoryUsedMB: MemoryUsage.heapUsed / (1024 * 1024),
+    MemoryLimitMB: ValidationState.SecurityPolicy.MaxMemoryMB,
+    CpuUsageUser: CpuUsage.user,
+    CpuUsageSystem: CpuUsage.system,
+    Platform: Process.platform,
+    Arch: Process.arch,
+    NodeVersion: Process.version,
+    WorkingDirectory: Process.cwd(),
+    ExecArgv: Process.execArgv,
+    ValidationState: ValidationStateToDTO(ValidationState),
+    Timestamp: Date.now()
+  };
+}, "ProcessStateToDTO");
+var DTOToProcessState = /* @__PURE__ */ __name((DTO) => {
+  return Effect.sync(() => {
+    if (!ValidateProcessStateDTO(DTO)) {
+      throw new ConversionError({
+        SourceType: "ProcessStateDTO",
+        TargetType: "ProcessValidationState",
+        Reason: "Invalid DTO structure",
+        Data: DTO
+      });
+    }
+    return {
+      ProcessId: DTO.Pid,
+      StartTime: DTO.StartTime
+    };
+  });
+}, "DTOToProcessState");
+var ValidateProcessStateDTO = /* @__PURE__ */ __name((DTO) => {
+  return typeof DTO.Pid === "number" && typeof DTO.Ppid === "number" && typeof DTO.StartTime === "number" && typeof DTO.Uptime === "number" && typeof DTO.MemoryUsedMB === "number" && typeof DTO.MemoryLimitMB === "number" && typeof DTO.Platform === "string" && typeof DTO.Arch === "string" && typeof DTO.NodeVersion === "string" && Array.isArray(DTO.ExecArgv) && typeof DTO.Timestamp === "number";
+}, "ValidateProcessStateDTO");
+var ValidationStateToDTO = /* @__PURE__ */ __name((State) => {
+  const FileAccessTotal = Array.from(State.FileAccessCount.values()).reduce(
+    (a, b) => a + b,
+    0
+  );
+  const NetworkAccessTotal = Array.from(
+    State.NetworkAccessCount.values()
+  ).reduce((a, b) => a + b, 0);
+  return {
+    TotalValidations: FileAccessTotal + NetworkAccessTotal,
+    FailedValidations: State.ViolationCount,
+    LastValidationTime: Date.now(),
+    AverageValidationTime: 0,
+    // FUTURE: Track running average of validation times
+    FileAccessCount: FileAccessTotal,
+    NetworkAccessCount: NetworkAccessTotal,
+    ChildProcessCount: State.ChildProcessCount,
+    ViolationCount: State.ViolationCount,
+    SecurityPolicyHash: GetSecurityPolicyHash(State.SecurityPolicy)
+  };
+}, "ValidationStateToDTO");
+var GetSecurityPolicyHash = /* @__PURE__ */ __name((Policy) => {
+  const PolicyString = JSON.stringify(Policy);
+  return Buffer.from(PolicyString).toString("base64").slice(0, 16);
+}, "GetSecurityPolicyHash");
+var ValidationResultToDTO = /* @__PURE__ */ __name((ProcessId, ValidationType, Result, DurationMs) => {
+  return {
+    ProcessId,
+    ValidationType,
+    Success: Result.Valid,
+    Reason: Result.Reason,
+    Severity: Result.Severity,
+    DurationMs,
+    Timestamp: Result.Timestamp
+  };
+}, "ValidationResultToDTO");
+var DTOToValidationResult = /* @__PURE__ */ __name((DTO) => {
+  return {
+    Valid: DTO.Success,
+    Reason: DTO.Reason,
+    Severity: DTO.Severity,
+    Timestamp: DTO.Timestamp
+  };
+}, "DTOToValidationResult");
+var CreateSecurityEventDTO = /* @__PURE__ */ __name((EventType, Severity, Message, Data2 = {}) => {
+  return {
+    EventId: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    EventType,
+    Severity,
+    ProcessId: Process.pid,
+    Message,
+    Data: Data2,
+    Timestamp: Date.now()
+  };
+}, "CreateSecurityEventDTO");
+var SerializeDTO = /* @__PURE__ */ __name((DTO) => {
+  return Effect.try({
+    try: /* @__PURE__ */ __name(() => JSON.stringify(DTO), "try"),
+    catch: /* @__PURE__ */ __name((Error2) => {
+      throw new ConversionError({
+        SourceType: typeof DTO,
+        TargetType: "string",
+        Reason: Error2 instanceof Error2 ? Error2.message : String(Error2),
+        Data: DTO
+      });
+    }, "catch")
+  });
+}, "SerializeDTO");
+var DeserializeDTO = /* @__PURE__ */ __name((JsonString, ExpectedType) => {
+  return Effect.try({
+    try: /* @__PURE__ */ __name(() => JSON.parse(JsonString), "try"),
+    catch: /* @__PURE__ */ __name((Error2) => {
+      throw new ConversionError({
+        SourceType: "string",
+        TargetType: ExpectedType,
+        Reason: Error2 instanceof Error2 ? Error2.message : String(Error2),
+        Data: JsonString
+      });
+    }, "catch")
+  });
+}, "DeserializeDTO");
+var CamelCaseToPascalCase = /* @__PURE__ */ __name((CamelCase) => {
+  return CamelCase.replace(/([a-z])([A-Z])/g, "$1_$2").split("_").map((Part) => Part.charAt(0).toUpperCase() + Part.slice(1)).join("");
+}, "CamelCaseToPascalCase");
+var PascalCaseToCamelCase = /* @__PURE__ */ __name((PascalCase) => {
+  return PascalCase.replace(
+    /([A-Z])/g,
+    (Match, Offset) => Offset > 0 ? Match.toLowerCase() : Match
+  );
+}, "PascalCaseToCamelCase");
+var ConvertObjectKeysToPascalCase = /* @__PURE__ */ __name((Obj) => {
+  if (typeof Obj !== "object" || Obj === null) {
+    return Obj;
+  }
+  if (Array.isArray(Obj)) {
+    return Obj.map((Item) => ConvertObjectKeysToPascalCase(Item));
+  }
+  const Result = {};
+  for (const [Key, Value] of Object.entries(Obj)) {
+    const PascalKey = CamelCaseToPascalCase(Key);
+    Result[PascalKey] = ConvertObjectKeysToPascalCase(Value);
+  }
+  return Result;
+}, "ConvertObjectKeysToPascalCase");
+var ConvertObjectKeysToCamelCase = /* @__PURE__ */ __name((Obj) => {
+  if (typeof Obj !== "object" || Obj === null) {
+    return Obj;
+  }
+  if (Array.isArray(Obj)) {
+    return Obj.map((Item) => ConvertObjectKeysToCamelCase(Item));
+  }
+  const Result = {};
+  for (const [Key, Value] of Object.entries(Obj)) {
+    const CamelKey = PascalCaseToCamelCase(Key);
+    Result[CamelKey] = ConvertObjectKeysToCamelCase(Value);
+  }
+  return Result;
+}, "ConvertObjectKeysToCamelCase");
+var BatchSecurityPoliciesToDTO = /* @__PURE__ */ __name((Policies, Version = "1.0.0") => {
+  return Policies.map((Policy) => SecurityPolicyToDTO(Policy, Version));
+}, "BatchSecurityPoliciesToDTO");
+var BatchDTOsToSecurityPolicies = /* @__PURE__ */ __name((DTOs) => {
+  return Effect.all(
+    DTOs.map((DTO) => DTOToSecurityPolicy(DTO)),
+    { concurrency: "unbounded" }
+  );
+}, "BatchDTOsToSecurityPolicies");
+export {
+  BatchDTOsToSecurityPolicies,
+  BatchSecurityPoliciesToDTO,
+  CamelCaseToPascalCase,
+  ConversionError,
+  ConvertObjectKeysToCamelCase,
+  ConvertObjectKeysToPascalCase,
+  CreateSecurityEventDTO,
+  DTOToProcessState,
+  DTOToSecurityPolicy,
+  DTOToValidationResult,
+  DeserializeDTO,
+  PascalCaseToCamelCase,
+  ProcessStateToDTO,
+  SecurityPolicyToDTO,
+  SerializeDTO,
+  ValidationResultToDTO,
+  ValidationStateToDTO
+};
+//# sourceMappingURL=TypeConverter.js.map

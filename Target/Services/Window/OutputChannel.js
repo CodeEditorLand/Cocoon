@@ -1,1 +1,71 @@
-import{Effect as c}from"effect";var r=(o,a,n)=>c.gen(function*(){let e=`output-${crypto.randomUUID()}`;return yield*a.Info(`[WindowService] Creating output channel: ${n} (${e})`),yield*c.tryPromise({try:()=>o.sendNotification("output.create",{id:e,name:n}),catch:()=>new Error("Failed to create output channel")}),yield*c.succeed({name:n,append(t){o.sendNotification("output.append",{channel:e,value:t}).catch(()=>{})},appendLine(t){o.sendNotification("output.appendLine",{channel:e,value:t}).catch(()=>{})},clear(){o.sendNotification("output.clear",{channel:e}).catch(()=>{})},show(t,i){o.sendNotification("output.show",{channel:e}).catch(()=>{})},hide(){o.sendNotification("output.show",{channel:e,visible:!1}).catch(()=>{})},dispose(){o.sendNotification("output.dispose",{channel:e}).catch(()=>{})},replace(t){o.sendNotification("output.replace",{channel:e,value:t}).catch(()=>{})}})});export{r as CreateOutputChannel};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/Window/OutputChannel.ts
+import { Effect } from "effect";
+var CreateOutputChannel = /* @__PURE__ */ __name((MountainClient, Logger, Name) => Effect.gen(function* () {
+  const ChannelId = `output-${crypto.randomUUID()}`;
+  yield* Logger.Info(
+    `[WindowService] Creating output channel: ${Name} (${ChannelId})`
+  );
+  yield* Effect.tryPromise({
+    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("output.create", {
+      id: ChannelId,
+      name: Name
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => new Error("Failed to create output channel"), "catch")
+  });
+  return yield* Effect.succeed({
+    name: Name,
+    append(Value) {
+      MountainClient.sendNotification("output.append", {
+        channel: ChannelId,
+        value: Value
+      }).catch(() => {
+      });
+    },
+    appendLine(Value) {
+      MountainClient.sendNotification("output.appendLine", {
+        channel: ChannelId,
+        value: Value
+      }).catch(() => {
+      });
+    },
+    clear() {
+      MountainClient.sendNotification("output.clear", {
+        channel: ChannelId
+      }).catch(() => {
+      });
+    },
+    show(_ColumnOrPreserveFocus, _PreserveFocus) {
+      MountainClient.sendNotification("output.show", {
+        channel: ChannelId
+      }).catch(() => {
+      });
+    },
+    hide() {
+      MountainClient.sendNotification("output.show", {
+        channel: ChannelId,
+        visible: false
+      }).catch(() => {
+      });
+    },
+    dispose() {
+      MountainClient.sendNotification("output.dispose", {
+        channel: ChannelId
+      }).catch(() => {
+      });
+    },
+    replace(_Value) {
+      MountainClient.sendNotification("output.replace", {
+        channel: ChannelId,
+        value: _Value
+      }).catch(() => {
+      });
+    }
+  });
+}), "CreateOutputChannel");
+export {
+  CreateOutputChannel
+};
+//# sourceMappingURL=OutputChannel.js.map

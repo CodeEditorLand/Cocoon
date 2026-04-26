@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Telemetry/PostHog/Event.ts"],
+  "sourcesContent": ["/**\n * @module Telemetry/PostHog/Event\n * @description\n * Shape for a PostHog event queued in Cocoon's buffer. Mirrors the\n * official SDK payload - `event`, `timestamp`, `distinct_id`,\n * `properties` - so the server accepts our direct `/batch` POST\n * without envelope changes.\n */\n\nexport type Properties = Record<string, unknown>;\n\nexport type Event = {\n\treadonly Name: string;\n\treadonly Timestamp: string;\n\treadonly Properties: Properties;\n};\n\nconst BaseProperties: Properties = {\n\t$app: \"land-editor\",\n\t$app_version: \"0.0.1\",\n\t$build_mode: \"debug\",\n\t$component: \"cocoon\",\n\t$tier: \"cocoon\",\n\t$lib: \"cocoon-posthog-bridge\",\n};\n\nexport const Create = (Name: string, Properties: Properties = {}): Event => ({\n\tName,\n\tTimestamp: new Date().toISOString(),\n\tProperties,\n});\n\nexport const Enrich = (Properties: Properties): Properties => ({\n\t...Properties,\n\t...BaseProperties,\n\t$node_version: process.version,\n});\n\nexport default { Create, Enrich };\n"],
+  "mappings": ";;;;AAiBA,IAAM,iBAA6B;AAAA,EAClC,MAAM;AAAA,EACN,cAAc;AAAA,EACd,aAAa;AAAA,EACb,YAAY;AAAA,EACZ,OAAO;AAAA,EACP,MAAM;AACP;AAEO,IAAM,SAAS,wBAAC,MAAc,aAAyB,CAAC,OAAc;AAAA,EAC5E;AAAA,EACA,YAAW,oBAAI,KAAK,GAAE,YAAY;AAAA,EAClC;AACD,IAJsB;AAMf,IAAM,SAAS,wBAAC,gBAAwC;AAAA,EAC9D,GAAG;AAAA,EACH,GAAG;AAAA,EACH,eAAe,QAAQ;AACxB,IAJsB;AAMtB,IAAO,gBAAQ,EAAE,QAAQ,OAAO;",
+  "names": []
+}
