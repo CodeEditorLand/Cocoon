@@ -61,16 +61,31 @@ function ListHandles() {
 __name(ListHandles, "ListHandles");
 
 // Source/Services/Handler/VscodeAPI/ScmNamespace.ts
+var ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
+var ScmTrace = /* @__PURE__ */ __name((Message) => {
+  if (!ScmTraceEnabled) return;
+  try {
+    process.stdout.write(`[DEV:SCM-TRACE] ${Message}
+`);
+  } catch {
+  }
+}, "ScmTrace");
 var CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
   createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
     const Handle = NextProviderHandle();
+    const RootUriShape = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
+    ScmTrace(
+      `createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriShape} handle=${Handle}`
+    );
     Context.SendToMountain("register_scm_provider", {
       handle: Handle,
       id: Id,
       label: Label,
       root_uri: RootUri,
       extension_id: ""
-    }).catch(() => {
+    }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
+      const Message = Error2 instanceof Error2 ? Error2.message : String(Error2);
+      ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
     });
     const Groups = /* @__PURE__ */ new Map();
     return {
@@ -86,12 +101,18 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
       createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
         const GroupHandle = `${Handle}/${GroupId}`;
         Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
+        ScmTrace(
+          `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
+        );
         Context.SendToMountain("register_scm_resource_group", {
           scm_handle: Handle,
           group_handle: GroupHandle,
           group_id: GroupId,
           label: GroupLabel
-        }).catch(() => {
+        }).catch((Error2) => {
+          ScmTrace(
+            `register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+          );
         });
         const State = { resourceStates: [] };
         return {
@@ -102,11 +123,17 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
           },
           set resourceStates(Value) {
             State.resourceStates = Value;
+            ScmTrace(
+              `update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${Array.isArray(Value) ? Value.length : 0}`
+            );
             Context.SendToMountain("update_scm_group", {
               scm_handle: Handle,
               group_handle: GroupHandle,
               resource_states: Value
-            }).catch(() => {
+            }).catch((Error2) => {
+              ScmTrace(
+                `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+              );
             });
           },
           dispose: /* @__PURE__ */ __name(() => {

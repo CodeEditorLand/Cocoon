@@ -20391,7 +20391,7 @@ var init_RouteManifest = __esm({
       mountain: 80,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-26T09:12:54Z"
+      generatedAt: "2026-04-26T09:45:29Z"
     };
   }
 });
@@ -26043,6 +26043,12 @@ var init_ExtensionsNamespace = __esm({
       const { ExtensionPath, ExtensionUri } = NormalizeLocation(
         Raw2?.extensionLocation
       );
+      const SafePackageJSON = Raw2 && typeof Raw2 === "object" ? {
+        ...Raw2,
+        name: typeof Raw2.name === "string" && Raw2.name.length > 0 ? Raw2.name : Id,
+        version: typeof Raw2.version === "string" && Raw2.version.length > 0 ? Raw2.version : "0.0.0",
+        publisher: typeof Raw2.publisher === "string" ? Raw2.publisher : Id.split(".")[0] ?? "unknown"
+      } : { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
       return {
         id: Id,
         extensionUri: ExtensionUri,
@@ -26051,7 +26057,7 @@ var init_ExtensionsNamespace = __esm({
         // built-ins that have completed activation; without it, callers
         // like the `github` extension treat the extension as missing.
         isActive: true,
-        packageJSON: Raw2,
+        packageJSON: SafePackageJSON,
         extensionKind: 1,
         exports: Exports,
         // Critical: `activate()` must resolve to the SAME exports object
@@ -26521,21 +26527,36 @@ var ScmNamespace_exports = {};
 __export(ScmNamespace_exports, {
   default: () => ScmNamespace_default
 });
-var CreateScmNamespace, ScmNamespace_default;
+var ScmTraceEnabled, ScmTrace, CreateScmNamespace, ScmNamespace_default;
 var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
+    ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
+    ScmTrace = /* @__PURE__ */ __name((Message) => {
+      if (!ScmTraceEnabled) return;
+      try {
+        process.stdout.write(`[DEV:SCM-TRACE] ${Message}
+`);
+      } catch {
+      }
+    }, "ScmTrace");
     CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
       createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
         const Handle = NextProviderHandle();
+        const RootUriShape = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
+        ScmTrace(
+          `createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriShape} handle=${Handle}`
+        );
         Context.SendToMountain("register_scm_provider", {
           handle: Handle,
           id: Id,
           label: Label,
           root_uri: RootUri,
           extension_id: ""
-        }).catch(() => {
+        }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
+          const Message = Error2 instanceof Error2 ? Error2.message : String(Error2);
+          ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
         });
         const Groups = /* @__PURE__ */ new Map();
         return {
@@ -26551,12 +26572,18 @@ var init_ScmNamespace = __esm({
           createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
             const GroupHandle = `${Handle}/${GroupId}`;
             Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
+            ScmTrace(
+              `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
+            );
             Context.SendToMountain("register_scm_resource_group", {
               scm_handle: Handle,
               group_handle: GroupHandle,
               group_id: GroupId,
               label: GroupLabel
-            }).catch(() => {
+            }).catch((Error2) => {
+              ScmTrace(
+                `register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+              );
             });
             const State = { resourceStates: [] };
             return {
@@ -26567,11 +26594,17 @@ var init_ScmNamespace = __esm({
               },
               set resourceStates(Value) {
                 State.resourceStates = Value;
+                ScmTrace(
+                  `update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${Array.isArray(Value) ? Value.length : 0}`
+                );
                 Context.SendToMountain("update_scm_group", {
                   scm_handle: Handle,
                   group_handle: GroupHandle,
                   resource_states: Value
-                }).catch(() => {
+                }).catch((Error2) => {
+                  ScmTrace(
+                    `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+                  );
                 });
               },
               dispose: /* @__PURE__ */ __name(() => {

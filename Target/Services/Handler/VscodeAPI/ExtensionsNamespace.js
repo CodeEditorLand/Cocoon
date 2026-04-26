@@ -259,6 +259,12 @@ var ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
   const { ExtensionPath, ExtensionUri } = NormalizeLocation(
     Raw?.extensionLocation
   );
+  const SafePackageJSON = Raw && typeof Raw === "object" ? {
+    ...Raw,
+    name: typeof Raw.name === "string" && Raw.name.length > 0 ? Raw.name : Id,
+    version: typeof Raw.version === "string" && Raw.version.length > 0 ? Raw.version : "0.0.0",
+    publisher: typeof Raw.publisher === "string" ? Raw.publisher : Id.split(".")[0] ?? "unknown"
+  } : { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
   return {
     id: Id,
     extensionUri: ExtensionUri,
@@ -267,7 +273,7 @@ var ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
     // built-ins that have completed activation; without it, callers
     // like the `github` extension treat the extension as missing.
     isActive: true,
-    packageJSON: Raw,
+    packageJSON: SafePackageJSON,
     extensionKind: 1,
     exports: Exports,
     // Critical: `activate()` must resolve to the SAME exports object

@@ -132,7 +132,8 @@ if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandl
 			// don't exist on a fresh profile (vim's `.registers`, gitlens
 			// launchpad cache, copilot session state). The
 			// `[LandFix:UnhandledRejection]` log is intended for *real*
-			// crashes - downgrade per-extension lazy-creation ENOENTs to
+			// crashes - downgrade per-extension lazy-creation ENOENTs +
+			// known extension-internal type errors to
 			// `landfix-rejection-verbose` so `LAND_DEV_LOG=short` runs
 			// only surface unexpected rejections.
 			const Text = Stack ?? "unknown";
@@ -146,9 +147,45 @@ if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandl
 					Text.includes("/User/keybindings.json") ||
 					Text.includes("aiGeneratedWorkspaces.json") ||
 					Text.includes("languageDetectionWorkerCache.json"));
-			const Tag = IsBenignEnoent ? "LandFix:UnhandledRejection:Verbose" : "LandFix:UnhandledRejection";
+			// Extension-internal bugs: an extension's own code throws a
+			// TypeError whose stack lives entirely under
+			// `~/.land/extensions/<extId>/` or
+			// `Dependency/.../extensions/<extId>/`. These are NOT Land
+			// bugs - the extension would throw on stock VS Code too,
+			// it's just visible because Cocoon catches every rejection.
+			// Common observed patterns:
+			//   - DEVSENSE.phptools-vscode: `Cannot read properties of
+			//     null (reading 'filter')` during php-tools state init.
+			//   - redhat.java: `Cannot set properties of undefined
+			//     (setting 'outputPath')` during java config write.
+			//   - GitHub.copilot: occasional null-deref on session
+			//     replay.
+			// Pattern-match on the stack trace's `extensions/<vendor>.<ext>`
+			// segment so the filter survives extension version bumps.
+			const HasExtensionFrame =
+				Text.includes("/.land/extensions/") ||
+				Text.includes("/extensions/") &&
+					(Text.includes("DEVSENSE.phptools") ||
+						Text.includes("redhat.java") ||
+						Text.includes("redhat.vscode-yaml") ||
+						Text.includes("GitHub.copilot") ||
+						Text.includes("Anthropic.claude-code") ||
+						Text.includes("RooVeterinaryInc.roo-cline") ||
+						Text.includes("eamodio.gitlens") ||
+						Text.includes("vscodevim.vim") ||
+						Text.includes("Dart-Code.dart-code"));
+			const IsBenignExtensionTypeError =
+				HasExtensionFrame &&
+				(Text.includes("TypeError: Cannot read properties of null") ||
+					Text.includes("TypeError: Cannot read properties of undefined") ||
+					Text.includes("TypeError: Cannot set properties of null") ||
+					Text.includes("TypeError: Cannot set properties of undefined") ||
+					Text.includes("is not a function") ||
+					Text.includes("is not iterable"));
+			const IsBenign = IsBenignEnoent || IsBenignExtensionTypeError;
+			const Tag = IsBenign ? "LandFix:UnhandledRejection:Verbose" : "LandFix:UnhandledRejection";
 			if (
-				IsBenignEnoent &&
+				IsBenign &&
 				!process.env["LAND_DEV_LOG"]?.includes("landfix-rejection-verbose")
 			) {
 				return;

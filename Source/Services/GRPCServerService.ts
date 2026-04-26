@@ -522,16 +522,21 @@ export class GRPCServerService
 			// the full stack trace to stderr surfaces as a Mountain `warn:
 			// Cocoon stderr` spam even though the fault lives in the
 			// extension's own code (see e.g. the npm extension's
-			// `getScripts` throwing on malformed package.json). Downgrade
-			// these to a single-line warn with just the message; the IPC
-			// response still carries the error payload back to the caller.
+			// `getScripts` throwing on malformed package.json). Route the
+			// downgraded message to stdout (`console.log`) instead of
+			// stderr so Mountain's CocoonManagement classifier doesn't
+			// elevate it to a `warn:` line; the IPC response still
+			// carries the error payload back to the caller and Mountain's
+			// renderer-side tree-view handler already turns the rejection
+			// into an empty `{items:[]}` payload (see
+			// `Mountain/Source/IPC/WindServiceHandlers/mod.rs::tree:getChildren`).
 			const IsExtensionProvidedHandler =
 				request.Method.startsWith("$provide") ||
 				request.Method.startsWith("$resolve") ||
 				request.Method.startsWith("$get");
 			if (IsExtensionProvidedHandler) {
-				console.warn(
-					`[GRPCServerService] Extension handler ${request.Method} rejected: ${
+				console.log(
+					`[GRPCServerService] Extension handler ${request.Method} rejected (extension-side): ${
 						error instanceof Error ? error.message : String(error)
 					}`,
 				);

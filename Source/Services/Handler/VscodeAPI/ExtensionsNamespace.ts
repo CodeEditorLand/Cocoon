@@ -235,6 +235,36 @@ const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
 	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
 		Raw?.extensionLocation,
 	);
+	// Defensive packageJSON: extensions like `muhammad-sammy.csharp`
+	// invoke `semver.parse(extension.packageJSON.version)` on their own
+	// or peer extensions' manifests. Mountain's scanner sometimes omits
+	// `version` when the upstream `package.json` itself lacks it (or
+	// when an extension is in a degenerate state on disk), and `semver`
+	// throws `Invalid version. Must be a string. Got type "undefined"`
+	// during activation, killing the extension before it can call
+	// `vscode.scm.createSourceControl(...)` / register language
+	// providers / etc. Fill the canonical fields with safe defaults so
+	// downstream consumers always get a string-typed `version`/`name`.
+	const SafePackageJSON =
+		Raw && typeof Raw === "object"
+			? {
+					...Raw,
+					name:
+						typeof (Raw as { name?: unknown }).name === "string" &&
+						(Raw as { name: string }).name.length > 0
+							? (Raw as { name: string }).name
+							: Id,
+					version:
+						typeof (Raw as { version?: unknown }).version === "string" &&
+						(Raw as { version: string }).version.length > 0
+							? (Raw as { version: string }).version
+							: "0.0.0",
+					publisher:
+						typeof (Raw as { publisher?: unknown }).publisher === "string"
+							? (Raw as { publisher: string }).publisher
+							: Id.split(".")[0] ?? "unknown",
+				}
+			: { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
 	return {
 		id: Id,
 		extensionUri: ExtensionUri,
@@ -243,7 +273,7 @@ const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
 		// built-ins that have completed activation; without it, callers
 		// like the `github` extension treat the extension as missing.
 		isActive: true,
-		packageJSON: Raw,
+		packageJSON: SafePackageJSON,
 		extensionKind: 1,
 		exports: Exports,
 		// Critical: `activate()` must resolve to the SAME exports object
