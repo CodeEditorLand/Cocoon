@@ -86,7 +86,7 @@ const SanitizeResourceState = (Raw:unknown): unknown => {
 const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 	createSourceControl: (Id: string, Label: string, RootUri?: unknown) => {
 		const Handle = NextProviderHandle();
-		const RootUriShape =
+		const RootUriDescription =
 			RootUri == null
 				? "null"
 				: typeof RootUri === "string"
@@ -95,13 +95,46 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 						? `object(scheme=${(RootUri as { scheme?: unknown })?.scheme ?? "<missing>"})`
 						: typeof RootUri;
 		ScmTrace(
-			`createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriShape} handle=${Handle}`,
+			`createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriDescription} handle=${Handle}`,
 		);
-		Context.SendToMountain("register_scm_provider", {
+		// vscode.git's `Uri.file()` returns a Uri instance whose getters
+		// (`fsPath`, `path`) and prototype methods don't serialise cleanly
+		// across the gRPC wire. Project to the upstream UriComponents shape
+		// so Mountain's `RegisterScmProvider.rs` reads the same plain
+		// `{scheme, authority, path, query, fragment}` data it expects from
+		// stock VS Code, and so JSON.stringify doesn't traverse any hidden
+		// back-references via the Repository → Model → openRepositories
+		// chain that vscode.git's Uri instances carry.
+		const RootUriShape =
+			RootUri && typeof RootUri === "object"
+				? {
+						scheme: (RootUri as { scheme?: unknown })?.scheme ?? "",
+						authority: (RootUri as { authority?: unknown })?.authority ?? "",
+						path: (RootUri as { path?: unknown })?.path ?? "",
+						query: (RootUri as { query?: unknown })?.query ?? "",
+						fragment: (RootUri as { fragment?: unknown })?.fragment ?? "",
+					}
+				: RootUri;
+
+		// vscode.git fires `createResourceGroup(...)` and the
+		// `resourceStates` setter synchronously after `createSourceControl`
+		// returns. Each of those goes through `Context.SendToMountain(...)`
+		// fire-and-forget, racing the still-in-flight `register_scm_provider`
+		// notification. Mountain has been observed to receive the group
+		// register/update notifications BEFORE the provider register
+		// notification, which causes the workbench's
+		// `SourceControlManagementProvider` to log
+		// `Received group update for unknown provider handle: <H>` and
+		// drop the update. Chain every subsequent SCM notification for
+		// this provider behind `ProviderReady` so the wire order matches
+		// the code-call order regardless of any per-method async overhead
+		// in `SendToMountain` (DualTrack import, payload serialisation,
+		// gRPC writer scheduling).
+		const ProviderReady = Context.SendToMountain("register_scm_provider", {
 			handle: Handle,
 			id: Id,
 			label: Label,
-			rootUri: RootUri,
+			rootUri: RootUriShape,
 			extensionId: "",
 		})
 			.then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`))
@@ -145,12 +178,14 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 				ScmTrace(
 					`createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`,
 				);
-				Context.SendToMountain("register_scm_resource_group", {
-					scmHandle: Handle,
-					groupHandle: GroupHandle,
-					groupId: GroupId,
-					label: GroupLabel,
-				}).catch((Error: unknown) => {
+				const GroupReady = ProviderReady.then(() =>
+					Context.SendToMountain("register_scm_resource_group", {
+						scmHandle: Handle,
+						groupHandle: GroupHandle,
+						groupId: GroupId,
+						label: GroupLabel,
+					}),
+				).catch((Error: unknown) => {
 					ScmTrace(
 						`register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${
 							Error instanceof globalThis.Error ? Error.message : String(Error)
@@ -183,11 +218,20 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 						const SanitizedStates = Array.isArray(Value)
 							? Value.map((Raw) => SanitizeResourceState(Raw))
 							: [];
-						Context.SendToMountain("update_scm_group", {
-							scmHandle: Handle,
-							groupHandle: GroupHandle,
-							resourceStates: SanitizedStates,
-						}).catch((Error: unknown) => {
+						// Chain after `GroupReady` so the workbench cannot
+						// receive an `update_scm_group` for a group whose
+						// `register_scm_resource_group` notification hasn't
+						// reached Mountain yet (same race as the provider
+						// register/update ordering - vscode.git sets
+						// `resourceStates` synchronously after
+						// `createResourceGroup`).
+						GroupReady.then(() =>
+							Context.SendToMountain("update_scm_group", {
+								scmHandle: Handle,
+								groupHandle: GroupHandle,
+								resourceStates: SanitizedStates,
+							}),
+						).catch((Error: unknown) => {
 							ScmTrace(
 								`update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${
 									Error instanceof globalThis.Error ? Error.message : String(Error)
@@ -196,12 +240,14 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 						});
 					},
 					dispose: () => {
-						Context.SendToMountain(
-							"unregister_scm_resource_group",
-							{
-								scmHandle: Handle,
-								groupHandle: GroupHandle,
-							},
+						GroupReady.then(() =>
+							Context.SendToMountain(
+								"unregister_scm_resource_group",
+								{
+									scmHandle: Handle,
+									groupHandle: GroupHandle,
+								},
+							),
 						).catch(() => {});
 						Groups.delete(GroupId);
 					},
@@ -213,9 +259,11 @@ const CreateScmNamespace = (Context: HandlerContext) => WrapScmNamespace({
 			acceptInputCommand: undefined,
 			quickDiffProvider: undefined,
 			dispose: () => {
-				Context.SendToMountain("unregister_scm_provider", {
-					handle: Handle,
-				}).catch(() => {});
+				ProviderReady.then(() =>
+					Context.SendToMountain("unregister_scm_provider", {
+						handle: Handle,
+					}),
+				).catch(() => {});
 				Groups.clear();
 			},
 		};

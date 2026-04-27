@@ -503,15 +503,22 @@ var SanitizeResourceState = /* @__PURE__ */ __name((Raw) => {
 var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_default({
   createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
     const Handle = NextProviderHandle();
-    const RootUriShape = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
+    const RootUriDescription = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
     ScmTrace(
-      `createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriShape} handle=${Handle}`
+      `createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriDescription} handle=${Handle}`
     );
-    Context.SendToMountain("register_scm_provider", {
+    const RootUriShape = RootUri && typeof RootUri === "object" ? {
+      scheme: RootUri?.scheme ?? "",
+      authority: RootUri?.authority ?? "",
+      path: RootUri?.path ?? "",
+      query: RootUri?.query ?? "",
+      fragment: RootUri?.fragment ?? ""
+    } : RootUri;
+    const ProviderReady = Context.SendToMountain("register_scm_provider", {
       handle: Handle,
       id: Id,
       label: Label,
-      rootUri: RootUri,
+      rootUri: RootUriShape,
       extensionId: ""
     }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
       const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
@@ -534,12 +541,14 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
         ScmTrace(
           `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
         );
-        Context.SendToMountain("register_scm_resource_group", {
-          scmHandle: Handle,
-          groupHandle: GroupHandle,
-          groupId: GroupId,
-          label: GroupLabel
-        }).catch((Error2) => {
+        const GroupReady = ProviderReady.then(
+          () => Context.SendToMountain("register_scm_resource_group", {
+            scmHandle: Handle,
+            groupHandle: GroupHandle,
+            groupId: GroupId,
+            label: GroupLabel
+          })
+        ).catch((Error2) => {
           ScmTrace(
             `register_scm_resource_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
           );
@@ -557,23 +566,27 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
               `update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${Array.isArray(Value) ? Value.length : 0}`
             );
             const SanitizedStates = Array.isArray(Value) ? Value.map((Raw) => SanitizeResourceState(Raw)) : [];
-            Context.SendToMountain("update_scm_group", {
-              scmHandle: Handle,
-              groupHandle: GroupHandle,
-              resourceStates: SanitizedStates
-            }).catch((Error2) => {
+            GroupReady.then(
+              () => Context.SendToMountain("update_scm_group", {
+                scmHandle: Handle,
+                groupHandle: GroupHandle,
+                resourceStates: SanitizedStates
+              })
+            ).catch((Error2) => {
               ScmTrace(
                 `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
               );
             });
           },
           dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain(
-              "unregister_scm_resource_group",
-              {
-                scmHandle: Handle,
-                groupHandle: GroupHandle
-              }
+            GroupReady.then(
+              () => Context.SendToMountain(
+                "unregister_scm_resource_group",
+                {
+                  scmHandle: Handle,
+                  groupHandle: GroupHandle
+                }
+              )
             ).catch(() => {
             });
             Groups.delete(GroupId);
@@ -586,9 +599,11 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
       acceptInputCommand: void 0,
       quickDiffProvider: void 0,
       dispose: /* @__PURE__ */ __name(() => {
-        Context.SendToMountain("unregister_scm_provider", {
-          handle: Handle
-        }).catch(() => {
+        ProviderReady.then(
+          () => Context.SendToMountain("unregister_scm_provider", {
+            handle: Handle
+          })
+        ).catch(() => {
         });
         Groups.clear();
       }, "dispose")
