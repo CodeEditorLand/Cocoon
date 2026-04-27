@@ -913,10 +913,73 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				const VisibilityListeners = new Set<(visible: boolean) => void>();
 				const DisposeListeners = new Set<() => void>();
 				const NoopDisposable = { dispose: () => {} };
+				// Per-resolve subscriptions to the Cocoon-side Emitter
+				// channels populated by `NotificationHandler.ts:
+				// webview.viewState` and `webview.dispose`. Stored so
+				// the proxy view's `dispose()` can drop them when the
+				// view goes away (extension may resolve again later
+				// with a fresh proxy; we don't want stale listeners
+				// firing into the old proxy's listener sets).
+				const ChannelVisibility = `webview.viewVisibility:${Handle}`;
+				const ChannelDispose = `webview.dispose:${Handle}`;
+				const VisibilityForward = (Visible: unknown) => {
+					for (const L of VisibilityListeners) {
+						try {
+							L(!!Visible);
+						} catch (_e) {
+							/* swallow */
+						}
+					}
+				};
+				const DisposeForward = () => {
+					for (const L of DisposeListeners) {
+						try {
+							L();
+						} catch (_e) {
+							/* swallow */
+						}
+					}
+					DisposeListeners.clear();
+					VisibilityListeners.clear();
+					Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+					Context.Emitter?.off?.(ChannelDispose, DisposeForward);
+				};
+				Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+				Context.Emitter?.on?.(ChannelDispose, DisposeForward);
+				let CurrentTitle: string | undefined;
+				let CurrentDescription: string | undefined;
+				let CurrentBadge: unknown;
+				const FireMetadataUpdate = () => {
+					Context.SendToMountain("webview.updateView", {
+						handle: Handle,
+						viewId: ViewId,
+						title: CurrentTitle ?? null,
+						description: CurrentDescription ?? null,
+						badge: CurrentBadge ?? null,
+					}).catch(() => {});
+				};
 				const View: any = {
-					title: undefined as string | undefined,
-					description: undefined as string | undefined,
-					badge: undefined as unknown,
+					get title() {
+						return CurrentTitle;
+					},
+					set title(Value: string | undefined) {
+						CurrentTitle = Value;
+						FireMetadataUpdate();
+					},
+					get description() {
+						return CurrentDescription;
+					},
+					set description(Value: string | undefined) {
+						CurrentDescription = Value;
+						FireMetadataUpdate();
+					},
+					get badge() {
+						return CurrentBadge;
+					},
+					set badge(Value: unknown) {
+						CurrentBadge = Value;
+						FireMetadataUpdate();
+					},
 					webview: {
 						get html() {
 							return CurrentHtml;
@@ -976,24 +1039,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						};
 					},
 					dispose: () => {
-						for (const L of DisposeListeners) {
-							try {
-								L();
-							} catch (_e) {
-								/* swallow */
-							}
-						}
-						DisposeListeners.clear();
-						VisibilityListeners.clear();
-					},
-					_FireVisibility: (Visible: boolean) => {
-						for (const L of VisibilityListeners) {
-							try {
-								L(Visible);
-							} catch (_e) {
-								/* swallow */
-							}
-						}
+						// Dispose forwarded to the channel-driven path
+						// so listeners + Emitter subscriptions are
+						// uniformly cleaned. `DisposeForward` handles
+						// firing all `DisposeListeners` and dropping
+						// the channel subscriptions.
+						DisposeForward();
 					},
 				};
 				return View;

@@ -26600,10 +26600,11 @@ __export(WindowNamespace_exports, {
   TreeDataProviders: () => TreeDataProviders,
   TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
   WebviewPanels: () => WebviewPanels,
+  WebviewViewBuilders: () => WebviewViewBuilders,
   WebviewViewProviders: () => WebviewViewProviders,
   default: () => WindowNamespace_default
 });
-var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels, RegisterCustomEditor, CreateWindowNamespace, WindowNamespace_default;
+var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, WebviewViewBuilders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels, RegisterCustomEditor, CreateWindowNamespace, WindowNamespace_default;
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
@@ -26625,6 +26626,7 @@ var init_WindowNamespace = __esm({
     TreeDataProviders = /* @__PURE__ */ new Map();
     TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
     WebviewViewProviders = /* @__PURE__ */ new Map();
+    WebviewViewBuilders = /* @__PURE__ */ new Map();
     CustomEditorProviders = /* @__PURE__ */ new Map();
     CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
     WebviewPanels = /* @__PURE__ */ new Map();
@@ -27332,6 +27334,133 @@ var init_WindowNamespace = __esm({
         registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
           const Handle = NextProviderHandle();
           WebviewViewProviders.set(String(Handle), Provider);
+          WebviewViewBuilders.set(String(Handle), () => {
+            let CurrentHtml = "";
+            const VisibilityListeners = /* @__PURE__ */ new Set();
+            const DisposeListeners = /* @__PURE__ */ new Set();
+            const NoopDisposable3 = { dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") };
+            const ChannelVisibility = `webview.viewVisibility:${Handle}`;
+            const ChannelDispose = `webview.dispose:${Handle}`;
+            const VisibilityForward = /* @__PURE__ */ __name((Visible) => {
+              for (const L of VisibilityListeners) {
+                try {
+                  L(!!Visible);
+                } catch (_e) {
+                }
+              }
+            }, "VisibilityForward");
+            const DisposeForward = /* @__PURE__ */ __name(() => {
+              for (const L of DisposeListeners) {
+                try {
+                  L();
+                } catch (_e) {
+                }
+              }
+              DisposeListeners.clear();
+              VisibilityListeners.clear();
+              Context21.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+              Context21.Emitter?.off?.(ChannelDispose, DisposeForward);
+            }, "DisposeForward");
+            Context21.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+            Context21.Emitter?.on?.(ChannelDispose, DisposeForward);
+            let CurrentTitle;
+            let CurrentDescription;
+            let CurrentBadge;
+            const FireMetadataUpdate = /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("webview.updateView", {
+                handle: Handle,
+                viewId: ViewId,
+                title: CurrentTitle ?? null,
+                description: CurrentDescription ?? null,
+                badge: CurrentBadge ?? null
+              }).catch(() => {
+              });
+            }, "FireMetadataUpdate");
+            const View = {
+              get title() {
+                return CurrentTitle;
+              },
+              set title(Value) {
+                CurrentTitle = Value;
+                FireMetadataUpdate();
+              },
+              get description() {
+                return CurrentDescription;
+              },
+              set description(Value) {
+                CurrentDescription = Value;
+                FireMetadataUpdate();
+              },
+              get badge() {
+                return CurrentBadge;
+              },
+              set badge(Value) {
+                CurrentBadge = Value;
+                FireMetadataUpdate();
+              },
+              webview: {
+                get html() {
+                  return CurrentHtml;
+                },
+                set html(Value) {
+                  CurrentHtml = String(Value ?? "");
+                  Context21.SendToMountain("webview.setHtml", {
+                    handle: Handle,
+                    viewId: ViewId,
+                    html: CurrentHtml
+                  }).catch(() => {
+                  });
+                },
+                options: {},
+                cspSource: "https://*",
+                asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+                postMessage: /* @__PURE__ */ __name(async (Message) => {
+                  await Context21.SendToMountain(
+                    "webview.postMessage",
+                    {
+                      handle: Handle,
+                      viewId: ViewId,
+                      message: Message
+                    }
+                  ).catch(() => {
+                  });
+                  return true;
+                }, "postMessage"),
+                onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+                  const Channel = `webview.message:${Handle}`;
+                  Context21.Emitter?.on?.(Channel, Listener);
+                  return {
+                    dispose: /* @__PURE__ */ __name(() => Context21.Emitter?.off?.(Channel, Listener), "dispose")
+                  };
+                }, "onDidReceiveMessage")
+              },
+              show: /* @__PURE__ */ __name((PreserveFocus) => {
+                Context21.SendToMountain("webview.reveal", {
+                  handle: Handle,
+                  viewId: ViewId,
+                  preserveFocus: !!PreserveFocus
+                }).catch(() => {
+                });
+              }, "show"),
+              onDidChangeVisibility: /* @__PURE__ */ __name((Listener) => {
+                VisibilityListeners.add(Listener);
+                return {
+                  dispose: /* @__PURE__ */ __name(() => VisibilityListeners.delete(Listener), "dispose")
+                };
+              }, "onDidChangeVisibility"),
+              onDispose: /* @__PURE__ */ __name((Listener) => {
+                DisposeListeners.add(Listener);
+                return {
+                  dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+                };
+              }, "onDispose"),
+              dispose: /* @__PURE__ */ __name(() => {
+                DisposeForward();
+              }, "dispose")
+            };
+            return View;
+          });
           Context21.MountainClient?.sendRequest("webview.registerView", [
             Handle,
             ViewId
@@ -27340,6 +27469,7 @@ var init_WindowNamespace = __esm({
           return {
             dispose: /* @__PURE__ */ __name(() => {
               WebviewViewProviders.delete(String(Handle));
+              WebviewViewBuilders.delete(String(Handle));
               Context21.MountainClient?.sendRequest(
                 "webview.unregisterView",
                 [Handle]
@@ -27945,7 +28075,12 @@ var init_RequestRoutingHandler = __esm({
           }
         }, "tree\\.\\w+"),
         "webview\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { WebviewPanels: WebviewPanels2, WebviewViewProviders: WebviewViewProviders2, CustomEditorProviders: CustomEditorProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const {
+            WebviewPanels: WebviewPanels2,
+            WebviewViewProviders: WebviewViewProviders2,
+            WebviewViewBuilders: WebviewViewBuilders2,
+            CustomEditorProviders: CustomEditorProviders2
+          } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
           const Handle = Params?.handle ?? Params?.[0];
           switch (Method2) {
             case "webview.resolveView": {
@@ -27955,8 +28090,11 @@ var init_RequestRoutingHandler = __esm({
                   `WebviewViewProvider handle not registered: ${Handle}`
                 );
               }
-              const View = Params?.view ?? Params?.[1];
-              const Ctx = Params?.context ?? Params?.[2];
+              const Builder = WebviewViewBuilders2.get(String(Handle));
+              const View = Params?.view ?? Params?.[1] ?? Builder?.() ?? {};
+              const Ctx = Params?.context ?? Params?.[2] ?? {
+                state: void 0
+              };
               return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
             }
             case "webview.resolveCustomEditor": {
@@ -28054,7 +28192,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-27T20:01:36Z"
+      generatedAt: "2026-04-27T21:23:04Z"
     };
   }
 });
@@ -36780,6 +36918,11 @@ var init_NotificationHandler = __esm({
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           if (Payload?.handle) {
             Emitter3.emit(`webview.dispose:${Payload.handle}`);
+            try {
+              Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports)).then(({ WebviewViewBuilders: _Builders }) => {
+              });
+            } catch (_e) {
+            }
           }
           break;
         }
@@ -36791,6 +36934,10 @@ var init_NotificationHandler = __esm({
               visible: Payload.visible,
               viewColumn: Payload.viewColumn
             });
+            Emitter3.emit(
+              `webview.viewVisibility:${Payload.handle}`,
+              !!Payload.visible
+            );
           }
           break;
         }

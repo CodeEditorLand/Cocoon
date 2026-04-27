@@ -474,6 +474,7 @@ var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callba
 var TreeDataProviders = /* @__PURE__ */ new Map();
 var TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
 var WebviewViewProviders = /* @__PURE__ */ new Map();
+var WebviewViewBuilders = /* @__PURE__ */ new Map();
 var CustomEditorProviders = /* @__PURE__ */ new Map();
 var CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
 var WebviewPanels = /* @__PURE__ */ new Map();
@@ -1181,6 +1182,133 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
       const Handle = NextProviderHandle();
       WebviewViewProviders.set(String(Handle), Provider);
+      WebviewViewBuilders.set(String(Handle), () => {
+        let CurrentHtml = "";
+        const VisibilityListeners = /* @__PURE__ */ new Set();
+        const DisposeListeners = /* @__PURE__ */ new Set();
+        const NoopDisposable2 = { dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") };
+        const ChannelVisibility = `webview.viewVisibility:${Handle}`;
+        const ChannelDispose = `webview.dispose:${Handle}`;
+        const VisibilityForward = /* @__PURE__ */ __name((Visible) => {
+          for (const L of VisibilityListeners) {
+            try {
+              L(!!Visible);
+            } catch (_e) {
+            }
+          }
+        }, "VisibilityForward");
+        const DisposeForward = /* @__PURE__ */ __name(() => {
+          for (const L of DisposeListeners) {
+            try {
+              L();
+            } catch (_e) {
+            }
+          }
+          DisposeListeners.clear();
+          VisibilityListeners.clear();
+          Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+          Context.Emitter?.off?.(ChannelDispose, DisposeForward);
+        }, "DisposeForward");
+        Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+        Context.Emitter?.on?.(ChannelDispose, DisposeForward);
+        let CurrentTitle;
+        let CurrentDescription;
+        let CurrentBadge;
+        const FireMetadataUpdate = /* @__PURE__ */ __name(() => {
+          Context.SendToMountain("webview.updateView", {
+            handle: Handle,
+            viewId: ViewId,
+            title: CurrentTitle ?? null,
+            description: CurrentDescription ?? null,
+            badge: CurrentBadge ?? null
+          }).catch(() => {
+          });
+        }, "FireMetadataUpdate");
+        const View = {
+          get title() {
+            return CurrentTitle;
+          },
+          set title(Value) {
+            CurrentTitle = Value;
+            FireMetadataUpdate();
+          },
+          get description() {
+            return CurrentDescription;
+          },
+          set description(Value) {
+            CurrentDescription = Value;
+            FireMetadataUpdate();
+          },
+          get badge() {
+            return CurrentBadge;
+          },
+          set badge(Value) {
+            CurrentBadge = Value;
+            FireMetadataUpdate();
+          },
+          webview: {
+            get html() {
+              return CurrentHtml;
+            },
+            set html(Value) {
+              CurrentHtml = String(Value ?? "");
+              Context.SendToMountain("webview.setHtml", {
+                handle: Handle,
+                viewId: ViewId,
+                html: CurrentHtml
+              }).catch(() => {
+              });
+            },
+            options: {},
+            cspSource: "https://*",
+            asWebviewUri: /* @__PURE__ */ __name((Uri) => Uri, "asWebviewUri"),
+            postMessage: /* @__PURE__ */ __name(async (Message) => {
+              await Context.SendToMountain(
+                "webview.postMessage",
+                {
+                  handle: Handle,
+                  viewId: ViewId,
+                  message: Message
+                }
+              ).catch(() => {
+              });
+              return true;
+            }, "postMessage"),
+            onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+              const Channel = `webview.message:${Handle}`;
+              Context.Emitter?.on?.(Channel, Listener);
+              return {
+                dispose: /* @__PURE__ */ __name(() => Context.Emitter?.off?.(Channel, Listener), "dispose")
+              };
+            }, "onDidReceiveMessage")
+          },
+          show: /* @__PURE__ */ __name((PreserveFocus) => {
+            Context.SendToMountain("webview.reveal", {
+              handle: Handle,
+              viewId: ViewId,
+              preserveFocus: !!PreserveFocus
+            }).catch(() => {
+            });
+          }, "show"),
+          onDidChangeVisibility: /* @__PURE__ */ __name((Listener) => {
+            VisibilityListeners.add(Listener);
+            return {
+              dispose: /* @__PURE__ */ __name(() => VisibilityListeners.delete(Listener), "dispose")
+            };
+          }, "onDidChangeVisibility"),
+          onDispose: /* @__PURE__ */ __name((Listener) => {
+            DisposeListeners.add(Listener);
+            return {
+              dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+            };
+          }, "onDispose"),
+          dispose: /* @__PURE__ */ __name(() => {
+            DisposeForward();
+          }, "dispose")
+        };
+        return View;
+      });
       Context.MountainClient?.sendRequest("webview.registerView", [
         Handle,
         ViewId
@@ -1189,6 +1317,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return {
         dispose: /* @__PURE__ */ __name(() => {
           WebviewViewProviders.delete(String(Handle));
+          WebviewViewBuilders.delete(String(Handle));
           Context.MountainClient?.sendRequest(
             "webview.unregisterView",
             [Handle]
@@ -1597,6 +1726,7 @@ export {
   TreeDataProviders,
   TreeDataProvidersByViewId,
   WebviewPanels,
+  WebviewViewBuilders,
   WebviewViewProviders,
   WindowNamespace_default as default
 };

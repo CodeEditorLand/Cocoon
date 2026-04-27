@@ -462,6 +462,20 @@ const HandleSpecificNotification = (
 				: Parameters;
 			if (Payload?.handle) {
 				Emitter.emit(`webview.dispose:${Payload.handle}`);
+				// Webview-view branch: dispose the per-handle proxy
+				// view so its onDispose listeners fire on the
+				// extension side. Builders entry stays in case the
+				// view is later re-resolved (workbench may show the
+				// panel again).
+				try {
+					import(
+						"./VscodeAPI/WindowNamespace.js"
+					).then(({ WebviewViewBuilders: _Builders }) => {
+						/* builders are factories - no per-instance state to dispose here */
+					});
+				} catch (_e) {
+					/* swallow */
+				}
 			}
 			break;
 		}
@@ -475,6 +489,18 @@ const HandleSpecificNotification = (
 					visible: Payload.visible,
 					viewColumn: Payload.viewColumn,
 				});
+				// Webview-view onDidChangeVisibility forward. The most
+				// recent proxy view for this handle stored its
+				// `_FireVisibility` hook on a per-resolve closure; we
+				// drop the visible flag onto the channel above so any
+				// proxy that subscribed via `view.onDidChangeVisibility(
+				// listener)` receives it through the same Emitter
+				// channel. Per-resolve subscriptions live on the proxy
+				// itself and are reaped when the next resolve runs.
+				Emitter.emit(
+					`webview.viewVisibility:${Payload.handle}`,
+					!!Payload.visible,
+				);
 			}
 			break;
 		}
