@@ -27,8 +27,8 @@ const CreateTasksNamespace = (Context: HandlerContext) => WrapTasksNamespace({
 		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_task_provider", {
 			handle: Handle,
-			task_type: TaskType,
-			extension_id: "",
+			taskType: TaskType,
+			extensionId: "",
 		}).catch(() => {});
 		return {
 			dispose: () => {

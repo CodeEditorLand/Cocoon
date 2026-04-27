@@ -11786,6 +11786,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },
@@ -11820,8 +11834,8 @@ var RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry
   const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
   Context.SendToMountain(MethodName, {
     handle: Handle,
-    language_selector: Language2,
-    extension_id: ""
+    languageSelector: Language2,
+    extensionId: ""
   }).catch(() => {
   });
   return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };

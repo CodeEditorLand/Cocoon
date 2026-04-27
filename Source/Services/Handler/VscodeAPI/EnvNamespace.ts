@@ -84,6 +84,15 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		sessionId:
 			(Env["sessionId"] as string) ??
 			`land-session-${Date.now().toString(36)}`,
+		// VS Code build identity strings. `vscode.tunnel-forwarding` and
+		// other extensions read `appCommit?.substring(0, 7)` to surface a
+		// short SHA in their telemetry / status bar. Returning the
+		// heuristic Proxy fallback (a function) crashes that call with
+		// `appCommit?.substring is not a function`. Default to empty
+		// string so optional-chained reads short-circuit cleanly; populate
+		// from build env when a real commit hash is available.
+		appCommit: (Env["appCommit"] as string) ?? "",
+		appQuality: (Env["appQuality"] as string) ?? "stable",
 		isNewAppInstall: false,
 		isAppPortable: false,
 		isTelemetryEnabled: false,

@@ -429,6 +429,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },
@@ -457,10 +471,10 @@ var CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => WrapAuth
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_authentication_provider", {
       handle: Handle,
-      provider_id: ProviderId,
+      providerId: ProviderId,
       label: Label,
-      supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
-      extension_id: ""
+      supportsMultipleAccounts: Options?.supportsMultipleAccounts ?? false,
+      extensionId: ""
     }).catch(() => {
     });
     return {

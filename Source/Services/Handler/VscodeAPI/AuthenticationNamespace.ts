@@ -32,11 +32,11 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) => WrapAuthentic
 		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_authentication_provider", {
 			handle: Handle,
-			provider_id: ProviderId,
+			providerId: ProviderId,
 			label: Label,
-			supports_multiple_accounts:
+			supportsMultipleAccounts:
 				Options?.supportsMultipleAccounts ?? false,
-			extension_id: "",
+			extensionId: "",
 		}).catch(() => {});
 		return {
 			dispose: () => {

@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-26T22:40:10Z"
+  generatedAt: "2026-04-27T14:42:11Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -34,6 +34,42 @@ if (process.env["LAND_DEV_LOG"]) {
 `
   );
 }
+var IsBypassValue = /* @__PURE__ */ __name((Raw) => {
+  if (!Raw) return false;
+  const Normalised = Raw.trim().toLowerCase();
+  return Normalised === "false" || Normalised === "0" || Normalised === "no" || Normalised === "off";
+}, "IsBypassValue");
+var ParseDomain = /* @__PURE__ */ __name((Method) => {
+  const Dot = Method.indexOf(".");
+  if (Dot <= 0) return "";
+  return Method.slice(0, Dot).toUpperCase();
+}, "ParseDomain");
+var IsRustDeferralEnabled = /* @__PURE__ */ __name((Method) => {
+  const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+  if (process.env[MethodKey] !== void 0) {
+    return !IsBypassValue(process.env[MethodKey]);
+  }
+  const Domain = ParseDomain(Method);
+  if (Domain) {
+    const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+    if (process.env[DomainKey] !== void 0) {
+      return !IsBypassValue(process.env[DomainKey]);
+    }
+  }
+  if (process.env["LAND_DEFER_RUST"] !== void 0) {
+    return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+  }
+  return true;
+}, "IsRustDeferralEnabled");
+if (process.env["LAND_DEV_LOG"]) {
+  const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+  if (ActiveBypasses) {
+    process.stdout.write(
+      `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
+`
+    );
+  }
+}
 function IsUnknownMethodError(Err) {
   if (Err == null) return false;
   const Message = Err instanceof Error ? Err.message : typeof Err === "string" ? Err : typeof Err.message === "string" ? Err.message : "";
@@ -42,6 +78,15 @@ function IsUnknownMethodError(Err) {
 }
 __name(IsUnknownMethodError, "IsUnknownMethodError");
 async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
   if (!MountainMethods.has(Method)) {
     LogDualTrack(Method, "node-fallback");
     try {
@@ -74,6 +119,15 @@ async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
 }
 __name(TryMountainThenNode, "TryMountainThenNode");
 async function TryMountainWithEmptyFallback(Context, Method, Arguments, NodeFallback, IsEmpty) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
   if (!MountainMethods.has(Method)) {
     LogDualTrack(Method, "node-fallback");
     try {
@@ -133,6 +187,25 @@ function MarkUnavailable(Method) {
   throw new NotImplementedError(Method);
 }
 __name(MarkUnavailable, "MarkUnavailable");
+var SendToMountainOrLocal = /* @__PURE__ */ __name((Context, Method, Payload, OnLocalFallback) => {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      OnLocalFallback?.();
+    } catch {
+    }
+    return Promise.resolve();
+  }
+  const Send = Context.SendToMountain;
+  return Send.call(Context, Method, Payload).then(
+    () => {
+      LogDualTrack(Method, "mountain");
+    },
+    (_Err) => {
+      LogDualTrack(Method, "error");
+    }
+  );
+}, "SendToMountainOrLocal");
 var LogDualTrack = /* @__PURE__ */ __name((Method, Route) => {
   if (!process.env["LAND_DEV_LOG"]) return;
   process.stdout.write(
@@ -141,10 +214,12 @@ var LogDualTrack = /* @__PURE__ */ __name((Method, Route) => {
   );
 }, "LogDualTrack");
 export {
+  IsRustDeferralEnabled,
   IsUnknownMethodError,
   LogDualTrack,
   MarkUnavailable,
   NotImplementedError,
+  SendToMountainOrLocal,
   TryMountainThenNode,
   TryMountainWithEmptyFallback
 };

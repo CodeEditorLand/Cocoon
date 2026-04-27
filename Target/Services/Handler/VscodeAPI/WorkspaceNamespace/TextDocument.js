@@ -299,7 +299,7 @@ var BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) 
   "register_text_document_content_provider",
   "unregister_text_document_content_provider",
   "textDocumentContent",
-  (Scheme) => ({ scheme: Scheme, extension_id: "" }),
+  (Scheme) => ({ scheme: Scheme, extensionId: "" }),
   (_Handle, Scheme, Provider) => {
     Context.ExtensionRegistry.set(
       `__textDocumentContentProvider:${Scheme}`,
@@ -319,9 +319,9 @@ var BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Schem
   Context.SendToMountain("register_file_system_provider", {
     handle: Handle,
     scheme: Scheme,
-    is_case_sensitive: Options?.isCaseSensitive ?? true,
-    is_readonly: Options?.isReadonly ?? false,
-    extension_id: ""
+    isCaseSensitive: Options?.isCaseSensitive ?? true,
+    isReadonly: Options?.isReadonly ?? false,
+    extensionId: ""
   }).catch(() => {
   });
   return {
@@ -339,33 +339,33 @@ var BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider
   "register_task_provider",
   "unregister_task_provider",
   "taskProvider",
-  (TaskType) => ({ task_type: TaskType, extension_id: "" })
+  (TaskType) => ({ taskType: TaskType, extensionId: "" })
 ), "BuildRegisterTaskProvider");
 var BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
   Context,
   "register_notebook_content_provider",
   "unregister_notebook_content_provider",
   "notebookContent",
-  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+  (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
 ), "BuildRegisterNotebookContentProvider");
 var BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
   Context,
   "register_notebook_serializer",
   "unregister_notebook_serializer",
   "notebookSerializer",
-  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+  (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
 ), "BuildRegisterNotebookSerializer");
 var BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
   Context.SendToMountain("register_remote_authority_resolver", {
-    authority_prefix: AuthorityPrefix,
-    extension_id: ""
+    authorityPrefix: AuthorityPrefix,
+    extensionId: ""
   }).catch(() => {
   });
   return {
     dispose: /* @__PURE__ */ __name(() => {
       Context.SendToMountain(
         "unregister_remote_authority_resolver",
-        { authority_prefix: AuthorityPrefix }
+        { authorityPrefix: AuthorityPrefix }
       ).catch(() => {
       });
     }, "dispose")

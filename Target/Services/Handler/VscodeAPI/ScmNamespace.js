@@ -429,6 +429,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },
@@ -453,6 +467,39 @@ var ScmTrace = /* @__PURE__ */ __name((Message) => {
   } catch {
   }
 }, "ScmTrace");
+var SanitizeResourceState = /* @__PURE__ */ __name((Raw) => {
+  if (Raw == null || typeof Raw !== "object") return Raw;
+  const Source = Raw;
+  const Out = {};
+  if (Source["resourceUri"] !== void 0) Out["resourceUri"] = Source["resourceUri"];
+  const Command = Source["command"];
+  if (Command && typeof Command === "object") {
+    const C = Command;
+    Out["command"] = {
+      title: C["title"] ?? "",
+      command: C["command"] ?? "",
+      tooltip: C["tooltip"] ?? ""
+    };
+  }
+  const Decorations = Source["decorations"];
+  if (Decorations && typeof Decorations === "object") {
+    const D = Decorations;
+    const SafeDecorations = {};
+    for (const Key of [
+      "strikeThrough",
+      "faded",
+      "tooltip",
+      "iconPath",
+      "light",
+      "dark"
+    ]) {
+      if (D[Key] !== void 0) SafeDecorations[Key] = D[Key];
+    }
+    Out["decorations"] = SafeDecorations;
+  }
+  if (Source["contextValue"] !== void 0) Out["contextValue"] = Source["contextValue"];
+  return Out;
+}, "SanitizeResourceState");
 var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_default({
   createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
     const Handle = NextProviderHandle();
@@ -464,23 +511,23 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
       handle: Handle,
       id: Id,
       label: Label,
-      root_uri: RootUri,
-      extension_id: ""
+      rootUri: RootUri,
+      extensionId: ""
     }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
       const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
       ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
     });
     const Groups = /* @__PURE__ */ new Map();
-    return {
+    const ConcreteSourceControl = {
       id: Id,
       label: Label,
       rootUri: RootUri,
-      inputBox: {
+      inputBox: WrapNamespaceWithHeuristics_default(`scm.sourceControl[${Id}].inputBox`, {
         value: "",
         placeholder: "",
         enabled: true,
         visible: true
-      },
+      }),
       createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
         const GroupHandle = `${Handle}/${GroupId}`;
         Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
@@ -488,9 +535,9 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
           `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
         );
         Context.SendToMountain("register_scm_resource_group", {
-          scm_handle: Handle,
-          group_handle: GroupHandle,
-          group_id: GroupId,
+          scmHandle: Handle,
+          groupHandle: GroupHandle,
+          groupId: GroupId,
           label: GroupLabel
         }).catch((Error2) => {
           ScmTrace(
@@ -509,10 +556,11 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
             ScmTrace(
               `update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${Array.isArray(Value) ? Value.length : 0}`
             );
+            const SanitizedStates = Array.isArray(Value) ? Value.map((Raw) => SanitizeResourceState(Raw)) : [];
             Context.SendToMountain("update_scm_group", {
-              scm_handle: Handle,
-              group_handle: GroupHandle,
-              resource_states: Value
+              scmHandle: Handle,
+              groupHandle: GroupHandle,
+              resourceStates: SanitizedStates
             }).catch((Error2) => {
               ScmTrace(
                 `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
@@ -523,8 +571,8 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
             Context.SendToMountain(
               "unregister_scm_resource_group",
               {
-                scm_handle: Handle,
-                group_handle: GroupHandle
+                scmHandle: Handle,
+                groupHandle: GroupHandle
               }
             ).catch(() => {
             });
@@ -545,6 +593,10 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_de
         Groups.clear();
       }, "dispose")
     };
+    return WrapNamespaceWithHeuristics_default(
+      `scm.sourceControl[${Id}]`,
+      ConcreteSourceControl
+    );
   }, "createSourceControl"),
   inputBox: { value: "" }
 }), "CreateScmNamespace");

@@ -429,6 +429,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },
@@ -457,8 +471,8 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => WrapDebugNamespac
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_debug_adapter", {
       handle: Handle,
-      debug_type: DebugType,
-      extension_id: ""
+      debugType: DebugType,
+      extensionId: ""
     }).catch(() => {
     });
     return {
@@ -474,7 +488,7 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => WrapDebugNamespac
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_debug_configuration_provider", {
       handle: Handle,
-      debug_type: DebugType
+      debugType: DebugType
     }).catch(() => {
     });
     return {

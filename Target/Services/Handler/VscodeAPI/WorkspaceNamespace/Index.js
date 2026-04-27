@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-26T22:40:10Z"
+  generatedAt: "2026-04-27T14:42:11Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -34,6 +34,42 @@ if (process.env["LAND_DEV_LOG"]) {
 `
   );
 }
+var IsBypassValue = /* @__PURE__ */ __name((Raw2) => {
+  if (!Raw2) return false;
+  const Normalised = Raw2.trim().toLowerCase();
+  return Normalised === "false" || Normalised === "0" || Normalised === "no" || Normalised === "off";
+}, "IsBypassValue");
+var ParseDomain = /* @__PURE__ */ __name((Method) => {
+  const Dot = Method.indexOf(".");
+  if (Dot <= 0) return "";
+  return Method.slice(0, Dot).toUpperCase();
+}, "ParseDomain");
+var IsRustDeferralEnabled = /* @__PURE__ */ __name((Method) => {
+  const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+  if (process.env[MethodKey] !== void 0) {
+    return !IsBypassValue(process.env[MethodKey]);
+  }
+  const Domain = ParseDomain(Method);
+  if (Domain) {
+    const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+    if (process.env[DomainKey] !== void 0) {
+      return !IsBypassValue(process.env[DomainKey]);
+    }
+  }
+  if (process.env["LAND_DEFER_RUST"] !== void 0) {
+    return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+  }
+  return true;
+}, "IsRustDeferralEnabled");
+if (process.env["LAND_DEV_LOG"]) {
+  const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+  if (ActiveBypasses) {
+    process.stdout.write(
+      `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
+`
+    );
+  }
+}
 function IsUnknownMethodError(Err) {
   if (Err == null) return false;
   const Message = Err instanceof Error ? Err.message : typeof Err === "string" ? Err : typeof Err.message === "string" ? Err.message : "";
@@ -42,6 +78,15 @@ function IsUnknownMethodError(Err) {
 }
 __name(IsUnknownMethodError, "IsUnknownMethodError");
 async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
   if (!MountainMethods.has(Method)) {
     LogDualTrack(Method, "node-fallback");
     try {
@@ -74,6 +119,15 @@ async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
 }
 __name(TryMountainThenNode, "TryMountainThenNode");
 async function TryMountainWithEmptyFallback(Context, Method, Arguments, NodeFallback, IsEmpty) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
   if (!MountainMethods.has(Method)) {
     LogDualTrack(Method, "node-fallback");
     try {
@@ -133,6 +187,25 @@ function MarkUnavailable(Method) {
   throw new NotImplementedError(Method);
 }
 __name(MarkUnavailable, "MarkUnavailable");
+var SendToMountainOrLocal = /* @__PURE__ */ __name((Context, Method, Payload, OnLocalFallback) => {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      OnLocalFallback?.();
+    } catch {
+    }
+    return Promise.resolve();
+  }
+  const Send = Context.SendToMountain;
+  return Send.call(Context, Method, Payload).then(
+    () => {
+      LogDualTrack(Method, "mountain");
+    },
+    (_Err) => {
+      LogDualTrack(Method, "error");
+    }
+  );
+}, "SendToMountainOrLocal");
 var LogDualTrack = /* @__PURE__ */ __name((Method, Route2) => {
   if (!process.env["LAND_DEV_LOG"]) return;
   process.stdout.write(
@@ -12382,7 +12455,7 @@ var BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) 
   "register_text_document_content_provider",
   "unregister_text_document_content_provider",
   "textDocumentContent",
-  (Scheme) => ({ scheme: Scheme, extension_id: "" }),
+  (Scheme) => ({ scheme: Scheme, extensionId: "" }),
   (_Handle, Scheme, Provider) => {
     Context.ExtensionRegistry.set(
       `__textDocumentContentProvider:${Scheme}`,
@@ -12402,9 +12475,9 @@ var BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Schem
   Context.SendToMountain("register_file_system_provider", {
     handle: Handle,
     scheme: Scheme,
-    is_case_sensitive: Options?.isCaseSensitive ?? true,
-    is_readonly: Options?.isReadonly ?? false,
-    extension_id: ""
+    isCaseSensitive: Options?.isCaseSensitive ?? true,
+    isReadonly: Options?.isReadonly ?? false,
+    extensionId: ""
   }).catch(() => {
   });
   return {
@@ -12422,33 +12495,33 @@ var BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider
   "register_task_provider",
   "unregister_task_provider",
   "taskProvider",
-  (TaskType) => ({ task_type: TaskType, extension_id: "" })
+  (TaskType) => ({ taskType: TaskType, extensionId: "" })
 ), "BuildRegisterTaskProvider");
 var BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
   Context,
   "register_notebook_content_provider",
   "unregister_notebook_content_provider",
   "notebookContent",
-  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+  (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
 ), "BuildRegisterNotebookContentProvider");
 var BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
   Context,
   "register_notebook_serializer",
   "unregister_notebook_serializer",
   "notebookSerializer",
-  (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+  (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
 ), "BuildRegisterNotebookSerializer");
 var BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
   Context.SendToMountain("register_remote_authority_resolver", {
-    authority_prefix: AuthorityPrefix,
-    extension_id: ""
+    authorityPrefix: AuthorityPrefix,
+    extensionId: ""
   }).catch(() => {
   });
   return {
     dispose: /* @__PURE__ */ __name(() => {
       Context.SendToMountain(
         "unregister_remote_authority_resolver",
-        { authority_prefix: AuthorityPrefix }
+        { authorityPrefix: AuthorityPrefix }
       ).catch(() => {
       });
     }, "dispose")
@@ -13327,6 +13400,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },

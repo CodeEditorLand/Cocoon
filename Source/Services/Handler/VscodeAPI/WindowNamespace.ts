@@ -940,7 +940,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_file_decoration_provider", {
 				handle: Handle,
-				extension_id: "",
+				extensionId: "",
 			}).catch(() => {});
 			// Stash locally so `FileDecorationProvider$provideFileDecoration`
 			// from Mountain can look up by handle.
@@ -964,7 +964,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_uri_handler", {
 				handle: Handle,
-				extension_id: "",
+				extensionId: "",
 			}).catch(() => {});
 			Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
 			return {
@@ -980,7 +980,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_terminal_link_provider", {
 				handle: Handle,
-				extension_id: "",
+				extensionId: "",
 			}).catch(() => {});
 			Context.ExtensionRegistry.set(
 				`__terminalLinkProvider:${Handle}`,
@@ -1002,8 +1002,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_terminal_profile_provider", {
 				handle: Handle,
-				profile_id: Id,
-				extension_id: "",
+				profileId: Id,
+				extensionId: "",
 			}).catch(() => {});
 			Context.ExtensionRegistry.set(
 				`__terminalProfileProvider:${Handle}`,
@@ -1032,8 +1032,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_external_uri_opener", {
 				handle: Handle,
-				opener_id: Id,
-				extension_id: "",
+				openerId: Id,
+				extensionId: "",
 			}).catch(() => {});
 			return {
 				dispose: () => {

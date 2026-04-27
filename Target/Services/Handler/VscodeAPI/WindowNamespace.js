@@ -429,6 +429,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },
@@ -1209,7 +1223,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const Handle = NextProviderHandle();
       Context.SendToMountain("register_file_decoration_provider", {
         handle: Handle,
-        extension_id: ""
+        extensionId: ""
       }).catch(() => {
       });
       Context.ExtensionRegistry.set(
@@ -1233,7 +1247,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const Handle = NextProviderHandle();
       Context.SendToMountain("register_uri_handler", {
         handle: Handle,
-        extension_id: ""
+        extensionId: ""
       }).catch(() => {
       });
       Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
@@ -1251,7 +1265,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const Handle = NextProviderHandle();
       Context.SendToMountain("register_terminal_link_provider", {
         handle: Handle,
-        extension_id: ""
+        extensionId: ""
       }).catch(() => {
       });
       Context.ExtensionRegistry.set(
@@ -1275,8 +1289,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const Handle = NextProviderHandle();
       Context.SendToMountain("register_terminal_profile_provider", {
         handle: Handle,
-        profile_id: Id,
-        extension_id: ""
+        profileId: Id,
+        extensionId: ""
       }).catch(() => {
       });
       Context.ExtensionRegistry.set(
@@ -1304,8 +1318,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const Handle = NextProviderHandle();
       Context.SendToMountain("register_external_uri_opener", {
         handle: Handle,
-        opener_id: Id,
-        extension_id: ""
+        openerId: Id,
+        extensionId: ""
       }).catch(() => {
       });
       return {

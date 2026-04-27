@@ -927,8 +927,23 @@ export class GRPCServerService
 	/**
 	 * Send a notification back to Mountain (for forwarding to Wind).
 	 * Used for extension host protocol messages, provider registrations, etc.
+	 *
+	 * Honours the env-controlled Rust-deference knob from `DualTrack`:
+	 * `LAND_DEFER_RUST=false`, `LAND_DEFER_RUST_<DOMAIN>=false`, or
+	 * `LAND_DEFER_RUST_METHOD_<METHOD>=false` short-circuits the call -
+	 * the notification is dropped on the Cocoon side and a `node-bypass`
+	 * line is logged via `LogDualTrack`. Fire-and-forget callers see the
+	 * same `Promise<void>` resolution they always saw, so no call-site
+	 * change is needed; the bypass is invisible to extensions.
 	 */
 	async SendToMountain(Method: string, Parameters: any): Promise<void> {
+		const { IsRustDeferralEnabled, LogDualTrack } = await import(
+			"./DualTrack.js"
+		);
+		if (!IsRustDeferralEnabled(Method)) {
+			LogDualTrack(Method, "node-bypass");
+			return;
+		}
 		if (!this.mountainClient) {
 			console.warn(
 				`[GRPCServerService] Cannot send ${Method} to Mountain - not connected`,

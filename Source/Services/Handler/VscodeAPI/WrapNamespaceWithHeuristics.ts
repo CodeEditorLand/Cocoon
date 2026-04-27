@@ -219,6 +219,36 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			}
 			if (typeof Property !== "string") return undefined;
 			if (Property === "then") return undefined;
+			// `toJSON` is consulted by `JSON.stringify` whenever a
+			// consumer serialises the namespace (workbench state
+			// snapshots, telemetry payloads, devtools console
+			// inspection). The default heuristic returns
+			// `Promise<undefined>` which is wrong here - `toJSON` must
+			// return a plain serialisable value (NOT a thenable) so
+			// `JSON.stringify` produces something coherent. Return a
+			// shallow representation of the concrete object's own keys
+			// without firing the audit-log path.
+			if (Property === "toJSON") {
+				return () => {
+					const Out:Record<string, unknown> = { _namespace: NamespaceName };
+					for (const Key of Object.keys(Target)) {
+						const Value = (Target as Record<string, unknown>)[Key];
+						const T = typeof Value;
+						Out[Key] = T === "function"
+							? "[Function]"
+							: T === "object" && Value !== null
+								? "[Object]"
+								: Value;
+					}
+					return Out;
+				};
+			}
+			// `toString` / `valueOf` should NOT be heuristic-stubbed -
+			// JS falls back to `Object.prototype.*` which yields the
+			// stable `[object Object]` shape consumers expect.
+			if (Property === "toString" || Property === "valueOf") {
+				return undefined;
+			}
 			const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
 			return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
 		},

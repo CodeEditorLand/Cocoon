@@ -26613,6 +26613,20 @@ var init_WrapNamespaceWithHeuristics = __esm({
         }
         if (typeof Property !== "string") return void 0;
         if (Property === "then") return void 0;
+        if (Property === "toJSON") {
+          return () => {
+            const Out = { _namespace: NamespaceName };
+            for (const Key of Object.keys(Target)) {
+              const Value = Target[Key];
+              const T = typeof Value;
+              Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+            }
+            return Out;
+          };
+        }
+        if (Property === "toString" || Property === "valueOf") {
+          return void 0;
+        }
         const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
         return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
       },
@@ -27418,7 +27432,7 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context21.SendToMountain("register_file_decoration_provider", {
             handle: Handle,
-            extension_id: ""
+            extensionId: ""
           }).catch(() => {
           });
           Context21.ExtensionRegistry.set(
@@ -27442,7 +27456,7 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context21.SendToMountain("register_uri_handler", {
             handle: Handle,
-            extension_id: ""
+            extensionId: ""
           }).catch(() => {
           });
           Context21.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
@@ -27460,7 +27474,7 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context21.SendToMountain("register_terminal_link_provider", {
             handle: Handle,
-            extension_id: ""
+            extensionId: ""
           }).catch(() => {
           });
           Context21.ExtensionRegistry.set(
@@ -27484,8 +27498,8 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context21.SendToMountain("register_terminal_profile_provider", {
             handle: Handle,
-            profile_id: Id,
-            extension_id: ""
+            profileId: Id,
+            extensionId: ""
           }).catch(() => {
           });
           Context21.ExtensionRegistry.set(
@@ -27513,8 +27527,8 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context21.SendToMountain("register_external_uri_opener", {
             handle: Handle,
-            opener_id: Id,
-            extension_id: ""
+            openerId: Id,
+            extensionId: ""
           }).catch(() => {
           });
           return {
@@ -28086,6 +28100,243 @@ var init_RequestRoutingHandler = __esm({
   }
 });
 
+// Source/Generated/RouteManifest.ts
+var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummary;
+var init_RouteManifest = __esm({
+  "Source/Generated/RouteManifest.ts"() {
+    "use strict";
+    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "Keybinding.GetResolved", "Languages.GetAll", "NativeHost.OpenExternal", "openDocument", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "warning", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
+    StockLiftExports = /* @__PURE__ */ new Set(["Basename", "Dirname", "Extname", "GlobIsEmpty", "GlobMatch", "GlobParsePattern", "IsEqualOrParent", "JoinPath", "RelativePath", "StockBasename", "StockDirname", "StockExtname", "StockGlobIsEmpty", "StockGlobMatch", "StockGlobParse", "StockIsEqualOrParent", "StockJoinPath", "StockRelativePath", "ToUri", "Uri", "URI"]);
+    BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
+    RouteManifestSummary = {
+      mountain: 82,
+      stockLift: 21,
+      bespoke: 1,
+      generatedAt: "2026-04-27T14:42:11Z"
+    };
+  }
+});
+
+// Source/Services/DualTrack.ts
+var DualTrack_exports = {};
+__export(DualTrack_exports, {
+  IsRustDeferralEnabled: () => IsRustDeferralEnabled,
+  IsUnknownMethodError: () => IsUnknownMethodError,
+  LogDualTrack: () => LogDualTrack,
+  MarkUnavailable: () => MarkUnavailable,
+  NotImplementedError: () => NotImplementedError2,
+  SendToMountainOrLocal: () => SendToMountainOrLocal,
+  TryMountainThenNode: () => TryMountainThenNode,
+  TryMountainWithEmptyFallback: () => TryMountainWithEmptyFallback
+});
+function IsUnknownMethodError(Err) {
+  if (Err == null) return false;
+  const Message = Err instanceof Error ? Err.message : typeof Err === "string" ? Err : typeof Err.message === "string" ? Err.message : "";
+  if (!Message) return false;
+  return Message.includes("Unknown method:") || Message.includes("Unknown IPC command") || Message.includes("no handler for method") || Message.includes("not routed to any domain");
+}
+async function TryMountainThenNode(Context21, Method, Arguments, NodeFallback) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
+  if (!MountainMethods.has(Method)) {
+    LogDualTrack(Method, "node-fallback");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
+  try {
+    const MountainResult = await Context21.MountainClient?.sendRequest(
+      Method,
+      Arguments
+    );
+    LogDualTrack(Method, "mountain");
+    return MountainResult;
+  } catch (Err) {
+    if (IsUnknownMethodError(Err)) {
+      LogDualTrack(Method, "node-fallback");
+      try {
+        return await NodeFallback(Arguments);
+      } catch (NodeErr) {
+        LogDualTrack(Method, "error");
+        throw NodeErr;
+      }
+    }
+    LogDualTrack(Method, "error");
+    throw Err;
+  }
+}
+async function TryMountainWithEmptyFallback(Context21, Method, Arguments, NodeFallback, IsEmpty) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
+  if (!MountainMethods.has(Method)) {
+    LogDualTrack(Method, "node-fallback");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
+  let MountainResult;
+  let MountainSucceeded = false;
+  try {
+    MountainResult = await Context21.MountainClient?.sendRequest(
+      Method,
+      Arguments
+    );
+    MountainSucceeded = true;
+    LogDualTrack(Method, "mountain");
+  } catch (Err) {
+    if (!IsUnknownMethodError(Err)) {
+      LogDualTrack(Method, "error");
+      throw Err;
+    }
+    LogDualTrack(Method, "node-fallback");
+  }
+  if (MountainSucceeded && MountainResult !== void 0 && IsEmpty(MountainResult)) {
+    try {
+      const NodeResult = await NodeFallback(Arguments);
+      const NodeIsEmpty = IsEmpty(NodeResult);
+      if (!NodeIsEmpty) {
+        if (process.env["LAND_DEV_LOG"]) {
+          process.stdout.write(
+            `[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)
+`
+          );
+        }
+        return NodeResult;
+      }
+      return MountainResult;
+    } catch {
+      return MountainResult;
+    }
+  }
+  if (MountainSucceeded && MountainResult !== void 0) {
+    return MountainResult;
+  }
+  try {
+    return await NodeFallback(Arguments);
+  } catch (NodeErr) {
+    LogDualTrack(Method, "error");
+    throw NodeErr;
+  }
+}
+function MarkUnavailable(Method) {
+  LogDualTrack(Method, "unavailable");
+  throw new NotImplementedError2(Method);
+}
+var NotImplementedError2, IsBypassValue, ParseDomain, IsRustDeferralEnabled, SendToMountainOrLocal, LogDualTrack;
+var init_DualTrack = __esm({
+  "Source/Services/DualTrack.ts"() {
+    "use strict";
+    init_RouteManifest();
+    NotImplementedError2 = class extends Error {
+      constructor(Method) {
+        super(
+          `Method '${Method}' is not implemented in Land: no Mountain Rust handler, no stock VS Code lift, no Cocoon bespoke fallback.`
+        );
+        this.Method = Method;
+        this.name = "NotImplementedError";
+      }
+      Method;
+      static {
+        __name(this, "NotImplementedError");
+      }
+      code = "NotImplemented";
+      _tag = "NotImplementedError";
+    };
+    if (process.env["LAND_DEV_LOG"]) {
+      process.stdout.write(
+        `[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}
+`
+      );
+    }
+    IsBypassValue = /* @__PURE__ */ __name((Raw2) => {
+      if (!Raw2) return false;
+      const Normalised = Raw2.trim().toLowerCase();
+      return Normalised === "false" || Normalised === "0" || Normalised === "no" || Normalised === "off";
+    }, "IsBypassValue");
+    ParseDomain = /* @__PURE__ */ __name((Method) => {
+      const Dot = Method.indexOf(".");
+      if (Dot <= 0) return "";
+      return Method.slice(0, Dot).toUpperCase();
+    }, "ParseDomain");
+    IsRustDeferralEnabled = /* @__PURE__ */ __name((Method) => {
+      const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+      if (process.env[MethodKey] !== void 0) {
+        return !IsBypassValue(process.env[MethodKey]);
+      }
+      const Domain = ParseDomain(Method);
+      if (Domain) {
+        const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+        if (process.env[DomainKey] !== void 0) {
+          return !IsBypassValue(process.env[DomainKey]);
+        }
+      }
+      if (process.env["LAND_DEFER_RUST"] !== void 0) {
+        return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+      }
+      return true;
+    }, "IsRustDeferralEnabled");
+    if (process.env["LAND_DEV_LOG"]) {
+      const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+      if (ActiveBypasses) {
+        process.stdout.write(
+          `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
+`
+        );
+      }
+    }
+    __name(IsUnknownMethodError, "IsUnknownMethodError");
+    __name(TryMountainThenNode, "TryMountainThenNode");
+    __name(TryMountainWithEmptyFallback, "TryMountainWithEmptyFallback");
+    __name(MarkUnavailable, "MarkUnavailable");
+    SendToMountainOrLocal = /* @__PURE__ */ __name((Context21, Method, Payload, OnLocalFallback) => {
+      if (!IsRustDeferralEnabled(Method)) {
+        LogDualTrack(Method, "node-bypass");
+        try {
+          OnLocalFallback?.();
+        } catch {
+        }
+        return Promise.resolve();
+      }
+      const Send = Context21.SendToMountain;
+      return Send.call(Context21, Method, Payload).then(
+        () => {
+          LogDualTrack(Method, "mountain");
+        },
+        (_Err) => {
+          LogDualTrack(Method, "error");
+        }
+      );
+    }, "SendToMountainOrLocal");
+    LogDualTrack = /* @__PURE__ */ __name((Method, Route3) => {
+      if (!process.env["LAND_DEV_LOG"]) return;
+      process.stdout.write(
+        `[DEV:DUAL-TRACK] method=${Method} route=${Route3}
+`
+      );
+    }, "LogDualTrack");
+  }
+});
+
 // Source/Interfaces/IGRPCServerService.ts
 import { Context as Context18 } from "effect";
 var IGRPCServerService;
@@ -28349,159 +28600,6 @@ var init_DocumentContentHandler = __esm({
       GetDocumentContent,
       BuildTextDocument
     };
-  }
-});
-
-// Source/Generated/RouteManifest.ts
-var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummary;
-var init_RouteManifest = __esm({
-  "Source/Generated/RouteManifest.ts"() {
-    "use strict";
-    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "Keybinding.GetResolved", "Languages.GetAll", "NativeHost.OpenExternal", "openDocument", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "warning", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
-    StockLiftExports = /* @__PURE__ */ new Set(["Basename", "Dirname", "Extname", "GlobIsEmpty", "GlobMatch", "GlobParsePattern", "IsEqualOrParent", "JoinPath", "RelativePath", "StockBasename", "StockDirname", "StockExtname", "StockGlobIsEmpty", "StockGlobMatch", "StockGlobParse", "StockIsEqualOrParent", "StockJoinPath", "StockRelativePath", "ToUri", "Uri", "URI"]);
-    BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
-    RouteManifestSummary = {
-      mountain: 82,
-      stockLift: 21,
-      bespoke: 1,
-      generatedAt: "2026-04-26T22:40:10Z"
-    };
-  }
-});
-
-// Source/Services/DualTrack.ts
-function IsUnknownMethodError(Err) {
-  if (Err == null) return false;
-  const Message = Err instanceof Error ? Err.message : typeof Err === "string" ? Err : typeof Err.message === "string" ? Err.message : "";
-  if (!Message) return false;
-  return Message.includes("Unknown method:") || Message.includes("Unknown IPC command") || Message.includes("no handler for method") || Message.includes("not routed to any domain");
-}
-async function TryMountainThenNode(Context21, Method, Arguments, NodeFallback) {
-  if (!MountainMethods.has(Method)) {
-    LogDualTrack(Method, "node-fallback");
-    try {
-      return await NodeFallback(Arguments);
-    } catch (NodeErr) {
-      LogDualTrack(Method, "error");
-      throw NodeErr;
-    }
-  }
-  try {
-    const MountainResult = await Context21.MountainClient?.sendRequest(
-      Method,
-      Arguments
-    );
-    LogDualTrack(Method, "mountain");
-    return MountainResult;
-  } catch (Err) {
-    if (IsUnknownMethodError(Err)) {
-      LogDualTrack(Method, "node-fallback");
-      try {
-        return await NodeFallback(Arguments);
-      } catch (NodeErr) {
-        LogDualTrack(Method, "error");
-        throw NodeErr;
-      }
-    }
-    LogDualTrack(Method, "error");
-    throw Err;
-  }
-}
-async function TryMountainWithEmptyFallback(Context21, Method, Arguments, NodeFallback, IsEmpty) {
-  if (!MountainMethods.has(Method)) {
-    LogDualTrack(Method, "node-fallback");
-    try {
-      return await NodeFallback(Arguments);
-    } catch (NodeErr) {
-      LogDualTrack(Method, "error");
-      throw NodeErr;
-    }
-  }
-  let MountainResult;
-  let MountainSucceeded = false;
-  try {
-    MountainResult = await Context21.MountainClient?.sendRequest(
-      Method,
-      Arguments
-    );
-    MountainSucceeded = true;
-    LogDualTrack(Method, "mountain");
-  } catch (Err) {
-    if (!IsUnknownMethodError(Err)) {
-      LogDualTrack(Method, "error");
-      throw Err;
-    }
-    LogDualTrack(Method, "node-fallback");
-  }
-  if (MountainSucceeded && MountainResult !== void 0 && IsEmpty(MountainResult)) {
-    try {
-      const NodeResult = await NodeFallback(Arguments);
-      const NodeIsEmpty = IsEmpty(NodeResult);
-      if (!NodeIsEmpty) {
-        if (process.env["LAND_DEV_LOG"]) {
-          process.stdout.write(
-            `[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)
-`
-          );
-        }
-        return NodeResult;
-      }
-      return MountainResult;
-    } catch {
-      return MountainResult;
-    }
-  }
-  if (MountainSucceeded && MountainResult !== void 0) {
-    return MountainResult;
-  }
-  try {
-    return await NodeFallback(Arguments);
-  } catch (NodeErr) {
-    LogDualTrack(Method, "error");
-    throw NodeErr;
-  }
-}
-function MarkUnavailable(Method) {
-  LogDualTrack(Method, "unavailable");
-  throw new NotImplementedError2(Method);
-}
-var NotImplementedError2, LogDualTrack;
-var init_DualTrack = __esm({
-  "Source/Services/DualTrack.ts"() {
-    "use strict";
-    init_RouteManifest();
-    NotImplementedError2 = class extends Error {
-      constructor(Method) {
-        super(
-          `Method '${Method}' is not implemented in Land: no Mountain Rust handler, no stock VS Code lift, no Cocoon bespoke fallback.`
-        );
-        this.Method = Method;
-        this.name = "NotImplementedError";
-      }
-      Method;
-      static {
-        __name(this, "NotImplementedError");
-      }
-      code = "NotImplemented";
-      _tag = "NotImplementedError";
-    };
-    if (process.env["LAND_DEV_LOG"]) {
-      process.stdout.write(
-        `[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}
-`
-      );
-    }
-    __name(IsUnknownMethodError, "IsUnknownMethodError");
-    __name(TryMountainThenNode, "TryMountainThenNode");
-    __name(TryMountainWithEmptyFallback, "TryMountainWithEmptyFallback");
-    __name(MarkUnavailable, "MarkUnavailable");
-    LogDualTrack = /* @__PURE__ */ __name((Method, Route3) => {
-      if (!process.env["LAND_DEV_LOG"]) return;
-      process.stdout.write(
-        `[DEV:DUAL-TRACK] method=${Method} route=${Route3}
-`
-      );
-    }, "LogDualTrack");
   }
 });
 
@@ -31885,7 +31983,7 @@ var init_Providers = __esm({
       "register_text_document_content_provider",
       "unregister_text_document_content_provider",
       "textDocumentContent",
-      (Scheme) => ({ scheme: Scheme, extension_id: "" }),
+      (Scheme) => ({ scheme: Scheme, extensionId: "" }),
       (_Handle, Scheme, Provider) => {
         Context21.ExtensionRegistry.set(
           `__textDocumentContentProvider:${Scheme}`,
@@ -31905,9 +32003,9 @@ var init_Providers = __esm({
       Context21.SendToMountain("register_file_system_provider", {
         handle: Handle,
         scheme: Scheme,
-        is_case_sensitive: Options?.isCaseSensitive ?? true,
-        is_readonly: Options?.isReadonly ?? false,
-        extension_id: ""
+        isCaseSensitive: Options?.isCaseSensitive ?? true,
+        isReadonly: Options?.isReadonly ?? false,
+        extensionId: ""
       }).catch(() => {
       });
       return {
@@ -31925,33 +32023,33 @@ var init_Providers = __esm({
       "register_task_provider",
       "unregister_task_provider",
       "taskProvider",
-      (TaskType) => ({ task_type: TaskType, extension_id: "" })
+      (TaskType) => ({ taskType: TaskType, extensionId: "" })
     ), "BuildRegisterTaskProvider");
     BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context21) => MakeProvider(
       Context21,
       "register_notebook_content_provider",
       "unregister_notebook_content_provider",
       "notebookContent",
-      (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
     ), "BuildRegisterNotebookContentProvider");
     BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context21) => MakeProvider(
       Context21,
       "register_notebook_serializer",
       "unregister_notebook_serializer",
       "notebookSerializer",
-      (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
     ), "BuildRegisterNotebookSerializer");
     BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context21) => (AuthorityPrefix, _Resolver) => {
       Context21.SendToMountain("register_remote_authority_resolver", {
-        authority_prefix: AuthorityPrefix,
-        extension_id: ""
+        authorityPrefix: AuthorityPrefix,
+        extensionId: ""
       }).catch(() => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
           Context21.SendToMountain(
             "unregister_remote_authority_resolver",
-            { authority_prefix: AuthorityPrefix }
+            { authorityPrefix: AuthorityPrefix }
           ).catch(() => {
           });
         }, "dispose")
@@ -33205,8 +33303,8 @@ var init_LanguagesNamespace = __esm({
       const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
       Context21.SendToMountain(MethodName, {
         handle: Handle,
-        language_selector: Language2,
-        extension_id: ""
+        languageSelector: Language2,
+        extensionId: ""
       }).catch(() => {
       });
       return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
@@ -34005,6 +34103,15 @@ var init_EnvNamespace = __esm({
         language: Env["language"] ?? "en",
         machineId: Context21.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
         sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
+        // VS Code build identity strings. `vscode.tunnel-forwarding` and
+        // other extensions read `appCommit?.substring(0, 7)` to surface a
+        // short SHA in their telemetry / status bar. Returning the
+        // heuristic Proxy fallback (a function) crashes that call with
+        // `appCommit?.substring is not a function`. Default to empty
+        // string so optional-chained reads short-circuit cleanly; populate
+        // from build env when a real commit hash is available.
+        appCommit: Env["appCommit"] ?? "",
+        appQuality: Env["appQuality"] ?? "stable",
         isNewAppInstall: false,
         isAppPortable: false,
         isTelemetryEnabled: false,
@@ -34193,8 +34300,8 @@ var init_DebugNamespace = __esm({
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_debug_adapter", {
           handle: Handle,
-          debug_type: DebugType,
-          extension_id: ""
+          debugType: DebugType,
+          extensionId: ""
         }).catch(() => {
         });
         return {
@@ -34210,7 +34317,7 @@ var init_DebugNamespace = __esm({
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_debug_configuration_provider", {
           handle: Handle,
-          debug_type: DebugType
+          debugType: DebugType
         }).catch(() => {
         });
         return {
@@ -34350,8 +34457,8 @@ var init_TasksNamespace = __esm({
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_task_provider", {
           handle: Handle,
-          task_type: TaskType,
-          extension_id: ""
+          taskType: TaskType,
+          extensionId: ""
         }).catch(() => {
         });
         return {
@@ -34409,12 +34516,13 @@ var ScmNamespace_exports = {};
 __export(ScmNamespace_exports, {
   default: () => ScmNamespace_default
 });
-var ScmTraceEnabled, ScmTrace, CreateScmNamespace, ScmNamespace_default;
+var ScmTraceEnabled, ScmTrace, SanitizeResourceState, CreateScmNamespace, ScmNamespace_default;
 var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
     init_WrapScmNamespace();
+    init_WrapNamespaceWithHeuristics();
     ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
     ScmTrace = /* @__PURE__ */ __name((Message) => {
       if (!ScmTraceEnabled) return;
@@ -34424,6 +34532,39 @@ var init_ScmNamespace = __esm({
       } catch {
       }
     }, "ScmTrace");
+    SanitizeResourceState = /* @__PURE__ */ __name((Raw2) => {
+      if (Raw2 == null || typeof Raw2 !== "object") return Raw2;
+      const Source = Raw2;
+      const Out = {};
+      if (Source["resourceUri"] !== void 0) Out["resourceUri"] = Source["resourceUri"];
+      const Command = Source["command"];
+      if (Command && typeof Command === "object") {
+        const C = Command;
+        Out["command"] = {
+          title: C["title"] ?? "",
+          command: C["command"] ?? "",
+          tooltip: C["tooltip"] ?? ""
+        };
+      }
+      const Decorations = Source["decorations"];
+      if (Decorations && typeof Decorations === "object") {
+        const D = Decorations;
+        const SafeDecorations = {};
+        for (const Key of [
+          "strikeThrough",
+          "faded",
+          "tooltip",
+          "iconPath",
+          "light",
+          "dark"
+        ]) {
+          if (D[Key] !== void 0) SafeDecorations[Key] = D[Key];
+        }
+        Out["decorations"] = SafeDecorations;
+      }
+      if (Source["contextValue"] !== void 0) Out["contextValue"] = Source["contextValue"];
+      return Out;
+    }, "SanitizeResourceState");
     CreateScmNamespace = /* @__PURE__ */ __name((Context21) => WrapScmNamespace_default({
       createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
         const Handle = NextProviderHandle();
@@ -34435,23 +34576,23 @@ var init_ScmNamespace = __esm({
           handle: Handle,
           id: Id,
           label: Label,
-          root_uri: RootUri,
-          extension_id: ""
+          rootUri: RootUri,
+          extensionId: ""
         }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
           const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
           ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
         });
         const Groups = /* @__PURE__ */ new Map();
-        return {
+        const ConcreteSourceControl = {
           id: Id,
           label: Label,
           rootUri: RootUri,
-          inputBox: {
+          inputBox: WrapNamespaceWithHeuristics_default(`scm.sourceControl[${Id}].inputBox`, {
             value: "",
             placeholder: "",
             enabled: true,
             visible: true
-          },
+          }),
           createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
             const GroupHandle = `${Handle}/${GroupId}`;
             Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
@@ -34459,9 +34600,9 @@ var init_ScmNamespace = __esm({
               `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
             );
             Context21.SendToMountain("register_scm_resource_group", {
-              scm_handle: Handle,
-              group_handle: GroupHandle,
-              group_id: GroupId,
+              scmHandle: Handle,
+              groupHandle: GroupHandle,
+              groupId: GroupId,
               label: GroupLabel
             }).catch((Error2) => {
               ScmTrace(
@@ -34480,10 +34621,11 @@ var init_ScmNamespace = __esm({
                 ScmTrace(
                   `update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${Array.isArray(Value) ? Value.length : 0}`
                 );
+                const SanitizedStates = Array.isArray(Value) ? Value.map((Raw2) => SanitizeResourceState(Raw2)) : [];
                 Context21.SendToMountain("update_scm_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle,
-                  resource_states: Value
+                  scmHandle: Handle,
+                  groupHandle: GroupHandle,
+                  resourceStates: SanitizedStates
                 }).catch((Error2) => {
                   ScmTrace(
                     `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
@@ -34494,8 +34636,8 @@ var init_ScmNamespace = __esm({
                 Context21.SendToMountain(
                   "unregister_scm_resource_group",
                   {
-                    scm_handle: Handle,
-                    group_handle: GroupHandle
+                    scmHandle: Handle,
+                    groupHandle: GroupHandle
                   }
                 ).catch(() => {
                 });
@@ -34516,6 +34658,10 @@ var init_ScmNamespace = __esm({
             Groups.clear();
           }, "dispose")
         };
+        return WrapNamespaceWithHeuristics_default(
+          `scm.sourceControl[${Id}]`,
+          ConcreteSourceControl
+        );
       }, "createSourceControl"),
       inputBox: { value: "" }
     }), "CreateScmNamespace");
@@ -34558,10 +34704,10 @@ var init_AuthenticationNamespace = __esm({
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_authentication_provider", {
           handle: Handle,
-          provider_id: ProviderId,
+          providerId: ProviderId,
           label: Label,
-          supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
-          extension_id: ""
+          supportsMultipleAccounts: Options?.supportsMultipleAccounts ?? false,
+          extensionId: ""
         }).catch(() => {
         });
         return {
@@ -36407,6 +36553,7 @@ var LazyURI, HydrateUri, ApplyWorkspaceDelta, SafeEmit, HandleSpecificNotificati
 var init_NotificationHandler = __esm({
   async "Source/Services/Handler/NotificationHandler.ts"() {
     "use strict";
+    init_WindowNamespace();
     ({ URI: LazyURI } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
     HydrateUri = /* @__PURE__ */ __name((Raw2) => {
       if (!Raw2) return null;
@@ -36772,6 +36919,101 @@ var init_NotificationHandler = __esm({
         // stored provider methods. The actual provider invocation is
         // done by `WindowNamespace`'s `handleCustomDocumentLifecycle`
         // helper which subscribes to these emitter channels.
+        // `$resolveCustomEditor` is fired by the workbench when a user
+        // opens a file under a registered custom-editor viewType. Mountain
+        // forwards the positional payload `[ResourceUriComponents,
+        // ViewType, WebviewPanelHandle]` from
+        // `Track/Effect/CreateEffectForRequest/Webview.rs`. Without this
+        // case, the workbench's "Open With…" dispatch silently drops every
+        // custom-editor open - Jupyter notebooks, hex viewer, image
+        // preview, etc. all fail to load. Look up the registered provider
+        // by viewType, build a minimal `CustomDocument` shape (what the
+        // provider's `resolveCustomEditor(document, webviewPanel, token)`
+        // expects), and invoke. Errors are caught so a buggy provider
+        // never crashes the host.
+        case "$resolveCustomEditor": {
+          const Args = Array.isArray(Parameters) ? Parameters : [];
+          const UriComponents = Args[0];
+          const ViewType = Args[1] ?? "";
+          const WebviewPanelHandle = Args[2];
+          const ProviderEntry = CustomEditorProvidersByViewType.get(ViewType);
+          if (!ProviderEntry) {
+            try {
+              process.stdout.write(
+                `[NotificationHandler] $resolveCustomEditor: no provider for viewType="${ViewType}"
+`
+              );
+            } catch {
+            }
+            break;
+          }
+          const Provider = ProviderEntry.Provider;
+          const Method2 = ProviderEntry.Readonly ? "resolveCustomEditor" : typeof Provider["resolveCustomTextEditor"] === "function" ? "resolveCustomTextEditor" : "resolveCustomEditor";
+          const Resolve = Provider[Method2];
+          if (typeof Resolve !== "function") {
+            try {
+              process.stdout.write(
+                `[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" lacks ${Method2}()
+`
+              );
+            } catch {
+            }
+            break;
+          }
+          const Document = {
+            uri: UriComponents,
+            dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose")
+          };
+          const WebviewPanel = {
+            handle: WebviewPanelHandle,
+            viewType: ViewType,
+            webview: {
+              postMessage: /* @__PURE__ */ __name(() => Promise.resolve(false), "postMessage"),
+              html: "",
+              options: {},
+              cspSource: "vscode-webview:"
+            },
+            dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose"),
+            onDidDispose: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidDispose"),
+            onDidChangeViewState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeViewState")
+          };
+          try {
+            const Result = Resolve.call(
+              Provider,
+              Document,
+              WebviewPanel,
+              { isCancellationRequested: false }
+            );
+            if (Result && typeof Result.then === "function") {
+              Result.then(
+                () => {
+                },
+                (Error2) => {
+                  try {
+                    process.stdout.write(
+                      `[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" rejected: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}
+`
+                    );
+                  } catch {
+                  }
+                }
+              );
+            }
+          } catch (Error2) {
+            try {
+              process.stdout.write(
+                `[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" threw: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}
+`
+              );
+            } catch {
+            }
+          }
+          break;
+        }
         case "$onSaveCustomDocument":
         case "$onSaveCustomDocumentAs":
         case "$onRevertCustomDocument":
@@ -36779,7 +37021,15 @@ var init_NotificationHandler = __esm({
         case "$onWillSaveCustomDocument":
         case "$onDidChangeCustomDocument": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          const Suffix = Method.startsWith("$on") ? Method.slice(3, 4).toLowerCase() + Method.slice(4) : Method;
+          const ChannelMap = {
+            $onSaveCustomDocument: "saveDocument",
+            $onSaveCustomDocumentAs: "saveDocumentAs",
+            $onRevertCustomDocument: "revertCustomDocument",
+            $onBackupCustomDocument: "backupCustomDocument",
+            $onWillSaveCustomDocument: "willSaveCustomDocument",
+            $onDidChangeCustomDocument: "didChangeCustomDocument"
+          };
+          const Suffix = ChannelMap[Method] ?? Method;
           Emitter3.emit(`customEditor.${Suffix}`, Payload);
           break;
         }
@@ -37464,8 +37714,21 @@ var init_GRPCServerService = __esm({
       /**
        * Send a notification back to Mountain (for forwarding to Wind).
        * Used for extension host protocol messages, provider registrations, etc.
+       *
+       * Honours the env-controlled Rust-deference knob from `DualTrack`:
+       * `LAND_DEFER_RUST=false`, `LAND_DEFER_RUST_<DOMAIN>=false`, or
+       * `LAND_DEFER_RUST_METHOD_<METHOD>=false` short-circuits the call -
+       * the notification is dropped on the Cocoon side and a `node-bypass`
+       * line is logged via `LogDualTrack`. Fire-and-forget callers see the
+       * same `Promise<void>` resolution they always saw, so no call-site
+       * change is needed; the bypass is invisible to extensions.
        */
       async SendToMountain(Method, Parameters) {
+        const { IsRustDeferralEnabled: IsRustDeferralEnabled2, LogDualTrack: LogDualTrack2 } = await Promise.resolve().then(() => (init_DualTrack(), DualTrack_exports));
+        if (!IsRustDeferralEnabled2(Method)) {
+          LogDualTrack2(Method, "node-bypass");
+          return;
+        }
         if (!this.mountainClient) {
           console.warn(
             `[GRPCServerService] Cannot send ${Method} to Mountain - not connected`

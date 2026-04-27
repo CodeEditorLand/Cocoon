@@ -42,6 +42,7 @@
 import type { EventEmitter } from "events";
 
 import type { HandlerContext } from "./HandlerContext.js";
+import * as WindowNamespaceModule from "./VscodeAPI/WindowNamespace.js";
 
 type WorkspaceFolderWire = {
 	uri?: string;
@@ -674,6 +675,109 @@ const HandleSpecificNotification = (
 		// stored provider methods. The actual provider invocation is
 		// done by `WindowNamespace`'s `handleCustomDocumentLifecycle`
 		// helper which subscribes to these emitter channels.
+		// `$resolveCustomEditor` is fired by the workbench when a user
+		// opens a file under a registered custom-editor viewType. Mountain
+		// forwards the positional payload `[ResourceUriComponents,
+		// ViewType, WebviewPanelHandle]` from
+		// `Track/Effect/CreateEffectForRequest/Webview.rs`. Without this
+		// case, the workbench's "Open With…" dispatch silently drops every
+		// custom-editor open - Jupyter notebooks, hex viewer, image
+		// preview, etc. all fail to load. Look up the registered provider
+		// by viewType, build a minimal `CustomDocument` shape (what the
+		// provider's `resolveCustomEditor(document, webviewPanel, token)`
+		// expects), and invoke. Errors are caught so a buggy provider
+		// never crashes the host.
+		case "$resolveCustomEditor": {
+			const Args = Array.isArray(Parameters) ? Parameters : [];
+			const UriComponents = Args[0] as unknown;
+			const ViewType = (Args[1] as string | undefined) ?? "";
+			const WebviewPanelHandle = Args[2] as unknown;
+			const ProviderEntry = WindowNamespaceModule
+				.CustomEditorProvidersByViewType
+				.get(ViewType);
+			if (!ProviderEntry) {
+				try {
+					process.stdout.write(
+						`[NotificationHandler] $resolveCustomEditor: no provider for viewType="${ViewType}"\n`,
+					);
+				} catch {}
+				break;
+			}
+			const Provider = ProviderEntry.Provider as Record<string, unknown>;
+			const Method = ProviderEntry.Readonly
+				? "resolveCustomEditor"
+				: typeof Provider["resolveCustomTextEditor"] === "function"
+					? "resolveCustomTextEditor"
+					: "resolveCustomEditor";
+			const Resolve = Provider[Method] as
+				| ((...A: unknown[]) => unknown)
+				| undefined;
+			if (typeof Resolve !== "function") {
+				try {
+					process.stdout.write(
+						`[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" lacks ${Method}()\n`,
+					);
+				} catch {}
+				break;
+			}
+			// Workbench-side `CustomDocument` shape: extension code reads
+			// `document.uri` (a real `Uri`) and treats the rest as opaque
+			// state it owns. We synthesise the minimum surface from the
+			// wire payload; rich save / backup state flows through the
+			// `customEditor.*` reverse-RPCs handled below.
+			const Document = {
+				uri: UriComponents,
+				dispose: () => {},
+			};
+			const WebviewPanel = {
+				handle: WebviewPanelHandle,
+				viewType: ViewType,
+				webview: {
+					postMessage: () => Promise.resolve(false),
+					html: "",
+					options: {},
+					cspSource: "vscode-webview:",
+				},
+				dispose: () => {},
+				onDidDispose: () => ({ dispose: () => {} }),
+				onDidChangeViewState: () => ({ dispose: () => {} }),
+			};
+			try {
+				const Result = Resolve.call(
+					Provider,
+					Document,
+					WebviewPanel,
+					{ isCancellationRequested: false },
+				) as unknown;
+				if (Result && typeof (Result as PromiseLike<unknown>).then === "function") {
+					(Result as PromiseLike<unknown>).then(
+						() => {},
+						(Error: unknown) => {
+							try {
+								process.stdout.write(
+									`[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" rejected: ${
+										Error instanceof globalThis.Error
+											? Error.message
+											: String(Error)
+									}\n`,
+								);
+							} catch {}
+						},
+					);
+				}
+			} catch (Error) {
+				try {
+					process.stdout.write(
+						`[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" threw: ${
+							Error instanceof globalThis.Error
+								? Error.message
+								: String(Error)
+						}\n`,
+					);
+				} catch {}
+			}
+			break;
+		}
 		case "$onSaveCustomDocument":
 		case "$onSaveCustomDocumentAs":
 		case "$onRevertCustomDocument":
@@ -683,11 +787,24 @@ const HandleSpecificNotification = (
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
-			// Method-suffix becomes channel suffix (camelCase): `onSaveCustomDocument`
-			// → `customEditor.saveDocument`, etc.
-			const Suffix = Method.startsWith("$on")
-				? Method.slice(3, 4).toLowerCase() + Method.slice(4)
-				: Method;
+			// Map Mountain's `$on…CustomDocument` reverse-RPC names to the
+			// channel suffixes that `WindowNamespace.ts:198-206` subscribes
+			// to. Save variants drop the `Custom` infix
+			// (`$onSaveCustomDocument` → `saveDocument`); revert / backup
+			// / willSave / didChange keep `Custom` because the subscriber
+			// channel includes it. Keeping this as an explicit table beats
+			// the previous `slice` heuristic which produced
+			// `customEditor.saveCustomDocument` and silently failed every
+			// listener match.
+			const ChannelMap:Record<string, string> = {
+				$onSaveCustomDocument: "saveDocument",
+				$onSaveCustomDocumentAs: "saveDocumentAs",
+				$onRevertCustomDocument: "revertCustomDocument",
+				$onBackupCustomDocument: "backupCustomDocument",
+				$onWillSaveCustomDocument: "willSaveCustomDocument",
+				$onDidChangeCustomDocument: "didChangeCustomDocument",
+			};
+			const Suffix = ChannelMap[Method] ?? Method;
 			Emitter.emit(`customEditor.${Suffix}`, Payload);
 			break;
 		}

@@ -19747,6 +19747,20 @@ var init_WrapNamespaceWithHeuristics = __esm({
         }
         if (typeof Property !== "string") return void 0;
         if (Property === "then") return void 0;
+        if (Property === "toJSON") {
+          return () => {
+            const Out = { _namespace: NamespaceName };
+            for (const Key of Object.keys(Target)) {
+              const Value = Target[Key];
+              const T = typeof Value;
+              Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+            }
+            return Out;
+          };
+        }
+        if (Property === "toString" || Property === "valueOf") {
+          return void 0;
+        }
         const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
         return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
       },
@@ -20552,7 +20566,7 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context.SendToMountain("register_file_decoration_provider", {
             handle: Handle,
-            extension_id: ""
+            extensionId: ""
           }).catch(() => {
           });
           Context.ExtensionRegistry.set(
@@ -20576,7 +20590,7 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context.SendToMountain("register_uri_handler", {
             handle: Handle,
-            extension_id: ""
+            extensionId: ""
           }).catch(() => {
           });
           Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
@@ -20594,7 +20608,7 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context.SendToMountain("register_terminal_link_provider", {
             handle: Handle,
-            extension_id: ""
+            extensionId: ""
           }).catch(() => {
           });
           Context.ExtensionRegistry.set(
@@ -20618,8 +20632,8 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context.SendToMountain("register_terminal_profile_provider", {
             handle: Handle,
-            profile_id: Id,
-            extension_id: ""
+            profileId: Id,
+            extensionId: ""
           }).catch(() => {
           });
           Context.ExtensionRegistry.set(
@@ -20647,8 +20661,8 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           Context.SendToMountain("register_external_uri_opener", {
             handle: Handle,
-            opener_id: Id,
-            extension_id: ""
+            openerId: Id,
+            extensionId: ""
           }).catch(() => {
           });
           return {
@@ -20935,7 +20949,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-26T22:40:10Z"
+      generatedAt: "2026-04-27T14:42:11Z"
     };
   }
 });
@@ -20948,6 +20962,15 @@ function IsUnknownMethodError(Err) {
   return Message.includes("Unknown method:") || Message.includes("Unknown IPC command") || Message.includes("no handler for method") || Message.includes("not routed to any domain");
 }
 async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
   if (!MountainMethods.has(Method)) {
     LogDualTrack(Method, "node-fallback");
     try {
@@ -20979,6 +21002,15 @@ async function TryMountainThenNode(Context, Method, Arguments, NodeFallback) {
   }
 }
 async function TryMountainWithEmptyFallback(Context, Method, Arguments, NodeFallback, IsEmpty) {
+  if (!IsRustDeferralEnabled(Method)) {
+    LogDualTrack(Method, "node-bypass");
+    try {
+      return await NodeFallback(Arguments);
+    } catch (NodeErr) {
+      LogDualTrack(Method, "error");
+      throw NodeErr;
+    }
+  }
   if (!MountainMethods.has(Method)) {
     LogDualTrack(Method, "node-fallback");
     try {
@@ -21036,7 +21068,7 @@ function MarkUnavailable(Method) {
   LogDualTrack(Method, "unavailable");
   throw new NotImplementedError2(Method);
 }
-var NotImplementedError2, LogDualTrack;
+var NotImplementedError2, IsBypassValue, ParseDomain, IsRustDeferralEnabled, SendToMountainOrLocal, LogDualTrack;
 var init_DualTrack = __esm({
   "Source/Services/DualTrack.ts"() {
     "use strict";
@@ -21062,10 +21094,65 @@ var init_DualTrack = __esm({
 `
       );
     }
+    IsBypassValue = /* @__PURE__ */ __name((Raw2) => {
+      if (!Raw2) return false;
+      const Normalised = Raw2.trim().toLowerCase();
+      return Normalised === "false" || Normalised === "0" || Normalised === "no" || Normalised === "off";
+    }, "IsBypassValue");
+    ParseDomain = /* @__PURE__ */ __name((Method) => {
+      const Dot = Method.indexOf(".");
+      if (Dot <= 0) return "";
+      return Method.slice(0, Dot).toUpperCase();
+    }, "ParseDomain");
+    IsRustDeferralEnabled = /* @__PURE__ */ __name((Method) => {
+      const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+      if (process.env[MethodKey] !== void 0) {
+        return !IsBypassValue(process.env[MethodKey]);
+      }
+      const Domain = ParseDomain(Method);
+      if (Domain) {
+        const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+        if (process.env[DomainKey] !== void 0) {
+          return !IsBypassValue(process.env[DomainKey]);
+        }
+      }
+      if (process.env["LAND_DEFER_RUST"] !== void 0) {
+        return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+      }
+      return true;
+    }, "IsRustDeferralEnabled");
+    if (process.env["LAND_DEV_LOG"]) {
+      const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+      if (ActiveBypasses) {
+        process.stdout.write(
+          `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
+`
+        );
+      }
+    }
     __name(IsUnknownMethodError, "IsUnknownMethodError");
     __name(TryMountainThenNode, "TryMountainThenNode");
     __name(TryMountainWithEmptyFallback, "TryMountainWithEmptyFallback");
     __name(MarkUnavailable, "MarkUnavailable");
+    SendToMountainOrLocal = /* @__PURE__ */ __name((Context, Method, Payload, OnLocalFallback) => {
+      if (!IsRustDeferralEnabled(Method)) {
+        LogDualTrack(Method, "node-bypass");
+        try {
+          OnLocalFallback?.();
+        } catch {
+        }
+        return Promise.resolve();
+      }
+      const Send = Context.SendToMountain;
+      return Send.call(Context, Method, Payload).then(
+        () => {
+          LogDualTrack(Method, "mountain");
+        },
+        (_Err) => {
+          LogDualTrack(Method, "error");
+        }
+      );
+    }, "SendToMountainOrLocal");
     LogDualTrack = /* @__PURE__ */ __name((Method, Route3) => {
       if (!process.env["LAND_DEV_LOG"]) return;
       process.stdout.write(
@@ -24539,7 +24626,7 @@ var init_Providers = __esm({
       "register_text_document_content_provider",
       "unregister_text_document_content_provider",
       "textDocumentContent",
-      (Scheme) => ({ scheme: Scheme, extension_id: "" }),
+      (Scheme) => ({ scheme: Scheme, extensionId: "" }),
       (_Handle, Scheme, Provider) => {
         Context.ExtensionRegistry.set(
           `__textDocumentContentProvider:${Scheme}`,
@@ -24559,9 +24646,9 @@ var init_Providers = __esm({
       Context.SendToMountain("register_file_system_provider", {
         handle: Handle,
         scheme: Scheme,
-        is_case_sensitive: Options?.isCaseSensitive ?? true,
-        is_readonly: Options?.isReadonly ?? false,
-        extension_id: ""
+        isCaseSensitive: Options?.isCaseSensitive ?? true,
+        isReadonly: Options?.isReadonly ?? false,
+        extensionId: ""
       }).catch(() => {
       });
       return {
@@ -24579,33 +24666,33 @@ var init_Providers = __esm({
       "register_task_provider",
       "unregister_task_provider",
       "taskProvider",
-      (TaskType) => ({ task_type: TaskType, extension_id: "" })
+      (TaskType) => ({ taskType: TaskType, extensionId: "" })
     ), "BuildRegisterTaskProvider");
     BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
       Context,
       "register_notebook_content_provider",
       "unregister_notebook_content_provider",
       "notebookContent",
-      (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
     ), "BuildRegisterNotebookContentProvider");
     BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
       Context,
       "register_notebook_serializer",
       "unregister_notebook_serializer",
       "notebookSerializer",
-      (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
+      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
     ), "BuildRegisterNotebookSerializer");
     BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
       Context.SendToMountain("register_remote_authority_resolver", {
-        authority_prefix: AuthorityPrefix,
-        extension_id: ""
+        authorityPrefix: AuthorityPrefix,
+        extensionId: ""
       }).catch(() => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
           Context.SendToMountain(
             "unregister_remote_authority_resolver",
-            { authority_prefix: AuthorityPrefix }
+            { authorityPrefix: AuthorityPrefix }
           ).catch(() => {
           });
         }, "dispose")
@@ -25859,8 +25946,8 @@ var init_LanguagesNamespace = __esm({
       const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
       Context.SendToMountain(MethodName, {
         handle: Handle,
-        language_selector: Language2,
-        extension_id: ""
+        languageSelector: Language2,
+        extensionId: ""
       }).catch(() => {
       });
       return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
@@ -26659,6 +26746,15 @@ var init_EnvNamespace = __esm({
         language: Env["language"] ?? "en",
         machineId: Context.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
         sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
+        // VS Code build identity strings. `vscode.tunnel-forwarding` and
+        // other extensions read `appCommit?.substring(0, 7)` to surface a
+        // short SHA in their telemetry / status bar. Returning the
+        // heuristic Proxy fallback (a function) crashes that call with
+        // `appCommit?.substring is not a function`. Default to empty
+        // string so optional-chained reads short-circuit cleanly; populate
+        // from build env when a real commit hash is available.
+        appCommit: Env["appCommit"] ?? "",
+        appQuality: Env["appQuality"] ?? "stable",
         isNewAppInstall: false,
         isAppPortable: false,
         isTelemetryEnabled: false,
@@ -26847,8 +26943,8 @@ var init_DebugNamespace = __esm({
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_debug_adapter", {
           handle: Handle,
-          debug_type: DebugType,
-          extension_id: ""
+          debugType: DebugType,
+          extensionId: ""
         }).catch(() => {
         });
         return {
@@ -26864,7 +26960,7 @@ var init_DebugNamespace = __esm({
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_debug_configuration_provider", {
           handle: Handle,
-          debug_type: DebugType
+          debugType: DebugType
         }).catch(() => {
         });
         return {
@@ -27004,8 +27100,8 @@ var init_TasksNamespace = __esm({
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_task_provider", {
           handle: Handle,
-          task_type: TaskType,
-          extension_id: ""
+          taskType: TaskType,
+          extensionId: ""
         }).catch(() => {
         });
         return {
@@ -27063,12 +27159,13 @@ var ScmNamespace_exports = {};
 __export(ScmNamespace_exports, {
   default: () => ScmNamespace_default
 });
-var ScmTraceEnabled, ScmTrace, CreateScmNamespace, ScmNamespace_default;
+var ScmTraceEnabled, ScmTrace, SanitizeResourceState, CreateScmNamespace, ScmNamespace_default;
 var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
     init_WrapScmNamespace();
+    init_WrapNamespaceWithHeuristics();
     ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
     ScmTrace = /* @__PURE__ */ __name((Message) => {
       if (!ScmTraceEnabled) return;
@@ -27078,6 +27175,39 @@ var init_ScmNamespace = __esm({
       } catch {
       }
     }, "ScmTrace");
+    SanitizeResourceState = /* @__PURE__ */ __name((Raw2) => {
+      if (Raw2 == null || typeof Raw2 !== "object") return Raw2;
+      const Source = Raw2;
+      const Out = {};
+      if (Source["resourceUri"] !== void 0) Out["resourceUri"] = Source["resourceUri"];
+      const Command = Source["command"];
+      if (Command && typeof Command === "object") {
+        const C = Command;
+        Out["command"] = {
+          title: C["title"] ?? "",
+          command: C["command"] ?? "",
+          tooltip: C["tooltip"] ?? ""
+        };
+      }
+      const Decorations = Source["decorations"];
+      if (Decorations && typeof Decorations === "object") {
+        const D = Decorations;
+        const SafeDecorations = {};
+        for (const Key of [
+          "strikeThrough",
+          "faded",
+          "tooltip",
+          "iconPath",
+          "light",
+          "dark"
+        ]) {
+          if (D[Key] !== void 0) SafeDecorations[Key] = D[Key];
+        }
+        Out["decorations"] = SafeDecorations;
+      }
+      if (Source["contextValue"] !== void 0) Out["contextValue"] = Source["contextValue"];
+      return Out;
+    }, "SanitizeResourceState");
     CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_default({
       createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
         const Handle = NextProviderHandle();
@@ -27089,23 +27219,23 @@ var init_ScmNamespace = __esm({
           handle: Handle,
           id: Id,
           label: Label,
-          root_uri: RootUri,
-          extension_id: ""
+          rootUri: RootUri,
+          extensionId: ""
         }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
           const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
           ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
         });
         const Groups = /* @__PURE__ */ new Map();
-        return {
+        const ConcreteSourceControl = {
           id: Id,
           label: Label,
           rootUri: RootUri,
-          inputBox: {
+          inputBox: WrapNamespaceWithHeuristics_default(`scm.sourceControl[${Id}].inputBox`, {
             value: "",
             placeholder: "",
             enabled: true,
             visible: true
-          },
+          }),
           createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
             const GroupHandle = `${Handle}/${GroupId}`;
             Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
@@ -27113,9 +27243,9 @@ var init_ScmNamespace = __esm({
               `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
             );
             Context.SendToMountain("register_scm_resource_group", {
-              scm_handle: Handle,
-              group_handle: GroupHandle,
-              group_id: GroupId,
+              scmHandle: Handle,
+              groupHandle: GroupHandle,
+              groupId: GroupId,
               label: GroupLabel
             }).catch((Error2) => {
               ScmTrace(
@@ -27134,10 +27264,11 @@ var init_ScmNamespace = __esm({
                 ScmTrace(
                   `update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${Array.isArray(Value) ? Value.length : 0}`
                 );
+                const SanitizedStates = Array.isArray(Value) ? Value.map((Raw2) => SanitizeResourceState(Raw2)) : [];
                 Context.SendToMountain("update_scm_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle,
-                  resource_states: Value
+                  scmHandle: Handle,
+                  groupHandle: GroupHandle,
+                  resourceStates: SanitizedStates
                 }).catch((Error2) => {
                   ScmTrace(
                     `update_scm_group FAILED scm=${Handle} group="${GroupId}" error=${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
@@ -27148,8 +27279,8 @@ var init_ScmNamespace = __esm({
                 Context.SendToMountain(
                   "unregister_scm_resource_group",
                   {
-                    scm_handle: Handle,
-                    group_handle: GroupHandle
+                    scmHandle: Handle,
+                    groupHandle: GroupHandle
                   }
                 ).catch(() => {
                 });
@@ -27170,6 +27301,10 @@ var init_ScmNamespace = __esm({
             Groups.clear();
           }, "dispose")
         };
+        return WrapNamespaceWithHeuristics_default(
+          `scm.sourceControl[${Id}]`,
+          ConcreteSourceControl
+        );
       }, "createSourceControl"),
       inputBox: { value: "" }
     }), "CreateScmNamespace");
@@ -27212,10 +27347,10 @@ var init_AuthenticationNamespace = __esm({
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_authentication_provider", {
           handle: Handle,
-          provider_id: ProviderId,
+          providerId: ProviderId,
           label: Label,
-          supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
-          extension_id: ""
+          supportsMultipleAccounts: Options?.supportsMultipleAccounts ?? false,
+          extensionId: ""
         }).catch(() => {
         });
         return {

@@ -100,6 +100,93 @@ if (process.env["LAND_DEV_LOG"]) {
 }
 
 /**
+ * Env-controlled Rust deference. Default: defer to Mountain (Rust)
+ * before falling back to Node. The knobs let the user opt OUT per-
+ * method, per-domain, or globally - useful when:
+ *   - Diagnosing a Mountain handler bug (force Node path for A/B).
+ *   - Running the editor with Mountain features disabled (e.g. CI
+ *     environments without native dialogs).
+ *   - Migrating a feature surface back to JS-only temporarily.
+ *
+ * Priority (first match wins, evaluated per call):
+ *   1. `LAND_DEFER_RUST_METHOD_<METHOD>` (e.g. `LAND_DEFER_RUST_METHOD_findFiles=false`)
+ *   2. `LAND_DEFER_RUST_<DOMAIN>` (e.g. `LAND_DEFER_RUST_WORKSPACE=false`)
+ *      where DOMAIN = uppercased prefix before the first `.` of the
+ *      method name (e.g. `Workspace.FindFiles` → `WORKSPACE`).
+ *      Methods without a `.` use the empty domain - only the global
+ *      knob applies.
+ *   3. `LAND_DEFER_RUST=false` - global bypass.
+ *   4. Default: defer (return true).
+ *
+ * Values: `false`, `0`, `no`, `off` → bypass Mountain. Anything else
+ * (including unset) → defer.
+ *
+ * NOTE: this only controls dispatch in `TryMountainThenNode` /
+ * `TryMountainWithEmptyFallback`. Fire-and-forget `SendToMountain(...)`
+ * notifications still flow direct unless wired through Batch 2 of the
+ * dual-track expansion. Reverse-RPC paths (Mountain → Cocoon) are not
+ * gated - Mountain decides whether to dispatch them.
+ */
+const IsBypassValue = (Raw:string|undefined): boolean => {
+	if (!Raw) return false;
+	const Normalised = Raw.trim().toLowerCase();
+	return (
+		Normalised === "false" ||
+		Normalised === "0" ||
+		Normalised === "no" ||
+		Normalised === "off"
+	);
+};
+
+const ParseDomain = (Method:string): string => {
+	const Dot = Method.indexOf(".");
+	if (Dot <= 0) return "";
+	return Method.slice(0, Dot).toUpperCase();
+};
+
+/**
+ * Returns `true` when the call should defer to Mountain (the default).
+ * Returns `false` when an env knob has flagged a bypass - caller should
+ * skip Mountain and go straight to the Node fallback.
+ */
+export const IsRustDeferralEnabled = (Method:string): boolean => {
+	// Per-method override wins. Method names can contain `.` and `:` -
+	// neither character is valid in a POSIX env-var name, so substitute
+	// to `_`.
+	const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+	if (process.env[MethodKey] !== undefined) {
+		return !IsBypassValue(process.env[MethodKey]);
+	}
+	// Per-domain override.
+	const Domain = ParseDomain(Method);
+	if (Domain) {
+		const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+		if (process.env[DomainKey] !== undefined) {
+			return !IsBypassValue(process.env[DomainKey]);
+		}
+	}
+	// Global override.
+	if (process.env["LAND_DEFER_RUST"] !== undefined) {
+		return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+	}
+	return true;
+};
+
+// Boot-time banner: surface the active deferral state so debugging the
+// "why is Mountain being skipped" question is one log line away.
+if (process.env["LAND_DEV_LOG"]) {
+	const ActiveBypasses = Object.keys(process.env)
+		.filter(K => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_"))
+		.filter(K => IsBypassValue(process.env[K]))
+		.join(",");
+	if (ActiveBypasses) {
+		process.stdout.write(
+			`[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}\n`,
+		);
+	}
+}
+
+/**
  * Shape Mountain returns when a method isn't routed:
  * - `.ok === false`, `.error.message` contains "Unknown method: <x>"
  * - Or the raw gRPC error from `MountainClient.sendRequest` has that
@@ -152,6 +239,20 @@ export async function TryMountainThenNode<T>(
 	Arguments: unknown[],
 	NodeFallback: (Arguments: unknown[]) => Promise<T>,
 ): Promise<T> {
+	// Env-controlled bypass: `LAND_DEFER_RUST=false` (global),
+	// `LAND_DEFER_RUST_<DOMAIN>=false` (per-domain), or
+	// `LAND_DEFER_RUST_METHOD_<METHOD>=false` (per-method) skip the
+	// Mountain round-trip and run the Node fallback directly. Logged
+	// distinctly so the env-toggled path is observable.
+	if (!IsRustDeferralEnabled(Method)) {
+		LogDualTrack(Method, "node-bypass");
+		try {
+			return await NodeFallback(Arguments);
+		} catch (NodeErr: unknown) {
+			LogDualTrack(Method, "error");
+			throw NodeErr;
+		}
+	}
 	// Build-time manifest short-circuit: skip the Mountain gRPC round-
 	// trip entirely when the generated manifest says Mountain has no
 	// handler for this method. Saves ~3-15 ms per call for every
@@ -221,6 +322,17 @@ export async function TryMountainWithEmptyFallback<T>(
 	NodeFallback: (Arguments: unknown[]) => Promise<T>,
 	IsEmpty: (Result: T) => boolean,
 ): Promise<T> {
+	// Env-controlled bypass mirrors `TryMountainThenNode`. When set,
+	// skip Mountain and rely on the Node fallback directly.
+	if (!IsRustDeferralEnabled(Method)) {
+		LogDualTrack(Method, "node-bypass");
+		try {
+			return await NodeFallback(Arguments);
+		} catch (NodeErr: unknown) {
+			LogDualTrack(Method, "error");
+			throw NodeErr;
+		}
+	}
 	if (!MountainMethods.has(Method)) {
 		LogDualTrack(Method, "node-fallback");
 		try {
@@ -295,9 +407,62 @@ export function MarkUnavailable(Method: string): never {
 	throw new NotImplementedError(Method);
 }
 
+/**
+ * Fire-and-forget Cocoon → Mountain notification dispatcher with the
+ * same env-controlled bypass as `TryMountainThenNode`. The hundreds of
+ * `Context.SendToMountain("register_X_provider", payload).catch(()=>{})`
+ * call sites in the namespace shims bypass DualTrack entirely - the
+ * caller never sees a route log, can't be opt-out'd, and a regression
+ * (Mountain panics on a payload key) silently drops every dispatch.
+ *
+ * `SendToMountainOrLocal(Context, Method, Payload, OnLocalFallback?)`:
+ *   - If the Rust deferral knob says skip Mountain (or the manifest
+ *     short-circuit fires), invoke `OnLocalFallback?.()` - a no-op
+ *     by default - and log `route=node-bypass`.
+ *   - Otherwise call `SendToMountain` and log `route=mountain` /
+ *     `route=error` based on the promise resolution.
+ *
+ * Notifications never have a return value - `OnLocalFallback` is for
+ * mirror state (e.g. registering a handle in a local map even when
+ * Mountain is bypassed). Returns the underlying `Promise<void>` so
+ * call sites that `.catch(...)` keep working.
+ */
+export const SendToMountainOrLocal = (
+	Context:HandlerContext,
+	Method:string,
+	Payload:unknown,
+	OnLocalFallback?:() => void,
+): Promise<void> => {
+	if (!IsRustDeferralEnabled(Method)) {
+		LogDualTrack(Method, "node-bypass");
+		try {
+			OnLocalFallback?.();
+		} catch {
+			// Local fallback errors must not crash the caller - same
+			// fire-and-forget semantics as the underlying SendToMountain.
+		}
+		return Promise.resolve();
+	}
+	const Send = (
+		Context as unknown as {
+			SendToMountain:(M:string, P:unknown) => Promise<void>;
+		}
+	).SendToMountain;
+	return Send.call(Context, Method, Payload).then(
+		() => {
+			LogDualTrack(Method, "mountain");
+		},
+		(_Err:unknown) => {
+			LogDualTrack(Method, "error");
+		},
+	);
+};
+
 export type DualTrackRoute =
 	| "mountain"
 	| "node-fallback"
+	| "node-bypass"
+	| "node-shadow"
 	| "unavailable"
 	| "error";
 

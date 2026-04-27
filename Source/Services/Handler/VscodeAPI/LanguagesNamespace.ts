@@ -52,8 +52,8 @@ const RegisterProvider = (
 		typeof Selector === "string" ? Selector : (Selector?.language ?? "*");
 	Context.SendToMountain(MethodName, {
 		handle: Handle,
-		language_selector: Language,
-		extension_id: "",
+		languageSelector: Language,
+		extensionId: "",
 	}).catch(() => {});
 	return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 };

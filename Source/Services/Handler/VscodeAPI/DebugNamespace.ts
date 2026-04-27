@@ -30,8 +30,8 @@ const CreateDebugNamespace = (Context: HandlerContext) => WrapDebugNamespace({
 		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_debug_adapter", {
 			handle: Handle,
-			debug_type: DebugType,
-			extension_id: "",
+			debugType: DebugType,
+			extensionId: "",
 		}).catch(() => {});
 		return {
 			dispose: () => {
@@ -49,7 +49,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => WrapDebugNamespace({
 		const Handle = NextProviderHandle();
 		Context.SendToMountain("register_debug_configuration_provider", {
 			handle: Handle,
-			debug_type: DebugType,
+			debugType: DebugType,
 		}).catch(() => {});
 		return {
 			dispose: () => {

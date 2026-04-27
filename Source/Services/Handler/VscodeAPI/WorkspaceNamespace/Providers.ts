@@ -45,7 +45,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 		"register_text_document_content_provider",
 		"unregister_text_document_content_provider",
 		"textDocumentContent",
-		(Scheme) => ({ scheme: Scheme, extension_id: "" }),
+		(Scheme) => ({ scheme: Scheme, extensionId: "" }),
 		(_Handle, Scheme, Provider) => {
 			Context.ExtensionRegistry.set(
 				`__textDocumentContentProvider:${Scheme}`,
@@ -87,9 +87,9 @@ export const BuildRegisterFileSystemProvider =
 		Context.SendToMountain("register_file_system_provider", {
 			handle: Handle,
 			scheme: Scheme,
-			is_case_sensitive: Options?.isCaseSensitive ?? true,
-			is_readonly: Options?.isReadonly ?? false,
-			extension_id: "",
+			isCaseSensitive: Options?.isCaseSensitive ?? true,
+			isReadonly: Options?.isReadonly ?? false,
+			extensionId: "",
 		}).catch(() => {});
 		return {
 			dispose: () => {
@@ -107,7 +107,7 @@ export const BuildRegisterTaskProvider = (Context: HandlerContext) =>
 		"register_task_provider",
 		"unregister_task_provider",
 		"taskProvider",
-		(TaskType) => ({ task_type: TaskType, extension_id: "" }),
+		(TaskType) => ({ taskType: TaskType, extensionId: "" }),
 	);
 
 export const BuildRegisterNotebookContentProvider = (
@@ -118,7 +118,7 @@ export const BuildRegisterNotebookContentProvider = (
 		"register_notebook_content_provider",
 		"unregister_notebook_content_provider",
 		"notebookContent",
-		(NotebookType) => ({ notebook_type: NotebookType, extension_id: "" }),
+		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
 	);
 
 export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
@@ -127,21 +127,21 @@ export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 		"register_notebook_serializer",
 		"unregister_notebook_serializer",
 		"notebookSerializer",
-		(NotebookType) => ({ notebook_type: NotebookType, extension_id: "" }),
+		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
 	);
 
 export const BuildRegisterRemoteAuthorityResolver =
 	(Context: HandlerContext) =>
 	(AuthorityPrefix: string, _Resolver: unknown) => {
 		Context.SendToMountain("register_remote_authority_resolver", {
-			authority_prefix: AuthorityPrefix,
-			extension_id: "",
+			authorityPrefix: AuthorityPrefix,
+			extensionId: "",
 		}).catch(() => {});
 		return {
 			dispose: () => {
 				Context.SendToMountain(
 					"unregister_remote_authority_resolver",
-					{ authority_prefix: AuthorityPrefix },
+					{ authorityPrefix: AuthorityPrefix },
 				).catch(() => {});
 			},
 		};

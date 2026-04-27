@@ -370,6 +370,20 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     }
     if (typeof Property !== "string") return void 0;
     if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = { _namespace: NamespaceName };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
     const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
     return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
   },
@@ -439,6 +453,15 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
     language: Env["language"] ?? "en",
     machineId: Context.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
     sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
+    // VS Code build identity strings. `vscode.tunnel-forwarding` and
+    // other extensions read `appCommit?.substring(0, 7)` to surface a
+    // short SHA in their telemetry / status bar. Returning the
+    // heuristic Proxy fallback (a function) crashes that call with
+    // `appCommit?.substring is not a function`. Default to empty
+    // string so optional-chained reads short-circuit cleanly; populate
+    // from build env when a real commit hash is available.
+    appCommit: Env["appCommit"] ?? "",
+    appQuality: Env["appQuality"] ?? "stable",
     isNewAppInstall: false,
     isAppPortable: false,
     isTelemetryEnabled: false,
