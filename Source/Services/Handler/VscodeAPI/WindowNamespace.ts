@@ -70,6 +70,21 @@ export const TreeDataProvidersByViewId = new Map<string, any>();
  * tree registry.
  */
 export const WebviewViewProviders = new Map<string, any>();
+
+/**
+ * Per-handle factory that returns a fresh `WebviewView` proxy for the
+ * extension's `resolveWebviewView(view, ctx)` callback. The proxy
+ * captures `Context` (scoped at `registerWebviewViewProvider` time) so
+ * `view.webview.html = X` and `view.webview.postMessage(msg)` from the
+ * extension fire `webview.setHtml` / `webview.postMessage` notifications
+ * back through Mountain → Sky → the parked workbench `WebviewView` in
+ * `globalThis.__CEL_WEBVIEW_VIEWS__.get(viewId)`.
+ *
+ * Indexed by the same handle string as `WebviewViewProviders` so the
+ * `webview.resolveView` request handler can look up both maps in one
+ * step.
+ */
+export const WebviewViewBuilders = new Map<string, () => any>();
 /**
  * Custom editor provider registry. Indexed by both the numeric handle
  * (for `webview.{register,unregister}CustomEditor` round-trips) and by
@@ -883,6 +898,106 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		registerWebviewViewProvider: (ViewId: string, Provider: any) => {
 			const Handle = NextProviderHandle();
 			WebviewViewProviders.set(String(Handle), Provider);
+			// Builder factory for the extension-facing `WebviewView`
+			// proxy. The proxy bridges Cocoon-side `view.webview.html =
+			// X` / `view.webview.postMessage(msg)` calls into Mountain
+			// notifications (`webview.setHtml`, `webview.postMessage`)
+			// keyed by the handle so Sky's `sky://webview/set-html`
+			// listener can apply the html to the parked workbench
+			// `WebviewView` in `__CEL_WEBVIEW_VIEWS__`.
+			//
+			// Each `resolveWebviewView` call gets a fresh proxy so
+			// per-call event subscriptions don't leak across resolves.
+			WebviewViewBuilders.set(String(Handle), () => {
+				let CurrentHtml = "";
+				const VisibilityListeners = new Set<(visible: boolean) => void>();
+				const DisposeListeners = new Set<() => void>();
+				const NoopDisposable = { dispose: () => {} };
+				const View: any = {
+					title: undefined as string | undefined,
+					description: undefined as string | undefined,
+					badge: undefined as unknown,
+					webview: {
+						get html() {
+							return CurrentHtml;
+						},
+						set html(Value: string) {
+							CurrentHtml = String(Value ?? "");
+							Context.SendToMountain("webview.setHtml", {
+								handle: Handle,
+								viewId: ViewId,
+								html: CurrentHtml,
+							}).catch(() => {});
+						},
+						options: {} as any,
+						cspSource: "https://*",
+						asWebviewUri: (Uri: any) => Uri,
+						postMessage: async (Message: unknown) => {
+							await Context.SendToMountain(
+								"webview.postMessage",
+								{
+									handle: Handle,
+									viewId: ViewId,
+									message: Message,
+								},
+							).catch(() => {});
+							return true;
+						},
+						onDidReceiveMessage: (
+							Listener: (msg: unknown) => void,
+						) => {
+							const Channel = `webview.message:${Handle}`;
+							Context.Emitter?.on?.(Channel, Listener);
+							return {
+								dispose: () =>
+									Context.Emitter?.off?.(Channel, Listener),
+							};
+						},
+					},
+					show: (PreserveFocus?: boolean) => {
+						Context.SendToMountain("webview.reveal", {
+							handle: Handle,
+							viewId: ViewId,
+							preserveFocus: !!PreserveFocus,
+						}).catch(() => {});
+					},
+					onDidChangeVisibility: (
+						Listener: (visible: boolean) => void,
+					) => {
+						VisibilityListeners.add(Listener);
+						return {
+							dispose: () => VisibilityListeners.delete(Listener),
+						};
+					},
+					onDispose: (Listener: () => void) => {
+						DisposeListeners.add(Listener);
+						return {
+							dispose: () => DisposeListeners.delete(Listener),
+						};
+					},
+					dispose: () => {
+						for (const L of DisposeListeners) {
+							try {
+								L();
+							} catch (_e) {
+								/* swallow */
+							}
+						}
+						DisposeListeners.clear();
+						VisibilityListeners.clear();
+					},
+					_FireVisibility: (Visible: boolean) => {
+						for (const L of VisibilityListeners) {
+							try {
+								L(Visible);
+							} catch (_e) {
+								/* swallow */
+							}
+						}
+					},
+				};
+				return View;
+			});
 			Context.MountainClient?.sendRequest("webview.registerView", [
 				Handle,
 				ViewId,
@@ -890,6 +1005,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return {
 				dispose: () => {
 					WebviewViewProviders.delete(String(Handle));
+					WebviewViewBuilders.delete(String(Handle));
 					Context.MountainClient?.sendRequest(
 						"webview.unregisterView",
 						[Handle],
