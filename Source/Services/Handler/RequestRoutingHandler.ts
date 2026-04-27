@@ -287,8 +287,12 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// back to Cocoon so extensions' onDid* handlers fire. Emit the
 			// event on Context.Emitter and each createWebviewPanel subscriber
 			// receives it.
-			const { WebviewPanels, WebviewViewProviders, CustomEditorProviders } =
-				await import("./VscodeAPI/WindowNamespace.js");
+			const {
+				WebviewPanels,
+				WebviewViewProviders,
+				WebviewViewBuilders,
+				CustomEditorProviders,
+			} = await import("./VscodeAPI/WindowNamespace.js");
 			const Handle = Params?.handle ?? Params?.[0];
 			switch (Method) {
 				case "webview.resolveView": {
@@ -298,8 +302,21 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							`WebviewViewProvider handle not registered: ${Handle}`,
 						);
 					}
-					const View = Params?.view ?? Params?.[1];
-					const Ctx = Params?.context ?? Params?.[2];
+					// Build a proxy `WebviewView` so the extension's
+					// `resolveWebviewView(view, ctx)` callback can read /
+					// set `view.webview.html`, `.postMessage`, etc. and
+					// the changes propagate via Mountain notifications
+					// to the parked workbench `WebviewView` (registered
+					// in `__CEL_WEBVIEW_VIEWS__` by SkyBridge). Caller
+					// (Sky bridge or workbench RPC) may also pass an
+					// override `view` in Params; honour the override
+					// when the caller has already constructed one.
+					const Builder = WebviewViewBuilders.get(String(Handle));
+					const View =
+						Params?.view ?? Params?.[1] ?? Builder?.() ?? {};
+					const Ctx = Params?.context ?? Params?.[2] ?? {
+						state: undefined,
+					};
 					return (
 						(await Provider.resolveWebviewView?.(View, Ctx)) ?? null
 					);
