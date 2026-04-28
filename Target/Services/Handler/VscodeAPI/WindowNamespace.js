@@ -995,7 +995,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
             ]).catch(() => {
             });
           },
-          cspSource: "vscode-resource: vscode-webview-resource: https:",
+          cspSource: "vscode-file: vscode-resource: vscode-webview-resource: https:",
           asWebviewUri: /* @__PURE__ */ __name((Uri) => Uri, "asWebviewUri"),
           postMessage: /* @__PURE__ */ __name(async (Message) => {
             try {

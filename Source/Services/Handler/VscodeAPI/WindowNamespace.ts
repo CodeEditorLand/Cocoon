@@ -696,7 +696,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						]).catch(() => {});
 					},
 					cspSource:
-						"vscode-resource: vscode-webview-resource: https:",
+						"vscode-file: vscode-resource: vscode-webview-resource: https:",
 					asWebviewUri: (Uri: unknown) => Uri,
 					postMessage: async (Message: unknown) => {
 						try {

@@ -67,7 +67,13 @@ export class WebviewImplementation implements Webview {
 	}
 
 	public get cspSource(): string {
-		return "vscode-resource: vscode-webview-resource: https:";
+		// `asWebviewUri` produces `vscode-file://<extensionId>/<path>` URIs
+		// (see implementation below). The webview's CSP must allow that
+		// scheme or the rewritten URLs are blocked by the renderer's
+		// content security policy and every extension-supplied icon /
+		// script / stylesheet 404s with a CSP refusal in DevTools.
+		// Legacy schemes are kept for extensions that hardcode them.
+		return "vscode-file: vscode-resource: vscode-webview-resource: https:";
 	}
 
 	public postMessage(Message: any): Promise<boolean> {

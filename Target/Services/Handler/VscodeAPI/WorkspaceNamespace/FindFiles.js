@@ -11007,7 +11007,7 @@ var AsyncIterableObject = class _AsyncIterableObject {
     });
   }
   static {
-    this.EMPTY = _AsyncIterableObject.fromArray([]);
+    this.EMPTY = this.fromArray([]);
   }
   constructor(executor, onReturn) {
     this._state = 0;
@@ -11338,7 +11338,7 @@ var AsyncIterableProducer = class _AsyncIterableProducer {
     });
   }
   static {
-    this.EMPTY = _AsyncIterableProducer.fromArray([]);
+    this.EMPTY = this.fromArray([]);
   }
   static map(iterable, mapFn) {
     return new _AsyncIterableProducer(async (emitter) => {

@@ -11589,13 +11589,13 @@ var init_files = __esm({
         this.KB = 1024;
       }
       static {
-        this.MB = _ByteSize.KB * _ByteSize.KB;
+        this.MB = this.KB * this.KB;
       }
       static {
-        this.GB = _ByteSize.MB * _ByteSize.KB;
+        this.GB = this.MB * this.KB;
       }
       static {
-        this.TB = _ByteSize.GB * _ByteSize.KB;
+        this.TB = this.GB * this.KB;
       }
       static formatSize(size) {
         if (!isNumber(size)) {
@@ -20870,7 +20870,7 @@ var WebviewImplementation = class {
     Effect2.runFork(UpdateEffect);
   }
   get cspSource() {
-    return "vscode-resource: vscode-webview-resource: https:";
+    return "vscode-file: vscode-resource: vscode-webview-resource: https:";
   }
   postMessage(Message) {
     if (this.IsDisposed) return Promise.resolve(false);

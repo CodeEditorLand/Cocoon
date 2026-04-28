@@ -8868,7 +8868,7 @@ var WebviewImplementation = class {
     Effect2.runFork(UpdateEffect);
   }
   get cspSource() {
-    return "vscode-resource: vscode-webview-resource: https:";
+    return "vscode-file: vscode-resource: vscode-webview-resource: https:";
   }
   postMessage(Message) {
     if (this.IsDisposed) return Promise.resolve(false);

@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-28T20:31:17Z"
+  generatedAt: "2026-04-28T21:51:30Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -11066,7 +11066,7 @@ var AsyncIterableObject = class _AsyncIterableObject {
     });
   }
   static {
-    this.EMPTY = _AsyncIterableObject.fromArray([]);
+    this.EMPTY = this.fromArray([]);
   }
   constructor(executor, onReturn) {
     this._state = 0;
@@ -11397,7 +11397,7 @@ var AsyncIterableProducer = class _AsyncIterableProducer {
     });
   }
   static {
-    this.EMPTY = _AsyncIterableProducer.fromArray([]);
+    this.EMPTY = this.fromArray([]);
   }
   static map(iterable, mapFn) {
     return new _AsyncIterableProducer(async (emitter) => {

@@ -2722,7 +2722,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-28T20:31:17Z"
+      generatedAt: "2026-04-28T21:51:30Z"
     };
   }
 });
@@ -14826,13 +14826,13 @@ var init_files = __esm({
         this.KB = 1024;
       }
       static {
-        this.MB = _ByteSize.KB * _ByteSize.KB;
+        this.MB = this.KB * this.KB;
       }
       static {
-        this.GB = _ByteSize.MB * _ByteSize.KB;
+        this.GB = this.MB * this.KB;
       }
       static {
-        this.TB = _ByteSize.GB * _ByteSize.KB;
+        this.TB = this.GB * this.KB;
       }
       static formatSize(size) {
         if (!isNumber(size)) {
@@ -24892,7 +24892,7 @@ var init_WindowNamespace = __esm({
                 ]).catch(() => {
                 });
               },
-              cspSource: "vscode-resource: vscode-webview-resource: https:",
+              cspSource: "vscode-file: vscode-resource: vscode-webview-resource: https:",
               asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
               postMessage: /* @__PURE__ */ __name(async (Message) => {
                 try {
@@ -27150,7 +27150,7 @@ var init_async = __esm({
         });
       }
       static {
-        this.EMPTY = _AsyncIterableObject.fromArray([]);
+        this.EMPTY = this.fromArray([]);
       }
       constructor(executor, onReturn) {
         this._state = 0;
@@ -27481,7 +27481,7 @@ var init_async = __esm({
         });
       }
       static {
-        this.EMPTY = _AsyncIterableProducer.fromArray([]);
+        this.EMPTY = this.fromArray([]);
       }
       static map(iterable, mapFn) {
         return new _AsyncIterableProducer(async (emitter) => {
