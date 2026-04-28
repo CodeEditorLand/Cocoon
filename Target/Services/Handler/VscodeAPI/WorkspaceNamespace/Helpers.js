@@ -62,12 +62,14 @@ var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
 }, "FolderToFsPath");
 var ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
   const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-  return (InitWorkspace.folders ?? []).map((Folder) => {
-    const FsPath = FolderToFsPath(Folder?.uri);
-    const Record = { ...Folder };
-    if (typeof FsPath === "string") Record.FsPath = FsPath;
-    return Record;
-  });
+  return (InitWorkspace.folders ?? []).map(
+    (Folder) => {
+      const FsPath = FolderToFsPath(Folder?.uri);
+      const Record = { ...Folder };
+      if (typeof FsPath === "string") Record.FsPath = FsPath;
+      return Record;
+    }
+  );
 }, "ResolveWorkspaceFolders");
 export {
   Call,

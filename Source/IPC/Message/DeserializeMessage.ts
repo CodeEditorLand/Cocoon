@@ -4,16 +4,20 @@
  * Deserializes a binary message into an IMessage structure.
  */
 
-import type { IDeserializationResult, IMessage, MessageMetadata } from "./Types.js";
-import { CompressionHint } from "./Types.js";
 import {
 	MAX_MESSAGE_SIZE,
 	MESSAGE_HEADER_MAGIC,
 	MessageFlags,
 	PROTOCOL_VERSION,
 } from "./Constants.js";
-import VSBuffer from "./VSBuffer.js";
+import {
+	CompressionHint,
+	type IDeserializationResult,
+	type IMessage,
+	type MessageMetadata,
+} from "./Types.js";
 import { ValidateMetadata } from "./Validation.js";
+import VSBuffer from "./VSBuffer.js";
 
 // ============================================================================
 // DESERIALIZATION
@@ -193,7 +197,10 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		return {
 			Success: false,
 			Message: null,
-			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
+			Error:
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error),
 			Warnings,
 		};
 	}

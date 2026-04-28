@@ -6,14 +6,7 @@
  * Wraps the existing ModuleInterceptorService with Effect patterns.
  */
 
-import {
-	Context,
-	Effect,
-	HashMap,
-	Layer,
-	Ref,
-	SubscriptionRef,
-} from "effect";
+import { Context, Effect, HashMap, Layer, Ref, SubscriptionRef } from "effect";
 
 import { TelemetryTag } from "./Telemetry.js";
 
@@ -263,7 +256,9 @@ export const ModuleInterceptorLive = Layer.effect(
 			const { default: NodeModule } = (yield* Effect.tryPromise({
 				try: () => import("node:module"),
 				catch: (Err) =>
-					new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`),
+					new Error(
+						`[ModuleInterceptor] import('node:module') failed: ${Err}`,
+					),
 			})) as any;
 
 			const OriginalLoad = NodeModule._load;

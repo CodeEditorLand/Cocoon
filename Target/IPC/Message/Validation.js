@@ -1,16 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/IPC/Message/Types.ts
-var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
-  CompressionHint2["None"] = "none";
-  CompressionHint2["Fast"] = "fast";
-  CompressionHint2["Balanced"] = "balanced";
-  CompressionHint2["Maximum"] = "maximum";
-  return CompressionHint2;
-})(CompressionHint || {});
-var Types_default = {};
-
 // Source/IPC/Message/Constants.ts
 var MAX_MESSAGE_SIZE = 10 * 1024 * 1024;
 var MAX_BATCH_SIZE = 50 * 1024 * 1024;
@@ -29,6 +19,16 @@ var MessageFlags = /* @__PURE__ */ ((MessageFlags2) => {
   return MessageFlags2;
 })(MessageFlags || {});
 var Constants_default = {};
+
+// Source/IPC/Message/Types.ts
+var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
+  CompressionHint2["None"] = "none";
+  CompressionHint2["Fast"] = "fast";
+  CompressionHint2["Balanced"] = "balanced";
+  CompressionHint2["Maximum"] = "maximum";
+  return CompressionHint2;
+})(CompressionHint || {});
+var Types_default = {};
 
 // Source/IPC/Message/Validation.ts
 var ValidateMetadata = /* @__PURE__ */ __name((Metadata) => {

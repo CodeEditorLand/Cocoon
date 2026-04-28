@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-27T21:36:32Z"
+  generatedAt: "2026-04-27T23:59:48Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -62,7 +62,9 @@ var IsRustDeferralEnabled = /* @__PURE__ */ __name((Method) => {
   return true;
 }, "IsRustDeferralEnabled");
 if (process.env["LAND_DEV_LOG"]) {
-  const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+  const ActiveBypasses = Object.keys(process.env).filter(
+    (K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")
+  ).filter((K) => IsBypassValue(process.env[K])).join(",");
   if (ActiveBypasses) {
     process.stdout.write(
       `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
@@ -208,10 +210,8 @@ var SendToMountainOrLocal = /* @__PURE__ */ __name((Context, Method, Payload, On
 }, "SendToMountainOrLocal");
 var LogDualTrack = /* @__PURE__ */ __name((Method, Route) => {
   if (!process.env["LAND_DEV_LOG"]) return;
-  process.stdout.write(
-    `[DEV:DUAL-TRACK] method=${Method} route=${Route}
-`
-  );
+  process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}
+`);
 }, "LogDualTrack");
 export {
   IsRustDeferralEnabled,

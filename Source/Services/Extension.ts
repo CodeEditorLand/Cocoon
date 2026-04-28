@@ -293,9 +293,10 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					>();
 
 					// Process configured extensions
-					for (const [ExtensionId, ExtensionDataRaw] of Object.entries(
-						ExtensionsConfig,
-					)) {
+					for (const [
+						ExtensionId,
+						ExtensionDataRaw,
+					] of Object.entries(ExtensionsConfig)) {
 						try {
 							const ExtensionData = ExtensionDataRaw as
 								| string

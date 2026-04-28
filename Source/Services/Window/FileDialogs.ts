@@ -25,7 +25,9 @@ import { ToDTO as SaveDialogOptionToDTO } from "../../TypeConverter/Dialog/SaveD
  * @param Options - Optional open dialog configuration
  */
 export const ShowOpenDialog = (
-	MountainClient: { sendRequest: (method: string, params: unknown[]) => Promise<unknown> },
+	MountainClient: {
+		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
+	},
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
 	Options?: VSCode.OpenDialogOptions,
 ): Effect.Effect<VSCode.Uri[] | undefined, Error> =>
@@ -74,7 +76,9 @@ export const ShowOpenDialog = (
  * @param Options - Optional save dialog configuration
  */
 export const ShowSaveDialog = (
-	MountainClient: { sendRequest: (method: string, params: unknown[]) => Promise<unknown> },
+	MountainClient: {
+		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
+	},
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
 	Options?: VSCode.SaveDialogOptions,
 ): Effect.Effect<VSCode.Uri | undefined, Error> =>
@@ -109,7 +113,7 @@ export const ShowSaveDialog = (
 		});
 
 		return ResultURI
-			? await (async () => {
+			? await(async () => {
 					const { Uri } = await import("vscode");
 					return Uri.parse(ResultURI.toString());
 				})()

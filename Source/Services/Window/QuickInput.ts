@@ -28,7 +28,9 @@ import {
  * @param Options - Optional quick pick configuration
  */
 export const ShowQuickPick = <T extends string>(
-	MountainClient: { sendRequest: (method: string, params: unknown[]) => Promise<unknown> },
+	MountainClient: {
+		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
+	},
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
 	Items: readonly T[] | VSCode.QuickPickItem[],
 	Options?: VSCode.QuickPickOptions,
@@ -109,8 +111,12 @@ export const ShowQuickPick = <T extends string>(
  * @param Options - Optional input box configuration
  */
 export const ShowInputBox = (
-	MountainClient: { sendRequest: (method: string, params: unknown[]) => Promise<unknown> },
-	Logger: { Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void> },
+	MountainClient: {
+		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
+	},
+	Logger: {
+		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	},
 	Options?: VSCode.InputBoxOptions,
 ): Effect.Effect<string | undefined, Error> =>
 	Effect.gen(function* () {

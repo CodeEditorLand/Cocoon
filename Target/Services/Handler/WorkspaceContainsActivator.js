@@ -19325,107 +19325,6 @@ var init_LanguageProviderRegistry = __esm({
   }
 });
 
-// Source/Utility/LandFixLog.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
-var init_LandFixLog = __esm({
-  "Source/Utility/LandFixLog.ts"() {
-    "use strict";
-    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
-    Enabled = Mode !== "off";
-    Long = Mode === "long";
-    DebugEnabled = Long;
-    AllowList = (() => {
-      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw2 || Raw2.trim().length === 0) return void 0;
-      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
-      return Tags.length === 0 ? void 0 : new Set(Tags);
-    })();
-    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
-    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
-    FormatTimestamp = /* @__PURE__ */ __name(() => {
-      const Now = /* @__PURE__ */ new Date();
-      if (Long) return Now.toISOString();
-      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
-        Now.getSeconds()
-      )}.${PadThree(Now.getMilliseconds())}`;
-    }, "FormatTimestamp");
-    SerializeContext = /* @__PURE__ */ __name((Context) => {
-      const Seen = /* @__PURE__ */ new WeakSet();
-      try {
-        return JSON.stringify(Context, (_Key, Value) => {
-          if (Value instanceof Error) {
-            return { name: Value.name, message: Value.message };
-          }
-          if (typeof Value === "bigint") return String(Value);
-          if (typeof Value === "function") return "[Function]";
-          if (typeof Value === "object" && Value !== null) {
-            if (Seen.has(Value)) return "[Circular]";
-            Seen.add(Value);
-          }
-          return Value;
-        });
-      } catch {
-        return '"[Unserializable]"';
-      }
-    }, "SerializeContext");
-    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
-    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
-      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
-      if (!Context) return `${Head}
-`;
-      return `${Head} ${SerializeContext(Context)}
-`;
-    }, "FormatLine");
-    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
-      if (!Enabled) return;
-      if (AllowList && !AllowList.has(Tag)) return;
-      try {
-        Stream.write(FormatLine(Level, Tag, Message, Context));
-      } catch {
-      }
-    }, "Emit");
-    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "Info");
-    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "warn", Tag, Message, Context);
-    }, "Warn");
-    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stderr, "error", Tag, Message, Context);
-    }, "ErrorLog");
-    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      if (!DebugEnabled) return;
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "Debug");
-    SeenOnce = /* @__PURE__ */ new Set();
-    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
-      if (!DebugEnabled) return;
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "DebugOnce");
-    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "InfoOnce");
-    LandFixLog = {
-      Info,
-      InfoOnce,
-      Warn,
-      Error: ErrorLog,
-      Debug,
-      DebugOnce,
-      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
-      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
-      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
-    };
-    LandFixLog_default = LandFixLog;
-  }
-});
-
 // Source/Telemetry/PostHog/Event.ts
 var BaseProperties, Create, Enrich, Event_default;
 var init_Event = __esm({
@@ -19656,14 +19555,115 @@ var init_PostHogBridge = __esm({
   }
 });
 
+// Source/Utility/LandFixLog.ts
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
+var init_LandFixLog = __esm({
+  "Source/Utility/LandFixLog.ts"() {
+    "use strict";
+    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+    Enabled = Mode !== "off";
+    Long = Mode === "long";
+    DebugEnabled = Long;
+    AllowList = (() => {
+      const Raw2 = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw2 || Raw2.trim().length === 0) return void 0;
+      const Tags = Raw2.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      return Tags.length === 0 ? void 0 : new Set(Tags);
+    })();
+    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+    FormatTimestamp = /* @__PURE__ */ __name(() => {
+      const Now = /* @__PURE__ */ new Date();
+      if (Long) return Now.toISOString();
+      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+        Now.getSeconds()
+      )}.${PadThree(Now.getMilliseconds())}`;
+    }, "FormatTimestamp");
+    SerializeContext = /* @__PURE__ */ __name((Context) => {
+      const Seen = /* @__PURE__ */ new WeakSet();
+      try {
+        return JSON.stringify(Context, (_Key, Value) => {
+          if (Value instanceof Error) {
+            return { name: Value.name, message: Value.message };
+          }
+          if (typeof Value === "bigint") return String(Value);
+          if (typeof Value === "function") return "[Function]";
+          if (typeof Value === "object" && Value !== null) {
+            if (Seen.has(Value)) return "[Circular]";
+            Seen.add(Value);
+          }
+          return Value;
+        });
+      } catch {
+        return '"[Unserializable]"';
+      }
+    }, "SerializeContext");
+    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+      if (!Context) return `${Head}
+`;
+      return `${Head} ${SerializeContext(Context)}
+`;
+    }, "FormatLine");
+    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+      if (!Enabled) return;
+      if (AllowList && !AllowList.has(Tag)) return;
+      try {
+        Stream.write(FormatLine(Level, Tag, Message, Context));
+      } catch {
+      }
+    }, "Emit");
+    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stdout, "info", Tag, Message, Context);
+    }, "Info");
+    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stdout, "warn", Tag, Message, Context);
+    }, "Warn");
+    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stderr, "error", Tag, Message, Context);
+    }, "ErrorLog");
+    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      if (!DebugEnabled) return;
+      Emit(process.stdout, "debug", Tag, Message, Context);
+    }, "Debug");
+    SeenOnce = /* @__PURE__ */ new Set();
+    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+      if (!DebugEnabled) return;
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "debug", Tag, Message, Context);
+    }, "DebugOnce");
+    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "info", Tag, Message, Context);
+    }, "InfoOnce");
+    LandFixLog = {
+      Info,
+      InfoOnce,
+      Warn,
+      Error: ErrorLog,
+      Debug,
+      DebugOnce,
+      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+    };
+    LandFixLog_default = LandFixLog;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts
 import { Effect } from "effect";
 var NoopDisposable, IsTrustFamily, ClassifyProperty, RecordGap, BuildHeuristicMethod, WrapNamespaceWithHeuristics, WrapNamespaceWithHeuristics_default;
 var init_WrapNamespaceWithHeuristics = __esm({
   "Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts"() {
     "use strict";
-    init_LandFixLog();
     init_PostHogBridge();
+    init_LandFixLog();
     NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
     IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
@@ -19749,7 +19749,9 @@ var init_WrapNamespaceWithHeuristics = __esm({
         if (Property === "then") return void 0;
         if (Property === "toJSON") {
           return () => {
-            const Out = { _namespace: NamespaceName };
+            const Out = {
+              _namespace: NamespaceName
+            };
             for (const Key of Object.keys(Target)) {
               const Value = Target[Key];
               const T = typeof Value;
@@ -20551,7 +20553,10 @@ var init_WindowNamespace = __esm({
               }
               DisposeListeners.clear();
               VisibilityListeners.clear();
-              Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+              Context.Emitter?.off?.(
+                ChannelVisibility,
+                VisibilityForward
+              );
               Context.Emitter?.off?.(ChannelDispose, DisposeForward);
             }, "DisposeForward");
             Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
@@ -21079,7 +21084,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-27T21:36:32Z"
+      generatedAt: "2026-04-27T23:59:48Z"
     };
   }
 });
@@ -21252,7 +21257,9 @@ var init_DualTrack = __esm({
       return true;
     }, "IsRustDeferralEnabled");
     if (process.env["LAND_DEV_LOG"]) {
-      const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+      const ActiveBypasses = Object.keys(process.env).filter(
+        (K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")
+      ).filter((K) => IsBypassValue(process.env[K])).join(",");
       if (ActiveBypasses) {
         process.stdout.write(
           `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
@@ -21285,10 +21292,8 @@ var init_DualTrack = __esm({
     }, "SendToMountainOrLocal");
     LogDualTrack = /* @__PURE__ */ __name((Method, Route3) => {
       if (!process.env["LAND_DEV_LOG"]) return;
-      process.stdout.write(
-        `[DEV:DUAL-TRACK] method=${Method} route=${Route3}
-`
-      );
+      process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route3}
+`);
     }, "LogDualTrack");
   }
 });
@@ -23851,9 +23856,9 @@ function GlobIsEmpty(Pattern) {
 var init_StockLift = __esm({
   "Source/Services/Handler/VscodeAPI/StockLift.ts"() {
     "use strict";
-    init_uri();
-    init_resources();
     init_glob();
+    init_resources();
+    init_uri();
     __name(ToUri, "ToUri");
     __name(RelativePath, "RelativePath");
     __name(IsEqualOrParent, "IsEqualOrParent");
@@ -23864,6 +23869,813 @@ var init_StockLift = __esm({
     __name(GlobMatch, "GlobMatch");
     __name(GlobParsePattern, "GlobParsePattern");
     __name(GlobIsEmpty, "GlobIsEmpty");
+  }
+});
+
+// Source/Services/DevLog.ts
+var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_default;
+var init_DevLog = __esm({
+  "Source/Services/DevLog.ts"() {
+    "use strict";
+    Raw = process.env["LAND_DEV_LOG"] ?? "";
+    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+    TagSet = new Set(ParsedTags);
+    IsShort = TagSet.has("short");
+    HasAll = TagSet.has("all");
+    IsEnabled = /* @__PURE__ */ __name((Tag) => {
+      if (TagSet.size === 0) return false;
+      if (HasAll || IsShort) return true;
+      return TagSet.has(Tag.toLowerCase());
+    }, "IsEnabled");
+    CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+      if (!IsEnabled(Tag)) return;
+      const TagUpper = Tag.toUpperCase();
+      process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+    }, "CocoonDevLog");
+    DevLog_default = CocoonDevLog;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
+var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, ResolveWorkspaceFolders;
+var init_Helpers = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts"() {
+    "use strict";
+    EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
+      Context.WorkspaceEventEmitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.WorkspaceEventEmitter.removeListener(
+            EventName,
+            Listener
+          );
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          Method,
+          Parameters
+        );
+      } catch {
+        return void 0;
+      }
+    }, "Call");
+    DefaultExcludeSegments = /* @__PURE__ */ new Set([
+      ".git",
+      "node_modules",
+      ".astro",
+      ".next",
+      ".nuxt",
+      ".cache",
+      ".turbo",
+      ".pnpm",
+      "Target",
+      "target",
+      "dist",
+      "out",
+      "build",
+      ".DS_Store"
+    ]);
+    ExtractGlobPattern = /* @__PURE__ */ __name((Raw2) => {
+      if (typeof Raw2 === "string" && Raw2.length > 0) return Raw2;
+      if (Raw2 && typeof Raw2 === "object") {
+        const Obj = Raw2;
+        if (typeof Obj["pattern"] === "string") return Obj["pattern"];
+        if (typeof Obj["glob"] === "string") return Obj["glob"];
+      }
+      return void 0;
+    }, "ExtractGlobPattern");
+    FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
+      const Raw2 = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+      if (typeof Raw2 !== "string" || Raw2.length === 0) return void 0;
+      if (Raw2.startsWith("file:")) {
+        try {
+          return decodeURIComponent(new URL(Raw2).pathname);
+        } catch {
+          return Raw2.replace(/^file:\/\//, "");
+        }
+      }
+      return Raw2;
+    }, "FolderToFsPath");
+    ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
+      const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+      return (InitWorkspace.folders ?? []).map(
+        (Folder) => {
+          const FsPath = FolderToFsPath(Folder?.uri);
+          const Record = { ...Folder };
+          if (typeof FsPath === "string") Record.FsPath = FsPath;
+          return Record;
+        }
+      );
+    }, "ResolveWorkspaceFolders");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
+var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
+var init_Configuration2 = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
+    "use strict";
+    init_DevLog();
+    init_Helpers();
+    CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
+      const ConfigCache = /* @__PURE__ */ new Map();
+      const ConfigInFlight = /* @__PURE__ */ new Set();
+      const ConfigListeners = /* @__PURE__ */ new Set();
+      const FireConfigChange = /* @__PURE__ */ __name((ChangedKey) => {
+        if (ConfigListeners.size === 0) return;
+        const Event2 = {
+          affectsConfiguration: /* @__PURE__ */ __name((QueryKey) => ChangedKey === QueryKey || ChangedKey.startsWith(`${QueryKey}.`), "affectsConfiguration")
+        };
+        for (const Listener of ConfigListeners) {
+          try {
+            Listener(Event2);
+          } catch {
+          }
+        }
+      }, "FireConfigChange");
+      const PrimeConfig = /* @__PURE__ */ __name((Key) => {
+        if (ConfigInFlight.has(Key)) return;
+        ConfigInFlight.add(Key);
+        void Call(
+          Context,
+          "Configuration.Inspect",
+          [Key]
+        ).then((Value) => {
+          ConfigInFlight.delete(Key);
+          if (Value === void 0) return;
+          const Shape = Value;
+          const Resolved = Shape?.["effectiveValue"] ?? Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["userValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
+          const Prior = ConfigCache.get(Key);
+          ConfigCache.set(Key, Resolved);
+          if (Prior !== Resolved) FireConfigChange(Key);
+        });
+      }, "PrimeConfig");
+      const PrePopulateFromManifest = /* @__PURE__ */ __name((PackageJSON) => {
+        const Manifest = PackageJSON ?? {};
+        const Contributed = Manifest.contributes?.configuration;
+        if (!Contributed) return;
+        const Sections = Array.isArray(Contributed) ? Contributed : [Contributed];
+        let Seeded = 0;
+        let Skipped = 0;
+        let ExtensionId = "";
+        const ManifestShape = PackageJSON ?? {};
+        if (ManifestShape.publisher && ManifestShape.name) {
+          ExtensionId = `${ManifestShape.publisher}.${ManifestShape.name}`;
+        }
+        for (const Section of Sections) {
+          const Properties = Section?.properties;
+          if (!Properties) continue;
+          for (const [DottedKey, Declaration] of Object.entries(Properties)) {
+            if (ConfigCache.has(DottedKey)) {
+              Skipped++;
+              continue;
+            }
+            if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
+              ConfigCache.set(DottedKey, Declaration.default);
+              Seeded++;
+            }
+          }
+        }
+        CocoonDevLog(
+          "config-prime",
+          `[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`
+        );
+      }, "PrePopulateFromManifest");
+      Context.Emitter.on("configurationChanged", (Payload) => {
+        const Shape = Payload ?? {};
+        const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
+        if (Keys.length === 0) {
+          return;
+        }
+        for (const Key of Keys) {
+          ConfigCache.delete(Key);
+          FireConfigChange(Key);
+          PrimeConfig(Key);
+        }
+      });
+      return {
+        ConfigCache,
+        ConfigInFlight,
+        ConfigListeners,
+        FireConfigChange,
+        PrimeConfig,
+        PrePopulateFromManifest
+      };
+    }, "CreateConfigurationState");
+    SynthesiseSubtree = /* @__PURE__ */ __name((Cache3, Full) => {
+      const Prefix = `${Full}.`;
+      const Subtree = {};
+      let Matched = false;
+      for (const [CachedKey, CachedValue] of Cache3.entries()) {
+        if (!CachedKey.startsWith(Prefix)) continue;
+        Matched = true;
+        const Local = CachedKey.slice(Prefix.length);
+        const Parts = Local.split(".");
+        let Current = Subtree;
+        for (let I = 0; I < Parts.length - 1; I++) {
+          const Segment = Parts[I];
+          const Existing = Current[Segment];
+          if (Existing === void 0 || Existing === null || typeof Existing !== "object") {
+            Current[Segment] = {};
+          }
+          Current = Current[Segment];
+        }
+        Current[Parts[Parts.length - 1]] = CachedValue;
+      }
+      return Matched ? Subtree : void 0;
+    }, "SynthesiseSubtree");
+    BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section, _Scope) => ({
+      get: /* @__PURE__ */ __name((Key, DefaultValue) => {
+        const Full = Section ? `${Section}.${Key}` : Key;
+        if (State.ConfigCache.has(Full)) {
+          const Cached = State.ConfigCache.get(Full);
+          if (Cached === null || Cached === void 0) {
+            const Subtree2 = SynthesiseSubtree(State.ConfigCache, Full);
+            if (Subtree2 !== void 0) {
+              CocoonDevLog(
+                "config-prime",
+                `[ConfigPrime] synthesise key=${Full} source=null-shadowed`
+              );
+              return Subtree2;
+            }
+          }
+          return Cached;
+        }
+        const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+        if (Subtree !== void 0) {
+          CocoonDevLog(
+            "config-prime",
+            `[ConfigPrime] synthesise key=${Full} source=miss`
+          );
+          return Subtree;
+        }
+        State.PrimeConfig(Full);
+        return DefaultValue;
+      }, "get"),
+      update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
+        const Full = Section ? `${Section}.${Key}` : Key;
+        const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
+        await Call(Context, "Configuration.Update", [
+          Full,
+          Value,
+          TargetIndex
+        ]);
+        const Prior = State.ConfigCache.get(Full);
+        State.ConfigCache.set(Full, Value);
+        if (Prior !== Value) State.FireConfigChange(Full);
+      }, "update"),
+      has: /* @__PURE__ */ __name((Key) => {
+        const Full = Section ? `${Section}.${Key}` : Key;
+        if (State.ConfigCache.has(Full)) return true;
+        if (SynthesiseSubtree(State.ConfigCache, Full) !== void 0) {
+          return true;
+        }
+        State.PrimeConfig(Full);
+        return false;
+      }, "has"),
+      inspect: /* @__PURE__ */ __name((Key) => {
+        const Full = Section ? `${Section}.${Key}` : Key;
+        let Cached;
+        if (State.ConfigCache.has(Full)) {
+          Cached = State.ConfigCache.get(Full);
+        } else {
+          const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+          if (Subtree === void 0) {
+            State.PrimeConfig(Full);
+            return void 0;
+          }
+          Cached = Subtree;
+        }
+        return {
+          key: Full,
+          defaultValue: void 0,
+          globalValue: Cached,
+          workspaceValue: void 0,
+          workspaceFolderValue: void 0,
+          defaultLanguageValue: void 0,
+          globalLanguageValue: void 0,
+          workspaceLanguageValue: void 0,
+          workspaceFolderLanguageValue: void 0,
+          languageIds: []
+        };
+      }, "inspect")
+    }), "BuildGetConfiguration");
+    BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener, ThisArg, Disposables) => {
+      const Bound = ThisArg === void 0 ? Listener : Listener.bind(ThisArg);
+      State.ConfigListeners.add(Bound);
+      const Subscription = {
+        dispose: /* @__PURE__ */ __name(() => {
+          State.ConfigListeners.delete(Bound);
+        }, "dispose")
+      };
+      if (Disposables && typeof Disposables.push === "function") {
+        Disposables.push(Subscription);
+      }
+      return Subscription;
+    }, "BuildOnDidChangeConfiguration");
+  }
+});
+
+// Source/Utility/Tier.ts
+var Injected, Pick, Tier, Tier_default;
+var init_Tier = __esm({
+  "Source/Utility/Tier.ts"() {
+    "use strict";
+    init_LandFixLog();
+    Injected = globalThis.__LandTiers ?? {};
+    Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
+      const FromInjected = Injected[Capability];
+      if (typeof FromInjected === "string" && FromInjected.length > 0) {
+        return FromInjected;
+      }
+      const FromEnvironment = process.env[`Tier${Capability}`];
+      if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
+        return FromEnvironment;
+      }
+      return Fallback;
+    }, "Pick");
+    Tier = {
+      RemoteProcedureCall: Pick(
+        "RemoteProcedureCall",
+        "GRPC"
+      ),
+      HTTPProxy: Pick("HTTPProxy", "HandRolled"),
+      Logger: Pick("Logger", "Standard"),
+      FileSystem: Pick("FileSystem", "Layer2"),
+      FindFiles: Pick("FindFiles", "Layer3"),
+      Glob: Pick("Glob", "JavaScript"),
+      // Default Layer4 so `createFileSystemWatcher` forwards to Mountain's
+      // native `notify`-crate implementation in `Environment/FileWatcherProvider.rs`.
+      // Stub mode drops every watch registration, leaving every extension that
+      // relies on file-change events (eslint, typescript, tailwind, most
+      // language servers) blind to disk mutations. Override with
+      // `TierFileWatcher=Stub` at launch to restore the old drop behaviour
+      // for debugging.
+      FileWatcher: Pick("FileWatcher", "Layer4"),
+      SchemeAssets: Pick("SchemeAssets", "Embedded"),
+      Configuration: Pick("Configuration", "Cache"),
+      Diagnostics: Pick("Diagnostics", "Full"),
+      Clipboard: Pick("Clipboard", "Layer3"),
+      OpenExternal: Pick("OpenExternal", "Layer3"),
+      DocumentMirror: Pick("DocumentMirror", "Full"),
+      ExtensionActivation: Pick(
+        "ExtensionActivation",
+        "Parallel8"
+      ),
+      ExtensionScan: Pick("ExtensionScan", "Sequential"),
+      ModuleCache: Pick("ModuleCache", "Simple"),
+      Telemetry: Pick("Telemetry", "Synchronous")
+    };
+    LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
+    Tier_default = Tier;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts
+var MakeProvider, BuildRegisterTextDocumentContentProvider, ClaimedFileSystemSchemes, BuildRegisterFileSystemProvider, BuildRegisterTaskProvider, BuildRegisterNotebookContentProvider, BuildRegisterNotebookSerializer, BuildRegisterRemoteAuthorityResolver, BuildRegisterResourceLabelFormatter;
+var init_Providers = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts"() {
+    "use strict";
+    init_LanguageProviderRegistry();
+    MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMethod, _LegacyHandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain(RegisterMethod, {
+        handle: Handle,
+        ...ExtraPayload(Key)
+      }).catch(() => {
+      });
+      OnRegister?.(Handle, Key, _Provider);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          OnDispose?.(Handle, Key);
+          Context.SendToMountain(UnregisterMethod, {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "MakeProvider");
+    BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
+      Context,
+      "register_text_document_content_provider",
+      "unregister_text_document_content_provider",
+      "textDocumentContent",
+      (Scheme) => ({ scheme: Scheme, extensionId: "" }),
+      (_Handle, Scheme, Provider) => {
+        Context.ExtensionRegistry.set(
+          `__textDocumentContentProvider:${Scheme}`,
+          Provider
+        );
+      },
+      (_Handle, Scheme) => {
+        Context.ExtensionRegistry.delete(
+          `__textDocumentContentProvider:${Scheme}`
+        );
+      }
+    ), "BuildRegisterTextDocumentContentProvider");
+    ClaimedFileSystemSchemes = /* @__PURE__ */ new Set();
+    BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Scheme, _Provider, Options) => {
+      const Handle = NextProviderHandle();
+      ClaimedFileSystemSchemes.add(Scheme);
+      Context.SendToMountain("register_file_system_provider", {
+        handle: Handle,
+        scheme: Scheme,
+        isCaseSensitive: Options?.isCaseSensitive ?? true,
+        isReadonly: Options?.isReadonly ?? false,
+        extensionId: ""
+      }).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          ClaimedFileSystemSchemes.delete(Scheme);
+          Context.SendToMountain("unregister_file_system_provider", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "BuildRegisterFileSystemProvider");
+    BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
+      Context,
+      "register_task_provider",
+      "unregister_task_provider",
+      "taskProvider",
+      (TaskType) => ({ taskType: TaskType, extensionId: "" })
+    ), "BuildRegisterTaskProvider");
+    BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
+      Context,
+      "register_notebook_content_provider",
+      "unregister_notebook_content_provider",
+      "notebookContent",
+      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
+    ), "BuildRegisterNotebookContentProvider");
+    BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
+      Context,
+      "register_notebook_serializer",
+      "unregister_notebook_serializer",
+      "notebookSerializer",
+      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
+    ), "BuildRegisterNotebookSerializer");
+    BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
+      Context.SendToMountain("register_remote_authority_resolver", {
+        authorityPrefix: AuthorityPrefix,
+        extensionId: ""
+      }).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.SendToMountain("unregister_remote_authority_resolver", {
+            authorityPrefix: AuthorityPrefix
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "BuildRegisterRemoteAuthorityResolver");
+    BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context) => (Formatter) => {
+      Context.SendToMountain("register_resource_label_formatter", {
+        formatter: Formatter
+      }).catch(() => {
+      });
+      return { dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") };
+    }, "BuildRegisterResourceLabelFormatter");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts
+function ExtractScheme(Uri2) {
+  if (Uri2 && typeof Uri2 === "object") {
+    const WithScheme = Uri2;
+    if (typeof WithScheme.scheme === "string" && WithScheme.scheme.length > 0) {
+      return WithScheme.scheme;
+    }
+  }
+  if (typeof Uri2 === "string") {
+    const Colon = Uri2.indexOf(":");
+    if (Colon > 0 && Colon < 32) {
+      const Scheme = Uri2.slice(0, Colon);
+      if (/^[a-zA-Z][a-zA-Z0-9+\-.]*$/.test(Scheme)) {
+        return Scheme.toLowerCase();
+      }
+    }
+    return "file";
+  }
+  return "file";
+}
+function ExtractFsPath(Uri2) {
+  if (Uri2 && typeof Uri2 === "object") {
+    const WithPath = Uri2;
+    if (typeof WithPath.fsPath === "string" && WithPath.fsPath.length > 0) {
+      return WithPath.fsPath;
+    }
+    if (typeof WithPath.path === "string" && WithPath.path.length > 0) {
+      return WithPath.path;
+    }
+  }
+  if (typeof Uri2 === "string") {
+    if (Uri2.startsWith("file://")) {
+      try {
+        return decodeURIComponent(Uri2.slice("file://".length));
+      } catch {
+        return Uri2.slice("file://".length);
+      }
+    }
+    if (Uri2.startsWith("/")) return Uri2;
+  }
+  return void 0;
+}
+function Route(Uri2) {
+  const Scheme = ExtractScheme(Uri2);
+  if (Tier_default.FileSystem === "Layer2") return "mountain";
+  if (Scheme !== "file") return "mountain";
+  if (ClaimedFileSystemSchemes.has("file")) return "mountain";
+  if (Tier_default.FileSystem === "Layer4") {
+    return ExtractFsPath(Uri2) !== void 0 ? "native" : "mountain";
+  }
+  return ExtractFsPath(Uri2) !== void 0 ? "native" : "mountain";
+}
+var init_FileSystemRoute = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts"() {
+    "use strict";
+    init_Tier();
+    init_Providers();
+    __name(ExtractScheme, "ExtractScheme");
+    __name(ExtractFsPath, "ExtractFsPath");
+    __name(Route, "Route");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
+import { promises as FsPromises } from "node:fs";
+import { dirname as PathDirname } from "node:path";
+var UriToString, FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
+var init_FileSystemNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
+    "use strict";
+    init_StockLift();
+    init_FileSystemRoute();
+    init_Helpers();
+    UriToString = /* @__PURE__ */ __name((Value) => {
+      if (Value == null) return "";
+      if (typeof Value === "string") {
+        if (Value.startsWith("/")) return `file://${Value}`;
+        return Value;
+      }
+      if (typeof Value === "object") {
+        const WithToString = Value;
+        if (typeof WithToString.toString === "function" && WithToString.toString !== Object.prototype.toString) {
+          const Rendered = WithToString.toString();
+          if (Rendered && Rendered !== "[object Object]") return Rendered;
+        }
+        const Hydrated = ToUri(Value);
+        if (Hydrated) return Hydrated.toString();
+        const WithParts = Value;
+        if (typeof WithParts.scheme === "string") {
+          const Scheme = WithParts.scheme;
+          const Authority = typeof WithParts.authority === "string" ? WithParts.authority : "";
+          const PathPart = typeof WithParts.path === "string" ? WithParts.path : "";
+          const Query = typeof WithParts.query === "string" && WithParts.query.length > 0 ? `?${WithParts.query}` : "";
+          const Fragment = typeof WithParts.fragment === "string" && WithParts.fragment.length > 0 ? `#${WithParts.fragment}` : "";
+          return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
+        }
+        if (typeof WithParts.fsPath === "string") {
+          return `file://${WithParts.fsPath}`;
+        }
+      }
+      return String(Value);
+    }, "UriToString");
+    FileType2 = {
+      Unknown: 0,
+      File: 1,
+      Directory: 2,
+      SymbolicLink: 64
+    };
+    LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
+      const Enabled2 = process.env["LAND_DEV_LOG"];
+      if (!Enabled2 || !Enabled2.includes("fs-route")) return;
+      process.stdout.write(
+        `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
+`
+      );
+    }, "LogRoute");
+    ThrowFileNotFound = /* @__PURE__ */ __name((Uri2) => {
+      const Api = globalThis.__cocoonVscodeAPI;
+      const FileNotFound = Api?.FileSystemError?.FileNotFound;
+      if (typeof FileNotFound === "function") throw FileNotFound(Uri2);
+      const Synthetic = new Error(
+        `EntryNotFound (FileSystemError): ${UriToString(Uri2)}`
+      );
+      Synthetic.code = "FileNotFound";
+      Synthetic.name = "FileSystemError";
+      throw Synthetic;
+    }, "ThrowFileNotFound");
+    MetadataToStat = /* @__PURE__ */ __name((Metadata) => ({
+      type: Metadata.isSymbolicLink() ? FileType2.SymbolicLink : Metadata.isDirectory() ? FileType2.Directory : FileType2.File,
+      size: Metadata.size,
+      mtime: Math.floor(Metadata.mtimeMs),
+      ctime: Math.floor(Metadata.ctimeMs)
+    }), "MetadataToStat");
+    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
+      stat: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("stat", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            const Metadata = await FsPromises.lstat(Path);
+            return MetadataToStat(Metadata);
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        return await Call(Context, "FileSystem.Stat", [
+          UriToString(Uri2)
+        ]) ?? {
+          type: FileType2.File,
+          size: 0,
+          ctime: 0,
+          mtime: 0
+        };
+      }, "stat"),
+      readFile: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("readFile", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            return await FsPromises.readFile(Path);
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        const UriString = UriToString(Uri2);
+        try {
+          const Raw2 = await Context.MountainClient?.sendRequest(
+            "FileSystem.ReadFile",
+            [UriString]
+          );
+          if (Raw2 == null) return Buffer.alloc(0);
+          if (Array.isArray(Raw2))
+            return Buffer.from(Raw2);
+          if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
+          return Buffer.from(String(Raw2), "utf8");
+        } catch (Err) {
+          const Message = Err instanceof Error ? Err.message : String(Err);
+          const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
+          if (/resource not found|ENOENT|not found/i.test(Message)) {
+            if (TraceFsRead) {
+              process.stdout.write(
+                `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+`
+              );
+            }
+            ThrowFileNotFound(Uri2);
+          }
+          process.stdout.write(
+            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
+`
+          );
+          throw Err;
+        }
+      }, "readFile"),
+      writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
+        const Decision = Route(Uri2);
+        LogRoute("writeFile", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          const Parent = PathDirname(Path);
+          if (Parent && Parent !== Path) {
+            await FsPromises.mkdir(Parent, { recursive: true }).catch(
+              () => {
+              }
+            );
+          }
+          await FsPromises.writeFile(Path, Content);
+          return;
+        }
+        const Text = new TextDecoder().decode(Content);
+        await Call(Context, "FileSystem.WriteFile", [
+          UriToString(Uri2),
+          Text
+        ]);
+      }, "writeFile"),
+      readDirectory: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("readDirectory", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            const Entries = await FsPromises.readdir(Path, {
+              withFileTypes: true
+            });
+            return Entries.map((Entry) => {
+              const Type = Entry.isSymbolicLink() ? FileType2.SymbolicLink : Entry.isDirectory() ? FileType2.Directory : FileType2.File;
+              return [Entry.name, Type];
+            });
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        return await Call(
+          Context,
+          "FileSystem.ReadDirectory",
+          [UriToString(Uri2)]
+        ) ?? [];
+      }, "readDirectory"),
+      createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("createDirectory", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          await FsPromises.mkdir(Path, { recursive: true });
+          return;
+        }
+        await Call(Context, "FileSystem.CreateDirectory", [
+          UriToString(Uri2)
+        ]);
+      }, "createDirectory"),
+      delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
+        const Decision = Route(Uri2);
+        LogRoute("delete", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            await FsPromises.rm(Path, {
+              recursive: Options?.recursive ?? false,
+              force: false
+            });
+            return;
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        await Call(Context, "FileSystem.Delete", [
+          UriToString(Uri2),
+          Options?.recursive ?? false
+        ]);
+      }, "delete"),
+      rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+        const SourceRoute = Route(Source);
+        const TargetRoute = Route(Target);
+        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
+        LogRoute("rename", Source, Decision);
+        if (Decision === "native") {
+          const SourcePath = ExtractFsPath(Source);
+          const TargetPath = ExtractFsPath(Target);
+          try {
+            await FsPromises.rename(SourcePath, TargetPath);
+            return;
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+            throw Err;
+          }
+        }
+        await Call(Context, "FileSystem.Rename", [
+          UriToString(Source),
+          UriToString(Target)
+        ]);
+      }, "rename"),
+      copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+        const SourceRoute = Route(Source);
+        const TargetRoute = Route(Target);
+        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
+        LogRoute("copy", Source, Decision);
+        if (Decision === "native") {
+          const SourcePath = ExtractFsPath(Source);
+          const TargetPath = ExtractFsPath(Target);
+          const Parent = PathDirname(TargetPath);
+          if (Parent && Parent !== TargetPath) {
+            await FsPromises.mkdir(Parent, { recursive: true }).catch(
+              () => {
+              }
+            );
+          }
+          try {
+            await FsPromises.copyFile(SourcePath, TargetPath);
+            return;
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+            throw Err;
+          }
+        }
+        await Call(Context, "FileSystem.Copy", [
+          UriToString(Source),
+          UriToString(Target)
+        ]);
+      }, "copy"),
+      isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
+        if (Scheme === "file") return true;
+        return true;
+      }, "isWritableFileSystem")
+    }), "BuildFileSystemNamespace");
   }
 });
 
@@ -24027,78 +24839,89 @@ var init_GlobToRegex = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
-var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, ResolveWorkspaceFolders;
-var init_Helpers = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts"() {
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
+var CreateFileSystemWatcher;
+var init_FileSystemWatcher = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts"() {
     "use strict";
-    EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
-      Context.WorkspaceEventEmitter.on(EventName, Listener);
-      return {
+    init_GlobToRegex();
+    init_Tier();
+    init_LanguageProviderRegistry();
+    init_Helpers();
+    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
+      const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") };
+      const StubWatcher = {
+        ignoreCreateEvents: IgnoreCreateEvents === true,
+        ignoreChangeEvents: IgnoreChangeEvents === true,
+        ignoreDeleteEvents: IgnoreDeleteEvents === true,
+        onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
+        onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
+        onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
         dispose: /* @__PURE__ */ __name(() => {
-          Context.WorkspaceEventEmitter.removeListener(
-            EventName,
-            Listener
-          );
         }, "dispose")
       };
-    }, "EventSubscriber");
-    Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
-      try {
-        return await Context.MountainClient?.sendRequest(
-          Method,
-          Parameters
-        );
-      } catch {
-        return void 0;
+      if (Tier_default.FileWatcher !== "Layer4") {
+        return StubWatcher;
       }
-    }, "Call");
-    DefaultExcludeSegments = /* @__PURE__ */ new Set([
-      ".git",
-      "node_modules",
-      ".astro",
-      ".next",
-      ".nuxt",
-      ".cache",
-      ".turbo",
-      ".pnpm",
-      "Target",
-      "target",
-      "dist",
-      "out",
-      "build",
-      ".DS_Store"
-    ]);
-    ExtractGlobPattern = /* @__PURE__ */ __name((Raw2) => {
-      if (typeof Raw2 === "string" && Raw2.length > 0) return Raw2;
-      if (Raw2 && typeof Raw2 === "object") {
-        const Obj = Raw2;
-        if (typeof Obj["pattern"] === "string") return Obj["pattern"];
-        if (typeof Obj["glob"] === "string") return Obj["glob"];
+      const PatternString = ExtractGlobPattern(Pattern);
+      if (!PatternString) {
+        return StubWatcher;
       }
-      return void 0;
-    }, "ExtractGlobPattern");
-    FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
-      const Raw2 = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
-      if (typeof Raw2 !== "string" || Raw2.length === 0) return void 0;
-      if (Raw2.startsWith("file:")) {
-        try {
-          return decodeURIComponent(new URL(Raw2).pathname);
-        } catch {
-          return Raw2.replace(/^file:\/\//, "");
-        }
+      const Matcher = GlobToRegex_default(PatternString);
+      const Folders = ResolveWorkspaceFolders(Context);
+      const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
+      if (!Root) {
+        return StubWatcher;
       }
-      return Raw2;
-    }, "FolderToFsPath");
-    ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
-      const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-      return (InitWorkspace.folders ?? []).map((Folder) => {
-        const FsPath = FolderToFsPath(Folder?.uri);
-        const Record = { ...Folder };
-        if (typeof FsPath === "string") Record.FsPath = FsPath;
-        return Record;
+      const Handle = NextProviderHandle();
+      const IsRecursive = PatternString.includes("**");
+      Context.MountainClient?.sendRequest("FileWatcher.Register", [
+        Handle,
+        Root,
+        IsRecursive,
+        PatternString
+      ]).catch(() => {
       });
-    }, "ResolveWorkspaceFolders");
+      const EventName = `fileWatcher:${Handle}`;
+      const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
+        if (Ignore) return StubDisposable;
+        const WrappedListener = /* @__PURE__ */ __name((Event2) => {
+          if (Event2.kind !== Kind) return;
+          if (!Matcher.test(Event2.path)) return;
+          try {
+            Listener({
+              scheme: "file",
+              path: Event2.path,
+              fsPath: Event2.path,
+              toString: /* @__PURE__ */ __name(() => `file://${Event2.path}`, "toString")
+            });
+          } catch {
+          }
+        }, "WrappedListener");
+        Context.Emitter.on(EventName, WrappedListener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context.Emitter.removeListener(EventName, WrappedListener);
+          }, "dispose")
+        };
+      }, "MakeSubscriber");
+      return {
+        ignoreCreateEvents: IgnoreCreateEvents === true,
+        ignoreChangeEvents: IgnoreChangeEvents === true,
+        ignoreDeleteEvents: IgnoreDeleteEvents === true,
+        onDidCreate: MakeSubscriber("create", IgnoreCreateEvents === true),
+        onDidChange: MakeSubscriber("change", IgnoreChangeEvents === true),
+        onDidDelete: MakeSubscriber("delete", IgnoreDeleteEvents === true),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.Emitter.removeAllListeners(EventName);
+          Context.MountainClient?.sendRequest("FileWatcher.Unregister", [
+            Handle
+          ]).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "CreateFileSystemWatcher");
   }
 });
 
@@ -24128,22 +24951,25 @@ var init_FindFiles = __esm({
       const IncludePattern = ExtractGlobPattern(Include);
       const ExcludePattern = ExtractGlobPattern(Exclude);
       const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-        `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+        process.stdout.write(
+          `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
 `
-      );
-      if (!IncludePattern) {
-        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-          "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
         );
+      if (!IncludePattern) {
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+          process.stdout.write(
+            "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
+          );
         return [];
       }
       const IncludeMatcher = CompileGlob(IncludePattern);
       if (!IncludeMatcher) {
-        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+          process.stdout.write(
+            `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
 `
-        );
+          );
         return [];
       }
       const ExcludeMatcher = ExcludePattern ? CompileGlob(ExcludePattern) : void 0;
@@ -24211,31 +25037,34 @@ var init_FindFiles = __esm({
       for (const Folder of Folders) {
         const FsPath = FolderToFsPath(Folder?.uri);
         if (!FsPath) {
-          if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-            `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
+          if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+            process.stdout.write(
+              `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
 `
-          );
+            );
           continue;
         }
         await Walk(FsPath, FsPath, 0);
       }
       if (Truncated) {
-        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-          `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+          process.stdout.write(
+            `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
+`
+          );
+      }
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+        process.stdout.write(
+          `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
 `
         );
-      }
-      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-        `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
-`
-      );
       return Results;
     }, "FindFilesLocal");
   }
 });
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts
-import { promises as FsPromises } from "node:fs";
+import { promises as FsPromises2 } from "node:fs";
 async function FindTextInFilesNodeFallback(Context, Folders, Query, Options, Callback) {
   const Pattern = ExtractPattern(Query);
   if (!Pattern) return { limitHit: false };
@@ -24257,7 +25086,7 @@ async function FindTextInFilesNodeFallback(Context, Folders, Query, Options, Cal
     if (!Path) continue;
     let Content;
     try {
-      Content = await FsPromises.readFile(Path, Encoding);
+      Content = await FsPromises2.readFile(Path, Encoding);
     } catch {
       continue;
     }
@@ -24334,571 +25163,6 @@ var init_FindTextInFilesFallback = __esm({
       return U.fsPath ?? U.path;
     }, "ToFsPath");
     __name(FindTextInFilesNodeFallback, "FindTextInFilesNodeFallback");
-  }
-});
-
-// Source/Utility/Tier.ts
-var Injected, Pick, Tier, Tier_default;
-var init_Tier = __esm({
-  "Source/Utility/Tier.ts"() {
-    "use strict";
-    init_LandFixLog();
-    Injected = globalThis.__LandTiers ?? {};
-    Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
-      const FromInjected = Injected[Capability];
-      if (typeof FromInjected === "string" && FromInjected.length > 0) {
-        return FromInjected;
-      }
-      const FromEnvironment = process.env[`Tier${Capability}`];
-      if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
-        return FromEnvironment;
-      }
-      return Fallback;
-    }, "Pick");
-    Tier = {
-      RemoteProcedureCall: Pick(
-        "RemoteProcedureCall",
-        "GRPC"
-      ),
-      HTTPProxy: Pick("HTTPProxy", "HandRolled"),
-      Logger: Pick("Logger", "Standard"),
-      FileSystem: Pick("FileSystem", "Layer2"),
-      FindFiles: Pick("FindFiles", "Layer3"),
-      Glob: Pick("Glob", "JavaScript"),
-      // Default Layer4 so `createFileSystemWatcher` forwards to Mountain's
-      // native `notify`-crate implementation in `Environment/FileWatcherProvider.rs`.
-      // Stub mode drops every watch registration, leaving every extension that
-      // relies on file-change events (eslint, typescript, tailwind, most
-      // language servers) blind to disk mutations. Override with
-      // `TierFileWatcher=Stub` at launch to restore the old drop behaviour
-      // for debugging.
-      FileWatcher: Pick("FileWatcher", "Layer4"),
-      SchemeAssets: Pick("SchemeAssets", "Embedded"),
-      Configuration: Pick("Configuration", "Cache"),
-      Diagnostics: Pick("Diagnostics", "Full"),
-      Clipboard: Pick("Clipboard", "Layer3"),
-      OpenExternal: Pick("OpenExternal", "Layer3"),
-      DocumentMirror: Pick("DocumentMirror", "Full"),
-      ExtensionActivation: Pick(
-        "ExtensionActivation",
-        "Parallel8"
-      ),
-      ExtensionScan: Pick("ExtensionScan", "Sequential"),
-      ModuleCache: Pick("ModuleCache", "Simple"),
-      Telemetry: Pick("Telemetry", "Synchronous")
-    };
-    LandFixLog_default.Info(
-      "Tier",
-      `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
-    );
-    Tier_default = Tier;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
-var CreateFileSystemWatcher;
-var init_FileSystemWatcher = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts"() {
-    "use strict";
-    init_GlobToRegex();
-    init_Tier();
-    init_LanguageProviderRegistry();
-    init_Helpers();
-    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
-      const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") };
-      const StubWatcher = {
-        ignoreCreateEvents: IgnoreCreateEvents === true,
-        ignoreChangeEvents: IgnoreChangeEvents === true,
-        ignoreDeleteEvents: IgnoreDeleteEvents === true,
-        onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
-        onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
-        onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      };
-      if (Tier_default.FileWatcher !== "Layer4") {
-        return StubWatcher;
-      }
-      const PatternString = ExtractGlobPattern(Pattern);
-      if (!PatternString) {
-        return StubWatcher;
-      }
-      const Matcher = GlobToRegex_default(PatternString);
-      const Folders = ResolveWorkspaceFolders(Context);
-      const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
-      if (!Root) {
-        return StubWatcher;
-      }
-      const Handle = NextProviderHandle();
-      const IsRecursive = PatternString.includes("**");
-      Context.MountainClient?.sendRequest("FileWatcher.Register", [
-        Handle,
-        Root,
-        IsRecursive,
-        PatternString
-      ]).catch(() => {
-      });
-      const EventName = `fileWatcher:${Handle}`;
-      const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
-        if (Ignore) return StubDisposable;
-        const WrappedListener = /* @__PURE__ */ __name((Event2) => {
-          if (Event2.kind !== Kind) return;
-          if (!Matcher.test(Event2.path)) return;
-          try {
-            Listener({
-              scheme: "file",
-              path: Event2.path,
-              fsPath: Event2.path,
-              toString: /* @__PURE__ */ __name(() => `file://${Event2.path}`, "toString")
-            });
-          } catch {
-          }
-        }, "WrappedListener");
-        Context.Emitter.on(EventName, WrappedListener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.Emitter.removeListener(
-              EventName,
-              WrappedListener
-            );
-          }, "dispose")
-        };
-      }, "MakeSubscriber");
-      return {
-        ignoreCreateEvents: IgnoreCreateEvents === true,
-        ignoreChangeEvents: IgnoreChangeEvents === true,
-        ignoreDeleteEvents: IgnoreDeleteEvents === true,
-        onDidCreate: MakeSubscriber(
-          "create",
-          IgnoreCreateEvents === true
-        ),
-        onDidChange: MakeSubscriber(
-          "change",
-          IgnoreChangeEvents === true
-        ),
-        onDidDelete: MakeSubscriber(
-          "delete",
-          IgnoreDeleteEvents === true
-        ),
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.removeAllListeners(EventName);
-          Context.MountainClient?.sendRequest(
-            "FileWatcher.Unregister",
-            [Handle]
-          ).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "CreateFileSystemWatcher");
-  }
-});
-
-// Source/Services/DevLog.ts
-var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_default;
-var init_DevLog = __esm({
-  "Source/Services/DevLog.ts"() {
-    "use strict";
-    Raw = process.env["LAND_DEV_LOG"] ?? "";
-    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
-    TagSet = new Set(ParsedTags);
-    IsShort = TagSet.has("short");
-    HasAll = TagSet.has("all");
-    IsEnabled = /* @__PURE__ */ __name((Tag) => {
-      if (TagSet.size === 0) return false;
-      if (HasAll || IsShort) return true;
-      return TagSet.has(Tag.toLowerCase());
-    }, "IsEnabled");
-    CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
-      if (!IsEnabled(Tag)) return;
-      const TagUpper = Tag.toUpperCase();
-      process.stdout.write(`[DEV:${TagUpper}] ${Message}
-`);
-    }, "CocoonDevLog");
-    DevLog_default = CocoonDevLog;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
-var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
-var init_Configuration2 = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
-    "use strict";
-    init_DevLog();
-    init_Helpers();
-    CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
-      const ConfigCache = /* @__PURE__ */ new Map();
-      const ConfigInFlight = /* @__PURE__ */ new Set();
-      const ConfigListeners = /* @__PURE__ */ new Set();
-      const FireConfigChange = /* @__PURE__ */ __name((ChangedKey) => {
-        if (ConfigListeners.size === 0) return;
-        const Event2 = {
-          affectsConfiguration: /* @__PURE__ */ __name((QueryKey) => ChangedKey === QueryKey || ChangedKey.startsWith(`${QueryKey}.`), "affectsConfiguration")
-        };
-        for (const Listener of ConfigListeners) {
-          try {
-            Listener(Event2);
-          } catch {
-          }
-        }
-      }, "FireConfigChange");
-      const PrimeConfig = /* @__PURE__ */ __name((Key) => {
-        if (ConfigInFlight.has(Key)) return;
-        ConfigInFlight.add(Key);
-        void Call(
-          Context,
-          "Configuration.Inspect",
-          [Key]
-        ).then((Value) => {
-          ConfigInFlight.delete(Key);
-          if (Value === void 0) return;
-          const Shape = Value;
-          const Resolved = Shape?.["effectiveValue"] ?? Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["userValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
-          const Prior = ConfigCache.get(Key);
-          ConfigCache.set(Key, Resolved);
-          if (Prior !== Resolved) FireConfigChange(Key);
-        });
-      }, "PrimeConfig");
-      const PrePopulateFromManifest = /* @__PURE__ */ __name((PackageJSON) => {
-        const Manifest = PackageJSON ?? {};
-        const Contributed = Manifest.contributes?.configuration;
-        if (!Contributed) return;
-        const Sections = Array.isArray(Contributed) ? Contributed : [Contributed];
-        let Seeded = 0;
-        let Skipped = 0;
-        let ExtensionId = "";
-        const ManifestShape = PackageJSON ?? {};
-        if (ManifestShape.publisher && ManifestShape.name) {
-          ExtensionId = `${ManifestShape.publisher}.${ManifestShape.name}`;
-        }
-        for (const Section of Sections) {
-          const Properties = Section?.properties;
-          if (!Properties) continue;
-          for (const [DottedKey, Declaration] of Object.entries(
-            Properties
-          )) {
-            if (ConfigCache.has(DottedKey)) {
-              Skipped++;
-              continue;
-            }
-            if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
-              ConfigCache.set(DottedKey, Declaration.default);
-              Seeded++;
-            }
-          }
-        }
-        CocoonDevLog(
-          "config-prime",
-          `[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`
-        );
-      }, "PrePopulateFromManifest");
-      Context.Emitter.on("configurationChanged", (Payload) => {
-        const Shape = Payload ?? {};
-        const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
-        if (Keys.length === 0) {
-          return;
-        }
-        for (const Key of Keys) {
-          ConfigCache.delete(Key);
-          FireConfigChange(Key);
-          PrimeConfig(Key);
-        }
-      });
-      return {
-        ConfigCache,
-        ConfigInFlight,
-        ConfigListeners,
-        FireConfigChange,
-        PrimeConfig,
-        PrePopulateFromManifest
-      };
-    }, "CreateConfigurationState");
-    SynthesiseSubtree = /* @__PURE__ */ __name((Cache3, Full) => {
-      const Prefix = `${Full}.`;
-      const Subtree = {};
-      let Matched = false;
-      for (const [CachedKey, CachedValue] of Cache3.entries()) {
-        if (!CachedKey.startsWith(Prefix)) continue;
-        Matched = true;
-        const Local = CachedKey.slice(Prefix.length);
-        const Parts = Local.split(".");
-        let Current = Subtree;
-        for (let I = 0; I < Parts.length - 1; I++) {
-          const Segment = Parts[I];
-          const Existing = Current[Segment];
-          if (Existing === void 0 || Existing === null || typeof Existing !== "object") {
-            Current[Segment] = {};
-          }
-          Current = Current[Segment];
-        }
-        Current[Parts[Parts.length - 1]] = CachedValue;
-      }
-      return Matched ? Subtree : void 0;
-    }, "SynthesiseSubtree");
-    BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section, _Scope) => ({
-      get: /* @__PURE__ */ __name((Key, DefaultValue) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        if (State.ConfigCache.has(Full)) {
-          const Cached = State.ConfigCache.get(Full);
-          if (Cached === null || Cached === void 0) {
-            const Subtree2 = SynthesiseSubtree(State.ConfigCache, Full);
-            if (Subtree2 !== void 0) {
-              CocoonDevLog(
-                "config-prime",
-                `[ConfigPrime] synthesise key=${Full} source=null-shadowed`
-              );
-              return Subtree2;
-            }
-          }
-          return Cached;
-        }
-        const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-        if (Subtree !== void 0) {
-          CocoonDevLog(
-            "config-prime",
-            `[ConfigPrime] synthesise key=${Full} source=miss`
-          );
-          return Subtree;
-        }
-        State.PrimeConfig(Full);
-        return DefaultValue;
-      }, "get"),
-      update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
-        await Call(Context, "Configuration.Update", [
-          Full,
-          Value,
-          TargetIndex
-        ]);
-        const Prior = State.ConfigCache.get(Full);
-        State.ConfigCache.set(Full, Value);
-        if (Prior !== Value) State.FireConfigChange(Full);
-      }, "update"),
-      has: /* @__PURE__ */ __name((Key) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        if (State.ConfigCache.has(Full)) return true;
-        if (SynthesiseSubtree(State.ConfigCache, Full) !== void 0) {
-          return true;
-        }
-        State.PrimeConfig(Full);
-        return false;
-      }, "has"),
-      inspect: /* @__PURE__ */ __name((Key) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        let Cached;
-        if (State.ConfigCache.has(Full)) {
-          Cached = State.ConfigCache.get(Full);
-        } else {
-          const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-          if (Subtree === void 0) {
-            State.PrimeConfig(Full);
-            return void 0;
-          }
-          Cached = Subtree;
-        }
-        return {
-          key: Full,
-          defaultValue: void 0,
-          globalValue: Cached,
-          workspaceValue: void 0,
-          workspaceFolderValue: void 0,
-          defaultLanguageValue: void 0,
-          globalLanguageValue: void 0,
-          workspaceLanguageValue: void 0,
-          workspaceFolderLanguageValue: void 0,
-          languageIds: []
-        };
-      }, "inspect")
-    }), "BuildGetConfiguration");
-    BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener, ThisArg, Disposables) => {
-      const Bound = ThisArg === void 0 ? Listener : Listener.bind(ThisArg);
-      State.ConfigListeners.add(Bound);
-      const Subscription = {
-        dispose: /* @__PURE__ */ __name(() => {
-          State.ConfigListeners.delete(Bound);
-        }, "dispose")
-      };
-      if (Disposables && typeof Disposables.push === "function") {
-        Disposables.push(Subscription);
-      }
-      return Subscription;
-    }, "BuildOnDidChangeConfiguration");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts
-var MakeProvider, BuildRegisterTextDocumentContentProvider, ClaimedFileSystemSchemes, BuildRegisterFileSystemProvider, BuildRegisterTaskProvider, BuildRegisterNotebookContentProvider, BuildRegisterNotebookSerializer, BuildRegisterRemoteAuthorityResolver, BuildRegisterResourceLabelFormatter;
-var init_Providers = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts"() {
-    "use strict";
-    init_LanguageProviderRegistry();
-    MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMethod, _LegacyHandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
-      const Handle = NextProviderHandle();
-      Context.SendToMountain(RegisterMethod, {
-        handle: Handle,
-        ...ExtraPayload(Key)
-      }).catch(() => {
-      });
-      OnRegister?.(Handle, Key, _Provider);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          OnDispose?.(Handle, Key);
-          Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-            () => {
-            }
-          );
-        }, "dispose")
-      };
-    }, "MakeProvider");
-    BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_text_document_content_provider",
-      "unregister_text_document_content_provider",
-      "textDocumentContent",
-      (Scheme) => ({ scheme: Scheme, extensionId: "" }),
-      (_Handle, Scheme, Provider) => {
-        Context.ExtensionRegistry.set(
-          `__textDocumentContentProvider:${Scheme}`,
-          Provider
-        );
-      },
-      (_Handle, Scheme) => {
-        Context.ExtensionRegistry.delete(
-          `__textDocumentContentProvider:${Scheme}`
-        );
-      }
-    ), "BuildRegisterTextDocumentContentProvider");
-    ClaimedFileSystemSchemes = /* @__PURE__ */ new Set();
-    BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Scheme, _Provider, Options) => {
-      const Handle = NextProviderHandle();
-      ClaimedFileSystemSchemes.add(Scheme);
-      Context.SendToMountain("register_file_system_provider", {
-        handle: Handle,
-        scheme: Scheme,
-        isCaseSensitive: Options?.isCaseSensitive ?? true,
-        isReadonly: Options?.isReadonly ?? false,
-        extensionId: ""
-      }).catch(() => {
-      });
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          ClaimedFileSystemSchemes.delete(Scheme);
-          Context.SendToMountain("unregister_file_system_provider", {
-            handle: Handle
-          }).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "BuildRegisterFileSystemProvider");
-    BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_task_provider",
-      "unregister_task_provider",
-      "taskProvider",
-      (TaskType) => ({ taskType: TaskType, extensionId: "" })
-    ), "BuildRegisterTaskProvider");
-    BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_notebook_content_provider",
-      "unregister_notebook_content_provider",
-      "notebookContent",
-      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
-    ), "BuildRegisterNotebookContentProvider");
-    BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_notebook_serializer",
-      "unregister_notebook_serializer",
-      "notebookSerializer",
-      (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
-    ), "BuildRegisterNotebookSerializer");
-    BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
-      Context.SendToMountain("register_remote_authority_resolver", {
-        authorityPrefix: AuthorityPrefix,
-        extensionId: ""
-      }).catch(() => {
-      });
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.SendToMountain(
-            "unregister_remote_authority_resolver",
-            { authorityPrefix: AuthorityPrefix }
-          ).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "BuildRegisterRemoteAuthorityResolver");
-    BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context) => (Formatter) => {
-      Context.SendToMountain("register_resource_label_formatter", {
-        formatter: Formatter
-      }).catch(() => {
-      });
-      return { dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") };
-    }, "BuildRegisterResourceLabelFormatter");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts
-function ExtractScheme(Uri2) {
-  if (Uri2 && typeof Uri2 === "object") {
-    const WithScheme = Uri2;
-    if (typeof WithScheme.scheme === "string" && WithScheme.scheme.length > 0) {
-      return WithScheme.scheme;
-    }
-  }
-  if (typeof Uri2 === "string") {
-    const Colon = Uri2.indexOf(":");
-    if (Colon > 0 && Colon < 32) {
-      const Scheme = Uri2.slice(0, Colon);
-      if (/^[a-zA-Z][a-zA-Z0-9+\-.]*$/.test(Scheme)) {
-        return Scheme.toLowerCase();
-      }
-    }
-    return "file";
-  }
-  return "file";
-}
-function ExtractFsPath(Uri2) {
-  if (Uri2 && typeof Uri2 === "object") {
-    const WithPath = Uri2;
-    if (typeof WithPath.fsPath === "string" && WithPath.fsPath.length > 0) {
-      return WithPath.fsPath;
-    }
-    if (typeof WithPath.path === "string" && WithPath.path.length > 0) {
-      return WithPath.path;
-    }
-  }
-  if (typeof Uri2 === "string") {
-    if (Uri2.startsWith("file://")) {
-      try {
-        return decodeURIComponent(Uri2.slice("file://".length));
-      } catch {
-        return Uri2.slice("file://".length);
-      }
-    }
-    if (Uri2.startsWith("/")) return Uri2;
-  }
-  return void 0;
-}
-function Route(Uri2) {
-  const Scheme = ExtractScheme(Uri2);
-  if (Tier_default.FileSystem === "Layer2") return "mountain";
-  if (Scheme !== "file") return "mountain";
-  if (ClaimedFileSystemSchemes.has("file")) return "mountain";
-  if (Tier_default.FileSystem === "Layer4") {
-    return ExtractFsPath(Uri2) !== void 0 ? "native" : "mountain";
-  }
-  return ExtractFsPath(Uri2) !== void 0 ? "native" : "mountain";
-}
-var init_FileSystemRoute = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts"() {
-    "use strict";
-    init_Tier();
-    init_Providers();
-    __name(ExtractScheme, "ExtractScheme");
-    __name(ExtractFsPath, "ExtractFsPath");
-    __name(Route, "Route");
   }
 });
 
@@ -25060,13 +25324,13 @@ var init_LanguageActivation = __esm({
 });
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts
-import { promises as FsPromises2 } from "node:fs";
+import { promises as FsPromises3 } from "node:fs";
 var BuildOpenTextDocument, BuildSaveAll, BuildApplyEdit, BuildUpdateWorkspaceFolders, BuildDocumentEventMembers;
 var init_TextDocument = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts"() {
     "use strict";
-    init_Helpers();
     init_FileSystemRoute();
+    init_Helpers();
     init_LanguageActivation();
     BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath) => {
       const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
@@ -25086,7 +25350,7 @@ var init_TextDocument = __esm({
               );
             }
             try {
-              Text = await FsPromises2.readFile(Path, "utf8");
+              Text = await FsPromises3.readFile(Path, "utf8");
             } catch {
               Text = "";
             }
@@ -25137,11 +25401,13 @@ var init_TextDocument = __esm({
     BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
       const Current = ReadFolders();
       const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
-      const Removals = Current.slice(Start, Start + RemoveCount).map((Folder) => ({
-        uri: {
-          value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
-        }
-      }));
+      const Removals = Current.slice(Start, Start + RemoveCount).map(
+        (Folder) => ({
+          uri: {
+            value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
+          }
+        })
+      );
       const Additions = ToAdd.map((Folder) => {
         const Raw2 = Folder?.uri;
         const Serialized = typeof Raw2 === "string" ? Raw2 : Raw2?.["toString"]?.call(Raw2) ?? String(Raw2 ?? "");
@@ -25198,268 +25464,6 @@ var init_TextDocument = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
-import { promises as FsPromises3 } from "node:fs";
-import { dirname as PathDirname } from "node:path";
-var UriToString, FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
-var init_FileSystemNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
-    "use strict";
-    init_StockLift();
-    init_Helpers();
-    init_FileSystemRoute();
-    UriToString = /* @__PURE__ */ __name((Value) => {
-      if (Value == null) return "";
-      if (typeof Value === "string") {
-        if (Value.startsWith("/")) return `file://${Value}`;
-        return Value;
-      }
-      if (typeof Value === "object") {
-        const WithToString = Value;
-        if (typeof WithToString.toString === "function" && WithToString.toString !== Object.prototype.toString) {
-          const Rendered = WithToString.toString();
-          if (Rendered && Rendered !== "[object Object]") return Rendered;
-        }
-        const Hydrated = ToUri(Value);
-        if (Hydrated) return Hydrated.toString();
-        const WithParts = Value;
-        if (typeof WithParts.scheme === "string") {
-          const Scheme = WithParts.scheme;
-          const Authority = typeof WithParts.authority === "string" ? WithParts.authority : "";
-          const PathPart = typeof WithParts.path === "string" ? WithParts.path : "";
-          const Query = typeof WithParts.query === "string" && WithParts.query.length > 0 ? `?${WithParts.query}` : "";
-          const Fragment = typeof WithParts.fragment === "string" && WithParts.fragment.length > 0 ? `#${WithParts.fragment}` : "";
-          return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
-        }
-        if (typeof WithParts.fsPath === "string") {
-          return `file://${WithParts.fsPath}`;
-        }
-      }
-      return String(Value);
-    }, "UriToString");
-    FileType2 = {
-      Unknown: 0,
-      File: 1,
-      Directory: 2,
-      SymbolicLink: 64
-    };
-    LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
-      const Enabled2 = process.env["LAND_DEV_LOG"];
-      if (!Enabled2 || !Enabled2.includes("fs-route")) return;
-      process.stdout.write(
-        `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
-`
-      );
-    }, "LogRoute");
-    ThrowFileNotFound = /* @__PURE__ */ __name((Uri2) => {
-      const Api = globalThis.__cocoonVscodeAPI;
-      const FileNotFound = Api?.FileSystemError?.FileNotFound;
-      if (typeof FileNotFound === "function") throw FileNotFound(Uri2);
-      const Synthetic = new Error(
-        `EntryNotFound (FileSystemError): ${UriToString(Uri2)}`
-      );
-      Synthetic.code = "FileNotFound";
-      Synthetic.name = "FileSystemError";
-      throw Synthetic;
-    }, "ThrowFileNotFound");
-    MetadataToStat = /* @__PURE__ */ __name((Metadata) => ({
-      type: Metadata.isSymbolicLink() ? FileType2.SymbolicLink : Metadata.isDirectory() ? FileType2.Directory : FileType2.File,
-      size: Metadata.size,
-      mtime: Math.floor(Metadata.mtimeMs),
-      ctime: Math.floor(Metadata.ctimeMs)
-    }), "MetadataToStat");
-    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
-      stat: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("stat", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            const Metadata = await FsPromises3.lstat(Path);
-            return MetadataToStat(Metadata);
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        return await Call(Context, "FileSystem.Stat", [UriToString(Uri2)]) ?? {
-          type: FileType2.File,
-          size: 0,
-          ctime: 0,
-          mtime: 0
-        };
-      }, "stat"),
-      readFile: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("readFile", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            return await FsPromises3.readFile(Path);
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        const UriString = UriToString(Uri2);
-        try {
-          const Raw2 = await Context.MountainClient?.sendRequest(
-            "FileSystem.ReadFile",
-            [UriString]
-          );
-          if (Raw2 == null) return Buffer.alloc(0);
-          if (Array.isArray(Raw2)) return Buffer.from(Raw2);
-          if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
-          return Buffer.from(String(Raw2), "utf8");
-        } catch (Err) {
-          const Message = Err instanceof Error ? Err.message : String(Err);
-          const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
-          if (/resource not found|ENOENT|not found/i.test(Message)) {
-            if (TraceFsRead) {
-              process.stdout.write(
-                `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
-`
-              );
-            }
-            ThrowFileNotFound(Uri2);
-          }
-          process.stdout.write(
-            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
-`
-          );
-          throw Err;
-        }
-      }, "readFile"),
-      writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
-        const Decision = Route(Uri2);
-        LogRoute("writeFile", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          const Parent = PathDirname(Path);
-          if (Parent && Parent !== Path) {
-            await FsPromises3.mkdir(Parent, { recursive: true }).catch(
-              () => {
-              }
-            );
-          }
-          await FsPromises3.writeFile(Path, Content);
-          return;
-        }
-        const Text = new TextDecoder().decode(Content);
-        await Call(Context, "FileSystem.WriteFile", [UriToString(Uri2), Text]);
-      }, "writeFile"),
-      readDirectory: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("readDirectory", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            const Entries = await FsPromises3.readdir(Path, {
-              withFileTypes: true
-            });
-            return Entries.map((Entry) => {
-              const Type = Entry.isSymbolicLink() ? FileType2.SymbolicLink : Entry.isDirectory() ? FileType2.Directory : FileType2.File;
-              return [Entry.name, Type];
-            });
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        return await Call(
-          Context,
-          "FileSystem.ReadDirectory",
-          [UriToString(Uri2)]
-        ) ?? [];
-      }, "readDirectory"),
-      createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("createDirectory", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          await FsPromises3.mkdir(Path, { recursive: true });
-          return;
-        }
-        await Call(Context, "FileSystem.CreateDirectory", [UriToString(Uri2)]);
-      }, "createDirectory"),
-      delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
-        const Decision = Route(Uri2);
-        LogRoute("delete", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            await FsPromises3.rm(Path, {
-              recursive: Options?.recursive ?? false,
-              force: false
-            });
-            return;
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        await Call(Context, "FileSystem.Delete", [
-          UriToString(Uri2),
-          Options?.recursive ?? false
-        ]);
-      }, "delete"),
-      rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-        const SourceRoute = Route(Source);
-        const TargetRoute = Route(Target);
-        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
-        LogRoute("rename", Source, Decision);
-        if (Decision === "native") {
-          const SourcePath = ExtractFsPath(Source);
-          const TargetPath = ExtractFsPath(Target);
-          try {
-            await FsPromises3.rename(SourcePath, TargetPath);
-            return;
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
-            throw Err;
-          }
-        }
-        await Call(Context, "FileSystem.Rename", [
-          UriToString(Source),
-          UriToString(Target)
-        ]);
-      }, "rename"),
-      copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-        const SourceRoute = Route(Source);
-        const TargetRoute = Route(Target);
-        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
-        LogRoute("copy", Source, Decision);
-        if (Decision === "native") {
-          const SourcePath = ExtractFsPath(Source);
-          const TargetPath = ExtractFsPath(Target);
-          const Parent = PathDirname(TargetPath);
-          if (Parent && Parent !== TargetPath) {
-            await FsPromises3.mkdir(Parent, { recursive: true }).catch(
-              () => {
-              }
-            );
-          }
-          try {
-            await FsPromises3.copyFile(SourcePath, TargetPath);
-            return;
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
-            throw Err;
-          }
-        }
-        await Call(Context, "FileSystem.Copy", [
-          UriToString(Source),
-          UriToString(Target)
-        ]);
-      }, "copy"),
-      isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
-        if (Scheme === "file") return true;
-        return true;
-      }, "isWritableFileSystem")
-    }), "BuildFileSystemNamespace");
-  }
-});
-
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts
 var WrapWorkspaceNamespace, WrapWorkspaceNamespace_default;
 var init_WrapWorkspaceNamespace = __esm({
@@ -25478,13 +25482,13 @@ var init_Index = __esm({
     "use strict";
     init_DualTrack();
     init_StockLift();
+    init_Configuration2();
+    init_FileSystemNamespace();
+    init_FileSystemWatcher();
     init_FindFiles();
     init_FindTextInFilesFallback();
-    init_FileSystemWatcher();
-    init_Configuration2();
-    init_TextDocument();
     init_Providers();
-    init_FileSystemNamespace();
+    init_TextDocument();
     init_WrapWorkspaceNamespace();
     HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
       if (!Array.isArray(Raw2)) return [];
@@ -25587,7 +25591,13 @@ var init_Index = __esm({
           const Raw2 = await TryMountainWithEmptyFallback(
             Context,
             "findFiles",
-            [Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
+            [
+              Include,
+              {
+                exclude: Options?.exclude,
+                maxResults: Options?.maxResults
+              }
+            ],
             async (Args) => {
               const [I, _O] = Args;
               const Opts = _O;
@@ -25850,16 +25860,26 @@ var init_Index = __esm({
         // - `registerFileSearchProvider[2]` - remote FS providers.
         // - `registerTextSearchProvider[2]` - grep-for-X extensions.
         // - `registerAITextSearchProvider` - AI search (copilot).
-        registerTimelineProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTimelineProvider"),
-        registerFileSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSearchProvider"),
-        registerFileSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSearchProvider2"),
-        registerTextSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextSearchProvider"),
-        registerTextSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextSearchProvider2"),
+        registerTimelineProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerTimelineProvider"),
+        registerFileSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerFileSearchProvider"),
+        registerFileSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerFileSearchProvider2"),
+        registerTextSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerTextSearchProvider"),
+        registerTextSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerTextSearchProvider2"),
         registerAITextSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerAITextSearchProvider"),
         // createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
@@ -25934,10 +25954,10 @@ var init_CommandsNamespace = __esm({
     CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => WrapCommandsNamespace_default({
       registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context.SendToMountain("registerCommand", { commandId: Command }).catch(
-          () => {
-          }
-        );
+        Context.SendToMountain("registerCommand", {
+          commandId: Command
+        }).catch(() => {
+        });
         return {
           dispose: /* @__PURE__ */ __name(() => {
             LanguageProviderRegistry.UnregisterCommand(Command);
@@ -26068,7 +26088,8 @@ var init_LanguagesNamespace = __esm({
       if (typeof WithParts.scheme === "string" && typeof WithParts.path === "string") {
         return `${WithParts.scheme}://${WithParts.path}`;
       }
-      if (typeof WithParts.fsPath === "string") return `file://${WithParts.fsPath}`;
+      if (typeof WithParts.fsPath === "string")
+        return `file://${WithParts.fsPath}`;
       return Rendered;
     }, "UriKey");
     RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
@@ -26389,7 +26410,8 @@ var init_LanguagesNamespace = __esm({
             let Score = 0;
             if (Filter.language !== void 0) {
               if (Filter.language === "*") Score += 5;
-              else if (Filter.language === Doc.languageId) Score += 10;
+              else if (Filter.language === Doc.languageId)
+                Score += 10;
               else return 0;
             }
             if (Filter.scheme !== void 0) {
@@ -26458,7 +26480,8 @@ var init_LanguagesNamespace = __esm({
           }
           if (typeof Filter.pattern === "string" && DocPath.length > 0) {
             try {
-              if (GlobToRegex_default(Filter.pattern).test(DocPath)) Score += 5;
+              if (GlobToRegex_default(Filter.pattern).test(DocPath))
+                Score += 5;
               else return 0;
             } catch {
               return 0;
@@ -26753,7 +26776,11 @@ var init_ExtensionsNamespace = __esm({
         name: typeof Raw2.name === "string" && Raw2.name.length > 0 ? Raw2.name : Id,
         version: typeof Raw2.version === "string" && Raw2.version.length > 0 ? Raw2.version : "0.0.0",
         publisher: typeof Raw2.publisher === "string" ? Raw2.publisher : Id.split(".")[0] ?? "unknown"
-      } : { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
+      } : {
+        name: Id,
+        version: "0.0.0",
+        publisher: Id.split(".")[0] ?? "unknown"
+      };
       return {
         id: Id,
         extensionUri: ExtensionUri,
@@ -27130,7 +27157,9 @@ var init_DebugNamespace = __esm({
       stopDebugging: /* @__PURE__ */ __name(async (Session) => {
         try {
           const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
-          await Context.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
+          await Context.MountainClient?.sendRequest("Debug.Stop", [
+            SessionId
+          ]);
         } catch {
         }
       }, "stopDebugging"),
@@ -27147,7 +27176,10 @@ var init_DebugNamespace = __esm({
         });
       }, "removeBreakpoints"),
       asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
-      onDidStartDebugSession: EventSubscriber2(Context, "debug.didStartSession"),
+      onDidStartDebugSession: EventSubscriber2(
+        Context,
+        "debug.didStartSession"
+      ),
       onDidTerminateDebugSession: EventSubscriber2(
         Context,
         "debug.didTerminateSession"
@@ -27256,9 +27288,10 @@ var init_TasksNamespace = __esm({
       }, "fetchTasks"),
       executeTask: /* @__PURE__ */ __name(async (Task3) => {
         try {
-          return await Context.MountainClient?.sendRequest("Task.Execute", [
-            Task3
-          ]);
+          return await Context.MountainClient?.sendRequest(
+            "Task.Execute",
+            [Task3]
+          );
         } catch {
           return void 0;
         }
@@ -27294,8 +27327,8 @@ var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
-    init_WrapScmNamespace();
     init_WrapNamespaceWithHeuristics();
+    init_WrapScmNamespace();
     ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
     ScmTrace = /* @__PURE__ */ __name((Message) => {
       if (!ScmTraceEnabled) return;
@@ -27309,7 +27342,8 @@ var init_ScmNamespace = __esm({
       if (Raw2 == null || typeof Raw2 !== "object") return Raw2;
       const Source = Raw2;
       const Out = {};
-      if (Source["resourceUri"] !== void 0) Out["resourceUri"] = Source["resourceUri"];
+      if (Source["resourceUri"] !== void 0)
+        Out["resourceUri"] = Source["resourceUri"];
       const Command = Source["command"];
       if (Command && typeof Command === "object") {
         const C = Command;
@@ -27335,7 +27369,8 @@ var init_ScmNamespace = __esm({
         }
         Out["decorations"] = SafeDecorations;
       }
-      if (Source["contextValue"] !== void 0) Out["contextValue"] = Source["contextValue"];
+      if (Source["contextValue"] !== void 0)
+        Out["contextValue"] = Source["contextValue"];
       return Out;
     }, "SanitizeResourceState");
     CreateScmNamespace = /* @__PURE__ */ __name((Context) => WrapScmNamespace_default({
@@ -27352,30 +27387,45 @@ var init_ScmNamespace = __esm({
           query: RootUri?.query ?? "",
           fragment: RootUri?.fragment ?? ""
         } : RootUri;
-        const ProviderReady = Context.SendToMountain("register_scm_provider", {
-          handle: Handle,
-          id: Id,
-          label: Label,
-          rootUri: RootUriShape,
-          extensionId: ""
-        }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
+        const ProviderReady = Context.SendToMountain(
+          "register_scm_provider",
+          {
+            handle: Handle,
+            id: Id,
+            label: Label,
+            rootUri: RootUriShape,
+            extensionId: ""
+          }
+        ).then(
+          () => ScmTrace(
+            `register_scm_provider ack id="${Id}" handle=${Handle}`
+          )
+        ).catch((Error2) => {
           const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
-          ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
+          ScmTrace(
+            `register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`
+          );
         });
         const Groups = /* @__PURE__ */ new Map();
         const ConcreteSourceControl = {
           id: Id,
           label: Label,
           rootUri: RootUri,
-          inputBox: WrapNamespaceWithHeuristics_default(`scm.sourceControl[${Id}].inputBox`, {
-            value: "",
-            placeholder: "",
-            enabled: true,
-            visible: true
-          }),
+          inputBox: WrapNamespaceWithHeuristics_default(
+            `scm.sourceControl[${Id}].inputBox`,
+            {
+              value: "",
+              placeholder: "",
+              enabled: true,
+              visible: true
+            }
+          ),
           createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
             const GroupHandle = `${Handle}/${GroupId}`;
-            Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
+            Groups.set(GroupId, {
+              label: GroupLabel,
+              resourceStates: []
+            });
             ScmTrace(
               `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
             );
@@ -27500,9 +27550,12 @@ var init_AuthenticationNamespace = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_authentication_provider", {
-              handle: Handle
-            }).catch(() => {
+            Context.SendToMountain(
+              "unregister_authentication_provider",
+              {
+                handle: Handle
+              }
+            ).catch(() => {
             });
           }, "dispose")
         };
@@ -28819,7 +28872,10 @@ var ActivateWorkspaceContainsExtensions = /* @__PURE__ */ __name(async (Context,
         if (IsLiteral) {
           Hit = await FolderContainsGlob(Folder.FsPath, Glob);
         } else {
-          const Mountain = await FolderContainsGlobViaMountain(Context, Glob);
+          const Mountain = await FolderContainsGlobViaMountain(
+            Context,
+            Glob
+          );
           if (typeof Mountain === "boolean") {
             Hit = Mountain;
           } else {

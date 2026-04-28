@@ -203,7 +203,12 @@ export class CommandService extends Effect.Service<CommandService>()(
 			): Effect.Effect<unknown, Error> =>
 				Effect.gen(function* () {
 					const StartTime = Date.now();
-					const { Callback, ThisArg, Extension: _Extension, Id } = Command;
+					const {
+						Callback,
+						ThisArg,
+						Extension: _Extension,
+						Id,
+					} = Command;
 
 					yield* Logger.Trace(
 						`[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`,

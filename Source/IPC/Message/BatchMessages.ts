@@ -11,12 +11,15 @@
  * - Message Data (variable): Concatenated message data
  */
 
-import type { IMessage, ISerializationResult } from "./Types.js";
-import { CompressionHint } from "./Types.js";
 import { MAX_BATCH_COUNT, MAX_BATCH_SIZE } from "./Constants.js";
-import VSBuffer from "./VSBuffer.js";
-import { ValidateMessage } from "./Validation.js";
 import SerializeMessage from "./SerializeMessage.js";
+import {
+	CompressionHint,
+	type IMessage,
+	type ISerializationResult,
+} from "./Types.js";
+import { ValidateMessage } from "./Validation.js";
+import VSBuffer from "./VSBuffer.js";
 
 // ============================================================================
 // BATCH OPERATIONS
@@ -166,7 +169,10 @@ export default (
 		return {
 			Success: false,
 			Data: null,
-			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
+			Error:
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error),
 			OriginalSize,
 			FinalSize,
 		};

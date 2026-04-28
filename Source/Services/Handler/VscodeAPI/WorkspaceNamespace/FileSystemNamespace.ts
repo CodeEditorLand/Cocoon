@@ -26,13 +26,13 @@ import { dirname as PathDirname } from "node:path";
 
 import type { HandlerContext } from "../../HandlerContext.js";
 import { ToUri as StockToUri } from "../StockLift.js";
-import { Call } from "./Helpers.js";
 import {
 	ExtractFsPath,
 	ExtractScheme,
 	Route,
 	type FileSystemRoute,
 } from "./FileSystemRoute.js";
+import { Call } from "./Helpers.js";
 
 /**
  * Serialise any URI shape - real `vscode.Uri` instance, UriComponents
@@ -90,7 +90,8 @@ const UriToString = (Value: unknown): string => {
 			const PathPart =
 				typeof WithParts.path === "string" ? WithParts.path : "";
 			const Query =
-				typeof WithParts.query === "string" && WithParts.query.length > 0
+				typeof WithParts.query === "string" &&
+				WithParts.query.length > 0
 					? `?${WithParts.query}`
 					: "";
 			const Fragment =
@@ -121,7 +122,11 @@ const FileType = {
 	SymbolicLink: 64,
 } as const;
 
-const LogRoute = (Operation: string, Uri: unknown, Decision: FileSystemRoute): void => {
+const LogRoute = (
+	Operation: string,
+	Uri: unknown,
+	Decision: FileSystemRoute,
+): void => {
 	// Per-call route decision - 14k+ lines per session under a normal
 	// extension activation (svelte's `detect` alone reads thousands of
 	// files). Gate under the explicit `fs-route` tag so the default
@@ -146,9 +151,13 @@ const ThrowFileNotFound = (Uri: unknown): never => {
 	throw Synthetic;
 };
 
-const MetadataToStat = (
-	Metadata: { isDirectory: () => boolean; isSymbolicLink: () => boolean; size: number; mtimeMs: number; ctimeMs: number },
-): StatShape => ({
+const MetadataToStat = (Metadata: {
+	isDirectory: () => boolean;
+	isSymbolicLink: () => boolean;
+	size: number;
+	mtimeMs: number;
+	ctimeMs: number;
+}): StatShape => ({
 	type: Metadata.isSymbolicLink()
 		? FileType.SymbolicLink
 		: Metadata.isDirectory()
@@ -174,7 +183,9 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			}
 		}
 		return (
-			(await Call<StatShape>(Context, "FileSystem.Stat", [UriToString(Uri)])) ?? {
+			(await Call<StatShape>(Context, "FileSystem.Stat", [
+				UriToString(Uri),
+			])) ?? {
 				type: FileType.File,
 				size: 0,
 				ctime: 0,
@@ -208,12 +219,14 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 				[UriString],
 			);
 			if (Raw == null) return Buffer.alloc(0);
-			if (Array.isArray(Raw)) return Buffer.from(Raw as readonly number[]);
+			if (Array.isArray(Raw))
+				return Buffer.from(Raw as readonly number[]);
 			if (Raw instanceof Uint8Array) return Buffer.from(Raw);
 			return Buffer.from(String(Raw), "utf8");
 		} catch (Err: unknown) {
 			const Message = Err instanceof Error ? Err.message : String(Err);
-			const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
+			const TraceFsRead =
+				process.env["LAND_DEV_LOG"]?.includes("fs-read");
 			if (/resource not found|ENOENT|not found/i.test(Message)) {
 				// 404 is the expected path for extensions probing for
 				// optional files (terminal-suggest cache, Gemfile.lock,
@@ -255,7 +268,10 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			return;
 		}
 		const Text = new TextDecoder().decode(Content);
-		await Call<void>(Context, "FileSystem.WriteFile", [UriToString(Uri), Text]);
+		await Call<void>(Context, "FileSystem.WriteFile", [
+			UriToString(Uri),
+			Text,
+		]);
 	},
 
 	readDirectory: async (Uri: any): Promise<Array<[string, number]>> => {
@@ -280,13 +296,11 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 				throw Err;
 			}
 		}
-		return (
-			((await Call<Array<[string, number]>>(
-				Context,
-				"FileSystem.ReadDirectory",
-				[UriToString(Uri)],
-			)) ?? []) as Array<[string, number]>
-		);
+		return ((await Call<Array<[string, number]>>(
+			Context,
+			"FileSystem.ReadDirectory",
+			[UriToString(Uri)],
+		)) ?? []) as Array<[string, number]>;
 	},
 
 	createDirectory: async (Uri: any): Promise<void> => {
@@ -297,7 +311,9 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			await FsPromises.mkdir(Path, { recursive: true });
 			return;
 		}
-		await Call<void>(Context, "FileSystem.CreateDirectory", [UriToString(Uri)]);
+		await Call<void>(Context, "FileSystem.CreateDirectory", [
+			UriToString(Uri),
+		]);
 	},
 
 	delete: async (

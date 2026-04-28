@@ -40,9 +40,10 @@ var ExtensionService = class extends Effect2.Service()(
         );
         const ExtensionsConfig = Configuration.GetValue("extensions", {});
         const NewRegistry = /* @__PURE__ */ new Map();
-        for (const [ExtensionId, ExtensionDataRaw] of Object.entries(
-          ExtensionsConfig
-        )) {
+        for (const [
+          ExtensionId,
+          ExtensionDataRaw
+        ] of Object.entries(ExtensionsConfig)) {
           try {
             const ExtensionData = ExtensionDataRaw;
             const ExtensionLocation = typeof ExtensionData === "string" ? ExtensionData : ExtensionData.path;

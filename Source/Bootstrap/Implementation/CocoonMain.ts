@@ -1,3 +1,19 @@
+import { NodeRuntime } from "@effect/platform-node";
+import { Effect } from "effect";
+
+// Import Tier dispatcher *after* __LandTiers is populated so the module's
+// top-level `LandFixLog.Info(...)` banner reports the resolved values.
+import "../../Utility/Tier.js";
+
+// Effect services
+import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
+import { EffectServices } from "../../ServiceMapping.js";
+// Atom PH3: PostHog telemetry - initialize as early as possible so errors
+// during bootstrap land in PostHog even if the rest of the extension host
+// fails to come up. Side-effect import: CocoonMain is the only direct
+// entry point, so one invocation is guaranteed.
+import PostHogBridge from "../../Telemetry/PostHogBridge.js";
+
 /**
  * @module CocoonMain
  * @description
@@ -103,22 +119,6 @@ declare const __LandTier_Telemetry__: string;
 			: (process.env["TierTelemetry"] ?? "Synchronous"),
 };
 
-import { NodeRuntime } from "@effect/platform-node";
-import { Effect } from "effect";
-
-// Import Tier dispatcher *after* __LandTiers is populated so the module's
-// top-level `LandFixLog.Info(...)` banner reports the resolved values.
-import "../../Utility/Tier.js";
-
-// Effect services
-import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
-import { EffectServices } from "../../ServiceMapping.js";
-
-// Atom PH3: PostHog telemetry - initialize as early as possible so errors
-// during bootstrap land in PostHog even if the rest of the extension host
-// fails to come up. Side-effect import: CocoonMain is the only direct
-// entry point, so one invocation is guaranteed.
-import PostHogBridge from "../../Telemetry/PostHogBridge.js";
 PostHogBridge.Initialize();
 
 // ============================================================================

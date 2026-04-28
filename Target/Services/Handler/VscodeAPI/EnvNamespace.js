@@ -372,7 +372,9 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     if (Property === "then") return void 0;
     if (Property === "toJSON") {
       return () => {
-        const Out = { _namespace: NamespaceName };
+        const Out = {
+          _namespace: NamespaceName
+        };
         for (const Key of Object.keys(Target)) {
           const Value = Target[Key];
           const T = typeof Value;

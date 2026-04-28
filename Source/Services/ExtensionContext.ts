@@ -529,9 +529,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 			 *
 			 * TODO: Add cleanup method to clean up extension state on deactivation
 			 */
-			void ((
-				ExtensionId: string,
-			): Effect.Effect<void, Error> =>
+			void ((ExtensionId: string): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
 					const GlobalSubscriptions = yield* Ref.get(
 						GlobalSubscriptionsRef,

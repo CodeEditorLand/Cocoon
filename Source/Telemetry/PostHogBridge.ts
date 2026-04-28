@@ -12,8 +12,7 @@
  * `CaptureEvent`, `CaptureError`, `Initialize`.
  */
 
-import CreateBuffer from "./PostHog/Buffer.js";
-import type { Buffer } from "./PostHog/Buffer.js";
+import CreateBuffer, { type Buffer } from "./PostHog/Buffer.js";
 import ReadConfiguration from "./PostHog/Configuration.js";
 import type { Properties } from "./PostHog/Event.js";
 import ResolveDistinctIdentifier from "./PostHog/Identifier.js";

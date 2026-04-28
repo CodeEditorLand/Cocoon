@@ -1010,7 +1010,12 @@ var CommandService = class extends Effect4.Service()(
       );
       const ExecuteLocalCommand = /* @__PURE__ */ __name((Command2, Arguments) => Effect4.gen(function* () {
         const StartTime = Date.now();
-        const { Callback, ThisArg, Extension: _Extension, Id } = Command2;
+        const {
+          Callback,
+          ThisArg,
+          Extension: _Extension,
+          Id
+        } = Command2;
         yield* Logger2.Trace(
           `[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`
         );

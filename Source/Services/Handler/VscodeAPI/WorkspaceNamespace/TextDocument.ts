@@ -6,11 +6,11 @@
  * document/file/notebook event subscriptions.
  */
 
-import type { HandlerContext } from "../../HandlerContext.js";
 import { promises as FsPromises } from "node:fs";
 
-import { Call, EventSubscriber } from "./Helpers.js";
+import type { HandlerContext } from "../../HandlerContext.js";
 import { ExtractFsPath, Route } from "./FileSystemRoute.js";
+import { Call, EventSubscriber } from "./Helpers.js";
 import {
 	DeriveLanguageIdFromUri,
 	FireOnLanguageActivation,
@@ -109,55 +109,63 @@ export const BuildApplyEdit =
 		return true;
 	};
 
-export const BuildUpdateWorkspaceFolders = (
-	Context: HandlerContext,
-	ReadFolders: () => Array<{ uri: unknown; name: string; index: number }>,
-) =>
-(
-	Start: number,
-	DeleteCount: number | null | undefined,
-	...ToAdd: Array<{ uri?: unknown; name?: string }>
-) => {
-	const Current = ReadFolders();
-	const RemoveCount =
-		typeof DeleteCount === "number" && DeleteCount > 0
-			? Math.min(DeleteCount, Math.max(Current.length - Start, 0))
-			: 0;
-	const Removals = Current.slice(Start, Start + RemoveCount).map((Folder) => ({
-		uri: {
-			value:
-				typeof Folder?.uri === "string"
-					? Folder.uri
-					: ((Folder?.uri as Record<string, unknown>)?.[
-							"toString"
-						] as (() => string) | undefined)?.call(Folder?.uri) ??
-						String(Folder?.uri),
-		},
-	}));
-	const Additions = ToAdd.map((Folder) => {
-		const Raw = Folder?.uri;
-		const Serialized =
-			typeof Raw === "string"
-				? Raw
-				: ((Raw as Record<string, unknown>)?.["toString"] as
-						| (() => string)
-						| undefined)?.call(Raw) ?? String(Raw ?? "");
-		return { uri: { value: Serialized }, name: Folder?.name ?? "" };
-	});
-	Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
-		additions: Additions,
-		removals: Removals,
-	}).catch((Error) => {
-		const Message =
-			Error instanceof globalThis.Error ? Error.message : String(Error);
-		try {
-			process.stdout.write(
-				`[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}\n`,
-			);
-		} catch {}
-	});
-	return true;
-};
+export const BuildUpdateWorkspaceFolders =
+	(
+		Context: HandlerContext,
+		ReadFolders: () => Array<{ uri: unknown; name: string; index: number }>,
+	) =>
+	(
+		Start: number,
+		DeleteCount: number | null | undefined,
+		...ToAdd: Array<{ uri?: unknown; name?: string }>
+	) => {
+		const Current = ReadFolders();
+		const RemoveCount =
+			typeof DeleteCount === "number" && DeleteCount > 0
+				? Math.min(DeleteCount, Math.max(Current.length - Start, 0))
+				: 0;
+		const Removals = Current.slice(Start, Start + RemoveCount).map(
+			(Folder) => ({
+				uri: {
+					value:
+						typeof Folder?.uri === "string"
+							? Folder.uri
+							: ((
+									(Folder?.uri as Record<string, unknown>)?.[
+										"toString"
+									] as (() => string) | undefined
+								)?.call(Folder?.uri) ?? String(Folder?.uri)),
+				},
+			}),
+		);
+		const Additions = ToAdd.map((Folder) => {
+			const Raw = Folder?.uri;
+			const Serialized =
+				typeof Raw === "string"
+					? Raw
+					: ((
+							(Raw as Record<string, unknown>)?.["toString"] as
+								| (() => string)
+								| undefined
+						)?.call(Raw) ?? String(Raw ?? ""));
+			return { uri: { value: Serialized }, name: Folder?.name ?? "" };
+		});
+		Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
+			additions: Additions,
+			removals: Removals,
+		}).catch((Error) => {
+			const Message =
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error);
+			try {
+				process.stdout.write(
+					`[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}\n`,
+				);
+			} catch {}
+		});
+		return true;
+	};
 
 export const BuildDocumentEventMembers = (Context: HandlerContext) => ({
 	onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),

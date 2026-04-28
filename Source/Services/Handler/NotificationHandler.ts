@@ -468,11 +468,11 @@ const HandleSpecificNotification = (
 				// view is later re-resolved (workbench may show the
 				// panel again).
 				try {
-					import(
-						"./VscodeAPI/WindowNamespace.js"
-					).then(({ WebviewViewBuilders: _Builders }) => {
-						/* builders are factories - no per-instance state to dispose here */
-					});
+					import("./VscodeAPI/WindowNamespace.js").then(
+						({ WebviewViewBuilders: _Builders }) => {
+							/* builders are factories - no per-instance state to dispose here */
+						},
+					);
 				} catch (_e) {
 					/* swallow */
 				}
@@ -718,9 +718,10 @@ const HandleSpecificNotification = (
 			const UriComponents = Args[0] as unknown;
 			const ViewType = (Args[1] as string | undefined) ?? "";
 			const WebviewPanelHandle = Args[2] as unknown;
-			const ProviderEntry = WindowNamespaceModule
-				.CustomEditorProvidersByViewType
-				.get(ViewType);
+			const ProviderEntry =
+				WindowNamespaceModule.CustomEditorProvidersByViewType.get(
+					ViewType,
+				);
 			if (!ProviderEntry) {
 				try {
 					process.stdout.write(
@@ -769,13 +770,13 @@ const HandleSpecificNotification = (
 				onDidChangeViewState: () => ({ dispose: () => {} }),
 			};
 			try {
-				const Result = Resolve.call(
-					Provider,
-					Document,
-					WebviewPanel,
-					{ isCancellationRequested: false },
-				) as unknown;
-				if (Result && typeof (Result as PromiseLike<unknown>).then === "function") {
+				const Result = Resolve.call(Provider, Document, WebviewPanel, {
+					isCancellationRequested: false,
+				}) as unknown;
+				if (
+					Result &&
+					typeof (Result as PromiseLike<unknown>).then === "function"
+				) {
 					(Result as PromiseLike<unknown>).then(
 						() => {},
 						(Error: unknown) => {
@@ -822,7 +823,7 @@ const HandleSpecificNotification = (
 			// the previous `slice` heuristic which produced
 			// `customEditor.saveCustomDocument` and silently failed every
 			// listener match.
-			const ChannelMap:Record<string, string> = {
+			const ChannelMap: Record<string, string> = {
 				$onSaveCustomDocument: "saveDocument",
 				$onSaveCustomDocumentAs: "saveDocumentAs",
 				$onRevertCustomDocument: "revertCustomDocument",

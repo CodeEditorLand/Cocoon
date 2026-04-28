@@ -50,7 +50,9 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 				`appRoot URL parse failed; fallback ${Raw} → ${Fallback}`,
 				{
 					error:
-						Error instanceof globalThis.Error ? Error.message : String(Error),
+						Error instanceof globalThis.Error
+							? Error.message
+							: String(Error),
 				},
 			);
 			return Fallback;

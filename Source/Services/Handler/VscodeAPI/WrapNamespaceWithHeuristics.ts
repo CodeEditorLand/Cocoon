@@ -38,8 +38,8 @@
 
 import { Effect } from "effect";
 
-import LandFixLog from "../../../Utility/LandFixLog.js";
 import { CaptureEvent } from "../../../Telemetry/PostHogBridge.js";
+import LandFixLog from "../../../Utility/LandFixLog.js";
 
 /** Stable disposable shape used by every event/registration heuristic. */
 const NoopDisposable = { dispose: () => {} };
@@ -230,15 +230,18 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			// without firing the audit-log path.
 			if (Property === "toJSON") {
 				return () => {
-					const Out:Record<string, unknown> = { _namespace: NamespaceName };
+					const Out: Record<string, unknown> = {
+						_namespace: NamespaceName,
+					};
 					for (const Key of Object.keys(Target)) {
 						const Value = (Target as Record<string, unknown>)[Key];
 						const T = typeof Value;
-						Out[Key] = T === "function"
-							? "[Function]"
-							: T === "object" && Value !== null
-								? "[Object]"
-								: Value;
+						Out[Key] =
+							T === "function"
+								? "[Function]"
+								: T === "object" && Value !== null
+									? "[Object]"
+									: Value;
 					}
 					return Out;
 				};
@@ -249,7 +252,8 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			if (Property === "toString" || Property === "valueOf") {
 				return undefined;
 			}
-			const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+			const Heuristic =
+				Overrides?.[Property] ?? ClassifyProperty(Property);
 			return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
 		},
 		has(Target, Property) {

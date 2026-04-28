@@ -416,7 +416,10 @@ export const SerializeDTO = (
 			throw new ConversionError({
 				SourceType: typeof DTO,
 				TargetType: "string",
-				Reason: Error instanceof globalThis.Error ? Error.message : String(Error),
+				Reason:
+					Error instanceof globalThis.Error
+						? Error.message
+						: String(Error),
 				Data: DTO,
 			});
 		},
@@ -436,7 +439,10 @@ export const DeserializeDTO = <T>(
 			throw new ConversionError({
 				SourceType: "string",
 				TargetType: ExpectedType,
-				Reason: Error instanceof globalThis.Error ? Error.message : String(Error),
+				Reason:
+					Error instanceof globalThis.Error
+						? Error.message
+						: String(Error),
 				Data: JsonString,
 			});
 		},

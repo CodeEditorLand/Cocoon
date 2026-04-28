@@ -135,9 +135,8 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		// providers by the same viewId the extension declared in its
 		// contributes.views manifest - the only stable key Mountain has.
 		"^\\$provideTreeChildren$": async (_Method: string, Params: any) => {
-			const { TreeDataProvidersByViewId } = await import(
-				"./VscodeAPI/WindowNamespace.js"
-			);
+			const { TreeDataProvidersByViewId } =
+				await import("./VscodeAPI/WindowNamespace.js");
 			const ViewId = Params?.viewId ?? Params?.[0];
 			const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
 			const Provider = TreeDataProvidersByViewId.get(String(ViewId));
@@ -175,18 +174,20 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			const Items = await Promise.all(
 				(Array.isArray(Children) ? Children : []).map(
 					async (Child: unknown, Index: number) => {
-						const Item = (await Provider.getTreeItem?.(Child)) ?? Child;
+						const Item =
+							(await Provider.getTreeItem?.(Child)) ?? Child;
 						const Raw = Item as Record<string, unknown>;
 						const Label =
 							typeof Raw.label === "string"
 								? Raw.label
-								: ((Raw.label as { label?: string } | undefined)?.label ??
-									"");
+								: ((Raw.label as { label?: string } | undefined)
+										?.label ?? "");
 						const IconValue = Raw.iconPath ?? Raw.icon ?? "";
 						const Icon =
 							typeof IconValue === "string"
 								? IconValue
-								: ((IconValue as { id?: string } | undefined)?.id ?? "");
+								: ((IconValue as { id?: string } | undefined)
+										?.id ?? "");
 						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded.
 						// Pass the raw enum numeric through so Sky can
 						// faithfully tell "Expanded" from "Collapsed" -
@@ -213,17 +214,23 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						const Tooltip =
 							typeof Raw.tooltip === "string"
 								? Raw.tooltip
-								: (Raw.tooltip as { value?: string } | undefined)?.value;
+								: (
+										Raw.tooltip as
+											| { value?: string }
+											| undefined
+									)?.value;
 						const ResourceUri = Raw.resourceUri;
 						const ContextValue =
 							typeof Raw.contextValue === "string"
 								? Raw.contextValue
 								: undefined;
 						const Command = Raw.command;
-						const AccessibilityInformation = Raw.accessibilityInformation;
+						const AccessibilityInformation =
+							Raw.accessibilityInformation;
 						return {
 							handle: String(
-								Raw.id ?? `${ViewId}/${ItemHandle || "root"}/${Index}`,
+								Raw.id ??
+									`${ViewId}/${ItemHandle || "root"}/${Index}`,
 							),
 							label: Label,
 							collapsibleState: CollapsibleState,
@@ -245,9 +252,8 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		"tree\\.\\w+": async (Method: string, Params: any) => {
 			// Mountain asks Cocoon for tree data; route to the registered
 			// TreeDataProvider for the handle and serialise the response.
-			const { TreeDataProviders } = await import(
-				"./VscodeAPI/WindowNamespace.js"
-			);
+			const { TreeDataProviders } =
+				await import("./VscodeAPI/WindowNamespace.js");
 			const Handle = Params?.handle ?? Params?.[0];
 			const Provider = TreeDataProviders.get(String(Handle));
 			if (!Provider) {
@@ -274,7 +280,8 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const Item = Params?.item ?? Params?.[1];
 					const Element = Params?.element ?? Params?.[2];
 					return (
-						(await Provider.resolveTreeItem?.(Item, Element)) ?? Item
+						(await Provider.resolveTreeItem?.(Item, Element)) ??
+						Item
 					);
 				}
 				default:
@@ -314,9 +321,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const Builder = WebviewViewBuilders.get(String(Handle));
 					const View =
 						Params?.view ?? Params?.[1] ?? Builder?.() ?? {};
-					const Ctx = Params?.context ?? Params?.[2] ?? {
-						state: undefined,
-					};
+					const Ctx = Params?.context ??
+						Params?.[2] ?? {
+							state: undefined,
+						};
 					return (
 						(await Provider.resolveWebviewView?.(View, Ctx)) ?? null
 					);
@@ -331,11 +339,9 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const Document = Params?.document ?? Params?.[1];
 					const Panel = Params?.panel ?? Params?.[2];
 					return (
-						(await Provider.resolveCustomEditor?.(
-							Document,
-							Panel,
-							{ asAbsolutePath: (p: string) => p },
-						)) ?? null
+						(await Provider.resolveCustomEditor?.(Document, Panel, {
+							asAbsolutePath: (p: string) => p,
+						})) ?? null
 					);
 				}
 				default: {

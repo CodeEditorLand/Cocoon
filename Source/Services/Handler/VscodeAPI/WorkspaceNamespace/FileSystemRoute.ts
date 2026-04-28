@@ -50,7 +50,10 @@ export type FileSystemRoute = "native" | "mountain";
 export function ExtractScheme(Uri: unknown): string {
 	if (Uri && typeof Uri === "object") {
 		const WithScheme = Uri as { scheme?: unknown };
-		if (typeof WithScheme.scheme === "string" && WithScheme.scheme.length > 0) {
+		if (
+			typeof WithScheme.scheme === "string" &&
+			WithScheme.scheme.length > 0
+		) {
 			return WithScheme.scheme;
 		}
 	}

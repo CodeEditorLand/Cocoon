@@ -589,7 +589,9 @@ export class GRPCServerService
 				method,
 			);
 		const ProxiedMethod = /^[A-Za-z]+\$[A-Za-z]+[A-Za-z0-9]*$/.test(method);
-		return DotMethod || ProvideMethod || ExtensionHostMethod || ProxiedMethod;
+		return (
+			DotMethod || ProvideMethod || ExtensionHostMethod || ProxiedMethod
+		);
 	}
 
 	/**
@@ -712,12 +714,12 @@ export class GRPCServerService
 		if (/^ExtHostCommands\$ExecuteContributedCommand/.test(method)) {
 			// Parameters shape: [commandId, arguments]
 			const Args = Array.isArray(parameters) ? parameters : [parameters];
-			const CommandId: string = typeof Args[0] === "string" ? Args[0] : "";
+			const CommandId: string =
+				typeof Args[0] === "string" ? Args[0] : "";
 			const CommandArguments: unknown = Args[1];
 			if (CommandId) {
-				const LanguageProviderRegistry = await import(
-					"./LanguageProviderRegistry.js"
-				);
+				const LanguageProviderRegistry =
+					await import("./LanguageProviderRegistry.js");
 				const ExtensionArguments = Array.isArray(CommandArguments)
 					? CommandArguments
 					: CommandArguments === undefined
@@ -876,10 +878,7 @@ export class GRPCServerService
 	 * Dependencies: CancellationService, operation context
 	 * Validation: Test with nested and parallel operations
 	 */
-	public registerCancelHandler(
-		requestId: bigint,
-		handler: () => void,
-	): void {
+	public registerCancelHandler(requestId: bigint, handler: () => void): void {
 		const entry = this.activeRequests.get(requestId);
 		if (entry) {
 			entry.cancelHandler = handler;
@@ -937,9 +936,8 @@ export class GRPCServerService
 	 * change is needed; the bypass is invisible to extensions.
 	 */
 	async SendToMountain(Method: string, Parameters: any): Promise<void> {
-		const { IsRustDeferralEnabled, LogDualTrack } = await import(
-			"./DualTrack.js"
-		);
+		const { IsRustDeferralEnabled, LogDualTrack } =
+			await import("./DualTrack.js");
 		if (!IsRustDeferralEnabled(Method)) {
 			LogDualTrack(Method, "node-bypass");
 			return;

@@ -64,7 +64,9 @@ export const ScanAllExtensions = (
 	Context: HandlerContext,
 	_Options: ScanOptions = {},
 ): ReadonlyArray<ScannedExtension> =>
-	Array.from(Context.ExtensionRegistry.values()) as ReadonlyArray<ScannedExtension>;
+	Array.from(
+		Context.ExtensionRegistry.values(),
+	) as ReadonlyArray<ScannedExtension>;
 
 /**
  * Read only built-in extensions (isBuiltin=true). Mirrors VS Code's

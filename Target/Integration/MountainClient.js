@@ -549,7 +549,9 @@ message RPCDataPayload {
       const ErrorMessage = error instanceof Error ? error.message : String(error);
       const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
       const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
-      const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes("mountain-client-verbose");
+      const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes(
+        "mountain-client-verbose"
+      );
       if (IsBenignNotFound) {
         if (TraceMountainClient) {
           process.stdout.write(

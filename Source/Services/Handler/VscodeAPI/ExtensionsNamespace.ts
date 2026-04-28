@@ -256,16 +256,22 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 							? (Raw as { name: string }).name
 							: Id,
 					version:
-						typeof (Raw as { version?: unknown }).version === "string" &&
+						typeof (Raw as { version?: unknown }).version ===
+							"string" &&
 						(Raw as { version: string }).version.length > 0
 							? (Raw as { version: string }).version
 							: "0.0.0",
 					publisher:
-						typeof (Raw as { publisher?: unknown }).publisher === "string"
+						typeof (Raw as { publisher?: unknown }).publisher ===
+						"string"
 							? (Raw as { publisher: string }).publisher
-							: Id.split(".")[0] ?? "unknown",
+							: (Id.split(".")[0] ?? "unknown"),
 				}
-			: { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
+			: {
+					name: Id,
+					version: "0.0.0",
+					publisher: Id.split(".")[0] ?? "unknown",
+				};
 	return {
 		id: Id,
 		extensionUri: ExtensionUri,
@@ -293,33 +299,36 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 // a bogus extension with empty path.
 const IsExtensionKey = (Key: string) => !Key.startsWith("__");
 
-const CreateExtensionsNamespace = (Context: HandlerContext) => WrapExtensionsNamespace({
-	getExtension: (Identifier: string) => {
-		if (!IsExtensionKey(Identifier)) return undefined;
-		const Raw = Context.ExtensionRegistry.get(Identifier);
-		return Raw ? ToExtensionObject(Context, Identifier, Raw) : undefined;
-	},
-	get all() {
-		return [...Context.ExtensionRegistry.entries()]
-			.filter(([Id]) => IsExtensionKey(Id))
-			.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
-	},
-	// Some extensions (html-language-features) iterate
-	// `extensions.allAcrossExtensionHosts`; return the same array as `all`
-	// so `for (...of...)` does not throw on `is not iterable`.
-	get allAcrossExtensionHosts() {
-		return [...Context.ExtensionRegistry.entries()]
-			.filter(([Id]) => IsExtensionKey(Id))
-			.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
-	},
-	onDidChange: (Listener: () => void) => {
-		Context.Emitter.on("deltaExtensions", Listener);
-		return {
-			dispose: () => {
-				Context.Emitter.off("deltaExtensions", Listener);
-			},
-		};
-	},
-});
+const CreateExtensionsNamespace = (Context: HandlerContext) =>
+	WrapExtensionsNamespace({
+		getExtension: (Identifier: string) => {
+			if (!IsExtensionKey(Identifier)) return undefined;
+			const Raw = Context.ExtensionRegistry.get(Identifier);
+			return Raw
+				? ToExtensionObject(Context, Identifier, Raw)
+				: undefined;
+		},
+		get all() {
+			return [...Context.ExtensionRegistry.entries()]
+				.filter(([Id]) => IsExtensionKey(Id))
+				.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+		},
+		// Some extensions (html-language-features) iterate
+		// `extensions.allAcrossExtensionHosts`; return the same array as `all`
+		// so `for (...of...)` does not throw on `is not iterable`.
+		get allAcrossExtensionHosts() {
+			return [...Context.ExtensionRegistry.entries()]
+				.filter(([Id]) => IsExtensionKey(Id))
+				.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+		},
+		onDidChange: (Listener: () => void) => {
+			Context.Emitter.on("deltaExtensions", Listener);
+			return {
+				dispose: () => {
+					Context.Emitter.off("deltaExtensions", Listener);
+				},
+			};
+		},
+	});
 
 export default CreateExtensionsNamespace;

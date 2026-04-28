@@ -5,14 +5,14 @@
  * instances.
  */
 
+import { MAX_BATCH_COUNT } from "./Constants.js";
+import DeserializeMessage from "./DeserializeMessage.js";
 import type {
 	IBatchMessage,
 	IDeserializationResult,
 	IMessage,
 } from "./Types.js";
-import { MAX_BATCH_COUNT } from "./Constants.js";
 import VSBuffer from "./VSBuffer.js";
-import DeserializeMessage from "./DeserializeMessage.js";
 
 // ============================================================================
 // UNBATCH OPERATION
@@ -182,7 +182,10 @@ export default (
 		return {
 			Success: false,
 			Message: null,
-			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
+			Error:
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error),
 			Warnings,
 			Messages,
 		};

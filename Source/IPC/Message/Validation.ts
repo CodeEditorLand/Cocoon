@@ -4,9 +4,17 @@
  * Validation functions for IPC message structures.
  */
 
-import type { IBatchMessage, IMessage, MessageMetadata } from "./Types.js";
-import { CompressionHint } from "./Types.js";
-import { MAX_BATCH_COUNT, MAX_BATCH_SIZE, MAX_MESSAGE_SIZE } from "./Constants.js";
+import {
+	MAX_BATCH_COUNT,
+	MAX_BATCH_SIZE,
+	MAX_MESSAGE_SIZE,
+} from "./Constants.js";
+import {
+	CompressionHint,
+	type IBatchMessage,
+	type IMessage,
+	type MessageMetadata,
+} from "./Types.js";
 
 // ============================================================================
 // MESSAGE VALIDATION

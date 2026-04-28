@@ -63,11 +63,11 @@
  *   which tokio-notify handles better than Node's native `fs.watch`).
  */
 
-import type { HandlerContext } from "../Services/Handler/HandlerContext.js";
 import {
 	MountainMethods,
 	RouteManifestSummary,
 } from "../Generated/RouteManifest.js";
+import type { HandlerContext } from "../Services/Handler/HandlerContext.js";
 
 /**
  * Typed error thrown by DualTrack when a method is routed to no tier.
@@ -127,7 +127,7 @@ if (process.env["LAND_DEV_LOG"]) {
  * dual-track expansion. Reverse-RPC paths (Mountain → Cocoon) are not
  * gated - Mountain decides whether to dispatch them.
  */
-const IsBypassValue = (Raw:string|undefined): boolean => {
+const IsBypassValue = (Raw: string | undefined): boolean => {
 	if (!Raw) return false;
 	const Normalised = Raw.trim().toLowerCase();
 	return (
@@ -138,7 +138,7 @@ const IsBypassValue = (Raw:string|undefined): boolean => {
 	);
 };
 
-const ParseDomain = (Method:string): string => {
+const ParseDomain = (Method: string): string => {
 	const Dot = Method.indexOf(".");
 	if (Dot <= 0) return "";
 	return Method.slice(0, Dot).toUpperCase();
@@ -149,7 +149,7 @@ const ParseDomain = (Method:string): string => {
  * Returns `false` when an env knob has flagged a bypass - caller should
  * skip Mountain and go straight to the Node fallback.
  */
-export const IsRustDeferralEnabled = (Method:string): boolean => {
+export const IsRustDeferralEnabled = (Method: string): boolean => {
 	// Per-method override wins. Method names can contain `.` and `:` -
 	// neither character is valid in a POSIX env-var name, so substitute
 	// to `_`.
@@ -176,8 +176,10 @@ export const IsRustDeferralEnabled = (Method:string): boolean => {
 // "why is Mountain being skipped" question is one log line away.
 if (process.env["LAND_DEV_LOG"]) {
 	const ActiveBypasses = Object.keys(process.env)
-		.filter(K => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_"))
-		.filter(K => IsBypassValue(process.env[K]))
+		.filter(
+			(K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_"),
+		)
+		.filter((K) => IsBypassValue(process.env[K]))
 		.join(",");
 	if (ActiveBypasses) {
 		process.stdout.write(
@@ -363,7 +365,11 @@ export async function TryMountainWithEmptyFallback<T>(
 	// Empty-result guard: Mountain succeeded but the result looks empty.
 	// Race the Node fallback and use whichever has more rows. Empty
 	// from both is fine - we return Mountain's empty.
-	if (MountainSucceeded && MountainResult !== undefined && IsEmpty(MountainResult)) {
+	if (
+		MountainSucceeded &&
+		MountainResult !== undefined &&
+		IsEmpty(MountainResult)
+	) {
 		try {
 			const NodeResult = await NodeFallback(Arguments);
 			const NodeIsEmpty = IsEmpty(NodeResult);
@@ -428,10 +434,10 @@ export function MarkUnavailable(Method: string): never {
  * call sites that `.catch(...)` keep working.
  */
 export const SendToMountainOrLocal = (
-	Context:HandlerContext,
-	Method:string,
-	Payload:unknown,
-	OnLocalFallback?:() => void,
+	Context: HandlerContext,
+	Method: string,
+	Payload: unknown,
+	OnLocalFallback?: () => void,
 ): Promise<void> => {
 	if (!IsRustDeferralEnabled(Method)) {
 		LogDualTrack(Method, "node-bypass");
@@ -445,14 +451,14 @@ export const SendToMountainOrLocal = (
 	}
 	const Send = (
 		Context as unknown as {
-			SendToMountain:(M:string, P:unknown) => Promise<void>;
+			SendToMountain: (M: string, P: unknown) => Promise<void>;
 		}
 	).SendToMountain;
 	return Send.call(Context, Method, Payload).then(
 		() => {
 			LogDualTrack(Method, "mountain");
 		},
-		(_Err:unknown) => {
+		(_Err: unknown) => {
 			LogDualTrack(Method, "error");
 		},
 	);
@@ -473,7 +479,5 @@ export type DualTrackRoute =
  */
 export const LogDualTrack = (Method: string, Route: DualTrackRoute): void => {
 	if (!process.env["LAND_DEV_LOG"]) return;
-	process.stdout.write(
-		`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`,
-	);
+	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`);
 };

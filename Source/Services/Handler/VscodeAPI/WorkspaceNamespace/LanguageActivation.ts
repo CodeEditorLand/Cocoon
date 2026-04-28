@@ -190,12 +190,15 @@ export function FireOnLanguageActivation(
 	// `HandleActivateByEvent` lives one directory up in
 	// ExtensionHostHandler.ts; call it indirectly via the request
 	// router so we don't introduce a circular import.
-	const Router = (Context as { ActivateByEvent?: (E: string) => Promise<void> })
-		.ActivateByEvent;
+	const Router = (
+		Context as { ActivateByEvent?: (E: string) => Promise<void> }
+	).ActivateByEvent;
 	if (typeof Router === "function") {
 		Router(Event).catch((Error: unknown) => {
 			const Message =
-				Error instanceof globalThis.Error ? Error.message : String(Error);
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error);
 			console.warn(
 				`[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`,
 			);

@@ -20026,21 +20026,110 @@ var MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
 );
 var MountainGRPCClientMockLayer = MountainGRPCClientMock;
 
-// Source/Services/Window/OutputChannel.ts
+// Source/TypeConverter/Dialog/Filter.ts
+var SerializeFilters = /* @__PURE__ */ __name((Filters) => {
+  if (!Filters) {
+    return void 0;
+  }
+  return Object.entries(Filters).map(([Name, Extensions]) => ({
+    name: Name,
+    extensions: Extensions
+  }));
+}, "SerializeFilters");
+
+// Source/TypeConverter/Dialog/OpenDialogOption.ts
+var ToDTO = /* @__PURE__ */ __name((Options) => {
+  if (!Options) {
+    return void 0;
+  }
+  return {
+    ...Options,
+    defaultUri: Options.defaultUri?.toJSON(),
+    filters: SerializeFilters(Options.filters)
+  };
+}, "ToDTO");
+
+// Source/TypeConverter/Dialog/SaveDialogOption.ts
+var ToDTO2 = /* @__PURE__ */ __name((Options) => {
+  if (!Options) {
+    return void 0;
+  }
+  return {
+    ...Options,
+    defaultUri: Options.defaultUri?.toJSON(),
+    filters: SerializeFilters(Options.filters)
+  };
+}, "ToDTO");
+
+// Source/Services/Window/FileDialogs.ts
 import { Effect as Effect5 } from "effect";
-var CreateOutputChannel = /* @__PURE__ */ __name((MountainClient, Logger2, Name) => Effect5.gen(function* () {
+var ShowOpenDialog = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect5.gen(function* () {
+  yield* Logger2.Debug(`[WindowService] Showing open dialog`);
+  const OptionsDTO = ToDTO(Options);
+  const Result = yield* Effect5.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowOpenDialog",
+        [OptionsDTO]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      const FilePaths = Response;
+      const { Uri: Uri2 } = await import("vscode");
+      return FilePaths.map((Path) => Uri2.file(Path));
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show open dialog: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  return Result;
+}), "ShowOpenDialog");
+var ShowSaveDialog = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect5.gen(function* () {
+  yield* Logger2.Debug(`[WindowService] Showing save dialog`);
+  const OptionsDTO = ToDTO2(Options);
+  const ResultURI = yield* Effect5.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowSaveDialog",
+        [OptionsDTO]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      const FilePath = Response;
+      const { Uri: Uri2 } = await import("vscode");
+      return Uri2.file(FilePath);
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show save dialog: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  return ResultURI ? await(async () => {
+    const { Uri: Uri2 } = await import("vscode");
+    return Uri2.parse(ResultURI.toString());
+  })() : void 0;
+}), "ShowSaveDialog");
+
+// Source/Services/Window/OutputChannel.ts
+import { Effect as Effect6 } from "effect";
+var CreateOutputChannel = /* @__PURE__ */ __name((MountainClient, Logger2, Name) => Effect6.gen(function* () {
   const ChannelId = `output-${crypto.randomUUID()}`;
   yield* Logger2.Info(
     `[WindowService] Creating output channel: ${Name} (${ChannelId})`
   );
-  yield* Effect5.tryPromise({
+  yield* Effect6.tryPromise({
     try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("output.create", {
       id: ChannelId,
       name: Name
     }), "try"),
     catch: /* @__PURE__ */ __name(() => new Error("Failed to create output channel"), "catch")
   });
-  return yield* Effect5.succeed({
+  return yield* Effect6.succeed({
     name: Name,
     append(Value) {
       MountainClient.sendNotification("output.append", {
@@ -20091,9 +20180,161 @@ var CreateOutputChannel = /* @__PURE__ */ __name((MountainClient, Logger2, Name)
   });
 }), "CreateOutputChannel");
 
+// Source/Services/Window/Progress.ts
+import { Effect as Effect7 } from "effect";
+var WithProgress = /* @__PURE__ */ __name((MountainClient, Logger2, Options, Task3) => Effect7.gen(function* () {
+  const ProgressId = `progress-${crypto.randomUUID()}`;
+  yield* Logger2.Info(
+    `[WindowService] Starting progress: ${Options.location} (${ProgressId})`
+  );
+  const CancellationToken2 = {
+    isCancellationRequested: false,
+    onCancellationRequested: /* @__PURE__ */ __name((_Listener) => ({
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "onCancellationRequested")
+  };
+  const ProgressReporter = {
+    report(Value) {
+      MountainClient.sendNotification("progress.update", {
+        id: ProgressId,
+        message: Value.message,
+        increment: Value.increment
+      }).catch(() => {
+      });
+    }
+  };
+  yield* Effect7.tryPromise({
+    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.start", {
+      id: ProgressId,
+      location: Options.location,
+      title: Options.title,
+      cancellable: Options.cancellable ?? false
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => new Error("Failed to start progress"), "catch")
+  });
+  const Result = yield* Effect7.tryPromise({
+    try: /* @__PURE__ */ __name(() => Task3(ProgressReporter, CancellationToken2), "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Progress task failed: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  yield* Effect7.tryPromise({
+    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.complete", {
+      id: ProgressId
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => new Error("Failed to complete progress"), "catch")
+  });
+  return Result;
+}), "WithProgress");
+
+// Source/TypeConverter/QuickInput.ts
+var SerializeItems = /* @__PURE__ */ __name((Items) => {
+  return Items.map((Item, Index) => {
+    const Base = typeof Item === "string" ? { label: Item } : Item;
+    return { ...Base, handle: Index };
+  });
+}, "SerializeItems");
+var SerializeButtons = /* @__PURE__ */ __name((Buttons) => {
+  return Buttons?.map((Button, Index) => {
+    const iconPath = Button.iconPath;
+    return {
+      iconPath: iconPath ? "dark" in iconPath && "light" in iconPath ? {
+        dark: iconPath.dark.toJSON(),
+        light: iconPath.light.toJSON()
+      } : iconPath.toJSON() : void 0,
+      tooltip: Button.tooltip,
+      handle: Index
+    };
+  });
+}, "SerializeButtons");
+
+// Source/Services/Window/QuickInput.ts
+import { Effect as Effect8 } from "effect";
+var ShowQuickPick = /* @__PURE__ */ __name((MountainClient, Logger2, Items, Options) => Effect8.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing quick pick with ${Items.length} items`
+  );
+  const ItemsDTO = SerializeItems(Items);
+  const ButtonsDTO = Options?.buttons ? SerializeButtons(Options.buttons) : void 0;
+  const RequestPayload = {
+    items: ItemsDTO,
+    options: Options ? {
+      placeHolder: Options.placeHolder,
+      matchOnDescription: Options.matchOnDescription,
+      matchOnDetail: Options.matchOnDetail,
+      ignoreFocusLost: Options.ignoreFocusLost,
+      canPickMany: Options.canPickMany
+    } : void 0,
+    buttons: ButtonsDTO
+  };
+  const SelectedItems = yield* Effect8.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowQuickPick",
+        [RequestPayload.items, RequestPayload.options]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      return Response;
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show quick pick: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  if (!SelectedItems || SelectedItems.length === 0) {
+    return void 0;
+  }
+  const SelectedValue = SelectedItems[0];
+  if (typeof Items[0] === "string") {
+    return SelectedValue;
+  }
+  return Items.find(
+    (Item) => Item.label === SelectedValue
+  );
+}), "ShowQuickPick");
+var ShowInputBox = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect8.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`
+  );
+  const RequestPayload = Options ? {
+    title: Options.title,
+    value: Options.value,
+    valueSelection: Options.valueSelection,
+    prompt: Options.prompt,
+    placeHolder: Options.placeHolder,
+    password: Options.password,
+    ignoreFocusLost: Options.ignoreFocusLost,
+    validateInput: Options.validateInput ? Options.validateInput.toString() : void 0
+  } : void 0;
+  const Result = yield* Effect8.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowInputBox",
+        [RequestPayload]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      return Response;
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show input box: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  return Result;
+}), "ShowInputBox");
+
 // Source/Services/Window/StatusBar.ts
-import { Effect as Effect6 } from "effect";
-var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger2, Id, Alignment, Priority) => Effect6.gen(function* () {
+import { Effect as Effect9 } from "effect";
+var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger2, Id, Alignment, Priority) => Effect9.gen(function* () {
   const ItemId = Id ?? `statusbar-${crypto.randomUUID()}`;
   yield* Logger2.Info(
     `[WindowService] Creating status bar item with id '${ItemId}'`
@@ -20116,7 +20357,7 @@ var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Lo
     text: "",
     tooltip: void 0
   });
-  return yield* Effect6.succeed({
+  return yield* Effect9.succeed({
     get id() {
       return State.id;
     },
@@ -20196,197 +20437,6 @@ var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Lo
   });
 }), "CreateStatusBarItem");
 
-// Source/TypeConverter/QuickInput.ts
-var SerializeItems = /* @__PURE__ */ __name((Items) => {
-  return Items.map((Item, Index) => {
-    const Base = typeof Item === "string" ? { label: Item } : Item;
-    return { ...Base, handle: Index };
-  });
-}, "SerializeItems");
-var SerializeButtons = /* @__PURE__ */ __name((Buttons) => {
-  return Buttons?.map((Button, Index) => {
-    const iconPath = Button.iconPath;
-    return {
-      iconPath: iconPath ? "dark" in iconPath && "light" in iconPath ? {
-        dark: iconPath.dark.toJSON(),
-        light: iconPath.light.toJSON()
-      } : iconPath.toJSON() : void 0,
-      tooltip: Button.tooltip,
-      handle: Index
-    };
-  });
-}, "SerializeButtons");
-
-// Source/Services/Window/QuickInput.ts
-import { Effect as Effect7 } from "effect";
-var ShowQuickPick = /* @__PURE__ */ __name((MountainClient, Logger2, Items, Options) => Effect7.gen(function* () {
-  yield* Logger2.Debug(
-    `[WindowService] Showing quick pick with ${Items.length} items`
-  );
-  const ItemsDTO = SerializeItems(Items);
-  const ButtonsDTO = Options?.buttons ? SerializeButtons(Options.buttons) : void 0;
-  const RequestPayload = {
-    items: ItemsDTO,
-    options: Options ? {
-      placeHolder: Options.placeHolder,
-      matchOnDescription: Options.matchOnDescription,
-      matchOnDetail: Options.matchOnDetail,
-      ignoreFocusLost: Options.ignoreFocusLost,
-      canPickMany: Options.canPickMany
-    } : void 0,
-    buttons: ButtonsDTO
-  };
-  const SelectedItems = yield* Effect7.tryPromise({
-    try: /* @__PURE__ */ __name(async () => {
-      const Response = await MountainClient.sendRequest(
-        "UserInterface.ShowQuickPick",
-        [RequestPayload.items, RequestPayload.options]
-      );
-      if (Response === null || Response === void 0) {
-        return void 0;
-      }
-      return Response;
-    }, "try"),
-    catch: /* @__PURE__ */ __name((Error_) => {
-      throw new Error(
-        `Failed to show quick pick: ${Error_.message}`
-      );
-    }, "catch")
-  });
-  if (!SelectedItems || SelectedItems.length === 0) {
-    return void 0;
-  }
-  const SelectedValue = SelectedItems[0];
-  if (typeof Items[0] === "string") {
-    return SelectedValue;
-  }
-  return Items.find(
-    (Item) => Item.label === SelectedValue
-  );
-}), "ShowQuickPick");
-var ShowInputBox = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect7.gen(function* () {
-  yield* Logger2.Debug(
-    `[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`
-  );
-  const RequestPayload = Options ? {
-    title: Options.title,
-    value: Options.value,
-    valueSelection: Options.valueSelection,
-    prompt: Options.prompt,
-    placeHolder: Options.placeHolder,
-    password: Options.password,
-    ignoreFocusLost: Options.ignoreFocusLost,
-    validateInput: Options.validateInput ? Options.validateInput.toString() : void 0
-  } : void 0;
-  const Result = yield* Effect7.tryPromise({
-    try: /* @__PURE__ */ __name(async () => {
-      const Response = await MountainClient.sendRequest(
-        "UserInterface.ShowInputBox",
-        [RequestPayload]
-      );
-      if (Response === null || Response === void 0) {
-        return void 0;
-      }
-      return Response;
-    }, "try"),
-    catch: /* @__PURE__ */ __name((Error_) => {
-      throw new Error(
-        `Failed to show input box: ${Error_.message}`
-      );
-    }, "catch")
-  });
-  return Result;
-}), "ShowInputBox");
-
-// Source/TypeConverter/Dialog/Filter.ts
-var SerializeFilters = /* @__PURE__ */ __name((Filters) => {
-  if (!Filters) {
-    return void 0;
-  }
-  return Object.entries(Filters).map(([Name, Extensions]) => ({
-    name: Name,
-    extensions: Extensions
-  }));
-}, "SerializeFilters");
-
-// Source/TypeConverter/Dialog/OpenDialogOption.ts
-var ToDTO = /* @__PURE__ */ __name((Options) => {
-  if (!Options) {
-    return void 0;
-  }
-  return {
-    ...Options,
-    defaultUri: Options.defaultUri?.toJSON(),
-    filters: SerializeFilters(Options.filters)
-  };
-}, "ToDTO");
-
-// Source/TypeConverter/Dialog/SaveDialogOption.ts
-var ToDTO2 = /* @__PURE__ */ __name((Options) => {
-  if (!Options) {
-    return void 0;
-  }
-  return {
-    ...Options,
-    defaultUri: Options.defaultUri?.toJSON(),
-    filters: SerializeFilters(Options.filters)
-  };
-}, "ToDTO");
-
-// Source/Services/Window/FileDialogs.ts
-import { Effect as Effect8 } from "effect";
-var ShowOpenDialog = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect8.gen(function* () {
-  yield* Logger2.Debug(`[WindowService] Showing open dialog`);
-  const OptionsDTO = ToDTO(Options);
-  const Result = yield* Effect8.tryPromise({
-    try: /* @__PURE__ */ __name(async () => {
-      const Response = await MountainClient.sendRequest(
-        "UserInterface.ShowOpenDialog",
-        [OptionsDTO]
-      );
-      if (Response === null || Response === void 0) {
-        return void 0;
-      }
-      const FilePaths = Response;
-      const { Uri: Uri2 } = await import("vscode");
-      return FilePaths.map((Path) => Uri2.file(Path));
-    }, "try"),
-    catch: /* @__PURE__ */ __name((Error_) => {
-      throw new Error(
-        `Failed to show open dialog: ${Error_.message}`
-      );
-    }, "catch")
-  });
-  return Result;
-}), "ShowOpenDialog");
-var ShowSaveDialog = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect8.gen(function* () {
-  yield* Logger2.Debug(`[WindowService] Showing save dialog`);
-  const OptionsDTO = ToDTO2(Options);
-  const ResultURI = yield* Effect8.tryPromise({
-    try: /* @__PURE__ */ __name(async () => {
-      const Response = await MountainClient.sendRequest(
-        "UserInterface.ShowSaveDialog",
-        [OptionsDTO]
-      );
-      if (Response === null || Response === void 0) {
-        return void 0;
-      }
-      const FilePath = Response;
-      const { Uri: Uri2 } = await import("vscode");
-      return Uri2.file(FilePath);
-    }, "try"),
-    catch: /* @__PURE__ */ __name((Error_) => {
-      throw new Error(
-        `Failed to show save dialog: ${Error_.message}`
-      );
-    }, "catch")
-  });
-  return ResultURI ? await(async () => {
-    const { Uri: Uri2 } = await import("vscode");
-    return Uri2.parse(ResultURI.toString());
-  })() : void 0;
-}), "ShowSaveDialog");
-
 // Source/TypeConverter/Main/ViewColumn.ts
 var { ViewColumn: VSCodeViewColumn } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
 var ActiveEditorGroup = -1;
@@ -20407,6 +20457,102 @@ var FromAPI = /* @__PURE__ */ __name((ViewColumn2) => {
   }
   return void 0;
 }, "FromAPI");
+
+// Source/Services/Window/TextDocument.ts
+import { Effect as Effect10 } from "effect";
+var ShowTextDocument = /* @__PURE__ */ __name((GRPCClient, Logger2, Workspace_, DocumentOrUri, ColumnOrOptions, PreserveFocus) => Effect10.gen(function* () {
+  const Uri2 = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
+  yield* Logger2.Info(
+    `[WindowService] Showing text document: ${Uri2.toString()}` + (ColumnOrOptions ? ` with options` : "")
+  );
+  let ViewColumnDTO;
+  let PreserveFocusValue = PreserveFocus ?? false;
+  let Selection3 = void 0;
+  let Preview;
+  if (typeof ColumnOrOptions === "number") {
+    ViewColumnDTO = FromAPI(ColumnOrOptions);
+  } else if (ColumnOrOptions) {
+    const Options = ColumnOrOptions;
+    ViewColumnDTO = FromAPI(Options.viewColumn);
+    PreserveFocusValue = Options.preserveFocus ?? false;
+    Preview = Options.preview;
+    if (Options.selection) {
+      Selection3 = Options.selection;
+    }
+  }
+  yield* GRPCClient.showTextDocument(Uri2.toString(), {
+    viewColumn: ViewColumnDTO ? ViewColumnDTO + 2 : void 0,
+    preserveFocus: PreserveFocusValue === true,
+    preview: Preview === true,
+    selection: Selection3 ? {
+      line: Selection3.start.line,
+      character: Selection3.start.character
+    } : void 0
+  });
+  const EditorId = "editor-" + Uri2.toString().slice(-8);
+  yield* Logger2.Debug(
+    `[WindowService] Showed text document with ID: ${EditorId}`
+  );
+  const Editor = Workspace_.visibleTextEditors.find(
+    (E) => E.id === EditorId
+  );
+  if (!Editor) {
+    return yield* Effect10.fail(
+      new Error(
+        `[WindowService] Could not find text editor with ID ${EditorId} after Mountain confirmation`
+      )
+    );
+  }
+  return Editor;
+}), "ShowTextDocument");
+var ShowInformationMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect10.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing information message: ${Message}`
+  );
+  const InfoResponse = yield* Effect10.tryPromise({
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showInformation", {
+      message: Message,
+      items: Items.length > 0 ? Items : void 0
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => null, "catch")
+  });
+  const InfoSelected = InfoResponse?.selectedItem;
+  return InfoSelected ? Items.find(
+    (I) => (typeof I === "string" ? I : I.title) === InfoSelected
+  ) ?? void 0 : void 0;
+}), "ShowInformationMessage");
+var ShowWarningMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect10.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing warning message: ${Message}`
+  );
+  const WarnResponse = yield* Effect10.tryPromise({
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showWarning", {
+      message: Message,
+      items: Items.length > 0 ? Items : void 0
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => null, "catch")
+  });
+  const WarnSelected = WarnResponse?.selectedItem;
+  return WarnSelected ? Items.find(
+    (I) => (typeof I === "string" ? I : I.title) === WarnSelected
+  ) ?? void 0 : void 0;
+}), "ShowWarningMessage");
+var ShowErrorMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect10.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing error message: ${Message}`
+  );
+  const ErrorResponse = yield* Effect10.tryPromise({
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showError", {
+      message: Message,
+      items: Items.length > 0 ? Items : void 0
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => null, "catch")
+  });
+  const ErrorSelected = ErrorResponse?.selectedItem;
+  return ErrorSelected ? Items.find(
+    (I) => (typeof I === "string" ? I : I.title) === ErrorSelected
+  ) ?? void 0 : void 0;
+}), "ShowErrorMessage");
 
 // Source/Platform/VSCode/Type.ts
 init_extHostTypes();
@@ -20444,7 +20590,7 @@ var ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Op
 
 // Source/WebviewPanel/WebviewImplementation.ts
 init_network();
-import { Effect as Effect9 } from "effect";
+import { Effect as Effect11 } from "effect";
 var WebviewImplementation = class {
   constructor(Handle, IPCService, Extension, InitialOptions) {
     this.Handle = Handle;
@@ -20474,7 +20620,7 @@ var WebviewImplementation = class {
       "$setWebviewHtml",
       [this.Handle, Value]
     );
-    Effect9.runFork(UpdateEffect);
+    Effect11.runFork(UpdateEffect);
   }
   get options() {
     return this._options;
@@ -20490,7 +20636,7 @@ var WebviewImplementation = class {
       "$setWebviewOptions",
       [this.Handle, OptionsDTO]
     );
-    Effect9.runFork(UpdateEffect);
+    Effect11.runFork(UpdateEffect);
   }
   get cspSource() {
     return "vscode-resource: vscode-webview-resource: https:";
@@ -20500,8 +20646,8 @@ var WebviewImplementation = class {
     const PostEffect = this.IPCService.SendRequest(
       "$postMessageToWebview",
       [this.Handle, Message]
-    ).pipe(Effect9.catchAll(() => Effect9.succeed(false)));
-    return Effect9.runPromise(PostEffect);
+    ).pipe(Effect11.catchAll(() => Effect11.succeed(false)));
+    return Effect11.runPromise(PostEffect);
   }
   asWebviewUri(LocalResource) {
     const Authority = this.Extension.identifier.value.toLowerCase();
@@ -20512,7 +20658,7 @@ var WebviewImplementation = class {
   }
   fireDidReceiveMessage(Message) {
     if (!this.IsDisposed) {
-      Effect9.runFork(this.OnDidReceiveMessageEmitter.Fire(Message));
+      Effect11.runFork(this.OnDidReceiveMessageEmitter.Fire(Message));
     }
   }
   dispose() {
@@ -20524,7 +20670,7 @@ var WebviewImplementation = class {
 };
 
 // Source/WebviewPanel/WebviewPanelImplementation.ts
-import { Effect as Effect10 } from "effect";
+import { Effect as Effect12 } from "effect";
 var WebviewPanelImplementation = class {
   constructor(Handle, IPC, Extension, OnDidDisposeCallback, InitialViewType, InitialTitle, InitialOptions, InitialViewColumn) {
     this.Handle = Handle;
@@ -20582,7 +20728,7 @@ var WebviewPanelImplementation = class {
   set title(Value) {
     if (this.IsDisposed || this._title === Value) return;
     this._title = Value;
-    Effect10.runFork(
+    Effect12.runFork(
       this.IPC.SendNotification("$setWebviewTitle", [this.Handle, Value])
     );
   }
@@ -20602,7 +20748,7 @@ var WebviewPanelImplementation = class {
       light: FromAPI2(internalValue),
       dark: FromAPI2(internalValue)
     } : void 0;
-    Effect10.runFork(
+    Effect12.runFork(
       this.IPC.SendNotification("$setWebviewIconPath", [
         this.Handle,
         IconPathDTO
@@ -20612,7 +20758,7 @@ var WebviewPanelImplementation = class {
   reveal(ViewColumn2, PreserveFocus) {
     if (this.IsDisposed) return;
     const ViewColumnDTO = ViewColumn2 ? ConvertShowOptionToDTO(ViewColumn2, PreserveFocus ?? false) : void 0;
-    Effect10.runFork(
+    Effect12.runFork(
       this.IPC.SendNotification("$revealWebviewPanel", [
         this.Handle,
         ViewColumnDTO,
@@ -20628,7 +20774,7 @@ var WebviewPanelImplementation = class {
     this.OnDidDisposeEmitter.Fire();
     this.OnDidDisposeCallback();
     this.webview.dispose();
-    Effect10.runFork(
+    Effect12.runFork(
       this.IPC.SendNotification("$disposeWebview", [this.Handle])
     );
   }
@@ -20650,8 +20796,8 @@ var WebviewPanelImplementation = class {
 };
 
 // Source/Services/Window/WebviewPanel.ts
-import { Effect as Effect11 } from "effect";
-var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger2, ViewType, Title, ShowOptions, Options) => Effect11.gen(function* () {
+import { Effect as Effect13 } from "effect";
+var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger2, ViewType, Title, ShowOptions, Options) => Effect13.gen(function* () {
   const PanelId = `webview-${crypto.randomUUID()}`;
   yield* Logger2.Info(
     `[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`
@@ -20681,7 +20827,7 @@ var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Log
     )
   });
   const IPCProxy = {
-    SendNotification: /* @__PURE__ */ __name((Method, Params) => Effect11.gen(function* () {
+    SendNotification: /* @__PURE__ */ __name((Method, Params) => Effect13.gen(function* () {
       yield* Logger2.Debug(
         `[WindowService] Webview notification: ${Method}`
       );
@@ -20692,7 +20838,7 @@ var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Log
       }).catch(() => {
       });
     }), "SendNotification"),
-    SendRequest: /* @__PURE__ */ __name((_Method, _Params) => Effect11.gen(function* () {
+    SendRequest: /* @__PURE__ */ __name((_Method, _Params) => Effect13.gen(function* () {
       return void 0;
     }), "SendRequest")
   };
@@ -20715,154 +20861,8 @@ var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Log
     PanelOptionsDTO ?? {},
     ViewColumn2
   );
-  return yield* Effect11.succeed(WebviewPanel);
+  return yield* Effect13.succeed(WebviewPanel);
 }), "CreateWebviewPanel");
-
-// Source/Services/Window/Progress.ts
-import { Effect as Effect12 } from "effect";
-var WithProgress = /* @__PURE__ */ __name((MountainClient, Logger2, Options, Task3) => Effect12.gen(function* () {
-  const ProgressId = `progress-${crypto.randomUUID()}`;
-  yield* Logger2.Info(
-    `[WindowService] Starting progress: ${Options.location} (${ProgressId})`
-  );
-  const CancellationToken2 = {
-    isCancellationRequested: false,
-    onCancellationRequested: /* @__PURE__ */ __name((_Listener) => ({
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose")
-    }), "onCancellationRequested")
-  };
-  const ProgressReporter = {
-    report(Value) {
-      MountainClient.sendNotification("progress.update", {
-        id: ProgressId,
-        message: Value.message,
-        increment: Value.increment
-      }).catch(() => {
-      });
-    }
-  };
-  yield* Effect12.tryPromise({
-    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.start", {
-      id: ProgressId,
-      location: Options.location,
-      title: Options.title,
-      cancellable: Options.cancellable ?? false
-    }), "try"),
-    catch: /* @__PURE__ */ __name(() => new Error("Failed to start progress"), "catch")
-  });
-  const Result = yield* Effect12.tryPromise({
-    try: /* @__PURE__ */ __name(() => Task3(ProgressReporter, CancellationToken2), "try"),
-    catch: /* @__PURE__ */ __name((Error_) => {
-      throw new Error(
-        `Progress task failed: ${Error_.message}`
-      );
-    }, "catch")
-  });
-  yield* Effect12.tryPromise({
-    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.complete", {
-      id: ProgressId
-    }), "try"),
-    catch: /* @__PURE__ */ __name(() => new Error("Failed to complete progress"), "catch")
-  });
-  return Result;
-}), "WithProgress");
-
-// Source/Services/Window/TextDocument.ts
-import { Effect as Effect13 } from "effect";
-var ShowTextDocument = /* @__PURE__ */ __name((GRPCClient, Logger2, Workspace_, DocumentOrUri, ColumnOrOptions, PreserveFocus) => Effect13.gen(function* () {
-  const Uri2 = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
-  yield* Logger2.Info(
-    `[WindowService] Showing text document: ${Uri2.toString()}` + (ColumnOrOptions ? ` with options` : "")
-  );
-  let ViewColumnDTO;
-  let PreserveFocusValue = PreserveFocus ?? false;
-  let Selection3 = void 0;
-  let Preview;
-  if (typeof ColumnOrOptions === "number") {
-    ViewColumnDTO = FromAPI(ColumnOrOptions);
-  } else if (ColumnOrOptions) {
-    const Options = ColumnOrOptions;
-    ViewColumnDTO = FromAPI(Options.viewColumn);
-    PreserveFocusValue = Options.preserveFocus ?? false;
-    Preview = Options.preview;
-    if (Options.selection) {
-      Selection3 = Options.selection;
-    }
-  }
-  yield* GRPCClient.showTextDocument(Uri2.toString(), {
-    viewColumn: ViewColumnDTO ? ViewColumnDTO + 2 : void 0,
-    preserveFocus: PreserveFocusValue === true,
-    preview: Preview === true,
-    selection: Selection3 ? {
-      line: Selection3.start.line,
-      character: Selection3.start.character
-    } : void 0
-  });
-  const EditorId = "editor-" + Uri2.toString().slice(-8);
-  yield* Logger2.Debug(
-    `[WindowService] Showed text document with ID: ${EditorId}`
-  );
-  const Editor = Workspace_.visibleTextEditors.find(
-    (E) => E.id === EditorId
-  );
-  if (!Editor) {
-    return yield* Effect13.fail(
-      new Error(
-        `[WindowService] Could not find text editor with ID ${EditorId} after Mountain confirmation`
-      )
-    );
-  }
-  return Editor;
-}), "ShowTextDocument");
-var ShowInformationMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect13.gen(function* () {
-  yield* Logger2.Debug(
-    `[WindowService] Showing information message: ${Message}`
-  );
-  const InfoResponse = yield* Effect13.tryPromise({
-    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showInformation", {
-      message: Message,
-      items: Items.length > 0 ? Items : void 0
-    }), "try"),
-    catch: /* @__PURE__ */ __name(() => null, "catch")
-  });
-  const InfoSelected = InfoResponse?.selectedItem;
-  return InfoSelected ? Items.find(
-    (I) => (typeof I === "string" ? I : I.title) === InfoSelected
-  ) ?? void 0 : void 0;
-}), "ShowInformationMessage");
-var ShowWarningMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect13.gen(function* () {
-  yield* Logger2.Debug(
-    `[WindowService] Showing warning message: ${Message}`
-  );
-  const WarnResponse = yield* Effect13.tryPromise({
-    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showWarning", {
-      message: Message,
-      items: Items.length > 0 ? Items : void 0
-    }), "try"),
-    catch: /* @__PURE__ */ __name(() => null, "catch")
-  });
-  const WarnSelected = WarnResponse?.selectedItem;
-  return WarnSelected ? Items.find(
-    (I) => (typeof I === "string" ? I : I.title) === WarnSelected
-  ) ?? void 0 : void 0;
-}), "ShowWarningMessage");
-var ShowErrorMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect13.gen(function* () {
-  yield* Logger2.Debug(
-    `[WindowService] Showing error message: ${Message}`
-  );
-  const ErrorResponse = yield* Effect13.tryPromise({
-    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showError", {
-      message: Message,
-      items: Items.length > 0 ? Items : void 0
-    }), "try"),
-    catch: /* @__PURE__ */ __name(() => null, "catch")
-  });
-  const ErrorSelected = ErrorResponse?.selectedItem;
-  return ErrorSelected ? Items.find(
-    (I) => (typeof I === "string" ? I : I.title) === ErrorSelected
-  ) ?? void 0 : void 0;
-}), "ShowErrorMessage");
 
 // Source/Services/Window/Index.ts
 import { Context as Context3, Effect as Effect14, Ref as Ref2 } from "effect";
@@ -20937,12 +20937,7 @@ var WindowService = class extends Effect14.Service()(
         ShowInputBox: /* @__PURE__ */ __name((Options) => ShowInputBox(MountainClient, Logger_, Options), "ShowInputBox"),
         ShowOpenDialog: /* @__PURE__ */ __name((Options) => ShowOpenDialog(MountainClient, Logger_, Options), "ShowOpenDialog"),
         ShowSaveDialog: /* @__PURE__ */ __name((Options) => ShowSaveDialog(MountainClient, Logger_, Options), "ShowSaveDialog"),
-        WithProgress: /* @__PURE__ */ __name((Options, Task3) => WithProgress(
-          MountainClient,
-          Logger_,
-          Options,
-          Task3
-        ), "WithProgress"),
+        WithProgress: /* @__PURE__ */ __name((Options, Task3) => WithProgress(MountainClient, Logger_, Options, Task3), "WithProgress"),
         CreateStatusBarItem: /* @__PURE__ */ __name((Id, Alignment, Priority) => CreateStatusBarItem(
           MountainClient,
           MountainGRPC,
@@ -20951,11 +20946,7 @@ var WindowService = class extends Effect14.Service()(
           Alignment,
           Priority
         ), "CreateStatusBarItem"),
-        CreateOutputChannel: /* @__PURE__ */ __name((Name) => CreateOutputChannel(
-          MountainClient,
-          Logger_,
-          Name
-        ), "CreateOutputChannel"),
+        CreateOutputChannel: /* @__PURE__ */ __name((Name) => CreateOutputChannel(MountainClient, Logger_, Name), "CreateOutputChannel"),
         CreateWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => CreateWebviewPanel(
           MountainClient,
           MountainGRPC,

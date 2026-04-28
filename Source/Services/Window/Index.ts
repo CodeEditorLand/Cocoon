@@ -27,19 +27,19 @@ import type * as VSCode from "vscode";
 import { IMountainClientService } from "../../Interfaces/IMountainClientService.js";
 import { CreateEventStream } from "../../Utility/EventStream.js";
 import { MountainGRPCClientService } from "../MountainGRPCClient.js";
-import { CreateOutputChannel } from "./OutputChannel.js";
-import { CreateStatusBarItem } from "./StatusBar.js";
-import { ShowInputBox, ShowQuickPick } from "./QuickInput.js";
 import { ShowOpenDialog, ShowSaveDialog } from "./FileDialogs.js";
-import { CreateWebviewPanel } from "./WebviewPanel.js";
-import { WithProgress } from "./Progress.js";
-import {
-	ShowTextDocument,
-	ShowInformationMessage,
-	ShowWarningMessage,
-	ShowErrorMessage,
-} from "./TextDocument.js";
 import type { Logger, Window, Workspace } from "./Interfaces.js";
+import { CreateOutputChannel } from "./OutputChannel.js";
+import { WithProgress } from "./Progress.js";
+import { ShowInputBox, ShowQuickPick } from "./QuickInput.js";
+import { CreateStatusBarItem } from "./StatusBar.js";
+import {
+	ShowErrorMessage,
+	ShowInformationMessage,
+	ShowTextDocument,
+	ShowWarningMessage,
+} from "./TextDocument.js";
+import { CreateWebviewPanel } from "./WebviewPanel.js";
 
 export type { Logger, Window, Workspace } from "./Interfaces.js";
 export type { VSCodeWindowAPI } from "./Interfaces.js";
@@ -111,7 +111,9 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				ShowTextDocument: (
 					DocumentOrUri: VSCode.Uri | VSCode.TextDocument,
-					ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
+					ColumnOrOptions?:
+						| VSCode.ViewColumn
+						| VSCode.TextDocumentShowOptions,
 					PreserveFocus?: boolean,
 				) =>
 					ShowTextDocument(
@@ -123,10 +125,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						PreserveFocus,
 					),
 
-				ShowInformationMessage: (
-					Message: string,
-					...Items: string[]
-				) =>
+				ShowInformationMessage: (Message: string, ...Items: string[]) =>
 					ShowInformationMessage(
 						MountainGRPC as any,
 						Logger_,
@@ -134,10 +133,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						...Items,
 					),
 
-				ShowWarningMessage: (
-					Message: string,
-					...Items: string[]
-				) =>
+				ShowWarningMessage: (Message: string, ...Items: string[]) =>
 					ShowWarningMessage(
 						MountainGRPC as any,
 						Logger_,
@@ -145,10 +141,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						...Items,
 					),
 
-				ShowErrorMessage: (
-					Message: string,
-					...Items: string[]
-				) =>
+				ShowErrorMessage: (Message: string, ...Items: string[]) =>
 					ShowErrorMessage(
 						MountainGRPC as any,
 						Logger_,
@@ -186,12 +179,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						Token: VSCode.CancellationToken,
 					) => Promise<T>,
 				) =>
-					WithProgress(
-						MountainClient as any,
-						Logger_,
-						Options,
-						Task,
-					),
+					WithProgress(MountainClient as any, Logger_, Options, Task),
 
 				CreateStatusBarItem: (
 					Id?: string,
@@ -208,11 +196,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 					),
 
 				CreateOutputChannel: (Name: string) =>
-					CreateOutputChannel(
-						MountainClient as any,
-						Logger_,
-						Name,
-					),
+					CreateOutputChannel(MountainClient as any, Logger_, Name),
 
 				CreateWebviewPanel: (
 					ViewType: string,
@@ -223,7 +207,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 								viewColumn: VSCode.ViewColumn;
 								preserveFocus?: boolean;
 						  },
-					Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
+					Options?: VSCode.WebviewPanelOptions &
+						VSCode.WebviewOptions,
 				) =>
 					CreateWebviewPanel(
 						MountainClient as any,

@@ -295,10 +295,7 @@ var Tier = {
   ModuleCache: Pick("ModuleCache", "Simple"),
   Telemetry: Pick("Telemetry", "Synchronous")
 };
-LandFixLog_default.Info(
-  "Tier",
-  `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
-);
+LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
 var Tier_default = Tier;
 
 // Source/Services/LanguageProviderRegistry.ts
@@ -421,12 +418,14 @@ var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
 }, "FolderToFsPath");
 var ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
   const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-  return (InitWorkspace.folders ?? []).map((Folder) => {
-    const FsPath = FolderToFsPath(Folder?.uri);
-    const Record = { ...Folder };
-    if (typeof FsPath === "string") Record.FsPath = FsPath;
-    return Record;
-  });
+  return (InitWorkspace.folders ?? []).map(
+    (Folder) => {
+      const FsPath = FolderToFsPath(Folder?.uri);
+      const Record = { ...Folder };
+      if (typeof FsPath === "string") Record.FsPath = FsPath;
+      return Record;
+    }
+  );
 }, "ResolveWorkspaceFolders");
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
@@ -484,10 +483,7 @@ var CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCr
     Context.Emitter.on(EventName, WrappedListener);
     return {
       dispose: /* @__PURE__ */ __name(() => {
-        Context.Emitter.removeListener(
-          EventName,
-          WrappedListener
-        );
+        Context.Emitter.removeListener(EventName, WrappedListener);
       }, "dispose")
     };
   }, "MakeSubscriber");
@@ -495,24 +491,14 @@ var CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCr
     ignoreCreateEvents: IgnoreCreateEvents === true,
     ignoreChangeEvents: IgnoreChangeEvents === true,
     ignoreDeleteEvents: IgnoreDeleteEvents === true,
-    onDidCreate: MakeSubscriber(
-      "create",
-      IgnoreCreateEvents === true
-    ),
-    onDidChange: MakeSubscriber(
-      "change",
-      IgnoreChangeEvents === true
-    ),
-    onDidDelete: MakeSubscriber(
-      "delete",
-      IgnoreDeleteEvents === true
-    ),
+    onDidCreate: MakeSubscriber("create", IgnoreCreateEvents === true),
+    onDidChange: MakeSubscriber("change", IgnoreChangeEvents === true),
+    onDidDelete: MakeSubscriber("delete", IgnoreDeleteEvents === true),
     dispose: /* @__PURE__ */ __name(() => {
       Context.Emitter.removeAllListeners(EventName);
-      Context.MountainClient?.sendRequest(
-        "FileWatcher.Unregister",
-        [Handle]
-      ).catch(() => {
+      Context.MountainClient?.sendRequest("FileWatcher.Unregister", [
+        Handle
+      ]).catch(() => {
       });
     }, "dispose")
   };

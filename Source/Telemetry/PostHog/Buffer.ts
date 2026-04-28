@@ -8,8 +8,7 @@
  */
 
 import type { Configuration } from "./Configuration.js";
-import Event from "./Event.js";
-import type { Event as QueuedEvent, Properties } from "./Event.js";
+import Event, { type Properties, type Event as QueuedEvent } from "./Event.js";
 import Transport from "./Transport.js";
 
 export type Buffer = {

@@ -44,8 +44,8 @@ const { Emitter } = await import("@codeeditorland/output/vs/base/common/event");
 // URI stamped onto it. Fully transparent to extensions - the wrapped
 // result is an instance of the stock class, so any `instanceof` check
 // downstream still matches.
-const StockRelativePattern:any = VsCodeTypes.RelativePattern;
-const HydrateBase = (Base:unknown):unknown => {
+const StockRelativePattern: any = VsCodeTypes.RelativePattern;
+const HydrateBase = (Base: unknown): unknown => {
 	if (Base == null) return Base;
 	if (typeof Base === "string") return Base;
 	if (Base instanceof URI) return Base;
@@ -59,15 +59,19 @@ const HydrateBase = (Base:unknown):unknown => {
 	const Revived = URI.revive(Base as any);
 	return Revived ?? Base;
 };
-const PatchedRelativePattern:any = function RelativePattern(
-	this:unknown,
-	Base:unknown,
-	Pattern:string,
+const PatchedRelativePattern: any = function RelativePattern(
+	this: unknown,
+	Base: unknown,
+	Pattern: string,
 ) {
 	const Safe = HydrateBase(Base);
 	// Forward to the stock constructor. `Reflect.construct` preserves
 	// prototype chain so `instanceof vscode.RelativePattern` still works.
-	return Reflect.construct(StockRelativePattern, [Safe, Pattern], PatchedRelativePattern);
+	return Reflect.construct(
+		StockRelativePattern,
+		[Safe, Pattern],
+		PatchedRelativePattern,
+	);
 };
 PatchedRelativePattern.prototype = StockRelativePattern.prototype;
 Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
@@ -206,7 +210,10 @@ const createVSCodeAPI = (
 				});
 				return undefined;
 			},
-			showWarningMessage: async (message: string, ..._items: string[]) => {
+			showWarningMessage: async (
+				message: string,
+				..._items: string[]
+			) => {
 				await mountainClient.sendRequest("window.showMessage", {
 					title: "Warning",
 					message: message,
@@ -401,9 +408,11 @@ const createVSCodeAPI = (
 						// commands. Real native-command typos still surface -
 						// they lack the `<extension-id>.<command>` shape.
 						const Message = String(Error?.message ?? Error);
-						const IsNotFound = Message.includes("not found") ||
+						const IsNotFound =
+							Message.includes("not found") ||
 							Message.includes("Command not found");
-						const IsExtensionNamespaced = command.includes(".") &&
+						const IsExtensionNamespaced =
+							command.includes(".") &&
 							!command.startsWith("vscode.") &&
 							!command.startsWith("workbench.") &&
 							!command.startsWith("editor.");

@@ -8,39 +8,39 @@
  * document-change notifications.
  */
 
-import type { HandlerContext } from "../../HandlerContext.js";
 import { TryMountainWithEmptyFallback } from "../../../DualTrack.js";
+import type { HandlerContext } from "../../HandlerContext.js";
 import {
 	IsEqualOrParent as StockIsEqualOrParent,
 	RelativePath as StockRelativePath,
 	ToUri as StockToUri,
 	Uri as StockUri,
 } from "../StockLift.js";
-import { FindFilesLocal } from "./FindFiles.js";
-import { FindTextInFilesNodeFallback } from "./FindTextInFilesFallback.js";
-import { CreateFileSystemWatcher } from "./FileSystemWatcher.js";
 import {
-	CreateConfigurationState,
 	BuildGetConfiguration,
 	BuildOnDidChangeConfiguration,
+	CreateConfigurationState,
 } from "./Configuration.js";
+import { BuildFileSystemNamespace } from "./FileSystemNamespace.js";
+import { CreateFileSystemWatcher } from "./FileSystemWatcher.js";
+import { FindFilesLocal } from "./FindFiles.js";
+import { FindTextInFilesNodeFallback } from "./FindTextInFilesFallback.js";
 import {
-	BuildOpenTextDocument,
-	BuildSaveAll,
-	BuildApplyEdit,
-	BuildUpdateWorkspaceFolders,
-	BuildDocumentEventMembers,
-} from "./TextDocument.js";
-import {
-	BuildRegisterTextDocumentContentProvider,
 	BuildRegisterFileSystemProvider,
-	BuildRegisterTaskProvider,
 	BuildRegisterNotebookContentProvider,
 	BuildRegisterNotebookSerializer,
 	BuildRegisterRemoteAuthorityResolver,
 	BuildRegisterResourceLabelFormatter,
+	BuildRegisterTaskProvider,
+	BuildRegisterTextDocumentContentProvider,
 } from "./Providers.js";
-import { BuildFileSystemNamespace } from "./FileSystemNamespace.js";
+import {
+	BuildApplyEdit,
+	BuildDocumentEventMembers,
+	BuildOpenTextDocument,
+	BuildSaveAll,
+	BuildUpdateWorkspaceFolders,
+} from "./TextDocument.js";
 import WrapWorkspaceNamespace from "./WrapWorkspaceNamespace.js";
 
 /**
@@ -158,8 +158,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	// extension's `activate()` synchronously reaches into nested config
 	// paths (GitLens, rust-analyzer, vscodevim all do this). One state
 	// instance per process, same as the shim itself.
-	(globalThis as { __cocoonConfigState?: typeof ConfigState }).__cocoonConfigState =
-		ConfigState;
+	(
+		globalThis as { __cocoonConfigState?: typeof ConfigState }
+	).__cocoonConfigState = ConfigState;
 
 	const Concrete = {
 		get workspaceFolders() {
@@ -190,7 +191,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			Exclude?: unknown,
 			MaxResults?: number,
 		): Promise<unknown[]> => {
-			const Raw = (await TryMountainWithEmptyFallback<unknown[]>(
+			const Raw = await TryMountainWithEmptyFallback<unknown[]>(
 				Context,
 				"findFiles",
 				[
@@ -202,7 +203,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 				],
 				async (Args) => {
 					const [I, _O] = Args;
-					const Opts = _O as { exclude?: unknown; maxResults?: number } | undefined;
+					const Opts = _O as
+						| { exclude?: unknown; maxResults?: number }
+						| undefined;
 					return FindFilesLocal(
 						Context,
 						ReadFolders(),
@@ -212,7 +215,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					);
 				},
 				(R) => !Array.isArray(R) || R.length === 0,
-			));
+			);
 			return HydrateUriResults(Raw);
 		},
 
@@ -229,13 +232,21 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			const Include = Array.isArray(FilePatterns)
 				? FilePatterns[0]
 				: FilePatterns;
-			const Raw = (await TryMountainWithEmptyFallback<unknown[]>(
+			const Raw = await TryMountainWithEmptyFallback<unknown[]>(
 				Context,
 				"findFiles",
-				[Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
+				[
+					Include,
+					{
+						exclude: Options?.exclude,
+						maxResults: Options?.maxResults,
+					},
+				],
 				async (Args) => {
 					const [I, _O] = Args;
-					const Opts = _O as { exclude?: unknown; maxResults?: number } | undefined;
+					const Opts = _O as
+						| { exclude?: unknown; maxResults?: number }
+						| undefined;
 					return FindFilesLocal(
 						Context,
 						ReadFolders(),
@@ -245,7 +256,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					);
 				},
 				(R) => !Array.isArray(R) || R.length === 0,
-			));
+			);
 			return HydrateUriResults(Raw);
 		},
 
@@ -324,7 +335,10 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// `openNotebookDocument` - notebook renderer support. Land has no
 		// notebook editor yet; return a minimal NotebookDocument shape so
 		// callers that immediately read `.uri` / `.cellCount` don't crash.
-		openNotebookDocument: async (_UriOrContent: unknown, _Content?: unknown) => ({
+		openNotebookDocument: async (
+			_UriOrContent: unknown,
+			_Content?: unknown,
+		) => ({
 			uri: undefined,
 			version: 1,
 			notebookType: "jupyter-notebook",
@@ -375,7 +389,10 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// normalisation that our previous `.startsWith()` missed. Falls
 		// back to the raw input when the URI can't be coerced (matches
 		// stock VS Code's own behaviour at the workspace boundary).
-		asRelativePath: (PathOrUri: unknown, IncludeWorkspaceFolder?: boolean) => {
+		asRelativePath: (
+			PathOrUri: unknown,
+			IncludeWorkspaceFolder?: boolean,
+		) => {
 			const Raw =
 				typeof PathOrUri === "string"
 					? PathOrUri
@@ -548,26 +565,21 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// - `registerFileSearchProvider[2]` - remote FS providers.
 		// - `registerTextSearchProvider[2]` - grep-for-X extensions.
 		// - `registerAITextSearchProvider` - AI search (copilot).
-		registerTimelineProvider: (
-			_Scheme: unknown,
-			_Provider: unknown,
-		) => ({ dispose: () => {} }),
-		registerFileSearchProvider: (
-			_Scheme: string,
-			_Provider: unknown,
-		) => ({ dispose: () => {} }),
-		registerFileSearchProvider2: (
-			_Scheme: string,
-			_Provider: unknown,
-		) => ({ dispose: () => {} }),
-		registerTextSearchProvider: (
-			_Scheme: string,
-			_Provider: unknown,
-		) => ({ dispose: () => {} }),
-		registerTextSearchProvider2: (
-			_Scheme: string,
-			_Provider: unknown,
-		) => ({ dispose: () => {} }),
+		registerTimelineProvider: (_Scheme: unknown, _Provider: unknown) => ({
+			dispose: () => {},
+		}),
+		registerFileSearchProvider: (_Scheme: string, _Provider: unknown) => ({
+			dispose: () => {},
+		}),
+		registerFileSearchProvider2: (_Scheme: string, _Provider: unknown) => ({
+			dispose: () => {},
+		}),
+		registerTextSearchProvider: (_Scheme: string, _Provider: unknown) => ({
+			dispose: () => {},
+		}),
+		registerTextSearchProvider2: (_Scheme: string, _Provider: unknown) => ({
+			dispose: () => {},
+		}),
 		registerAITextSearchProvider: (
 			_Scheme: string,
 			_Provider: unknown,

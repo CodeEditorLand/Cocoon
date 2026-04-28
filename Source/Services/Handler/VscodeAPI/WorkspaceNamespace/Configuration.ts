@@ -107,16 +107,10 @@ export const CreateConfigurationState = (
 			contributes?: {
 				configuration?:
 					| {
-							properties?: Record<
-								string,
-								{ default?: unknown }
-							>;
+							properties?: Record<string, { default?: unknown }>;
 					  }
 					| Array<{
-							properties?: Record<
-								string,
-								{ default?: unknown }
-							>;
+							properties?: Record<string, { default?: unknown }>;
 					  }>;
 			};
 		};
@@ -141,9 +135,7 @@ export const CreateConfigurationState = (
 		for (const Section of Sections) {
 			const Properties = Section?.properties;
 			if (!Properties) continue;
-			for (const [DottedKey, Declaration] of Object.entries(
-				Properties,
-			)) {
+			for (const [DottedKey, Declaration] of Object.entries(Properties)) {
 				// Only seed keys that don't already have a cached value -
 				// a user override (workspace or global settings) always
 				// wins over the manifest default.
@@ -262,131 +254,128 @@ const SynthesiseSubtree = (
 	return Matched ? Subtree : undefined;
 };
 
-export const BuildGetConfiguration = (
-	Context: HandlerContext,
-	State: ConfigurationState,
-) =>
-(Section?: string, _Scope?: unknown) => ({
-	get: <T>(Key: string, DefaultValue?: T): T | undefined => {
-		const Full = Section ? `${Section}.${Key}` : Key;
-		if (State.ConfigCache.has(Full)) {
-			const Cached = State.ConfigCache.get(Full);
-			// When Mountain's inspector reports a branch key as
-			// `null`/`undefined` (no user override), prefer the
-			// synthesised object built from cached leaves. Without this
-			// guard, a cached `null` for `gitlens.codeLens` would
-			// shadow the leaf defaults and the extension's
-			// `cfg.codeLens.enabled` read would throw on `null`.
-			if (Cached === null || Cached === undefined) {
-				const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-				if (Subtree !== undefined) {
-					CocoonDevLog(
-						"config-prime",
-						`[ConfigPrime] synthesise key=${Full} source=null-shadowed`,
-					);
-					return Subtree as T;
+export const BuildGetConfiguration =
+	(Context: HandlerContext, State: ConfigurationState) =>
+	(Section?: string, _Scope?: unknown) => ({
+		get: <T>(Key: string, DefaultValue?: T): T | undefined => {
+			const Full = Section ? `${Section}.${Key}` : Key;
+			if (State.ConfigCache.has(Full)) {
+				const Cached = State.ConfigCache.get(Full);
+				// When Mountain's inspector reports a branch key as
+				// `null`/`undefined` (no user override), prefer the
+				// synthesised object built from cached leaves. Without this
+				// guard, a cached `null` for `gitlens.codeLens` would
+				// shadow the leaf defaults and the extension's
+				// `cfg.codeLens.enabled` read would throw on `null`.
+				if (Cached === null || Cached === undefined) {
+					const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+					if (Subtree !== undefined) {
+						CocoonDevLog(
+							"config-prime",
+							`[ConfigPrime] synthesise key=${Full} source=null-shadowed`,
+						);
+						return Subtree as T;
+					}
 				}
+				return Cached as T;
 			}
-			return Cached as T;
-		}
-		// Branch key (`getConfiguration('gitlens').get('blame')`) -
-		// synthesise `{ format, enabled, ... }` from cached leaves so
-		// extensions that do `cfg.blame.format` get the expected shape
-		// rather than `TypeError: Cannot read properties of undefined`.
-		const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-		if (Subtree !== undefined) {
-			CocoonDevLog(
-				"config-prime",
-				`[ConfigPrime] synthesise key=${Full} source=miss`,
-			);
-			return Subtree as T;
-		}
-		State.PrimeConfig(Full);
-		return DefaultValue;
-	},
-	update: async (Key: string, Value: unknown, Target?: unknown) => {
-		const Full = Section ? `${Section}.${Key}` : Key;
-		// Target index: 0 = User, 1 = Workspace (matches dispatcher).
-		const TargetIndex =
-			Target === 2
-				? 1
-				: Target === true
-					? 0
-					: typeof Target === "number"
-						? Target
-						: 0;
-		await Call<void>(Context, "Configuration.Update", [
-			Full,
-			Value,
-			TargetIndex,
-		]);
-		// Write through so the next `get()` reflects the change and
-		// so listeners fire without waiting for a Mountain round-trip.
-		const Prior = State.ConfigCache.get(Full);
-		State.ConfigCache.set(Full, Value);
-		if (Prior !== Value) State.FireConfigChange(Full);
-	},
-	has: (Key: string): boolean => {
-		const Full = Section ? `${Section}.${Key}` : Key;
-		if (State.ConfigCache.has(Full)) return true;
-		// Branch key: treat as present if any cached leaf lives under it.
-		if (SynthesiseSubtree(State.ConfigCache, Full) !== undefined) {
-			return true;
-		}
-		State.PrimeConfig(Full);
-		return false;
-	},
-	inspect: <T>(Key: string) => {
-		const Full = Section ? `${Section}.${Key}` : Key;
-		let Cached: T | undefined;
-		if (State.ConfigCache.has(Full)) {
-			Cached = State.ConfigCache.get(Full) as T;
-		} else {
+			// Branch key (`getConfiguration('gitlens').get('blame')`) -
+			// synthesise `{ format, enabled, ... }` from cached leaves so
+			// extensions that do `cfg.blame.format` get the expected shape
+			// rather than `TypeError: Cannot read properties of undefined`.
 			const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
-			if (Subtree === undefined) {
-				State.PrimeConfig(Full);
-				return undefined;
+			if (Subtree !== undefined) {
+				CocoonDevLog(
+					"config-prime",
+					`[ConfigPrime] synthesise key=${Full} source=miss`,
+				);
+				return Subtree as T;
 			}
-			Cached = Subtree as T;
-		}
-		return {
-			key: Full,
-			defaultValue: undefined,
-			globalValue: Cached,
-			workspaceValue: undefined,
-			workspaceFolderValue: undefined,
-			defaultLanguageValue: undefined,
-			globalLanguageValue: undefined,
-			workspaceLanguageValue: undefined,
-			workspaceFolderLanguageValue: undefined,
-			languageIds: [] as string[],
-		};
-	},
-});
-
-export const BuildOnDidChangeConfiguration = (
-	State: ConfigurationState,
-) =>
-(
-	Listener: (Event: ConfigurationChangeEvent) => void,
-	ThisArg?: unknown,
-	Disposables?: { push: (D: { dispose: () => void }) => unknown },
-) => {
-	// VS Code's event contract is `(listener, thisArg?, disposables?)` -
-	// ours ignored both. rust-analyzer passes `this` as ThisArg and
-	// relies on the bound callback, so
-	// `this.onDidChangeConfiguration(evt)` accesses its own class members.
-	// Without the bind, `this` is undefined in the callback and
-	// `this.refreshLogging()` throws.
-	const Bound = ThisArg === undefined ? Listener : Listener.bind(ThisArg);
-	State.ConfigListeners.add(Bound);
-	const Subscription = {
-		dispose: () => {
-			State.ConfigListeners.delete(Bound);
+			State.PrimeConfig(Full);
+			return DefaultValue;
 		},
+		update: async (Key: string, Value: unknown, Target?: unknown) => {
+			const Full = Section ? `${Section}.${Key}` : Key;
+			// Target index: 0 = User, 1 = Workspace (matches dispatcher).
+			const TargetIndex =
+				Target === 2
+					? 1
+					: Target === true
+						? 0
+						: typeof Target === "number"
+							? Target
+							: 0;
+			await Call<void>(Context, "Configuration.Update", [
+				Full,
+				Value,
+				TargetIndex,
+			]);
+			// Write through so the next `get()` reflects the change and
+			// so listeners fire without waiting for a Mountain round-trip.
+			const Prior = State.ConfigCache.get(Full);
+			State.ConfigCache.set(Full, Value);
+			if (Prior !== Value) State.FireConfigChange(Full);
+		},
+		has: (Key: string): boolean => {
+			const Full = Section ? `${Section}.${Key}` : Key;
+			if (State.ConfigCache.has(Full)) return true;
+			// Branch key: treat as present if any cached leaf lives under it.
+			if (SynthesiseSubtree(State.ConfigCache, Full) !== undefined) {
+				return true;
+			}
+			State.PrimeConfig(Full);
+			return false;
+		},
+		inspect: <T>(Key: string) => {
+			const Full = Section ? `${Section}.${Key}` : Key;
+			let Cached: T | undefined;
+			if (State.ConfigCache.has(Full)) {
+				Cached = State.ConfigCache.get(Full) as T;
+			} else {
+				const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+				if (Subtree === undefined) {
+					State.PrimeConfig(Full);
+					return undefined;
+				}
+				Cached = Subtree as T;
+			}
+			return {
+				key: Full,
+				defaultValue: undefined,
+				globalValue: Cached,
+				workspaceValue: undefined,
+				workspaceFolderValue: undefined,
+				defaultLanguageValue: undefined,
+				globalLanguageValue: undefined,
+				workspaceLanguageValue: undefined,
+				workspaceFolderLanguageValue: undefined,
+				languageIds: [] as string[],
+			};
+		},
+	});
+
+export const BuildOnDidChangeConfiguration =
+	(State: ConfigurationState) =>
+	(
+		Listener: (Event: ConfigurationChangeEvent) => void,
+		ThisArg?: unknown,
+		Disposables?: { push: (D: { dispose: () => void }) => unknown },
+	) => {
+		// VS Code's event contract is `(listener, thisArg?, disposables?)` -
+		// ours ignored both. rust-analyzer passes `this` as ThisArg and
+		// relies on the bound callback, so
+		// `this.onDidChangeConfiguration(evt)` accesses its own class members.
+		// Without the bind, `this` is undefined in the callback and
+		// `this.refreshLogging()` throws.
+		const Bound = ThisArg === undefined ? Listener : Listener.bind(ThisArg);
+		State.ConfigListeners.add(Bound);
+		const Subscription = {
+			dispose: () => {
+				State.ConfigListeners.delete(Bound);
+			},
+		};
+		if (Disposables && typeof Disposables.push === "function") {
+			Disposables.push(Subscription);
+		}
+		return Subscription;
 	};
-	if (Disposables && typeof Disposables.push === "function") {
-		Disposables.push(Subscription);
-	}
-	return Subscription;
-};

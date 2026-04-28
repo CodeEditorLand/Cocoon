@@ -12,16 +12,19 @@
  * - Data (variable): Binary payload
  */
 
-import type { IMessage, ISerializationResult } from "./Types.js";
-import { CompressionHint } from "./Types.js";
 import {
 	COMPRESSION_THRESHOLD,
 	MAX_MESSAGE_SIZE,
 	MESSAGE_HEADER_MAGIC,
 	PROTOCOL_VERSION,
 } from "./Constants.js";
-import VSBuffer from "./VSBuffer.js";
+import {
+	CompressionHint,
+	type IMessage,
+	type ISerializationResult,
+} from "./Types.js";
 import { ValidateMessage } from "./Validation.js";
+import VSBuffer from "./VSBuffer.js";
 
 // ============================================================================
 // SERIALIZATION
@@ -144,7 +147,10 @@ export default (Message: IMessage): ISerializationResult => {
 		return {
 			Success: false,
 			Data: null,
-			Error: Error instanceof globalThis.Error ? Error.message : String(Error),
+			Error:
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error),
 			OriginalSize,
 			FinalSize,
 		};

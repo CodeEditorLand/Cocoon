@@ -166,10 +166,7 @@ var init_Tier = __esm({
       ModuleCache: Pick("ModuleCache", "Simple"),
       Telemetry: Pick("Telemetry", "Synchronous")
     };
-    LandFixLog_default.Info(
-      "Tier",
-      `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
-    );
+    LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
     Tier_default = Tier;
   }
 });
@@ -929,14 +926,7 @@ var init_Health = __esm({
 });
 
 // Source/Effect/ModuleInterceptor.ts
-import {
-  Context as Context4,
-  Effect as Effect4,
-  HashMap as HashMap3,
-  Layer as Layer4,
-  Ref as Ref3,
-  SubscriptionRef as SubscriptionRef3
-} from "effect";
+import { Context as Context4, Effect as Effect4, HashMap as HashMap3, Layer as Layer4, Ref as Ref3, SubscriptionRef as SubscriptionRef3 } from "effect";
 var SecurityLevel, ModuleNotFoundError, ModuleAccessDeniedError, SecurityPolicyNotFoundError, ModuleInterceptorTag, ModuleInterceptor, defaultSecurityPolicy, ModuleInterceptorLive, makeMockModuleInterceptor, ModuleInterceptorMock;
 var init_ModuleInterceptor = __esm({
   "Source/Effect/ModuleInterceptor.ts"() {
@@ -1062,7 +1052,9 @@ var init_ModuleInterceptor = __esm({
           );
           const { default: NodeModule } = yield* Effect4.tryPromise({
             try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
-            catch: /* @__PURE__ */ __name((Err) => new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`), "catch")
+            catch: /* @__PURE__ */ __name((Err) => new Error(
+              `[ModuleInterceptor] import('node:module') failed: ${Err}`
+            ), "catch")
           });
           const OriginalLoad = NodeModule._load;
           NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
@@ -1864,7 +1856,9 @@ message RPCDataPayload {
           const ErrorMessage = error instanceof Error ? error.message : String(error);
           const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
-          const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes("mountain-client-verbose");
+          const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes(
+            "mountain-client-verbose"
+          );
           if (IsBenignNotFound) {
             if (TraceMountainClient) {
               process.stdout.write(
@@ -22186,7 +22180,11 @@ var init_APIFactoryService = __esm({
     }, "HydrateBase");
     PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
       const Safe = HydrateBase(Base);
-      return Reflect.construct(StockRelativePattern, [Safe, Pattern], PatchedRelativePattern);
+      return Reflect.construct(
+        StockRelativePattern,
+        [Safe, Pattern],
+        PatchedRelativePattern
+      );
     }, "RelativePattern");
     PatchedRelativePattern.prototype = StockRelativePattern.prototype;
     Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
@@ -26528,8 +26526,8 @@ var NoopDisposable, IsTrustFamily, ClassifyProperty, RecordGap, BuildHeuristicMe
 var init_WrapNamespaceWithHeuristics = __esm({
   "Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts"() {
     "use strict";
-    init_LandFixLog();
     init_PostHogBridge();
+    init_LandFixLog();
     NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
     IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
@@ -26615,7 +26613,9 @@ var init_WrapNamespaceWithHeuristics = __esm({
         if (Property === "then") return void 0;
         if (Property === "toJSON") {
           return () => {
-            const Out = { _namespace: NamespaceName };
+            const Out = {
+              _namespace: NamespaceName
+            };
             for (const Key of Object.keys(Target)) {
               const Value = Target[Key];
               const T = typeof Value;
@@ -27417,7 +27417,10 @@ var init_WindowNamespace = __esm({
               }
               DisposeListeners.clear();
               VisibilityListeners.clear();
-              Context21.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+              Context21.Emitter?.off?.(
+                ChannelVisibility,
+                VisibilityForward
+              );
               Context21.Emitter?.off?.(ChannelDispose, DisposeForward);
             }, "DisposeForward");
             Context21.Emitter?.on?.(ChannelVisibility, VisibilityForward);
@@ -28164,11 +28167,9 @@ var init_RequestRoutingHandler = __esm({
               }
               const Document = Params?.document ?? Params?.[1];
               const Panel = Params?.panel ?? Params?.[2];
-              return await Provider.resolveCustomEditor?.(
-                Document,
-                Panel,
-                { asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath") }
-              ) ?? null;
+              return await Provider.resolveCustomEditor?.(Document, Panel, {
+                asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath")
+              }) ?? null;
             }
             default: {
               const Panel = WebviewPanels2.get(String(Handle));
@@ -28250,7 +28251,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-27T21:36:32Z"
+      generatedAt: "2026-04-27T23:59:48Z"
     };
   }
 });
@@ -28434,7 +28435,9 @@ var init_DualTrack = __esm({
       return true;
     }, "IsRustDeferralEnabled");
     if (process.env["LAND_DEV_LOG"]) {
-      const ActiveBypasses = Object.keys(process.env).filter((K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")).filter((K) => IsBypassValue(process.env[K])).join(",");
+      const ActiveBypasses = Object.keys(process.env).filter(
+        (K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")
+      ).filter((K) => IsBypassValue(process.env[K])).join(",");
       if (ActiveBypasses) {
         process.stdout.write(
           `[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}
@@ -28467,10 +28470,8 @@ var init_DualTrack = __esm({
     }, "SendToMountainOrLocal");
     LogDualTrack = /* @__PURE__ */ __name((Method, Route3) => {
       if (!process.env["LAND_DEV_LOG"]) return;
-      process.stdout.write(
-        `[DEV:DUAL-TRACK] method=${Method} route=${Route3}
-`
-      );
+      process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route3}
+`);
     }, "LogDualTrack");
   }
 });
@@ -31299,9 +31300,9 @@ function GlobIsEmpty(Pattern) {
 var init_StockLift = __esm({
   "Source/Services/Handler/VscodeAPI/StockLift.ts"() {
     "use strict";
-    init_uri();
-    init_resources();
     init_glob();
+    init_resources();
+    init_uri();
     __name(ToUri, "ToUri");
     __name(RelativePath, "RelativePath");
     __name(IsEqualOrParent, "IsEqualOrParent");
@@ -31312,166 +31313,6 @@ var init_StockLift = __esm({
     __name(GlobMatch, "GlobMatch");
     __name(GlobParsePattern, "GlobParsePattern");
     __name(GlobIsEmpty, "GlobIsEmpty");
-  }
-});
-
-// Source/Utility/GlobToRegex.ts
-var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
-var init_GlobToRegex = __esm({
-  "Source/Utility/GlobToRegex.ts"() {
-    "use strict";
-    FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
-      let Depth = 1;
-      for (let I = Start + 1; I < Input.length; I++) {
-        const Character = Input[I];
-        if (Character === "\\") {
-          I++;
-          continue;
-        }
-        if (Character === Open) Depth++;
-        else if (Character === Close) {
-          Depth--;
-          if (Depth === 0) return I;
-        }
-      }
-      return -1;
-    }, "FindMatchingBrace");
-    SplitTopLevelCommas = /* @__PURE__ */ __name((Body) => {
-      const Parts = [];
-      let Depth = 0;
-      let Start = 0;
-      for (let I = 0; I < Body.length; I++) {
-        const Character = Body[I];
-        if (Character === "\\") {
-          I++;
-          continue;
-        }
-        if (Character === "{" || Character === "(") Depth++;
-        else if (Character === "}" || Character === ")") Depth--;
-        else if (Character === "," && Depth === 0) {
-          Parts.push(Body.slice(Start, I));
-          Start = I + 1;
-        }
-      }
-      Parts.push(Body.slice(Start));
-      return Parts;
-    }, "SplitTopLevelCommas");
-    ExpandBraces = /* @__PURE__ */ __name((Input) => {
-      const Open = Input.indexOf("{");
-      if (Open === -1) return [Input];
-      const Close = FindMatchingBrace(Input, Open, "{", "}");
-      if (Close === -1) return [Input];
-      const Prefix = Input.slice(0, Open);
-      const Body = Input.slice(Open + 1, Close);
-      const Suffix = Input.slice(Close + 1);
-      const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
-      const Alternatives = [];
-      if (RangeMatch) {
-        const Start = parseInt(RangeMatch[1], 10);
-        const End = parseInt(RangeMatch[2], 10);
-        const StepRaw = RangeMatch[3];
-        const Step = StepRaw ? Math.abs(parseInt(StepRaw, 10)) : 1;
-        if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
-          const Width = RangeMatch[1].startsWith("0") || RangeMatch[2].startsWith("0") ? Math.max(RangeMatch[1].length, RangeMatch[2].length) : 0;
-          const Direction = Start <= End ? 1 : -1;
-          for (let Value = Start; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
-            const Text = String(Math.abs(Value));
-            const Padded = Width > 0 && Text.length < Width ? "0".repeat(Width - Text.length) + Text : Text;
-            Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
-          }
-        }
-      }
-      if (Alternatives.length === 0) {
-        Alternatives.push(...SplitTopLevelCommas(Body));
-      }
-      const Expanded = [];
-      for (const Alternative of Alternatives) {
-        for (const Sub of ExpandBraces(Alternative)) {
-          for (const Tail of ExpandBraces(Suffix)) {
-            Expanded.push(`${Prefix}${Sub}${Tail}`);
-          }
-        }
-      }
-      return Expanded;
-    }, "ExpandBraces");
-    RegexEscape = /* @__PURE__ */ __name((Character) => /[.+^$()|\[\]\\]/.test(Character) ? `\\${Character}` : Character, "RegexEscape");
-    PlainGlobToRegexSource = /* @__PURE__ */ __name((Glob) => {
-      let Expression = "";
-      let I = 0;
-      while (I < Glob.length) {
-        const Character = Glob[I];
-        const Next = Glob[I + 1];
-        if (Character === "*" && Next === "*") {
-          Expression += ".*";
-          I += 2;
-          if (Glob[I] === "/") I++;
-          continue;
-        }
-        if ((Character === "?" || Character === "*" || Character === "+" || Character === "@" || Character === "!") && Next === "(") {
-          const CloseAt = FindMatchingBrace(Glob, I + 1, "(", ")");
-          if (CloseAt !== -1) {
-            const Inside = Glob.slice(I + 2, CloseAt);
-            const Alternatives = SplitTopLevelCommas(
-              Inside.replace(/\|/g, ",")
-            ).map((Alternative) => PlainGlobToRegexSource(Alternative));
-            const Joined = Alternatives.join("|");
-            switch (Character) {
-              case "?":
-                Expression += `(?:${Joined})?`;
-                break;
-              case "*":
-                Expression += `(?:${Joined})*`;
-                break;
-              case "+":
-                Expression += `(?:${Joined})+`;
-                break;
-              case "@":
-                Expression += `(?:${Joined})`;
-                break;
-              case "!":
-                Expression += `(?:(?!(?:${Joined})(?:/|$))[^/])+`;
-                break;
-            }
-            I = CloseAt + 1;
-            continue;
-          }
-        }
-        if (Character === "*") {
-          Expression += "[^/]*";
-          I++;
-          continue;
-        }
-        if (Character === "?") {
-          Expression += "[^/]";
-          I++;
-          continue;
-        }
-        if (Character === "[") {
-          const CloseAt = Glob.indexOf("]", I + 1);
-          if (CloseAt !== -1) {
-            let Class = Glob.slice(I + 1, CloseAt);
-            if (Class.startsWith("!")) Class = `^${Class.slice(1)}`;
-            Expression += `[${Class}]`;
-            I = CloseAt + 1;
-            continue;
-          }
-        }
-        if (Character === "\\" && Next !== void 0) {
-          Expression += RegexEscape(Next);
-          I += 2;
-          continue;
-        }
-        Expression += RegexEscape(Character);
-        I++;
-      }
-      return Expression;
-    }, "PlainGlobToRegexSource");
-    GlobToRegex = /* @__PURE__ */ __name((Glob) => {
-      const Variants = ExpandBraces(Glob);
-      const Source = Variants.length === 1 ? PlainGlobToRegexSource(Variants[0]) : `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
-      return new RegExp(`^${Source}$`);
-    }, "GlobToRegex");
-    GlobToRegex_default = GlobToRegex;
   }
 });
 
@@ -31540,347 +31381,15 @@ var init_Helpers = __esm({
     }, "FolderToFsPath");
     ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context21) => {
       const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
-      return (InitWorkspace.folders ?? []).map((Folder) => {
-        const FsPath = FolderToFsPath(Folder?.uri);
-        const Record = { ...Folder };
-        if (typeof FsPath === "string") Record.FsPath = FsPath;
-        return Record;
-      });
+      return (InitWorkspace.folders ?? []).map(
+        (Folder) => {
+          const FsPath = FolderToFsPath(Folder?.uri);
+          const Record = { ...Folder };
+          if (typeof FsPath === "string") Record.FsPath = FsPath;
+          return Record;
+        }
+      );
     }, "ResolveWorkspaceFolders");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts
-function CompileGlob(Pattern) {
-  try {
-    const Parsed = GlobParsePattern(Pattern);
-    if (typeof Parsed === "function") return Parsed;
-  } catch {
-  }
-  try {
-    const Regex = GlobToRegex_default(Pattern);
-    return (Path) => Regex.test(Path);
-  } catch {
-    return void 0;
-  }
-}
-var FindFilesLocal;
-var init_FindFiles = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts"() {
-    "use strict";
-    init_GlobToRegex();
-    init_StockLift();
-    init_Helpers();
-    __name(CompileGlob, "CompileGlob");
-    FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
-      const IncludePattern = ExtractGlobPattern(Include);
-      const ExcludePattern = ExtractGlobPattern(Exclude);
-      const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-        `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
-`
-      );
-      if (!IncludePattern) {
-        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-          "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
-        );
-        return [];
-      }
-      const IncludeMatcher = CompileGlob(IncludePattern);
-      if (!IncludeMatcher) {
-        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
-`
-        );
-        return [];
-      }
-      const ExcludeMatcher = ExcludePattern ? CompileGlob(ExcludePattern) : void 0;
-      const { readdir } = await import("node:fs/promises");
-      const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
-      const Results = [];
-      const MaxDepth = 32;
-      const DeadlineAt = Date.now() + 3e4;
-      let Truncated = "";
-      const Walk = /* @__PURE__ */ __name(async (Root, Current, Depth) => {
-        if (Results.length >= Cap) {
-          Truncated = "cap";
-          return;
-        }
-        if (Depth > MaxDepth) {
-          Truncated = Truncated || "depth";
-          return;
-        }
-        if (Date.now() > DeadlineAt) {
-          Truncated = Truncated || "deadline";
-          return;
-        }
-        let Entries;
-        try {
-          Entries = await readdir(Current, {
-            withFileTypes: true
-          });
-        } catch {
-          return;
-        }
-        const SubDirectories = [];
-        for (const Entry of Entries) {
-          if (Results.length >= Cap) {
-            Truncated = "cap";
-            return;
-          }
-          const Name = Entry.name;
-          if (DefaultExcludeSegments.has(Name)) continue;
-          if (typeof Entry.isSymbolicLink === "function" && Entry.isSymbolicLink())
-            continue;
-          const Full = join3(Current, Name);
-          const RelativeFromRoot = relative2(Root, Full).split(sep2).join("/");
-          if (Entry.isDirectory()) {
-            SubDirectories.push(Full);
-            continue;
-          }
-          if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
-          if (!IncludeMatcher(RelativeFromRoot)) continue;
-          Results.push(URI.file(Full));
-        }
-        const Concurrency = 4;
-        for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
-          const Batch = SubDirectories.slice(Index, Index + Concurrency);
-          await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
-          if (Results.length >= Cap) {
-            Truncated = "cap";
-            return;
-          }
-          if (Date.now() > DeadlineAt) {
-            Truncated = Truncated || "deadline";
-            return;
-          }
-        }
-      }, "Walk");
-      for (const Folder of Folders) {
-        const FsPath = FolderToFsPath(Folder?.uri);
-        if (!FsPath) {
-          if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-            `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
-`
-          );
-          continue;
-        }
-        await Walk(FsPath, FsPath, 0);
-      }
-      if (Truncated) {
-        if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-          `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
-`
-        );
-      }
-      if (process.env["LAND_DEV_LOG"]?.includes("wsns")) process.stdout.write(
-        `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
-`
-      );
-      return Results;
-    }, "FindFilesLocal");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts
-import { promises as FsPromises } from "node:fs";
-async function FindTextInFilesNodeFallback(Context21, Folders, Query, Options, Callback) {
-  const Pattern = ExtractPattern(Query);
-  if (!Pattern) return { limitHit: false };
-  const Opts = Options ?? {};
-  const Max = typeof Opts.maxResults === "number" ? Opts.maxResults : 1e4;
-  const Encoding = Opts.encoding ?? "utf8";
-  const Candidates = await FindFilesLocal(
-    Context21,
-    Folders,
-    Opts.include ?? "**/*",
-    Opts.exclude,
-    // Don't let the file-enumeration phase cap us below the match cap.
-    Math.max(Max * 4, 1e4)
-  );
-  let Emitted = 0;
-  for (const Candidate of Candidates) {
-    if (Emitted >= Max) return { limitHit: true };
-    const Path = ToFsPath(Candidate);
-    if (!Path) continue;
-    let Content;
-    try {
-      Content = await FsPromises.readFile(Path, Encoding);
-    } catch {
-      continue;
-    }
-    if (Content.length > 0 && Content.indexOf("\0") !== -1) continue;
-    const Lines = Content.split("\n");
-    for (let LineNumber = 0; LineNumber < Lines.length; LineNumber++) {
-      const Line = Lines[LineNumber];
-      Pattern.lastIndex = 0;
-      const Ranges = [];
-      let M;
-      while ((M = Pattern.exec(Line)) !== null) {
-        Ranges.push({
-          start: { line: LineNumber, character: M.index },
-          end: {
-            line: LineNumber,
-            character: M.index + M[0].length
-          }
-        });
-        if (M[0].length === 0) Pattern.lastIndex++;
-      }
-      if (Ranges.length === 0) continue;
-      const Match = {
-        uri: Candidate,
-        ranges: Ranges,
-        preview: {
-          text: Line,
-          matches: Ranges.map((R) => ({
-            start: { line: 0, character: R.start.character },
-            end: { line: 0, character: R.end.character }
-          }))
-        }
-      };
-      if (Callback) {
-        try {
-          Callback(Match);
-        } catch {
-        }
-      }
-      Emitted += Ranges.length;
-      if (Emitted >= Max) return { limitHit: true };
-    }
-  }
-  return { limitHit: false };
-}
-var ExtractPattern, ToFsPath;
-var init_FindTextInFilesFallback = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts"() {
-    "use strict";
-    init_FindFiles();
-    ExtractPattern = /* @__PURE__ */ __name((Query) => {
-      if (Query == null) return void 0;
-      const Q = typeof Query === "string" ? { pattern: Query } : Query;
-      if (!Q.pattern) return void 0;
-      const Flags = `gm${Q.isCaseSensitive ? "" : "i"}`;
-      let Source = Q.pattern;
-      if (!Q.isRegExp) {
-        Source = Source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      }
-      if (Q.isWordMatch) {
-        Source = `\\b${Source}\\b`;
-      }
-      try {
-        return new RegExp(Source, Flags);
-      } catch {
-        return void 0;
-      }
-    }, "ExtractPattern");
-    ToFsPath = /* @__PURE__ */ __name((Uri2) => {
-      if (Uri2 == null) return void 0;
-      if (typeof Uri2 === "string") {
-        return Uri2.startsWith("file://") ? Uri2.slice("file://".length) : Uri2;
-      }
-      const U = Uri2;
-      return U.fsPath ?? U.path;
-    }, "ToFsPath");
-    __name(FindTextInFilesNodeFallback, "FindTextInFilesNodeFallback");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
-var CreateFileSystemWatcher;
-var init_FileSystemWatcher = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts"() {
-    "use strict";
-    init_GlobToRegex();
-    init_Tier();
-    init_LanguageProviderRegistry();
-    init_Helpers();
-    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context21, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
-      const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") };
-      const StubWatcher = {
-        ignoreCreateEvents: IgnoreCreateEvents === true,
-        ignoreChangeEvents: IgnoreChangeEvents === true,
-        ignoreDeleteEvents: IgnoreDeleteEvents === true,
-        onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
-        onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
-        onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      };
-      if (Tier_default.FileWatcher !== "Layer4") {
-        return StubWatcher;
-      }
-      const PatternString = ExtractGlobPattern(Pattern);
-      if (!PatternString) {
-        return StubWatcher;
-      }
-      const Matcher = GlobToRegex_default(PatternString);
-      const Folders = ResolveWorkspaceFolders(Context21);
-      const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
-      if (!Root) {
-        return StubWatcher;
-      }
-      const Handle = NextProviderHandle();
-      const IsRecursive = PatternString.includes("**");
-      Context21.MountainClient?.sendRequest("FileWatcher.Register", [
-        Handle,
-        Root,
-        IsRecursive,
-        PatternString
-      ]).catch(() => {
-      });
-      const EventName = `fileWatcher:${Handle}`;
-      const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
-        if (Ignore) return StubDisposable;
-        const WrappedListener = /* @__PURE__ */ __name((Event2) => {
-          if (Event2.kind !== Kind) return;
-          if (!Matcher.test(Event2.path)) return;
-          try {
-            Listener({
-              scheme: "file",
-              path: Event2.path,
-              fsPath: Event2.path,
-              toString: /* @__PURE__ */ __name(() => `file://${Event2.path}`, "toString")
-            });
-          } catch {
-          }
-        }, "WrappedListener");
-        Context21.Emitter.on(EventName, WrappedListener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context21.Emitter.removeListener(
-              EventName,
-              WrappedListener
-            );
-          }, "dispose")
-        };
-      }, "MakeSubscriber");
-      return {
-        ignoreCreateEvents: IgnoreCreateEvents === true,
-        ignoreChangeEvents: IgnoreChangeEvents === true,
-        ignoreDeleteEvents: IgnoreDeleteEvents === true,
-        onDidCreate: MakeSubscriber(
-          "create",
-          IgnoreCreateEvents === true
-        ),
-        onDidChange: MakeSubscriber(
-          "change",
-          IgnoreChangeEvents === true
-        ),
-        onDidDelete: MakeSubscriber(
-          "delete",
-          IgnoreDeleteEvents === true
-        ),
-        dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.removeAllListeners(EventName);
-          Context21.MountainClient?.sendRequest(
-            "FileWatcher.Unregister",
-            [Handle]
-          ).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "CreateFileSystemWatcher");
   }
 });
 
@@ -31939,9 +31448,7 @@ var init_Configuration3 = __esm({
         for (const Section of Sections) {
           const Properties = Section?.properties;
           if (!Properties) continue;
-          for (const [DottedKey, Declaration] of Object.entries(
-            Properties
-          )) {
+          for (const [DottedKey, Declaration] of Object.entries(Properties)) {
             if (ConfigCache.has(DottedKey)) {
               Skipped++;
               continue;
@@ -32109,10 +31616,10 @@ var init_Providers = __esm({
       return {
         dispose: /* @__PURE__ */ __name(() => {
           OnDispose?.(Handle, Key);
-          Context21.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-            () => {
-            }
-          );
+          Context21.SendToMountain(UnregisterMethod, {
+            handle: Handle
+          }).catch(() => {
+          });
         }, "dispose")
       };
     }, "MakeProvider");
@@ -32185,10 +31692,9 @@ var init_Providers = __esm({
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain(
-            "unregister_remote_authority_resolver",
-            { authorityPrefix: AuthorityPrefix }
-          ).catch(() => {
+          Context21.SendToMountain("unregister_remote_authority_resolver", {
+            authorityPrefix: AuthorityPrefix
+          }).catch(() => {
           });
         }, "dispose")
       };
@@ -32264,6 +31770,763 @@ var init_FileSystemRoute = __esm({
     __name(ExtractScheme, "ExtractScheme");
     __name(ExtractFsPath, "ExtractFsPath");
     __name(Route, "Route");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
+import { promises as FsPromises } from "node:fs";
+import { dirname as PathDirname } from "node:path";
+var UriToString, FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
+var init_FileSystemNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
+    "use strict";
+    init_StockLift();
+    init_FileSystemRoute();
+    init_Helpers();
+    UriToString = /* @__PURE__ */ __name((Value) => {
+      if (Value == null) return "";
+      if (typeof Value === "string") {
+        if (Value.startsWith("/")) return `file://${Value}`;
+        return Value;
+      }
+      if (typeof Value === "object") {
+        const WithToString = Value;
+        if (typeof WithToString.toString === "function" && WithToString.toString !== Object.prototype.toString) {
+          const Rendered = WithToString.toString();
+          if (Rendered && Rendered !== "[object Object]") return Rendered;
+        }
+        const Hydrated = ToUri(Value);
+        if (Hydrated) return Hydrated.toString();
+        const WithParts = Value;
+        if (typeof WithParts.scheme === "string") {
+          const Scheme = WithParts.scheme;
+          const Authority = typeof WithParts.authority === "string" ? WithParts.authority : "";
+          const PathPart = typeof WithParts.path === "string" ? WithParts.path : "";
+          const Query = typeof WithParts.query === "string" && WithParts.query.length > 0 ? `?${WithParts.query}` : "";
+          const Fragment = typeof WithParts.fragment === "string" && WithParts.fragment.length > 0 ? `#${WithParts.fragment}` : "";
+          return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
+        }
+        if (typeof WithParts.fsPath === "string") {
+          return `file://${WithParts.fsPath}`;
+        }
+      }
+      return String(Value);
+    }, "UriToString");
+    FileType2 = {
+      Unknown: 0,
+      File: 1,
+      Directory: 2,
+      SymbolicLink: 64
+    };
+    LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
+      const Enabled2 = process.env["LAND_DEV_LOG"];
+      if (!Enabled2 || !Enabled2.includes("fs-route")) return;
+      process.stdout.write(
+        `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
+`
+      );
+    }, "LogRoute");
+    ThrowFileNotFound = /* @__PURE__ */ __name((Uri2) => {
+      const Api = globalThis.__cocoonVscodeAPI;
+      const FileNotFound = Api?.FileSystemError?.FileNotFound;
+      if (typeof FileNotFound === "function") throw FileNotFound(Uri2);
+      const Synthetic = new Error(
+        `EntryNotFound (FileSystemError): ${UriToString(Uri2)}`
+      );
+      Synthetic.code = "FileNotFound";
+      Synthetic.name = "FileSystemError";
+      throw Synthetic;
+    }, "ThrowFileNotFound");
+    MetadataToStat = /* @__PURE__ */ __name((Metadata) => ({
+      type: Metadata.isSymbolicLink() ? FileType2.SymbolicLink : Metadata.isDirectory() ? FileType2.Directory : FileType2.File,
+      size: Metadata.size,
+      mtime: Math.floor(Metadata.mtimeMs),
+      ctime: Math.floor(Metadata.ctimeMs)
+    }), "MetadataToStat");
+    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context21) => ({
+      stat: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("stat", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            const Metadata = await FsPromises.lstat(Path);
+            return MetadataToStat(Metadata);
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        return await Call(Context21, "FileSystem.Stat", [
+          UriToString(Uri2)
+        ]) ?? {
+          type: FileType2.File,
+          size: 0,
+          ctime: 0,
+          mtime: 0
+        };
+      }, "stat"),
+      readFile: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("readFile", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            return await FsPromises.readFile(Path);
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        const UriString = UriToString(Uri2);
+        try {
+          const Raw2 = await Context21.MountainClient?.sendRequest(
+            "FileSystem.ReadFile",
+            [UriString]
+          );
+          if (Raw2 == null) return Buffer.alloc(0);
+          if (Array.isArray(Raw2))
+            return Buffer.from(Raw2);
+          if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
+          return Buffer.from(String(Raw2), "utf8");
+        } catch (Err) {
+          const Message = Err instanceof Error ? Err.message : String(Err);
+          const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
+          if (/resource not found|ENOENT|not found/i.test(Message)) {
+            if (TraceFsRead) {
+              process.stdout.write(
+                `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+`
+              );
+            }
+            ThrowFileNotFound(Uri2);
+          }
+          process.stdout.write(
+            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
+`
+          );
+          throw Err;
+        }
+      }, "readFile"),
+      writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
+        const Decision = Route(Uri2);
+        LogRoute("writeFile", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          const Parent = PathDirname(Path);
+          if (Parent && Parent !== Path) {
+            await FsPromises.mkdir(Parent, { recursive: true }).catch(
+              () => {
+              }
+            );
+          }
+          await FsPromises.writeFile(Path, Content);
+          return;
+        }
+        const Text = new TextDecoder().decode(Content);
+        await Call(Context21, "FileSystem.WriteFile", [
+          UriToString(Uri2),
+          Text
+        ]);
+      }, "writeFile"),
+      readDirectory: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("readDirectory", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            const Entries = await FsPromises.readdir(Path, {
+              withFileTypes: true
+            });
+            return Entries.map((Entry) => {
+              const Type = Entry.isSymbolicLink() ? FileType2.SymbolicLink : Entry.isDirectory() ? FileType2.Directory : FileType2.File;
+              return [Entry.name, Type];
+            });
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        return await Call(
+          Context21,
+          "FileSystem.ReadDirectory",
+          [UriToString(Uri2)]
+        ) ?? [];
+      }, "readDirectory"),
+      createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
+        const Decision = Route(Uri2);
+        LogRoute("createDirectory", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          await FsPromises.mkdir(Path, { recursive: true });
+          return;
+        }
+        await Call(Context21, "FileSystem.CreateDirectory", [
+          UriToString(Uri2)
+        ]);
+      }, "createDirectory"),
+      delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
+        const Decision = Route(Uri2);
+        LogRoute("delete", Uri2, Decision);
+        if (Decision === "native") {
+          const Path = ExtractFsPath(Uri2);
+          try {
+            await FsPromises.rm(Path, {
+              recursive: Options?.recursive ?? false,
+              force: false
+            });
+            return;
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
+            throw Err;
+          }
+        }
+        await Call(Context21, "FileSystem.Delete", [
+          UriToString(Uri2),
+          Options?.recursive ?? false
+        ]);
+      }, "delete"),
+      rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+        const SourceRoute = Route(Source);
+        const TargetRoute = Route(Target);
+        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
+        LogRoute("rename", Source, Decision);
+        if (Decision === "native") {
+          const SourcePath = ExtractFsPath(Source);
+          const TargetPath = ExtractFsPath(Target);
+          try {
+            await FsPromises.rename(SourcePath, TargetPath);
+            return;
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+            throw Err;
+          }
+        }
+        await Call(Context21, "FileSystem.Rename", [
+          UriToString(Source),
+          UriToString(Target)
+        ]);
+      }, "rename"),
+      copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+        const SourceRoute = Route(Source);
+        const TargetRoute = Route(Target);
+        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
+        LogRoute("copy", Source, Decision);
+        if (Decision === "native") {
+          const SourcePath = ExtractFsPath(Source);
+          const TargetPath = ExtractFsPath(Target);
+          const Parent = PathDirname(TargetPath);
+          if (Parent && Parent !== TargetPath) {
+            await FsPromises.mkdir(Parent, { recursive: true }).catch(
+              () => {
+              }
+            );
+          }
+          try {
+            await FsPromises.copyFile(SourcePath, TargetPath);
+            return;
+          } catch (Err) {
+            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+            throw Err;
+          }
+        }
+        await Call(Context21, "FileSystem.Copy", [
+          UriToString(Source),
+          UriToString(Target)
+        ]);
+      }, "copy"),
+      isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
+        if (Scheme === "file") return true;
+        return true;
+      }, "isWritableFileSystem")
+    }), "BuildFileSystemNamespace");
+  }
+});
+
+// Source/Utility/GlobToRegex.ts
+var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
+var init_GlobToRegex = __esm({
+  "Source/Utility/GlobToRegex.ts"() {
+    "use strict";
+    FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
+      let Depth = 1;
+      for (let I = Start + 1; I < Input.length; I++) {
+        const Character = Input[I];
+        if (Character === "\\") {
+          I++;
+          continue;
+        }
+        if (Character === Open) Depth++;
+        else if (Character === Close) {
+          Depth--;
+          if (Depth === 0) return I;
+        }
+      }
+      return -1;
+    }, "FindMatchingBrace");
+    SplitTopLevelCommas = /* @__PURE__ */ __name((Body) => {
+      const Parts = [];
+      let Depth = 0;
+      let Start = 0;
+      for (let I = 0; I < Body.length; I++) {
+        const Character = Body[I];
+        if (Character === "\\") {
+          I++;
+          continue;
+        }
+        if (Character === "{" || Character === "(") Depth++;
+        else if (Character === "}" || Character === ")") Depth--;
+        else if (Character === "," && Depth === 0) {
+          Parts.push(Body.slice(Start, I));
+          Start = I + 1;
+        }
+      }
+      Parts.push(Body.slice(Start));
+      return Parts;
+    }, "SplitTopLevelCommas");
+    ExpandBraces = /* @__PURE__ */ __name((Input) => {
+      const Open = Input.indexOf("{");
+      if (Open === -1) return [Input];
+      const Close = FindMatchingBrace(Input, Open, "{", "}");
+      if (Close === -1) return [Input];
+      const Prefix = Input.slice(0, Open);
+      const Body = Input.slice(Open + 1, Close);
+      const Suffix = Input.slice(Close + 1);
+      const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
+      const Alternatives = [];
+      if (RangeMatch) {
+        const Start = parseInt(RangeMatch[1], 10);
+        const End = parseInt(RangeMatch[2], 10);
+        const StepRaw = RangeMatch[3];
+        const Step = StepRaw ? Math.abs(parseInt(StepRaw, 10)) : 1;
+        if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
+          const Width = RangeMatch[1].startsWith("0") || RangeMatch[2].startsWith("0") ? Math.max(RangeMatch[1].length, RangeMatch[2].length) : 0;
+          const Direction = Start <= End ? 1 : -1;
+          for (let Value = Start; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
+            const Text = String(Math.abs(Value));
+            const Padded = Width > 0 && Text.length < Width ? "0".repeat(Width - Text.length) + Text : Text;
+            Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
+          }
+        }
+      }
+      if (Alternatives.length === 0) {
+        Alternatives.push(...SplitTopLevelCommas(Body));
+      }
+      const Expanded = [];
+      for (const Alternative of Alternatives) {
+        for (const Sub of ExpandBraces(Alternative)) {
+          for (const Tail of ExpandBraces(Suffix)) {
+            Expanded.push(`${Prefix}${Sub}${Tail}`);
+          }
+        }
+      }
+      return Expanded;
+    }, "ExpandBraces");
+    RegexEscape = /* @__PURE__ */ __name((Character) => /[.+^$()|\[\]\\]/.test(Character) ? `\\${Character}` : Character, "RegexEscape");
+    PlainGlobToRegexSource = /* @__PURE__ */ __name((Glob) => {
+      let Expression = "";
+      let I = 0;
+      while (I < Glob.length) {
+        const Character = Glob[I];
+        const Next = Glob[I + 1];
+        if (Character === "*" && Next === "*") {
+          Expression += ".*";
+          I += 2;
+          if (Glob[I] === "/") I++;
+          continue;
+        }
+        if ((Character === "?" || Character === "*" || Character === "+" || Character === "@" || Character === "!") && Next === "(") {
+          const CloseAt = FindMatchingBrace(Glob, I + 1, "(", ")");
+          if (CloseAt !== -1) {
+            const Inside = Glob.slice(I + 2, CloseAt);
+            const Alternatives = SplitTopLevelCommas(
+              Inside.replace(/\|/g, ",")
+            ).map((Alternative) => PlainGlobToRegexSource(Alternative));
+            const Joined = Alternatives.join("|");
+            switch (Character) {
+              case "?":
+                Expression += `(?:${Joined})?`;
+                break;
+              case "*":
+                Expression += `(?:${Joined})*`;
+                break;
+              case "+":
+                Expression += `(?:${Joined})+`;
+                break;
+              case "@":
+                Expression += `(?:${Joined})`;
+                break;
+              case "!":
+                Expression += `(?:(?!(?:${Joined})(?:/|$))[^/])+`;
+                break;
+            }
+            I = CloseAt + 1;
+            continue;
+          }
+        }
+        if (Character === "*") {
+          Expression += "[^/]*";
+          I++;
+          continue;
+        }
+        if (Character === "?") {
+          Expression += "[^/]";
+          I++;
+          continue;
+        }
+        if (Character === "[") {
+          const CloseAt = Glob.indexOf("]", I + 1);
+          if (CloseAt !== -1) {
+            let Class = Glob.slice(I + 1, CloseAt);
+            if (Class.startsWith("!")) Class = `^${Class.slice(1)}`;
+            Expression += `[${Class}]`;
+            I = CloseAt + 1;
+            continue;
+          }
+        }
+        if (Character === "\\" && Next !== void 0) {
+          Expression += RegexEscape(Next);
+          I += 2;
+          continue;
+        }
+        Expression += RegexEscape(Character);
+        I++;
+      }
+      return Expression;
+    }, "PlainGlobToRegexSource");
+    GlobToRegex = /* @__PURE__ */ __name((Glob) => {
+      const Variants = ExpandBraces(Glob);
+      const Source = Variants.length === 1 ? PlainGlobToRegexSource(Variants[0]) : `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
+      return new RegExp(`^${Source}$`);
+    }, "GlobToRegex");
+    GlobToRegex_default = GlobToRegex;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
+var CreateFileSystemWatcher;
+var init_FileSystemWatcher = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts"() {
+    "use strict";
+    init_GlobToRegex();
+    init_Tier();
+    init_LanguageProviderRegistry();
+    init_Helpers();
+    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context21, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
+      const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") };
+      const StubWatcher = {
+        ignoreCreateEvents: IgnoreCreateEvents === true,
+        ignoreChangeEvents: IgnoreChangeEvents === true,
+        ignoreDeleteEvents: IgnoreDeleteEvents === true,
+        onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
+        onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
+        onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      };
+      if (Tier_default.FileWatcher !== "Layer4") {
+        return StubWatcher;
+      }
+      const PatternString = ExtractGlobPattern(Pattern);
+      if (!PatternString) {
+        return StubWatcher;
+      }
+      const Matcher = GlobToRegex_default(PatternString);
+      const Folders = ResolveWorkspaceFolders(Context21);
+      const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
+      if (!Root) {
+        return StubWatcher;
+      }
+      const Handle = NextProviderHandle();
+      const IsRecursive = PatternString.includes("**");
+      Context21.MountainClient?.sendRequest("FileWatcher.Register", [
+        Handle,
+        Root,
+        IsRecursive,
+        PatternString
+      ]).catch(() => {
+      });
+      const EventName = `fileWatcher:${Handle}`;
+      const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
+        if (Ignore) return StubDisposable;
+        const WrappedListener = /* @__PURE__ */ __name((Event2) => {
+          if (Event2.kind !== Kind) return;
+          if (!Matcher.test(Event2.path)) return;
+          try {
+            Listener({
+              scheme: "file",
+              path: Event2.path,
+              fsPath: Event2.path,
+              toString: /* @__PURE__ */ __name(() => `file://${Event2.path}`, "toString")
+            });
+          } catch {
+          }
+        }, "WrappedListener");
+        Context21.Emitter.on(EventName, WrappedListener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context21.Emitter.removeListener(EventName, WrappedListener);
+          }, "dispose")
+        };
+      }, "MakeSubscriber");
+      return {
+        ignoreCreateEvents: IgnoreCreateEvents === true,
+        ignoreChangeEvents: IgnoreChangeEvents === true,
+        ignoreDeleteEvents: IgnoreDeleteEvents === true,
+        onDidCreate: MakeSubscriber("create", IgnoreCreateEvents === true),
+        onDidChange: MakeSubscriber("change", IgnoreChangeEvents === true),
+        onDidDelete: MakeSubscriber("delete", IgnoreDeleteEvents === true),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context21.Emitter.removeAllListeners(EventName);
+          Context21.MountainClient?.sendRequest("FileWatcher.Unregister", [
+            Handle
+          ]).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "CreateFileSystemWatcher");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts
+function CompileGlob(Pattern) {
+  try {
+    const Parsed = GlobParsePattern(Pattern);
+    if (typeof Parsed === "function") return Parsed;
+  } catch {
+  }
+  try {
+    const Regex = GlobToRegex_default(Pattern);
+    return (Path) => Regex.test(Path);
+  } catch {
+    return void 0;
+  }
+}
+var FindFilesLocal;
+var init_FindFiles = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts"() {
+    "use strict";
+    init_GlobToRegex();
+    init_StockLift();
+    init_Helpers();
+    __name(CompileGlob, "CompileGlob");
+    FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
+      const IncludePattern = ExtractGlobPattern(Include);
+      const ExcludePattern = ExtractGlobPattern(Exclude);
+      const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+        process.stdout.write(
+          `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
+`
+        );
+      if (!IncludePattern) {
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+          process.stdout.write(
+            "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
+          );
+        return [];
+      }
+      const IncludeMatcher = CompileGlob(IncludePattern);
+      if (!IncludeMatcher) {
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+          process.stdout.write(
+            `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)
+`
+          );
+        return [];
+      }
+      const ExcludeMatcher = ExcludePattern ? CompileGlob(ExcludePattern) : void 0;
+      const { readdir } = await import("node:fs/promises");
+      const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
+      const Results = [];
+      const MaxDepth = 32;
+      const DeadlineAt = Date.now() + 3e4;
+      let Truncated = "";
+      const Walk = /* @__PURE__ */ __name(async (Root, Current, Depth) => {
+        if (Results.length >= Cap) {
+          Truncated = "cap";
+          return;
+        }
+        if (Depth > MaxDepth) {
+          Truncated = Truncated || "depth";
+          return;
+        }
+        if (Date.now() > DeadlineAt) {
+          Truncated = Truncated || "deadline";
+          return;
+        }
+        let Entries;
+        try {
+          Entries = await readdir(Current, {
+            withFileTypes: true
+          });
+        } catch {
+          return;
+        }
+        const SubDirectories = [];
+        for (const Entry of Entries) {
+          if (Results.length >= Cap) {
+            Truncated = "cap";
+            return;
+          }
+          const Name = Entry.name;
+          if (DefaultExcludeSegments.has(Name)) continue;
+          if (typeof Entry.isSymbolicLink === "function" && Entry.isSymbolicLink())
+            continue;
+          const Full = join3(Current, Name);
+          const RelativeFromRoot = relative2(Root, Full).split(sep2).join("/");
+          if (Entry.isDirectory()) {
+            SubDirectories.push(Full);
+            continue;
+          }
+          if (ExcludeMatcher && ExcludeMatcher(RelativeFromRoot)) continue;
+          if (!IncludeMatcher(RelativeFromRoot)) continue;
+          Results.push(URI.file(Full));
+        }
+        const Concurrency = 4;
+        for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
+          const Batch = SubDirectories.slice(Index, Index + Concurrency);
+          await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
+          if (Results.length >= Cap) {
+            Truncated = "cap";
+            return;
+          }
+          if (Date.now() > DeadlineAt) {
+            Truncated = Truncated || "deadline";
+            return;
+          }
+        }
+      }, "Walk");
+      for (const Folder of Folders) {
+        const FsPath = FolderToFsPath(Folder?.uri);
+        if (!FsPath) {
+          if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+            process.stdout.write(
+              `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
+`
+            );
+          continue;
+        }
+        await Walk(FsPath, FsPath, 0);
+      }
+      if (Truncated) {
+        if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+          process.stdout.write(
+            `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
+`
+          );
+      }
+      if (process.env["LAND_DEV_LOG"]?.includes("wsns"))
+        process.stdout.write(
+          `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
+`
+        );
+      return Results;
+    }, "FindFilesLocal");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts
+import { promises as FsPromises2 } from "node:fs";
+async function FindTextInFilesNodeFallback(Context21, Folders, Query, Options, Callback) {
+  const Pattern = ExtractPattern(Query);
+  if (!Pattern) return { limitHit: false };
+  const Opts = Options ?? {};
+  const Max = typeof Opts.maxResults === "number" ? Opts.maxResults : 1e4;
+  const Encoding = Opts.encoding ?? "utf8";
+  const Candidates = await FindFilesLocal(
+    Context21,
+    Folders,
+    Opts.include ?? "**/*",
+    Opts.exclude,
+    // Don't let the file-enumeration phase cap us below the match cap.
+    Math.max(Max * 4, 1e4)
+  );
+  let Emitted = 0;
+  for (const Candidate of Candidates) {
+    if (Emitted >= Max) return { limitHit: true };
+    const Path = ToFsPath(Candidate);
+    if (!Path) continue;
+    let Content;
+    try {
+      Content = await FsPromises2.readFile(Path, Encoding);
+    } catch {
+      continue;
+    }
+    if (Content.length > 0 && Content.indexOf("\0") !== -1) continue;
+    const Lines = Content.split("\n");
+    for (let LineNumber = 0; LineNumber < Lines.length; LineNumber++) {
+      const Line = Lines[LineNumber];
+      Pattern.lastIndex = 0;
+      const Ranges = [];
+      let M;
+      while ((M = Pattern.exec(Line)) !== null) {
+        Ranges.push({
+          start: { line: LineNumber, character: M.index },
+          end: {
+            line: LineNumber,
+            character: M.index + M[0].length
+          }
+        });
+        if (M[0].length === 0) Pattern.lastIndex++;
+      }
+      if (Ranges.length === 0) continue;
+      const Match = {
+        uri: Candidate,
+        ranges: Ranges,
+        preview: {
+          text: Line,
+          matches: Ranges.map((R) => ({
+            start: { line: 0, character: R.start.character },
+            end: { line: 0, character: R.end.character }
+          }))
+        }
+      };
+      if (Callback) {
+        try {
+          Callback(Match);
+        } catch {
+        }
+      }
+      Emitted += Ranges.length;
+      if (Emitted >= Max) return { limitHit: true };
+    }
+  }
+  return { limitHit: false };
+}
+var ExtractPattern, ToFsPath;
+var init_FindTextInFilesFallback = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts"() {
+    "use strict";
+    init_FindFiles();
+    ExtractPattern = /* @__PURE__ */ __name((Query) => {
+      if (Query == null) return void 0;
+      const Q = typeof Query === "string" ? { pattern: Query } : Query;
+      if (!Q.pattern) return void 0;
+      const Flags = `gm${Q.isCaseSensitive ? "" : "i"}`;
+      let Source = Q.pattern;
+      if (!Q.isRegExp) {
+        Source = Source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+      if (Q.isWordMatch) {
+        Source = `\\b${Source}\\b`;
+      }
+      try {
+        return new RegExp(Source, Flags);
+      } catch {
+        return void 0;
+      }
+    }, "ExtractPattern");
+    ToFsPath = /* @__PURE__ */ __name((Uri2) => {
+      if (Uri2 == null) return void 0;
+      if (typeof Uri2 === "string") {
+        return Uri2.startsWith("file://") ? Uri2.slice("file://".length) : Uri2;
+      }
+      const U = Uri2;
+      return U.fsPath ?? U.path;
+    }, "ToFsPath");
+    __name(FindTextInFilesNodeFallback, "FindTextInFilesNodeFallback");
   }
 });
 
@@ -32425,13 +32688,13 @@ var init_LanguageActivation = __esm({
 });
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts
-import { promises as FsPromises2 } from "node:fs";
+import { promises as FsPromises3 } from "node:fs";
 var BuildOpenTextDocument, BuildSaveAll, BuildApplyEdit, BuildUpdateWorkspaceFolders, BuildDocumentEventMembers;
 var init_TextDocument = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts"() {
     "use strict";
-    init_Helpers();
     init_FileSystemRoute();
+    init_Helpers();
     init_LanguageActivation();
     BuildOpenTextDocument = /* @__PURE__ */ __name((Context21) => async (UriOrPath) => {
       const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
@@ -32451,7 +32714,7 @@ var init_TextDocument = __esm({
               );
             }
             try {
-              Text = await FsPromises2.readFile(Path, "utf8");
+              Text = await FsPromises3.readFile(Path, "utf8");
             } catch {
               Text = "";
             }
@@ -32502,11 +32765,13 @@ var init_TextDocument = __esm({
     BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context21, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
       const Current = ReadFolders();
       const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
-      const Removals = Current.slice(Start, Start + RemoveCount).map((Folder) => ({
-        uri: {
-          value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
-        }
-      }));
+      const Removals = Current.slice(Start, Start + RemoveCount).map(
+        (Folder) => ({
+          uri: {
+            value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
+          }
+        })
+      );
       const Additions = ToAdd.map((Folder) => {
         const Raw2 = Folder?.uri;
         const Serialized = typeof Raw2 === "string" ? Raw2 : Raw2?.["toString"]?.call(Raw2) ?? String(Raw2 ?? "");
@@ -32563,268 +32828,6 @@ var init_TextDocument = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
-import { promises as FsPromises3 } from "node:fs";
-import { dirname as PathDirname } from "node:path";
-var UriToString, FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
-var init_FileSystemNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
-    "use strict";
-    init_StockLift();
-    init_Helpers();
-    init_FileSystemRoute();
-    UriToString = /* @__PURE__ */ __name((Value) => {
-      if (Value == null) return "";
-      if (typeof Value === "string") {
-        if (Value.startsWith("/")) return `file://${Value}`;
-        return Value;
-      }
-      if (typeof Value === "object") {
-        const WithToString = Value;
-        if (typeof WithToString.toString === "function" && WithToString.toString !== Object.prototype.toString) {
-          const Rendered = WithToString.toString();
-          if (Rendered && Rendered !== "[object Object]") return Rendered;
-        }
-        const Hydrated = ToUri(Value);
-        if (Hydrated) return Hydrated.toString();
-        const WithParts = Value;
-        if (typeof WithParts.scheme === "string") {
-          const Scheme = WithParts.scheme;
-          const Authority = typeof WithParts.authority === "string" ? WithParts.authority : "";
-          const PathPart = typeof WithParts.path === "string" ? WithParts.path : "";
-          const Query = typeof WithParts.query === "string" && WithParts.query.length > 0 ? `?${WithParts.query}` : "";
-          const Fragment = typeof WithParts.fragment === "string" && WithParts.fragment.length > 0 ? `#${WithParts.fragment}` : "";
-          return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
-        }
-        if (typeof WithParts.fsPath === "string") {
-          return `file://${WithParts.fsPath}`;
-        }
-      }
-      return String(Value);
-    }, "UriToString");
-    FileType2 = {
-      Unknown: 0,
-      File: 1,
-      Directory: 2,
-      SymbolicLink: 64
-    };
-    LogRoute = /* @__PURE__ */ __name((Operation, Uri2, Decision) => {
-      const Enabled2 = process.env["LAND_DEV_LOG"];
-      if (!Enabled2 || !Enabled2.includes("fs-route")) return;
-      process.stdout.write(
-        `[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri2)} uri=${UriToString(Uri2)}
-`
-      );
-    }, "LogRoute");
-    ThrowFileNotFound = /* @__PURE__ */ __name((Uri2) => {
-      const Api = globalThis.__cocoonVscodeAPI;
-      const FileNotFound = Api?.FileSystemError?.FileNotFound;
-      if (typeof FileNotFound === "function") throw FileNotFound(Uri2);
-      const Synthetic = new Error(
-        `EntryNotFound (FileSystemError): ${UriToString(Uri2)}`
-      );
-      Synthetic.code = "FileNotFound";
-      Synthetic.name = "FileSystemError";
-      throw Synthetic;
-    }, "ThrowFileNotFound");
-    MetadataToStat = /* @__PURE__ */ __name((Metadata) => ({
-      type: Metadata.isSymbolicLink() ? FileType2.SymbolicLink : Metadata.isDirectory() ? FileType2.Directory : FileType2.File,
-      size: Metadata.size,
-      mtime: Math.floor(Metadata.mtimeMs),
-      ctime: Math.floor(Metadata.ctimeMs)
-    }), "MetadataToStat");
-    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context21) => ({
-      stat: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("stat", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            const Metadata = await FsPromises3.lstat(Path);
-            return MetadataToStat(Metadata);
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        return await Call(Context21, "FileSystem.Stat", [UriToString(Uri2)]) ?? {
-          type: FileType2.File,
-          size: 0,
-          ctime: 0,
-          mtime: 0
-        };
-      }, "stat"),
-      readFile: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("readFile", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            return await FsPromises3.readFile(Path);
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        const UriString = UriToString(Uri2);
-        try {
-          const Raw2 = await Context21.MountainClient?.sendRequest(
-            "FileSystem.ReadFile",
-            [UriString]
-          );
-          if (Raw2 == null) return Buffer.alloc(0);
-          if (Array.isArray(Raw2)) return Buffer.from(Raw2);
-          if (Raw2 instanceof Uint8Array) return Buffer.from(Raw2);
-          return Buffer.from(String(Raw2), "utf8");
-        } catch (Err) {
-          const Message = Err instanceof Error ? Err.message : String(Err);
-          const TraceFsRead = process.env["LAND_DEV_LOG"]?.includes("fs-read");
-          if (/resource not found|ENOENT|not found/i.test(Message)) {
-            if (TraceFsRead) {
-              process.stdout.write(
-                `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
-`
-              );
-            }
-            ThrowFileNotFound(Uri2);
-          }
-          process.stdout.write(
-            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
-`
-          );
-          throw Err;
-        }
-      }, "readFile"),
-      writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
-        const Decision = Route(Uri2);
-        LogRoute("writeFile", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          const Parent = PathDirname(Path);
-          if (Parent && Parent !== Path) {
-            await FsPromises3.mkdir(Parent, { recursive: true }).catch(
-              () => {
-              }
-            );
-          }
-          await FsPromises3.writeFile(Path, Content);
-          return;
-        }
-        const Text = new TextDecoder().decode(Content);
-        await Call(Context21, "FileSystem.WriteFile", [UriToString(Uri2), Text]);
-      }, "writeFile"),
-      readDirectory: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("readDirectory", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            const Entries = await FsPromises3.readdir(Path, {
-              withFileTypes: true
-            });
-            return Entries.map((Entry) => {
-              const Type = Entry.isSymbolicLink() ? FileType2.SymbolicLink : Entry.isDirectory() ? FileType2.Directory : FileType2.File;
-              return [Entry.name, Type];
-            });
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        return await Call(
-          Context21,
-          "FileSystem.ReadDirectory",
-          [UriToString(Uri2)]
-        ) ?? [];
-      }, "readDirectory"),
-      createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
-        const Decision = Route(Uri2);
-        LogRoute("createDirectory", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          await FsPromises3.mkdir(Path, { recursive: true });
-          return;
-        }
-        await Call(Context21, "FileSystem.CreateDirectory", [UriToString(Uri2)]);
-      }, "createDirectory"),
-      delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
-        const Decision = Route(Uri2);
-        LogRoute("delete", Uri2, Decision);
-        if (Decision === "native") {
-          const Path = ExtractFsPath(Uri2);
-          try {
-            await FsPromises3.rm(Path, {
-              recursive: Options?.recursive ?? false,
-              force: false
-            });
-            return;
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Uri2);
-            throw Err;
-          }
-        }
-        await Call(Context21, "FileSystem.Delete", [
-          UriToString(Uri2),
-          Options?.recursive ?? false
-        ]);
-      }, "delete"),
-      rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-        const SourceRoute = Route(Source);
-        const TargetRoute = Route(Target);
-        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
-        LogRoute("rename", Source, Decision);
-        if (Decision === "native") {
-          const SourcePath = ExtractFsPath(Source);
-          const TargetPath = ExtractFsPath(Target);
-          try {
-            await FsPromises3.rename(SourcePath, TargetPath);
-            return;
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
-            throw Err;
-          }
-        }
-        await Call(Context21, "FileSystem.Rename", [
-          UriToString(Source),
-          UriToString(Target)
-        ]);
-      }, "rename"),
-      copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-        const SourceRoute = Route(Source);
-        const TargetRoute = Route(Target);
-        const Decision = SourceRoute === "native" && TargetRoute === "native" ? "native" : "mountain";
-        LogRoute("copy", Source, Decision);
-        if (Decision === "native") {
-          const SourcePath = ExtractFsPath(Source);
-          const TargetPath = ExtractFsPath(Target);
-          const Parent = PathDirname(TargetPath);
-          if (Parent && Parent !== TargetPath) {
-            await FsPromises3.mkdir(Parent, { recursive: true }).catch(
-              () => {
-              }
-            );
-          }
-          try {
-            await FsPromises3.copyFile(SourcePath, TargetPath);
-            return;
-          } catch (Err) {
-            if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
-            throw Err;
-          }
-        }
-        await Call(Context21, "FileSystem.Copy", [
-          UriToString(Source),
-          UriToString(Target)
-        ]);
-      }, "copy"),
-      isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
-        if (Scheme === "file") return true;
-        return true;
-      }, "isWritableFileSystem")
-    }), "BuildFileSystemNamespace");
-  }
-});
-
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts
 var WrapWorkspaceNamespace, WrapWorkspaceNamespace_default;
 var init_WrapWorkspaceNamespace = __esm({
@@ -32843,13 +32846,13 @@ var init_Index = __esm({
     "use strict";
     init_DualTrack();
     init_StockLift();
+    init_Configuration3();
+    init_FileSystemNamespace();
+    init_FileSystemWatcher();
     init_FindFiles();
     init_FindTextInFilesFallback();
-    init_FileSystemWatcher();
-    init_Configuration3();
-    init_TextDocument();
     init_Providers();
-    init_FileSystemNamespace();
+    init_TextDocument();
     init_WrapWorkspaceNamespace();
     HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
       if (!Array.isArray(Raw2)) return [];
@@ -32952,7 +32955,13 @@ var init_Index = __esm({
           const Raw2 = await TryMountainWithEmptyFallback(
             Context21,
             "findFiles",
-            [Include, { exclude: Options?.exclude, maxResults: Options?.maxResults }],
+            [
+              Include,
+              {
+                exclude: Options?.exclude,
+                maxResults: Options?.maxResults
+              }
+            ],
             async (Args) => {
               const [I, _O] = Args;
               const Opts = _O;
@@ -33215,16 +33224,26 @@ var init_Index = __esm({
         // - `registerFileSearchProvider[2]` - remote FS providers.
         // - `registerTextSearchProvider[2]` - grep-for-X extensions.
         // - `registerAITextSearchProvider` - AI search (copilot).
-        registerTimelineProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTimelineProvider"),
-        registerFileSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSearchProvider"),
-        registerFileSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSearchProvider2"),
-        registerTextSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextSearchProvider"),
-        registerTextSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextSearchProvider2"),
+        registerTimelineProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerTimelineProvider"),
+        registerFileSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerFileSearchProvider"),
+        registerFileSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerFileSearchProvider2"),
+        registerTextSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerTextSearchProvider"),
+        registerTextSearchProvider2: /* @__PURE__ */ __name((_Scheme, _Provider) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerTextSearchProvider2"),
         registerAITextSearchProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerAITextSearchProvider"),
         // createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
@@ -33299,10 +33318,10 @@ var init_CommandsNamespace = __esm({
     CreateCommandsNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => WrapCommandsNamespace_default({
       registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context21.SendToMountain("registerCommand", { commandId: Command }).catch(
-          () => {
-          }
-        );
+        Context21.SendToMountain("registerCommand", {
+          commandId: Command
+        }).catch(() => {
+        });
         return {
           dispose: /* @__PURE__ */ __name(() => {
             LanguageProviderRegistry.UnregisterCommand(Command);
@@ -33433,7 +33452,8 @@ var init_LanguagesNamespace = __esm({
       if (typeof WithParts.scheme === "string" && typeof WithParts.path === "string") {
         return `${WithParts.scheme}://${WithParts.path}`;
       }
-      if (typeof WithParts.fsPath === "string") return `file://${WithParts.fsPath}`;
+      if (typeof WithParts.fsPath === "string")
+        return `file://${WithParts.fsPath}`;
       return Rendered;
     }, "UriKey");
     RegisterProvider = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry, MethodName, Selector, Provider) => {
@@ -33754,7 +33774,8 @@ var init_LanguagesNamespace = __esm({
             let Score = 0;
             if (Filter.language !== void 0) {
               if (Filter.language === "*") Score += 5;
-              else if (Filter.language === Doc.languageId) Score += 10;
+              else if (Filter.language === Doc.languageId)
+                Score += 10;
               else return 0;
             }
             if (Filter.scheme !== void 0) {
@@ -33823,7 +33844,8 @@ var init_LanguagesNamespace = __esm({
           }
           if (typeof Filter.pattern === "string" && DocPath.length > 0) {
             try {
-              if (GlobToRegex_default(Filter.pattern).test(DocPath)) Score += 5;
+              if (GlobToRegex_default(Filter.pattern).test(DocPath))
+                Score += 5;
               else return 0;
             } catch {
               return 0;
@@ -34118,7 +34140,11 @@ var init_ExtensionsNamespace = __esm({
         name: typeof Raw2.name === "string" && Raw2.name.length > 0 ? Raw2.name : Id,
         version: typeof Raw2.version === "string" && Raw2.version.length > 0 ? Raw2.version : "0.0.0",
         publisher: typeof Raw2.publisher === "string" ? Raw2.publisher : Id.split(".")[0] ?? "unknown"
-      } : { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
+      } : {
+        name: Id,
+        version: "0.0.0",
+        publisher: Id.split(".")[0] ?? "unknown"
+      };
       return {
         id: Id,
         extensionUri: ExtensionUri,
@@ -34495,7 +34521,9 @@ var init_DebugNamespace = __esm({
       stopDebugging: /* @__PURE__ */ __name(async (Session) => {
         try {
           const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
-          await Context21.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
+          await Context21.MountainClient?.sendRequest("Debug.Stop", [
+            SessionId
+          ]);
         } catch {
         }
       }, "stopDebugging"),
@@ -34512,7 +34540,10 @@ var init_DebugNamespace = __esm({
         });
       }, "removeBreakpoints"),
       asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
-      onDidStartDebugSession: EventSubscriber2(Context21, "debug.didStartSession"),
+      onDidStartDebugSession: EventSubscriber2(
+        Context21,
+        "debug.didStartSession"
+      ),
       onDidTerminateDebugSession: EventSubscriber2(
         Context21,
         "debug.didTerminateSession"
@@ -34621,9 +34652,10 @@ var init_TasksNamespace = __esm({
       }, "fetchTasks"),
       executeTask: /* @__PURE__ */ __name(async (Task3) => {
         try {
-          return await Context21.MountainClient?.sendRequest("Task.Execute", [
-            Task3
-          ]);
+          return await Context21.MountainClient?.sendRequest(
+            "Task.Execute",
+            [Task3]
+          );
         } catch {
           return void 0;
         }
@@ -34659,8 +34691,8 @@ var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
     init_LanguageProviderRegistry();
-    init_WrapScmNamespace();
     init_WrapNamespaceWithHeuristics();
+    init_WrapScmNamespace();
     ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string";
     ScmTrace = /* @__PURE__ */ __name((Message) => {
       if (!ScmTraceEnabled) return;
@@ -34674,7 +34706,8 @@ var init_ScmNamespace = __esm({
       if (Raw2 == null || typeof Raw2 !== "object") return Raw2;
       const Source = Raw2;
       const Out = {};
-      if (Source["resourceUri"] !== void 0) Out["resourceUri"] = Source["resourceUri"];
+      if (Source["resourceUri"] !== void 0)
+        Out["resourceUri"] = Source["resourceUri"];
       const Command = Source["command"];
       if (Command && typeof Command === "object") {
         const C = Command;
@@ -34700,7 +34733,8 @@ var init_ScmNamespace = __esm({
         }
         Out["decorations"] = SafeDecorations;
       }
-      if (Source["contextValue"] !== void 0) Out["contextValue"] = Source["contextValue"];
+      if (Source["contextValue"] !== void 0)
+        Out["contextValue"] = Source["contextValue"];
       return Out;
     }, "SanitizeResourceState");
     CreateScmNamespace = /* @__PURE__ */ __name((Context21) => WrapScmNamespace_default({
@@ -34717,30 +34751,45 @@ var init_ScmNamespace = __esm({
           query: RootUri?.query ?? "",
           fragment: RootUri?.fragment ?? ""
         } : RootUri;
-        const ProviderReady = Context21.SendToMountain("register_scm_provider", {
-          handle: Handle,
-          id: Id,
-          label: Label,
-          rootUri: RootUriShape,
-          extensionId: ""
-        }).then(() => ScmTrace(`register_scm_provider ack id="${Id}" handle=${Handle}`)).catch((Error2) => {
+        const ProviderReady = Context21.SendToMountain(
+          "register_scm_provider",
+          {
+            handle: Handle,
+            id: Id,
+            label: Label,
+            rootUri: RootUriShape,
+            extensionId: ""
+          }
+        ).then(
+          () => ScmTrace(
+            `register_scm_provider ack id="${Id}" handle=${Handle}`
+          )
+        ).catch((Error2) => {
           const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
-          ScmTrace(`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`);
+          ScmTrace(
+            `register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`
+          );
         });
         const Groups = /* @__PURE__ */ new Map();
         const ConcreteSourceControl = {
           id: Id,
           label: Label,
           rootUri: RootUri,
-          inputBox: WrapNamespaceWithHeuristics_default(`scm.sourceControl[${Id}].inputBox`, {
-            value: "",
-            placeholder: "",
-            enabled: true,
-            visible: true
-          }),
+          inputBox: WrapNamespaceWithHeuristics_default(
+            `scm.sourceControl[${Id}].inputBox`,
+            {
+              value: "",
+              placeholder: "",
+              enabled: true,
+              visible: true
+            }
+          ),
           createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
             const GroupHandle = `${Handle}/${GroupId}`;
-            Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
+            Groups.set(GroupId, {
+              label: GroupLabel,
+              resourceStates: []
+            });
             ScmTrace(
               `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
             );
@@ -34865,9 +34914,12 @@ var init_AuthenticationNamespace = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.SendToMountain("unregister_authentication_provider", {
-              handle: Handle
-            }).catch(() => {
+            Context21.SendToMountain(
+              "unregister_authentication_provider",
+              {
+                handle: Handle
+              }
+            ).catch(() => {
             });
           }, "dispose")
         };
@@ -36650,7 +36702,10 @@ var init_WorkspaceContainsActivator = __esm({
             if (IsLiteral) {
               Hit = await FolderContainsGlob(Folder.FsPath, Glob);
             } else {
-              const Mountain = await FolderContainsGlobViaMountain(Context21, Glob);
+              const Mountain = await FolderContainsGlobViaMountain(
+                Context21,
+                Glob
+              );
               if (typeof Mountain === "boolean") {
                 Hit = Mountain;
               } else {
@@ -36919,8 +36974,10 @@ var init_NotificationHandler = __esm({
           if (Payload?.handle) {
             Emitter3.emit(`webview.dispose:${Payload.handle}`);
             try {
-              Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports)).then(({ WebviewViewBuilders: _Builders }) => {
-              });
+              Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports)).then(
+                ({ WebviewViewBuilders: _Builders }) => {
+                }
+              );
             } catch (_e) {
             }
           }
@@ -37098,7 +37155,9 @@ var init_NotificationHandler = __esm({
           const UriComponents = Args[0];
           const ViewType = Args[1] ?? "";
           const WebviewPanelHandle = Args[2];
-          const ProviderEntry = CustomEditorProvidersByViewType.get(ViewType);
+          const ProviderEntry = CustomEditorProvidersByViewType.get(
+            ViewType
+          );
           if (!ProviderEntry) {
             try {
               process.stdout.write(
@@ -37144,12 +37203,9 @@ var init_NotificationHandler = __esm({
             }, "dispose") }), "onDidChangeViewState")
           };
           try {
-            const Result = Resolve.call(
-              Provider,
-              Document,
-              WebviewPanel,
-              { isCancellationRequested: false }
-            );
+            const Result = Resolve.call(Provider, Document, WebviewPanel, {
+              isCancellationRequested: false
+            });
             if (Result && typeof Result.then === "function") {
               Result.then(
                 () => {
@@ -38443,7 +38499,10 @@ var init_Bootstrap = __esm({
       Effect22.gen(function* () {
         const telemetry = yield* TelemetryTag;
         const StageStart = Date.now();
-        CocoonDevLog("bootstrap-stage", "[Bootstrap] stage=Environment event=start");
+        CocoonDevLog(
+          "bootstrap-stage",
+          "[Bootstrap] stage=Environment event=start"
+        );
         telemetry.log(
           "info",
           "[Cocoon Bootstrap] Stage 1: Detecting environment..."
@@ -38913,6 +38972,8 @@ init_Tier();
 await init_Effect();
 await init_ServiceMapping();
 init_PostHogBridge();
+import { NodeRuntime } from "@effect/platform-node";
+import { Effect as Effect23 } from "effect";
 globalThis.__LandTiers = {
   RemoteProcedureCall: true ? "GRPC" : process.env["TierRemoteProcedureCall"] ?? "GRPC",
   HTTPProxy: true ? "HandRolled" : process.env["TierHTTPProxy"] ?? "HandRolled",
@@ -38932,8 +38993,6 @@ globalThis.__LandTiers = {
   ModuleCache: true ? "Simple" : process.env["TierModuleCache"] ?? "Simple",
   Telemetry: true ? "Synchronous" : process.env["TierTelemetry"] ?? "Synchronous"
 };
-import { NodeRuntime } from "@effect/platform-node";
-import { Effect as Effect23 } from "effect";
 PostHogBridge_default.Initialize();
 var bootstrapCocoonEffect = Effect23.gen(function* () {
   const telemetry = yield* TelemetryTag;

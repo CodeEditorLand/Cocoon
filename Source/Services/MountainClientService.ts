@@ -748,8 +748,9 @@ message RPCDataPayload {
 			// benign is now settled; gate behind `mountain-client-verbose`
 			// so the default log stays clean. Real failures take the
 			// `else` branch and log unconditionally.
-			const TraceMountainClient =
-				process.env["LAND_DEV_LOG"]?.includes("mountain-client-verbose");
+			const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes(
+				"mountain-client-verbose",
+			);
 			if (IsBenignNotFound) {
 				if (TraceMountainClient) {
 					process.stdout.write(
@@ -1376,8 +1377,7 @@ message RPCDataPayload {
 		circuitBreakerFailureCount: number;
 		lastHealthCheck?: Date;
 	} {
-		const IsConnected =
-			this.connectionState === ConnectionState.Connected;
+		const IsConnected = this.connectionState === ConnectionState.Connected;
 		return {
 			connected: IsConnected,
 			mountainHost: this.mountainHost,

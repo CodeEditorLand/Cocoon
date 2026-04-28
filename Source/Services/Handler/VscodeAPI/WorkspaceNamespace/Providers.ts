@@ -8,34 +8,35 @@
  * registerResourceLabelFormatter.
  */
 
-import type { HandlerContext } from "../../HandlerContext.js";
 import { NextProviderHandle } from "../../../LanguageProviderRegistry.js";
+import type { HandlerContext } from "../../HandlerContext.js";
 
-const MakeProvider = (
-	Context: HandlerContext,
-	RegisterMethod: string,
-	UnregisterMethod: string,
-	_LegacyHandlePrefix: string,
-	ExtraPayload: (Key: string) => Record<string, unknown>,
-	OnRegister?: (Handle: number, Key: string, Provider: any) => void,
-	OnDispose?: (Handle: number, Key: string) => void,
-) =>
-(Key: string, _Provider: any, _Options?: any) => {
-	const Handle = NextProviderHandle();
-	Context.SendToMountain(RegisterMethod, {
-		handle: Handle,
-		...ExtraPayload(Key),
-	}).catch(() => {});
-	OnRegister?.(Handle, Key, _Provider);
-	return {
-		dispose: () => {
-			OnDispose?.(Handle, Key);
-			Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-				() => {},
-			);
-		},
+const MakeProvider =
+	(
+		Context: HandlerContext,
+		RegisterMethod: string,
+		UnregisterMethod: string,
+		_LegacyHandlePrefix: string,
+		ExtraPayload: (Key: string) => Record<string, unknown>,
+		OnRegister?: (Handle: number, Key: string, Provider: any) => void,
+		OnDispose?: (Handle: number, Key: string) => void,
+	) =>
+	(Key: string, _Provider: any, _Options?: any) => {
+		const Handle = NextProviderHandle();
+		Context.SendToMountain(RegisterMethod, {
+			handle: Handle,
+			...ExtraPayload(Key),
+		}).catch(() => {});
+		OnRegister?.(Handle, Key, _Provider);
+		return {
+			dispose: () => {
+				OnDispose?.(Handle, Key);
+				Context.SendToMountain(UnregisterMethod, {
+					handle: Handle,
+				}).catch(() => {});
+			},
+		};
 	};
-};
 
 export const BuildRegisterTextDocumentContentProvider = (
 	Context: HandlerContext,
@@ -110,9 +111,7 @@ export const BuildRegisterTaskProvider = (Context: HandlerContext) =>
 		(TaskType) => ({ taskType: TaskType, extensionId: "" }),
 	);
 
-export const BuildRegisterNotebookContentProvider = (
-	Context: HandlerContext,
-) =>
+export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>
 	MakeProvider(
 		Context,
 		"register_notebook_content_provider",
@@ -139,10 +138,9 @@ export const BuildRegisterRemoteAuthorityResolver =
 		}).catch(() => {});
 		return {
 			dispose: () => {
-				Context.SendToMountain(
-					"unregister_remote_authority_resolver",
-					{ authorityPrefix: AuthorityPrefix },
-				).catch(() => {});
+				Context.SendToMountain("unregister_remote_authority_resolver", {
+					authorityPrefix: AuthorityPrefix,
+				}).catch(() => {});
 			},
 		};
 	};

@@ -240,14 +240,7 @@ var withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect.gen(funct
 }), "withSpan");
 
 // Source/Effect/ModuleInterceptor.ts
-import {
-  Context as Context2,
-  Effect as Effect2,
-  HashMap as HashMap2,
-  Layer as Layer2,
-  Ref as Ref2,
-  SubscriptionRef as SubscriptionRef2
-} from "effect";
+import { Context as Context2, Effect as Effect2, HashMap as HashMap2, Layer as Layer2, Ref as Ref2, SubscriptionRef as SubscriptionRef2 } from "effect";
 var SecurityLevel = /* @__PURE__ */ ((SecurityLevel2) => {
   SecurityLevel2["TRUSTED"] = "TRUSTED";
   SecurityLevel2["SANDBOXED"] = "SANDBOXED";
@@ -368,7 +361,9 @@ var ModuleInterceptorLive = Layer2.effect(
       );
       const { default: NodeModule } = yield* Effect2.tryPromise({
         try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
-        catch: /* @__PURE__ */ __name((Err) => new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`), "catch")
+        catch: /* @__PURE__ */ __name((Err) => new Error(
+          `[ModuleInterceptor] import('node:module') failed: ${Err}`
+        ), "catch")
       });
       const OriginalLoad = NodeModule._load;
       NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {

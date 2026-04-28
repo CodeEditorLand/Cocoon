@@ -55,7 +55,10 @@ export const CreateStatusBarItem = (
 			command: undefined as string | VSCode.Command | undefined,
 			alignment: Alignment ?? (1 as VSCode.StatusBarAlignment), // Left = 1
 			priority: Priority,
-			backgroundColor: undefined as string | VSCode.ThemeColor | undefined,
+			backgroundColor: undefined as
+				| string
+				| VSCode.ThemeColor
+				| undefined,
 			color: undefined as string | VSCode.ThemeColor | undefined,
 			isVisible: false,
 		};

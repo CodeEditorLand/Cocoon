@@ -141,10 +141,7 @@ var Tier = {
   ModuleCache: Pick("ModuleCache", "Simple"),
   Telemetry: Pick("Telemetry", "Synchronous")
 };
-LandFixLog_default.Info(
-  "Tier",
-  `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
-);
+LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
 var Tier_default = Tier;
 export {
   Tier_default as default

@@ -118,9 +118,6 @@ const Tier = {
 } as const;
 
 // One-shot boot banner -------------------------------------------------------
-LandFixLog.Info(
-	"Tier",
-	`Cocoon tier set resolved: ${JSON.stringify(Tier)}`,
-);
+LandFixLog.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
 
 export default Tier;

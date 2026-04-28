@@ -72,10 +72,10 @@ var MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMe
   return {
     dispose: /* @__PURE__ */ __name(() => {
       OnDispose?.(Handle, Key);
-      Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-        () => {
-        }
-      );
+      Context.SendToMountain(UnregisterMethod, {
+        handle: Handle
+      }).catch(() => {
+      });
     }, "dispose")
   };
 }, "MakeProvider");
@@ -148,10 +148,9 @@ var BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (
   });
   return {
     dispose: /* @__PURE__ */ __name(() => {
-      Context.SendToMountain(
-        "unregister_remote_authority_resolver",
-        { authorityPrefix: AuthorityPrefix }
-      ).catch(() => {
+      Context.SendToMountain("unregister_remote_authority_resolver", {
+        authorityPrefix: AuthorityPrefix
+      }).catch(() => {
       });
     }, "dispose")
   };

@@ -50,8 +50,7 @@ export const ShowTextDocument = (
 ): Effect.Effect<VSCode.TextEditor, Error> =>
 	Effect.gen(function* () {
 		// Extract URI from either Uri or TextDocument
-		const Uri =
-			"uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
+		const Uri = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
 
 		yield* Logger.Info(
 			`[WindowService] Showing text document: ${Uri.toString()}` +

@@ -41,20 +41,20 @@
  * calls, no stateful singletons created on import.
  */
 
-import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 import {
-	relativePath as StockRelativePath,
-	isEqualOrParent as StockIsEqualOrParent,
+	isEmptyPattern as StockGlobIsEmpty,
+	match as StockGlobMatch,
+	parse as StockGlobParse,
+} from "@codeeditorland/output/vs/base/common/glob.js";
+import {
 	basename as StockBasename,
 	dirname as StockDirname,
 	extname as StockExtname,
+	isEqualOrParent as StockIsEqualOrParent,
 	joinPath as StockJoinPath,
+	relativePath as StockRelativePath,
 } from "@codeeditorland/output/vs/base/common/resources.js";
-import {
-	match as StockGlobMatch,
-	parse as StockGlobParse,
-	isEmptyPattern as StockGlobIsEmpty,
-} from "@codeeditorland/output/vs/base/common/glob.js";
+import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 
 /**
  * Normalise any URI-shape Cocoon sees (real `Uri` instance, URI-like
@@ -130,7 +130,10 @@ export function RelativePath(From: unknown, To: unknown): string | undefined {
  * that Cocoon's hand-rolled `.startsWith()` prefix check was
  * approximating.
  */
-export function IsEqualOrParent(Resource: unknown, Candidate: unknown): boolean {
+export function IsEqualOrParent(
+	Resource: unknown,
+	Candidate: unknown,
+): boolean {
 	const R = ToUri(Resource);
 	const C = ToUri(Candidate);
 	if (!R || !C) return false;
@@ -157,7 +160,10 @@ export function Extname(Resource: unknown): string {
 	return U ? StockExtname(U) : "";
 }
 
-export function JoinPath(Resource: unknown, ...Parts: string[]): URI | undefined {
+export function JoinPath(
+	Resource: unknown,
+	...Parts: string[]
+): URI | undefined {
 	const U = ToUri(Resource);
 	return U ? StockJoinPath(U, ...Parts) : undefined;
 }

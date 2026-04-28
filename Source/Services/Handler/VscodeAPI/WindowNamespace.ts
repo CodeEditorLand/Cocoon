@@ -910,7 +910,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// per-call event subscriptions don't leak across resolves.
 			WebviewViewBuilders.set(String(Handle), () => {
 				let CurrentHtml = "";
-				const VisibilityListeners = new Set<(visible: boolean) => void>();
+				const VisibilityListeners = new Set<
+					(visible: boolean) => void
+				>();
 				const DisposeListeners = new Set<() => void>();
 				const NoopDisposable = { dispose: () => {} };
 				// Per-resolve subscriptions to the Cocoon-side Emitter
@@ -941,7 +943,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					}
 					DisposeListeners.clear();
 					VisibilityListeners.clear();
-					Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+					Context.Emitter?.off?.(
+						ChannelVisibility,
+						VisibilityForward,
+					);
 					Context.Emitter?.off?.(ChannelDispose, DisposeForward);
 				};
 				Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);

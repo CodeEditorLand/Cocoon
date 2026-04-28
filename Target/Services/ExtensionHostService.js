@@ -19446,7 +19446,11 @@ var HydrateBase = /* @__PURE__ */ __name((Base) => {
 }, "HydrateBase");
 var PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
   const Safe = HydrateBase(Base);
-  return Reflect.construct(StockRelativePattern, [Safe, Pattern], PatchedRelativePattern);
+  return Reflect.construct(
+    StockRelativePattern,
+    [Safe, Pattern],
+    PatchedRelativePattern
+  );
 }, "RelativePattern");
 PatchedRelativePattern.prototype = StockRelativePattern.prototype;
 Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);

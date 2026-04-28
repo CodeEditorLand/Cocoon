@@ -24,7 +24,9 @@ export const CreateOutputChannel = (
 	MountainClient: {
 		sendNotification: (method: string, params: unknown) => Promise<void>;
 	},
-	Logger: { Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void> },
+	Logger: {
+		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	},
 	Name: string,
 ): Effect.Effect<VSCode.OutputChannel, Error> =>
 	Effect.gen(function* () {

@@ -59,9 +59,7 @@ interface TextSearchMatch {
 const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	if (Query == null) return undefined;
 	const Q =
-		typeof Query === "string"
-			? { pattern: Query }
-			: (Query as QueryShape);
+		typeof Query === "string" ? { pattern: Query } : (Query as QueryShape);
 	if (!Q.pattern) return undefined;
 
 	// `m` flag for multiline so `^`/`$` match per-line; `g` flag so the

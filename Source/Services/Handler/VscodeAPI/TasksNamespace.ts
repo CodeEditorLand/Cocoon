@@ -7,8 +7,8 @@
  * `Context.Emitter` on `"task.*"` channels.
  */
 
-import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import type { HandlerContext } from "../HandlerContext.js";
 import WrapTasksNamespace from "./WrapTasksNamespace.js";
 
 const EventSubscriber =
@@ -22,51 +22,53 @@ const EventSubscriber =
 		};
 	};
 
-const CreateTasksNamespace = (Context: HandlerContext) => WrapTasksNamespace({
-	registerTaskProvider: (TaskType: string, _Provider: unknown) => {
-		const Handle = NextProviderHandle();
-		Context.SendToMountain("register_task_provider", {
-			handle: Handle,
-			taskType: TaskType,
-			extensionId: "",
-		}).catch(() => {});
-		return {
-			dispose: () => {
-				Context.SendToMountain("unregister_task_provider", {
-					handle: Handle,
-				}).catch(() => {});
-			},
-		};
-	},
+const CreateTasksNamespace = (Context: HandlerContext) =>
+	WrapTasksNamespace({
+		registerTaskProvider: (TaskType: string, _Provider: unknown) => {
+			const Handle = NextProviderHandle();
+			Context.SendToMountain("register_task_provider", {
+				handle: Handle,
+				taskType: TaskType,
+				extensionId: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain("unregister_task_provider", {
+						handle: Handle,
+					}).catch(() => {});
+				},
+			};
+		},
 
-	fetchTasks: async (Filter?: unknown): Promise<unknown[]> => {
-		try {
-			const Response = await Context.MountainClient?.sendRequest(
-				"Task.Fetch",
-				[Filter],
-			);
-			return Array.isArray(Response) ? Response : [];
-		} catch {
-			return [];
-		}
-	},
+		fetchTasks: async (Filter?: unknown): Promise<unknown[]> => {
+			try {
+				const Response = await Context.MountainClient?.sendRequest(
+					"Task.Fetch",
+					[Filter],
+				);
+				return Array.isArray(Response) ? Response : [];
+			} catch {
+				return [];
+			}
+		},
 
-	executeTask: async (Task: unknown): Promise<unknown> => {
-		try {
-			return await Context.MountainClient?.sendRequest("Task.Execute", [
-				Task,
-			]);
-		} catch {
-			return undefined;
-		}
-	},
+		executeTask: async (Task: unknown): Promise<unknown> => {
+			try {
+				return await Context.MountainClient?.sendRequest(
+					"Task.Execute",
+					[Task],
+				);
+			} catch {
+				return undefined;
+			}
+		},
 
-	onDidStartTask: EventSubscriber(Context, "task.didStart"),
-	onDidEndTask: EventSubscriber(Context, "task.didEnd"),
-	onDidStartTaskProcess: EventSubscriber(Context, "task.didStartProcess"),
-	onDidEndTaskProcess: EventSubscriber(Context, "task.didEndProcess"),
+		onDidStartTask: EventSubscriber(Context, "task.didStart"),
+		onDidEndTask: EventSubscriber(Context, "task.didEnd"),
+		onDidStartTaskProcess: EventSubscriber(Context, "task.didStartProcess"),
+		onDidEndTaskProcess: EventSubscriber(Context, "task.didEndProcess"),
 
-	taskExecutions: [] as unknown[],
-});
+		taskExecutions: [] as unknown[],
+	});
 
 export default CreateTasksNamespace;

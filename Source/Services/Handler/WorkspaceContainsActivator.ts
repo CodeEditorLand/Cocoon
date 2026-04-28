@@ -233,9 +233,8 @@ export const ActivateWorkspaceContainsExtensions = async (
 
 	// Lazy-load ExtensionHostHandler to avoid a circular import with the
 	// handler suite - NotificationHandler imports this module at load time.
-	const { default: ExtensionHostHandler } = await import(
-		"./ExtensionHostHandler.js"
-	);
+	const { default: ExtensionHostHandler } =
+		await import("./ExtensionHostHandler.js");
 
 	let ActivationCount = 0;
 	for (const { Identifier, Globs } of Extensions) {
@@ -265,7 +264,10 @@ export const ActivateWorkspaceContainsExtensions = async (
 					Hit = await FolderContainsGlob(Folder.FsPath, Glob);
 				} else {
 					// eslint-disable-next-line no-await-in-loop
-					const Mountain = await FolderContainsGlobViaMountain(Context, Glob);
+					const Mountain = await FolderContainsGlobViaMountain(
+						Context,
+						Glob,
+					);
 					if (typeof Mountain === "boolean") {
 						Hit = Mountain;
 					} else {

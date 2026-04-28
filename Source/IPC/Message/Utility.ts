@@ -4,9 +4,8 @@
  * Utility functions for creating and analyzing IPC messages.
  */
 
-import type { IMessage } from "./Types.js";
-import { CompressionHint } from "./Types.js";
 import { COMPRESSION_THRESHOLD, MessageFlags } from "./Constants.js";
+import { CompressionHint, type IMessage } from "./Types.js";
 import VSBuffer from "./VSBuffer.js";
 
 // ============================================================================
@@ -61,7 +60,9 @@ export const CreateMessage = (
  * @param Message - Message to analyze
  * @returns Recommended compression hint
  */
-export const GetOptimalCompressionHint = (Message: IMessage): CompressionHint => {
+export const GetOptimalCompressionHint = (
+	Message: IMessage,
+): CompressionHint => {
 	if (Message.Data.length < COMPRESSION_THRESHOLD) {
 		return CompressionHint.None;
 	}

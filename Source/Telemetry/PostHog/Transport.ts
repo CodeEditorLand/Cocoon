@@ -9,8 +9,7 @@
 
 import * as NodeHttps from "node:https";
 
-import Event from "./Event.js";
-import type { Event as QueuedEvent } from "./Event.js";
+import Event, { type Event as QueuedEvent } from "./Event.js";
 
 const RequestTimeoutMilliseconds = 5000;
 

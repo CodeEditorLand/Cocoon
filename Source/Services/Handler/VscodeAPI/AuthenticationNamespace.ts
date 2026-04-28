@@ -7,8 +7,8 @@
  * on the `"auth.didChangeSessions"` channel Mountain emits.
  */
 
-import type { HandlerContext } from "../HandlerContext.js";
 import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
+import type { HandlerContext } from "../HandlerContext.js";
 import WrapAuthenticationNamespace from "./WrapAuthenticationNamespace.js";
 
 const EventSubscriber =
@@ -22,66 +22,70 @@ const EventSubscriber =
 		};
 	};
 
-const CreateAuthenticationNamespace = (Context: HandlerContext) => WrapAuthenticationNamespace({
-	registerAuthenticationProvider: (
-		ProviderId: string,
-		Label: string,
-		_Provider: unknown,
-		Options?: { supportsMultipleAccounts?: boolean },
-	) => {
-		const Handle = NextProviderHandle();
-		Context.SendToMountain("register_authentication_provider", {
-			handle: Handle,
-			providerId: ProviderId,
-			label: Label,
-			supportsMultipleAccounts:
-				Options?.supportsMultipleAccounts ?? false,
-			extensionId: "",
-		}).catch(() => {});
-		return {
-			dispose: () => {
-				Context.SendToMountain("unregister_authentication_provider", {
-					handle: Handle,
-				}).catch(() => {});
-			},
-		};
-	},
-
-	getSession: async (
-		ProviderId: string,
-		Scopes: readonly string[],
-		Options?: {
-			createIfNone?: boolean;
-			clearSessionPreference?: boolean;
-			forceNewSession?: boolean | { detail: string };
-			silent?: boolean;
+const CreateAuthenticationNamespace = (Context: HandlerContext) =>
+	WrapAuthenticationNamespace({
+		registerAuthenticationProvider: (
+			ProviderId: string,
+			Label: string,
+			_Provider: unknown,
+			Options?: { supportsMultipleAccounts?: boolean },
+		) => {
+			const Handle = NextProviderHandle();
+			Context.SendToMountain("register_authentication_provider", {
+				handle: Handle,
+				providerId: ProviderId,
+				label: Label,
+				supportsMultipleAccounts:
+					Options?.supportsMultipleAccounts ?? false,
+				extensionId: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain(
+						"unregister_authentication_provider",
+						{
+							handle: Handle,
+						},
+					).catch(() => {});
+				},
+			};
 		},
-	): Promise<unknown> => {
-		try {
-			// Authentication.GetSession - not yet routed; catch returns undefined.
-			return await Context.MountainClient?.sendRequest(
-				"Authentication.GetSession",
-				[ProviderId, Scopes, Options ?? {}],
-			);
-		} catch {
-			return undefined;
-		}
-	},
 
-	getAccounts: async (ProviderId: string): Promise<unknown[]> => {
-		try {
-			// Authentication.GetAccounts - not yet routed; catch returns [].
-			const Result = await Context.MountainClient?.sendRequest(
-				"Authentication.GetAccounts",
-				[ProviderId],
-			);
-			return Array.isArray(Result) ? Result : [];
-		} catch {
-			return [];
-		}
-	},
+		getSession: async (
+			ProviderId: string,
+			Scopes: readonly string[],
+			Options?: {
+				createIfNone?: boolean;
+				clearSessionPreference?: boolean;
+				forceNewSession?: boolean | { detail: string };
+				silent?: boolean;
+			},
+		): Promise<unknown> => {
+			try {
+				// Authentication.GetSession - not yet routed; catch returns undefined.
+				return await Context.MountainClient?.sendRequest(
+					"Authentication.GetSession",
+					[ProviderId, Scopes, Options ?? {}],
+				);
+			} catch {
+				return undefined;
+			}
+		},
 
-	onDidChangeSessions: EventSubscriber(Context, "auth.didChangeSessions"),
-});
+		getAccounts: async (ProviderId: string): Promise<unknown[]> => {
+			try {
+				// Authentication.GetAccounts - not yet routed; catch returns [].
+				const Result = await Context.MountainClient?.sendRequest(
+					"Authentication.GetAccounts",
+					[ProviderId],
+				);
+				return Array.isArray(Result) ? Result : [];
+			} catch {
+				return [];
+			}
+		},
+
+		onDidChangeSessions: EventSubscriber(Context, "auth.didChangeSessions"),
+	});
 
 export default CreateAuthenticationNamespace;

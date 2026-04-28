@@ -1,16 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/IPC/Message/Types.ts
-var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
-  CompressionHint2["None"] = "none";
-  CompressionHint2["Fast"] = "fast";
-  CompressionHint2["Balanced"] = "balanced";
-  CompressionHint2["Maximum"] = "maximum";
-  return CompressionHint2;
-})(CompressionHint || {});
-var Types_default = {};
-
 // Source/IPC/Message/Constants.ts
 var MAX_MESSAGE_SIZE = 10 * 1024 * 1024;
 var MAX_BATCH_SIZE = 50 * 1024 * 1024;
@@ -29,6 +19,96 @@ var MessageFlags = /* @__PURE__ */ ((MessageFlags2) => {
   return MessageFlags2;
 })(MessageFlags || {});
 var Constants_default = {};
+
+// Source/IPC/Message/Types.ts
+var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
+  CompressionHint2["None"] = "none";
+  CompressionHint2["Fast"] = "fast";
+  CompressionHint2["Balanced"] = "balanced";
+  CompressionHint2["Maximum"] = "maximum";
+  return CompressionHint2;
+})(CompressionHint || {});
+var Types_default = {};
+
+// Source/IPC/Message/Validation.ts
+var ValidateMetadata = /* @__PURE__ */ __name((Metadata) => {
+  if (!Metadata) {
+    return false;
+  }
+  if (typeof Metadata.MessageID !== "string" || Metadata.MessageID.length === 0) {
+    return false;
+  }
+  if (typeof Metadata.Source !== "string" || Metadata.Source.length === 0) {
+    return false;
+  }
+  if (typeof Metadata.Destination !== "string" || Metadata.Destination.length === 0) {
+    return false;
+  }
+  if (typeof Metadata.Timestamp !== "number" || Metadata.Timestamp <= 0) {
+    return false;
+  }
+  if (typeof Metadata.MessageType !== "string" || Metadata.MessageType.length === 0) {
+    return false;
+  }
+  return true;
+}, "ValidateMetadata");
+var ValidateMessage = /* @__PURE__ */ __name((Message) => {
+  if (!Message) {
+    return false;
+  }
+  if (!ValidateMetadata(Message.Metadata)) {
+    return false;
+  }
+  if (!(Message.Data instanceof Uint8Array)) {
+    return false;
+  }
+  if (Message.Data.length > MAX_MESSAGE_SIZE) {
+    return false;
+  }
+  if (!Object.values(CompressionHint).includes(Message.CompressionHint)) {
+    return false;
+  }
+  if (typeof Message.Flags !== "number" || Message.Flags < 0) {
+    return false;
+  }
+  return true;
+}, "ValidateMessage");
+var ValidateBatchMessage = /* @__PURE__ */ __name((Batch) => {
+  if (!Batch) {
+    return false;
+  }
+  if (!Array.isArray(Batch.Messages) || Batch.Messages.length === 0) {
+    return false;
+  }
+  if (!Batch.BatchMetadata) {
+    return false;
+  }
+  if (typeof Batch.BatchMetadata.BatchID !== "string" || Batch.BatchMetadata.BatchID.length === 0) {
+    return false;
+  }
+  if (typeof Batch.BatchMetadata.MessageCount !== "number" || Batch.BatchMetadata.MessageCount <= 0) {
+    return false;
+  }
+  if (Batch.BatchMetadata.MessageCount > MAX_BATCH_COUNT) {
+    return false;
+  }
+  if (typeof Batch.BatchMetadata.TotalSize !== "number" || Batch.BatchMetadata.TotalSize <= 0) {
+    return false;
+  }
+  if (Batch.BatchMetadata.TotalSize > MAX_BATCH_SIZE) {
+    return false;
+  }
+  if (typeof Batch.BatchMetadata.Timestamp !== "number" || Batch.BatchMetadata.Timestamp <= 0) {
+    return false;
+  }
+  for (const Message of Batch.Messages) {
+    if (!ValidateMessage(Message)) {
+      return false;
+    }
+  }
+  return true;
+}, "ValidateBatchMessage");
+var Validation_default = { ValidateMetadata, ValidateMessage, ValidateBatchMessage };
 
 // Source/IPC/Message/VSBuffer.ts
 var VSBuffer = class _VSBuffer {
@@ -278,86 +358,6 @@ var VSBuffer = class _VSBuffer {
     return new _VSBuffer(this.buffer.slice(Start, ActualEnd));
   }
 };
-
-// Source/IPC/Message/Validation.ts
-var ValidateMetadata = /* @__PURE__ */ __name((Metadata) => {
-  if (!Metadata) {
-    return false;
-  }
-  if (typeof Metadata.MessageID !== "string" || Metadata.MessageID.length === 0) {
-    return false;
-  }
-  if (typeof Metadata.Source !== "string" || Metadata.Source.length === 0) {
-    return false;
-  }
-  if (typeof Metadata.Destination !== "string" || Metadata.Destination.length === 0) {
-    return false;
-  }
-  if (typeof Metadata.Timestamp !== "number" || Metadata.Timestamp <= 0) {
-    return false;
-  }
-  if (typeof Metadata.MessageType !== "string" || Metadata.MessageType.length === 0) {
-    return false;
-  }
-  return true;
-}, "ValidateMetadata");
-var ValidateMessage = /* @__PURE__ */ __name((Message) => {
-  if (!Message) {
-    return false;
-  }
-  if (!ValidateMetadata(Message.Metadata)) {
-    return false;
-  }
-  if (!(Message.Data instanceof Uint8Array)) {
-    return false;
-  }
-  if (Message.Data.length > MAX_MESSAGE_SIZE) {
-    return false;
-  }
-  if (!Object.values(CompressionHint).includes(Message.CompressionHint)) {
-    return false;
-  }
-  if (typeof Message.Flags !== "number" || Message.Flags < 0) {
-    return false;
-  }
-  return true;
-}, "ValidateMessage");
-var ValidateBatchMessage = /* @__PURE__ */ __name((Batch) => {
-  if (!Batch) {
-    return false;
-  }
-  if (!Array.isArray(Batch.Messages) || Batch.Messages.length === 0) {
-    return false;
-  }
-  if (!Batch.BatchMetadata) {
-    return false;
-  }
-  if (typeof Batch.BatchMetadata.BatchID !== "string" || Batch.BatchMetadata.BatchID.length === 0) {
-    return false;
-  }
-  if (typeof Batch.BatchMetadata.MessageCount !== "number" || Batch.BatchMetadata.MessageCount <= 0) {
-    return false;
-  }
-  if (Batch.BatchMetadata.MessageCount > MAX_BATCH_COUNT) {
-    return false;
-  }
-  if (typeof Batch.BatchMetadata.TotalSize !== "number" || Batch.BatchMetadata.TotalSize <= 0) {
-    return false;
-  }
-  if (Batch.BatchMetadata.TotalSize > MAX_BATCH_SIZE) {
-    return false;
-  }
-  if (typeof Batch.BatchMetadata.Timestamp !== "number" || Batch.BatchMetadata.Timestamp <= 0) {
-    return false;
-  }
-  for (const Message of Batch.Messages) {
-    if (!ValidateMessage(Message)) {
-      return false;
-    }
-  }
-  return true;
-}, "ValidateBatchMessage");
-var Validation_default = { ValidateMetadata, ValidateMessage, ValidateBatchMessage };
 
 // Source/IPC/Message/DeserializeMessage.ts
 var DeserializeMessage_default = /* @__PURE__ */ __name((Data) => {

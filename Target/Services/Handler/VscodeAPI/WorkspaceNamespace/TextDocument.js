@@ -1,75 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
-var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
-  Context.WorkspaceEventEmitter.on(EventName, Listener);
-  return {
-    dispose: /* @__PURE__ */ __name(() => {
-      Context.WorkspaceEventEmitter.removeListener(
-        EventName,
-        Listener
-      );
-    }, "dispose")
-  };
-}, "EventSubscriber");
-var Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
-  try {
-    return await Context.MountainClient?.sendRequest(
-      Method,
-      Parameters
-    );
-  } catch {
-    return void 0;
-  }
-}, "Call");
-var DefaultExcludeSegments = /* @__PURE__ */ new Set([
-  ".git",
-  "node_modules",
-  ".astro",
-  ".next",
-  ".nuxt",
-  ".cache",
-  ".turbo",
-  ".pnpm",
-  "Target",
-  "target",
-  "dist",
-  "out",
-  "build",
-  ".DS_Store"
-]);
-var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
-  if (typeof Raw === "string" && Raw.length > 0) return Raw;
-  if (Raw && typeof Raw === "object") {
-    const Obj = Raw;
-    if (typeof Obj["pattern"] === "string") return Obj["pattern"];
-    if (typeof Obj["glob"] === "string") return Obj["glob"];
-  }
-  return void 0;
-}, "ExtractGlobPattern");
-var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
-  const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
-  if (typeof Raw !== "string" || Raw.length === 0) return void 0;
-  if (Raw.startsWith("file:")) {
-    try {
-      return decodeURIComponent(new URL(Raw).pathname);
-    } catch {
-      return Raw.replace(/^file:\/\//, "");
-    }
-  }
-  return Raw;
-}, "FolderToFsPath");
-var ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
-  const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-  return (InitWorkspace.folders ?? []).map((Folder) => {
-    const FsPath = FolderToFsPath(Folder?.uri);
-    const Record = { ...Folder };
-    if (typeof FsPath === "string") Record.FsPath = FsPath;
-    return Record;
-  });
-}, "ResolveWorkspaceFolders");
-
 // Source/Utility/LandFixLog.ts
 var Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
 var Enabled = Mode !== "off";
@@ -210,10 +141,7 @@ var Tier = {
   ModuleCache: Pick("ModuleCache", "Simple"),
   Telemetry: Pick("Telemetry", "Synchronous")
 };
-LandFixLog_default.Info(
-  "Tier",
-  `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
-);
+LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
 var Tier_default = Tier;
 
 // Source/Services/LanguageProviderRegistry.ts
@@ -287,10 +215,10 @@ var MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMe
   return {
     dispose: /* @__PURE__ */ __name(() => {
       OnDispose?.(Handle, Key);
-      Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-        () => {
-        }
-      );
+      Context.SendToMountain(UnregisterMethod, {
+        handle: Handle
+      }).catch(() => {
+      });
     }, "dispose")
   };
 }, "MakeProvider");
@@ -363,10 +291,9 @@ var BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (
   });
   return {
     dispose: /* @__PURE__ */ __name(() => {
-      Context.SendToMountain(
-        "unregister_remote_authority_resolver",
-        { authorityPrefix: AuthorityPrefix }
-      ).catch(() => {
+      Context.SendToMountain("unregister_remote_authority_resolver", {
+        authorityPrefix: AuthorityPrefix
+      }).catch(() => {
       });
     }, "dispose")
   };
@@ -435,6 +362,77 @@ function Route(Uri) {
   return ExtractFsPath(Uri) !== void 0 ? "native" : "mountain";
 }
 __name(Route, "Route");
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
+var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
+  Context.WorkspaceEventEmitter.on(EventName, Listener);
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.WorkspaceEventEmitter.removeListener(
+        EventName,
+        Listener
+      );
+    }, "dispose")
+  };
+}, "EventSubscriber");
+var Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
+  try {
+    return await Context.MountainClient?.sendRequest(
+      Method,
+      Parameters
+    );
+  } catch {
+    return void 0;
+  }
+}, "Call");
+var DefaultExcludeSegments = /* @__PURE__ */ new Set([
+  ".git",
+  "node_modules",
+  ".astro",
+  ".next",
+  ".nuxt",
+  ".cache",
+  ".turbo",
+  ".pnpm",
+  "Target",
+  "target",
+  "dist",
+  "out",
+  "build",
+  ".DS_Store"
+]);
+var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
+  if (typeof Raw === "string" && Raw.length > 0) return Raw;
+  if (Raw && typeof Raw === "object") {
+    const Obj = Raw;
+    if (typeof Obj["pattern"] === "string") return Obj["pattern"];
+    if (typeof Obj["glob"] === "string") return Obj["glob"];
+  }
+  return void 0;
+}, "ExtractGlobPattern");
+var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
+  const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+  if (typeof Raw !== "string" || Raw.length === 0) return void 0;
+  if (Raw.startsWith("file:")) {
+    try {
+      return decodeURIComponent(new URL(Raw).pathname);
+    } catch {
+      return Raw.replace(/^file:\/\//, "");
+    }
+  }
+  return Raw;
+}, "FolderToFsPath");
+var ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
+  const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+  return (InitWorkspace.folders ?? []).map(
+    (Folder) => {
+      const FsPath = FolderToFsPath(Folder?.uri);
+      const Record = { ...Folder };
+      if (typeof FsPath === "string") Record.FsPath = FsPath;
+      return Record;
+    }
+  );
+}, "ResolveWorkspaceFolders");
 
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace/LanguageActivation.ts
 var STATIC_EXTENSION_TO_LANGUAGE = {
@@ -658,11 +656,13 @@ var BuildApplyEdit = /* @__PURE__ */ __name((Context) => async (_Edit) => {
 var BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
   const Current = ReadFolders();
   const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
-  const Removals = Current.slice(Start, Start + RemoveCount).map((Folder) => ({
-    uri: {
-      value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
-    }
-  }));
+  const Removals = Current.slice(Start, Start + RemoveCount).map(
+    (Folder) => ({
+      uri: {
+        value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
+      }
+    })
+  );
   const Additions = ToAdd.map((Folder) => {
     const Raw = Folder?.uri;
     const Serialized = typeof Raw === "string" ? Raw : Raw?.["toString"]?.call(Raw) ?? String(Raw ?? "");

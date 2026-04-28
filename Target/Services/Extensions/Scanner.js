@@ -2,7 +2,9 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Services/Extensions/Scanner.ts
-var ScanAllExtensions = /* @__PURE__ */ __name((Context, _Options = {}) => Array.from(Context.ExtensionRegistry.values()), "ScanAllExtensions");
+var ScanAllExtensions = /* @__PURE__ */ __name((Context, _Options = {}) => Array.from(
+  Context.ExtensionRegistry.values()
+), "ScanAllExtensions");
 var ScanSystemExtensions = /* @__PURE__ */ __name((Context) => Array.from(Context.ExtensionRegistry.values()).filter(
   (Extension) => Extension?.isBuiltin === true
 ), "ScanSystemExtensions");

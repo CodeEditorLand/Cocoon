@@ -114,7 +114,10 @@ const stage1_Environment = withSpan(
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const StageStart = Date.now();
-		CocoonDevLog("bootstrap-stage", "[Bootstrap] stage=Environment event=start");
+		CocoonDevLog(
+			"bootstrap-stage",
+			"[Bootstrap] stage=Environment event=start",
+		);
 
 		telemetry.log(
 			"info",

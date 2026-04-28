@@ -372,7 +372,9 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     if (Property === "then") return void 0;
     if (Property === "toJSON") {
       return () => {
-        const Out = { _namespace: NamespaceName };
+        const Out = {
+          _namespace: NamespaceName
+        };
         for (const Key of Object.keys(Target)) {
           const Value = Target[Key];
           const T = typeof Value;
@@ -566,7 +568,11 @@ var ToExtensionObject = /* @__PURE__ */ __name((_Context, Id, Raw) => {
     name: typeof Raw.name === "string" && Raw.name.length > 0 ? Raw.name : Id,
     version: typeof Raw.version === "string" && Raw.version.length > 0 ? Raw.version : "0.0.0",
     publisher: typeof Raw.publisher === "string" ? Raw.publisher : Id.split(".")[0] ?? "unknown"
-  } : { name: Id, version: "0.0.0", publisher: Id.split(".")[0] ?? "unknown" };
+  } : {
+    name: Id,
+    version: "0.0.0",
+    publisher: Id.split(".")[0] ?? "unknown"
+  };
   return {
     id: Id,
     extensionUri: ExtensionUri,
