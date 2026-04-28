@@ -257,7 +257,7 @@ export const TelemetryLive = Layer.effect(
 				// Emit via process.stdout.write / process.stderr.write so the
 				// line survives esbuild's production `drop: ["console"]` sweep.
 				// Context is JSON-encoded inline to keep the output one line
-				// per event (parseable by `LAND_DEV_LOG=long` pipelines).
+				// per event (parseable by `Trace=long` pipelines).
 				const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
 				let ContextText = "";
 				if (context && Object.keys(context).length > 0) {

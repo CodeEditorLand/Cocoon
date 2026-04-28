@@ -6,7 +6,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-27T23:59:48Z"
+  generatedAt: "2026-04-28T04:27:19Z"
 };
 export {
   BespokeCocoonMethods,

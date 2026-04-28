@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-27T23:59:48Z"
+  generatedAt: "2026-04-28T04:27:19Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -28,7 +28,7 @@ var NotImplementedError = class extends Error {
   code = "NotImplemented";
   _tag = "NotImplementedError";
 };
-if (process.env["LAND_DEV_LOG"]) {
+if (process.env["Trace"]) {
   process.stdout.write(
     `[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}
 `
@@ -45,25 +45,25 @@ var ParseDomain = /* @__PURE__ */ __name((Method) => {
   return Method.slice(0, Dot).toUpperCase();
 }, "ParseDomain");
 var IsRustDeferralEnabled = /* @__PURE__ */ __name((Method) => {
-  const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+  const MethodKey = `Defer${Method.replace(/[.:]/g, "_")}`;
   if (process.env[MethodKey] !== void 0) {
     return !IsBypassValue(process.env[MethodKey]);
   }
   const Domain = ParseDomain(Method);
   if (Domain) {
-    const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+    const DomainKey = `Defer${Domain}`;
     if (process.env[DomainKey] !== void 0) {
       return !IsBypassValue(process.env[DomainKey]);
     }
   }
-  if (process.env["LAND_DEFER_RUST"] !== void 0) {
-    return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+  if (process.env["Defer"] !== void 0) {
+    return !IsBypassValue(process.env["Defer"]);
   }
   return true;
 }, "IsRustDeferralEnabled");
-if (process.env["LAND_DEV_LOG"]) {
+if (process.env["Trace"]) {
   const ActiveBypasses = Object.keys(process.env).filter(
-    (K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_")
+    (K) => K === "Defer" || K.startsWith("Defer")
   ).filter((K) => IsBypassValue(process.env[K])).join(",");
   if (ActiveBypasses) {
     process.stdout.write(
@@ -160,7 +160,7 @@ async function TryMountainWithEmptyFallback(Context, Method, Arguments, NodeFall
       const NodeResult = await NodeFallback(Arguments);
       const NodeIsEmpty = IsEmpty(NodeResult);
       if (!NodeIsEmpty) {
-        if (process.env["LAND_DEV_LOG"]) {
+        if (process.env["Trace"]) {
           process.stdout.write(
             `[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)
 `
@@ -209,7 +209,7 @@ var SendToMountainOrLocal = /* @__PURE__ */ __name((Context, Method, Payload, On
   );
 }, "SendToMountainOrLocal");
 var LogDualTrack = /* @__PURE__ */ __name((Method, Route) => {
-  if (!process.env["LAND_DEV_LOG"]) return;
+  if (!process.env["Trace"]) return;
   process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}
 `);
 }, "LogDualTrack");

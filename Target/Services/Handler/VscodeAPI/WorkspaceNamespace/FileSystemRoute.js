@@ -2,12 +2,12 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Utility/LandFixLog.ts
-var Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+var Mode = process.env["Mend"] ?? "short";
 var Enabled = Mode !== "off";
 var Long = Mode === "long";
 var DebugEnabled = Long;
 var AllowList = (() => {
-  const Raw = process.env["LAND_LANDFIX_TAGS"];
+  const Raw = process.env["Mend"];
   if (!Raw || Raw.trim().length === 0) return void 0;
   const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
   return Tags.length === 0 ? void 0 : new Set(Tags);
@@ -156,7 +156,7 @@ function Unregister(Handle) {
 __name(Unregister, "Unregister");
 function Get(Handle) {
   const Provider = Callbacks.get(Handle);
-  if (process.env.LAND_DEV_LOG) {
+  if (process.env.Trace) {
     console.warn(
       `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
     );

@@ -5,8 +5,8 @@
  * delegation for functions passed as arguments.
  */
 
-import type { IDisposable } from "@codeeditorland/output/vs/base/common/lifecycle";
-import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid";
+import type { IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
+import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
 import type * as VSCode from "vscode";
 
 /**

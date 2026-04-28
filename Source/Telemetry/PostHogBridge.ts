@@ -3,9 +3,9 @@
  * @description
  * Cocoon PostHog bridge. Direct `/batch` POST via `node:https` (no
  * `posthog-node` dep - keeps the bundle out of the extension host's
- * module graph). Batches every `LAND_POSTHOG_COCOON_BATCH_WINDOW_MS`
+ * module graph). Batches every `Buffer`
  * (default 3s) and drains on SIGINT/SIGTERM/exit so crash events land.
- * No-op when `LAND_POSTHOG_COCOON_ENABLED=false` or `NODE_ENV=production`.
+ * No-op when `Report=false` or `NODE_ENV=production`.
  *
  * Implementation is split across `PostHog/*.ts` - this file composes
  * those atoms and exposes the three call sites the rest of Cocoon uses:

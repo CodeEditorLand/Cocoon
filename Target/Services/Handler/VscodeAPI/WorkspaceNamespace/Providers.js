@@ -13,7 +13,7 @@ function Unregister(Handle) {
 __name(Unregister, "Unregister");
 function Get(Handle) {
   const Provider = Callbacks.get(Handle);
-  if (process.env.LAND_DEV_LOG) {
+  if (process.env.Trace) {
     console.warn(
       `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
     );

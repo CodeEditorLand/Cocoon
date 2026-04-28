@@ -2,12 +2,12 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Utility/LandFixLog.ts
-var Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+var Mode = process.env["Mend"] ?? "short";
 var Enabled = Mode !== "off";
 var Long = Mode === "long";
 var DebugEnabled = Long;
 var AllowList = (() => {
-  const Raw = process.env["LAND_LANDFIX_TAGS"];
+  const Raw = process.env["Mend"];
   if (!Raw || Raw.trim().length === 0) return void 0;
   const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
   return Tags.length === 0 ? void 0 : new Set(Tags);
@@ -217,18 +217,18 @@ var ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
   return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
 }, "ReadNumber");
 var Configuration_default = /* @__PURE__ */ __name(() => ({
-  Key: ReadString("LAND_POSTHOG_KEY", DefaultKey),
-  Host: ReadString("LAND_POSTHOG_HOST", DefaultHost),
-  Enabled: ReadBoolean("LAND_POSTHOG_COCOON_ENABLED", true) && process.env["NODE_ENV"] !== "production",
+  Key: ReadString("Authorize", DefaultKey),
+  Host: ReadString("Beam", DefaultHost),
+  Enabled: ReadBoolean("Report", true) && process.env["NODE_ENV"] !== "production",
   BatchWindowMilliseconds: ReadNumber(
-    "LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
+    "Buffer",
     DefaultBatchWindowMilliseconds
   ),
   BatchMaximum: ReadNumber(
-    "LAND_POSTHOG_COCOON_BATCH_MAX",
+    "Batch",
     DefaultBatchMaximum
   ),
-  DistinctIdentifierSeed: process.env["LAND_POSTHOG_DISTINCT_ID"] ?? ""
+  DistinctIdentifierSeed: process.env["Brand"] ?? ""
 }), "default");
 
 // Source/Telemetry/PostHog/Identifier.ts

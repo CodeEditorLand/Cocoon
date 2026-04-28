@@ -593,8 +593,8 @@ message RPCDataPayload {
 		// via the existing catch / timeout paths.
 		if (
 			typeof process !== "undefined" &&
-			typeof process.env["LAND_DEV_LOG"] === "string" &&
-			process.env["LAND_DEV_LOG"].includes("grpc-verbose")
+			typeof process.env["Trace"] === "string" &&
+			process.env["Trace"].includes("grpc-verbose")
 		) {
 			console.log(
 				`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`,
@@ -624,7 +624,7 @@ message RPCDataPayload {
 			if (
 				method === "tree.register" &&
 				typeof process !== "undefined" &&
-				process.env["LAND_DEV_LOG"]?.includes("tree-latency")
+				process.env["Trace"]?.includes("tree-latency")
 			) {
 				try {
 					const Timestamp = process.hrtime.bigint().toString();
@@ -687,12 +687,12 @@ message RPCDataPayload {
 
 			// Success completion is per-call and FileSystem.ReadFile alone
 			// fires 14k+ times in a long session. Gate the success line
-			// behind `LAND_DEV_LOG=grpc-verbose`; errors / timeouts still
+			// behind `Trace=grpc-verbose`; errors / timeouts still
 			// log unconditionally via the catch block below.
 			if (
 				typeof process !== "undefined" &&
-				typeof process.env["LAND_DEV_LOG"] === "string" &&
-				process.env["LAND_DEV_LOG"].includes("grpc-verbose")
+				typeof process.env["Trace"] === "string" &&
+				process.env["Trace"].includes("grpc-verbose")
 			) {
 				console.log(
 					`[MountainClientService] Request ${method} completed successfully in ${duration}ms`,
@@ -748,7 +748,7 @@ message RPCDataPayload {
 			// benign is now settled; gate behind `mountain-client-verbose`
 			// so the default log stays clean. Real failures take the
 			// `else` branch and log unconditionally.
-			const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes(
+			const TraceMountainClient = process.env["Trace"]?.includes(
 				"mountain-client-verbose",
 			);
 			if (IsBenignNotFound) {
@@ -840,8 +840,8 @@ message RPCDataPayload {
 		// diagnostics via a debug command still see them.
 		if (
 			typeof process !== "undefined" &&
-			typeof process.env["LAND_DEV_LOG"] === "string" &&
-			process.env["LAND_DEV_LOG"].includes("grpc-verbose")
+			typeof process.env["Trace"] === "string" &&
+			process.env["Trace"].includes("grpc-verbose")
 		) {
 			console.log(
 				`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`,
@@ -1190,13 +1190,13 @@ message RPCDataPayload {
 		// `progress.report` fires hundreds of times during a single
 		// activation pass), flooding the log with no diagnostic value
 		// unless a notification *fails*. Gate both under
-		// `LAND_DEV_LOG=grpc-verbose` so the quiet path is silent and the
+		// `Trace=grpc-verbose` so the quiet path is silent and the
 		// noisy path is one env var away. The existing failure `console.error`
 		// below stays unconditional.
 		const TraceGrpcVerbose =
 			typeof process !== "undefined" &&
-			typeof process.env["LAND_DEV_LOG"] === "string" &&
-			process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+			typeof process.env["Trace"] === "string" &&
+			process.env["Trace"].includes("grpc-verbose");
 		if (TraceGrpcVerbose) {
 			console.log(
 				`[MountainClientService] Sending notification to Mountain: ${method}`,

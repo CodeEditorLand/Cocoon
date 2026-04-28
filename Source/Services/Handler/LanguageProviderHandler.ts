@@ -74,7 +74,7 @@ const BuildVsDocument = async (
 	DocumentContentCache: Map<string, string>,
 ): Promise<any> => {
 	const { Position, Range } =
-		await import("@codeeditorland/output/vs/workbench/api/common/extHostTypes");
+		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
 	let CachedContent: string | null = null;
 	let CachedLines: string[] | null = null;
@@ -261,7 +261,7 @@ const InvokeLanguageProvider = async (
 
 	// Real VS Code Position class from @codeeditorland/output.
 	const { Position } =
-		await import("@codeeditorland/output/vs/workbench/api/common/extHostTypes");
+		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 	const VsPosition = new Position(PosLine, PosChar);
 
 	const Ext = UriString.split(".").pop() ?? "";
@@ -276,7 +276,7 @@ const InvokeLanguageProvider = async (
 	);
 
 	const { CancellationTokenSource } =
-		await import("@codeeditorland/output/vs/base/common/cancellation");
+		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 	const VsToken = new CancellationTokenSource().token;
 
 	const Context = Args[3];
@@ -284,7 +284,7 @@ const InvokeLanguageProvider = async (
 	try {
 		switch (Method) {
 			case "$provideHover": {
-				if (process.env.LAND_DEV_LOG) {
+				if (process.env.Trace) {
 					console.warn(
 						`[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof (Provider as any).provideHover === "function"}`,
 					);
@@ -294,7 +294,7 @@ const InvokeLanguageProvider = async (
 					VsPosition,
 					VsToken,
 				);
-				if (process.env.LAND_DEV_LOG) {
+				if (process.env.Trace) {
 					console.warn(
 						`[DEV:EXTHOST] provideHover result kind=${Result ? (Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents) : "null"}`,
 					);

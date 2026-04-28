@@ -2,7 +2,7 @@
  * @module Handler/VscodeAPI/StockLift
  * @description
  * Thin adapters that lift **stock VS Code source** (as bundled by
- * Output's `@codeeditorland/output/vs/…` export map) and expose it with
+ * Output's `@codeeditorland/output/Target/Microsoft/VSCode/vs/…` export map) and expose it with
  * a signature convenient for Cocoon's shim namespaces.
  *
  * This is the third tier in the fallback hierarchy:
@@ -45,7 +45,7 @@ import {
 	isEmptyPattern as StockGlobIsEmpty,
 	match as StockGlobMatch,
 	parse as StockGlobParse,
-} from "@codeeditorland/output/vs/base/common/glob.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/glob.js";
 import {
 	basename as StockBasename,
 	dirname as StockDirname,
@@ -53,8 +53,8 @@ import {
 	isEqualOrParent as StockIsEqualOrParent,
 	joinPath as StockJoinPath,
 	relativePath as StockRelativePath,
-} from "@codeeditorland/output/vs/base/common/resources.js";
-import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
+import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 
 /**
  * Normalise any URI-shape Cocoon sees (real `Uri` instance, URI-like

@@ -18,13 +18,13 @@
  */
 
 // Full VS Code extHostTypes barrel - every constructor and enum extension code uses.
-export * from "@codeeditorland/output/vs/workbench/api/common/extHostTypes";
+export * from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
 
 // URI is imported internally by extHostTypes but not re-exported; add it explicitly.
-export { URI } from "@codeeditorland/output/vs/base/common/uri";
+export { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 
 // Cancellation primitives.
 export {
 	CancellationToken,
 	CancellationTokenSource,
-} from "@codeeditorland/output/vs/base/common/cancellation";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";

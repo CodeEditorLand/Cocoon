@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Telemetry/PostHog/Identifier.ts"],
-  "sourcesContent": ["/**\n * @module Telemetry/PostHog/Identifier\n * @description\n * Derives the PostHog `distinct_id` for this Cocoon process. Respects an\n * explicit seed (`LAND_POSTHOG_DISTINCT_ID` - useful for CI correlation);\n * else falls back to `land-dev-<user>` so repeated dev sessions from the\n * same account merge into one person in the PostHog project.\n */\n\nexport default (Seed: string): string => {\n\tif (Seed.length > 0) return Seed;\n\n\tconst Username =\n\t\tprocess.env[\"USER\"] ?? process.env[\"USERNAME\"] ?? \"unknown\";\n\n\treturn `land-dev-${Username}`;\n};\n"],
+  "sourcesContent": ["/**\n * @module Telemetry/PostHog/Identifier\n * @description\n * Derives the PostHog `distinct_id` for this Cocoon process. Respects an\n * explicit seed (`Brand` - useful for CI correlation);\n * else falls back to `land-dev-<user>` so repeated dev sessions from the\n * same account merge into one person in the PostHog project.\n */\n\nexport default (Seed: string): string => {\n\tif (Seed.length > 0) return Seed;\n\n\tconst Username =\n\t\tprocess.env[\"USER\"] ?? process.env[\"USERNAME\"] ?? \"unknown\";\n\n\treturn `land-dev-${Username}`;\n};\n"],
   "mappings": ";;;;AASA,IAAO,qBAAQ,wBAAC,SAAyB;AACxC,MAAI,KAAK,SAAS,EAAG,QAAO;AAE5B,QAAM,WACL,QAAQ,IAAI,MAAM,KAAK,QAAQ,IAAI,UAAU,KAAK;AAEnD,SAAO,YAAY,QAAQ;AAC5B,GAPe;",
   "names": []
 }

@@ -93,7 +93,7 @@ export class NotImplementedError extends Error {
  * the manifest, the counts stay stale and you see the same numbers
  * as the previous run).
  */
-if (process.env["LAND_DEV_LOG"]) {
+if (process.env["Trace"]) {
 	process.stdout.write(
 		`[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}\n`,
 	);
@@ -109,13 +109,13 @@ if (process.env["LAND_DEV_LOG"]) {
  *   - Migrating a feature surface back to JS-only temporarily.
  *
  * Priority (first match wins, evaluated per call):
- *   1. `LAND_DEFER_RUST_METHOD_<METHOD>` (e.g. `LAND_DEFER_RUST_METHOD_findFiles=false`)
- *   2. `LAND_DEFER_RUST_<DOMAIN>` (e.g. `LAND_DEFER_RUST_WORKSPACE=false`)
+ *   1. `Defer<METHOD>` (e.g. `DeferfindFiles=false`)
+ *   2. `Defer<DOMAIN>` (e.g. `Defer=false`)
  *      where DOMAIN = uppercased prefix before the first `.` of the
  *      method name (e.g. `Workspace.FindFiles` → `WORKSPACE`).
  *      Methods without a `.` use the empty domain - only the global
  *      knob applies.
- *   3. `LAND_DEFER_RUST=false` - global bypass.
+ *   3. `Defer=false` - global bypass.
  *   4. Default: defer (return true).
  *
  * Values: `false`, `0`, `no`, `off` → bypass Mountain. Anything else
@@ -153,31 +153,31 @@ export const IsRustDeferralEnabled = (Method: string): boolean => {
 	// Per-method override wins. Method names can contain `.` and `:` -
 	// neither character is valid in a POSIX env-var name, so substitute
 	// to `_`.
-	const MethodKey = `LAND_DEFER_RUST_METHOD_${Method.replace(/[.:]/g, "_")}`;
+	const MethodKey = `Defer${Method.replace(/[.:]/g, "_")}`;
 	if (process.env[MethodKey] !== undefined) {
 		return !IsBypassValue(process.env[MethodKey]);
 	}
 	// Per-domain override.
 	const Domain = ParseDomain(Method);
 	if (Domain) {
-		const DomainKey = `LAND_DEFER_RUST_${Domain}`;
+		const DomainKey = `Defer${Domain}`;
 		if (process.env[DomainKey] !== undefined) {
 			return !IsBypassValue(process.env[DomainKey]);
 		}
 	}
 	// Global override.
-	if (process.env["LAND_DEFER_RUST"] !== undefined) {
-		return !IsBypassValue(process.env["LAND_DEFER_RUST"]);
+	if (process.env["Defer"] !== undefined) {
+		return !IsBypassValue(process.env["Defer"]);
 	}
 	return true;
 };
 
 // Boot-time banner: surface the active deferral state so debugging the
 // "why is Mountain being skipped" question is one log line away.
-if (process.env["LAND_DEV_LOG"]) {
+if (process.env["Trace"]) {
 	const ActiveBypasses = Object.keys(process.env)
 		.filter(
-			(K) => K === "LAND_DEFER_RUST" || K.startsWith("LAND_DEFER_RUST_"),
+			(K) => K === "Defer" || K.startsWith("Defer"),
 		)
 		.filter((K) => IsBypassValue(process.env[K]))
 		.join(",");
@@ -241,9 +241,9 @@ export async function TryMountainThenNode<T>(
 	Arguments: unknown[],
 	NodeFallback: (Arguments: unknown[]) => Promise<T>,
 ): Promise<T> {
-	// Env-controlled bypass: `LAND_DEFER_RUST=false` (global),
-	// `LAND_DEFER_RUST_<DOMAIN>=false` (per-domain), or
-	// `LAND_DEFER_RUST_METHOD_<METHOD>=false` (per-method) skip the
+	// Env-controlled bypass: `Defer=false` (global),
+	// `Defer<DOMAIN>=false` (per-domain), or
+	// `Defer<METHOD>=false` (per-method) skip the
 	// Mountain round-trip and run the Node fallback directly. Logged
 	// distinctly so the env-toggled path is observable.
 	if (!IsRustDeferralEnabled(Method)) {
@@ -374,7 +374,7 @@ export async function TryMountainWithEmptyFallback<T>(
 			const NodeResult = await NodeFallback(Arguments);
 			const NodeIsEmpty = IsEmpty(NodeResult);
 			if (!NodeIsEmpty) {
-				if (process.env["LAND_DEV_LOG"]) {
+				if (process.env["Trace"]) {
 					process.stdout.write(
 						`[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)\n`,
 					);
@@ -473,11 +473,11 @@ export type DualTrackRoute =
 	| "error";
 
 /**
- * Log one dispatch decision. Guarded by `LAND_DEV_LOG` so release runs
+ * Log one dispatch decision. Guarded by `Trace` so release runs
  * stay silent. Tag `[DEV:DUAL-TRACK]` is picked up by Mountain's stdout
  * tail under `[DEV:COCOON]` prefix.
  */
 export const LogDualTrack = (Method: string, Route: DualTrackRoute): void => {
-	if (!process.env["LAND_DEV_LOG"]) return;
+	if (!process.env["Trace"]) return;
 	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`);
 };

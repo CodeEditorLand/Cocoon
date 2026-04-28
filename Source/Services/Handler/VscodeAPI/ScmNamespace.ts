@@ -19,14 +19,14 @@ import WrapScmNamespace from "./WrapScmNamespace.js";
  * silent and the SCM viewlet stays empty with no signal at all. Tag
  * `scm-trace` is short-mode-friendly (not in `SHORT_MODE_MUTED_TAGS`).
  *
- * Gated on `LAND_DEV_LOG` so production runs (which never set the env)
+ * Gated on `Trace` so production runs (which never set the env)
  * pay zero per-call cost. The Mountain-side `cfg!(debug_assertions)`
  * gate on `dev_log!` already strips logging in release builds; this
  * env check mirrors that for the Cocoon side.
  */
 const ScmTraceEnabled =
 	typeof process !== "undefined" &&
-	typeof process.env["LAND_DEV_LOG"] === "string";
+	typeof process.env["Trace"] === "string";
 const ScmTrace = (Message: string): void => {
 	if (!ScmTraceEnabled) return;
 	try {

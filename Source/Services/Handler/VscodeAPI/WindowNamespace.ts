@@ -476,7 +476,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					// `Source Control` / `SCM` traffic to a visible
 					// dev_log tag - the F6 diagnostic depends on
 					// vscode.git's `logger.info('[Model][doInitialScan]
-					// …')` lines being readable in `LAND_DEV_LOG=short`
+					// …')` lines being readable in `Trace=short`
 					// runs.
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,

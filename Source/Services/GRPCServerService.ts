@@ -928,8 +928,8 @@ export class GRPCServerService
 	 * Used for extension host protocol messages, provider registrations, etc.
 	 *
 	 * Honours the env-controlled Rust-deference knob from `DualTrack`:
-	 * `LAND_DEFER_RUST=false`, `LAND_DEFER_RUST_<DOMAIN>=false`, or
-	 * `LAND_DEFER_RUST_METHOD_<METHOD>=false` short-circuits the call -
+	 * `Defer=false`, `Defer<DOMAIN>=false`, or
+	 * `Defer<METHOD>=false` short-circuits the call -
 	 * the notification is dropped on the Cocoon side and a `node-bypass`
 	 * line is logged via `LogDualTrack`. Fire-and-forget callers see the
 	 * same `Promise<void>` resolution they always saw, so no call-site

@@ -584,13 +584,13 @@ const EnsureVscodeAPIRegistered = async (
 
 	try {
 		const VsCodeTypes =
-			await import("@codeeditorland/output/vs/workbench/api/common/extHostTypes");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 		const { URI } =
-			await import("@codeeditorland/output/vs/base/common/uri");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
 		const { CancellationTokenSource } =
-			await import("@codeeditorland/output/vs/base/common/cancellation");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 		const { Emitter } =
-			await import("@codeeditorland/output/vs/base/common/event");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
 
 		// Defensive RelativePattern wrapper. Stock `extHostTypes.RelativePattern`
 		// (extHostTypes.ts:1914) throws `Illegal argument: base` unless the
@@ -1118,7 +1118,7 @@ const ActivateExtension = async (
 		}
 		// Successful-resolve runs per extension (~40 lines per boot) and
 		// is only useful when actively debugging module resolution. Gate.
-		if (process.env["LAND_DEV_LOG"]?.includes("preflight")) {
+		if (process.env["Trace"]?.includes("preflight")) {
 			process.stdout.write(
 				`[LandFix:Preflight] ${ExtensionId} main resolved → ${Resolved}\n`,
 			);
@@ -1233,7 +1233,7 @@ const ActivateExtension = async (
 			// activates ok but never reaches `vscode.scm.createSourceControl`).
 			// Gated to specific extension IDs so the log doesn't spam for the 113
 			// scanned extensions; covers the Git family + npm/gulp/jake which all
-			// take the same shortcut. Fires under `LAND_DEV_LOG=ext-preactivate` or
+			// take the same shortcut. Fires under `Trace=ext-preactivate` or
 			// the implicit `=short` (we always emit on stdout via console.log).
 			const InstrumentedExtensions = [
 				"vscode.git",

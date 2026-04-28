@@ -9,13 +9,13 @@
  *
  * Controlled by two environment variables, both read once at module load:
  *
- * | `LAND_LANDFIX_LOG` | Behaviour                                           |
+ * | `Mend` | Behaviour                                           |
  * | ------------------ | --------------------------------------------------- |
  * | `off`              | All LandFix output is silenced                      |
  * | `short` (default)  | `HH:MM:SS.mmm` timestamp + tag + message            |
  * | `long`             | Full ISO-8601 timestamp + tag + message + Debug on  |
  *
- * | `LAND_LANDFIX_TAGS` | Comma-separated allowlist (e.g. `Bootstrap,WsNs`)  |
+ * | `Mend` | Comma-separated allowlist (e.g. `Bootstrap,WsNs`)  |
  * | ------------------- | -------------------------------------------------- |
  * | unset (default)     | All tags emit                                      |
  * | `Tag1,Tag2`         | Only those tags emit; all others silenced          |
@@ -32,13 +32,13 @@
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-const Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+const Mode = process.env["Mend"] ?? "short";
 const Enabled = Mode !== "off";
 const Long = Mode === "long";
 const DebugEnabled = Long;
 
 const AllowList: ReadonlySet<string> | undefined = (() => {
-	const Raw = process.env["LAND_LANDFIX_TAGS"];
+	const Raw = process.env["Mend"];
 	if (!Raw || Raw.trim().length === 0) return undefined;
 	const Tags = Raw.split(",")
 		.map((Entry) => Entry.trim())

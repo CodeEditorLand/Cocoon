@@ -31,7 +31,7 @@ var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_de
 var init_DevLog = __esm({
   "Source/Services/DevLog.ts"() {
     "use strict";
-    Raw = process.env["LAND_DEV_LOG"] ?? "";
+    Raw = process.env["Trace"] ?? "";
     ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
     TagSet = new Set(ParsedTags);
     IsShort = TagSet.has("short");
@@ -515,7 +515,7 @@ message RPCDataPayload {
           method,
           startTime
         });
-        if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+        if (typeof process !== "undefined" && typeof process.env["Trace"] === "string" && process.env["Trace"].includes("grpc-verbose")) {
           console.log(
             `[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`
           );
@@ -529,7 +529,7 @@ message RPCDataPayload {
             Method: method,
             Parameter: this.SerializeParameters(parameters)
           };
-          if (method === "tree.register" && typeof process !== "undefined" && process.env["LAND_DEV_LOG"]?.includes("tree-latency")) {
+          if (method === "tree.register" && typeof process !== "undefined" && process.env["Trace"]?.includes("tree-latency")) {
             try {
               const Timestamp = process.hrtime.bigint().toString();
               const Correlation = parameters?.[0]?.viewId ?? `req-${requestIdentifier}`;
@@ -566,7 +566,7 @@ message RPCDataPayload {
             throw error;
           }
           const responseData = this.DeserializeResponse(response.Result);
-          if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+          if (typeof process !== "undefined" && typeof process.env["Trace"] === "string" && process.env["Trace"].includes("grpc-verbose")) {
             console.log(
               `[MountainClientService] Request ${method} completed successfully in ${duration}ms`
             );
@@ -580,7 +580,7 @@ message RPCDataPayload {
           const ErrorMessage = error instanceof Error ? error.message : String(error);
           const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
-          const TraceMountainClient = process.env["LAND_DEV_LOG"]?.includes(
+          const TraceMountainClient = process.env["Trace"]?.includes(
             "mountain-client-verbose"
           );
           if (IsBenignNotFound) {
@@ -650,7 +650,7 @@ message RPCDataPayload {
         this.averageResponseTime = (this.averageResponseTime * (this.totalRequests - 1) + duration) / this.totalRequests;
         this.maxResponseTime = Math.max(this.maxResponseTime, duration);
         this.minResponseTime = Math.min(this.minResponseTime, duration);
-        if (typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose")) {
+        if (typeof process !== "undefined" && typeof process.env["Trace"] === "string" && process.env["Trace"].includes("grpc-verbose")) {
           console.log(
             `[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`
           );
@@ -921,7 +921,7 @@ message RPCDataPayload {
         if (this.connectionState !== "CONNECTED" /* Connected */ || !this.client) {
           throw new Error("Not connected to Mountain");
         }
-        const TraceGrpcVerbose = typeof process !== "undefined" && typeof process.env["LAND_DEV_LOG"] === "string" && process.env["LAND_DEV_LOG"].includes("grpc-verbose");
+        const TraceGrpcVerbose = typeof process !== "undefined" && typeof process.env["Trace"] === "string" && process.env["Trace"].includes("grpc-verbose");
         if (TraceGrpcVerbose) {
           console.log(
             `[MountainClientService] Sending notification to Mountain: ${method}`

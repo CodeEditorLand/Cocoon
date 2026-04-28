@@ -12,12 +12,15 @@ var IMountainClientService = Effect.Service()(
   }
 );
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/uuid.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/uuid.js
+var __defProp2 = Object.defineProperty;
+var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var _UUIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isUUID(value) {
   return _UUIDPattern.test(value);
 }
 __name(isUUID, "isUUID");
+__name2(isUUID, "isUUID");
 var generateUuid = (function() {
   if (typeof crypto.randomUUID === "function") {
     return crypto.randomUUID.bind(crypto);
@@ -27,7 +30,7 @@ var generateUuid = (function() {
   for (let i = 0; i < 256; i++) {
     _hex.push(i.toString(16).padStart(2, "0"));
   }
-  return /* @__PURE__ */ __name(function generateUuid2() {
+  return /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function generateUuid2() {
     crypto.getRandomValues(_data);
     _data[6] = _data[6] & 15 | 64;
     _data[8] = _data[8] & 63 | 128;
@@ -54,12 +57,13 @@ var generateUuid = (function() {
     result += _hex[_data[i++]];
     result += _hex[_data[i++]];
     return result;
-  }, "generateUuid");
+  }, "generateUuid2"), "generateUuid");
 })();
 function prefixedUuid(namespace) {
   return `${namespace}-${generateUuid()}`;
 }
 __name(prefixedUuid, "prefixedUuid");
+__name2(prefixedUuid, "prefixedUuid");
 
 // Source/TypeConverter/Command.ts
 var APICommandArgument = class {

@@ -154,7 +154,7 @@ export const CreateConfigurationState = (
 			}
 		}
 		// `config-prime` tag: surfaces per-extension priming activity so
-		// `LAND_DEV_LOG=config-prime tail -f Mountain.dev.log` shows
+		// `Trace=config-prime tail -f Mountain.dev.log` shows
 		// which extension manifests successfully seeded defaults vs
 		// which ones contributed zero config (non-issue) vs which ones
 		// hit cache-already-populated paths (follows up on F2 / GitLens

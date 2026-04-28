@@ -115,7 +115,7 @@ decision is a performance tradeoff on identical semantics (fs I/O).
 ### Dev-log tag
 
 `dual-track` - registered in `Mountain/Source/IPC/DevLog.rs` header
-table. Enable with `LAND_DEV_LOG=dual-track` (or include in a broader
+table. Enable with `Trace=dual-track` (or include in a broader
 set) to see which Cocoon operations are serving as compatibility
 scaffolding.
 
@@ -211,7 +211,7 @@ tier 1 takes over; tiers 2 + 3 go quiet automatically.
 
 1. Create `<Namespace>Route.ts` next to the Namespace file. Export a
    `Route` type, a `Route()` function (pure), and a `LogRoute()`
-   helper that honours `LAND_DEV_LOG`.
+   helper that honours `Trace`.
 2. Import it in the corresponding `<Namespace>Namespace.ts`. Call
    `Route(args)` once per dispatch, `LogRoute(decision)` for the
    diagnostic line, then branch on the decision.
@@ -222,7 +222,7 @@ tier 1 takes over; tiers 2 + 3 go quiet automatically.
    `Element/Mountain/build.rs::IsDeclaredTierFeature` if Rust cares
    about it.
 4. Document the tag in `Element/Mountain/Source/IPC/DevLog.rs` so
-   `LAND_DEV_LOG=…` autocompletes know about it.
+   `Trace=…` autocompletes know about it.
 5. Reference the new router in the "Landed routers" table above.
 
 ## Why not split every namespace at once

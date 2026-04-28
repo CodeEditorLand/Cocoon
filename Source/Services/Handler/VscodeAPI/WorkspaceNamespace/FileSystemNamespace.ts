@@ -132,7 +132,7 @@ const LogRoute = (
 	// files). Gate under the explicit `fs-route` tag so the default
 	// `short` / empty setting stays quiet. The IPC side already logs
 	// FileSystem.ReadFile round-trip timing, so nothing useful is lost.
-	const Enabled = process.env["LAND_DEV_LOG"];
+	const Enabled = process.env["Trace"];
 	if (!Enabled || !Enabled.includes("fs-route")) return;
 	process.stdout.write(
 		`[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${UriToString(Uri)}\n`,
@@ -226,12 +226,12 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		} catch (Err: unknown) {
 			const Message = Err instanceof Error ? Err.message : String(Err);
 			const TraceFsRead =
-				process.env["LAND_DEV_LOG"]?.includes("fs-read");
+				process.env["Trace"]?.includes("fs-read");
 			if (/resource not found|ENOENT|not found/i.test(Message)) {
 				// 404 is the expected path for extensions probing for
 				// optional files (terminal-suggest cache, Gemfile.lock,
 				// composer.json, rust-toolchain.toml). Silent by default;
-				// `LAND_DEV_LOG=fs-read` re-enables the trace.
+				// `Trace=fs-read` re-enables the trace.
 				if (TraceFsRead) {
 					process.stdout.write(
 						`[LandFix:FsRead] 404 → FileNotFound for ${UriString}\n`,

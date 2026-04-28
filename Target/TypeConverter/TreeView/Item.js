@@ -323,7 +323,9 @@ __export(Type_exports, {
   validateTestCoverageCount: () => validateTestCoverageCount
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arraysFind.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
+var __defProp2 = Object.defineProperty;
+var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 function findLast(array, predicate, fromIndex = array.length - 1) {
   const idx = findLastIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -332,6 +334,7 @@ function findLast(array, predicate, fromIndex = array.length - 1) {
   return array[idx];
 }
 __name(findLast, "findLast");
+__name2(findLast, "findLast");
 function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   for (let i = fromIndex; i >= 0; i--) {
     const element = array[i];
@@ -342,6 +345,7 @@ function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   return -1;
 }
 __name(findLastIdx, "findLastIdx");
+__name2(findLastIdx, "findLastIdx");
 function findFirst(array, predicate, fromIndex = 0) {
   const idx = findFirstIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -350,6 +354,7 @@ function findFirst(array, predicate, fromIndex = 0) {
   return array[idx];
 }
 __name(findFirst, "findFirst");
+__name2(findFirst, "findFirst");
 function findFirstIdx(array, predicate, fromIndex = 0) {
   for (let i = fromIndex; i < array.length; i++) {
     const element = array[i];
@@ -360,11 +365,13 @@ function findFirstIdx(array, predicate, fromIndex = 0) {
   return -1;
 }
 __name(findFirstIdx, "findFirstIdx");
+__name2(findFirstIdx, "findFirstIdx");
 function findLastMonotonous(array, predicate) {
   const idx = findLastIdxMonotonous(array, predicate);
   return idx === -1 ? void 0 : array[idx];
 }
 __name(findLastMonotonous, "findLastMonotonous");
+__name2(findLastMonotonous, "findLastMonotonous");
 function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -379,11 +386,13 @@ function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.
   return i - 1;
 }
 __name(findLastIdxMonotonous, "findLastIdxMonotonous");
+__name2(findLastIdxMonotonous, "findLastIdxMonotonous");
 function findFirstMonotonous(array, predicate) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
   return idx === array.length ? void 0 : array[idx];
 }
 __name(findFirstMonotonous, "findFirstMonotonous");
+__name2(findFirstMonotonous, "findFirstMonotonous");
 function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -398,14 +407,19 @@ function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx
   return i;
 }
 __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+__name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
 function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
   return idx === array.length ? -1 : idx;
 }
 __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+__name2(findFirstIdxMonotonous, "findFirstIdxMonotonous");
 var MonotonousArray = class _MonotonousArray {
   static {
     __name(this, "MonotonousArray");
+  }
+  static {
+    __name2(this, "MonotonousArray");
   }
   static {
     this.assertInvariants = false;
@@ -448,6 +462,7 @@ function findFirstMax(array, comparator) {
   return max;
 }
 __name(findFirstMax, "findFirstMax");
+__name2(findFirstMax, "findFirstMax");
 function findLastMax(array, comparator) {
   if (array.length === 0) {
     return void 0;
@@ -462,10 +477,12 @@ function findLastMax(array, comparator) {
   return max;
 }
 __name(findLastMax, "findLastMax");
+__name2(findLastMax, "findLastMax");
 function findFirstMin(array, comparator) {
   return findFirstMax(array, (a, b) => -comparator(a, b));
 }
 __name(findFirstMin, "findFirstMin");
+__name2(findFirstMin, "findFirstMin");
 function findMaxIdx(array, comparator) {
   if (array.length === 0) {
     return -1;
@@ -480,6 +497,7 @@ function findMaxIdx(array, comparator) {
   return maxIdx;
 }
 __name(findMaxIdx, "findMaxIdx");
+__name2(findMaxIdx, "findMaxIdx");
 function mapFindFirst(items, mapFn) {
   for (const value of items) {
     const mapped = mapFn(value);
@@ -490,11 +508,17 @@ function mapFindFirst(items, mapFn) {
   return void 0;
 }
 __name(mapFindFirst, "mapFindFirst");
+__name2(mapFindFirst, "mapFindFirst");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/errors.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
+var __defProp3 = Object.defineProperty;
+var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
 var ErrorHandler = class {
   static {
     __name(this, "ErrorHandler");
+  }
+  static {
+    __name3(this, "ErrorHandler");
   }
   constructor() {
     this.listeners = [];
@@ -544,6 +568,7 @@ function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
   errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
 }
 __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+__name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
 function isSigPipeError(e) {
   if (!e || typeof e !== "object") {
     return false;
@@ -552,11 +577,13 @@ function isSigPipeError(e) {
   return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
 }
 __name(isSigPipeError, "isSigPipeError");
+__name3(isSigPipeError, "isSigPipeError");
 function onBugIndicatingError(e) {
   errorHandler.onUnexpectedError(e);
   return void 0;
 }
 __name(onBugIndicatingError, "onBugIndicatingError");
+__name3(onBugIndicatingError, "onBugIndicatingError");
 function onUnexpectedError(e) {
   if (!isCancellationError(e)) {
     errorHandler.onUnexpectedError(e);
@@ -564,6 +591,7 @@ function onUnexpectedError(e) {
   return void 0;
 }
 __name(onUnexpectedError, "onUnexpectedError");
+__name3(onUnexpectedError, "onUnexpectedError");
 function onUnexpectedExternalError(e) {
   if (!isCancellationError(e)) {
     errorHandler.onUnexpectedExternalError(e);
@@ -571,6 +599,7 @@ function onUnexpectedExternalError(e) {
   return void 0;
 }
 __name(onUnexpectedExternalError, "onUnexpectedExternalError");
+__name3(onUnexpectedExternalError, "onUnexpectedExternalError");
 function transformErrorForSerialization(error) {
   if (error instanceof Error) {
     const { name, message, cause } = error;
@@ -588,6 +617,7 @@ function transformErrorForSerialization(error) {
   return error;
 }
 __name(transformErrorForSerialization, "transformErrorForSerialization");
+__name3(transformErrorForSerialization, "transformErrorForSerialization");
 function transformErrorFromSerialization(data) {
   let error;
   if (data.noTelemetry) {
@@ -607,6 +637,7 @@ function transformErrorFromSerialization(data) {
   return error;
 }
 __name(transformErrorFromSerialization, "transformErrorFromSerialization");
+__name3(transformErrorFromSerialization, "transformErrorFromSerialization");
 var canceledName = "Canceled";
 function isCancellationError(error) {
   if (error instanceof CancellationError) {
@@ -615,9 +646,13 @@ function isCancellationError(error) {
   return error instanceof Error && error.name === canceledName && error.message === canceledName;
 }
 __name(isCancellationError, "isCancellationError");
+__name3(isCancellationError, "isCancellationError");
 var CancellationError = class extends Error {
   static {
     __name(this, "CancellationError");
+  }
+  static {
+    __name3(this, "CancellationError");
   }
   constructor() {
     super(canceledName);
@@ -627,6 +662,9 @@ var CancellationError = class extends Error {
 var PendingMigrationError = class _PendingMigrationError extends Error {
   static {
     __name(this, "PendingMigrationError");
+  }
+  static {
+    __name3(this, "PendingMigrationError");
   }
   static {
     this._name = "PendingMigrationError";
@@ -645,6 +683,7 @@ function canceled() {
   return error;
 }
 __name(canceled, "canceled");
+__name3(canceled, "canceled");
 function illegalArgument(name) {
   if (name) {
     return new Error(`Illegal argument: ${name}`);
@@ -653,6 +692,7 @@ function illegalArgument(name) {
   }
 }
 __name(illegalArgument, "illegalArgument");
+__name3(illegalArgument, "illegalArgument");
 function illegalState(name) {
   if (name) {
     return new Error(`Illegal state: ${name}`);
@@ -661,9 +701,13 @@ function illegalState(name) {
   }
 }
 __name(illegalState, "illegalState");
+__name3(illegalState, "illegalState");
 var ReadonlyError = class extends TypeError {
   static {
     __name(this, "ReadonlyError");
+  }
+  static {
+    __name3(this, "ReadonlyError");
   }
   constructor(name) {
     super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
@@ -682,9 +726,13 @@ function getErrorMessage(err) {
   return String(err);
 }
 __name(getErrorMessage, "getErrorMessage");
+__name3(getErrorMessage, "getErrorMessage");
 var NotImplementedError = class extends Error {
   static {
     __name(this, "NotImplementedError");
+  }
+  static {
+    __name3(this, "NotImplementedError");
   }
   constructor(message) {
     super("NotImplemented");
@@ -697,6 +745,9 @@ var NotSupportedError = class extends Error {
   static {
     __name(this, "NotSupportedError");
   }
+  static {
+    __name3(this, "NotSupportedError");
+  }
   constructor(message) {
     super("NotSupported");
     if (message) {
@@ -708,6 +759,9 @@ var ExpectedError = class extends Error {
   static {
     __name(this, "ExpectedError");
   }
+  static {
+    __name3(this, "ExpectedError");
+  }
   constructor() {
     super(...arguments);
     this.isExpected = true;
@@ -716,6 +770,9 @@ var ExpectedError = class extends Error {
 var ErrorNoTelemetry = class _ErrorNoTelemetry extends Error {
   static {
     __name(this, "ErrorNoTelemetry");
+  }
+  static {
+    __name3(this, "ErrorNoTelemetry");
   }
   constructor(msg) {
     super(msg);
@@ -738,13 +795,18 @@ var BugIndicatingError = class _BugIndicatingError extends Error {
   static {
     __name(this, "BugIndicatingError");
   }
+  static {
+    __name3(this, "BugIndicatingError");
+  }
   constructor(message) {
     super(message || "An unexpected bug occurred.");
     Object.setPrototypeOf(this, _BugIndicatingError.prototype);
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arrays.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
+var __defProp4 = Object.defineProperty;
+var __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
 function tail(arr) {
   if (arr.length === 0) {
     throw new Error("Invalid tail call");
@@ -752,6 +814,7 @@ function tail(arr) {
   return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];
 }
 __name(tail, "tail");
+__name4(tail, "tail");
 function equals(one, other, itemEquals = (a, b) => a === b) {
   if (one === other) {
     return true;
@@ -770,6 +833,7 @@ function equals(one, other, itemEquals = (a, b) => a === b) {
   return true;
 }
 __name(equals, "equals");
+__name4(equals, "equals");
 function removeFastWithoutKeepingOrder(array, index2) {
   const last = array.length - 1;
   if (index2 < last) {
@@ -778,10 +842,12 @@ function removeFastWithoutKeepingOrder(array, index2) {
   array.pop();
 }
 __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+__name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
 function binarySearch(array, key, comparator) {
   return binarySearch2(array.length, (i) => comparator(array[i], key));
 }
 __name(binarySearch, "binarySearch");
+__name4(binarySearch, "binarySearch");
 function binarySearch2(length, compareToKey) {
   let low = 0, high = length - 1;
   while (low <= high) {
@@ -798,6 +864,7 @@ function binarySearch2(length, compareToKey) {
   return -(low + 1);
 }
 __name(binarySearch2, "binarySearch2");
+__name4(binarySearch2, "binarySearch2");
 function quickSelect(nth, data, compare2) {
   nth = nth | 0;
   if (nth >= data.length) {
@@ -826,6 +893,7 @@ function quickSelect(nth, data, compare2) {
   }
 }
 __name(quickSelect, "quickSelect");
+__name4(quickSelect, "quickSelect");
 function groupBy(data, compare2) {
   const result = [];
   let currentGroup = void 0;
@@ -840,6 +908,7 @@ function groupBy(data, compare2) {
   return result;
 }
 __name(groupBy, "groupBy");
+__name4(groupBy, "groupBy");
 function* groupAdjacentBy(items, shouldBeGrouped) {
   let currentGroup;
   let last;
@@ -859,22 +928,26 @@ function* groupAdjacentBy(items, shouldBeGrouped) {
   }
 }
 __name(groupAdjacentBy, "groupAdjacentBy");
+__name4(groupAdjacentBy, "groupAdjacentBy");
 function forEachAdjacent(arr, f) {
   for (let i = 0; i <= arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
   }
 }
 __name(forEachAdjacent, "forEachAdjacent");
+__name4(forEachAdjacent, "forEachAdjacent");
 function forEachWithNeighbors(arr, f) {
   for (let i = 0; i < arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
   }
 }
 __name(forEachWithNeighbors, "forEachWithNeighbors");
+__name4(forEachWithNeighbors, "forEachWithNeighbors");
 function concatArrays(...arrays) {
   return [].concat(...arrays);
 }
 __name(concatArrays, "concatArrays");
+__name4(concatArrays, "concatArrays");
 function sortedDiff(before, after, compare2) {
   const result = [];
   function pushSplice(start, deleteCount, toInsert) {
@@ -890,6 +963,7 @@ function sortedDiff(before, after, compare2) {
     }
   }
   __name(pushSplice, "pushSplice");
+  __name4(pushSplice, "pushSplice");
   let beforeIdx = 0;
   let afterIdx = 0;
   while (true) {
@@ -918,6 +992,7 @@ function sortedDiff(before, after, compare2) {
   return result;
 }
 __name(sortedDiff, "sortedDiff");
+__name4(sortedDiff, "sortedDiff");
 function delta(before, after, compare2) {
   const splices = sortedDiff(before, after, compare2);
   const removed = [];
@@ -929,6 +1004,7 @@ function delta(before, after, compare2) {
   return { removed, added };
 }
 __name(delta, "delta");
+__name4(delta, "delta");
 function top(array, compare2, n) {
   if (n === 0) {
     return [];
@@ -938,6 +1014,7 @@ function top(array, compare2, n) {
   return result;
 }
 __name(top, "top");
+__name4(top, "top");
 function topAsync(array, compare2, n, batch, token) {
   if (n === 0) {
     return Promise.resolve([]);
@@ -948,7 +1025,7 @@ function topAsync(array, compare2, n, batch, token) {
       const result = array.slice(0, n).sort(compare2);
       for (let i = n, m = Math.min(n + batch, o); i < o; i = m, m = Math.min(m + batch, o)) {
         if (i > n) {
-          await new Promise((resolve3) => setTimeout(resolve3));
+          await new Promise((resolve22) => setTimeout(resolve22));
         }
         if (token && token.isCancellationRequested) {
           throw new CancellationError();
@@ -960,6 +1037,7 @@ function topAsync(array, compare2, n, batch, token) {
   });
 }
 __name(topAsync, "topAsync");
+__name4(topAsync, "topAsync");
 function topStep(array, compare2, result, i, m) {
   for (const n = result.length; i < m; i++) {
     const element = array[i];
@@ -971,10 +1049,12 @@ function topStep(array, compare2, result, i, m) {
   }
 }
 __name(topStep, "topStep");
+__name4(topStep, "topStep");
 function coalesce(array) {
   return array.filter((e) => !!e);
 }
 __name(coalesce, "coalesce");
+__name4(coalesce, "coalesce");
 function coalesceInPlace(array) {
   let to = 0;
   for (let i = 0; i < array.length; i++) {
@@ -986,18 +1066,22 @@ function coalesceInPlace(array) {
   array.length = to;
 }
 __name(coalesceInPlace, "coalesceInPlace");
+__name4(coalesceInPlace, "coalesceInPlace");
 function move(array, from, to) {
   array.splice(to, 0, array.splice(from, 1)[0]);
 }
 __name(move, "move");
+__name4(move, "move");
 function isFalsyOrEmpty(obj) {
   return !Array.isArray(obj) || obj.length === 0;
 }
 __name(isFalsyOrEmpty, "isFalsyOrEmpty");
+__name4(isFalsyOrEmpty, "isFalsyOrEmpty");
 function isNonEmptyArray(obj) {
   return Array.isArray(obj) && obj.length > 0;
 }
 __name(isNonEmptyArray, "isNonEmptyArray");
+__name4(isNonEmptyArray, "isNonEmptyArray");
 function distinct(array, keyFn = (value) => value) {
   const seen = /* @__PURE__ */ new Set();
   return array.filter((element) => {
@@ -1010,6 +1094,7 @@ function distinct(array, keyFn = (value) => value) {
   });
 }
 __name(distinct, "distinct");
+__name4(distinct, "distinct");
 function uniqueFilter(keyFn) {
   const seen = /* @__PURE__ */ new Set();
   return (element) => {
@@ -1022,14 +1107,16 @@ function uniqueFilter(keyFn) {
   };
 }
 __name(uniqueFilter, "uniqueFilter");
-function commonPrefixLength(one, other, equals3 = (a, b) => a === b) {
+__name4(uniqueFilter, "uniqueFilter");
+function commonPrefixLength(one, other, equals22 = (a, b) => a === b) {
   let result = 0;
-  for (let i = 0, len = Math.min(one.length, other.length); i < len && equals3(one[i], other[i]); i++) {
+  for (let i = 0, len = Math.min(one.length, other.length); i < len && equals22(one[i], other[i]); i++) {
     result++;
   }
   return result;
 }
 __name(commonPrefixLength, "commonPrefixLength");
+__name4(commonPrefixLength, "commonPrefixLength");
 function range(arg, to) {
   let from = typeof to === "number" ? arg : 0;
   if (typeof to === "number") {
@@ -1051,6 +1138,7 @@ function range(arg, to) {
   return result;
 }
 __name(range, "range");
+__name4(range, "range");
 function index(array, indexer, mapper) {
   return array.reduce((r, t) => {
     r[indexer(t)] = mapper ? mapper(t) : t;
@@ -1058,11 +1146,13 @@ function index(array, indexer, mapper) {
   }, /* @__PURE__ */ Object.create(null));
 }
 __name(index, "index");
+__name4(index, "index");
 function insert(array, element) {
   array.push(element);
   return () => remove(array, element);
 }
 __name(insert, "insert");
+__name4(insert, "insert");
 function remove(array, element) {
   const index2 = array.indexOf(element);
   if (index2 > -1) {
@@ -1072,17 +1162,19 @@ function remove(array, element) {
   return void 0;
 }
 __name(remove, "remove");
+__name4(remove, "remove");
 function arrayInsert(target, insertIndex, insertArr) {
   const before = target.slice(0, insertIndex);
   const after = target.slice(insertIndex);
   return before.concat(insertArr, after);
 }
 __name(arrayInsert, "arrayInsert");
+__name4(arrayInsert, "arrayInsert");
 function shuffle(array, _seed) {
   let rand;
   if (typeof _seed === "number") {
     let seed = _seed;
-    rand = /* @__PURE__ */ __name(() => {
+    rand = /* @__PURE__ */ __name4(() => {
       const x = Math.sin(seed++) * 179426549;
       return x - Math.floor(x);
     }, "rand");
@@ -1097,6 +1189,7 @@ function shuffle(array, _seed) {
   }
 }
 __name(shuffle, "shuffle");
+__name4(shuffle, "shuffle");
 function pushToStart(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -1105,6 +1198,7 @@ function pushToStart(arr, value) {
   }
 }
 __name(pushToStart, "pushToStart");
+__name4(pushToStart, "pushToStart");
 function pushToEnd(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -1113,16 +1207,19 @@ function pushToEnd(arr, value) {
   }
 }
 __name(pushToEnd, "pushToEnd");
+__name4(pushToEnd, "pushToEnd");
 function pushMany(arr, items) {
   for (const item of items) {
     arr.push(item);
   }
 }
 __name(pushMany, "pushMany");
+__name4(pushMany, "pushMany");
 function mapArrayOrNot(items, fn) {
   return Array.isArray(items) ? items.map(fn) : fn(items);
 }
 __name(mapArrayOrNot, "mapArrayOrNot");
+__name4(mapArrayOrNot, "mapArrayOrNot");
 function mapFilter(array, fn) {
   const result = [];
   for (const item of array) {
@@ -1134,19 +1231,23 @@ function mapFilter(array, fn) {
   return result;
 }
 __name(mapFilter, "mapFilter");
+__name4(mapFilter, "mapFilter");
 function withoutDuplicates(array) {
   const s = new Set(array);
   return Array.from(s);
 }
 __name(withoutDuplicates, "withoutDuplicates");
+__name4(withoutDuplicates, "withoutDuplicates");
 function asArray(x) {
   return Array.isArray(x) ? x : [x];
 }
 __name(asArray, "asArray");
+__name4(asArray, "asArray");
 function getRandomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 __name(getRandomElement, "getRandomElement");
+__name4(getRandomElement, "getRandomElement");
 function insertInto(array, start, newItems) {
   const startIdx = getActualStartIndex(array, start);
   const originalLength = array.length;
@@ -1160,6 +1261,7 @@ function insertInto(array, start, newItems) {
   }
 }
 __name(insertInto, "insertInto");
+__name4(insertInto, "insertInto");
 function splice(array, start, deleteCount, newItems) {
   const index2 = getActualStartIndex(array, start);
   let result = array.splice(index2, deleteCount);
@@ -1170,31 +1272,37 @@ function splice(array, start, deleteCount, newItems) {
   return result;
 }
 __name(splice, "splice");
+__name4(splice, "splice");
 function getActualStartIndex(array, start) {
   return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
 }
 __name(getActualStartIndex, "getActualStartIndex");
+__name4(getActualStartIndex, "getActualStartIndex");
 var CompareResult;
 (function(CompareResult2) {
   function isLessThan(result) {
     return result < 0;
   }
   __name(isLessThan, "isLessThan");
+  __name4(isLessThan, "isLessThan");
   CompareResult2.isLessThan = isLessThan;
   function isLessThanOrEqual(result) {
     return result <= 0;
   }
   __name(isLessThanOrEqual, "isLessThanOrEqual");
+  __name4(isLessThanOrEqual, "isLessThanOrEqual");
   CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
   function isGreaterThan(result) {
     return result > 0;
   }
   __name(isGreaterThan, "isGreaterThan");
+  __name4(isGreaterThan, "isGreaterThan");
   CompareResult2.isGreaterThan = isGreaterThan;
   function isNeitherLessOrGreaterThan(result) {
     return result === 0;
   }
   __name(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
+  __name4(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
   CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
   CompareResult2.greaterThan = 1;
   CompareResult2.lessThan = -1;
@@ -1204,6 +1312,7 @@ function compareBy(selector, comparator) {
   return (a, b) => comparator(selector(a), selector(b));
 }
 __name(compareBy, "compareBy");
+__name4(compareBy, "compareBy");
 function tieBreakComparators(...comparators) {
   return (item1, item2) => {
     for (const comparator of comparators) {
@@ -1216,12 +1325,14 @@ function tieBreakComparators(...comparators) {
   };
 }
 __name(tieBreakComparators, "tieBreakComparators");
-var numberComparator = /* @__PURE__ */ __name((a, b) => a - b, "numberComparator");
-var booleanComparator = /* @__PURE__ */ __name((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
+__name4(tieBreakComparators, "tieBreakComparators");
+var numberComparator = /* @__PURE__ */ __name4((a, b) => a - b, "numberComparator");
+var booleanComparator = /* @__PURE__ */ __name4((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
 function reverseOrder(comparator) {
   return (a, b) => -comparator(a, b);
 }
 __name(reverseOrder, "reverseOrder");
+__name4(reverseOrder, "reverseOrder");
 function compareUndefinedSmallest(comparator) {
   return (a, b) => {
     if (a === void 0) {
@@ -1233,9 +1344,13 @@ function compareUndefinedSmallest(comparator) {
   };
 }
 __name(compareUndefinedSmallest, "compareUndefinedSmallest");
+__name4(compareUndefinedSmallest, "compareUndefinedSmallest");
 var ArrayQueue = class {
   static {
     __name(this, "ArrayQueue");
+  }
+  static {
+    __name4(this, "ArrayQueue");
   }
   /**
    * Constructs a queue that is backed by the given array. Runtime is O(1).
@@ -1306,6 +1421,9 @@ var ArrayQueue = class {
 var CallbackIterable = class _CallbackIterable {
   static {
     __name(this, "CallbackIterable");
+  }
+  static {
+    __name4(this, "CallbackIterable");
   }
   static {
     this.empty = new _CallbackIterable((_callback) => {
@@ -1380,6 +1498,9 @@ var Permutation = class _Permutation {
   static {
     __name(this, "Permutation");
   }
+  static {
+    __name4(this, "Permutation");
+  }
   constructor(_indexMap) {
     this._indexMap = _indexMap;
   }
@@ -1412,16 +1533,21 @@ async function findAsync(array, predicate) {
   return results.find((r) => r.ok)?.element;
 }
 __name(findAsync, "findAsync");
+__name4(findAsync, "findAsync");
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
 }
 __name(sum, "sum");
+__name4(sum, "sum");
 function sumBy(array, selector) {
   return array.reduce((acc, value) => acc + selector(value), 0);
 }
 __name(sumBy, "sumBy");
+__name4(sumBy, "sumBy");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/lazy.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js
+var __defProp5 = Object.defineProperty;
+var __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
 var LazyValueState;
 (function(LazyValueState2) {
   LazyValueState2[LazyValueState2["Uninitialized"] = 0] = "Uninitialized";
@@ -1431,6 +1557,9 @@ var LazyValueState;
 var Lazy = class {
   static {
     __name(this, "Lazy");
+  }
+  static {
+    __name5(this, "Lazy");
   }
   constructor(executor) {
     this.executor = executor;
@@ -1474,7 +1603,9 @@ var Lazy = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/collections.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
+var __defProp6 = Object.defineProperty;
+var __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
 var _a;
 function groupBy2(data, groupFn) {
   const result = /* @__PURE__ */ Object.create(null);
@@ -1489,6 +1620,7 @@ function groupBy2(data, groupFn) {
   return result;
 }
 __name(groupBy2, "groupBy");
+__name6(groupBy2, "groupBy");
 function groupByMap(data, groupFn) {
   const result = /* @__PURE__ */ new Map();
   for (const element of data) {
@@ -1503,6 +1635,7 @@ function groupByMap(data, groupFn) {
   return result;
 }
 __name(groupByMap, "groupByMap");
+__name6(groupByMap, "groupByMap");
 function diffSets(before, after) {
   const removed = [];
   const added = [];
@@ -1519,6 +1652,7 @@ function diffSets(before, after) {
   return { removed, added };
 }
 __name(diffSets, "diffSets");
+__name6(diffSets, "diffSets");
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -1535,6 +1669,7 @@ function diffMaps(before, after) {
   return { removed, added };
 }
 __name(diffMaps, "diffMaps");
+__name6(diffMaps, "diffMaps");
 function intersection(setA, setB) {
   const result = /* @__PURE__ */ new Set();
   for (const elem of setB) {
@@ -1545,9 +1680,13 @@ function intersection(setA, setB) {
   return result;
 }
 __name(intersection, "intersection");
+__name6(intersection, "intersection");
 var SetWithKey = class {
   static {
     __name(this, "SetWithKey");
+  }
+  static {
+    __name6(this, "SetWithKey");
   }
   static {
     _a = Symbol.toStringTag;
@@ -1598,7 +1737,9 @@ var SetWithKey = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/map.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
+var __defProp7 = Object.defineProperty;
+var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
 var _a2, _b, _c;
 function getOrSet(map, key, value) {
   let result = map.get(key);
@@ -1609,6 +1750,7 @@ function getOrSet(map, key, value) {
   return result;
 }
 __name(getOrSet, "getOrSet");
+__name7(getOrSet, "getOrSet");
 function mapToString(map) {
   const entries = [];
   map.forEach((value, key) => {
@@ -1617,6 +1759,7 @@ function mapToString(map) {
   return `Map(${map.size}) {${entries.join(", ")}}`;
 }
 __name(mapToString, "mapToString");
+__name7(mapToString, "mapToString");
 function setToString(set) {
   const entries = [];
   set.forEach((value) => {
@@ -1625,9 +1768,13 @@ function setToString(set) {
   return `Set(${set.size}) {${entries.join(", ")}}`;
 }
 __name(setToString, "setToString");
+__name7(setToString, "setToString");
 var ResourceMapEntry = class {
   static {
     __name(this, "ResourceMapEntry");
+  }
+  static {
+    __name7(this, "ResourceMapEntry");
   }
   constructor(uri, value) {
     this.uri = uri;
@@ -1638,9 +1785,13 @@ function isEntries(arg) {
   return Array.isArray(arg);
 }
 __name(isEntries, "isEntries");
+__name7(isEntries, "isEntries");
 var ResourceMap = class _ResourceMap {
   static {
     __name(this, "ResourceMap");
+  }
+  static {
+    __name7(this, "ResourceMap");
   }
   static {
     this.defaultToKey = (resource) => resource.toString();
@@ -1713,6 +1864,9 @@ var ResourceSet = class {
   static {
     __name(this, "ResourceSet");
   }
+  static {
+    __name7(this, "ResourceSet");
+  }
   constructor(entriesOrKey, toKey) {
     this[_b] = "ResourceSet";
     if (!entriesOrKey || typeof entriesOrKey === "function") {
@@ -1763,6 +1917,9 @@ var Touch;
 var LinkedMap = class {
   static {
     __name(this, "LinkedMap");
+  }
+  static {
+    __name7(this, "LinkedMap");
   }
   constructor() {
     this[_c] = "LinkedMap";
@@ -2105,6 +2262,9 @@ var Cache = class extends LinkedMap {
   static {
     __name(this, "Cache");
   }
+  static {
+    __name7(this, "Cache");
+  }
   constructor(limit, ratio = 1) {
     super();
     this._limit = limit;
@@ -2153,6 +2313,9 @@ var LRUCache = class extends Cache {
   static {
     __name(this, "LRUCache");
   }
+  static {
+    __name7(this, "LRUCache");
+  }
   constructor(limit, ratio = 1) {
     super(limit, ratio);
   }
@@ -2168,6 +2331,9 @@ var LRUCache = class extends Cache {
 var MRUCache = class extends Cache {
   static {
     __name(this, "MRUCache");
+  }
+  static {
+    __name7(this, "MRUCache");
   }
   constructor(limit, ratio = 1) {
     super(limit, ratio);
@@ -2186,6 +2352,9 @@ var MRUCache = class extends Cache {
 var CounterSet = class {
   static {
     __name(this, "CounterSet");
+  }
+  static {
+    __name7(this, "CounterSet");
   }
   constructor() {
     this.map = /* @__PURE__ */ new Map();
@@ -2214,6 +2383,9 @@ var CounterSet = class {
 var BidirectionalMap = class {
   static {
     __name(this, "BidirectionalMap");
+  }
+  static {
+    __name7(this, "BidirectionalMap");
   }
   constructor(entries) {
     this._m1 = /* @__PURE__ */ new Map();
@@ -2262,6 +2434,9 @@ var BidirectionalMap = class {
 var SetMap = class {
   static {
     __name(this, "SetMap");
+  }
+  static {
+    __name7(this, "SetMap");
   }
   constructor() {
     this.map = /* @__PURE__ */ new Map();
@@ -2319,9 +2494,13 @@ function mapsStrictEqualIgnoreOrder(a, b) {
   return true;
 }
 __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+__name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
 var NKeyMap = class {
   static {
     __name(this, "NKeyMap");
+  }
+  static {
+    __name7(this, "NKeyMap");
   }
   constructor() {
     this._data = /* @__PURE__ */ new Map();
@@ -2369,13 +2548,14 @@ var NKeyMap = class {
       }
     }
     __name(iterate, "iterate");
+    __name7(iterate, "iterate");
     yield* iterate(this._data);
   }
   /**
    * Get a textual representation of the map for debugging purposes.
    */
   toString() {
-    const printMap = /* @__PURE__ */ __name((map, depth) => {
+    const printMap = /* @__PURE__ */ __name7((map, depth) => {
       let result = "";
       for (const [key, value] of map) {
         result += `${"  ".repeat(depth)}${key}: `;
@@ -2392,7 +2572,9 @@ var NKeyMap = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/functional.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
+var __defProp8 = Object.defineProperty;
+var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
 function createSingleCallFunction(fn, fnDidRunCallback) {
   const _this = this;
   let didCall = false;
@@ -2415,21 +2597,27 @@ function createSingleCallFunction(fn, fnDidRunCallback) {
   };
 }
 __name(createSingleCallFunction, "createSingleCallFunction");
+__name8(createSingleCallFunction, "createSingleCallFunction");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/assert.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/assert.js
+var __defProp9 = Object.defineProperty;
+var __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
 function ok(value, message) {
   if (!value) {
     throw new Error(message ? `Assertion failed (${message})` : "Assertion Failed");
   }
 }
 __name(ok, "ok");
+__name9(ok, "ok");
 function assertNever(value, message = "Unreachable") {
   throw new Error(message);
 }
 __name(assertNever, "assertNever");
+__name9(assertNever, "assertNever");
 function softAssertNever(value) {
 }
 __name(softAssertNever, "softAssertNever");
+__name9(softAssertNever, "softAssertNever");
 function assert(condition, messageOrError = "unexpected state") {
   if (!condition) {
     const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
@@ -2437,12 +2625,14 @@ function assert(condition, messageOrError = "unexpected state") {
   }
 }
 __name(assert, "assert");
+__name9(assert, "assert");
 function softAssert(condition, message = "Soft Assertion Failed") {
   if (!condition) {
     onUnexpectedError(new BugIndicatingError(message));
   }
 }
 __name(softAssert, "softAssert");
+__name9(softAssert, "softAssert");
 function assertFn(condition) {
   if (!condition()) {
     debugger;
@@ -2451,6 +2641,7 @@ function assertFn(condition) {
   }
 }
 __name(assertFn, "assertFn");
+__name9(assertFn, "assertFn");
 function checkAdjacentItems(items, predicate) {
   let i = 0;
   while (i < items.length - 1) {
@@ -2464,68 +2655,85 @@ function checkAdjacentItems(items, predicate) {
   return true;
 }
 __name(checkAdjacentItems, "checkAdjacentItems");
+__name9(checkAdjacentItems, "checkAdjacentItems");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/types.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
+var __defProp10 = Object.defineProperty;
+var __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
 function isString(str) {
   return typeof str === "string";
 }
 __name(isString, "isString");
+__name10(isString, "isString");
 function isStringArray(value) {
   return isArrayOf(value, isString);
 }
 __name(isStringArray, "isStringArray");
+__name10(isStringArray, "isStringArray");
 function isArrayOf(value, check) {
   return Array.isArray(value) && value.every(check);
 }
 __name(isArrayOf, "isArrayOf");
+__name10(isArrayOf, "isArrayOf");
 function isObject(obj) {
   return typeof obj === "object" && obj !== null && !Array.isArray(obj) && !(obj instanceof RegExp) && !(obj instanceof Date);
 }
 __name(isObject, "isObject");
+__name10(isObject, "isObject");
 function isTypedArray(obj) {
   const TypedArray = Object.getPrototypeOf(Uint8Array);
   return typeof obj === "object" && obj instanceof TypedArray;
 }
 __name(isTypedArray, "isTypedArray");
+__name10(isTypedArray, "isTypedArray");
 function isNumber(obj) {
   return typeof obj === "number" && !isNaN(obj);
 }
 __name(isNumber, "isNumber");
+__name10(isNumber, "isNumber");
 function isIterable(obj) {
   return !!obj && typeof obj[Symbol.iterator] === "function";
 }
 __name(isIterable, "isIterable");
+__name10(isIterable, "isIterable");
 function isAsyncIterable(obj) {
   return !!obj && typeof obj[Symbol.asyncIterator] === "function";
 }
 __name(isAsyncIterable, "isAsyncIterable");
+__name10(isAsyncIterable, "isAsyncIterable");
 function isBoolean(obj) {
   return obj === true || obj === false;
 }
 __name(isBoolean, "isBoolean");
+__name10(isBoolean, "isBoolean");
 function isUndefined(obj) {
   return typeof obj === "undefined";
 }
 __name(isUndefined, "isUndefined");
+__name10(isUndefined, "isUndefined");
 function isDefined(arg) {
   return !isUndefinedOrNull(arg);
 }
 __name(isDefined, "isDefined");
+__name10(isDefined, "isDefined");
 function isUndefinedOrNull(obj) {
   return isUndefined(obj) || obj === null;
 }
 __name(isUndefinedOrNull, "isUndefinedOrNull");
+__name10(isUndefinedOrNull, "isUndefinedOrNull");
 function assertType(condition, type) {
   if (!condition) {
     throw new Error(type ? `Unexpected type, expected '${type}'` : "Unexpected type");
   }
 }
 __name(assertType, "assertType");
+__name10(assertType, "assertType");
 function assertReturnsDefined(arg) {
   assert(arg !== null && arg !== void 0, "Argument is `undefined` or `null`.");
   return arg;
 }
 __name(assertReturnsDefined, "assertReturnsDefined");
+__name10(assertReturnsDefined, "assertReturnsDefined");
 function assertDefined(value, error) {
   if (value === null || value === void 0) {
     const errorToThrow = typeof error === "string" ? new Error(error) : error;
@@ -2533,6 +2741,7 @@ function assertDefined(value, error) {
   }
 }
 __name(assertDefined, "assertDefined");
+__name10(assertDefined, "assertDefined");
 function assertReturnsAllDefined(...args) {
   const result = [];
   for (let i = 0; i < args.length; i++) {
@@ -2545,12 +2754,14 @@ function assertReturnsAllDefined(...args) {
   return result;
 }
 __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-var isOneOf = /* @__PURE__ */ __name((value, validValues) => {
+__name10(assertReturnsAllDefined, "assertReturnsAllDefined");
+var isOneOf = /* @__PURE__ */ __name10((value, validValues) => {
   return validValues.includes(value);
 }, "isOneOf");
 function typeCheck(_thing) {
 }
 __name(typeCheck, "typeCheck");
+__name10(typeCheck, "typeCheck");
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 function isEmptyObject(obj) {
   if (!isObject(obj)) {
@@ -2564,14 +2775,17 @@ function isEmptyObject(obj) {
   return true;
 }
 __name(isEmptyObject, "isEmptyObject");
+__name10(isEmptyObject, "isEmptyObject");
 function isFunction(obj) {
   return typeof obj === "function";
 }
 __name(isFunction, "isFunction");
+__name10(isFunction, "isFunction");
 function areFunctions(...objects) {
   return objects.length > 0 && objects.every(isFunction);
 }
 __name(areFunctions, "areFunctions");
+__name10(areFunctions, "areFunctions");
 function validateConstraints(args, constraints) {
   const len = Math.min(args.length, constraints.length);
   for (let i = 0; i < len; i++) {
@@ -2579,6 +2793,7 @@ function validateConstraints(args, constraints) {
   }
 }
 __name(validateConstraints, "validateConstraints");
+__name10(validateConstraints, "validateConstraints");
 function validateConstraint(arg, constraint) {
   if (isString(constraint)) {
     if (typeof arg !== constraint) {
@@ -2601,10 +2816,12 @@ function validateConstraint(arg, constraint) {
   }
 }
 __name(validateConstraint, "validateConstraint");
+__name10(validateConstraint, "validateConstraint");
 function upcast(x) {
   return x;
 }
 __name(upcast, "upcast");
+__name10(upcast, "upcast");
 function hasKey(x, key) {
   for (const k in key) {
     if (!(k in x)) {
@@ -2614,25 +2831,31 @@ function hasKey(x, key) {
   return true;
 }
 __name(hasKey, "hasKey");
+__name10(hasKey, "hasKey");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/iterator.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
+var __defProp11 = Object.defineProperty;
+var __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
 var Iterable;
 (function(Iterable2) {
   function is(thing) {
     return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
   }
   __name(is, "is");
+  __name11(is, "is");
   Iterable2.is = is;
   const _empty2 = Object.freeze([]);
   function empty() {
     return _empty2;
   }
   __name(empty, "empty");
+  __name11(empty, "empty");
   Iterable2.empty = empty;
   function* single(element) {
     yield element;
   }
   __name(single, "single");
+  __name11(single, "single");
   Iterable2.single = single;
   function wrap(iterableOrElement) {
     if (is(iterableOrElement)) {
@@ -2642,11 +2865,13 @@ var Iterable;
     }
   }
   __name(wrap, "wrap");
+  __name11(wrap, "wrap");
   Iterable2.wrap = wrap;
   function from(iterable) {
     return iterable ?? _empty2;
   }
   __name(from, "from");
+  __name11(from, "from");
   Iterable2.from = from;
   function* reverse(array) {
     for (let i = array.length - 1; i >= 0; i--) {
@@ -2654,16 +2879,19 @@ var Iterable;
     }
   }
   __name(reverse, "reverse");
+  __name11(reverse, "reverse");
   Iterable2.reverse = reverse;
   function isEmpty(iterable) {
     return !iterable || iterable[Symbol.iterator]().next().done === true;
   }
   __name(isEmpty, "isEmpty");
+  __name11(isEmpty, "isEmpty");
   Iterable2.isEmpty = isEmpty;
   function first(iterable) {
     return iterable[Symbol.iterator]().next().value;
   }
   __name(first, "first");
+  __name11(first, "first");
   Iterable2.first = first;
   function some(iterable, predicate) {
     let i = 0;
@@ -2675,6 +2903,7 @@ var Iterable;
     return false;
   }
   __name(some, "some");
+  __name11(some, "some");
   Iterable2.some = some;
   function every(iterable, predicate) {
     let i = 0;
@@ -2686,6 +2915,7 @@ var Iterable;
     return true;
   }
   __name(every, "every");
+  __name11(every, "every");
   Iterable2.every = every;
   function find(iterable, predicate) {
     for (const element of iterable) {
@@ -2696,6 +2926,7 @@ var Iterable;
     return void 0;
   }
   __name(find, "find");
+  __name11(find, "find");
   Iterable2.find = find;
   function* filter(iterable, predicate) {
     for (const element of iterable) {
@@ -2705,6 +2936,7 @@ var Iterable;
     }
   }
   __name(filter, "filter");
+  __name11(filter, "filter");
   Iterable2.filter = filter;
   function* map(iterable, fn) {
     let index2 = 0;
@@ -2713,6 +2945,7 @@ var Iterable;
     }
   }
   __name(map, "map");
+  __name11(map, "map");
   Iterable2.map = map;
   function* flatMap(iterable, fn) {
     let index2 = 0;
@@ -2721,6 +2954,7 @@ var Iterable;
     }
   }
   __name(flatMap, "flatMap");
+  __name11(flatMap, "flatMap");
   Iterable2.flatMap = flatMap;
   function* concat(...iterables) {
     for (const item of iterables) {
@@ -2732,6 +2966,7 @@ var Iterable;
     }
   }
   __name(concat, "concat");
+  __name11(concat, "concat");
   Iterable2.concat = concat;
   function reduce(iterable, reducer, initialValue) {
     let value = initialValue;
@@ -2741,6 +2976,7 @@ var Iterable;
     return value;
   }
   __name(reduce, "reduce");
+  __name11(reduce, "reduce");
   Iterable2.reduce = reduce;
   function length(iterable) {
     let count2 = 0;
@@ -2750,6 +2986,7 @@ var Iterable;
     return count2;
   }
   __name(length, "length");
+  __name11(length, "length");
   Iterable2.length = length;
   function* slice(arr, from2, to = arr.length) {
     if (from2 < -arr.length) {
@@ -2768,6 +3005,7 @@ var Iterable;
     }
   }
   __name(slice, "slice");
+  __name11(slice, "slice");
   Iterable2.slice = slice;
   function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
     const consumed = [];
@@ -2787,6 +3025,7 @@ var Iterable;
     } }];
   }
   __name(consume, "consume");
+  __name11(consume, "consume");
   Iterable2.consume = consume;
   async function asyncToArray(iterable) {
     const result = [];
@@ -2796,6 +3035,7 @@ var Iterable;
     return result;
   }
   __name(asyncToArray, "asyncToArray");
+  __name11(asyncToArray, "asyncToArray");
   Iterable2.asyncToArray = asyncToArray;
   async function asyncToArrayFlat(iterable) {
     let result = [];
@@ -2805,15 +3045,21 @@ var Iterable;
     return result;
   }
   __name(asyncToArrayFlat, "asyncToArrayFlat");
+  __name11(asyncToArrayFlat, "asyncToArrayFlat");
   Iterable2.asyncToArrayFlat = asyncToArrayFlat;
 })(Iterable || (Iterable = {}));
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/lifecycle.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
+var __defProp12 = Object.defineProperty;
+var __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
 var TRACK_DISPOSABLES = false;
 var disposableTracker = null;
 var GCBasedDisposableTracker = class {
   static {
     __name(this, "GCBasedDisposableTracker");
+  }
+  static {
+    __name12(this, "GCBasedDisposableTracker");
   }
   constructor() {
     this._registry = new FinalizationRegistry((heldValue) => {
@@ -2841,6 +3087,9 @@ var GCBasedDisposableTracker = class {
 var DisposableTracker = class _DisposableTracker {
   static {
     __name(this, "DisposableTracker");
+  }
+  static {
+    __name12(this, "DisposableTracker");
   }
   constructor() {
     this.livingDisposables = /* @__PURE__ */ new Map();
@@ -2914,11 +3163,13 @@ var DisposableTracker = class _DisposableTracker {
         }
       }
       __name(removePrefix, "removePrefix");
+      __name12(removePrefix, "removePrefix");
       const lines = leaking.source.split("\n").map((p) => p.trim().replace("at ", "")).filter((l) => l !== "");
       removePrefix(lines, ["Error", /^trackDisposable \(.*\)$/, /^DisposableTracker.trackDisposable \(.*\)$/]);
       return lines.reverse();
     }
     __name(getStackTracePath, "getStackTracePath");
+    __name12(getStackTracePath, "getStackTracePath");
     const stackTraceStarts = new SetMap();
     for (const leaking of uncoveredLeakingObjs) {
       const stackTracePath = getStackTracePath(leaking);
@@ -2971,6 +3222,7 @@ function setDisposableTracker(tracker) {
   disposableTracker = tracker;
 }
 __name(setDisposableTracker, "setDisposableTracker");
+__name12(setDisposableTracker, "setDisposableTracker");
 if (TRACK_DISPOSABLES) {
   const __is_disposable_tracked__ = "__is_disposable_tracked__";
   setDisposableTracker(new class {
@@ -3007,14 +3259,17 @@ function trackDisposable(x) {
   return x;
 }
 __name(trackDisposable, "trackDisposable");
+__name12(trackDisposable, "trackDisposable");
 function markAsDisposed(disposable) {
   disposableTracker?.markAsDisposed(disposable);
 }
 __name(markAsDisposed, "markAsDisposed");
+__name12(markAsDisposed, "markAsDisposed");
 function setParentOfDisposable(child, parent) {
   disposableTracker?.setParent(child, parent);
 }
 __name(setParentOfDisposable, "setParentOfDisposable");
+__name12(setParentOfDisposable, "setParentOfDisposable");
 function setParentOfDisposables(children, parent) {
   if (!disposableTracker) {
     return;
@@ -3024,15 +3279,18 @@ function setParentOfDisposables(children, parent) {
   }
 }
 __name(setParentOfDisposables, "setParentOfDisposables");
+__name12(setParentOfDisposables, "setParentOfDisposables");
 function markAsSingleton(singleton) {
   disposableTracker?.markAsSingleton(singleton);
   return singleton;
 }
 __name(markAsSingleton, "markAsSingleton");
+__name12(markAsSingleton, "markAsSingleton");
 function isDisposable(thing) {
   return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
 }
 __name(isDisposable, "isDisposable");
+__name12(isDisposable, "isDisposable");
 function dispose(arg) {
   if (Iterable.is(arg)) {
     const errors = [];
@@ -3057,6 +3315,7 @@ function dispose(arg) {
   }
 }
 __name(dispose, "dispose");
+__name12(dispose, "dispose");
 function disposeIfDisposable(disposables) {
   for (const d of disposables) {
     if (isDisposable(d)) {
@@ -3066,15 +3325,20 @@ function disposeIfDisposable(disposables) {
   return [];
 }
 __name(disposeIfDisposable, "disposeIfDisposable");
+__name12(disposeIfDisposable, "disposeIfDisposable");
 function combinedDisposable(...disposables) {
   const parent = toDisposable(() => dispose(disposables));
   setParentOfDisposables(disposables, parent);
   return parent;
 }
 __name(combinedDisposable, "combinedDisposable");
+__name12(combinedDisposable, "combinedDisposable");
 var FunctionDisposable = class {
   static {
     __name(this, "FunctionDisposable");
+  }
+  static {
+    __name12(this, "FunctionDisposable");
   }
   constructor(fn) {
     this._isDisposed = false;
@@ -3097,9 +3361,13 @@ function toDisposable(fn) {
   return new FunctionDisposable(fn);
 }
 __name(toDisposable, "toDisposable");
+__name12(toDisposable, "toDisposable");
 var DisposableStore = class _DisposableStore {
   static {
     __name(this, "DisposableStore");
+  }
+  static {
+    __name12(this, "DisposableStore");
   }
   static {
     this.DISABLE_DISPOSED_WARNING = false;
@@ -3197,6 +3465,9 @@ var Disposable = class {
     __name(this, "Disposable");
   }
   static {
+    __name12(this, "Disposable");
+  }
+  static {
     this.None = Object.freeze({ dispose() {
     } });
   }
@@ -3222,6 +3493,9 @@ var Disposable = class {
 var MutableDisposable = class {
   static {
     __name(this, "MutableDisposable");
+  }
+  static {
+    __name12(this, "MutableDisposable");
   }
   constructor() {
     this._isDisposed = false;
@@ -3284,6 +3558,9 @@ var MandatoryMutableDisposable = class {
   static {
     __name(this, "MandatoryMutableDisposable");
   }
+  static {
+    __name12(this, "MandatoryMutableDisposable");
+  }
   constructor(initialValue) {
     this._disposable = new MutableDisposable();
     this._isDisposed = false;
@@ -3307,6 +3584,9 @@ var RefCountedDisposable = class {
   static {
     __name(this, "RefCountedDisposable");
   }
+  static {
+    __name12(this, "RefCountedDisposable");
+  }
   constructor(_disposable) {
     this._disposable = _disposable;
     this._counter = 1;
@@ -3325,6 +3605,9 @@ var RefCountedDisposable = class {
 var ReferenceCollection = class {
   static {
     __name(this, "ReferenceCollection");
+  }
+  static {
+    __name12(this, "ReferenceCollection");
   }
   constructor() {
     this.references = /* @__PURE__ */ new Map();
@@ -3350,6 +3633,9 @@ var AsyncReferenceCollection = class {
   static {
     __name(this, "AsyncReferenceCollection");
   }
+  static {
+    __name12(this, "AsyncReferenceCollection");
+  }
   constructor(referenceCollection) {
     this.referenceCollection = referenceCollection;
   }
@@ -3359,7 +3645,7 @@ var AsyncReferenceCollection = class {
       const object = await ref.object;
       return {
         object,
-        dispose: /* @__PURE__ */ __name(() => ref.dispose(), "dispose")
+        dispose: /* @__PURE__ */ __name12(() => ref.dispose(), "dispose")
       };
     } catch (error) {
       ref.dispose();
@@ -3370,6 +3656,9 @@ var AsyncReferenceCollection = class {
 var ImmortalReference = class {
   static {
     __name(this, "ImmortalReference");
+  }
+  static {
+    __name12(this, "ImmortalReference");
   }
   constructor(object) {
     this.object = object;
@@ -3386,9 +3675,13 @@ function disposeOnReturn(fn) {
   }
 }
 __name(disposeOnReturn, "disposeOnReturn");
+__name12(disposeOnReturn, "disposeOnReturn");
 var DisposableMap = class {
   static {
     __name(this, "DisposableMap");
+  }
+  static {
+    __name12(this, "DisposableMap");
   }
   constructor(store = /* @__PURE__ */ new Map()) {
     this._isDisposed = false;
@@ -3470,6 +3763,9 @@ var DisposableSet = class {
   static {
     __name(this, "DisposableSet");
   }
+  static {
+    __name12(this, "DisposableSet");
+  }
   constructor(store = /* @__PURE__ */ new Set()) {
     this._isDisposed = false;
     this._store = store;
@@ -3550,6 +3846,7 @@ function thenIfNotDisposed(promise, then) {
   });
 }
 __name(thenIfNotDisposed, "thenIfNotDisposed");
+__name12(thenIfNotDisposed, "thenIfNotDisposed");
 function thenRegisterOrDispose(promise, store) {
   return promise.then((disposable) => {
     if (store.isDisposed) {
@@ -3561,16 +3858,22 @@ function thenRegisterOrDispose(promise, store) {
   });
 }
 __name(thenRegisterOrDispose, "thenRegisterOrDispose");
+__name12(thenRegisterOrDispose, "thenRegisterOrDispose");
 var DisposableResourceMap = class extends DisposableMap {
   static {
     __name(this, "DisposableResourceMap");
+  }
+  static {
+    __name12(this, "DisposableResourceMap");
   }
   constructor() {
     super(new ResourceMap());
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/stream.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/stream.js
+var __defProp13 = Object.defineProperty;
+var __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
 function isReadable(obj) {
   const candidate = obj;
   if (!candidate) {
@@ -3579,6 +3882,7 @@ function isReadable(obj) {
   return typeof candidate.read === "function";
 }
 __name(isReadable, "isReadable");
+__name13(isReadable, "isReadable");
 function isReadableStream(obj) {
   const candidate = obj;
   if (!candidate) {
@@ -3587,6 +3891,7 @@ function isReadableStream(obj) {
   return [candidate.on, candidate.pause, candidate.resume, candidate.destroy].every((fn) => typeof fn === "function");
 }
 __name(isReadableStream, "isReadableStream");
+__name13(isReadableStream, "isReadableStream");
 function isReadableBufferedStream(obj) {
   const candidate = obj;
   if (!candidate) {
@@ -3595,13 +3900,18 @@ function isReadableBufferedStream(obj) {
   return isReadableStream(candidate.stream) && Array.isArray(candidate.buffer) && typeof candidate.ended === "boolean";
 }
 __name(isReadableBufferedStream, "isReadableBufferedStream");
+__name13(isReadableBufferedStream, "isReadableBufferedStream");
 function newWriteableStream(reducer, options) {
   return new WriteableStreamImpl(reducer, options);
 }
 __name(newWriteableStream, "newWriteableStream");
+__name13(newWriteableStream, "newWriteableStream");
 var WriteableStreamImpl = class {
   static {
     __name(this, "WriteableStreamImpl");
+  }
+  static {
+    __name13(this, "WriteableStreamImpl");
   }
   /**
    * @param reducer a function that reduces the buffered data into a single object;
@@ -3795,6 +4105,7 @@ function consumeReadable(readable, reducer) {
   return reducer(chunks);
 }
 __name(consumeReadable, "consumeReadable");
+__name13(consumeReadable, "consumeReadable");
 function peekReadable(readable, reducer, maxChunks) {
   const chunks = [];
   let chunk = void 0;
@@ -3805,7 +4116,7 @@ function peekReadable(readable, reducer, maxChunks) {
     return reducer(chunks);
   }
   return {
-    read: /* @__PURE__ */ __name(() => {
+    read: /* @__PURE__ */ __name13(() => {
       if (chunks.length > 0) {
         return chunks.shift();
       }
@@ -3819,23 +4130,24 @@ function peekReadable(readable, reducer, maxChunks) {
   };
 }
 __name(peekReadable, "peekReadable");
+__name13(peekReadable, "peekReadable");
 function consumeStream(stream, reducer) {
   return new Promise((resolve2, reject) => {
     const chunks = [];
     listenStream(stream, {
-      onData: /* @__PURE__ */ __name((chunk) => {
+      onData: /* @__PURE__ */ __name13((chunk) => {
         if (reducer) {
           chunks.push(chunk);
         }
       }, "onData"),
-      onError: /* @__PURE__ */ __name((error) => {
+      onError: /* @__PURE__ */ __name13((error) => {
         if (reducer) {
           reject(error);
         } else {
           resolve2(void 0);
         }
       }, "onError"),
-      onEnd: /* @__PURE__ */ __name(() => {
+      onEnd: /* @__PURE__ */ __name13(() => {
         if (reducer) {
           resolve2(reducer(chunks));
         } else {
@@ -3846,6 +4158,7 @@ function consumeStream(stream, reducer) {
   });
 }
 __name(consumeStream, "consumeStream");
+__name13(consumeStream, "consumeStream");
 function listenStream(stream, listener, token) {
   stream.on("error", (error) => {
     if (!token?.isCancellationRequested) {
@@ -3864,11 +4177,12 @@ function listenStream(stream, listener, token) {
   });
 }
 __name(listenStream, "listenStream");
+__name13(listenStream, "listenStream");
 function peekStream(stream, maxChunks) {
   return new Promise((resolve2, reject) => {
     const streamListeners = new DisposableStore();
     const buffer = [];
-    const dataListener = /* @__PURE__ */ __name((chunk) => {
+    const dataListener = /* @__PURE__ */ __name13((chunk) => {
       buffer.push(chunk);
       if (buffer.length > maxChunks) {
         streamListeners.dispose();
@@ -3876,11 +4190,11 @@ function peekStream(stream, maxChunks) {
         return resolve2({ stream, buffer, ended: false });
       }
     }, "dataListener");
-    const errorListener = /* @__PURE__ */ __name((error) => {
+    const errorListener = /* @__PURE__ */ __name13((error) => {
       streamListeners.dispose();
       return reject(error);
     }, "errorListener");
-    const endListener = /* @__PURE__ */ __name(() => {
+    const endListener = /* @__PURE__ */ __name13(() => {
       streamListeners.dispose();
       return resolve2({ stream, buffer, ended: true });
     }, "endListener");
@@ -3893,12 +4207,14 @@ function peekStream(stream, maxChunks) {
   });
 }
 __name(peekStream, "peekStream");
+__name13(peekStream, "peekStream");
 function toStream(t, reducer) {
   const stream = newWriteableStream(reducer);
   stream.end(t);
   return stream;
 }
 __name(toStream, "toStream");
+__name13(toStream, "toStream");
 function emptyStream() {
   const stream = newWriteableStream(() => {
     throw new Error("not supported");
@@ -3907,10 +4223,11 @@ function emptyStream() {
   return stream;
 }
 __name(emptyStream, "emptyStream");
+__name13(emptyStream, "emptyStream");
 function toReadable(t) {
   let consumed = false;
   return {
-    read: /* @__PURE__ */ __name(() => {
+    read: /* @__PURE__ */ __name13(() => {
       if (consumed) {
         return null;
       }
@@ -3920,20 +4237,22 @@ function toReadable(t) {
   };
 }
 __name(toReadable, "toReadable");
+__name13(toReadable, "toReadable");
 function transform(stream, transformer, reducer) {
   const target = newWriteableStream(reducer);
   listenStream(stream, {
-    onData: /* @__PURE__ */ __name((data) => target.write(transformer.data(data)), "onData"),
-    onError: /* @__PURE__ */ __name((error) => target.error(transformer.error ? transformer.error(error) : error), "onError"),
-    onEnd: /* @__PURE__ */ __name(() => target.end(), "onEnd")
+    onData: /* @__PURE__ */ __name13((data) => target.write(transformer.data(data)), "onData"),
+    onError: /* @__PURE__ */ __name13((error) => target.error(transformer.error ? transformer.error(error) : error), "onError"),
+    onEnd: /* @__PURE__ */ __name13(() => target.end(), "onEnd")
   });
   return target;
 }
 __name(transform, "transform");
+__name13(transform, "transform");
 function prefixedReadable(prefix, readable, reducer) {
   let prefixHandled = false;
   return {
-    read: /* @__PURE__ */ __name(() => {
+    read: /* @__PURE__ */ __name13(() => {
       const chunk = readable.read();
       if (!prefixHandled) {
         prefixHandled = true;
@@ -3947,19 +4266,20 @@ function prefixedReadable(prefix, readable, reducer) {
   };
 }
 __name(prefixedReadable, "prefixedReadable");
+__name13(prefixedReadable, "prefixedReadable");
 function prefixedStream(prefix, stream, reducer) {
   let prefixHandled = false;
   const target = newWriteableStream(reducer);
   listenStream(stream, {
-    onData: /* @__PURE__ */ __name((data) => {
+    onData: /* @__PURE__ */ __name13((data) => {
       if (!prefixHandled) {
         prefixHandled = true;
         return target.write(reducer([prefix, data]));
       }
       return target.write(data);
     }, "onData"),
-    onError: /* @__PURE__ */ __name((error) => target.error(error), "onError"),
-    onEnd: /* @__PURE__ */ __name(() => {
+    onError: /* @__PURE__ */ __name13((error) => target.error(error), "onError"),
+    onEnd: /* @__PURE__ */ __name13(() => {
       if (!prefixHandled) {
         prefixHandled = true;
         target.write(prefix);
@@ -3970,8 +4290,11 @@ function prefixedStream(prefix, stream, reducer) {
   return target;
 }
 __name(prefixedStream, "prefixedStream");
+__name13(prefixedStream, "prefixedStream");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/buffer.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js
+var __defProp14 = Object.defineProperty;
+var __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
 var hasBuffer = typeof Buffer !== "undefined";
 var indexOfTable = new Lazy(() => new Uint8Array(256));
 var textEncoder;
@@ -3979,6 +4302,9 @@ var textDecoder;
 var VSBuffer = class _VSBuffer {
   static {
     __name(this, "VSBuffer");
+  }
+  static {
+    __name14(this, "VSBuffer");
   }
   /**
    * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
@@ -4157,20 +4483,24 @@ function binaryIndexOf(haystack, needle, offset = 0) {
   return result;
 }
 __name(binaryIndexOf, "binaryIndexOf");
+__name14(binaryIndexOf, "binaryIndexOf");
 function readUInt16LE(source, offset) {
   return source[offset + 0] << 0 >>> 0 | source[offset + 1] << 8 >>> 0;
 }
 __name(readUInt16LE, "readUInt16LE");
+__name14(readUInt16LE, "readUInt16LE");
 function writeUInt16LE(destination, value, offset) {
   destination[offset + 0] = value & 255;
   value = value >>> 8;
   destination[offset + 1] = value & 255;
 }
 __name(writeUInt16LE, "writeUInt16LE");
+__name14(writeUInt16LE, "writeUInt16LE");
 function readUInt32BE(source, offset) {
   return source[offset] * 2 ** 24 + source[offset + 1] * 2 ** 16 + source[offset + 2] * 2 ** 8 + source[offset + 3];
 }
 __name(readUInt32BE, "readUInt32BE");
+__name14(readUInt32BE, "readUInt32BE");
 function writeUInt32BE(destination, value, offset) {
   destination[offset + 3] = value;
   value = value >>> 8;
@@ -4181,10 +4511,12 @@ function writeUInt32BE(destination, value, offset) {
   destination[offset] = value;
 }
 __name(writeUInt32BE, "writeUInt32BE");
+__name14(writeUInt32BE, "writeUInt32BE");
 function readUInt32LE(source, offset) {
   return source[offset + 0] << 0 >>> 0 | source[offset + 1] << 8 >>> 0 | source[offset + 2] << 16 >>> 0 | source[offset + 3] << 24 >>> 0;
 }
 __name(readUInt32LE, "readUInt32LE");
+__name14(readUInt32LE, "readUInt32LE");
 function writeUInt32LE(destination, value, offset) {
   destination[offset + 0] = value & 255;
   value = value >>> 8;
@@ -4195,26 +4527,32 @@ function writeUInt32LE(destination, value, offset) {
   destination[offset + 3] = value & 255;
 }
 __name(writeUInt32LE, "writeUInt32LE");
+__name14(writeUInt32LE, "writeUInt32LE");
 function readUInt8(source, offset) {
   return source[offset];
 }
 __name(readUInt8, "readUInt8");
+__name14(readUInt8, "readUInt8");
 function writeUInt8(destination, value, offset) {
   destination[offset] = value;
 }
 __name(writeUInt8, "writeUInt8");
+__name14(writeUInt8, "writeUInt8");
 function readableToBuffer(readable) {
   return consumeReadable(readable, (chunks) => VSBuffer.concat(chunks));
 }
 __name(readableToBuffer, "readableToBuffer");
+__name14(readableToBuffer, "readableToBuffer");
 function bufferToReadable(buffer) {
   return toReadable(buffer);
 }
 __name(bufferToReadable, "bufferToReadable");
+__name14(bufferToReadable, "bufferToReadable");
 function streamToBuffer(stream) {
   return consumeStream(stream, (chunks) => VSBuffer.concat(chunks));
 }
 __name(streamToBuffer, "streamToBuffer");
+__name14(streamToBuffer, "streamToBuffer");
 async function bufferedStreamToBuffer(bufferedStream) {
   if (bufferedStream.ended) {
     return VSBuffer.concat(bufferedStream.buffer);
@@ -4227,32 +4565,38 @@ async function bufferedStreamToBuffer(bufferedStream) {
   ]);
 }
 __name(bufferedStreamToBuffer, "bufferedStreamToBuffer");
+__name14(bufferedStreamToBuffer, "bufferedStreamToBuffer");
 function bufferToStream(buffer) {
   return toStream(buffer, (chunks) => VSBuffer.concat(chunks));
 }
 __name(bufferToStream, "bufferToStream");
+__name14(bufferToStream, "bufferToStream");
 function streamToBufferReadableStream(stream) {
-  return transform(stream, { data: /* @__PURE__ */ __name((data) => typeof data === "string" ? VSBuffer.fromString(data) : VSBuffer.wrap(data), "data") }, (chunks) => VSBuffer.concat(chunks));
+  return transform(stream, { data: /* @__PURE__ */ __name14((data) => typeof data === "string" ? VSBuffer.fromString(data) : VSBuffer.wrap(data), "data") }, (chunks) => VSBuffer.concat(chunks));
 }
 __name(streamToBufferReadableStream, "streamToBufferReadableStream");
+__name14(streamToBufferReadableStream, "streamToBufferReadableStream");
 function newWriteableBufferStream(options) {
   return newWriteableStream((chunks) => VSBuffer.concat(chunks), options);
 }
 __name(newWriteableBufferStream, "newWriteableBufferStream");
+__name14(newWriteableBufferStream, "newWriteableBufferStream");
 function prefixedBufferReadable(prefix, readable) {
   return prefixedReadable(prefix, readable, (chunks) => VSBuffer.concat(chunks));
 }
 __name(prefixedBufferReadable, "prefixedBufferReadable");
+__name14(prefixedBufferReadable, "prefixedBufferReadable");
 function prefixedBufferStream(prefix, stream) {
   return prefixedStream(prefix, stream, (chunks) => VSBuffer.concat(chunks));
 }
 __name(prefixedBufferStream, "prefixedBufferStream");
+__name14(prefixedBufferStream, "prefixedBufferStream");
 function decodeBase64(encoded) {
   let building = 0;
   let remainder = 0;
   let bufi = 0;
   const buffer = new Uint8Array(Math.floor(encoded.length / 4 * 3));
-  const append = /* @__PURE__ */ __name((value) => {
+  const append = /* @__PURE__ */ __name14((value) => {
     switch (remainder) {
       case 3:
         buffer[bufi++] = building | value;
@@ -4298,6 +4642,7 @@ function decodeBase64(encoded) {
   return VSBuffer.wrap(buffer).slice(0, unpadded);
 }
 __name(decodeBase64, "decodeBase64");
+__name14(decodeBase64, "decodeBase64");
 var base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 var base64UrlSafeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 function encodeBase64({ buffer }, padded = true, urlSafe = false) {
@@ -4334,6 +4679,7 @@ function encodeBase64({ buffer }, padded = true, urlSafe = false) {
   return output;
 }
 __name(encodeBase64, "encodeBase64");
+__name14(encodeBase64, "encodeBase64");
 var hexChars = "0123456789abcdef";
 function encodeHex({ buffer }) {
   let result = "";
@@ -4345,6 +4691,7 @@ function encodeHex({ buffer }) {
   return result;
 }
 __name(encodeHex, "encodeHex");
+__name14(encodeHex, "encodeHex");
 function decodeHex(hex) {
   if (hex.length % 2 !== 0) {
     throw new SyntaxError("Hex string must have an even length");
@@ -4356,6 +4703,7 @@ function decodeHex(hex) {
   return VSBuffer.wrap(out);
 }
 __name(decodeHex, "decodeHex");
+__name14(decodeHex, "decodeHex");
 function decodeHexChar(str, position) {
   const s = str.charCodeAt(position);
   if (s >= 48 && s <= 57) {
@@ -4369,16 +4717,21 @@ function decodeHexChar(str, position) {
   }
 }
 __name(decodeHexChar, "decodeHexChar");
+__name14(decodeHexChar, "decodeHexChar");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/nls.js
+// ../Output/Target/Microsoft/VSCode/vs/nls.js
+var __defProp15 = Object.defineProperty;
+var __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
 function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
 }
 __name(getNLSMessages, "getNLSMessages");
+__name15(getNLSMessages, "getNLSMessages");
 function getNLSLanguage() {
   return globalThis._VSCODE_NLS_LANGUAGE;
 }
 __name(getNLSLanguage, "getNLSLanguage");
+__name15(getNLSLanguage, "getNLSLanguage");
 var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
 function _format(message, args) {
   let result;
@@ -4403,6 +4756,7 @@ function _format(message, args) {
   return result;
 }
 __name(_format, "_format");
+__name15(_format, "_format");
 function localize(data, message, ...args) {
   if (typeof data === "number") {
     return _format(lookupMessage(data, message), args);
@@ -4410,6 +4764,7 @@ function localize(data, message, ...args) {
   return _format(message, args);
 }
 __name(localize, "localize");
+__name15(localize, "localize");
 function lookupMessage(index2, fallback) {
   const message = getNLSMessages()?.[index2];
   if (typeof message !== "string") {
@@ -4421,6 +4776,7 @@ function lookupMessage(index2, fallback) {
   return message;
 }
 __name(lookupMessage, "lookupMessage");
+__name15(lookupMessage, "lookupMessage");
 function localize2(data, originalMessage, ...args) {
   let message;
   if (typeof data === "number") {
@@ -4435,8 +4791,11 @@ function localize2(data, originalMessage, ...args) {
   };
 }
 __name(localize2, "localize2");
+__name15(localize2, "localize2");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/platform.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
+var __defProp16 = Object.defineProperty;
+var __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
 var LANGUAGE_DEFAULT = "en";
 var _isWindows = false;
 var _isMacintosh = false;
@@ -4504,8 +4863,8 @@ var Platform;
   Platform2[Platform2["Linux"] = 2] = "Linux";
   Platform2[Platform2["Windows"] = 3] = "Windows";
 })(Platform || (Platform = {}));
-function PlatformToString(platform3) {
-  switch (platform3) {
+function PlatformToString(platform22) {
+  switch (platform22) {
     case 0:
       return "Web";
     case 1:
@@ -4517,6 +4876,7 @@ function PlatformToString(platform3) {
   }
 }
 __name(PlatformToString, "PlatformToString");
+__name16(PlatformToString, "PlatformToString");
 var _platform = 0;
 if (_isMacintosh) {
   _platform = 1;
@@ -4546,6 +4906,7 @@ var Language;
     return language;
   }
   __name(value, "value");
+  __name16(value, "value");
   Language2.value = value;
   function isDefaultVariant() {
     if (language.length === 2) {
@@ -4557,11 +4918,13 @@ var Language;
     }
   }
   __name(isDefaultVariant, "isDefaultVariant");
+  __name16(isDefaultVariant, "isDefaultVariant");
   Language2.isDefaultVariant = isDefaultVariant;
   function isDefault() {
     return language === "en";
   }
   __name(isDefault, "isDefault");
+  __name16(isDefault, "isDefault");
   Language2.isDefault = isDefault;
 })(Language || (Language = {}));
 var locale = _locale;
@@ -4616,6 +4979,7 @@ function isLittleEndian() {
   return _isLittleEndian;
 }
 __name(isLittleEndian, "isLittleEndian");
+__name16(isLittleEndian, "isLittleEndian");
 var isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
 var isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
 var isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
@@ -4625,8 +4989,9 @@ function isTahoeOrNewer(osVersion) {
   return parseFloat(osVersion) >= 25;
 }
 __name(isTahoeOrNewer, "isTahoeOrNewer");
+__name16(isTahoeOrNewer, "isTahoeOrNewer");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/process.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
 var safeProcess;
 var vscodeGlobal = globalThis.vscode;
 if (typeof vscodeGlobal !== "undefined" && typeof vscodeGlobal.process !== "undefined") {
@@ -4683,7 +5048,9 @@ var env = safeProcess.env;
 var platform2 = safeProcess.platform;
 var arch = safeProcess.arch;
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/path.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/path.js
+var __defProp17 = Object.defineProperty;
+var __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
 var CHAR_UPPERCASE_A = 65;
 var CHAR_LOWERCASE_A = 97;
 var CHAR_UPPERCASE_Z = 90;
@@ -4696,6 +5063,9 @@ var CHAR_QUESTION_MARK = 63;
 var ErrorInvalidArgType = class extends Error {
   static {
     __name(this, "ErrorInvalidArgType");
+  }
+  static {
+    __name17(this, "ErrorInvalidArgType");
   }
   constructor(name, expected, actual) {
     let determiner;
@@ -4718,26 +5088,31 @@ function validateObject(pathObject, name) {
   }
 }
 __name(validateObject, "validateObject");
+__name17(validateObject, "validateObject");
 function validateString(value, name) {
   if (typeof value !== "string") {
     throw new ErrorInvalidArgType(name, "string", value);
   }
 }
 __name(validateString, "validateString");
+__name17(validateString, "validateString");
 var platformIsWin32 = platform2 === "win32";
 function isPathSeparator(code) {
   return code === CHAR_FORWARD_SLASH || code === CHAR_BACKWARD_SLASH;
 }
 __name(isPathSeparator, "isPathSeparator");
+__name17(isPathSeparator, "isPathSeparator");
 function isPosixPathSeparator(code) {
   return code === CHAR_FORWARD_SLASH;
 }
 __name(isPosixPathSeparator, "isPosixPathSeparator");
+__name17(isPosixPathSeparator, "isPosixPathSeparator");
 function isWindowsDeviceRoot(code) {
   return code >= CHAR_UPPERCASE_A && code <= CHAR_UPPERCASE_Z || code >= CHAR_LOWERCASE_A && code <= CHAR_LOWERCASE_Z;
 }
 __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
-function normalizeString(path, allowAboveRoot, separator, isPathSeparator3) {
+__name17(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+function normalizeString(path, allowAboveRoot, separator, isPathSeparator22) {
   let res = "";
   let lastSegmentLength = 0;
   let lastSlash = -1;
@@ -4746,12 +5121,12 @@ function normalizeString(path, allowAboveRoot, separator, isPathSeparator3) {
   for (let i = 0; i <= path.length; ++i) {
     if (i < path.length) {
       code = path.charCodeAt(i);
-    } else if (isPathSeparator3(code)) {
+    } else if (isPathSeparator22(code)) {
       break;
     } else {
       code = CHAR_FORWARD_SLASH;
     }
-    if (isPathSeparator3(code)) {
+    if (isPathSeparator22(code)) {
       if (lastSlash === i - 1 || dots === 1) {
       } else if (dots === 2) {
         if (res.length < 2 || lastSegmentLength !== 2 || res.charCodeAt(res.length - 1) !== CHAR_DOT || res.charCodeAt(res.length - 2) !== CHAR_DOT) {
@@ -4798,10 +5173,12 @@ function normalizeString(path, allowAboveRoot, separator, isPathSeparator3) {
   return res;
 }
 __name(normalizeString, "normalizeString");
+__name17(normalizeString, "normalizeString");
 function formatExt(ext) {
   return ext ? `${ext[0] === "." ? "" : "."}${ext}` : "";
 }
 __name(formatExt, "formatExt");
+__name17(formatExt, "formatExt");
 function _format2(sep2, pathObject) {
   validateObject(pathObject, "pathObject");
   const dir = pathObject.dir || pathObject.root;
@@ -4812,6 +5189,7 @@ function _format2(sep2, pathObject) {
   return dir === pathObject.root ? `${dir}${base}` : `${dir}${sep2}${base}`;
 }
 __name(_format2, "_format");
+__name17(_format2, "_format");
 var win32 = {
   // path.resolve([from ...], to)
   resolve(...pathSegments) {
@@ -5794,7 +6172,9 @@ var toNamespacedPath = platformIsWin32 ? win32.toNamespacedPath : posix.toNamesp
 var sep = platformIsWin32 ? win32.sep : posix.sep;
 var delimiter = platformIsWin32 ? win32.delimiter : posix.delimiter;
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/mime.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/mime.js
+var __defProp18 = Object.defineProperty;
+var __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
 var Mimes = Object.freeze({
   text: "text/plain",
   binary: "application/octet-stream",
@@ -5876,12 +6256,14 @@ function getMediaOrTextMime(path) {
   }
 }
 __name(getMediaOrTextMime, "getMediaOrTextMime");
+__name18(getMediaOrTextMime, "getMediaOrTextMime");
 function getMediaMime(path) {
   const ext = extname(path);
   const mimeType = mapExtToMediaMimes[ext.toLowerCase()];
   return Array.isArray(mimeType) ? mimeType[0] : mimeType;
 }
 __name(getMediaMime, "getMediaMime");
+__name18(getMediaMime, "getMediaMime");
 function getExtensionForMimeType(mimeType) {
   for (const extension in mapExtToMediaMimes) {
     const value = mapExtToMediaMimes[extension];
@@ -5892,6 +6274,7 @@ function getExtensionForMimeType(mimeType) {
   return void 0;
 }
 __name(getExtensionForMimeType, "getExtensionForMimeType");
+__name18(getExtensionForMimeType, "getExtensionForMimeType");
 var _simplePattern = /^(.+)\/(.+?)(;.+)?$/;
 function normalizeMimeType(mimeType, strict) {
   const match = _simplePattern.exec(mimeType);
@@ -5901,15 +6284,22 @@ function normalizeMimeType(mimeType, strict) {
   return `${match[1].toLowerCase()}/${match[2].toLowerCase()}${match[3] ?? ""}`;
 }
 __name(normalizeMimeType, "normalizeMimeType");
+__name18(normalizeMimeType, "normalizeMimeType");
 function isTextStreamMime(mimeType) {
   return ["application/vnd.code.notebook.stdout", "application/vnd.code.notebook.stderr"].includes(mimeType);
 }
 __name(isTextStreamMime, "isTextStreamMime");
+__name18(isTextStreamMime, "isTextStreamMime");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/linkedList.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js
+var __defProp19 = Object.defineProperty;
+var __name19 = /* @__PURE__ */ __name((target, value) => __defProp19(target, "name", { value, configurable: true }), "__name");
 var Node = class _Node {
   static {
     __name(this, "Node");
+  }
+  static {
+    __name19(this, "Node");
   }
   static {
     this.Undefined = new _Node(void 0);
@@ -5923,6 +6313,9 @@ var Node = class _Node {
 var LinkedList = class {
   static {
     __name(this, "LinkedList");
+  }
+  static {
+    __name19(this, "LinkedList");
   }
   constructor() {
     this._first = Node.Undefined;
@@ -6030,11 +6423,16 @@ var LinkedList = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/stopwatch.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js
+var __defProp20 = Object.defineProperty;
+var __name20 = /* @__PURE__ */ __name((target, value) => __defProp20(target, "name", { value, configurable: true }), "__name");
 var performanceNow = globalThis.performance.now.bind(globalThis.performance);
 var StopWatch = class _StopWatch {
   static {
     __name(this, "StopWatch");
+  }
+  static {
+    __name20(this, "StopWatch");
   }
   static create(highResolution) {
     return new _StopWatch(highResolution);
@@ -6059,7 +6457,9 @@ var StopWatch = class _StopWatch {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/event.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
+var __defProp21 = Object.defineProperty;
+var __name21 = /* @__PURE__ */ __name((target, value) => __defProp21(target, "name", { value, configurable: true }), "__name");
 var _enableDisposeWithListenerWarning = false;
 var _enableSnapshotPotentialLeakWarning = false;
 var _bufferLeakWarnCountThreshold = 100;
@@ -6068,6 +6468,7 @@ function _isBufferLeakWarningEnabled() {
   return !!env["VSCODE_DEV"];
 }
 __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+__name21(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
 var Event;
 (function(Event2) {
   Event2.None = () => Disposable.None;
@@ -6086,10 +6487,12 @@ var Event;
     }
   }
   __name(_addLeakageTraceLogic, "_addLeakageTraceLogic");
+  __name21(_addLeakageTraceLogic, "_addLeakageTraceLogic");
   function defer(event, flushOnListenerRemove, disposable) {
     return debounce(event, () => void 0, 0, void 0, flushOnListenerRemove ?? true, void 0, disposable);
   }
   __name(defer, "defer");
+  __name21(defer, "defer");
   Event2.defer = defer;
   function once(event) {
     return (listener, thisArgs = null, disposables) => {
@@ -6112,16 +6515,19 @@ var Event;
     };
   }
   __name(once, "once");
+  __name21(once, "once");
   Event2.once = once;
   function onceIf(event, condition) {
     return Event2.once(Event2.filter(event, condition));
   }
   __name(onceIf, "onceIf");
+  __name21(onceIf, "onceIf");
   Event2.onceIf = onceIf;
   function map(event, map2, disposable) {
     return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
   }
   __name(map, "map");
+  __name21(map, "map");
   Event2.map = map;
   function forEach(event, each, disposable) {
     return snapshot((listener, thisArgs = null, disposables) => event((i) => {
@@ -6130,16 +6536,19 @@ var Event;
     }, null, disposables), disposable);
   }
   __name(forEach, "forEach");
+  __name21(forEach, "forEach");
   Event2.forEach = forEach;
   function filter(event, filter2, disposable) {
     return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
   }
   __name(filter, "filter");
+  __name21(filter, "filter");
   Event2.filter = filter;
   function signal(event) {
     return event;
   }
   __name(signal, "signal");
+  __name21(signal, "signal");
   Event2.signal = signal;
   function any(...events) {
     return (listener, thisArgs = null, disposables) => {
@@ -6148,6 +6557,7 @@ var Event;
     };
   }
   __name(any, "any");
+  __name21(any, "any");
   Event2.any = any;
   function reduce(event, merge, initial, disposable) {
     let output = initial;
@@ -6157,6 +6567,7 @@ var Event;
     }, disposable);
   }
   __name(reduce, "reduce");
+  __name21(reduce, "reduce");
   Event2.reduce = reduce;
   function snapshot(event, disposable) {
     let listener;
@@ -6176,6 +6587,7 @@ var Event;
     return emitter.event;
   }
   __name(snapshot, "snapshot");
+  __name21(snapshot, "snapshot");
   function addAndReturnDisposable(d, store) {
     if (store instanceof Array) {
       store.push(d);
@@ -6185,6 +6597,7 @@ var Event;
     return d;
   }
   __name(addAndReturnDisposable, "addAndReturnDisposable");
+  __name21(addAndReturnDisposable, "addAndReturnDisposable");
   function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
     let subscription;
     let output = void 0;
@@ -6201,7 +6614,7 @@ var Event;
             emitter.fire(output);
             output = void 0;
           }
-          doFire = /* @__PURE__ */ __name(() => {
+          doFire = /* @__PURE__ */ __name21(() => {
             const _output = output;
             output = void 0;
             handle = void 0;
@@ -6241,6 +6654,7 @@ var Event;
     return emitter.event;
   }
   __name(debounce, "debounce");
+  __name21(debounce, "debounce");
   Event2.debounce = debounce;
   function accumulate(event, delay = 0, flushOnListenerRemove, disposable) {
     return Event2.debounce(event, (last, e) => {
@@ -6252,6 +6666,7 @@ var Event;
     }, delay, void 0, flushOnListenerRemove ?? true, void 0, disposable);
   }
   __name(accumulate, "accumulate");
+  __name21(accumulate, "accumulate");
   Event2.accumulate = accumulate;
   function throttle(event, merge, delay = 100, leading = true, trailing = true, leakWarningThreshold, disposable) {
     let subscription;
@@ -6305,6 +6720,7 @@ var Event;
     return emitter.event;
   }
   __name(throttle, "throttle");
+  __name21(throttle, "throttle");
   Event2.throttle = throttle;
   function latch(event, equals3 = (a, b) => a === b, disposable) {
     let firstCall = true;
@@ -6317,6 +6733,7 @@ var Event;
     }, disposable);
   }
   __name(latch, "latch");
+  __name21(latch, "latch");
   Event2.latch = latch;
   function split(event, isT, disposable) {
     return [
@@ -6325,6 +6742,7 @@ var Event;
     ];
   }
   __name(split, "split");
+  __name21(split, "split");
   Event2.split = split;
   function buffer(event, debugName, flushAfterTimeout = false, _buffer = [], disposable) {
     let buffer2 = _buffer.slice();
@@ -6345,7 +6763,7 @@ var Event;
         disposable.add(toDisposable(() => clearTimeout(bufferLeakWarningData.timerId)));
       }
     }
-    const clearLeakWarningTimer = /* @__PURE__ */ __name(() => {
+    const clearLeakWarningTimer = /* @__PURE__ */ __name21(() => {
       if (bufferLeakWarningData) {
         clearTimeout(bufferLeakWarningData.timerId);
       }
@@ -6365,7 +6783,7 @@ var Event;
     if (disposable) {
       disposable.add(listener);
     }
-    const flush = /* @__PURE__ */ __name(() => {
+    const flush = /* @__PURE__ */ __name21(() => {
       buffer2?.forEach((e) => emitter.fire(e));
       buffer2 = null;
       clearLeakWarningTimer();
@@ -6402,9 +6820,10 @@ var Event;
     return emitter.event;
   }
   __name(buffer, "buffer");
+  __name21(buffer, "buffer");
   Event2.buffer = buffer;
   function chain(event, sythensize) {
-    const fn = /* @__PURE__ */ __name((listener, thisArgs, disposables) => {
+    const fn = /* @__PURE__ */ __name21((listener, thisArgs, disposables) => {
       const cs = sythensize(new ChainableSynthesis());
       return event(function(value) {
         const result = cs.evaluate(value);
@@ -6416,11 +6835,15 @@ var Event;
     return fn;
   }
   __name(chain, "chain");
+  __name21(chain, "chain");
   Event2.chain = chain;
   const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
   class ChainableSynthesis {
     static {
       __name(this, "ChainableSynthesis");
+    }
+    static {
+      __name21(this, "ChainableSynthesis");
     }
     constructor() {
       this.steps = [];
@@ -6470,22 +6893,24 @@ var Event;
     }
   }
   function fromNodeEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-    const fn = /* @__PURE__ */ __name((...args) => result.fire(map2(...args)), "fn");
-    const onFirstListenerAdd = /* @__PURE__ */ __name(() => emitter.on(eventName, fn), "onFirstListenerAdd");
-    const onLastListenerRemove = /* @__PURE__ */ __name(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
+    const fn = /* @__PURE__ */ __name21((...args) => result.fire(map2(...args)), "fn");
+    const onFirstListenerAdd = /* @__PURE__ */ __name21(() => emitter.on(eventName, fn), "onFirstListenerAdd");
+    const onLastListenerRemove = /* @__PURE__ */ __name21(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
     const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
     return result.event;
   }
   __name(fromNodeEventEmitter, "fromNodeEventEmitter");
+  __name21(fromNodeEventEmitter, "fromNodeEventEmitter");
   Event2.fromNodeEventEmitter = fromNodeEventEmitter;
   function fromDOMEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-    const fn = /* @__PURE__ */ __name((...args) => result.fire(map2(...args)), "fn");
-    const onFirstListenerAdd = /* @__PURE__ */ __name(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
-    const onLastListenerRemove = /* @__PURE__ */ __name(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
+    const fn = /* @__PURE__ */ __name21((...args) => result.fire(map2(...args)), "fn");
+    const onFirstListenerAdd = /* @__PURE__ */ __name21(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
+    const onLastListenerRemove = /* @__PURE__ */ __name21(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
     const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
     return result.event;
   }
   __name(fromDOMEventEmitter, "fromDOMEventEmitter");
+  __name21(fromDOMEventEmitter, "fromDOMEventEmitter");
   Event2.fromDOMEventEmitter = fromDOMEventEmitter;
   function toPromise(event, disposables) {
     let cancelRef;
@@ -6493,7 +6918,7 @@ var Event;
     const promise = new Promise((resolve2) => {
       listener = once(event)(resolve2);
       addToDisposables(listener, disposables);
-      cancelRef = /* @__PURE__ */ __name(() => {
+      cancelRef = /* @__PURE__ */ __name21(() => {
         disposeAndRemove(listener, disposables);
       }, "cancelRef");
     });
@@ -6504,32 +6929,38 @@ var Event;
     return promise;
   }
   __name(toPromise, "toPromise");
+  __name21(toPromise, "toPromise");
   Event2.toPromise = toPromise;
   function forward(from, to) {
     return from((e) => to.fire(e));
   }
   __name(forward, "forward");
+  __name21(forward, "forward");
   Event2.forward = forward;
   function runAndSubscribe(event, handler, initial) {
     handler(initial);
     return event((e) => handler(e));
   }
   __name(runAndSubscribe, "runAndSubscribe");
+  __name21(runAndSubscribe, "runAndSubscribe");
   Event2.runAndSubscribe = runAndSubscribe;
   class EmitterObserver {
     static {
       __name(this, "EmitterObserver");
+    }
+    static {
+      __name21(this, "EmitterObserver");
     }
     constructor(_observable, store) {
       this._observable = _observable;
       this._counter = 0;
       this._hasChanged = false;
       const options = {
-        onWillAddFirstListener: /* @__PURE__ */ __name(() => {
+        onWillAddFirstListener: /* @__PURE__ */ __name21(() => {
           _observable.addObserver(this);
           this._observable.reportChanges();
         }, "onWillAddFirstListener"),
-        onDidRemoveLastListener: /* @__PURE__ */ __name(() => {
+        onDidRemoveLastListener: /* @__PURE__ */ __name21(() => {
           _observable.removeObserver(this);
         }, "onDidRemoveLastListener")
       };
@@ -6565,6 +6996,7 @@ var Event;
     return observer.emitter.event;
   }
   __name(fromObservable, "fromObservable");
+  __name21(fromObservable, "fromObservable");
   Event2.fromObservable = fromObservable;
   function fromObservableLight(observable) {
     return (listener, thisArgs, disposables) => {
@@ -6602,11 +7034,15 @@ var Event;
     };
   }
   __name(fromObservableLight, "fromObservableLight");
+  __name21(fromObservableLight, "fromObservableLight");
   Event2.fromObservableLight = fromObservableLight;
 })(Event || (Event = {}));
 var EventProfiling = class _EventProfiling {
   static {
     __name(this, "EventProfiling");
+  }
+  static {
+    __name21(this, "EventProfiling");
   }
   static {
     this.all = /* @__PURE__ */ new Set();
@@ -6647,9 +7083,13 @@ function setGlobalLeakWarningThreshold(n) {
   };
 }
 __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+__name21(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
 var LeakageMonitor = class _LeakageMonitor {
   static {
     __name(this, "LeakageMonitor");
+  }
+  static {
+    __name21(this, "LeakageMonitor");
   }
   static {
     this._idPool = 1;
@@ -6686,8 +7126,8 @@ var LeakageMonitor = class _LeakageMonitor {
       this._errorHandler(error);
     }
     return () => {
-      const count3 = this._stacks.get(stack.value) || 0;
-      this._stacks.set(stack.value, count3 - 1);
+      const count22 = this._stacks.get(stack.value) || 0;
+      this._stacks.set(stack.value, count22 - 1);
     };
   }
   getMostFrequentStack() {
@@ -6709,6 +7149,9 @@ var Stacktrace = class _Stacktrace {
   static {
     __name(this, "Stacktrace");
   }
+  static {
+    __name21(this, "Stacktrace");
+  }
   static create() {
     const err = new Error();
     return new _Stacktrace(err.stack ?? "");
@@ -6723,6 +7166,9 @@ var Stacktrace = class _Stacktrace {
 var ListenerLeakError = class _ListenerLeakError extends Error {
   static {
     __name(this, "ListenerLeakError");
+  }
+  static {
+    __name21(this, "ListenerLeakError");
   }
   constructor(kind, details, stack, listenerCount, emitterName) {
     super(emitterName ? `[${emitterName}] potential listener LEAK detected, ${kind}` : `potential listener LEAK detected, ${kind}`);
@@ -6740,6 +7186,9 @@ var ListenerRefusalError = class extends ListenerLeakError {
   static {
     __name(this, "ListenerRefusalError");
   }
+  static {
+    __name21(this, "ListenerRefusalError");
+  }
   constructor(kind, details, stack, listenerCount, emitterName) {
     super(kind, details, stack, listenerCount, emitterName);
     this.name = "ListenerRefusalError";
@@ -6750,13 +7199,16 @@ var UniqueContainer = class {
   static {
     __name(this, "UniqueContainer");
   }
+  static {
+    __name21(this, "UniqueContainer");
+  }
   constructor(value) {
     this.value = value;
     this.id = id++;
   }
 };
 var compactionThreshold = 2;
-var forEachListener = /* @__PURE__ */ __name((listeners, fn) => {
+var forEachListener = /* @__PURE__ */ __name21((listeners, fn) => {
   if (listeners instanceof UniqueContainer) {
     fn(listeners);
   } else {
@@ -6771,6 +7223,9 @@ var forEachListener = /* @__PURE__ */ __name((listeners, fn) => {
 var Emitter = class {
   static {
     __name(this, "Emitter");
+  }
+  static {
+    __name21(this, "Emitter");
   }
   constructor(options) {
     this._size = 0;
@@ -6936,10 +7391,13 @@ var Emitter = class {
     return this._size > 0;
   }
 };
-var createEventDeliveryQueue = /* @__PURE__ */ __name(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
+var createEventDeliveryQueue = /* @__PURE__ */ __name21(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
 var EventDeliveryQueuePrivate = class {
   static {
     __name(this, "EventDeliveryQueuePrivate");
+  }
+  static {
+    __name21(this, "EventDeliveryQueuePrivate");
   }
   constructor() {
     this.i = -1;
@@ -6961,6 +7419,9 @@ var AsyncEmitter = class extends Emitter {
   static {
     __name(this, "AsyncEmitter");
   }
+  static {
+    __name21(this, "AsyncEmitter");
+  }
   async fireAsync(data, token, promiseJoin) {
     if (!this._listeners) {
       return;
@@ -6975,7 +7436,7 @@ var AsyncEmitter = class extends Emitter {
       const event = {
         ...data2,
         token,
-        waitUntil: /* @__PURE__ */ __name((p) => {
+        waitUntil: /* @__PURE__ */ __name21((p) => {
           if (Object.isFrozen(thenables)) {
             throw new Error("waitUntil can NOT be called asynchronous");
           }
@@ -7005,6 +7466,9 @@ var AsyncEmitter = class extends Emitter {
 var PauseableEmitter = class extends Emitter {
   static {
     __name(this, "PauseableEmitter");
+  }
+  static {
+    __name21(this, "PauseableEmitter");
   }
   get isPaused() {
     return this._isPaused !== 0;
@@ -7047,6 +7511,9 @@ var DebounceEmitter = class extends PauseableEmitter {
   static {
     __name(this, "DebounceEmitter");
   }
+  static {
+    __name21(this, "DebounceEmitter");
+  }
   constructor(options) {
     super(options);
     this._delay = options.delay ?? 100;
@@ -7065,6 +7532,9 @@ var DebounceEmitter = class extends PauseableEmitter {
 var MicrotaskEmitter = class extends Emitter {
   static {
     __name(this, "MicrotaskEmitter");
+  }
+  static {
+    __name21(this, "MicrotaskEmitter");
   }
   constructor(options) {
     super(options);
@@ -7092,12 +7562,15 @@ var EventMultiplexer = class {
   static {
     __name(this, "EventMultiplexer");
   }
+  static {
+    __name21(this, "EventMultiplexer");
+  }
   constructor() {
     this.hasListeners = false;
     this.events = [];
     this.emitter = new Emitter({
-      onWillAddFirstListener: /* @__PURE__ */ __name(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
-      onDidRemoveLastListener: /* @__PURE__ */ __name(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
+      onWillAddFirstListener: /* @__PURE__ */ __name21(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
+      onDidRemoveLastListener: /* @__PURE__ */ __name21(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
     });
   }
   get event() {
@@ -7109,7 +7582,7 @@ var EventMultiplexer = class {
     if (this.hasListeners) {
       this.hook(e);
     }
-    const dispose2 = /* @__PURE__ */ __name(() => {
+    const dispose2 = /* @__PURE__ */ __name21(() => {
       if (this.hasListeners) {
         this.unhook(e);
       }
@@ -7145,6 +7618,9 @@ var DynamicListEventMultiplexer = class {
   static {
     __name(this, "DynamicListEventMultiplexer");
   }
+  static {
+    __name21(this, "DynamicListEventMultiplexer");
+  }
   constructor(items, onAddItem, onRemoveItem, getEvent) {
     this._store = new DisposableStore();
     const multiplexer = this._store.add(new EventMultiplexer());
@@ -7153,6 +7629,7 @@ var DynamicListEventMultiplexer = class {
       itemListeners.set(instance, multiplexer.add(getEvent(instance)));
     }
     __name(addItem, "addItem");
+    __name21(addItem, "addItem");
     for (const instance of items) {
       addItem(instance);
     }
@@ -7171,6 +7648,9 @@ var DynamicListEventMultiplexer = class {
 var EventBufferer = class {
   static {
     __name(this, "EventBufferer");
+  }
+  static {
+    __name21(this, "EventBufferer");
   }
   constructor() {
     this.data = [];
@@ -7216,16 +7696,19 @@ var Relay = class {
   static {
     __name(this, "Relay");
   }
+  static {
+    __name21(this, "Relay");
+  }
   constructor() {
     this.listening = false;
     this.inputEvent = Event.None;
     this.inputEventListener = Disposable.None;
     this.emitter = new Emitter({
-      onDidAddFirstListener: /* @__PURE__ */ __name(() => {
+      onDidAddFirstListener: /* @__PURE__ */ __name21(() => {
         this.listening = true;
         this.inputEventListener = this.inputEvent(this.emitter.fire, this.emitter);
       }, "onDidAddFirstListener"),
-      onDidRemoveLastListener: /* @__PURE__ */ __name(() => {
+      onDidRemoveLastListener: /* @__PURE__ */ __name21(() => {
         this.listening = false;
         this.inputEventListener.dispose();
       }, "onDidRemoveLastListener")
@@ -7248,6 +7731,9 @@ var ValueWithChangeEvent = class {
   static {
     __name(this, "ValueWithChangeEvent");
   }
+  static {
+    __name21(this, "ValueWithChangeEvent");
+  }
   static const(value) {
     return new ConstValueWithChangeEvent(value);
   }
@@ -7269,6 +7755,9 @@ var ValueWithChangeEvent = class {
 var ConstValueWithChangeEvent = class {
   static {
     __name(this, "ConstValueWithChangeEvent");
+  }
+  static {
+    __name21(this, "ConstValueWithChangeEvent");
   }
   constructor(value) {
     this.value = value;
@@ -7297,6 +7786,7 @@ function trackSetChanges(getData, onDidChangeData, handleItem) {
   return store;
 }
 __name(trackSetChanges, "trackSetChanges");
+__name21(trackSetChanges, "trackSetChanges");
 function addToDisposables(result, disposables) {
   if (disposables instanceof DisposableStore) {
     disposables.add(result);
@@ -7305,6 +7795,7 @@ function addToDisposables(result, disposables) {
   }
 }
 __name(addToDisposables, "addToDisposables");
+__name21(addToDisposables, "addToDisposables");
 function disposeAndRemove(result, disposables) {
   if (disposables instanceof DisposableStore) {
     disposables.delete(result);
@@ -7317,8 +7808,11 @@ function disposeAndRemove(result, disposables) {
   result.dispose();
 }
 __name(disposeAndRemove, "disposeAndRemove");
+__name21(disposeAndRemove, "disposeAndRemove");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/cancellation.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/cancellation.js
+var __defProp22 = Object.defineProperty;
+var __name22 = /* @__PURE__ */ __name((target, value) => __defProp22(target, "name", { value, configurable: true }), "__name");
 var shortcutEvent = Object.freeze(function(callback, context) {
   const handle = setTimeout(callback.bind(context), 0);
   return { dispose() {
@@ -7340,6 +7834,7 @@ var CancellationToken;
     return typeof thing.isCancellationRequested === "boolean" && typeof thing.onCancellationRequested === "function";
   }
   __name(isCancellationToken, "isCancellationToken");
+  __name22(isCancellationToken, "isCancellationToken");
   CancellationToken2.isCancellationToken = isCancellationToken;
   CancellationToken2.None = Object.freeze({
     isCancellationRequested: false,
@@ -7353,6 +7848,9 @@ var CancellationToken;
 var MutableToken = class {
   static {
     __name(this, "MutableToken");
+  }
+  static {
+    __name22(this, "MutableToken");
   }
   constructor() {
     this._isCancelled = false;
@@ -7389,6 +7887,9 @@ var MutableToken = class {
 var CancellationTokenSource = class {
   static {
     __name(this, "CancellationTokenSource");
+  }
+  static {
+    __name22(this, "CancellationTokenSource");
   }
   constructor(parent) {
     this._token = void 0;
@@ -7428,9 +7929,13 @@ function cancelOnDispose(store) {
   return source.token;
 }
 __name(cancelOnDispose, "cancelOnDispose");
+__name22(cancelOnDispose, "cancelOnDispose");
 var CancellationTokenPool = class {
   static {
     __name(this, "CancellationTokenPool");
+  }
+  static {
+    __name22(this, "CancellationTokenPool");
   }
   constructor() {
     this._source = new CancellationTokenSource();
@@ -7476,10 +7981,15 @@ var CancellationTokenPool = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/cache.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/cache.js
+var __defProp23 = Object.defineProperty;
+var __name23 = /* @__PURE__ */ __name((target, value) => __defProp23(target, "name", { value, configurable: true }), "__name");
 var Cache2 = class {
   static {
     __name(this, "Cache");
+  }
+  static {
+    __name23(this, "Cache");
   }
   constructor(task) {
     this.task = task;
@@ -7493,7 +8003,7 @@ var Cache2 = class {
     const promise = this.task(cts.token);
     this.result = {
       promise,
-      dispose: /* @__PURE__ */ __name(() => {
+      dispose: /* @__PURE__ */ __name23(() => {
         this.result = null;
         cts.cancel();
         cts.dispose();
@@ -7506,9 +8016,13 @@ function identity(t) {
   return t;
 }
 __name(identity, "identity");
+__name23(identity, "identity");
 var LRUCachedFunction = class {
   static {
     __name(this, "LRUCachedFunction");
+  }
+  static {
+    __name23(this, "LRUCachedFunction");
   }
   constructor(arg1, arg2) {
     this.lastCache = void 0;
@@ -7533,6 +8047,9 @@ var LRUCachedFunction = class {
 var CachedFunction = class {
   static {
     __name(this, "CachedFunction");
+  }
+  static {
+    __name23(this, "CachedFunction");
   }
   get cachedValues() {
     return this._map;
@@ -7563,6 +8080,9 @@ var WeakCachedFunction = class {
   static {
     __name(this, "WeakCachedFunction");
   }
+  static {
+    __name23(this, "WeakCachedFunction");
+  }
   constructor(arg1, arg2) {
     this._map = /* @__PURE__ */ new WeakMap();
     if (typeof arg1 === "function") {
@@ -7584,7 +8104,9 @@ var WeakCachedFunction = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/strings.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/strings.js
+var __defProp24 = Object.defineProperty;
+var __name24 = /* @__PURE__ */ __name((target, value) => __defProp24(target, "name", { value, configurable: true }), "__name");
 function isFalsyOrWhitespace(str) {
   if (!str || typeof str !== "string") {
     return true;
@@ -7592,6 +8114,7 @@ function isFalsyOrWhitespace(str) {
   return str.trim().length === 0;
 }
 __name(isFalsyOrWhitespace, "isFalsyOrWhitespace");
+__name24(isFalsyOrWhitespace, "isFalsyOrWhitespace");
 var _formatRegexp = /{(\d+)}/g;
 function format2(value, ...args) {
   if (args.length === 0) {
@@ -7603,6 +8126,7 @@ function format2(value, ...args) {
   });
 }
 __name(format2, "format");
+__name24(format2, "format");
 var _format2Regexp = /{([^}]+)}/g;
 function format22(template, values) {
   if (Object.keys(values).length === 0) {
@@ -7611,6 +8135,7 @@ function format22(template, values) {
   return template.replace(_format2Regexp, (match, group) => values[group] ?? match);
 }
 __name(format22, "format2");
+__name24(format22, "format2");
 function htmlAttributeEncodeValue(value) {
   return value.replace(/[<>"'&]/g, (ch) => {
     switch (ch) {
@@ -7629,6 +8154,7 @@ function htmlAttributeEncodeValue(value) {
   });
 }
 __name(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
+__name24(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
 function escape(html) {
   return html.replace(/[<>&]/g, function(match) {
     switch (match) {
@@ -7644,10 +8170,12 @@ function escape(html) {
   });
 }
 __name(escape, "escape");
+__name24(escape, "escape");
 function escapeRegExpCharacters(value) {
   return value.replace(/[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]/g, "\\$&");
 }
 __name(escapeRegExpCharacters, "escapeRegExpCharacters");
+__name24(escapeRegExpCharacters, "escapeRegExpCharacters");
 function count(value, substr) {
   let result = 0;
   let index2 = value.indexOf(substr);
@@ -7658,6 +8186,7 @@ function count(value, substr) {
   return result;
 }
 __name(count, "count");
+__name24(count, "count");
 function truncate(value, maxLength, suffix = Ellipsis) {
   if (value.length <= maxLength) {
     return value;
@@ -7665,6 +8194,7 @@ function truncate(value, maxLength, suffix = Ellipsis) {
   return `${value.substr(0, maxLength)}${suffix}`;
 }
 __name(truncate, "truncate");
+__name24(truncate, "truncate");
 function truncateMiddle(value, maxLength, suffix = Ellipsis) {
   if (value.length <= maxLength) {
     return value;
@@ -7674,11 +8204,13 @@ function truncateMiddle(value, maxLength, suffix = Ellipsis) {
   return `${value.substr(0, prefixLength)}${suffix}${value.substr(value.length - suffixLength)}`;
 }
 __name(truncateMiddle, "truncateMiddle");
+__name24(truncateMiddle, "truncateMiddle");
 function trim(haystack, needle = " ") {
   const trimmed = ltrim(haystack, needle);
   return rtrim(trimmed, needle);
 }
 __name(trim, "trim");
+__name24(trim, "trim");
 function ltrim(haystack, needle) {
   if (!haystack || !needle) {
     return haystack;
@@ -7698,6 +8230,7 @@ function ltrim(haystack, needle) {
   return haystack.substring(offset);
 }
 __name(ltrim, "ltrim");
+__name24(ltrim, "ltrim");
 function rtrim(haystack, needle) {
   if (!haystack || !needle) {
     return haystack;
@@ -7718,10 +8251,12 @@ function rtrim(haystack, needle) {
   return haystack.substring(0, offset);
 }
 __name(rtrim, "rtrim");
+__name24(rtrim, "rtrim");
 function convertSimple2RegExpPattern(pattern) {
   return pattern.replace(/[\-\\\{\}\+\?\|\^\$\.\,\[\]\(\)\#\s]/g, "\\$&").replace(/[\*]/g, ".*");
 }
 __name(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
+__name24(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
 function createRegExp(searchString, isRegex, options = {}) {
   if (!searchString) {
     throw new Error("Cannot create regex from empty string");
@@ -7753,6 +8288,7 @@ function createRegExp(searchString, isRegex, options = {}) {
   return new RegExp(searchString, modifiers);
 }
 __name(createRegExp, "createRegExp");
+__name24(createRegExp, "createRegExp");
 function regExpLeadsToEndlessLoop(regexp) {
   if (regexp.source === "^" || regexp.source === "^$" || regexp.source === "$" || regexp.source === "^\\s*$") {
     return false;
@@ -7761,14 +8297,17 @@ function regExpLeadsToEndlessLoop(regexp) {
   return !!(match && regexp.lastIndex === 0);
 }
 __name(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
+__name24(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
 function joinStrings(items, separator) {
   return items.filter((item) => item !== void 0 && item !== null && item !== false).join(separator);
 }
 __name(joinStrings, "joinStrings");
+__name24(joinStrings, "joinStrings");
 function splitLines(str) {
   return str.split(/\r\n|\r|\n/);
 }
 __name(splitLines, "splitLines");
+__name24(splitLines, "splitLines");
 function splitLinesIncludeSeparators(str) {
   const linesWithSeparators = [];
   const splitLinesAndSeparators = str.split(/(\r\n|\r|\n)/);
@@ -7778,6 +8317,7 @@ function splitLinesIncludeSeparators(str) {
   return linesWithSeparators;
 }
 __name(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
+__name24(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
 function indexOfPattern(str, re) {
   const match = re.exec(str);
   if (match) {
@@ -7786,6 +8326,7 @@ function indexOfPattern(str, re) {
   return -1;
 }
 __name(indexOfPattern, "indexOfPattern");
+__name24(indexOfPattern, "indexOfPattern");
 function firstNonWhitespaceIndex(str) {
   for (let i = 0, len = str.length; i < len; i++) {
     const chCode = str.charCodeAt(i);
@@ -7796,6 +8337,7 @@ function firstNonWhitespaceIndex(str) {
   return -1;
 }
 __name(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
+__name24(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
 function getLeadingWhitespace(str, start = 0, end = str.length) {
   for (let i = start; i < end; i++) {
     const chCode = str.charCodeAt(i);
@@ -7806,6 +8348,7 @@ function getLeadingWhitespace(str, start = 0, end = str.length) {
   return str.substring(start, end);
 }
 __name(getLeadingWhitespace, "getLeadingWhitespace");
+__name24(getLeadingWhitespace, "getLeadingWhitespace");
 function lastNonWhitespaceIndex(str, startIndex = str.length - 1) {
   for (let i = startIndex; i >= 0; i--) {
     const chCode = str.charCodeAt(i);
@@ -7816,6 +8359,7 @@ function lastNonWhitespaceIndex(str, startIndex = str.length - 1) {
   return -1;
 }
 __name(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
+__name24(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
 function getIndentationLength(str) {
   const idx = firstNonWhitespaceIndex(str);
   if (idx === -1) {
@@ -7824,6 +8368,7 @@ function getIndentationLength(str) {
   return idx;
 }
 __name(getIndentationLength, "getIndentationLength");
+__name24(getIndentationLength, "getIndentationLength");
 function replaceAsync(str, search, replacer) {
   const parts = [];
   let last = 0;
@@ -7839,6 +8384,7 @@ function replaceAsync(str, search, replacer) {
   return Promise.all(parts).then((p) => p.join(""));
 }
 __name(replaceAsync, "replaceAsync");
+__name24(replaceAsync, "replaceAsync");
 function compare(a, b) {
   if (a < b) {
     return -1;
@@ -7849,6 +8395,7 @@ function compare(a, b) {
   }
 }
 __name(compare, "compare");
+__name24(compare, "compare");
 function compareSubstring(a, b, aStart = 0, aEnd = a.length, bStart = 0, bEnd = b.length) {
   for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
     const codeA = a.charCodeAt(aStart);
@@ -7869,10 +8416,12 @@ function compareSubstring(a, b, aStart = 0, aEnd = a.length, bStart = 0, bEnd = 
   return 0;
 }
 __name(compareSubstring, "compareSubstring");
+__name24(compareSubstring, "compareSubstring");
 function compareIgnoreCase(a, b) {
   return compareSubstringIgnoreCase(a, b, 0, a.length, 0, b.length);
 }
 __name(compareIgnoreCase, "compareIgnoreCase");
+__name24(compareIgnoreCase, "compareIgnoreCase");
 function compareSubstringIgnoreCase(a, b, aStart = 0, aEnd = a.length, bStart = 0, bEnd = b.length) {
   for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
     let codeA = a.charCodeAt(aStart);
@@ -7905,37 +8454,45 @@ function compareSubstringIgnoreCase(a, b, aStart = 0, aEnd = a.length, bStart = 
   return 0;
 }
 __name(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
+__name24(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
 function isAsciiDigit(code) {
   return code >= 48 && code <= 57;
 }
 __name(isAsciiDigit, "isAsciiDigit");
+__name24(isAsciiDigit, "isAsciiDigit");
 function isLowerAsciiLetter(code) {
   return code >= 97 && code <= 122;
 }
 __name(isLowerAsciiLetter, "isLowerAsciiLetter");
+__name24(isLowerAsciiLetter, "isLowerAsciiLetter");
 function isUpperAsciiLetter(code) {
   return code >= 65 && code <= 90;
 }
 __name(isUpperAsciiLetter, "isUpperAsciiLetter");
+__name24(isUpperAsciiLetter, "isUpperAsciiLetter");
 function equalsIgnoreCase(a, b) {
   return a.length === b.length && compareSubstringIgnoreCase(a, b) === 0;
 }
 __name(equalsIgnoreCase, "equalsIgnoreCase");
+__name24(equalsIgnoreCase, "equalsIgnoreCase");
 function equals2(a, b, ignoreCase) {
   return a === b || !!ignoreCase && a !== void 0 && b !== void 0 && equalsIgnoreCase(a, b);
 }
 __name(equals2, "equals");
+__name24(equals2, "equals");
 function startsWithIgnoreCase(str, candidate) {
   const len = candidate.length;
   return len <= str.length && compareSubstringIgnoreCase(str, candidate, 0, len) === 0;
 }
 __name(startsWithIgnoreCase, "startsWithIgnoreCase");
+__name24(startsWithIgnoreCase, "startsWithIgnoreCase");
 function endsWithIgnoreCase(str, candidate) {
   const len = str.length;
   const start = len - candidate.length;
   return start >= 0 && compareSubstringIgnoreCase(str, candidate, start, len) === 0;
 }
 __name(endsWithIgnoreCase, "endsWithIgnoreCase");
+__name24(endsWithIgnoreCase, "endsWithIgnoreCase");
 function commonPrefixLength2(a, b) {
   const len = Math.min(a.length, b.length);
   let i;
@@ -7947,6 +8504,7 @@ function commonPrefixLength2(a, b) {
   return len;
 }
 __name(commonPrefixLength2, "commonPrefixLength");
+__name24(commonPrefixLength2, "commonPrefixLength");
 function commonSuffixLength(a, b) {
   const len = Math.min(a.length, b.length);
   let i;
@@ -7960,18 +8518,22 @@ function commonSuffixLength(a, b) {
   return len;
 }
 __name(commonSuffixLength, "commonSuffixLength");
+__name24(commonSuffixLength, "commonSuffixLength");
 function isHighSurrogate(charCode) {
   return 55296 <= charCode && charCode <= 56319;
 }
 __name(isHighSurrogate, "isHighSurrogate");
+__name24(isHighSurrogate, "isHighSurrogate");
 function isLowSurrogate(charCode) {
   return 56320 <= charCode && charCode <= 57343;
 }
 __name(isLowSurrogate, "isLowSurrogate");
+__name24(isLowSurrogate, "isLowSurrogate");
 function computeCodePoint(highSurrogate, lowSurrogate) {
   return (highSurrogate - 55296 << 10) + (lowSurrogate - 56320) + 65536;
 }
 __name(computeCodePoint, "computeCodePoint");
+__name24(computeCodePoint, "computeCodePoint");
 function getNextCodePoint(str, len, offset) {
   const charCode = str.charCodeAt(offset);
   if (isHighSurrogate(charCode) && offset + 1 < len) {
@@ -7983,6 +8545,7 @@ function getNextCodePoint(str, len, offset) {
   return charCode;
 }
 __name(getNextCodePoint, "getNextCodePoint");
+__name24(getNextCodePoint, "getNextCodePoint");
 function getPrevCodePoint(str, offset) {
   const charCode = str.charCodeAt(offset - 1);
   if (isLowSurrogate(charCode) && offset > 1) {
@@ -7994,9 +8557,13 @@ function getPrevCodePoint(str, offset) {
   return charCode;
 }
 __name(getPrevCodePoint, "getPrevCodePoint");
+__name24(getPrevCodePoint, "getPrevCodePoint");
 var CodePointIterator = class {
   static {
     __name(this, "CodePointIterator");
+  }
+  static {
+    __name24(this, "CodePointIterator");
   }
   get offset() {
     return this._offset;
@@ -8026,6 +8593,9 @@ var CodePointIterator = class {
 var GraphemeIterator = class {
   static {
     __name(this, "GraphemeIterator");
+  }
+  static {
+    __name24(this, "GraphemeIterator");
   }
   get offset() {
     return this._iterator.offset;
@@ -8074,11 +8644,13 @@ function nextCharLength(str, initialOffset) {
   return iterator.nextGraphemeLength();
 }
 __name(nextCharLength, "nextCharLength");
+__name24(nextCharLength, "nextCharLength");
 function prevCharLength(str, initialOffset) {
   const iterator = new GraphemeIterator(str, initialOffset);
   return iterator.prevGraphemeLength();
 }
 __name(prevCharLength, "prevCharLength");
+__name24(prevCharLength, "prevCharLength");
 function getCharContainingOffset(str, offset) {
   if (offset > 0 && isLowSurrogate(str.charCodeAt(offset))) {
     offset--;
@@ -8088,6 +8660,7 @@ function getCharContainingOffset(str, offset) {
   return [startOffset, endOffset];
 }
 __name(getCharContainingOffset, "getCharContainingOffset");
+__name24(getCharContainingOffset, "getCharContainingOffset");
 function charCount(str) {
   const iterator = new GraphemeIterator(str);
   let length = 0;
@@ -8098,11 +8671,13 @@ function charCount(str) {
   return length;
 }
 __name(charCount, "charCount");
+__name24(charCount, "charCount");
 var CONTAINS_RTL = void 0;
 function makeContainsRtl() {
   return /(?:[\u05BE\u05C0\u05C3\u05C6\u05D0-\u05F4\u0608\u060B\u060D\u061B-\u064A\u066D-\u066F\u0671-\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u0710\u0712-\u072F\u074D-\u07A5\u07B1-\u07EA\u07F4\u07F5\u07FA\u07FE-\u0815\u081A\u0824\u0828\u0830-\u0858\u085E-\u088E\u08A0-\u08C9\u200F\uFB1D\uFB1F-\uFB28\uFB2A-\uFD3D\uFD50-\uFDC7\uFDF0-\uFDFC\uFE70-\uFEFC]|\uD802[\uDC00-\uDD1B\uDD20-\uDE00\uDE10-\uDE35\uDE40-\uDEE4\uDEEB-\uDF35\uDF40-\uDFFF]|\uD803[\uDC00-\uDD23\uDE80-\uDEA9\uDEAD-\uDF45\uDF51-\uDF81\uDF86-\uDFF6]|\uD83A[\uDC00-\uDCCF\uDD00-\uDD43\uDD4B-\uDFFF]|\uD83B[\uDC00-\uDEBB])/;
 }
 __name(makeContainsRtl, "makeContainsRtl");
+__name24(makeContainsRtl, "makeContainsRtl");
 function containsRTL(str) {
   if (!CONTAINS_RTL) {
     CONTAINS_RTL = makeContainsRtl();
@@ -8110,24 +8685,29 @@ function containsRTL(str) {
   return CONTAINS_RTL.test(str);
 }
 __name(containsRTL, "containsRTL");
+__name24(containsRTL, "containsRTL");
 var IS_BASIC_ASCII = /^[\t\n\r\x20-\x7E]*$/;
 function isBasicASCII(str) {
   return IS_BASIC_ASCII.test(str);
 }
 __name(isBasicASCII, "isBasicASCII");
+__name24(isBasicASCII, "isBasicASCII");
 var UNUSUAL_LINE_TERMINATORS = /[\u2028\u2029]/;
 function containsUnusualLineTerminators(str) {
   return UNUSUAL_LINE_TERMINATORS.test(str);
 }
 __name(containsUnusualLineTerminators, "containsUnusualLineTerminators");
+__name24(containsUnusualLineTerminators, "containsUnusualLineTerminators");
 function isFullWidthCharacter(charCode) {
   return charCode >= 11904 && charCode <= 55215 || charCode >= 63744 && charCode <= 64255 || charCode >= 65281 && charCode <= 65374 || charCode >= 65504 && charCode <= 65510;
 }
 __name(isFullWidthCharacter, "isFullWidthCharacter");
+__name24(isFullWidthCharacter, "isFullWidthCharacter");
 function isEmojiImprecise(x) {
   return x >= 127462 && x <= 127487 || x === 8986 || x === 8987 || x === 9200 || x === 9203 || x >= 9728 && x <= 10175 || x === 11088 || x === 11093 || x >= 127744 && x <= 128591 || x >= 128640 && x <= 128764 || x >= 128992 && x <= 129008 || x >= 129280 && x <= 129535 || x >= 129648 && x <= 129782;
 }
 __name(isEmojiImprecise, "isEmojiImprecise");
+__name24(isEmojiImprecise, "isEmojiImprecise");
 function lcut(text, n, prefix = "") {
   const trimmed = text.trimStart();
   if (trimmed.length < n) {
@@ -8148,6 +8728,7 @@ function lcut(text, n, prefix = "") {
   return prefix + trimmed.substring(i).trimStart();
 }
 __name(lcut, "lcut");
+__name24(lcut, "lcut");
 function rcut(text, n, suffix = "") {
   const trimmed = text.trimEnd();
   if (trimmed.length <= n) {
@@ -8177,6 +8758,7 @@ function rcut(text, n, suffix = "") {
   return result + suffix;
 }
 __name(rcut, "rcut");
+__name24(rcut, "rcut");
 var CSI_SEQUENCE = /(?:\x1b\[|\x9b)[=?>!]?[\d;:]*["$#'* ]?[a-zA-Z@^`{}|~]/;
 var OSC_SEQUENCE = /(?:\x1b\]|\x9d).*?(?:\x1b\\|\x07|\x9c)/;
 var ESC_SEQUENCE = /\x1b(?:[ #%\(\)\*\+\-\.\/]?[a-zA-Z0-9\|}~@])/;
@@ -8199,6 +8781,7 @@ function* forAnsiStringParts(str) {
   }
 }
 __name(forAnsiStringParts, "forAnsiStringParts");
+__name24(forAnsiStringParts, "forAnsiStringParts");
 function removeAnsiEscapeCodes(str) {
   if (str) {
     str = str.replace(CONTROL_SEQUENCES, "");
@@ -8206,11 +8789,13 @@ function removeAnsiEscapeCodes(str) {
   return str;
 }
 __name(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
+__name24(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
 var PROMPT_NON_PRINTABLE = /\\\[.*?\\\]/g;
 function removeAnsiEscapeCodesFromPrompt(str) {
   return removeAnsiEscapeCodes(str).replace(PROMPT_NON_PRINTABLE, "");
 }
 __name(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
+__name24(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
 var UTF8_BOM_CHARACTER = String.fromCharCode(
   65279
   /* CharCode.UTF8_BOM */
@@ -8219,10 +8804,12 @@ function startsWithUTF8BOM(str) {
   return !!(str && str.length > 0 && str.charCodeAt(0) === 65279);
 }
 __name(startsWithUTF8BOM, "startsWithUTF8BOM");
+__name24(startsWithUTF8BOM, "startsWithUTF8BOM");
 function stripUTF8BOM(str) {
   return startsWithUTF8BOM(str) ? str.substr(1) : str;
 }
 __name(stripUTF8BOM, "stripUTF8BOM");
+__name24(stripUTF8BOM, "stripUTF8BOM");
 function fuzzyContains(target, query) {
   if (!target || !query) {
     return false;
@@ -8245,6 +8832,7 @@ function fuzzyContains(target, query) {
   return true;
 }
 __name(fuzzyContains, "fuzzyContains");
+__name24(fuzzyContains, "fuzzyContains");
 function containsUppercaseCharacter(target, ignoreEscapedChars = false) {
   if (!target) {
     return false;
@@ -8255,10 +8843,12 @@ function containsUppercaseCharacter(target, ignoreEscapedChars = false) {
   return target.toLowerCase() !== target;
 }
 __name(containsUppercaseCharacter, "containsUppercaseCharacter");
+__name24(containsUppercaseCharacter, "containsUppercaseCharacter");
 function uppercaseFirstLetter(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 __name(uppercaseFirstLetter, "uppercaseFirstLetter");
+__name24(uppercaseFirstLetter, "uppercaseFirstLetter");
 function getNLines(str, n = 1) {
   if (n === 0) {
     return "";
@@ -8277,6 +8867,7 @@ function getNLines(str, n = 1) {
   return str.substr(0, idx);
 }
 __name(getNLines, "getNLines");
+__name24(getNLines, "getNLines");
 function singleLetterHash(n) {
   const LETTERS_CNT = 90 - 65 + 1;
   n = n % (2 * LETTERS_CNT);
@@ -8286,11 +8877,13 @@ function singleLetterHash(n) {
   return String.fromCharCode(65 + n - LETTERS_CNT);
 }
 __name(singleLetterHash, "singleLetterHash");
+__name24(singleLetterHash, "singleLetterHash");
 function getGraphemeBreakType(codePoint) {
   const graphemeBreakTree = GraphemeBreakTree.getInstance();
   return graphemeBreakTree.getGraphemeBreakType(codePoint);
 }
 __name(getGraphemeBreakType, "getGraphemeBreakType");
+__name24(getGraphemeBreakType, "getGraphemeBreakType");
 function breakBetweenGraphemeBreakType(breakTypeA, breakTypeB) {
   if (breakTypeA === 0) {
     return breakTypeB !== 5 && breakTypeB !== 7;
@@ -8339,6 +8932,7 @@ function breakBetweenGraphemeBreakType(breakTypeA, breakTypeB) {
   return true;
 }
 __name(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
+__name24(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
 var GraphemeBreakType;
 (function(GraphemeBreakType2) {
   GraphemeBreakType2[GraphemeBreakType2["Other"] = 0] = "Other";
@@ -8360,6 +8954,9 @@ var GraphemeBreakType;
 var GraphemeBreakTree = class _GraphemeBreakTree {
   static {
     __name(this, "GraphemeBreakTree");
+  }
+  static {
+    __name24(this, "GraphemeBreakTree");
   }
   static {
     this._INSTANCE = null;
@@ -8405,6 +9002,7 @@ function getGraphemeBreakRawData() {
   return JSON.parse("[0,0,0,51229,51255,12,44061,44087,12,127462,127487,6,7083,7085,5,47645,47671,12,54813,54839,12,128678,128678,14,3270,3270,5,9919,9923,14,45853,45879,12,49437,49463,12,53021,53047,12,71216,71218,7,128398,128399,14,129360,129374,14,2519,2519,5,4448,4519,9,9742,9742,14,12336,12336,14,44957,44983,12,46749,46775,12,48541,48567,12,50333,50359,12,52125,52151,12,53917,53943,12,69888,69890,5,73018,73018,5,127990,127990,14,128558,128559,14,128759,128760,14,129653,129655,14,2027,2035,5,2891,2892,7,3761,3761,5,6683,6683,5,8293,8293,4,9825,9826,14,9999,9999,14,43452,43453,5,44509,44535,12,45405,45431,12,46301,46327,12,47197,47223,12,48093,48119,12,48989,49015,12,49885,49911,12,50781,50807,12,51677,51703,12,52573,52599,12,53469,53495,12,54365,54391,12,65279,65279,4,70471,70472,7,72145,72147,7,119173,119179,5,127799,127818,14,128240,128244,14,128512,128512,14,128652,128652,14,128721,128722,14,129292,129292,14,129445,129450,14,129734,129743,14,1476,1477,5,2366,2368,7,2750,2752,7,3076,3076,5,3415,3415,5,4141,4144,5,6109,6109,5,6964,6964,5,7394,7400,5,9197,9198,14,9770,9770,14,9877,9877,14,9968,9969,14,10084,10084,14,43052,43052,5,43713,43713,5,44285,44311,12,44733,44759,12,45181,45207,12,45629,45655,12,46077,46103,12,46525,46551,12,46973,46999,12,47421,47447,12,47869,47895,12,48317,48343,12,48765,48791,12,49213,49239,12,49661,49687,12,50109,50135,12,50557,50583,12,51005,51031,12,51453,51479,12,51901,51927,12,52349,52375,12,52797,52823,12,53245,53271,12,53693,53719,12,54141,54167,12,54589,54615,12,55037,55063,12,69506,69509,5,70191,70193,5,70841,70841,7,71463,71467,5,72330,72342,5,94031,94031,5,123628,123631,5,127763,127765,14,127941,127941,14,128043,128062,14,128302,128317,14,128465,128467,14,128539,128539,14,128640,128640,14,128662,128662,14,128703,128703,14,128745,128745,14,129004,129007,14,129329,129330,14,129402,129402,14,129483,129483,14,129686,129704,14,130048,131069,14,173,173,4,1757,1757,1,2200,2207,5,2434,2435,7,2631,2632,5,2817,2817,5,3008,3008,5,3201,3201,5,3387,3388,5,3542,3542,5,3902,3903,7,4190,4192,5,6002,6003,5,6439,6440,5,6765,6770,7,7019,7027,5,7154,7155,7,8205,8205,13,8505,8505,14,9654,9654,14,9757,9757,14,9792,9792,14,9852,9853,14,9890,9894,14,9937,9937,14,9981,9981,14,10035,10036,14,11035,11036,14,42654,42655,5,43346,43347,7,43587,43587,5,44006,44007,7,44173,44199,12,44397,44423,12,44621,44647,12,44845,44871,12,45069,45095,12,45293,45319,12,45517,45543,12,45741,45767,12,45965,45991,12,46189,46215,12,46413,46439,12,46637,46663,12,46861,46887,12,47085,47111,12,47309,47335,12,47533,47559,12,47757,47783,12,47981,48007,12,48205,48231,12,48429,48455,12,48653,48679,12,48877,48903,12,49101,49127,12,49325,49351,12,49549,49575,12,49773,49799,12,49997,50023,12,50221,50247,12,50445,50471,12,50669,50695,12,50893,50919,12,51117,51143,12,51341,51367,12,51565,51591,12,51789,51815,12,52013,52039,12,52237,52263,12,52461,52487,12,52685,52711,12,52909,52935,12,53133,53159,12,53357,53383,12,53581,53607,12,53805,53831,12,54029,54055,12,54253,54279,12,54477,54503,12,54701,54727,12,54925,54951,12,55149,55175,12,68101,68102,5,69762,69762,7,70067,70069,7,70371,70378,5,70720,70721,7,71087,71087,5,71341,71341,5,71995,71996,5,72249,72249,7,72850,72871,5,73109,73109,5,118576,118598,5,121505,121519,5,127245,127247,14,127568,127569,14,127777,127777,14,127872,127891,14,127956,127967,14,128015,128016,14,128110,128172,14,128259,128259,14,128367,128368,14,128424,128424,14,128488,128488,14,128530,128532,14,128550,128551,14,128566,128566,14,128647,128647,14,128656,128656,14,128667,128673,14,128691,128693,14,128715,128715,14,128728,128732,14,128752,128752,14,128765,128767,14,129096,129103,14,129311,129311,14,129344,129349,14,129394,129394,14,129413,129425,14,129466,129471,14,129511,129535,14,129664,129666,14,129719,129722,14,129760,129767,14,917536,917631,5,13,13,2,1160,1161,5,1564,1564,4,1807,1807,1,2085,2087,5,2307,2307,7,2382,2383,7,2497,2500,5,2563,2563,7,2677,2677,5,2763,2764,7,2879,2879,5,2914,2915,5,3021,3021,5,3142,3144,5,3263,3263,5,3285,3286,5,3398,3400,7,3530,3530,5,3633,3633,5,3864,3865,5,3974,3975,5,4155,4156,7,4229,4230,5,5909,5909,7,6078,6085,7,6277,6278,5,6451,6456,7,6744,6750,5,6846,6846,5,6972,6972,5,7074,7077,5,7146,7148,7,7222,7223,5,7416,7417,5,8234,8238,4,8417,8417,5,9000,9000,14,9203,9203,14,9730,9731,14,9748,9749,14,9762,9763,14,9776,9783,14,9800,9811,14,9831,9831,14,9872,9873,14,9882,9882,14,9900,9903,14,9929,9933,14,9941,9960,14,9974,9974,14,9989,9989,14,10006,10006,14,10062,10062,14,10160,10160,14,11647,11647,5,12953,12953,14,43019,43019,5,43232,43249,5,43443,43443,5,43567,43568,7,43696,43696,5,43765,43765,7,44013,44013,5,44117,44143,12,44229,44255,12,44341,44367,12,44453,44479,12,44565,44591,12,44677,44703,12,44789,44815,12,44901,44927,12,45013,45039,12,45125,45151,12,45237,45263,12,45349,45375,12,45461,45487,12,45573,45599,12,45685,45711,12,45797,45823,12,45909,45935,12,46021,46047,12,46133,46159,12,46245,46271,12,46357,46383,12,46469,46495,12,46581,46607,12,46693,46719,12,46805,46831,12,46917,46943,12,47029,47055,12,47141,47167,12,47253,47279,12,47365,47391,12,47477,47503,12,47589,47615,12,47701,47727,12,47813,47839,12,47925,47951,12,48037,48063,12,48149,48175,12,48261,48287,12,48373,48399,12,48485,48511,12,48597,48623,12,48709,48735,12,48821,48847,12,48933,48959,12,49045,49071,12,49157,49183,12,49269,49295,12,49381,49407,12,49493,49519,12,49605,49631,12,49717,49743,12,49829,49855,12,49941,49967,12,50053,50079,12,50165,50191,12,50277,50303,12,50389,50415,12,50501,50527,12,50613,50639,12,50725,50751,12,50837,50863,12,50949,50975,12,51061,51087,12,51173,51199,12,51285,51311,12,51397,51423,12,51509,51535,12,51621,51647,12,51733,51759,12,51845,51871,12,51957,51983,12,52069,52095,12,52181,52207,12,52293,52319,12,52405,52431,12,52517,52543,12,52629,52655,12,52741,52767,12,52853,52879,12,52965,52991,12,53077,53103,12,53189,53215,12,53301,53327,12,53413,53439,12,53525,53551,12,53637,53663,12,53749,53775,12,53861,53887,12,53973,53999,12,54085,54111,12,54197,54223,12,54309,54335,12,54421,54447,12,54533,54559,12,54645,54671,12,54757,54783,12,54869,54895,12,54981,55007,12,55093,55119,12,55243,55291,10,66045,66045,5,68325,68326,5,69688,69702,5,69817,69818,5,69957,69958,7,70089,70092,5,70198,70199,5,70462,70462,5,70502,70508,5,70750,70750,5,70846,70846,7,71100,71101,5,71230,71230,7,71351,71351,5,71737,71738,5,72000,72000,7,72160,72160,5,72273,72278,5,72752,72758,5,72882,72883,5,73031,73031,5,73461,73462,7,94192,94193,7,119149,119149,7,121403,121452,5,122915,122916,5,126980,126980,14,127358,127359,14,127535,127535,14,127759,127759,14,127771,127771,14,127792,127793,14,127825,127867,14,127897,127899,14,127945,127945,14,127985,127986,14,128000,128007,14,128021,128021,14,128066,128100,14,128184,128235,14,128249,128252,14,128266,128276,14,128335,128335,14,128379,128390,14,128407,128419,14,128444,128444,14,128481,128481,14,128499,128499,14,128526,128526,14,128536,128536,14,128543,128543,14,128556,128556,14,128564,128564,14,128577,128580,14,128643,128645,14,128649,128649,14,128654,128654,14,128660,128660,14,128664,128664,14,128675,128675,14,128686,128689,14,128695,128696,14,128705,128709,14,128717,128719,14,128725,128725,14,128736,128741,14,128747,128748,14,128755,128755,14,128762,128762,14,128981,128991,14,129009,129023,14,129160,129167,14,129296,129304,14,129320,129327,14,129340,129342,14,129356,129356,14,129388,129392,14,129399,129400,14,129404,129407,14,129432,129442,14,129454,129455,14,129473,129474,14,129485,129487,14,129648,129651,14,129659,129660,14,129671,129679,14,129709,129711,14,129728,129730,14,129751,129753,14,129776,129782,14,917505,917505,4,917760,917999,5,10,10,3,127,159,4,768,879,5,1471,1471,5,1536,1541,1,1648,1648,5,1767,1768,5,1840,1866,5,2070,2073,5,2137,2139,5,2274,2274,1,2363,2363,7,2377,2380,7,2402,2403,5,2494,2494,5,2507,2508,7,2558,2558,5,2622,2624,7,2641,2641,5,2691,2691,7,2759,2760,5,2786,2787,5,2876,2876,5,2881,2884,5,2901,2902,5,3006,3006,5,3014,3016,7,3072,3072,5,3134,3136,5,3157,3158,5,3260,3260,5,3266,3266,5,3274,3275,7,3328,3329,5,3391,3392,7,3405,3405,5,3457,3457,5,3536,3537,7,3551,3551,5,3636,3642,5,3764,3772,5,3895,3895,5,3967,3967,7,3993,4028,5,4146,4151,5,4182,4183,7,4226,4226,5,4253,4253,5,4957,4959,5,5940,5940,7,6070,6070,7,6087,6088,7,6158,6158,4,6432,6434,5,6448,6449,7,6679,6680,5,6742,6742,5,6754,6754,5,6783,6783,5,6912,6915,5,6966,6970,5,6978,6978,5,7042,7042,7,7080,7081,5,7143,7143,7,7150,7150,7,7212,7219,5,7380,7392,5,7412,7412,5,8203,8203,4,8232,8232,4,8265,8265,14,8400,8412,5,8421,8432,5,8617,8618,14,9167,9167,14,9200,9200,14,9410,9410,14,9723,9726,14,9733,9733,14,9745,9745,14,9752,9752,14,9760,9760,14,9766,9766,14,9774,9774,14,9786,9786,14,9794,9794,14,9823,9823,14,9828,9828,14,9833,9850,14,9855,9855,14,9875,9875,14,9880,9880,14,9885,9887,14,9896,9897,14,9906,9916,14,9926,9927,14,9935,9935,14,9939,9939,14,9962,9962,14,9972,9972,14,9978,9978,14,9986,9986,14,9997,9997,14,10002,10002,14,10017,10017,14,10055,10055,14,10071,10071,14,10133,10135,14,10548,10549,14,11093,11093,14,12330,12333,5,12441,12442,5,42608,42610,5,43010,43010,5,43045,43046,5,43188,43203,7,43302,43309,5,43392,43394,5,43446,43449,5,43493,43493,5,43571,43572,7,43597,43597,7,43703,43704,5,43756,43757,5,44003,44004,7,44009,44010,7,44033,44059,12,44089,44115,12,44145,44171,12,44201,44227,12,44257,44283,12,44313,44339,12,44369,44395,12,44425,44451,12,44481,44507,12,44537,44563,12,44593,44619,12,44649,44675,12,44705,44731,12,44761,44787,12,44817,44843,12,44873,44899,12,44929,44955,12,44985,45011,12,45041,45067,12,45097,45123,12,45153,45179,12,45209,45235,12,45265,45291,12,45321,45347,12,45377,45403,12,45433,45459,12,45489,45515,12,45545,45571,12,45601,45627,12,45657,45683,12,45713,45739,12,45769,45795,12,45825,45851,12,45881,45907,12,45937,45963,12,45993,46019,12,46049,46075,12,46105,46131,12,46161,46187,12,46217,46243,12,46273,46299,12,46329,46355,12,46385,46411,12,46441,46467,12,46497,46523,12,46553,46579,12,46609,46635,12,46665,46691,12,46721,46747,12,46777,46803,12,46833,46859,12,46889,46915,12,46945,46971,12,47001,47027,12,47057,47083,12,47113,47139,12,47169,47195,12,47225,47251,12,47281,47307,12,47337,47363,12,47393,47419,12,47449,47475,12,47505,47531,12,47561,47587,12,47617,47643,12,47673,47699,12,47729,47755,12,47785,47811,12,47841,47867,12,47897,47923,12,47953,47979,12,48009,48035,12,48065,48091,12,48121,48147,12,48177,48203,12,48233,48259,12,48289,48315,12,48345,48371,12,48401,48427,12,48457,48483,12,48513,48539,12,48569,48595,12,48625,48651,12,48681,48707,12,48737,48763,12,48793,48819,12,48849,48875,12,48905,48931,12,48961,48987,12,49017,49043,12,49073,49099,12,49129,49155,12,49185,49211,12,49241,49267,12,49297,49323,12,49353,49379,12,49409,49435,12,49465,49491,12,49521,49547,12,49577,49603,12,49633,49659,12,49689,49715,12,49745,49771,12,49801,49827,12,49857,49883,12,49913,49939,12,49969,49995,12,50025,50051,12,50081,50107,12,50137,50163,12,50193,50219,12,50249,50275,12,50305,50331,12,50361,50387,12,50417,50443,12,50473,50499,12,50529,50555,12,50585,50611,12,50641,50667,12,50697,50723,12,50753,50779,12,50809,50835,12,50865,50891,12,50921,50947,12,50977,51003,12,51033,51059,12,51089,51115,12,51145,51171,12,51201,51227,12,51257,51283,12,51313,51339,12,51369,51395,12,51425,51451,12,51481,51507,12,51537,51563,12,51593,51619,12,51649,51675,12,51705,51731,12,51761,51787,12,51817,51843,12,51873,51899,12,51929,51955,12,51985,52011,12,52041,52067,12,52097,52123,12,52153,52179,12,52209,52235,12,52265,52291,12,52321,52347,12,52377,52403,12,52433,52459,12,52489,52515,12,52545,52571,12,52601,52627,12,52657,52683,12,52713,52739,12,52769,52795,12,52825,52851,12,52881,52907,12,52937,52963,12,52993,53019,12,53049,53075,12,53105,53131,12,53161,53187,12,53217,53243,12,53273,53299,12,53329,53355,12,53385,53411,12,53441,53467,12,53497,53523,12,53553,53579,12,53609,53635,12,53665,53691,12,53721,53747,12,53777,53803,12,53833,53859,12,53889,53915,12,53945,53971,12,54001,54027,12,54057,54083,12,54113,54139,12,54169,54195,12,54225,54251,12,54281,54307,12,54337,54363,12,54393,54419,12,54449,54475,12,54505,54531,12,54561,54587,12,54617,54643,12,54673,54699,12,54729,54755,12,54785,54811,12,54841,54867,12,54897,54923,12,54953,54979,12,55009,55035,12,55065,55091,12,55121,55147,12,55177,55203,12,65024,65039,5,65520,65528,4,66422,66426,5,68152,68154,5,69291,69292,5,69633,69633,5,69747,69748,5,69811,69814,5,69826,69826,5,69932,69932,7,70016,70017,5,70079,70080,7,70095,70095,5,70196,70196,5,70367,70367,5,70402,70403,7,70464,70464,5,70487,70487,5,70709,70711,7,70725,70725,7,70833,70834,7,70843,70844,7,70849,70849,7,71090,71093,5,71103,71104,5,71227,71228,7,71339,71339,5,71344,71349,5,71458,71461,5,71727,71735,5,71985,71989,7,71998,71998,5,72002,72002,7,72154,72155,5,72193,72202,5,72251,72254,5,72281,72283,5,72344,72345,5,72766,72766,7,72874,72880,5,72885,72886,5,73023,73029,5,73104,73105,5,73111,73111,5,92912,92916,5,94095,94098,5,113824,113827,4,119142,119142,7,119155,119162,4,119362,119364,5,121476,121476,5,122888,122904,5,123184,123190,5,125252,125258,5,127183,127183,14,127340,127343,14,127377,127386,14,127491,127503,14,127548,127551,14,127744,127756,14,127761,127761,14,127769,127769,14,127773,127774,14,127780,127788,14,127796,127797,14,127820,127823,14,127869,127869,14,127894,127895,14,127902,127903,14,127943,127943,14,127947,127950,14,127972,127972,14,127988,127988,14,127992,127994,14,128009,128011,14,128019,128019,14,128023,128041,14,128064,128064,14,128102,128107,14,128174,128181,14,128238,128238,14,128246,128247,14,128254,128254,14,128264,128264,14,128278,128299,14,128329,128330,14,128348,128359,14,128371,128377,14,128392,128393,14,128401,128404,14,128421,128421,14,128433,128434,14,128450,128452,14,128476,128478,14,128483,128483,14,128495,128495,14,128506,128506,14,128519,128520,14,128528,128528,14,128534,128534,14,128538,128538,14,128540,128542,14,128544,128549,14,128552,128555,14,128557,128557,14,128560,128563,14,128565,128565,14,128567,128576,14,128581,128591,14,128641,128642,14,128646,128646,14,128648,128648,14,128650,128651,14,128653,128653,14,128655,128655,14,128657,128659,14,128661,128661,14,128663,128663,14,128665,128666,14,128674,128674,14,128676,128677,14,128679,128685,14,128690,128690,14,128694,128694,14,128697,128702,14,128704,128704,14,128710,128714,14,128716,128716,14,128720,128720,14,128723,128724,14,128726,128727,14,128733,128735,14,128742,128744,14,128746,128746,14,128749,128751,14,128753,128754,14,128756,128758,14,128761,128761,14,128763,128764,14,128884,128895,14,128992,129003,14,129008,129008,14,129036,129039,14,129114,129119,14,129198,129279,14,129293,129295,14,129305,129310,14,129312,129319,14,129328,129328,14,129331,129338,14,129343,129343,14,129351,129355,14,129357,129359,14,129375,129387,14,129393,129393,14,129395,129398,14,129401,129401,14,129403,129403,14,129408,129412,14,129426,129431,14,129443,129444,14,129451,129453,14,129456,129465,14,129472,129472,14,129475,129482,14,129484,129484,14,129488,129510,14,129536,129647,14,129652,129652,14,129656,129658,14,129661,129663,14,129667,129670,14,129680,129685,14,129705,129708,14,129712,129718,14,129723,129727,14,129731,129733,14,129744,129750,14,129754,129759,14,129768,129775,14,129783,129791,14,917504,917504,4,917506,917535,4,917632,917759,4,918000,921599,4,0,9,4,11,12,4,14,31,4,169,169,14,174,174,14,1155,1159,5,1425,1469,5,1473,1474,5,1479,1479,5,1552,1562,5,1611,1631,5,1750,1756,5,1759,1764,5,1770,1773,5,1809,1809,5,1958,1968,5,2045,2045,5,2075,2083,5,2089,2093,5,2192,2193,1,2250,2273,5,2275,2306,5,2362,2362,5,2364,2364,5,2369,2376,5,2381,2381,5,2385,2391,5,2433,2433,5,2492,2492,5,2495,2496,7,2503,2504,7,2509,2509,5,2530,2531,5,2561,2562,5,2620,2620,5,2625,2626,5,2635,2637,5,2672,2673,5,2689,2690,5,2748,2748,5,2753,2757,5,2761,2761,7,2765,2765,5,2810,2815,5,2818,2819,7,2878,2878,5,2880,2880,7,2887,2888,7,2893,2893,5,2903,2903,5,2946,2946,5,3007,3007,7,3009,3010,7,3018,3020,7,3031,3031,5,3073,3075,7,3132,3132,5,3137,3140,7,3146,3149,5,3170,3171,5,3202,3203,7,3262,3262,7,3264,3265,7,3267,3268,7,3271,3272,7,3276,3277,5,3298,3299,5,3330,3331,7,3390,3390,5,3393,3396,5,3402,3404,7,3406,3406,1,3426,3427,5,3458,3459,7,3535,3535,5,3538,3540,5,3544,3550,7,3570,3571,7,3635,3635,7,3655,3662,5,3763,3763,7,3784,3789,5,3893,3893,5,3897,3897,5,3953,3966,5,3968,3972,5,3981,3991,5,4038,4038,5,4145,4145,7,4153,4154,5,4157,4158,5,4184,4185,5,4209,4212,5,4228,4228,7,4237,4237,5,4352,4447,8,4520,4607,10,5906,5908,5,5938,5939,5,5970,5971,5,6068,6069,5,6071,6077,5,6086,6086,5,6089,6099,5,6155,6157,5,6159,6159,5,6313,6313,5,6435,6438,7,6441,6443,7,6450,6450,5,6457,6459,5,6681,6682,7,6741,6741,7,6743,6743,7,6752,6752,5,6757,6764,5,6771,6780,5,6832,6845,5,6847,6862,5,6916,6916,7,6965,6965,5,6971,6971,7,6973,6977,7,6979,6980,7,7040,7041,5,7073,7073,7,7078,7079,7,7082,7082,7,7142,7142,5,7144,7145,5,7149,7149,5,7151,7153,5,7204,7211,7,7220,7221,7,7376,7378,5,7393,7393,7,7405,7405,5,7415,7415,7,7616,7679,5,8204,8204,5,8206,8207,4,8233,8233,4,8252,8252,14,8288,8292,4,8294,8303,4,8413,8416,5,8418,8420,5,8482,8482,14,8596,8601,14,8986,8987,14,9096,9096,14,9193,9196,14,9199,9199,14,9201,9202,14,9208,9210,14,9642,9643,14,9664,9664,14,9728,9729,14,9732,9732,14,9735,9741,14,9743,9744,14,9746,9746,14,9750,9751,14,9753,9756,14,9758,9759,14,9761,9761,14,9764,9765,14,9767,9769,14,9771,9773,14,9775,9775,14,9784,9785,14,9787,9791,14,9793,9793,14,9795,9799,14,9812,9822,14,9824,9824,14,9827,9827,14,9829,9830,14,9832,9832,14,9851,9851,14,9854,9854,14,9856,9861,14,9874,9874,14,9876,9876,14,9878,9879,14,9881,9881,14,9883,9884,14,9888,9889,14,9895,9895,14,9898,9899,14,9904,9905,14,9917,9918,14,9924,9925,14,9928,9928,14,9934,9934,14,9936,9936,14,9938,9938,14,9940,9940,14,9961,9961,14,9963,9967,14,9970,9971,14,9973,9973,14,9975,9977,14,9979,9980,14,9982,9985,14,9987,9988,14,9992,9996,14,9998,9998,14,10000,10001,14,10004,10004,14,10013,10013,14,10024,10024,14,10052,10052,14,10060,10060,14,10067,10069,14,10083,10083,14,10085,10087,14,10145,10145,14,10175,10175,14,11013,11015,14,11088,11088,14,11503,11505,5,11744,11775,5,12334,12335,5,12349,12349,14,12951,12951,14,42607,42607,5,42612,42621,5,42736,42737,5,43014,43014,5,43043,43044,7,43047,43047,7,43136,43137,7,43204,43205,5,43263,43263,5,43335,43345,5,43360,43388,8,43395,43395,7,43444,43445,7,43450,43451,7,43454,43456,7,43561,43566,5,43569,43570,5,43573,43574,5,43596,43596,5,43644,43644,5,43698,43700,5,43710,43711,5,43755,43755,7,43758,43759,7,43766,43766,5,44005,44005,5,44008,44008,5,44012,44012,7,44032,44032,11,44060,44060,11,44088,44088,11,44116,44116,11,44144,44144,11,44172,44172,11,44200,44200,11,44228,44228,11,44256,44256,11,44284,44284,11,44312,44312,11,44340,44340,11,44368,44368,11,44396,44396,11,44424,44424,11,44452,44452,11,44480,44480,11,44508,44508,11,44536,44536,11,44564,44564,11,44592,44592,11,44620,44620,11,44648,44648,11,44676,44676,11,44704,44704,11,44732,44732,11,44760,44760,11,44788,44788,11,44816,44816,11,44844,44844,11,44872,44872,11,44900,44900,11,44928,44928,11,44956,44956,11,44984,44984,11,45012,45012,11,45040,45040,11,45068,45068,11,45096,45096,11,45124,45124,11,45152,45152,11,45180,45180,11,45208,45208,11,45236,45236,11,45264,45264,11,45292,45292,11,45320,45320,11,45348,45348,11,45376,45376,11,45404,45404,11,45432,45432,11,45460,45460,11,45488,45488,11,45516,45516,11,45544,45544,11,45572,45572,11,45600,45600,11,45628,45628,11,45656,45656,11,45684,45684,11,45712,45712,11,45740,45740,11,45768,45768,11,45796,45796,11,45824,45824,11,45852,45852,11,45880,45880,11,45908,45908,11,45936,45936,11,45964,45964,11,45992,45992,11,46020,46020,11,46048,46048,11,46076,46076,11,46104,46104,11,46132,46132,11,46160,46160,11,46188,46188,11,46216,46216,11,46244,46244,11,46272,46272,11,46300,46300,11,46328,46328,11,46356,46356,11,46384,46384,11,46412,46412,11,46440,46440,11,46468,46468,11,46496,46496,11,46524,46524,11,46552,46552,11,46580,46580,11,46608,46608,11,46636,46636,11,46664,46664,11,46692,46692,11,46720,46720,11,46748,46748,11,46776,46776,11,46804,46804,11,46832,46832,11,46860,46860,11,46888,46888,11,46916,46916,11,46944,46944,11,46972,46972,11,47000,47000,11,47028,47028,11,47056,47056,11,47084,47084,11,47112,47112,11,47140,47140,11,47168,47168,11,47196,47196,11,47224,47224,11,47252,47252,11,47280,47280,11,47308,47308,11,47336,47336,11,47364,47364,11,47392,47392,11,47420,47420,11,47448,47448,11,47476,47476,11,47504,47504,11,47532,47532,11,47560,47560,11,47588,47588,11,47616,47616,11,47644,47644,11,47672,47672,11,47700,47700,11,47728,47728,11,47756,47756,11,47784,47784,11,47812,47812,11,47840,47840,11,47868,47868,11,47896,47896,11,47924,47924,11,47952,47952,11,47980,47980,11,48008,48008,11,48036,48036,11,48064,48064,11,48092,48092,11,48120,48120,11,48148,48148,11,48176,48176,11,48204,48204,11,48232,48232,11,48260,48260,11,48288,48288,11,48316,48316,11,48344,48344,11,48372,48372,11,48400,48400,11,48428,48428,11,48456,48456,11,48484,48484,11,48512,48512,11,48540,48540,11,48568,48568,11,48596,48596,11,48624,48624,11,48652,48652,11,48680,48680,11,48708,48708,11,48736,48736,11,48764,48764,11,48792,48792,11,48820,48820,11,48848,48848,11,48876,48876,11,48904,48904,11,48932,48932,11,48960,48960,11,48988,48988,11,49016,49016,11,49044,49044,11,49072,49072,11,49100,49100,11,49128,49128,11,49156,49156,11,49184,49184,11,49212,49212,11,49240,49240,11,49268,49268,11,49296,49296,11,49324,49324,11,49352,49352,11,49380,49380,11,49408,49408,11,49436,49436,11,49464,49464,11,49492,49492,11,49520,49520,11,49548,49548,11,49576,49576,11,49604,49604,11,49632,49632,11,49660,49660,11,49688,49688,11,49716,49716,11,49744,49744,11,49772,49772,11,49800,49800,11,49828,49828,11,49856,49856,11,49884,49884,11,49912,49912,11,49940,49940,11,49968,49968,11,49996,49996,11,50024,50024,11,50052,50052,11,50080,50080,11,50108,50108,11,50136,50136,11,50164,50164,11,50192,50192,11,50220,50220,11,50248,50248,11,50276,50276,11,50304,50304,11,50332,50332,11,50360,50360,11,50388,50388,11,50416,50416,11,50444,50444,11,50472,50472,11,50500,50500,11,50528,50528,11,50556,50556,11,50584,50584,11,50612,50612,11,50640,50640,11,50668,50668,11,50696,50696,11,50724,50724,11,50752,50752,11,50780,50780,11,50808,50808,11,50836,50836,11,50864,50864,11,50892,50892,11,50920,50920,11,50948,50948,11,50976,50976,11,51004,51004,11,51032,51032,11,51060,51060,11,51088,51088,11,51116,51116,11,51144,51144,11,51172,51172,11,51200,51200,11,51228,51228,11,51256,51256,11,51284,51284,11,51312,51312,11,51340,51340,11,51368,51368,11,51396,51396,11,51424,51424,11,51452,51452,11,51480,51480,11,51508,51508,11,51536,51536,11,51564,51564,11,51592,51592,11,51620,51620,11,51648,51648,11,51676,51676,11,51704,51704,11,51732,51732,11,51760,51760,11,51788,51788,11,51816,51816,11,51844,51844,11,51872,51872,11,51900,51900,11,51928,51928,11,51956,51956,11,51984,51984,11,52012,52012,11,52040,52040,11,52068,52068,11,52096,52096,11,52124,52124,11,52152,52152,11,52180,52180,11,52208,52208,11,52236,52236,11,52264,52264,11,52292,52292,11,52320,52320,11,52348,52348,11,52376,52376,11,52404,52404,11,52432,52432,11,52460,52460,11,52488,52488,11,52516,52516,11,52544,52544,11,52572,52572,11,52600,52600,11,52628,52628,11,52656,52656,11,52684,52684,11,52712,52712,11,52740,52740,11,52768,52768,11,52796,52796,11,52824,52824,11,52852,52852,11,52880,52880,11,52908,52908,11,52936,52936,11,52964,52964,11,52992,52992,11,53020,53020,11,53048,53048,11,53076,53076,11,53104,53104,11,53132,53132,11,53160,53160,11,53188,53188,11,53216,53216,11,53244,53244,11,53272,53272,11,53300,53300,11,53328,53328,11,53356,53356,11,53384,53384,11,53412,53412,11,53440,53440,11,53468,53468,11,53496,53496,11,53524,53524,11,53552,53552,11,53580,53580,11,53608,53608,11,53636,53636,11,53664,53664,11,53692,53692,11,53720,53720,11,53748,53748,11,53776,53776,11,53804,53804,11,53832,53832,11,53860,53860,11,53888,53888,11,53916,53916,11,53944,53944,11,53972,53972,11,54000,54000,11,54028,54028,11,54056,54056,11,54084,54084,11,54112,54112,11,54140,54140,11,54168,54168,11,54196,54196,11,54224,54224,11,54252,54252,11,54280,54280,11,54308,54308,11,54336,54336,11,54364,54364,11,54392,54392,11,54420,54420,11,54448,54448,11,54476,54476,11,54504,54504,11,54532,54532,11,54560,54560,11,54588,54588,11,54616,54616,11,54644,54644,11,54672,54672,11,54700,54700,11,54728,54728,11,54756,54756,11,54784,54784,11,54812,54812,11,54840,54840,11,54868,54868,11,54896,54896,11,54924,54924,11,54952,54952,11,54980,54980,11,55008,55008,11,55036,55036,11,55064,55064,11,55092,55092,11,55120,55120,11,55148,55148,11,55176,55176,11,55216,55238,9,64286,64286,5,65056,65071,5,65438,65439,5,65529,65531,4,66272,66272,5,68097,68099,5,68108,68111,5,68159,68159,5,68900,68903,5,69446,69456,5,69632,69632,7,69634,69634,7,69744,69744,5,69759,69761,5,69808,69810,7,69815,69816,7,69821,69821,1,69837,69837,1,69927,69931,5,69933,69940,5,70003,70003,5,70018,70018,7,70070,70078,5,70082,70083,1,70094,70094,7,70188,70190,7,70194,70195,7,70197,70197,7,70206,70206,5,70368,70370,7,70400,70401,5,70459,70460,5,70463,70463,7,70465,70468,7,70475,70477,7,70498,70499,7,70512,70516,5,70712,70719,5,70722,70724,5,70726,70726,5,70832,70832,5,70835,70840,5,70842,70842,5,70845,70845,5,70847,70848,5,70850,70851,5,71088,71089,7,71096,71099,7,71102,71102,7,71132,71133,5,71219,71226,5,71229,71229,5,71231,71232,5,71340,71340,7,71342,71343,7,71350,71350,7,71453,71455,5,71462,71462,7,71724,71726,7,71736,71736,7,71984,71984,5,71991,71992,7,71997,71997,7,71999,71999,1,72001,72001,1,72003,72003,5,72148,72151,5,72156,72159,7,72164,72164,7,72243,72248,5,72250,72250,1,72263,72263,5,72279,72280,7,72324,72329,1,72343,72343,7,72751,72751,7,72760,72765,5,72767,72767,5,72873,72873,7,72881,72881,7,72884,72884,7,73009,73014,5,73020,73021,5,73030,73030,1,73098,73102,7,73107,73108,7,73110,73110,7,73459,73460,5,78896,78904,4,92976,92982,5,94033,94087,7,94180,94180,5,113821,113822,5,118528,118573,5,119141,119141,5,119143,119145,5,119150,119154,5,119163,119170,5,119210,119213,5,121344,121398,5,121461,121461,5,121499,121503,5,122880,122886,5,122907,122913,5,122918,122922,5,123566,123566,5,125136,125142,5,126976,126979,14,126981,127182,14,127184,127231,14,127279,127279,14,127344,127345,14,127374,127374,14,127405,127461,14,127489,127490,14,127514,127514,14,127538,127546,14,127561,127567,14,127570,127743,14,127757,127758,14,127760,127760,14,127762,127762,14,127766,127768,14,127770,127770,14,127772,127772,14,127775,127776,14,127778,127779,14,127789,127791,14,127794,127795,14,127798,127798,14,127819,127819,14,127824,127824,14,127868,127868,14,127870,127871,14,127892,127893,14,127896,127896,14,127900,127901,14,127904,127940,14,127942,127942,14,127944,127944,14,127946,127946,14,127951,127955,14,127968,127971,14,127973,127984,14,127987,127987,14,127989,127989,14,127991,127991,14,127995,127999,5,128008,128008,14,128012,128014,14,128017,128018,14,128020,128020,14,128022,128022,14,128042,128042,14,128063,128063,14,128065,128065,14,128101,128101,14,128108,128109,14,128173,128173,14,128182,128183,14,128236,128237,14,128239,128239,14,128245,128245,14,128248,128248,14,128253,128253,14,128255,128258,14,128260,128263,14,128265,128265,14,128277,128277,14,128300,128301,14,128326,128328,14,128331,128334,14,128336,128347,14,128360,128366,14,128369,128370,14,128378,128378,14,128391,128391,14,128394,128397,14,128400,128400,14,128405,128406,14,128420,128420,14,128422,128423,14,128425,128432,14,128435,128443,14,128445,128449,14,128453,128464,14,128468,128475,14,128479,128480,14,128482,128482,14,128484,128487,14,128489,128494,14,128496,128498,14,128500,128505,14,128507,128511,14,128513,128518,14,128521,128525,14,128527,128527,14,128529,128529,14,128533,128533,14,128535,128535,14,128537,128537,14]");
 }
 __name(getGraphemeBreakRawData, "getGraphemeBreakRawData");
+__name24(getGraphemeBreakRawData, "getGraphemeBreakRawData");
 function getLeftDeleteOffset(offset, str) {
   if (offset === 0) {
     return 0;
@@ -8418,6 +9016,7 @@ function getLeftDeleteOffset(offset, str) {
   return iterator.offset;
 }
 __name(getLeftDeleteOffset, "getLeftDeleteOffset");
+__name24(getLeftDeleteOffset, "getLeftDeleteOffset");
 function getOffsetBeforeLastEmojiComponent(initialOffset, str) {
   const iterator = new CodePointIterator(str, initialOffset);
   let codePoint = iterator.prevCodePoint();
@@ -8440,10 +9039,12 @@ function getOffsetBeforeLastEmojiComponent(initialOffset, str) {
   return resultOffset;
 }
 __name(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
+__name24(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
 function isEmojiModifier(codePoint) {
   return 127995 <= codePoint && codePoint <= 127999;
 }
 __name(isEmojiModifier, "isEmojiModifier");
+__name24(isEmojiModifier, "isEmojiModifier");
 var CodePoint;
 (function(CodePoint2) {
   CodePoint2[CodePoint2["zwj"] = 8205] = "zwj";
@@ -8455,6 +9056,9 @@ var noBreakWhitespace = "\xA0";
 var AmbiguousCharacters = class _AmbiguousCharacters {
   static {
     __name(this, "AmbiguousCharacters");
+  }
+  static {
+    __name24(this, "AmbiguousCharacters");
   }
   static {
     this.ambiguousCharacterData = new Lazy(() => {
@@ -8472,6 +9076,7 @@ var AmbiguousCharacters = class _AmbiguousCharacters {
         return result;
       }
       __name(arrayToMap, "arrayToMap");
+      __name24(arrayToMap, "arrayToMap");
       function mergeMaps(map1, map2) {
         const result = new Map(map1);
         for (const [key, value] of map2) {
@@ -8480,6 +9085,7 @@ var AmbiguousCharacters = class _AmbiguousCharacters {
         return result;
       }
       __name(mergeMaps, "mergeMaps");
+      __name24(mergeMaps, "mergeMaps");
       function intersectMaps(map1, map2) {
         if (!map1) {
           return map2;
@@ -8493,6 +9099,7 @@ var AmbiguousCharacters = class _AmbiguousCharacters {
         return result;
       }
       __name(intersectMaps, "intersectMaps");
+      __name24(intersectMaps, "intersectMaps");
       const data = this.ambiguousCharacterData.value;
       let filteredLocales = locales.filter((l) => !l.startsWith("_") && Object.hasOwn(data, l));
       if (filteredLocales.length === 0) {
@@ -8547,6 +9154,9 @@ var InvisibleCharacters = class _InvisibleCharacters {
   static {
     __name(this, "InvisibleCharacters");
   }
+  static {
+    __name24(this, "InvisibleCharacters");
+  }
   static getRawData() {
     return JSON.parse('{"_common":[11,12,13,127,847,1564,4447,4448,6068,6069,6155,6156,6157,6158,7355,7356,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8204,8205,8206,8207,8234,8235,8236,8237,8238,8239,8287,8288,8289,8290,8291,8292,8293,8294,8295,8296,8297,8298,8299,8300,8301,8302,8303,10240,12644,65024,65025,65026,65027,65028,65029,65030,65031,65032,65033,65034,65035,65036,65037,65038,65039,65279,65440,65520,65521,65522,65523,65524,65525,65526,65527,65528,65532,78844,119155,119156,119157,119158,119159,119160,119161,119162,917504,917505,917506,917507,917508,917509,917510,917511,917512,917513,917514,917515,917516,917517,917518,917519,917520,917521,917522,917523,917524,917525,917526,917527,917528,917529,917530,917531,917532,917533,917534,917535,917536,917537,917538,917539,917540,917541,917542,917543,917544,917545,917546,917547,917548,917549,917550,917551,917552,917553,917554,917555,917556,917557,917558,917559,917560,917561,917562,917563,917564,917565,917566,917567,917568,917569,917570,917571,917572,917573,917574,917575,917576,917577,917578,917579,917580,917581,917582,917583,917584,917585,917586,917587,917588,917589,917590,917591,917592,917593,917594,917595,917596,917597,917598,917599,917600,917601,917602,917603,917604,917605,917606,917607,917608,917609,917610,917611,917612,917613,917614,917615,917616,917617,917618,917619,917620,917621,917622,917623,917624,917625,917626,917627,917628,917629,917630,917631,917760,917761,917762,917763,917764,917765,917766,917767,917768,917769,917770,917771,917772,917773,917774,917775,917776,917777,917778,917779,917780,917781,917782,917783,917784,917785,917786,917787,917788,917789,917790,917791,917792,917793,917794,917795,917796,917797,917798,917799,917800,917801,917802,917803,917804,917805,917806,917807,917808,917809,917810,917811,917812,917813,917814,917815,917816,917817,917818,917819,917820,917821,917822,917823,917824,917825,917826,917827,917828,917829,917830,917831,917832,917833,917834,917835,917836,917837,917838,917839,917840,917841,917842,917843,917844,917845,917846,917847,917848,917849,917850,917851,917852,917853,917854,917855,917856,917857,917858,917859,917860,917861,917862,917863,917864,917865,917866,917867,917868,917869,917870,917871,917872,917873,917874,917875,917876,917877,917878,917879,917880,917881,917882,917883,917884,917885,917886,917887,917888,917889,917890,917891,917892,917893,917894,917895,917896,917897,917898,917899,917900,917901,917902,917903,917904,917905,917906,917907,917908,917909,917910,917911,917912,917913,917914,917915,917916,917917,917918,917919,917920,917921,917922,917923,917924,917925,917926,917927,917928,917929,917930,917931,917932,917933,917934,917935,917936,917937,917938,917939,917940,917941,917942,917943,917944,917945,917946,917947,917948,917949,917950,917951,917952,917953,917954,917955,917956,917957,917958,917959,917960,917961,917962,917963,917964,917965,917966,917967,917968,917969,917970,917971,917972,917973,917974,917975,917976,917977,917978,917979,917980,917981,917982,917983,917984,917985,917986,917987,917988,917989,917990,917991,917992,917993,917994,917995,917996,917997,917998,917999],"cs":[173,8203,12288],"de":[173,8203,12288],"es":[8203,12288],"fr":[173,8203,12288],"it":[160,173,12288],"ja":[173],"ko":[173,12288],"pl":[173,8203,12288],"pt-BR":[173,8203,12288],"qps-ploc":[160,173,8203,12288],"ru":[173,12288],"tr":[160,173,8203,12288],"zh-hans":[160,173,8203,12288],"zh-hant":[173,12288]}');
   }
@@ -8589,12 +9199,16 @@ function toBinary(str) {
   return binary;
 }
 __name(toBinary, "toBinary");
+__name24(toBinary, "toBinary");
 function multibyteAwareBtoa(str) {
   return btoa(toBinary(str));
 }
 __name(multibyteAwareBtoa, "multibyteAwareBtoa");
+__name24(multibyteAwareBtoa, "multibyteAwareBtoa");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/uri.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/uri.js
+var __defProp25 = Object.defineProperty;
+var __name25 = /* @__PURE__ */ __name((target, value) => __defProp25(target, "name", { value, configurable: true }), "__name");
 var _schemePattern = /^\w[\w\d+.-]*$/;
 var _singleSlashStart = /^\//;
 var _doubleSlashStart = /^\/\//;
@@ -8620,6 +9234,7 @@ function _validateUri(ret, _strict) {
   }
 }
 __name(_validateUri, "_validateUri");
+__name25(_validateUri, "_validateUri");
 function _schemeFix(scheme, _strict) {
   if (!scheme && !_strict) {
     return "file";
@@ -8627,6 +9242,7 @@ function _schemeFix(scheme, _strict) {
   return scheme;
 }
 __name(_schemeFix, "_schemeFix");
+__name25(_schemeFix, "_schemeFix");
 function _referenceResolution(scheme, path) {
   switch (scheme) {
     case "https":
@@ -8642,12 +9258,16 @@ function _referenceResolution(scheme, path) {
   return path;
 }
 __name(_referenceResolution, "_referenceResolution");
+__name25(_referenceResolution, "_referenceResolution");
 var _empty = "";
 var _slash = "/";
 var _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
 var URI = class _URI {
   static {
     __name(this, "URI");
+  }
+  static {
+    __name25(this, "URI");
   }
   static isUri(thing) {
     if (thing instanceof _URI) {
@@ -8864,10 +9484,14 @@ function isUriComponents(thing) {
   return typeof thing.scheme === "string" && (typeof thing.authority === "string" || typeof thing.authority === "undefined") && (typeof thing.path === "string" || typeof thing.path === "undefined") && (typeof thing.query === "string" || typeof thing.query === "undefined") && (typeof thing.fragment === "string" || typeof thing.fragment === "undefined");
 }
 __name(isUriComponents, "isUriComponents");
+__name25(isUriComponents, "isUriComponents");
 var _pathSepMarker = isWindows ? 1 : void 0;
 var Uri = class extends URI {
   static {
     __name(this, "Uri");
+  }
+  static {
+    __name25(this, "Uri");
   }
   constructor() {
     super(...arguments);
@@ -9035,6 +9659,7 @@ function encodeURIComponentFast(uriComponent, isPath, isAuthority) {
   return res !== void 0 ? res : uriComponent;
 }
 __name(encodeURIComponentFast, "encodeURIComponentFast");
+__name25(encodeURIComponentFast, "encodeURIComponentFast");
 function encodeURIComponentMinimal(path) {
   let res = void 0;
   for (let pos = 0; pos < path.length; pos++) {
@@ -9053,6 +9678,7 @@ function encodeURIComponentMinimal(path) {
   return res !== void 0 ? res : path;
 }
 __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+__name25(encodeURIComponentMinimal, "encodeURIComponentMinimal");
 function uriToFsPath(uri, keepDriveLetterCasing) {
   let value;
   if (uri.authority && uri.path.length > 1 && uri.scheme === "file") {
@@ -9072,6 +9698,7 @@ function uriToFsPath(uri, keepDriveLetterCasing) {
   return value;
 }
 __name(uriToFsPath, "uriToFsPath");
+__name25(uriToFsPath, "uriToFsPath");
 function _asFormatted(uri, skipEncoding) {
   const encoder = !skipEncoding ? encodeURIComponentFast : encodeURIComponentMinimal;
   let res = "";
@@ -9133,6 +9760,7 @@ function _asFormatted(uri, skipEncoding) {
   return res;
 }
 __name(_asFormatted, "_asFormatted");
+__name25(_asFormatted, "_asFormatted");
 function decodeURIComponentGraceful(str) {
   try {
     return decodeURIComponent(str);
@@ -9145,6 +9773,7 @@ function decodeURIComponentGraceful(str) {
   }
 }
 __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+__name25(decodeURIComponentGraceful, "decodeURIComponentGraceful");
 var _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
 function percentDecode(str) {
   if (!str.match(_rEncodedAsHex)) {
@@ -9153,13 +9782,17 @@ function percentDecode(str) {
   return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));
 }
 __name(percentDecode, "percentDecode");
+__name25(percentDecode, "percentDecode");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/uuid.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/uuid.js
+var __defProp26 = Object.defineProperty;
+var __name26 = /* @__PURE__ */ __name((target, value) => __defProp26(target, "name", { value, configurable: true }), "__name");
 var _UUIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isUUID(value) {
   return _UUIDPattern.test(value);
 }
 __name(isUUID, "isUUID");
+__name26(isUUID, "isUUID");
 var generateUuid = (function() {
   if (typeof crypto.randomUUID === "function") {
     return crypto.randomUUID.bind(crypto);
@@ -9169,7 +9802,7 @@ var generateUuid = (function() {
   for (let i = 0; i < 256; i++) {
     _hex.push(i.toString(16).padStart(2, "0"));
   }
-  return /* @__PURE__ */ __name(function generateUuid2() {
+  return /* @__PURE__ */ __name26(/* @__PURE__ */ __name(function generateUuid2() {
     crypto.getRandomValues(_data);
     _data[6] = _data[6] & 15 | 64;
     _data[8] = _data[8] & 63 | 128;
@@ -9196,14 +9829,17 @@ var generateUuid = (function() {
     result += _hex[_data[i++]];
     result += _hex[_data[i++]];
     return result;
-  }, "generateUuid");
+  }, "generateUuid2"), "generateUuid");
 })();
 function prefixedUuid(namespace) {
   return `${namespace}-${generateUuid()}`;
 }
 __name(prefixedUuid, "prefixedUuid");
+__name26(prefixedUuid, "prefixedUuid");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/platform/instantiation/common/instantiation.js
+// ../Output/Target/Microsoft/VSCode/vs/platform/instantiation/common/instantiation.js
+var __defProp27 = Object.defineProperty;
+var __name27 = /* @__PURE__ */ __name((target, value) => __defProp27(target, "name", { value, configurable: true }), "__name");
 var _util;
 (function(_util2) {
   _util2.serviceIds = /* @__PURE__ */ new Map();
@@ -9213,6 +9849,7 @@ var _util;
     return ctor[_util2.DI_DEPENDENCIES] || [];
   }
   __name(getServiceDependencies, "getServiceDependencies");
+  __name27(getServiceDependencies, "getServiceDependencies");
   _util2.getServiceDependencies = getServiceDependencies;
 })(_util || (_util = {}));
 var IInstantiationService = createDecorator("instantiationService");
@@ -9225,11 +9862,12 @@ function storeServiceDependency(id2, target, index2) {
   }
 }
 __name(storeServiceDependency, "storeServiceDependency");
+__name27(storeServiceDependency, "storeServiceDependency");
 function createDecorator(serviceId) {
   if (_util.serviceIds.has(serviceId)) {
     return _util.serviceIds.get(serviceId);
   }
-  const id2 = /* @__PURE__ */ __name(function(target, key, index2) {
+  const id2 = /* @__PURE__ */ __name27(function(target, key, index2) {
     if (arguments.length !== 3) {
       throw new Error("@IServiceName-decorator can only be used to decorate a parameter");
     }
@@ -9240,12 +9878,16 @@ function createDecorator(serviceId) {
   return id2;
 }
 __name(createDecorator, "createDecorator");
+__name27(createDecorator, "createDecorator");
 function refineServiceDecorator(serviceIdentifier) {
   return serviceIdentifier;
 }
 __name(refineServiceDecorator, "refineServiceDecorator");
+__name27(refineServiceDecorator, "refineServiceDecorator");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/network.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/network.js
+var __defProp28 = Object.defineProperty;
+var __name28 = /* @__PURE__ */ __name((target, value) => __defProp28(target, "name", { value, configurable: true }), "__name");
 var Schemas;
 (function(Schemas2) {
   Schemas2.inMemory = "inmemory";
@@ -9305,15 +9947,20 @@ function matchesScheme(target, scheme) {
   }
 }
 __name(matchesScheme, "matchesScheme");
+__name28(matchesScheme, "matchesScheme");
 function matchesSomeScheme(target, ...schemes) {
   return schemes.some((scheme) => matchesScheme(target, scheme));
 }
 __name(matchesSomeScheme, "matchesSomeScheme");
+__name28(matchesSomeScheme, "matchesSomeScheme");
 var connectionTokenCookieName = "vscode-tkn";
 var connectionTokenQueryName = "tkn";
 var RemoteAuthoritiesImpl = class {
   static {
     __name(this, "RemoteAuthoritiesImpl");
+  }
+  static {
+    __name28(this, "RemoteAuthoritiesImpl");
   }
   constructor() {
     this._hosts = /* @__PURE__ */ Object.create(null);
@@ -9381,6 +10028,7 @@ function getServerProductSegment(product) {
   return `${product.quality ?? "oss"}-${product.commit ?? "dev"}`;
 }
 __name(getServerProductSegment, "getServerProductSegment");
+__name28(getServerProductSegment, "getServerProductSegment");
 var builtinExtensionsPath = "vs/../../extensions";
 var nodeModulesPath = "vs/../../node_modules";
 var nodeModulesAsarPath = "vs/../../node_modules.asar";
@@ -9389,6 +10037,9 @@ var VSCODE_AUTHORITY = "vscode-app";
 var FileAccessImpl = class _FileAccessImpl {
   static {
     __name(this, "FileAccessImpl");
+  }
+  static {
+    __name28(this, "FileAccessImpl");
   }
   static {
     this.FALLBACK_AUTHORITY = VSCODE_AUTHORITY;
@@ -9505,6 +10156,7 @@ var COI;
     return coiHeaders.get(value);
   }
   __name(getHeadersFromQuery, "getHeadersFromQuery");
+  __name28(getHeadersFromQuery, "getHeadersFromQuery");
   COI2.getHeadersFromQuery = getHeadersFromQuery;
   function addSearchParam(urlOrSearch, coop, coep) {
     if (!globalThis.crossOriginIsolated) {
@@ -9518,14 +10170,18 @@ var COI;
     }
   }
   __name(addSearchParam, "addSearchParam");
+  __name28(addSearchParam, "addSearchParam");
   COI2.addSearchParam = addSearchParam;
 })(COI || (COI = {}));
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/platform/remote/common/remoteHosts.js
+// ../Output/Target/Microsoft/VSCode/vs/platform/remote/common/remoteHosts.js
+var __defProp29 = Object.defineProperty;
+var __name29 = /* @__PURE__ */ __name((target, value) => __defProp29(target, "name", { value, configurable: true }), "__name");
 function getRemoteAuthority(uri) {
   return uri.scheme === Schemas.vscodeRemote ? uri.authority : void 0;
 }
 __name(getRemoteAuthority, "getRemoteAuthority");
+__name29(getRemoteAuthority, "getRemoteAuthority");
 function getRemoteName(authority) {
   if (!authority) {
     return void 0;
@@ -9537,6 +10193,7 @@ function getRemoteName(authority) {
   return authority.substr(0, pos);
 }
 __name(getRemoteName, "getRemoteName");
+__name29(getRemoteName, "getRemoteName");
 function getRemoteServerRootPath(authority) {
   if (!authority) {
     return void 0;
@@ -9548,6 +10205,7 @@ function getRemoteServerRootPath(authority) {
   return authority.substring(pos + 1);
 }
 __name(getRemoteServerRootPath, "getRemoteServerRootPath");
+__name29(getRemoteServerRootPath, "getRemoteServerRootPath");
 function parseAuthorityWithPort(authority) {
   const { host, port } = parseAuthority(authority);
   if (typeof port === "undefined") {
@@ -9556,6 +10214,7 @@ function parseAuthorityWithPort(authority) {
   return { host, port };
 }
 __name(parseAuthorityWithPort, "parseAuthorityWithPort");
+__name29(parseAuthorityWithPort, "parseAuthorityWithPort");
 function parseAuthorityWithOptionalPort(authority, defaultPort) {
   let { host, port } = parseAuthority(authority);
   if (typeof port === "undefined") {
@@ -9564,6 +10223,7 @@ function parseAuthorityWithOptionalPort(authority, defaultPort) {
   return { host, port };
 }
 __name(parseAuthorityWithOptionalPort, "parseAuthorityWithOptionalPort");
+__name29(parseAuthorityWithOptionalPort, "parseAuthorityWithOptionalPort");
 function parseAuthority(authority) {
   const m1 = authority.match(/^(\[[0-9a-z:]+\]):(\d+)$/);
   if (m1) {
@@ -9580,8 +10240,11 @@ function parseAuthority(authority) {
   return { host: authority, port: void 0 };
 }
 __name(parseAuthority, "parseAuthority");
+__name29(parseAuthority, "parseAuthority");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/platform/extensions/common/extensions.js
+// ../Output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js
+var __defProp30 = Object.defineProperty;
+var __name30 = /* @__PURE__ */ __name((target, value) => __defProp30(target, "name", { value, configurable: true }), "__name");
 var USER_MANIFEST_CACHE_FILE = "extensions.user.cache";
 var BUILTIN_MANIFEST_CACHE_FILE = "extensions.builtin.cache";
 var UNDEFINED_PUBLISHER = "undefined_publisher";
@@ -9595,6 +10258,7 @@ function getWorkspaceSupportTypeMessage(supportType) {
   return void 0;
 }
 __name(getWorkspaceSupportTypeMessage, "getWorkspaceSupportTypeMessage");
+__name30(getWorkspaceSupportTypeMessage, "getWorkspaceSupportTypeMessage");
 var EXTENSION_CATEGORIES = [
   "AI",
   "Azure",
@@ -9642,6 +10306,9 @@ var ExtensionIdentifier = class {
   static {
     __name(this, "ExtensionIdentifier");
   }
+  static {
+    __name30(this, "ExtensionIdentifier");
+  }
   constructor(value) {
     this.value = value;
     this._lower = value.toLowerCase();
@@ -9674,6 +10341,9 @@ var ExtensionIdentifierSet = class {
   static {
     __name(this, "ExtensionIdentifierSet");
   }
+  static {
+    __name30(this, "ExtensionIdentifierSet");
+  }
   get size() {
     return this._set.size;
   }
@@ -9698,6 +10368,9 @@ var ExtensionIdentifierSet = class {
 var ExtensionIdentifierMap = class {
   static {
     __name(this, "ExtensionIdentifierMap");
+  }
+  static {
+    __name30(this, "ExtensionIdentifierMap");
   }
   constructor() {
     this._map = /* @__PURE__ */ new Map();
@@ -9731,6 +10404,9 @@ var ExtensionError = class extends Error {
   static {
     __name(this, "ExtensionError");
   }
+  static {
+    __name30(this, "ExtensionError");
+  }
   constructor(extensionIdentifier, cause, message) {
     super(`Error in extension ${ExtensionIdentifier.toKey(extensionIdentifier)}: ${message ?? cause.message}`, { cause });
     this.name = "ExtensionError";
@@ -9741,14 +10417,17 @@ function isApplicationScopedExtension(manifest) {
   return isLanguagePackExtension(manifest);
 }
 __name(isApplicationScopedExtension, "isApplicationScopedExtension");
+__name30(isApplicationScopedExtension, "isApplicationScopedExtension");
 function isLanguagePackExtension(manifest) {
   return manifest.contributes && manifest.contributes.localizations ? manifest.contributes.localizations.length > 0 : false;
 }
 __name(isLanguagePackExtension, "isLanguagePackExtension");
+__name30(isLanguagePackExtension, "isLanguagePackExtension");
 function isAuthenticationProviderExtension(manifest) {
   return manifest.contributes && manifest.contributes.authentication ? manifest.contributes.authentication.length > 0 : false;
 }
 __name(isAuthenticationProviderExtension, "isAuthenticationProviderExtension");
+__name30(isAuthenticationProviderExtension, "isAuthenticationProviderExtension");
 function isResolverExtension(manifest, remoteAuthority) {
   if (remoteAuthority) {
     const activationEvent = `onResolveRemoteAuthority:${getRemoteName(remoteAuthority)}`;
@@ -9757,6 +10436,7 @@ function isResolverExtension(manifest, remoteAuthority) {
   return false;
 }
 __name(isResolverExtension, "isResolverExtension");
+__name30(isResolverExtension, "isResolverExtension");
 function parseApiProposals(enabledApiProposals) {
   return enabledApiProposals.map((proposal) => {
     const [proposalName, version] = proposal.split("@");
@@ -9764,16 +10444,23 @@ function parseApiProposals(enabledApiProposals) {
   });
 }
 __name(parseApiProposals, "parseApiProposals");
+__name30(parseApiProposals, "parseApiProposals");
 function parseEnabledApiProposalNames(enabledApiProposals) {
   return enabledApiProposals.map((proposal) => proposal.split("@")[0]);
 }
 __name(parseEnabledApiProposalNames, "parseEnabledApiProposalNames");
+__name30(parseEnabledApiProposalNames, "parseEnabledApiProposalNames");
 var IBuiltinExtensionsScannerService = createDecorator("IBuiltinExtensionsScannerService");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/ternarySearchTree.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/ternarySearchTree.js
+var __defProp31 = Object.defineProperty;
+var __name31 = /* @__PURE__ */ __name((target, value) => __defProp31(target, "name", { value, configurable: true }), "__name");
 var StringIterator = class {
   static {
     __name(this, "StringIterator");
+  }
+  static {
+    __name31(this, "StringIterator");
   }
   constructor() {
     this._value = "";
@@ -9803,6 +10490,9 @@ var StringIterator = class {
 var ConfigKeysIterator = class {
   static {
     __name(this, "ConfigKeysIterator");
+  }
+  static {
+    __name31(this, "ConfigKeysIterator");
   }
   constructor(_caseSensitive = true) {
     this._caseSensitive = _caseSensitive;
@@ -9843,6 +10533,9 @@ var ConfigKeysIterator = class {
 var PathIterator = class {
   static {
     __name(this, "PathIterator");
+  }
+  static {
+    __name31(this, "PathIterator");
   }
   constructor(_splitOnBackslash = true, _caseSensitive = true) {
     this._splitOnBackslash = _splitOnBackslash;
@@ -9899,6 +10592,9 @@ var UriIteratorState;
 var UriIterator = class {
   static {
     __name(this, "UriIterator");
+  }
+  static {
+    __name31(this, "UriIterator");
   }
   constructor(_ignorePathCasing, _ignoreQueryAndFragment) {
     this._ignorePathCasing = _ignorePathCasing;
@@ -9993,6 +10689,9 @@ var Undef = class _Undef {
     __name(this, "Undef");
   }
   static {
+    __name31(this, "Undef");
+  }
+  static {
     this.Val = /* @__PURE__ */ Symbol("undefined_placeholder");
   }
   static wrap(value) {
@@ -10005,6 +10704,9 @@ var Undef = class _Undef {
 var TernarySearchTreeNode = class {
   static {
     __name(this, "TernarySearchTreeNode");
+  }
+  static {
+    __name31(this, "TernarySearchTreeNode");
   }
   constructor() {
     this.height = 1;
@@ -10055,6 +10757,9 @@ var Dir;
 var TernarySearchTree = class _TernarySearchTree {
   static {
     __name(this, "TernarySearchTree");
+  }
+  static {
+    __name31(this, "TernarySearchTree");
   }
   static forUris(ignorePathCasing = () => false, ignoreQueryAndFragment = () => false) {
     return new _TernarySearchTree(new UriIterator(ignorePathCasing, ignoreQueryAndFragment));
@@ -10423,7 +11128,7 @@ var TernarySearchTree = class _TernarySearchTree {
   }
   // for debug/testing
   _isBalanced() {
-    const nodeIsBalanced = /* @__PURE__ */ __name((node) => {
+    const nodeIsBalanced = /* @__PURE__ */ __name31((node) => {
       if (!node) {
         return true;
       }
@@ -10437,12 +11142,15 @@ var TernarySearchTree = class _TernarySearchTree {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/platform/files/common/files.js
+// ../Output/Target/Microsoft/VSCode/vs/platform/files/common/files.js
+var __defProp32 = Object.defineProperty;
+var __name32 = /* @__PURE__ */ __name((target, value) => __defProp32(target, "name", { value, configurable: true }), "__name");
 var IFileService = createDecorator("fileService");
 function isFileOpenForWriteOptions(options) {
   return options.create === true;
 }
 __name(isFileOpenForWriteOptions, "isFileOpenForWriteOptions");
+__name32(isFileOpenForWriteOptions, "isFileOpenForWriteOptions");
 var FileType;
 (function(FileType2) {
   FileType2[FileType2["Unknown"] = 0] = "Unknown";
@@ -10467,6 +11175,7 @@ function isFileSystemWatcher(thing) {
   return !!candidate && typeof candidate.onDidChange === "function";
 }
 __name(isFileSystemWatcher, "isFileSystemWatcher");
+__name32(isFileSystemWatcher, "isFileSystemWatcher");
 var FileSystemProviderCapabilities;
 (function(FileSystemProviderCapabilities2) {
   FileSystemProviderCapabilities2[FileSystemProviderCapabilities2["None"] = 0] = "None";
@@ -10489,30 +11198,37 @@ function hasReadWriteCapability(provider) {
   return !!(provider.capabilities & 2);
 }
 __name(hasReadWriteCapability, "hasReadWriteCapability");
+__name32(hasReadWriteCapability, "hasReadWriteCapability");
 function hasFileAppendCapability(provider) {
   return !!(provider.capabilities & 524288);
 }
 __name(hasFileAppendCapability, "hasFileAppendCapability");
+__name32(hasFileAppendCapability, "hasFileAppendCapability");
 function hasFileFolderCopyCapability(provider) {
   return !!(provider.capabilities & 8);
 }
 __name(hasFileFolderCopyCapability, "hasFileFolderCopyCapability");
+__name32(hasFileFolderCopyCapability, "hasFileFolderCopyCapability");
 function hasFileCloneCapability(provider) {
   return !!(provider.capabilities & 131072);
 }
 __name(hasFileCloneCapability, "hasFileCloneCapability");
+__name32(hasFileCloneCapability, "hasFileCloneCapability");
 function hasFileRealpathCapability(provider) {
   return !!(provider.capabilities & 262144);
 }
 __name(hasFileRealpathCapability, "hasFileRealpathCapability");
+__name32(hasFileRealpathCapability, "hasFileRealpathCapability");
 function hasOpenReadWriteCloseCapability(provider) {
   return !!(provider.capabilities & 4);
 }
 __name(hasOpenReadWriteCloseCapability, "hasOpenReadWriteCloseCapability");
+__name32(hasOpenReadWriteCloseCapability, "hasOpenReadWriteCloseCapability");
 function hasFileReadStreamCapability(provider) {
   return !!(provider.capabilities & 16);
 }
 __name(hasFileReadStreamCapability, "hasFileReadStreamCapability");
+__name32(hasFileReadStreamCapability, "hasFileReadStreamCapability");
 function hasFileAtomicReadCapability(provider) {
   if (!hasReadWriteCapability(provider)) {
     return false;
@@ -10520,6 +11236,7 @@ function hasFileAtomicReadCapability(provider) {
   return !!(provider.capabilities & 16384);
 }
 __name(hasFileAtomicReadCapability, "hasFileAtomicReadCapability");
+__name32(hasFileAtomicReadCapability, "hasFileAtomicReadCapability");
 function hasFileAtomicWriteCapability(provider) {
   if (!hasReadWriteCapability(provider)) {
     return false;
@@ -10527,14 +11244,17 @@ function hasFileAtomicWriteCapability(provider) {
   return !!(provider.capabilities & 32768);
 }
 __name(hasFileAtomicWriteCapability, "hasFileAtomicWriteCapability");
+__name32(hasFileAtomicWriteCapability, "hasFileAtomicWriteCapability");
 function hasFileAtomicDeleteCapability(provider) {
   return !!(provider.capabilities & 65536);
 }
 __name(hasFileAtomicDeleteCapability, "hasFileAtomicDeleteCapability");
+__name32(hasFileAtomicDeleteCapability, "hasFileAtomicDeleteCapability");
 function hasReadonlyCapability(provider) {
   return !!(provider.capabilities & 2048);
 }
 __name(hasReadonlyCapability, "hasReadonlyCapability");
+__name32(hasReadonlyCapability, "hasReadonlyCapability");
 var FileSystemProviderErrorCode;
 (function(FileSystemProviderErrorCode2) {
   FileSystemProviderErrorCode2["FileExists"] = "EntryExists";
@@ -10552,6 +11272,9 @@ var FileSystemProviderError = class _FileSystemProviderError extends Error {
   static {
     __name(this, "FileSystemProviderError");
   }
+  static {
+    __name32(this, "FileSystemProviderError");
+  }
   static create(error, code) {
     const providerError = new _FileSystemProviderError(error.toString(), code);
     markAsFileSystemProviderError(providerError, code);
@@ -10566,6 +11289,7 @@ function createFileSystemProviderError(error, code) {
   return FileSystemProviderError.create(error, code);
 }
 __name(createFileSystemProviderError, "createFileSystemProviderError");
+__name32(createFileSystemProviderError, "createFileSystemProviderError");
 function ensureFileSystemProviderError(error) {
   if (!error) {
     return createFileSystemProviderError(localize("unknownError", "Unknown Error"), FileSystemProviderErrorCode.Unknown);
@@ -10573,11 +11297,13 @@ function ensureFileSystemProviderError(error) {
   return error;
 }
 __name(ensureFileSystemProviderError, "ensureFileSystemProviderError");
+__name32(ensureFileSystemProviderError, "ensureFileSystemProviderError");
 function markAsFileSystemProviderError(error, code) {
   error.name = code ? `${code} (FileSystemError)` : `FileSystemError`;
   return error;
 }
 __name(markAsFileSystemProviderError, "markAsFileSystemProviderError");
+__name32(markAsFileSystemProviderError, "markAsFileSystemProviderError");
 function toFileSystemProviderErrorCode(error) {
   if (!error) {
     return FileSystemProviderErrorCode.Unknown;
@@ -10610,6 +11336,7 @@ function toFileSystemProviderErrorCode(error) {
   return FileSystemProviderErrorCode.Unknown;
 }
 __name(toFileSystemProviderErrorCode, "toFileSystemProviderErrorCode");
+__name32(toFileSystemProviderErrorCode, "toFileSystemProviderErrorCode");
 function toFileOperationResult(error) {
   if (error instanceof FileOperationError) {
     return error.fileOperationResult;
@@ -10634,6 +11361,7 @@ function toFileOperationResult(error) {
   }
 }
 __name(toFileOperationResult, "toFileOperationResult");
+__name32(toFileOperationResult, "toFileOperationResult");
 var FileOperation;
 (function(FileOperation2) {
   FileOperation2[FileOperation2["CREATE"] = 0] = "CREATE";
@@ -10646,6 +11374,9 @@ var FileOperationEvent = class {
   static {
     __name(this, "FileOperationEvent");
   }
+  static {
+    __name32(this, "FileOperationEvent");
+  }
   constructor(resource, operation, target) {
     this.resource = resource;
     this.operation = operation;
@@ -10656,14 +11387,17 @@ var FileOperationEvent = class {
   }
 };
 var FileChangeType;
-(function(FileChangeType3) {
-  FileChangeType3[FileChangeType3["UPDATED"] = 0] = "UPDATED";
-  FileChangeType3[FileChangeType3["ADDED"] = 1] = "ADDED";
-  FileChangeType3[FileChangeType3["DELETED"] = 2] = "DELETED";
+(function(FileChangeType22) {
+  FileChangeType22[FileChangeType22["UPDATED"] = 0] = "UPDATED";
+  FileChangeType22[FileChangeType22["ADDED"] = 1] = "ADDED";
+  FileChangeType22[FileChangeType22["DELETED"] = 2] = "DELETED";
 })(FileChangeType || (FileChangeType = {}));
 var FileChangesEvent = class _FileChangesEvent {
   static {
     __name(this, "FileChangesEvent");
+  }
+  static {
+    __name32(this, "FileChangesEvent");
   }
   static {
     this.MIXED_CORRELATION = null;
@@ -10831,9 +11565,13 @@ function isParent(path, candidate, ignoreCase) {
   return path.indexOf(candidate) === 0;
 }
 __name(isParent, "isParent");
+__name32(isParent, "isParent");
 var FileOperationError = class extends Error {
   static {
     __name(this, "FileOperationError");
+  }
+  static {
+    __name32(this, "FileOperationError");
   }
   constructor(message, fileOperationResult, options) {
     super(message);
@@ -10845,6 +11583,9 @@ var TooLargeFileOperationError = class extends FileOperationError {
   static {
     __name(this, "TooLargeFileOperationError");
   }
+  static {
+    __name32(this, "TooLargeFileOperationError");
+  }
   constructor(message, fileOperationResult, size, options) {
     super(message, fileOperationResult, options);
     this.fileOperationResult = fileOperationResult;
@@ -10854,6 +11595,9 @@ var TooLargeFileOperationError = class extends FileOperationError {
 var NotModifiedSinceFileOperationError = class extends FileOperationError {
   static {
     __name(this, "NotModifiedSinceFileOperationError");
+  }
+  static {
+    __name32(this, "NotModifiedSinceFileOperationError");
   }
   constructor(message, stat, options) {
     super(message, 2, options);
@@ -10904,6 +11648,7 @@ function etag(stat) {
   return stat.mtime.toString(29) + stat.size.toString(31);
 }
 __name(etag, "etag");
+__name32(etag, "etag");
 async function whenProviderRegistered(file, fileService) {
   if (fileService.hasProvider(URI.from({ scheme: file.scheme }))) {
     return;
@@ -10918,9 +11663,13 @@ async function whenProviderRegistered(file, fileService) {
   });
 }
 __name(whenProviderRegistered, "whenProviderRegistered");
+__name32(whenProviderRegistered, "whenProviderRegistered");
 var ByteSize = class _ByteSize {
   static {
     __name(this, "ByteSize");
+  }
+  static {
+    __name32(this, "ByteSize");
   }
   static {
     this.KB = 1024;
@@ -10968,8 +11717,11 @@ function getLargeFileConfirmationLimit(arg) {
   return 1024 * ByteSize.MB;
 }
 __name(getLargeFileConfirmationLimit, "getLargeFileConfirmationLimit");
+__name32(getLargeFileConfirmationLimit, "getLargeFileConfirmationLimit");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/platform/remote/common/remoteAuthorityResolver.js
+// ../Output/Target/Microsoft/VSCode/vs/platform/remote/common/remoteAuthorityResolver.js
+var __defProp33 = Object.defineProperty;
+var __name33 = /* @__PURE__ */ __name((target, value) => __defProp33(target, "name", { value, configurable: true }), "__name");
 var IRemoteAuthorityResolverService = createDecorator("remoteAuthorityResolverService");
 var RemoteConnectionType;
 (function(RemoteConnectionType2) {
@@ -10979,6 +11731,9 @@ var RemoteConnectionType;
 var ManagedRemoteConnection = class {
   static {
     __name(this, "ManagedRemoteConnection");
+  }
+  static {
+    __name33(this, "ManagedRemoteConnection");
   }
   constructor(id2) {
     this.id = id2;
@@ -10991,6 +11746,9 @@ var ManagedRemoteConnection = class {
 var WebSocketRemoteConnection = class {
   static {
     __name(this, "WebSocketRemoteConnection");
+  }
+  static {
+    __name33(this, "WebSocketRemoteConnection");
   }
   constructor(host, port) {
     this.host = host;
@@ -11012,6 +11770,9 @@ var RemoteAuthorityResolverErrorCode;
 var RemoteAuthorityResolverError = class _RemoteAuthorityResolverError extends ErrorNoTelemetry {
   static {
     __name(this, "RemoteAuthorityResolverError");
+  }
+  static {
+    __name33(this, "RemoteAuthorityResolverError");
   }
   static isNotAvailable(err) {
     return err instanceof _RemoteAuthorityResolverError && err._code === RemoteAuthorityResolverErrorCode.NotAvailable;
@@ -11045,11 +11806,14 @@ function getRemoteAuthorityPrefix(remoteAuthority) {
   return remoteAuthority.substring(0, plusIndex);
 }
 __name(getRemoteAuthorityPrefix, "getRemoteAuthorityPrefix");
+__name33(getRemoteAuthorityPrefix, "getRemoteAuthorityPrefix");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/es5ClassCompat.js
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/es5ClassCompat.js
+var __defProp34 = Object.defineProperty;
+var __name34 = /* @__PURE__ */ __name((target, value) => __defProp34(target, "name", { value, configurable: true }), "__name");
 function es5ClassCompat(target) {
   const interceptFunctions = {
-    apply: /* @__PURE__ */ __name(function(...args) {
+    apply: /* @__PURE__ */ __name34(function(...args) {
       if (args.length === 0) {
         return Reflect.construct(target, []);
       } else {
@@ -11057,7 +11821,7 @@ function es5ClassCompat(target) {
         return Reflect.construct(target, argsList, args[0].constructor);
       }
     }, "apply"),
-    call: /* @__PURE__ */ __name(function(...args) {
+    call: /* @__PURE__ */ __name34(function(...args) {
       if (args.length === 0) {
         return Reflect.construct(target, []);
       } else {
@@ -11069,8 +11833,11 @@ function es5ClassCompat(target) {
   return Object.assign(target, interceptFunctions);
 }
 __name(es5ClassCompat, "es5ClassCompat");
+__name34(es5ClassCompat, "es5ClassCompat");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/naturalLanguage/korean.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/naturalLanguage/korean.js
+var __defProp35 = Object.defineProperty;
+var __name35 = /* @__PURE__ */ __name((target, value) => __defProp35(target, "name", { value, configurable: true }), "__name");
 function getKoreanAltChars(code) {
   const result = disassembleKorean(code);
   if (result && result.length > 0) {
@@ -11079,6 +11846,7 @@ function getKoreanAltChars(code) {
   return void 0;
 }
 __name(getKoreanAltChars, "getKoreanAltChars");
+__name35(getKoreanAltChars, "getKoreanAltChars");
 var codeBufferLength = 0;
 var codeBuffer = new Uint32Array(10);
 function disassembleKorean(code) {
@@ -11164,12 +11932,14 @@ function disassembleKorean(code) {
   return void 0;
 }
 __name(disassembleKorean, "disassembleKorean");
+__name35(disassembleKorean, "disassembleKorean");
 function getCodesFromArray(code, array, arrayStartIndex) {
   if (code >= arrayStartIndex && code < arrayStartIndex + array.length) {
     addCodesToBuffer(array[code - arrayStartIndex]);
   }
 }
 __name(getCodesFromArray, "getCodesFromArray");
+__name35(getCodesFromArray, "getCodesFromArray");
 function addCodesToBuffer(codes) {
   if (codes === 0) {
     return;
@@ -11183,6 +11953,7 @@ function addCodesToBuffer(codes) {
   }
 }
 __name(addCodesToBuffer, "addCodesToBuffer");
+__name35(addCodesToBuffer, "addCodesToBuffer");
 var HangulRangeStartCode;
 (function(HangulRangeStartCode2) {
   HangulRangeStartCode2[HangulRangeStartCode2["InitialConsonant"] = 4352] = "InitialConsonant";
@@ -11554,17 +12325,21 @@ var compatibilityJamo = new Uint16Array([
   // ㆎ
 ]);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/normalization.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/normalization.js
+var __defProp36 = Object.defineProperty;
+var __name36 = /* @__PURE__ */ __name((target, value) => __defProp36(target, "name", { value, configurable: true }), "__name");
 var nfcCache = new LRUCache(1e4);
 function normalizeNFC(str) {
   return normalize2(str, "NFC", nfcCache);
 }
 __name(normalizeNFC, "normalizeNFC");
+__name36(normalizeNFC, "normalizeNFC");
 var nfdCache = new LRUCache(1e4);
 function normalizeNFD(str) {
   return normalize2(str, "NFD", nfdCache);
 }
 __name(normalizeNFD, "normalizeNFD");
+__name36(normalizeNFD, "normalizeNFD");
 var nonAsciiCharactersPattern = /[^\u0000-\u0080]/;
 function normalize2(str, form, normalizedCache) {
   if (!str) {
@@ -11584,6 +12359,7 @@ function normalize2(str, form, normalizedCache) {
   return res;
 }
 __name(normalize2, "normalize");
+__name36(normalize2, "normalize");
 var tryNormalizeToBase = (function() {
   const cache = new LRUCache(1e4);
   const accentsRegex = /[\u0300-\u036f]/g;
@@ -11599,7 +12375,9 @@ var tryNormalizeToBase = (function() {
   };
 })();
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/filters.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/filters.js
+var __defProp37 = Object.defineProperty;
+var __name37 = /* @__PURE__ */ __name((target, value) => __defProp37(target, "name", { value, configurable: true }), "__name");
 function or(...filter) {
   return function(word, wordToMatchAgainst) {
     for (let i = 0, len = filter.length; i < len; i++) {
@@ -11612,6 +12390,7 @@ function or(...filter) {
   };
 }
 __name(or, "or");
+__name37(or, "or");
 var matchesStrictPrefix = _matchesPrefix.bind(void 0, false);
 var matchesPrefix = _matchesPrefix.bind(void 0, true);
 function _matchesPrefix(ignoreCase, word, wordToMatchAgainst) {
@@ -11630,6 +12409,7 @@ function _matchesPrefix(ignoreCase, word, wordToMatchAgainst) {
   return word.length > 0 ? [{ start: 0, end: word.length }] : [];
 }
 __name(_matchesPrefix, "_matchesPrefix");
+__name37(_matchesPrefix, "_matchesPrefix");
 function matchesContiguousSubString(word, wordToMatchAgainst) {
   if (word.length > wordToMatchAgainst.length) {
     return null;
@@ -11641,6 +12421,7 @@ function matchesContiguousSubString(word, wordToMatchAgainst) {
   return [{ start: index2, end: index2 + word.length }];
 }
 __name(matchesContiguousSubString, "matchesContiguousSubString");
+__name37(matchesContiguousSubString, "matchesContiguousSubString");
 function matchesBaseContiguousSubString(word, wordToMatchAgainst) {
   if (word.length > wordToMatchAgainst.length) {
     return null;
@@ -11654,6 +12435,7 @@ function matchesBaseContiguousSubString(word, wordToMatchAgainst) {
   return [{ start: index2, end: index2 + word.length }];
 }
 __name(matchesBaseContiguousSubString, "matchesBaseContiguousSubString");
+__name37(matchesBaseContiguousSubString, "matchesBaseContiguousSubString");
 function matchesSubString(word, wordToMatchAgainst) {
   if (word.length > wordToMatchAgainst.length) {
     return null;
@@ -11661,6 +12443,7 @@ function matchesSubString(word, wordToMatchAgainst) {
   return _matchesSubString(word.toLowerCase(), wordToMatchAgainst.toLowerCase(), 0, 0);
 }
 __name(matchesSubString, "matchesSubString");
+__name37(matchesSubString, "matchesSubString");
 function _matchesSubString(word, wordToMatchAgainst, i, j) {
   if (i === word.length) {
     return [];
@@ -11678,32 +12461,39 @@ function _matchesSubString(word, wordToMatchAgainst, i, j) {
   }
 }
 __name(_matchesSubString, "_matchesSubString");
+__name37(_matchesSubString, "_matchesSubString");
 function isLower(code) {
   return 97 <= code && code <= 122;
 }
 __name(isLower, "isLower");
+__name37(isLower, "isLower");
 function isUpper(code) {
   return 65 <= code && code <= 90;
 }
 __name(isUpper, "isUpper");
+__name37(isUpper, "isUpper");
 function isNumber2(code) {
   return 48 <= code && code <= 57;
 }
 __name(isNumber2, "isNumber");
+__name37(isNumber2, "isNumber");
 function isWhitespace(code) {
   return code === 32 || code === 9 || code === 10 || code === 13;
 }
 __name(isWhitespace, "isWhitespace");
+__name37(isWhitespace, "isWhitespace");
 var wordSeparators = /* @__PURE__ */ new Set();
 "()[]{}<>`'\"-/;:,.?!".split("").forEach((s) => wordSeparators.add(s.charCodeAt(0)));
 function isWordSeparator(code) {
   return isWhitespace(code) || wordSeparators.has(code);
 }
 __name(isWordSeparator, "isWordSeparator");
+__name37(isWordSeparator, "isWordSeparator");
 function charactersMatch(codeA, codeB) {
   return codeA === codeB || isWordSeparator(codeA) && isWordSeparator(codeB);
 }
 __name(charactersMatch, "charactersMatch");
+__name37(charactersMatch, "charactersMatch");
 var alternateCharsCache = /* @__PURE__ */ new Map();
 function getAlternateCodes(code) {
   if (alternateCharsCache.has(code)) {
@@ -11718,10 +12508,12 @@ function getAlternateCodes(code) {
   return result;
 }
 __name(getAlternateCodes, "getAlternateCodes");
+__name37(getAlternateCodes, "getAlternateCodes");
 function isAlphanumeric(code) {
   return isLower(code) || isUpper(code) || isNumber2(code);
 }
 __name(isAlphanumeric, "isAlphanumeric");
+__name37(isAlphanumeric, "isAlphanumeric");
 function join2(head, tail2) {
   if (tail2.length === 0) {
     tail2 = [head];
@@ -11733,6 +12525,7 @@ function join2(head, tail2) {
   return tail2;
 }
 __name(join2, "join");
+__name37(join2, "join");
 function nextAnchor(camelCaseWord, start) {
   for (let i = start; i < camelCaseWord.length; i++) {
     const c = camelCaseWord.charCodeAt(i);
@@ -11743,6 +12536,7 @@ function nextAnchor(camelCaseWord, start) {
   return camelCaseWord.length;
 }
 __name(nextAnchor, "nextAnchor");
+__name37(nextAnchor, "nextAnchor");
 function _matchesCamelCase(word, camelCaseWord, i, j) {
   if (i === word.length) {
     return [];
@@ -11762,6 +12556,7 @@ function _matchesCamelCase(word, camelCaseWord, i, j) {
   }
 }
 __name(_matchesCamelCase, "_matchesCamelCase");
+__name37(_matchesCamelCase, "_matchesCamelCase");
 function analyzeCamelCaseWord(word) {
   let upper = 0, lower = 0, alpha = 0, numeric = 0, code = 0;
   for (let i = 0; i < word.length; i++) {
@@ -11786,16 +12581,19 @@ function analyzeCamelCaseWord(word) {
   return { upperPercent, lowerPercent, alphaPercent, numericPercent };
 }
 __name(analyzeCamelCaseWord, "analyzeCamelCaseWord");
+__name37(analyzeCamelCaseWord, "analyzeCamelCaseWord");
 function isUpperCaseWord(analysis) {
   const { upperPercent, lowerPercent } = analysis;
   return lowerPercent === 0 && upperPercent > 0.6;
 }
 __name(isUpperCaseWord, "isUpperCaseWord");
+__name37(isUpperCaseWord, "isUpperCaseWord");
 function isCamelCaseWord(analysis) {
   const { upperPercent, lowerPercent, alphaPercent, numericPercent } = analysis;
   return lowerPercent > 0.2 && upperPercent < 0.8 && alphaPercent > 0.6 && numericPercent < 0.2;
 }
 __name(isCamelCaseWord, "isCamelCaseWord");
+__name37(isCamelCaseWord, "isCamelCaseWord");
 function isCamelCasePattern(word) {
   let upper = 0, lower = 0, code = 0, whitespace = 0;
   for (let i = 0; i < word.length; i++) {
@@ -11817,6 +12615,7 @@ function isCamelCasePattern(word) {
   }
 }
 __name(isCamelCasePattern, "isCamelCasePattern");
+__name37(isCamelCasePattern, "isCamelCasePattern");
 function matchesCamelCase(word, camelCaseWord) {
   if (!camelCaseWord) {
     return null;
@@ -11847,6 +12646,7 @@ function matchesCamelCase(word, camelCaseWord) {
   return result;
 }
 __name(matchesCamelCase, "matchesCamelCase");
+__name37(matchesCamelCase, "matchesCamelCase");
 function matchesWords(word, target, contiguous = false) {
   if (!target || target.length === 0) {
     return null;
@@ -11865,6 +12665,7 @@ function matchesWords(word, target, contiguous = false) {
   return result;
 }
 __name(matchesWords, "matchesWords");
+__name37(matchesWords, "matchesWords");
 function _matchesWords(word, target, wordIndex, targetIndex, contiguous) {
   let targetIndexOffset = 0;
   if (wordIndex === word.length) {
@@ -11909,6 +12710,7 @@ function _matchesWords(word, target, wordIndex, targetIndex, contiguous) {
   return join2({ start: targetIndex, end: targetIndex + targetIndexOffset + 1 }, result);
 }
 __name(_matchesWords, "_matchesWords");
+__name37(_matchesWords, "_matchesWords");
 function nextWord(word, start) {
   for (let i = start; i < word.length; i++) {
     if (isWordSeparator(word.charCodeAt(i)) || i > 0 && isWordSeparator(word.charCodeAt(i - 1))) {
@@ -11918,6 +12720,7 @@ function nextWord(word, start) {
   return word.length;
 }
 __name(nextWord, "nextWord");
+__name37(nextWord, "nextWord");
 var fuzzyContiguousFilter = or(matchesPrefix, matchesCamelCase, matchesContiguousSubString);
 var fuzzySeparateFilter = or(matchesPrefix, matchesCamelCase, matchesSubString);
 var fuzzyRegExpCache = new LRUCache(1e4);
@@ -11937,11 +12740,13 @@ function matchesFuzzy(word, wordToMatchAgainst, enableSeparateSubstringMatching 
   return enableSeparateSubstringMatching ? fuzzySeparateFilter(word, wordToMatchAgainst) : fuzzyContiguousFilter(word, wordToMatchAgainst);
 }
 __name(matchesFuzzy, "matchesFuzzy");
+__name37(matchesFuzzy, "matchesFuzzy");
 function matchesFuzzy2(pattern, word) {
   const score = fuzzyScore(pattern, pattern.toLowerCase(), 0, word, word.toLowerCase(), 0, { firstMatchCanBeWeak: true, boostFullMatch: true });
   return score ? createMatches(score) : null;
 }
 __name(matchesFuzzy2, "matchesFuzzy2");
+__name37(matchesFuzzy2, "matchesFuzzy2");
 function anyScore(pattern, lowPattern, patternPos, word, lowWord, wordPos) {
   const max = Math.min(13, pattern.length);
   for (; patternPos < max; patternPos++) {
@@ -11953,6 +12758,7 @@ function anyScore(pattern, lowPattern, patternPos, word, lowWord, wordPos) {
   return [0, wordPos];
 }
 __name(anyScore, "anyScore");
+__name37(anyScore, "anyScore");
 function createMatches(score) {
   if (typeof score === "undefined") {
     return [];
@@ -11971,6 +12777,7 @@ function createMatches(score) {
   return res;
 }
 __name(createMatches, "createMatches");
+__name37(createMatches, "createMatches");
 var _maxLen = 128;
 function initTable() {
   const table = [];
@@ -11984,6 +12791,7 @@ function initTable() {
   return table;
 }
 __name(initTable, "initTable");
+__name37(initTable, "initTable");
 function initArr(maxLen) {
   const row = [];
   for (let i = 0; i <= maxLen; i++) {
@@ -11992,6 +12800,7 @@ function initArr(maxLen) {
   return row;
 }
 __name(initArr, "initArr");
+__name37(initArr, "initArr");
 var _minWordMatchPos = initArr(2 * _maxLen);
 var _maxWordMatchPos = initArr(2 * _maxLen);
 var _diag = initTable();
@@ -12006,6 +12815,7 @@ function printTable(table, pattern, patternLen, word, wordLen) {
     return s;
   }
   __name(pad, "pad");
+  __name37(pad, "pad");
   let ret = ` |   |${word.split("").map((c) => pad(c, 3)).join("|")}
 `;
   for (let i = 0; i <= patternLen; i++) {
@@ -12019,6 +12829,7 @@ function printTable(table, pattern, patternLen, word, wordLen) {
   return ret;
 }
 __name(printTable, "printTable");
+__name37(printTable, "printTable");
 function printTables(pattern, patternStart, word, wordStart) {
   pattern = pattern.substr(patternStart);
   word = word.substr(wordStart);
@@ -12027,6 +12838,7 @@ function printTables(pattern, patternStart, word, wordStart) {
   console.log(printTable(_diag, pattern, pattern.length, word, word.length));
 }
 __name(printTables, "printTables");
+__name37(printTables, "printTables");
 function isSeparatorAtPos(value, index2) {
   if (index2 < 0 || index2 >= value.length) {
     return false;
@@ -12062,6 +12874,7 @@ function isSeparatorAtPos(value, index2) {
   }
 }
 __name(isSeparatorAtPos, "isSeparatorAtPos");
+__name37(isSeparatorAtPos, "isSeparatorAtPos");
 function isWhitespaceAtPos(value, index2) {
   if (index2 < 0 || index2 >= value.length) {
     return false;
@@ -12076,10 +12889,12 @@ function isWhitespaceAtPos(value, index2) {
   }
 }
 __name(isWhitespaceAtPos, "isWhitespaceAtPos");
+__name37(isWhitespaceAtPos, "isWhitespaceAtPos");
 function isUpperCaseAtPos(pos, word, wordLow) {
   return word[pos] !== wordLow[pos];
 }
 __name(isUpperCaseAtPos, "isUpperCaseAtPos");
+__name37(isUpperCaseAtPos, "isUpperCaseAtPos");
 function isPatternInWord(patternLow, patternPos, patternLen, wordLow, wordPos, wordLen, fillMinWordPosArr = false) {
   while (patternPos < patternLen && wordPos < wordLen) {
     if (patternLow[patternPos] === wordLow[wordPos]) {
@@ -12093,6 +12908,7 @@ function isPatternInWord(patternLow, patternPos, patternLen, wordLow, wordPos, w
   return patternPos === patternLen;
 }
 __name(isPatternInWord, "isPatternInWord");
+__name37(isPatternInWord, "isPatternInWord");
 var Arrow;
 (function(Arrow2) {
   Arrow2[Arrow2["Diag"] = 1] = "Diag";
@@ -12106,11 +12922,15 @@ var FuzzyScore;
     return !score || score.length === 2 && score[0] === -100 && score[1] === 0;
   }
   __name(isDefault, "isDefault");
+  __name37(isDefault, "isDefault");
   FuzzyScore2.isDefault = isDefault;
 })(FuzzyScore || (FuzzyScore = {}));
 var FuzzyScoreOptions = class {
   static {
     __name(this, "FuzzyScoreOptions");
+  }
+  static {
+    __name37(this, "FuzzyScoreOptions");
   }
   static {
     this.default = { boostFullMatch: true, firstMatchCanBeWeak: false };
@@ -12217,6 +13037,7 @@ function fuzzyScore(pattern, patternLow, patternStart, word, wordLow, wordStart,
   return result;
 }
 __name(fuzzyScore, "fuzzyScore");
+__name37(fuzzyScore, "fuzzyScore");
 function _fillInMaxWordMatchPos(patternLen, wordLen, patternStart, wordStart, patternLow, wordLow) {
   let patternPos = patternLen - 1;
   let wordPos = wordLen - 1;
@@ -12229,6 +13050,7 @@ function _fillInMaxWordMatchPos(patternLen, wordLen, patternStart, wordStart, pa
   }
 }
 __name(_fillInMaxWordMatchPos, "_fillInMaxWordMatchPos");
+__name37(_fillInMaxWordMatchPos, "_fillInMaxWordMatchPos");
 function _doScore(pattern, patternLow, patternPos, patternStart, word, wordLow, wordPos, wordLen, wordStart, newMatchStart, outFirstMatchStrong) {
   if (patternLow[patternPos] !== wordLow[wordPos]) {
     return Number.MIN_SAFE_INTEGER;
@@ -12269,14 +13091,17 @@ function _doScore(pattern, patternLow, patternPos, patternStart, word, wordLow, 
   return score;
 }
 __name(_doScore, "_doScore");
+__name37(_doScore, "_doScore");
 function fuzzyScoreGracefulAggressive(pattern, lowPattern, patternPos, word, lowWord, wordPos, options) {
   return fuzzyScoreWithPermutations(pattern, lowPattern, patternPos, word, lowWord, wordPos, true, options);
 }
 __name(fuzzyScoreGracefulAggressive, "fuzzyScoreGracefulAggressive");
+__name37(fuzzyScoreGracefulAggressive, "fuzzyScoreGracefulAggressive");
 function fuzzyScoreGraceful(pattern, lowPattern, patternPos, word, lowWord, wordPos, options) {
   return fuzzyScoreWithPermutations(pattern, lowPattern, patternPos, word, lowWord, wordPos, false, options);
 }
 __name(fuzzyScoreGraceful, "fuzzyScoreGraceful");
+__name37(fuzzyScoreGraceful, "fuzzyScoreGraceful");
 function fuzzyScoreWithPermutations(pattern, lowPattern, patternPos, word, lowWord, wordPos, aggressive, options) {
   let top2 = fuzzyScore(pattern, lowPattern, patternPos, word, lowWord, wordPos, options);
   if (top2 && !aggressive) {
@@ -12300,6 +13125,7 @@ function fuzzyScoreWithPermutations(pattern, lowPattern, patternPos, word, lowWo
   return top2;
 }
 __name(fuzzyScoreWithPermutations, "fuzzyScoreWithPermutations");
+__name37(fuzzyScoreWithPermutations, "fuzzyScoreWithPermutations");
 function nextTypoPermutation(pattern, patternPos) {
   if (patternPos + 1 >= pattern.length) {
     return void 0;
@@ -12312,8 +13138,11 @@ function nextTypoPermutation(pattern, patternPos) {
   return pattern.slice(0, patternPos) + swap2 + swap1 + pattern.slice(patternPos + 2);
 }
 __name(nextTypoPermutation, "nextTypoPermutation");
+__name37(nextTypoPermutation, "nextTypoPermutation");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/codiconsUtil.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/codiconsUtil.js
+var __defProp38 = Object.defineProperty;
+var __name38 = /* @__PURE__ */ __name((target, value) => __defProp38(target, "name", { value, configurable: true }), "__name");
 var _codiconFontCharacters = /* @__PURE__ */ Object.create(null);
 function register(id2, fontCharacter) {
   if (isString(fontCharacter)) {
@@ -12327,12 +13156,14 @@ function register(id2, fontCharacter) {
   return { id: id2 };
 }
 __name(register, "register");
+__name38(register, "register");
 function getCodiconFontCharacters() {
   return _codiconFontCharacters;
 }
 __name(getCodiconFontCharacters, "getCodiconFontCharacters");
+__name38(getCodiconFontCharacters, "getCodiconFontCharacters");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/codiconsLibrary.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/codiconsLibrary.js
 var codiconsLibrary = {
   add: register("add", 6e4),
   plus: register("plus", 6e4),
@@ -12984,11 +13815,14 @@ var codiconsLibrary = {
   terminalSecure: register("terminal-secure", 60549)
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/codicons.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/codicons.js
+var __defProp39 = Object.defineProperty;
+var __name39 = /* @__PURE__ */ __name((target, value) => __defProp39(target, "name", { value, configurable: true }), "__name");
 function getAllCodicons() {
   return Object.values(Codicon);
 }
 __name(getAllCodicons, "getAllCodicons");
+__name39(getAllCodicons, "getAllCodicons");
 var codiconsDerived = {
   dialogError: register("dialog-error", "error"),
   dialogWarning: register("dialog-warning", "warning"),
@@ -13027,26 +13861,30 @@ var Codicon = {
   ...codiconsDerived
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/themables.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/themables.js
+var __defProp40 = Object.defineProperty;
+var __name40 = /* @__PURE__ */ __name((target, value) => __defProp40(target, "name", { value, configurable: true }), "__name");
 var ThemeColor;
-(function(ThemeColor4) {
+(function(ThemeColor23) {
   function isThemeColor(obj) {
     return !!obj && typeof obj === "object" && typeof obj.id === "string";
   }
   __name(isThemeColor, "isThemeColor");
-  ThemeColor4.isThemeColor = isThemeColor;
+  __name40(isThemeColor, "isThemeColor");
+  ThemeColor23.isThemeColor = isThemeColor;
 })(ThemeColor || (ThemeColor = {}));
 function themeColorFromId(id2) {
   return { id: id2 };
 }
 __name(themeColorFromId, "themeColorFromId");
+__name40(themeColorFromId, "themeColorFromId");
 var ThemeIcon;
-(function(ThemeIcon4) {
-  ThemeIcon4.iconNameSegment = "[A-Za-z0-9]+";
-  ThemeIcon4.iconNameExpression = "[A-Za-z0-9-]+";
-  ThemeIcon4.iconModifierExpression = "~[A-Za-z]+";
-  ThemeIcon4.iconNameCharacter = "[A-Za-z0-9~-]";
-  const ThemeIconIdRegex = new RegExp(`^(${ThemeIcon4.iconNameExpression})(${ThemeIcon4.iconModifierExpression})?$`);
+(function(ThemeIcon23) {
+  ThemeIcon23.iconNameSegment = "[A-Za-z0-9]+";
+  ThemeIcon23.iconNameExpression = "[A-Za-z0-9-]+";
+  ThemeIcon23.iconModifierExpression = "~[A-Za-z]+";
+  ThemeIcon23.iconNameCharacter = "[A-Za-z0-9~-]";
+  const ThemeIconIdRegex = new RegExp(`^(${ThemeIcon23.iconNameExpression})(${ThemeIcon23.iconModifierExpression})?$`);
   function asClassNameArray(icon) {
     const match = ThemeIconIdRegex.exec(icon.id);
     if (!match) {
@@ -13060,23 +13898,27 @@ var ThemeIcon;
     return classNames;
   }
   __name(asClassNameArray, "asClassNameArray");
-  ThemeIcon4.asClassNameArray = asClassNameArray;
+  __name40(asClassNameArray, "asClassNameArray");
+  ThemeIcon23.asClassNameArray = asClassNameArray;
   function asClassName(icon) {
     return asClassNameArray(icon).join(" ");
   }
   __name(asClassName, "asClassName");
-  ThemeIcon4.asClassName = asClassName;
+  __name40(asClassName, "asClassName");
+  ThemeIcon23.asClassName = asClassName;
   function asCSSSelector(icon) {
     return "." + asClassNameArray(icon).join(".");
   }
   __name(asCSSSelector, "asCSSSelector");
-  ThemeIcon4.asCSSSelector = asCSSSelector;
+  __name40(asCSSSelector, "asCSSSelector");
+  ThemeIcon23.asCSSSelector = asCSSSelector;
   function isThemeIcon(obj) {
     return !!obj && typeof obj === "object" && typeof obj.id === "string" && (typeof obj.color === "undefined" || ThemeColor.isThemeColor(obj.color));
   }
   __name(isThemeIcon, "isThemeIcon");
-  ThemeIcon4.isThemeIcon = isThemeIcon;
-  const _regexFromString = new RegExp(`^\\$\\((${ThemeIcon4.iconNameExpression}(?:${ThemeIcon4.iconModifierExpression})?)\\)$`);
+  __name40(isThemeIcon, "isThemeIcon");
+  ThemeIcon23.isThemeIcon = isThemeIcon;
+  const _regexFromString = new RegExp(`^\\$\\((${ThemeIcon23.iconNameExpression}(?:${ThemeIcon23.iconModifierExpression})?)\\)$`);
   function fromString(str) {
     const match = _regexFromString.exec(str);
     if (!match) {
@@ -13086,12 +13928,14 @@ var ThemeIcon;
     return { id: name };
   }
   __name(fromString, "fromString");
-  ThemeIcon4.fromString = fromString;
+  __name40(fromString, "fromString");
+  ThemeIcon23.fromString = fromString;
   function fromId(id2) {
     return { id: id2 };
   }
   __name(fromId, "fromId");
-  ThemeIcon4.fromId = fromId;
+  __name40(fromId, "fromId");
+  ThemeIcon23.fromId = fromId;
   function modify(icon, modifier) {
     let id2 = icon.id;
     const tildeIndex = id2.lastIndexOf("~");
@@ -13104,7 +13948,8 @@ var ThemeIcon;
     return { id: id2 };
   }
   __name(modify, "modify");
-  ThemeIcon4.modify = modify;
+  __name40(modify, "modify");
+  ThemeIcon23.modify = modify;
   function getModifier(icon) {
     const tildeIndex = icon.id.lastIndexOf("~");
     if (tildeIndex !== -1) {
@@ -13113,25 +13958,31 @@ var ThemeIcon;
     return void 0;
   }
   __name(getModifier, "getModifier");
-  ThemeIcon4.getModifier = getModifier;
+  __name40(getModifier, "getModifier");
+  ThemeIcon23.getModifier = getModifier;
   function isEqual3(ti1, ti2) {
     return ti1.id === ti2.id && ti1.color?.id === ti2.color?.id;
   }
   __name(isEqual3, "isEqual");
-  ThemeIcon4.isEqual = isEqual3;
+  __name40(isEqual3, "isEqual");
+  ThemeIcon23.isEqual = isEqual3;
   function isFile(icon) {
     return icon?.id === Codicon.file.id;
   }
   __name(isFile, "isFile");
-  ThemeIcon4.isFile = isFile;
+  __name40(isFile, "isFile");
+  ThemeIcon23.isFile = isFile;
   function isFolder(icon) {
     return icon?.id === Codicon.folder.id;
   }
   __name(isFolder, "isFolder");
-  ThemeIcon4.isFolder = isFolder;
+  __name40(isFolder, "isFolder");
+  ThemeIcon23.isFolder = isFolder;
 })(ThemeIcon || (ThemeIcon = {}));
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/iconLabels.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/iconLabels.js
+var __defProp41 = Object.defineProperty;
+var __name41 = /* @__PURE__ */ __name((target, value) => __defProp41(target, "name", { value, configurable: true }), "__name");
 var iconStartMarker = "$(";
 var iconsRegex = new RegExp(`\\$\\(${ThemeIcon.iconNameExpression}(?:${ThemeIcon.iconModifierExpression})?\\)`, "g");
 var escapeIconsRegex = new RegExp(`(\\\\)?${iconsRegex.source}`, "g");
@@ -13139,11 +13990,13 @@ function escapeIcons(text) {
   return text.replace(escapeIconsRegex, (match, escaped) => escaped ? match : `\\${match}`);
 }
 __name(escapeIcons, "escapeIcons");
+__name41(escapeIcons, "escapeIcons");
 var markdownEscapedIconsRegex = new RegExp(`\\\\${iconsRegex.source}`, "g");
 function markdownEscapeEscapedIcons(text) {
   return text.replace(markdownEscapedIconsRegex, (match) => `\\${match}`);
 }
 __name(markdownEscapeEscapedIcons, "markdownEscapeEscapedIcons");
+__name41(markdownEscapeEscapedIcons, "markdownEscapeEscapedIcons");
 var stripIconsRegex = new RegExp(`(\\s)?(\\\\)?${iconsRegex.source}(\\s)?`, "g");
 function stripIcons(text) {
   if (text.indexOf(iconStartMarker) === -1) {
@@ -13152,6 +14005,7 @@ function stripIcons(text) {
   return text.replace(stripIconsRegex, (match, preWhitespace, escaped, postWhitespace) => escaped ? match : preWhitespace || postWhitespace || "");
 }
 __name(stripIcons, "stripIcons");
+__name41(stripIcons, "stripIcons");
 function getCodiconAriaLabel(text) {
   if (!text) {
     return "";
@@ -13159,6 +14013,7 @@ function getCodiconAriaLabel(text) {
   return text.replace(/\$\((.*?)\)/g, (_match, codiconName) => ` ${codiconName} `).trim();
 }
 __name(getCodiconAriaLabel, "getCodiconAriaLabel");
+__name41(getCodiconAriaLabel, "getCodiconAriaLabel");
 var _parseIconsRegex = new RegExp(`\\$\\(${ThemeIcon.iconNameCharacter}+\\)`, "g");
 function parseLabelWithIcons(input) {
   _parseIconsRegex.lastIndex = 0;
@@ -13183,6 +14038,7 @@ function parseLabelWithIcons(input) {
   return { text, iconOffsets };
 }
 __name(parseLabelWithIcons, "parseLabelWithIcons");
+__name41(parseLabelWithIcons, "parseLabelWithIcons");
 function matchesFuzzyIconAware(query, target, enableSeparateSubstringMatching = false) {
   const { text, iconOffsets } = target;
   if (!iconOffsets || iconOffsets.length === 0) {
@@ -13201,16 +14057,21 @@ function matchesFuzzyIconAware(query, target, enableSeparateSubstringMatching = 
   return matches;
 }
 __name(matchesFuzzyIconAware, "matchesFuzzyIconAware");
+__name41(matchesFuzzyIconAware, "matchesFuzzyIconAware");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/extpath.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/extpath.js
+var __defProp42 = Object.defineProperty;
+var __name42 = /* @__PURE__ */ __name((target, value) => __defProp42(target, "name", { value, configurable: true }), "__name");
 function isPathSeparator2(code) {
   return code === 47 || code === 92;
 }
 __name(isPathSeparator2, "isPathSeparator");
+__name42(isPathSeparator2, "isPathSeparator");
 function toSlashes(osPath) {
   return osPath.replace(/[\\/]/g, posix.sep);
 }
 __name(toSlashes, "toSlashes");
+__name42(toSlashes, "toSlashes");
 function toPosixPath(osPath) {
   if (osPath.indexOf("/") === -1) {
     osPath = toSlashes(osPath);
@@ -13221,6 +14082,7 @@ function toPosixPath(osPath) {
   return osPath;
 }
 __name(toPosixPath, "toPosixPath");
+__name42(toPosixPath, "toPosixPath");
 function getRoot(path, sep2 = posix.sep) {
   if (!path) {
     return "";
@@ -13269,6 +14131,7 @@ function getRoot(path, sep2 = posix.sep) {
   return "";
 }
 __name(getRoot, "getRoot");
+__name42(getRoot, "getRoot");
 function isUNC(path) {
   if (!isWindows) {
     return false;
@@ -13302,6 +14165,7 @@ function isUNC(path) {
   return true;
 }
 __name(isUNC, "isUNC");
+__name42(isUNC, "isUNC");
 var WINDOWS_INVALID_FILE_CHARS = /[\\/:\*\?"<>\|]/g;
 var UNIX_INVALID_FILE_CHARS = /[/]/g;
 var WINDOWS_FORBIDDEN_NAMES = /^(con|prn|aux|clock\$|nul|lpt[0-9]|com[0-9])(\.(.*?))?$/i;
@@ -13332,6 +14196,7 @@ function isValidBasename(name, isWindowsOS = isWindows) {
   return true;
 }
 __name(isValidBasename, "isValidBasename");
+__name42(isValidBasename, "isValidBasename");
 function isEqual(pathA, pathB, ignoreCase) {
   const identityEquals = pathA === pathB;
   if (!ignoreCase || identityEquals) {
@@ -13343,6 +14208,7 @@ function isEqual(pathA, pathB, ignoreCase) {
   return equalsIgnoreCase(pathA, pathB);
 }
 __name(isEqual, "isEqual");
+__name42(isEqual, "isEqual");
 function isEqualOrParent(base, parentCandidate, ignoreCase, separator = sep) {
   if (base === parentCandidate) {
     return true;
@@ -13373,10 +14239,12 @@ function isEqualOrParent(base, parentCandidate, ignoreCase, separator = sep) {
   return base.indexOf(parentCandidate) === 0;
 }
 __name(isEqualOrParent, "isEqualOrParent");
+__name42(isEqualOrParent, "isEqualOrParent");
 function isWindowsDriveLetter(char0) {
   return char0 >= 65 && char0 <= 90 || char0 >= 97 && char0 <= 122;
 }
 __name(isWindowsDriveLetter, "isWindowsDriveLetter");
+__name42(isWindowsDriveLetter, "isWindowsDriveLetter");
 function sanitizeFilePath(candidate, cwd2) {
   if (isWindows && candidate.endsWith(":")) {
     candidate += sep;
@@ -13388,6 +14256,7 @@ function sanitizeFilePath(candidate, cwd2) {
   return removeTrailingPathSeparator(candidate);
 }
 __name(sanitizeFilePath, "sanitizeFilePath");
+__name42(sanitizeFilePath, "sanitizeFilePath");
 function removeTrailingPathSeparator(candidate) {
   if (isWindows) {
     candidate = rtrim(candidate, sep);
@@ -13403,6 +14272,7 @@ function removeTrailingPathSeparator(candidate) {
   return candidate;
 }
 __name(removeTrailingPathSeparator, "removeTrailingPathSeparator");
+__name42(removeTrailingPathSeparator, "removeTrailingPathSeparator");
 function isRootOrDriveLetter(path) {
   const pathNormalized = normalize(path);
   if (isWindows) {
@@ -13414,6 +14284,7 @@ function isRootOrDriveLetter(path) {
   return pathNormalized === posix.sep;
 }
 __name(isRootOrDriveLetter, "isRootOrDriveLetter");
+__name42(isRootOrDriveLetter, "isRootOrDriveLetter");
 function hasDriveLetter(path, isWindowsOS = isWindows) {
   if (isWindowsOS) {
     return isWindowsDriveLetter(path.charCodeAt(0)) && path.charCodeAt(1) === 58;
@@ -13421,10 +14292,12 @@ function hasDriveLetter(path, isWindowsOS = isWindows) {
   return false;
 }
 __name(hasDriveLetter, "hasDriveLetter");
+__name42(hasDriveLetter, "hasDriveLetter");
 function getDriveLetter(path, isWindowsOS = isWindows) {
   return hasDriveLetter(path, isWindowsOS) ? path[0] : void 0;
 }
 __name(getDriveLetter, "getDriveLetter");
+__name42(getDriveLetter, "getDriveLetter");
 function indexOfPath(path, candidate, ignoreCase) {
   if (candidate.length > path.length) {
     return -1;
@@ -13439,6 +14312,7 @@ function indexOfPath(path, candidate, ignoreCase) {
   return path.indexOf(candidate);
 }
 __name(indexOfPath, "indexOfPath");
+__name42(indexOfPath, "indexOfPath");
 function parseLineAndColumnAware(rawPath) {
   const segments = rawPath.split(":");
   let path;
@@ -13465,6 +14339,7 @@ function parseLineAndColumnAware(rawPath) {
   };
 }
 __name(parseLineAndColumnAware, "parseLineAndColumnAware");
+__name42(parseLineAndColumnAware, "parseLineAndColumnAware");
 var pathChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 var windowsSafePathFirstChars = "BDEFGHIJKMOQRSTUVWXYZbdefghijkmoqrstuvwxyz0123456789";
 function randomPath(parent, prefix, randomLength = 8) {
@@ -13490,15 +14365,22 @@ function randomPath(parent, prefix, randomLength = 8) {
   return randomFileName;
 }
 __name(randomPath, "randomPath");
+__name42(randomPath, "randomPath");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/resources.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/resources.js
+var __defProp43 = Object.defineProperty;
+var __name43 = /* @__PURE__ */ __name((target, value) => __defProp43(target, "name", { value, configurable: true }), "__name");
 function originalFSPath(uri) {
   return uriToFsPath(uri, true);
 }
 __name(originalFSPath, "originalFSPath");
+__name43(originalFSPath, "originalFSPath");
 var ExtUri = class {
   static {
     __name(this, "ExtUri");
+  }
+  static {
+    __name43(this, "ExtUri");
   }
   constructor(_ignorePathCasing) {
     this._ignorePathCasing = _ignorePathCasing;
@@ -13555,18 +14437,18 @@ var ExtUri = class {
     if (resource.path.length === 0) {
       return resource;
     }
-    let dirname3;
+    let dirname22;
     if (resource.scheme === Schemas.file) {
-      dirname3 = URI.file(dirname(originalFSPath(resource))).path;
+      dirname22 = URI.file(dirname(originalFSPath(resource))).path;
     } else {
-      dirname3 = posix.dirname(resource.path);
-      if (resource.authority && dirname3.length && dirname3.charCodeAt(0) !== 47) {
+      dirname22 = posix.dirname(resource.path);
+      if (resource.authority && dirname22.length && dirname22.charCodeAt(0) !== 47) {
         console.error(`dirname("${resource.toString})) resulted in a relative path`);
-        dirname3 = "/";
+        dirname22 = "/";
       }
     }
     return resource.with({
-      path: dirname3
+      path: dirname22
     });
   }
   normalizePath(resource) {
@@ -13695,6 +14577,7 @@ function distinctParents(items, resourceAccessor) {
   return distinctParents2;
 }
 __name(distinctParents, "distinctParents");
+__name43(distinctParents, "distinctParents");
 var DataUri;
 (function(DataUri2) {
   DataUri2.META_DATA_LABEL = "label";
@@ -13717,6 +14600,7 @@ var DataUri;
     return metadata;
   }
   __name(parseMetaData, "parseMetaData");
+  __name43(parseMetaData, "parseMetaData");
   DataUri2.parseMetaData = parseMetaData;
 })(DataUri || (DataUri = {}));
 function toLocalResource(resource, authority, localScheme) {
@@ -13730,8 +14614,11 @@ function toLocalResource(resource, authority, localScheme) {
   return resource.with({ scheme: localScheme });
 }
 __name(toLocalResource, "toLocalResource");
+__name43(toLocalResource, "toLocalResource");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/htmlContent.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/htmlContent.js
+var __defProp44 = Object.defineProperty;
+var __name44 = /* @__PURE__ */ __name((target, value) => __defProp44(target, "name", { value, configurable: true }), "__name");
 var MarkdownStringTextNewlineStyle;
 (function(MarkdownStringTextNewlineStyle2) {
   MarkdownStringTextNewlineStyle2[MarkdownStringTextNewlineStyle2["Paragraph"] = 0] = "Paragraph";
@@ -13740,6 +14627,9 @@ var MarkdownStringTextNewlineStyle;
 var MarkdownString = class _MarkdownString {
   static {
     __name(this, "MarkdownString");
+  }
+  static {
+    __name44(this, "MarkdownString");
   }
   static lift(dto) {
     const markdownString = new _MarkdownString(dto.value, dto);
@@ -13810,6 +14700,7 @@ function isEmptyMarkdownString(oneOrMany) {
   }
 }
 __name(isEmptyMarkdownString, "isEmptyMarkdownString");
+__name44(isEmptyMarkdownString, "isEmptyMarkdownString");
 function isMarkdownString(thing) {
   if (thing instanceof MarkdownString) {
     return true;
@@ -13819,6 +14710,7 @@ function isMarkdownString(thing) {
   return false;
 }
 __name(isMarkdownString, "isMarkdownString");
+__name44(isMarkdownString, "isMarkdownString");
 function markdownStringEqual(a, b) {
   if (a === b) {
     return true;
@@ -13829,10 +14721,12 @@ function markdownStringEqual(a, b) {
   }
 }
 __name(markdownStringEqual, "markdownStringEqual");
+__name44(markdownStringEqual, "markdownStringEqual");
 function escapeMarkdownSyntaxTokens(text) {
   return text.replace(/[\\`*_{}[\]()#+\-!~]/g, "\\$&");
 }
 __name(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
+__name44(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
 function appendEscapedMarkdownCodeBlockFence(code, langId) {
   const longestFenceLength = code.match(/^`+/gm)?.reduce((a, b) => a.length > b.length ? a : b).length ?? 0;
   const desiredFenceLength = longestFenceLength >= 3 ? longestFenceLength + 1 : 3;
@@ -13843,6 +14737,7 @@ function appendEscapedMarkdownCodeBlockFence(code, langId) {
   ].join("\n");
 }
 __name(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
+__name44(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
 function appendEscapedMarkdownInlineCode(text) {
   const longestBacktickRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((m) => m.length));
   const fence = "`".repeat(longestBacktickRun + 1);
@@ -13851,10 +14746,12 @@ function appendEscapedMarkdownInlineCode(text) {
   return `${fence}${content}${fence}`;
 }
 __name(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
+__name44(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
 function escapeDoubleQuotes(input) {
   return input.replace(/"/g, "&quot;");
 }
 __name(escapeDoubleQuotes, "escapeDoubleQuotes");
+__name44(escapeDoubleQuotes, "escapeDoubleQuotes");
 function removeMarkdownEscapes(text) {
   if (!text) {
     return text;
@@ -13862,6 +14759,7 @@ function removeMarkdownEscapes(text) {
   return text.replace(/\\([\\`*_{}[\]()#+\-.!~])/g, "$1");
 }
 __name(removeMarkdownEscapes, "removeMarkdownEscapes");
+__name44(removeMarkdownEscapes, "removeMarkdownEscapes");
 function parseHrefAndDimensions(href) {
   const dimensions = [];
   const splitted = href.split("|").map((s) => s.trim());
@@ -13884,15 +14782,18 @@ function parseHrefAndDimensions(href) {
   return { href, dimensions };
 }
 __name(parseHrefAndDimensions, "parseHrefAndDimensions");
+__name44(parseHrefAndDimensions, "parseHrefAndDimensions");
 function createMarkdownLink(text, href, title, escapeTokens = true) {
   return `[${escapeTokens ? escapeMarkdownSyntaxTokens(text) : text}](${href}${title ? ` "${escapeMarkdownSyntaxTokens(title)}"` : ""})`;
 }
 __name(createMarkdownLink, "createMarkdownLink");
+__name44(createMarkdownLink, "createMarkdownLink");
 function createMarkdownCommandLink(command, escapeTokens = true) {
   const uri = createCommandUri(command.id, ...command.arguments || []).toString();
   return createMarkdownLink(command.text, uri, command.tooltip, escapeTokens);
 }
 __name(createMarkdownCommandLink, "createMarkdownCommandLink");
+__name44(createMarkdownCommandLink, "createMarkdownCommandLink");
 function createCommandUri(commandId, ...commandArgs) {
   return URI.from({
     scheme: Schemas.command,
@@ -13901,18 +14802,24 @@ function createCommandUri(commandId, ...commandArgs) {
   });
 }
 __name(createCommandUri, "createCommandUri");
+__name44(createCommandUri, "createCommandUri");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/markdownString.js
-var __decorate = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/markdownString.js
+var __defProp45 = Object.defineProperty;
+var __name45 = /* @__PURE__ */ __name((target, value) => __defProp45(target, "name", { value, configurable: true }), "__name");
+var __decorate = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var MarkdownString_1;
-var MarkdownString2 = MarkdownString_1 = class MarkdownString3 {
+var MarkdownString2 = MarkdownString_1 = class MarkdownString22 {
   static {
-    __name(this, "MarkdownString");
+    __name(this, "MarkdownString2");
+  }
+  static {
+    __name45(this, "MarkdownString");
   }
   #delegate;
   static isMarkdownString(thing) {
@@ -13980,17 +14887,22 @@ MarkdownString2 = MarkdownString_1 = __decorate([
   es5ClassCompat
 ], MarkdownString2);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/position.js
-var __decorate2 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/position.js
+var __defProp46 = Object.defineProperty;
+var __name46 = /* @__PURE__ */ __name((target, value) => __defProp46(target, "name", { value, configurable: true }), "__name");
+var __decorate2 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var Position_1;
 var Position = Position_1 = class Position2 {
   static {
-    __name(this, "Position");
+    __name(this, "Position2");
+  }
+  static {
+    __name46(this, "Position");
   }
   static Min(...positions) {
     if (positions.length === 0) {
@@ -14144,17 +15056,22 @@ Position = Position_1 = __decorate2([
   es5ClassCompat
 ], Position);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/range.js
-var __decorate3 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/range.js
+var __defProp47 = Object.defineProperty;
+var __name47 = /* @__PURE__ */ __name((target, value) => __defProp47(target, "name", { value, configurable: true }), "__name");
+var __decorate3 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var Range_1;
 var Range = Range_1 = class Range2 {
   static {
-    __name(this, "Range");
+    __name(this, "Range2");
+  }
+  static {
+    __name47(this, "Range");
   }
   static isRange(thing) {
     if (thing instanceof Range_1) {
@@ -14274,18 +15191,24 @@ function getDebugDescriptionOfRange(range2) {
   return range2.isEmpty ? `[${range2.start.line}:${range2.start.character})` : `[${range2.start.line}:${range2.start.character} -> ${range2.end.line}:${range2.end.character})`;
 }
 __name(getDebugDescriptionOfRange, "getDebugDescriptionOfRange");
+__name47(getDebugDescriptionOfRange, "getDebugDescriptionOfRange");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/codeActionKind.js
-var __decorate4 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/codeActionKind.js
+var __defProp48 = Object.defineProperty;
+var __name48 = /* @__PURE__ */ __name((target, value) => __defProp48(target, "name", { value, configurable: true }), "__name");
+var __decorate4 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var CodeActionKind_1;
 var CodeActionKind = class CodeActionKind2 {
   static {
-    __name(this, "CodeActionKind");
+    __name(this, "CodeActionKind2");
+  }
+  static {
+    __name48(this, "CodeActionKind");
   }
   static {
     CodeActionKind_1 = this;
@@ -14321,13 +15244,15 @@ CodeActionKind.SourceOrganizeImports = CodeActionKind.Source.append("organizeImp
 CodeActionKind.SourceFixAll = CodeActionKind.Source.append("fixAll");
 CodeActionKind.Notebook = CodeActionKind.Empty.append("notebook");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/diagnostic.js
-var __decorate5 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/diagnostic.js
+var __defProp49 = Object.defineProperty;
+var __name49 = /* @__PURE__ */ __name((target, value) => __defProp49(target, "name", { value, configurable: true }), "__name");
+var __decorate5 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var DiagnosticTag;
 (function(DiagnosticTag2) {
   DiagnosticTag2[DiagnosticTag2["Unnecessary"] = 1] = "Unnecessary";
@@ -14342,7 +15267,10 @@ var DiagnosticSeverity;
 })(DiagnosticSeverity || (DiagnosticSeverity = {}));
 var DiagnosticRelatedInformation = class DiagnosticRelatedInformation2 {
   static {
-    __name(this, "DiagnosticRelatedInformation");
+    __name(this, "DiagnosticRelatedInformation2");
+  }
+  static {
+    __name49(this, "DiagnosticRelatedInformation");
   }
   static is(thing) {
     if (!thing) {
@@ -14369,7 +15297,10 @@ DiagnosticRelatedInformation = __decorate5([
 ], DiagnosticRelatedInformation);
 var Diagnostic = class Diagnostic2 {
   static {
-    __name(this, "Diagnostic");
+    __name(this, "Diagnostic2");
+  }
+  static {
+    __name49(this, "Diagnostic");
   }
   constructor(range2, message, severity = DiagnosticSeverity.Error) {
     if (!Range.isRange(range2)) {
@@ -14405,17 +15336,22 @@ Diagnostic = __decorate5([
   es5ClassCompat
 ], Diagnostic);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/location.js
-var __decorate6 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/location.js
+var __defProp50 = Object.defineProperty;
+var __name50 = /* @__PURE__ */ __name((target, value) => __defProp50(target, "name", { value, configurable: true }), "__name");
+var __decorate6 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var Location_1;
 var Location = Location_1 = class Location2 {
   static {
-    __name(this, "Location");
+    __name(this, "Location2");
+  }
+  static {
+    __name50(this, "Location");
   }
   static isLocation(thing) {
     if (thing instanceof Location_1) {
@@ -14448,13 +15384,15 @@ Location = Location_1 = __decorate6([
   es5ClassCompat
 ], Location);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/notebooks.js
-var __decorate7 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/notebooks.js
+var __defProp51 = Object.defineProperty;
+var __name51 = /* @__PURE__ */ __name((target, value) => __defProp51(target, "name", { value, configurable: true }), "__name");
+var __decorate7 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var NotebookEdit_1;
 var NotebookCellKind;
 (function(NotebookCellKind2) {
@@ -14464,6 +15402,9 @@ var NotebookCellKind;
 var NotebookRange = class _NotebookRange {
   static {
     __name(this, "NotebookRange");
+  }
+  static {
+    __name51(this, "NotebookRange");
   }
   static isNotebookRange(thing) {
     if (thing instanceof _NotebookRange) {
@@ -14517,6 +15458,9 @@ var NotebookCellData = class _NotebookCellData {
   static {
     __name(this, "NotebookCellData");
   }
+  static {
+    __name51(this, "NotebookCellData");
+  }
   static validate(data) {
     if (typeof data.kind !== "number") {
       throw new Error("NotebookCellData MUST have 'kind' property");
@@ -14549,13 +15493,19 @@ var NotebookData = class {
   static {
     __name(this, "NotebookData");
   }
+  static {
+    __name51(this, "NotebookData");
+  }
   constructor(cells) {
     this.cells = cells;
   }
 };
 var NotebookEdit = NotebookEdit_1 = class NotebookEdit2 {
   static {
-    __name(this, "NotebookEdit");
+    __name(this, "NotebookEdit2");
+  }
+  static {
+    __name51(this, "NotebookEdit");
   }
   static isNotebookCellEdit(thing) {
     if (thing instanceof NotebookEdit_1) {
@@ -14596,6 +15546,9 @@ NotebookEdit = NotebookEdit_1 = __decorate7([
 var NotebookCellOutputItem = class _NotebookCellOutputItem {
   static {
     __name(this, "NotebookCellOutputItem");
+  }
+  static {
+    __name51(this, "NotebookCellOutputItem");
   }
   static isNotebookCellOutputItem(obj) {
     if (obj instanceof _NotebookCellOutputItem) {
@@ -14646,6 +15599,9 @@ var NotebookCellOutput = class _NotebookCellOutput {
   static {
     __name(this, "NotebookCellOutput");
   }
+  static {
+    __name51(this, "NotebookCellOutput");
+  }
   static isNotebookCellOutput(candidate) {
     if (candidate instanceof _NotebookCellOutput) {
       return true;
@@ -14687,17 +15643,22 @@ var NotebookCellOutput = class _NotebookCellOutput {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/selection.js
-var __decorate8 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/selection.js
+var __defProp52 = Object.defineProperty;
+var __name52 = /* @__PURE__ */ __name((target, value) => __defProp52(target, "name", { value, configurable: true }), "__name");
+var __decorate8 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var Selection_1;
 var Selection = Selection_1 = class Selection2 extends Range {
   static {
-    __name(this, "Selection");
+    __name(this, "Selection2");
+  }
+  static {
+    __name52(this, "Selection");
   }
   static isSelection(thing) {
     if (thing instanceof Selection_1) {
@@ -14761,18 +15722,24 @@ function getDebugDescriptionOfSelection(selection) {
   return rangeStr;
 }
 __name(getDebugDescriptionOfSelection, "getDebugDescriptionOfSelection");
+__name52(getDebugDescriptionOfSelection, "getDebugDescriptionOfSelection");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/snippetString.js
-var __decorate9 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/snippetString.js
+var __defProp53 = Object.defineProperty;
+var __name53 = /* @__PURE__ */ __name((target, value) => __defProp53(target, "name", { value, configurable: true }), "__name");
+var __decorate9 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var SnippetString_1;
 var SnippetString = SnippetString_1 = class SnippetString2 {
   static {
-    __name(this, "SnippetString");
+    __name(this, "SnippetString2");
+  }
+  static {
+    __name53(this, "SnippetString");
   }
   static isSnippetString(thing) {
     if (thing instanceof SnippetString_1) {
@@ -14849,10 +15816,15 @@ SnippetString = SnippetString_1 = __decorate9([
   es5ClassCompat
 ], SnippetString);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/snippetTextEdit.js
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/snippetTextEdit.js
+var __defProp54 = Object.defineProperty;
+var __name54 = /* @__PURE__ */ __name((target, value) => __defProp54(target, "name", { value, configurable: true }), "__name");
 var SnippetTextEdit = class _SnippetTextEdit {
   static {
     __name(this, "SnippetTextEdit");
+  }
+  static {
+    __name54(this, "SnippetTextEdit");
   }
   static isSnippetTextEdit(thing) {
     if (thing instanceof _SnippetTextEdit) {
@@ -14875,13 +15847,15 @@ var SnippetTextEdit = class _SnippetTextEdit {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/symbolInformation.js
-var __decorate10 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/symbolInformation.js
+var __defProp55 = Object.defineProperty;
+var __name55 = /* @__PURE__ */ __name((target, value) => __defProp55(target, "name", { value, configurable: true }), "__name");
+var __decorate10 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var SymbolInformation_1;
 var SymbolKind;
 (function(SymbolKind2) {
@@ -14918,7 +15892,10 @@ var SymbolTag;
 })(SymbolTag || (SymbolTag = {}));
 var SymbolInformation = SymbolInformation_1 = class SymbolInformation2 {
   static {
-    __name(this, "SymbolInformation");
+    __name(this, "SymbolInformation2");
+  }
+  static {
+    __name55(this, "SymbolInformation");
   }
   static validate(candidate) {
     if (!candidate.name) {
@@ -14952,13 +15929,15 @@ SymbolInformation = SymbolInformation_1 = __decorate10([
   es5ClassCompat
 ], SymbolInformation);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/textEdit.js
-var __decorate11 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/textEdit.js
+var __defProp56 = Object.defineProperty;
+var __name56 = /* @__PURE__ */ __name((target, value) => __defProp56(target, "name", { value, configurable: true }), "__name");
+var __decorate11 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var TextEdit_1;
 var EndOfLine;
 (function(EndOfLine2) {
@@ -14967,7 +15946,10 @@ var EndOfLine;
 })(EndOfLine || (EndOfLine = {}));
 var TextEdit = TextEdit_1 = class TextEdit2 {
   static {
-    __name(this, "TextEdit");
+    __name(this, "TextEdit2");
+  }
+  static {
+    __name56(this, "TextEdit");
   }
   static isTextEdit(thing) {
     if (thing instanceof TextEdit_1) {
@@ -15035,13 +16017,15 @@ TextEdit = TextEdit_1 = __decorate11([
   es5ClassCompat
 ], TextEdit);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes/workspaceEdit.js
-var __decorate12 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes/workspaceEdit.js
+var __defProp57 = Object.defineProperty;
+var __name57 = /* @__PURE__ */ __name((target, value) => __defProp57(target, "name", { value, configurable: true }), "__name");
+var __decorate12 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var FileEditType;
 (function(FileEditType2) {
   FileEditType2[FileEditType2["File"] = 1] = "File";
@@ -15052,7 +16036,10 @@ var FileEditType;
 })(FileEditType || (FileEditType = {}));
 var WorkspaceEdit = class WorkspaceEdit2 {
   static {
-    __name(this, "WorkspaceEdit");
+    __name(this, "WorkspaceEdit2");
+  }
+  static {
+    __name57(this, "WorkspaceEdit");
   }
   constructor() {
     this._edits = [];
@@ -15177,13 +16164,15 @@ WorkspaceEdit = __decorate12([
   es5ClassCompat
 ], WorkspaceEdit);
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/workbench/api/common/extHostTypes.js
-var __decorate13 = function(decorators, target, key, desc) {
+// ../Output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js
+var __defProp58 = Object.defineProperty;
+var __name58 = /* @__PURE__ */ __name((target, value) => __defProp58(target, "name", { value, configurable: true }), "__name");
+var __decorate13 = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
   else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
   return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+}, "__decorate");
 var Disposable_1, DocumentSymbol_1, TaskGroup_1, Task_1, TreeItem_1, FileSystemError_1, TestMessage_1;
 var TerminalOutputAnchor;
 (function(TerminalOutputAnchor2) {
@@ -15196,9 +16185,12 @@ var TerminalQuickFixType;
   TerminalQuickFixType2[TerminalQuickFixType2["Opener"] = 1] = "Opener";
   TerminalQuickFixType2[TerminalQuickFixType2["Command"] = 3] = "Command";
 })(TerminalQuickFixType || (TerminalQuickFixType = {}));
-var Disposable2 = Disposable_1 = class Disposable3 {
+var Disposable2 = Disposable_1 = class Disposable22 {
   static {
-    __name(this, "Disposable");
+    __name(this, "Disposable2");
+  }
+  static {
+    __name58(this, "Disposable");
   }
   static from(...inDisposables) {
     let disposables = inDisposables;
@@ -15227,7 +16219,7 @@ var Disposable2 = Disposable_1 = class Disposable3 {
 Disposable2 = Disposable_1 = __decorate13([
   es5ClassCompat
 ], Disposable2);
-var validateConnectionToken = /* @__PURE__ */ __name((connectionToken) => {
+var validateConnectionToken = /* @__PURE__ */ __name58((connectionToken) => {
   if (typeof connectionToken !== "string" || connectionToken.length === 0 || !/^[0-9A-Za-z_\-]+$/.test(connectionToken)) {
     throw illegalArgument("connectionToken");
   }
@@ -15235,6 +16227,9 @@ var validateConnectionToken = /* @__PURE__ */ __name((connectionToken) => {
 var ResolvedAuthority = class {
   static {
     __name(this, "ResolvedAuthority");
+  }
+  static {
+    __name58(this, "ResolvedAuthority");
   }
   static isResolvedAuthority(resolvedAuthority) {
     return resolvedAuthority && typeof resolvedAuthority === "object" && typeof resolvedAuthority.host === "string" && typeof resolvedAuthority.port === "number" && (resolvedAuthority.connectionToken === void 0 || typeof resolvedAuthority.connectionToken === "string");
@@ -15258,6 +16253,9 @@ var ManagedResolvedAuthority = class {
   static {
     __name(this, "ManagedResolvedAuthority");
   }
+  static {
+    __name58(this, "ManagedResolvedAuthority");
+  }
   static isManagedResolvedAuthority(resolvedAuthority) {
     return resolvedAuthority && typeof resolvedAuthority === "object" && typeof resolvedAuthority.makeConnection === "function" && (resolvedAuthority.connectionToken === void 0 || typeof resolvedAuthority.connectionToken === "string");
   }
@@ -15272,6 +16270,9 @@ var ManagedResolvedAuthority = class {
 var RemoteAuthorityResolverError2 = class _RemoteAuthorityResolverError extends Error {
   static {
     __name(this, "RemoteAuthorityResolverError");
+  }
+  static {
+    __name58(this, "RemoteAuthorityResolverError");
   }
   static NotAvailable(message, handled) {
     return new _RemoteAuthorityResolverError(message, RemoteAuthorityResolverErrorCode.NotAvailable, handled);
@@ -15295,7 +16296,10 @@ var EnvironmentVariableMutatorType;
 })(EnvironmentVariableMutatorType || (EnvironmentVariableMutatorType = {}));
 var Hover = class Hover2 {
   static {
-    __name(this, "Hover");
+    __name(this, "Hover2");
+  }
+  static {
+    __name58(this, "Hover");
   }
   constructor(contents, range2) {
     if (!contents) {
@@ -15314,7 +16318,10 @@ Hover = __decorate13([
 ], Hover);
 var VerboseHover = class VerboseHover2 extends Hover {
   static {
-    __name(this, "VerboseHover");
+    __name(this, "VerboseHover2");
+  }
+  static {
+    __name58(this, "VerboseHover");
   }
   constructor(contents, range2, canIncreaseVerbosity, canDecreaseVerbosity) {
     super(contents, range2);
@@ -15338,7 +16345,10 @@ var DocumentHighlightKind;
 })(DocumentHighlightKind || (DocumentHighlightKind = {}));
 var DocumentHighlight = class DocumentHighlight2 {
   static {
-    __name(this, "DocumentHighlight");
+    __name(this, "DocumentHighlight2");
+  }
+  static {
+    __name58(this, "DocumentHighlight");
   }
   constructor(range2, kind = DocumentHighlightKind.Text) {
     this.range = range2;
@@ -15356,7 +16366,10 @@ DocumentHighlight = __decorate13([
 ], DocumentHighlight);
 var MultiDocumentHighlight = class MultiDocumentHighlight2 {
   static {
-    __name(this, "MultiDocumentHighlight");
+    __name(this, "MultiDocumentHighlight2");
+  }
+  static {
+    __name58(this, "MultiDocumentHighlight");
   }
   constructor(uri, highlights) {
     this.uri = uri;
@@ -15374,7 +16387,10 @@ MultiDocumentHighlight = __decorate13([
 ], MultiDocumentHighlight);
 var DocumentSymbol = DocumentSymbol_1 = class DocumentSymbol2 {
   static {
-    __name(this, "DocumentSymbol");
+    __name(this, "DocumentSymbol2");
+  }
+  static {
+    __name58(this, "DocumentSymbol");
   }
   static validate(candidate) {
     if (!candidate.name) {
@@ -15405,7 +16421,10 @@ var CodeActionTriggerKind;
 })(CodeActionTriggerKind || (CodeActionTriggerKind = {}));
 var CodeAction = class CodeAction2 {
   static {
-    __name(this, "CodeAction");
+    __name(this, "CodeAction2");
+  }
+  static {
+    __name58(this, "CodeAction");
   }
   constructor(title, kind) {
     this.title = title;
@@ -15417,7 +16436,10 @@ CodeAction = __decorate13([
 ], CodeAction);
 var SelectionRange = class SelectionRange2 {
   static {
-    __name(this, "SelectionRange");
+    __name(this, "SelectionRange2");
+  }
+  static {
+    __name58(this, "SelectionRange");
   }
   constructor(range2, parent) {
     this.range = range2;
@@ -15434,6 +16456,9 @@ var CallHierarchyItem = class {
   static {
     __name(this, "CallHierarchyItem");
   }
+  static {
+    __name58(this, "CallHierarchyItem");
+  }
   constructor(kind, name, detail, uri, range2, selectionRange) {
     this.kind = kind;
     this.name = name;
@@ -15447,6 +16472,9 @@ var CallHierarchyIncomingCall = class {
   static {
     __name(this, "CallHierarchyIncomingCall");
   }
+  static {
+    __name58(this, "CallHierarchyIncomingCall");
+  }
   constructor(item, fromRanges) {
     this.fromRanges = fromRanges;
     this.from = item;
@@ -15455,6 +16483,9 @@ var CallHierarchyIncomingCall = class {
 var CallHierarchyOutgoingCall = class {
   static {
     __name(this, "CallHierarchyOutgoingCall");
+  }
+  static {
+    __name58(this, "CallHierarchyOutgoingCall");
   }
   constructor(item, fromRanges) {
     this.fromRanges = fromRanges;
@@ -15469,7 +16500,10 @@ var LanguageStatusSeverity;
 })(LanguageStatusSeverity || (LanguageStatusSeverity = {}));
 var CodeLens = class CodeLens2 {
   static {
-    __name(this, "CodeLens");
+    __name(this, "CodeLens2");
+  }
+  static {
+    __name58(this, "CodeLens");
   }
   constructor(range2, command) {
     this.range = range2;
@@ -15484,7 +16518,10 @@ CodeLens = __decorate13([
 ], CodeLens);
 var ParameterInformation = class ParameterInformation2 {
   static {
-    __name(this, "ParameterInformation");
+    __name(this, "ParameterInformation2");
+  }
+  static {
+    __name58(this, "ParameterInformation");
   }
   constructor(label, documentation) {
     this.label = label;
@@ -15496,7 +16533,10 @@ ParameterInformation = __decorate13([
 ], ParameterInformation);
 var SignatureInformation = class SignatureInformation2 {
   static {
-    __name(this, "SignatureInformation");
+    __name(this, "SignatureInformation2");
+  }
+  static {
+    __name58(this, "SignatureInformation");
   }
   constructor(label, documentation) {
     this.label = label;
@@ -15509,7 +16549,10 @@ SignatureInformation = __decorate13([
 ], SignatureInformation);
 var SignatureHelp = class SignatureHelp2 {
   static {
-    __name(this, "SignatureHelp");
+    __name(this, "SignatureHelp2");
+  }
+  static {
+    __name58(this, "SignatureHelp");
   }
   constructor() {
     this.activeSignature = 0;
@@ -15533,7 +16576,10 @@ var InlayHintKind;
 })(InlayHintKind || (InlayHintKind = {}));
 var InlayHintLabelPart = class InlayHintLabelPart2 {
   static {
-    __name(this, "InlayHintLabelPart");
+    __name(this, "InlayHintLabelPart2");
+  }
+  static {
+    __name58(this, "InlayHintLabelPart");
   }
   constructor(value) {
     this.value = value;
@@ -15544,7 +16590,10 @@ InlayHintLabelPart = __decorate13([
 ], InlayHintLabelPart);
 var InlayHint = class InlayHint2 {
   static {
-    __name(this, "InlayHint");
+    __name(this, "InlayHint2");
+  }
+  static {
+    __name58(this, "InlayHint");
   }
   constructor(position, label, kind) {
     this.position = position;
@@ -15597,7 +16646,10 @@ var CompletionItemTag;
 })(CompletionItemTag || (CompletionItemTag = {}));
 var CompletionItem = class CompletionItem2 {
   static {
-    __name(this, "CompletionItem");
+    __name(this, "CompletionItem2");
+  }
+  static {
+    __name58(this, "CompletionItem");
   }
   constructor(label, kind) {
     this.label = label;
@@ -15622,7 +16674,10 @@ CompletionItem = __decorate13([
 ], CompletionItem);
 var CompletionList = class CompletionList2 {
   static {
-    __name(this, "CompletionList");
+    __name(this, "CompletionList2");
+  }
+  static {
+    __name58(this, "CompletionList");
   }
   constructor(items = [], isIncomplete = false) {
     this.items = items;
@@ -15634,7 +16689,10 @@ CompletionList = __decorate13([
 ], CompletionList);
 var InlineSuggestion = class InlineSuggestion2 {
   static {
-    __name(this, "InlineSuggestion");
+    __name(this, "InlineSuggestion2");
+  }
+  static {
+    __name58(this, "InlineSuggestion");
   }
   constructor(insertText, range2, command) {
     this.insertText = insertText;
@@ -15647,7 +16705,10 @@ InlineSuggestion = __decorate13([
 ], InlineSuggestion);
 var InlineSuggestionList = class InlineSuggestionList2 {
   static {
-    __name(this, "InlineSuggestionList");
+    __name(this, "InlineSuggestionList2");
+  }
+  static {
+    __name58(this, "InlineSuggestionList");
   }
   constructor(items) {
     this.commands = void 0;
@@ -15699,6 +16760,7 @@ function asStatusBarItemIdentifier(extension, id2) {
   return `${ExtensionIdentifier.toKey(extension)}.${id2}`;
 }
 __name(asStatusBarItemIdentifier, "asStatusBarItemIdentifier");
+__name58(asStatusBarItemIdentifier, "asStatusBarItemIdentifier");
 var TextEditorLineNumbersStyle;
 (function(TextEditorLineNumbersStyle2) {
   TextEditorLineNumbersStyle2[TextEditorLineNumbersStyle2["Off"] = 0] = "Off";
@@ -15758,6 +16820,7 @@ var DecorationRangeBehavior;
     return void 0;
   }
   __name(fromValue, "fromValue");
+  __name58(fromValue, "fromValue");
   TextEditorSelectionChangeKind2.fromValue = fromValue;
 })(TextEditorSelectionChangeKind || (TextEditorSelectionChangeKind = {}));
 var SyntaxTokenType;
@@ -15782,11 +16845,15 @@ var SyntaxTokenType;
     return "other";
   }
   __name(toString, "toString");
+  __name58(toString, "toString");
   SyntaxTokenType2.toString = toString;
 })(SyntaxTokenType || (SyntaxTokenType = {}));
 var DocumentLink = class DocumentLink2 {
   static {
-    __name(this, "DocumentLink");
+    __name(this, "DocumentLink2");
+  }
+  static {
+    __name58(this, "DocumentLink");
   }
   constructor(range2, target) {
     if (target && !URI.isUri(target)) {
@@ -15804,7 +16871,10 @@ DocumentLink = __decorate13([
 ], DocumentLink);
 var Color = class Color2 {
   static {
-    __name(this, "Color");
+    __name(this, "Color2");
+  }
+  static {
+    __name58(this, "Color");
   }
   constructor(red, green, blue, alpha) {
     this.red = red;
@@ -15818,7 +16888,10 @@ Color = __decorate13([
 ], Color);
 var ColorInformation = class ColorInformation2 {
   static {
-    __name(this, "ColorInformation");
+    __name(this, "ColorInformation2");
+  }
+  static {
+    __name58(this, "ColorInformation");
   }
   constructor(range2, color) {
     if (color && !(color instanceof Color)) {
@@ -15836,7 +16909,10 @@ ColorInformation = __decorate13([
 ], ColorInformation);
 var ColorPresentation = class ColorPresentation2 {
   static {
-    __name(this, "ColorPresentation");
+    __name(this, "ColorPresentation2");
+  }
+  static {
+    __name58(this, "ColorPresentation");
   }
   constructor(label) {
     if (!label || typeof label !== "string") {
@@ -15895,6 +16971,9 @@ var TerminalLink = class {
   static {
     __name(this, "TerminalLink");
   }
+  static {
+    __name58(this, "TerminalLink");
+  }
   constructor(startIndex, length, tooltip) {
     this.startIndex = startIndex;
     this.length = length;
@@ -15914,6 +16993,9 @@ var TerminalQuickFixOpener = class {
   static {
     __name(this, "TerminalQuickFixOpener");
   }
+  static {
+    __name58(this, "TerminalQuickFixOpener");
+  }
   constructor(uri) {
     this.uri = uri;
   }
@@ -15921,6 +17003,9 @@ var TerminalQuickFixOpener = class {
 var TerminalQuickFixCommand = class {
   static {
     __name(this, "TerminalQuickFixCommand");
+  }
+  static {
+    __name58(this, "TerminalQuickFixCommand");
   }
   constructor(terminalCommand) {
     this.terminalCommand = terminalCommand;
@@ -15934,6 +17019,9 @@ var TerminalLocation;
 var TerminalProfile = class {
   static {
     __name(this, "TerminalProfile");
+  }
+  static {
+    __name58(this, "TerminalProfile");
   }
   constructor(options) {
     this.options = options;
@@ -15966,6 +17054,9 @@ var TerminalCompletionItem = class {
   static {
     __name(this, "TerminalCompletionItem");
   }
+  static {
+    __name58(this, "TerminalCompletionItem");
+  }
   constructor(label, replacementRange, kind, detail, documentation, isFile, isDirectory, isKeyword) {
     this.label = label;
     this.replacementRange = replacementRange;
@@ -15980,6 +17071,9 @@ var TerminalCompletionItem = class {
 var TerminalCompletionList = class {
   static {
     __name(this, "TerminalCompletionList");
+  }
+  static {
+    __name58(this, "TerminalCompletionList");
   }
   /**
    * Creates a new completion list.
@@ -16022,7 +17116,10 @@ var TaskPanelKind;
 })(TaskPanelKind || (TaskPanelKind = {}));
 var TaskGroup = class TaskGroup2 {
   static {
-    __name(this, "TaskGroup");
+    __name(this, "TaskGroup2");
+  }
+  static {
+    __name58(this, "TaskGroup");
   }
   static {
     TaskGroup_1 = this;
@@ -16078,9 +17175,13 @@ function computeTaskExecutionId(values) {
   return id2;
 }
 __name(computeTaskExecutionId, "computeTaskExecutionId");
+__name58(computeTaskExecutionId, "computeTaskExecutionId");
 var ProcessExecution = class ProcessExecution2 {
   static {
-    __name(this, "ProcessExecution");
+    __name(this, "ProcessExecution2");
+  }
+  static {
+    __name58(this, "ProcessExecution");
   }
   constructor(process2, varg1, varg2) {
     if (typeof process2 !== "string") {
@@ -16140,7 +17241,10 @@ ProcessExecution = __decorate13([
 ], ProcessExecution);
 var ShellExecution = class ShellExecution2 {
   static {
-    __name(this, "ShellExecution");
+    __name(this, "ShellExecution2");
+  }
+  static {
+    __name58(this, "ShellExecution");
   }
   constructor(arg0, arg1, arg2) {
     this._args = [];
@@ -16235,6 +17339,9 @@ var CustomExecution = class {
   static {
     __name(this, "CustomExecution");
   }
+  static {
+    __name58(this, "CustomExecution");
+  }
   constructor(callback) {
     this._callback = callback;
   }
@@ -16250,7 +17357,10 @@ var CustomExecution = class {
 };
 var Task = class Task2 {
   static {
-    __name(this, "Task");
+    __name(this, "Task2");
+  }
+  static {
+    __name58(this, "Task");
   }
   static {
     Task_1 = this;
@@ -16487,11 +17597,15 @@ var ViewBadge;
     return true;
   }
   __name(isViewBadge, "isViewBadge");
+  __name58(isViewBadge, "isViewBadge");
   ViewBadge2.isViewBadge = isViewBadge;
 })(ViewBadge || (ViewBadge = {}));
 var TreeItem = TreeItem_1 = class TreeItem2 {
   static {
-    __name(this, "TreeItem");
+    __name(this, "TreeItem2");
+  }
+  static {
+    __name58(this, "TreeItem");
   }
   static isTreeItem(thing, extension) {
     const treeItemThing = thing;
@@ -16564,10 +17678,10 @@ TreeItem = TreeItem_1 = __decorate13([
   es5ClassCompat
 ], TreeItem);
 var TreeItemCollapsibleState;
-(function(TreeItemCollapsibleState3) {
-  TreeItemCollapsibleState3[TreeItemCollapsibleState3["None"] = 0] = "None";
-  TreeItemCollapsibleState3[TreeItemCollapsibleState3["Collapsed"] = 1] = "Collapsed";
-  TreeItemCollapsibleState3[TreeItemCollapsibleState3["Expanded"] = 2] = "Expanded";
+(function(TreeItemCollapsibleState22) {
+  TreeItemCollapsibleState22[TreeItemCollapsibleState22["None"] = 0] = "None";
+  TreeItemCollapsibleState22[TreeItemCollapsibleState22["Collapsed"] = 1] = "Collapsed";
+  TreeItemCollapsibleState22[TreeItemCollapsibleState22["Expanded"] = 2] = "Expanded";
 })(TreeItemCollapsibleState || (TreeItemCollapsibleState = {}));
 var TreeItemCheckboxState;
 (function(TreeItemCheckboxState2) {
@@ -16576,7 +17690,10 @@ var TreeItemCheckboxState;
 })(TreeItemCheckboxState || (TreeItemCheckboxState = {}));
 var DataTransferItem = class DataTransferItem2 {
   static {
-    __name(this, "DataTransferItem");
+    __name(this, "DataTransferItem2");
+  }
+  static {
+    __name58(this, "DataTransferItem");
   }
   async asString() {
     return typeof this.value === "string" ? this.value : JSON.stringify(this.value);
@@ -16595,10 +17712,16 @@ var InternalDataTransferItem = class extends DataTransferItem {
   static {
     __name(this, "InternalDataTransferItem");
   }
+  static {
+    __name58(this, "InternalDataTransferItem");
+  }
 };
 var InternalFileDataTransferItem = class extends InternalDataTransferItem {
   static {
     __name(this, "InternalFileDataTransferItem");
+  }
+  static {
+    __name58(this, "InternalFileDataTransferItem");
   }
   #file;
   constructor(file) {
@@ -16613,6 +17736,9 @@ var DataTransferFile = class {
   static {
     __name(this, "DataTransferFile");
   }
+  static {
+    __name58(this, "DataTransferFile");
+  }
   constructor(name, uri, itemId, getData) {
     this.name = name;
     this.uri = uri;
@@ -16625,7 +17751,10 @@ var DataTransferFile = class {
 };
 var DataTransfer = class DataTransfer2 {
   static {
-    __name(this, "DataTransfer");
+    __name(this, "DataTransfer2");
+  }
+  static {
+    __name58(this, "DataTransfer");
   }
   #items = /* @__PURE__ */ new Map();
   constructor(init) {
@@ -16667,7 +17796,10 @@ DataTransfer = __decorate13([
 ], DataTransfer);
 var DocumentDropEdit = class DocumentDropEdit2 {
   static {
-    __name(this, "DocumentDropEdit");
+    __name(this, "DocumentDropEdit2");
+  }
+  static {
+    __name58(this, "DocumentDropEdit");
   }
   constructor(insertText, title, kind) {
     this.insertText = insertText;
@@ -16686,6 +17818,9 @@ var DocumentPasteTriggerKind;
 var DocumentDropOrPasteEditKind = class _DocumentDropOrPasteEditKind {
   static {
     __name(this, "DocumentDropOrPasteEditKind");
+  }
+  static {
+    __name58(this, "DocumentDropOrPasteEditKind");
   }
   static {
     this.sep = ".";
@@ -16710,15 +17845,21 @@ var DocumentPasteEdit = class {
   static {
     __name(this, "DocumentPasteEdit");
   }
+  static {
+    __name58(this, "DocumentPasteEdit");
+  }
   constructor(insertText, title, kind) {
     this.title = title;
     this.insertText = insertText;
     this.kind = kind;
   }
 };
-var ThemeIcon2 = class ThemeIcon3 {
+var ThemeIcon2 = class ThemeIcon22 {
   static {
-    __name(this, "ThemeIcon");
+    __name(this, "ThemeIcon2");
+  }
+  static {
+    __name58(this, "ThemeIcon");
   }
   constructor(id2, color) {
     this.id = id2;
@@ -16737,9 +17878,12 @@ ThemeIcon2 = __decorate13([
 ], ThemeIcon2);
 ThemeIcon2.File = new ThemeIcon2("file");
 ThemeIcon2.Folder = new ThemeIcon2("folder");
-var ThemeColor2 = class ThemeColor3 {
+var ThemeColor2 = class ThemeColor22 {
   static {
-    __name(this, "ThemeColor");
+    __name(this, "ThemeColor2");
+  }
+  static {
+    __name58(this, "ThemeColor");
   }
   constructor(id2) {
     this.id = id2;
@@ -16756,7 +17900,10 @@ var ConfigurationTarget;
 })(ConfigurationTarget || (ConfigurationTarget = {}));
 var RelativePattern = class RelativePattern2 {
   static {
-    __name(this, "RelativePattern");
+    __name(this, "RelativePattern2");
+  }
+  static {
+    __name58(this, "RelativePattern");
   }
   get base() {
     return this._base;
@@ -16806,9 +17953,13 @@ function setBreakpointId(bp, id2) {
   breakpointIds.set(bp, id2);
 }
 __name(setBreakpointId, "setBreakpointId");
+__name58(setBreakpointId, "setBreakpointId");
 var Breakpoint = class Breakpoint2 {
   static {
-    __name(this, "Breakpoint");
+    __name(this, "Breakpoint2");
+  }
+  static {
+    __name58(this, "Breakpoint");
   }
   constructor(enabled, condition, hitCondition, logMessage, mode) {
     this.enabled = typeof enabled === "boolean" ? enabled : true;
@@ -16837,7 +17988,10 @@ Breakpoint = __decorate13([
 ], Breakpoint);
 var SourceBreakpoint = class SourceBreakpoint2 extends Breakpoint {
   static {
-    __name(this, "SourceBreakpoint");
+    __name(this, "SourceBreakpoint2");
+  }
+  static {
+    __name58(this, "SourceBreakpoint");
   }
   constructor(location, enabled, condition, hitCondition, logMessage, mode) {
     super(enabled, condition, hitCondition, logMessage, mode);
@@ -16852,7 +18006,10 @@ SourceBreakpoint = __decorate13([
 ], SourceBreakpoint);
 var FunctionBreakpoint = class FunctionBreakpoint2 extends Breakpoint {
   static {
-    __name(this, "FunctionBreakpoint");
+    __name(this, "FunctionBreakpoint2");
+  }
+  static {
+    __name58(this, "FunctionBreakpoint");
   }
   constructor(functionName, enabled, condition, hitCondition, logMessage, mode) {
     super(enabled, condition, hitCondition, logMessage, mode);
@@ -16864,7 +18021,10 @@ FunctionBreakpoint = __decorate13([
 ], FunctionBreakpoint);
 var DataBreakpoint = class DataBreakpoint2 extends Breakpoint {
   static {
-    __name(this, "DataBreakpoint");
+    __name(this, "DataBreakpoint2");
+  }
+  static {
+    __name58(this, "DataBreakpoint");
   }
   constructor(label, dataId, canPersist, enabled, condition, hitCondition, logMessage, mode) {
     super(enabled, condition, hitCondition, logMessage, mode);
@@ -16881,7 +18041,10 @@ DataBreakpoint = __decorate13([
 ], DataBreakpoint);
 var DebugAdapterExecutable = class DebugAdapterExecutable2 {
   static {
-    __name(this, "DebugAdapterExecutable");
+    __name(this, "DebugAdapterExecutable2");
+  }
+  static {
+    __name58(this, "DebugAdapterExecutable");
   }
   constructor(command, args, options) {
     this.command = command;
@@ -16894,7 +18057,10 @@ DebugAdapterExecutable = __decorate13([
 ], DebugAdapterExecutable);
 var DebugAdapterServer = class DebugAdapterServer2 {
   static {
-    __name(this, "DebugAdapterServer");
+    __name(this, "DebugAdapterServer2");
+  }
+  static {
+    __name58(this, "DebugAdapterServer");
   }
   constructor(port, host) {
     this.port = port;
@@ -16906,7 +18072,10 @@ DebugAdapterServer = __decorate13([
 ], DebugAdapterServer);
 var DebugAdapterNamedPipeServer = class DebugAdapterNamedPipeServer2 {
   static {
-    __name(this, "DebugAdapterNamedPipeServer");
+    __name(this, "DebugAdapterNamedPipeServer2");
+  }
+  static {
+    __name58(this, "DebugAdapterNamedPipeServer");
   }
   constructor(path) {
     this.path = path;
@@ -16917,7 +18086,10 @@ DebugAdapterNamedPipeServer = __decorate13([
 ], DebugAdapterNamedPipeServer);
 var DebugAdapterInlineImplementation = class DebugAdapterInlineImplementation2 {
   static {
-    __name(this, "DebugAdapterInlineImplementation");
+    __name(this, "DebugAdapterInlineImplementation2");
+  }
+  static {
+    __name58(this, "DebugAdapterInlineImplementation");
   }
   constructor(impl) {
     this.implementation = impl;
@@ -16930,6 +18102,9 @@ var DebugStackFrame = class {
   static {
     __name(this, "DebugStackFrame");
   }
+  static {
+    __name58(this, "DebugStackFrame");
+  }
   constructor(session, threadId, frameId) {
     this.session = session;
     this.threadId = threadId;
@@ -16940,6 +18115,9 @@ var DebugThread = class {
   static {
     __name(this, "DebugThread");
   }
+  static {
+    __name58(this, "DebugThread");
+  }
   constructor(session, threadId) {
     this.session = session;
     this.threadId = threadId;
@@ -16947,7 +18125,10 @@ var DebugThread = class {
 };
 var EvaluatableExpression = class EvaluatableExpression2 {
   static {
-    __name(this, "EvaluatableExpression");
+    __name(this, "EvaluatableExpression2");
+  }
+  static {
+    __name58(this, "EvaluatableExpression");
   }
   constructor(range2, expression) {
     this.range = range2;
@@ -16972,7 +18153,10 @@ var InlineCompletionsDisposeReasonKind;
 })(InlineCompletionsDisposeReasonKind || (InlineCompletionsDisposeReasonKind = {}));
 var InlineValueText = class InlineValueText2 {
   static {
-    __name(this, "InlineValueText");
+    __name(this, "InlineValueText2");
+  }
+  static {
+    __name58(this, "InlineValueText");
   }
   constructor(range2, text) {
     this.range = range2;
@@ -16984,7 +18168,10 @@ InlineValueText = __decorate13([
 ], InlineValueText);
 var InlineValueVariableLookup = class InlineValueVariableLookup2 {
   static {
-    __name(this, "InlineValueVariableLookup");
+    __name(this, "InlineValueVariableLookup2");
+  }
+  static {
+    __name58(this, "InlineValueVariableLookup");
   }
   constructor(range2, variableName, caseSensitiveLookup = true) {
     this.range = range2;
@@ -16997,7 +18184,10 @@ InlineValueVariableLookup = __decorate13([
 ], InlineValueVariableLookup);
 var InlineValueEvaluatableExpression = class InlineValueEvaluatableExpression2 {
   static {
-    __name(this, "InlineValueEvaluatableExpression");
+    __name(this, "InlineValueEvaluatableExpression2");
+  }
+  static {
+    __name58(this, "InlineValueEvaluatableExpression");
   }
   constructor(range2, expression) {
     this.range = range2;
@@ -17009,7 +18199,10 @@ InlineValueEvaluatableExpression = __decorate13([
 ], InlineValueEvaluatableExpression);
 var InlineValueContext = class InlineValueContext2 {
   static {
-    __name(this, "InlineValueContext");
+    __name(this, "InlineValueContext2");
+  }
+  static {
+    __name58(this, "InlineValueContext");
   }
   constructor(frameId, range2) {
     this.frameId = frameId;
@@ -17032,20 +18225,26 @@ var NewSymbolName = class {
   static {
     __name(this, "NewSymbolName");
   }
+  static {
+    __name58(this, "NewSymbolName");
+  }
   constructor(newSymbolName, tags) {
     this.newSymbolName = newSymbolName;
     this.tags = tags;
   }
 };
 var FileChangeType2;
-(function(FileChangeType3) {
-  FileChangeType3[FileChangeType3["Changed"] = 1] = "Changed";
-  FileChangeType3[FileChangeType3["Created"] = 2] = "Created";
-  FileChangeType3[FileChangeType3["Deleted"] = 3] = "Deleted";
+(function(FileChangeType22) {
+  FileChangeType22[FileChangeType22["Changed"] = 1] = "Changed";
+  FileChangeType22[FileChangeType22["Created"] = 2] = "Created";
+  FileChangeType22[FileChangeType22["Deleted"] = 3] = "Deleted";
 })(FileChangeType2 || (FileChangeType2 = {}));
 var FileSystemError = FileSystemError_1 = class FileSystemError2 extends Error {
   static {
-    __name(this, "FileSystemError");
+    __name(this, "FileSystemError2");
+  }
+  static {
+    __name58(this, "FileSystemError");
   }
   static FileExists(messageOrUri) {
     return new FileSystemError_1(messageOrUri, FileSystemProviderErrorCode.FileExists, FileSystemError_1.FileExists);
@@ -17080,7 +18279,10 @@ FileSystemError = FileSystemError_1 = __decorate13([
 ], FileSystemError);
 var FoldingRange = class FoldingRange2 {
   static {
-    __name(this, "FoldingRange");
+    __name(this, "FoldingRange2");
+  }
+  static {
+    __name58(this, "FoldingRange");
   }
   constructor(start, end, kind) {
     this.start = start;
@@ -17131,6 +18333,9 @@ var SemanticTokensLegend = class {
   static {
     __name(this, "SemanticTokensLegend");
   }
+  static {
+    __name58(this, "SemanticTokensLegend");
+  }
   constructor(tokenTypes, tokenModifiers = []) {
     this.tokenTypes = tokenTypes;
     this.tokenModifiers = tokenModifiers;
@@ -17140,9 +18345,13 @@ function isStrArrayOrUndefined(arg) {
   return typeof arg === "undefined" || isStringArray(arg);
 }
 __name(isStrArrayOrUndefined, "isStrArrayOrUndefined");
+__name58(isStrArrayOrUndefined, "isStrArrayOrUndefined");
 var SemanticTokensBuilder = class _SemanticTokensBuilder {
   static {
     __name(this, "SemanticTokensBuilder");
+  }
+  static {
+    __name58(this, "SemanticTokensBuilder");
   }
   constructor(legend) {
     this._prevLine = 0;
@@ -17288,6 +18497,9 @@ var SemanticTokens = class {
   static {
     __name(this, "SemanticTokens");
   }
+  static {
+    __name58(this, "SemanticTokens");
+  }
   constructor(data, resultId) {
     this.resultId = resultId;
     this.data = data;
@@ -17296,6 +18508,9 @@ var SemanticTokens = class {
 var SemanticTokensEdit = class {
   static {
     __name(this, "SemanticTokensEdit");
+  }
+  static {
+    __name58(this, "SemanticTokensEdit");
   }
   constructor(start, deleteCount, data) {
     this.start = start;
@@ -17306,6 +18521,9 @@ var SemanticTokensEdit = class {
 var SemanticTokensEdits = class {
   static {
     __name(this, "SemanticTokensEdits");
+  }
+  static {
+    __name58(this, "SemanticTokensEdits");
   }
   constructor(edits, resultId) {
     this.resultId = resultId;
@@ -17321,6 +18539,9 @@ var DebugVisualization = class {
   static {
     __name(this, "DebugVisualization");
   }
+  static {
+    __name58(this, "DebugVisualization");
+  }
   constructor(name) {
     this.name = name;
   }
@@ -17333,7 +18554,10 @@ var QuickInputButtonLocation;
 })(QuickInputButtonLocation || (QuickInputButtonLocation = {}));
 var QuickInputButtons = class QuickInputButtons2 {
   static {
-    __name(this, "QuickInputButtons");
+    __name(this, "QuickInputButtons2");
+  }
+  static {
+    __name58(this, "QuickInputButtons");
   }
   static {
     this.Back = { iconPath: new ThemeIcon2("arrow-left") };
@@ -17364,6 +18588,9 @@ var FileDecoration = class {
   static {
     __name(this, "FileDecoration");
   }
+  static {
+    __name58(this, "FileDecoration");
+  }
   static validate(d) {
     if (typeof d.badge === "string") {
       let len = nextCharLength(d.badge, 0);
@@ -17391,7 +18618,10 @@ var FileDecoration = class {
 };
 var ColorTheme = class ColorTheme2 {
   static {
-    __name(this, "ColorTheme");
+    __name(this, "ColorTheme2");
+  }
+  static {
+    __name58(this, "ColorTheme");
   }
   constructor(kind) {
     this.kind = kind;
@@ -17410,6 +18640,9 @@ var ColorThemeKind;
 var CellErrorStackFrame = class {
   static {
     __name(this, "CellErrorStackFrame");
+  }
+  static {
+    __name58(this, "CellErrorStackFrame");
   }
   /**
    * @param label The name of the stack frame
@@ -17444,6 +18677,9 @@ var NotebookCellStatusBarItem = class {
   static {
     __name(this, "NotebookCellStatusBarItem");
   }
+  static {
+    __name58(this, "NotebookCellStatusBarItem");
+  }
   constructor(text, alignment) {
     this.text = text;
     this.alignment = alignment;
@@ -17464,6 +18700,9 @@ var NotebookRendererScript = class {
   static {
     __name(this, "NotebookRendererScript");
   }
+  static {
+    __name58(this, "NotebookRendererScript");
+  }
   constructor(uri, provides = []) {
     this.uri = uri;
     this.provides = asArray(provides);
@@ -17472,6 +18711,9 @@ var NotebookRendererScript = class {
 var NotebookKernelSourceAction = class {
   static {
     __name(this, "NotebookKernelSourceAction");
+  }
+  static {
+    __name58(this, "NotebookKernelSourceAction");
   }
   constructor(label) {
     this.label = label;
@@ -17484,7 +18726,10 @@ var NotebookVariablesRequestKind;
 })(NotebookVariablesRequestKind || (NotebookVariablesRequestKind = {}));
 var TimelineItem = class TimelineItem2 {
   static {
-    __name(this, "TimelineItem");
+    __name(this, "TimelineItem2");
+  }
+  static {
+    __name58(this, "TimelineItem");
   }
   constructor(label, timestamp) {
     this.label = label;
@@ -17516,6 +18761,9 @@ var LinkedEditingRanges = class {
   static {
     __name(this, "LinkedEditingRanges");
   }
+  static {
+    __name58(this, "LinkedEditingRanges");
+  }
   constructor(ranges, wordPattern) {
     this.ranges = ranges;
     this.wordPattern = wordPattern;
@@ -17524,6 +18772,9 @@ var LinkedEditingRanges = class {
 var PortAttributes = class {
   static {
     __name(this, "PortAttributes");
+  }
+  static {
+    __name58(this, "PortAttributes");
   }
   constructor(autoForwardAction) {
     this._autoForwardAction = autoForwardAction;
@@ -17551,6 +18802,9 @@ var TestRunProfileBase = class {
   static {
     __name(this, "TestRunProfileBase");
   }
+  static {
+    __name58(this, "TestRunProfileBase");
+  }
   constructor(controllerId, profileId, kind) {
     this.controllerId = controllerId;
     this.profileId = profileId;
@@ -17559,7 +18813,10 @@ var TestRunProfileBase = class {
 };
 var TestRunRequest = class TestRunRequest2 {
   static {
-    __name(this, "TestRunRequest");
+    __name(this, "TestRunRequest2");
+  }
+  static {
+    __name58(this, "TestRunRequest");
   }
   constructor(include = void 0, exclude = void 0, profile = void 0, continuous = false, preserveFocus = true) {
     this.include = include;
@@ -17574,7 +18831,10 @@ TestRunRequest = __decorate13([
 ], TestRunRequest);
 var TestMessage = TestMessage_1 = class TestMessage2 {
   static {
-    __name(this, "TestMessage");
+    __name(this, "TestMessage2");
+  }
+  static {
+    __name58(this, "TestMessage");
   }
   static diff(message, expected, actual) {
     const msg = new TestMessage_1(message);
@@ -17591,7 +18851,10 @@ TestMessage = TestMessage_1 = __decorate13([
 ], TestMessage);
 var TestTag = class TestTag2 {
   static {
-    __name(this, "TestTag");
+    __name(this, "TestTag2");
+  }
+  static {
+    __name58(this, "TestTag");
   }
   constructor(id2) {
     this.id = id2;
@@ -17603,6 +18866,9 @@ TestTag = __decorate13([
 var TestMessageStackFrame = class {
   static {
     __name(this, "TestMessageStackFrame");
+  }
+  static {
+    __name58(this, "TestMessageStackFrame");
   }
   /**
    * @param label The name of the stack frame
@@ -17618,6 +18884,9 @@ var TestMessageStackFrame = class {
 var TestCoverageCount = class {
   static {
     __name(this, "TestCoverageCount");
+  }
+  static {
+    __name58(this, "TestCoverageCount");
   }
   constructor(covered, total) {
     this.covered = covered;
@@ -17637,9 +18906,13 @@ function validateTestCoverageCount(cc) {
   }
 }
 __name(validateTestCoverageCount, "validateTestCoverageCount");
+__name58(validateTestCoverageCount, "validateTestCoverageCount");
 var FileCoverage = class _FileCoverage {
   static {
     __name(this, "FileCoverage");
+  }
+  static {
+    __name58(this, "FileCoverage");
   }
   static fromDetails(uri, details) {
     const statements = new TestCoverageCount(0, 0);
@@ -17674,6 +18947,9 @@ var StatementCoverage = class {
   static {
     __name(this, "StatementCoverage");
   }
+  static {
+    __name58(this, "StatementCoverage");
+  }
   // back compat until finalization:
   get executionCount() {
     return +this.executed;
@@ -17691,6 +18967,9 @@ var BranchCoverage = class {
   static {
     __name(this, "BranchCoverage");
   }
+  static {
+    __name58(this, "BranchCoverage");
+  }
   // back compat until finalization:
   get executionCount() {
     return +this.executed;
@@ -17707,6 +18986,9 @@ var BranchCoverage = class {
 var DeclarationCoverage = class {
   static {
     __name(this, "DeclarationCoverage");
+  }
+  static {
+    __name58(this, "DeclarationCoverage");
   }
   // back compat until finalization:
   get executionCount() {
@@ -17747,6 +19029,9 @@ var TypeHierarchyItem = class {
   static {
     __name(this, "TypeHierarchyItem");
   }
+  static {
+    __name58(this, "TypeHierarchyItem");
+  }
   constructor(kind, name, detail, uri, range2, selectionRange) {
     this.kind = kind;
     this.name = name;
@@ -17760,6 +19045,9 @@ var TextTabInput = class {
   static {
     __name(this, "TextTabInput");
   }
+  static {
+    __name58(this, "TextTabInput");
+  }
   constructor(uri) {
     this.uri = uri;
   }
@@ -17767,6 +19055,9 @@ var TextTabInput = class {
 var TextDiffTabInput = class {
   static {
     __name(this, "TextDiffTabInput");
+  }
+  static {
+    __name58(this, "TextDiffTabInput");
   }
   constructor(original, modified) {
     this.original = original;
@@ -17776,6 +19067,9 @@ var TextDiffTabInput = class {
 var TextMergeTabInput = class {
   static {
     __name(this, "TextMergeTabInput");
+  }
+  static {
+    __name58(this, "TextMergeTabInput");
   }
   constructor(base, input1, input2, result) {
     this.base = base;
@@ -17788,6 +19082,9 @@ var CustomEditorTabInput = class {
   static {
     __name(this, "CustomEditorTabInput");
   }
+  static {
+    __name58(this, "CustomEditorTabInput");
+  }
   constructor(uri, viewType) {
     this.uri = uri;
     this.viewType = viewType;
@@ -17797,6 +19094,9 @@ var WebviewEditorTabInput = class {
   static {
     __name(this, "WebviewEditorTabInput");
   }
+  static {
+    __name58(this, "WebviewEditorTabInput");
+  }
   constructor(viewType) {
     this.viewType = viewType;
   }
@@ -17804,6 +19104,9 @@ var WebviewEditorTabInput = class {
 var NotebookEditorTabInput = class {
   static {
     __name(this, "NotebookEditorTabInput");
+  }
+  static {
+    __name58(this, "NotebookEditorTabInput");
   }
   constructor(uri, notebookType) {
     this.uri = uri;
@@ -17813,6 +19116,9 @@ var NotebookEditorTabInput = class {
 var NotebookDiffEditorTabInput = class {
   static {
     __name(this, "NotebookDiffEditorTabInput");
+  }
+  static {
+    __name58(this, "NotebookDiffEditorTabInput");
   }
   constructor(original, modified, notebookType) {
     this.original = original;
@@ -17824,12 +19130,18 @@ var TerminalEditorTabInput = class {
   static {
     __name(this, "TerminalEditorTabInput");
   }
+  static {
+    __name58(this, "TerminalEditorTabInput");
+  }
   constructor() {
   }
 };
 var InteractiveWindowInput = class {
   static {
     __name(this, "InteractiveWindowInput");
+  }
+  static {
+    __name58(this, "InteractiveWindowInput");
   }
   constructor(uri, inputBoxUri) {
     this.uri = uri;
@@ -17840,12 +19152,18 @@ var ChatEditorTabInput = class {
   static {
     __name(this, "ChatEditorTabInput");
   }
+  static {
+    __name58(this, "ChatEditorTabInput");
+  }
   constructor() {
   }
 };
 var TextMultiDiffTabInput = class {
   static {
     __name(this, "TextMultiDiffTabInput");
+  }
+  static {
+    __name58(this, "TextMultiDiffTabInput");
   }
   constructor(textDiffs) {
     this.textDiffs = textDiffs;
@@ -17870,6 +19188,9 @@ var ChatVariableLevel;
 var ChatCompletionItem = class {
   static {
     __name(this, "ChatCompletionItem");
+  }
+  static {
+    __name58(this, "ChatCompletionItem");
   }
   constructor(id2, label, values) {
     this.id = id2;
@@ -17906,6 +19227,9 @@ var ChatResponseMarkdownPart = class {
   static {
     __name(this, "ChatResponseMarkdownPart");
   }
+  static {
+    __name58(this, "ChatResponseMarkdownPart");
+  }
   constructor(value) {
     if (typeof value !== "string" && value.isTrusted === true) {
       throw new Error("The boolean form of MarkdownString.isTrusted is NOT supported for chat participants.");
@@ -17916,6 +19240,9 @@ var ChatResponseMarkdownPart = class {
 var ChatResponseMarkdownWithVulnerabilitiesPart = class {
   static {
     __name(this, "ChatResponseMarkdownWithVulnerabilitiesPart");
+  }
+  static {
+    __name58(this, "ChatResponseMarkdownWithVulnerabilitiesPart");
   }
   constructor(value, vulnerabilities) {
     if (typeof value !== "string" && value.isTrusted === true) {
@@ -17929,6 +19256,9 @@ var ChatResponseConfirmationPart = class {
   static {
     __name(this, "ChatResponseConfirmationPart");
   }
+  static {
+    __name58(this, "ChatResponseConfirmationPart");
+  }
   constructor(title, message, data, buttons) {
     this.title = title;
     this.message = message;
@@ -17940,6 +19270,9 @@ var ChatResponseFileTreePart = class {
   static {
     __name(this, "ChatResponseFileTreePart");
   }
+  static {
+    __name58(this, "ChatResponseFileTreePart");
+  }
   constructor(value, baseUri) {
     this.value = value;
     this.baseUri = baseUri;
@@ -17948,6 +19281,9 @@ var ChatResponseFileTreePart = class {
 var ChatResponseMultiDiffPart = class {
   static {
     __name(this, "ChatResponseMultiDiffPart");
+  }
+  static {
+    __name58(this, "ChatResponseMultiDiffPart");
   }
   constructor(value, title, readOnly) {
     this.value = value;
@@ -17959,6 +19295,9 @@ var McpToolInvocationContentData = class {
   static {
     __name(this, "McpToolInvocationContentData");
   }
+  static {
+    __name58(this, "McpToolInvocationContentData");
+  }
   constructor(data, mimeType) {
     this.data = data;
     this.mimeType = mimeType;
@@ -17967,6 +19306,9 @@ var McpToolInvocationContentData = class {
 var ChatSubagentToolInvocationData = class {
   static {
     __name(this, "ChatSubagentToolInvocationData");
+  }
+  static {
+    __name58(this, "ChatSubagentToolInvocationData");
   }
   constructor(description, agentName, prompt, result) {
     this.description = description;
@@ -17978,6 +19320,9 @@ var ChatSubagentToolInvocationData = class {
 var ChatResponseExternalEditPart = class {
   static {
     __name(this, "ChatResponseExternalEditPart");
+  }
+  static {
+    __name58(this, "ChatResponseExternalEditPart");
   }
   constructor(uris, callback) {
     this.uris = uris;
@@ -17991,6 +19336,9 @@ var ChatResponseAnchorPart = class {
   static {
     __name(this, "ChatResponseAnchorPart");
   }
+  static {
+    __name58(this, "ChatResponseAnchorPart");
+  }
   constructor(value, title) {
     this.value = value;
     this.value2 = value;
@@ -18001,6 +19349,9 @@ var ChatResponseProgressPart = class {
   static {
     __name(this, "ChatResponseProgressPart");
   }
+  static {
+    __name58(this, "ChatResponseProgressPart");
+  }
   constructor(value) {
     this.value = value;
   }
@@ -18008,6 +19359,9 @@ var ChatResponseProgressPart = class {
 var ChatResponseProgressPart2 = class {
   static {
     __name(this, "ChatResponseProgressPart2");
+  }
+  static {
+    __name58(this, "ChatResponseProgressPart2");
   }
   constructor(value, task) {
     this.value = value;
@@ -18018,6 +19372,9 @@ var ChatResponseThinkingProgressPart = class {
   static {
     __name(this, "ChatResponseThinkingProgressPart");
   }
+  static {
+    __name58(this, "ChatResponseThinkingProgressPart");
+  }
   constructor(value, id2, metadata) {
     this.value = value;
     this.id = id2;
@@ -18027,6 +19384,9 @@ var ChatResponseThinkingProgressPart = class {
 var ChatResponseHookPart = class {
   static {
     __name(this, "ChatResponseHookPart");
+  }
+  static {
+    __name58(this, "ChatResponseHookPart");
   }
   constructor(hookType, stopReason, systemMessage, metadata) {
     this.hookType = hookType;
@@ -18039,6 +19399,9 @@ var ChatResponseWarningPart = class {
   static {
     __name(this, "ChatResponseWarningPart");
   }
+  static {
+    __name58(this, "ChatResponseWarningPart");
+  }
   constructor(value) {
     if (typeof value !== "string" && value.isTrusted === true) {
       throw new Error("The boolean form of MarkdownString.isTrusted is NOT supported for chat participants.");
@@ -18049,6 +19412,9 @@ var ChatResponseWarningPart = class {
 var ChatResponseInfoPart = class {
   static {
     __name(this, "ChatResponseInfoPart");
+  }
+  static {
+    __name58(this, "ChatResponseInfoPart");
   }
   constructor(value) {
     if (typeof value !== "string" && value.isTrusted === true) {
@@ -18061,6 +19427,9 @@ var ChatResponseCommandButtonPart = class {
   static {
     __name(this, "ChatResponseCommandButtonPart");
   }
+  static {
+    __name58(this, "ChatResponseCommandButtonPart");
+  }
   constructor(value) {
     this.value = value;
   }
@@ -18068,6 +19437,9 @@ var ChatResponseCommandButtonPart = class {
 var ChatResponseReferencePart = class {
   static {
     __name(this, "ChatResponseReferencePart");
+  }
+  static {
+    __name58(this, "ChatResponseReferencePart");
   }
   constructor(value, iconPath, options) {
     this.value = value;
@@ -18079,6 +19451,9 @@ var ChatResponseCodeblockUriPart = class {
   static {
     __name(this, "ChatResponseCodeblockUriPart");
   }
+  static {
+    __name58(this, "ChatResponseCodeblockUriPart");
+  }
   constructor(value, isEdit, undoStopId) {
     this.value = value;
     this.isEdit = isEdit;
@@ -18088,6 +19463,9 @@ var ChatResponseCodeblockUriPart = class {
 var ChatResponseCodeCitationPart = class {
   static {
     __name(this, "ChatResponseCodeCitationPart");
+  }
+  static {
+    __name58(this, "ChatResponseCodeCitationPart");
   }
   constructor(value, license, snippet) {
     this.value = value;
@@ -18099,6 +19477,9 @@ var ChatResponseMovePart = class {
   static {
     __name(this, "ChatResponseMovePart");
   }
+  static {
+    __name58(this, "ChatResponseMovePart");
+  }
   constructor(uri, range2) {
     this.uri = uri;
     this.range = range2;
@@ -18108,6 +19489,9 @@ var ChatResponseExtensionsPart = class {
   static {
     __name(this, "ChatResponseExtensionsPart");
   }
+  static {
+    __name58(this, "ChatResponseExtensionsPart");
+  }
   constructor(extensions) {
     this.extensions = extensions;
   }
@@ -18115,6 +19499,9 @@ var ChatResponseExtensionsPart = class {
 var ChatResponsePullRequestPart = class {
   static {
     __name(this, "ChatResponsePullRequestPart");
+  }
+  static {
+    __name58(this, "ChatResponsePullRequestPart");
   }
   constructor(uriOrCommand, title, description, author, linkTag) {
     this.title = title;
@@ -18152,6 +19539,9 @@ var ChatQuestion = class {
   static {
     __name(this, "ChatQuestion");
   }
+  static {
+    __name58(this, "ChatQuestion");
+  }
   constructor(id2, type, title, options) {
     this.id = id2;
     this.type = type;
@@ -18166,6 +19556,9 @@ var ChatResponseQuestionCarouselPart = class {
   static {
     __name(this, "ChatResponseQuestionCarouselPart");
   }
+  static {
+    __name58(this, "ChatResponseQuestionCarouselPart");
+  }
   constructor(questions, allowSkip = true) {
     this.questions = questions;
     this.allowSkip = allowSkip;
@@ -18174,6 +19567,9 @@ var ChatResponseQuestionCarouselPart = class {
 var ChatResponseTextEditPart = class {
   static {
     __name(this, "ChatResponseTextEditPart");
+  }
+  static {
+    __name58(this, "ChatResponseTextEditPart");
   }
   constructor(uri, editsOrDone) {
     this.uri = uri;
@@ -18189,6 +19585,9 @@ var ChatResponseNotebookEditPart = class {
   static {
     __name(this, "ChatResponseNotebookEditPart");
   }
+  static {
+    __name58(this, "ChatResponseNotebookEditPart");
+  }
   constructor(uri, editsOrDone) {
     this.uri = uri;
     if (editsOrDone === true) {
@@ -18202,6 +19601,9 @@ var ChatResponseNotebookEditPart = class {
 var ChatResponseWorkspaceEditPart = class {
   static {
     __name(this, "ChatResponseWorkspaceEditPart");
+  }
+  static {
+    __name58(this, "ChatResponseWorkspaceEditPart");
   }
   constructor(edits) {
     this.edits = edits;
@@ -18223,6 +19625,9 @@ var ChatToolInvocationPart = class {
   static {
     __name(this, "ChatToolInvocationPart");
   }
+  static {
+    __name58(this, "ChatToolInvocationPart");
+  }
   constructor(toolName, toolCallId, errorMessage) {
     this.toolName = toolName;
     this.toolCallId = toolCallId;
@@ -18232,6 +19637,9 @@ var ChatToolInvocationPart = class {
 var ChatRequestTurn = class {
   static {
     __name(this, "ChatRequestTurn");
+  }
+  static {
+    __name58(this, "ChatRequestTurn");
   }
   constructor(prompt, command, references, participant, toolReferences, editedFileEvents, id2, modelId, modeInstructions2) {
     this.prompt = prompt;
@@ -18249,6 +19657,9 @@ var ChatResponseTurn = class {
   static {
     __name(this, "ChatResponseTurn");
   }
+  static {
+    __name58(this, "ChatResponseTurn");
+  }
   constructor(response, result, participant, command) {
     this.response = response;
     this.result = result;
@@ -18259,6 +19670,9 @@ var ChatResponseTurn = class {
 var ChatResponseTurn2 = class {
   static {
     __name(this, "ChatResponseTurn2");
+  }
+  static {
+    __name58(this, "ChatResponseTurn2");
   }
   constructor(response, result, participant, command) {
     this.response = response;
@@ -18284,6 +19698,9 @@ var ChatSessionStatus;
 var ChatSessionCustomizationType = class _ChatSessionCustomizationType {
   static {
     __name(this, "ChatSessionCustomizationType");
+  }
+  static {
+    __name58(this, "ChatSessionCustomizationType");
   }
   static {
     this.Agent = new _ChatSessionCustomizationType("agent");
@@ -18329,6 +19746,9 @@ var ChatDebugToolCallEvent = class {
   static {
     __name(this, "ChatDebugToolCallEvent");
   }
+  static {
+    __name58(this, "ChatDebugToolCallEvent");
+  }
   constructor(toolName, created) {
     this._kind = "toolCall";
     this.toolName = toolName;
@@ -18339,6 +19759,9 @@ var ChatDebugModelTurnEvent = class {
   static {
     __name(this, "ChatDebugModelTurnEvent");
   }
+  static {
+    __name58(this, "ChatDebugModelTurnEvent");
+  }
   constructor(created) {
     this._kind = "modelTurn";
     this.created = created;
@@ -18347,6 +19770,9 @@ var ChatDebugModelTurnEvent = class {
 var ChatDebugGenericEvent = class {
   static {
     __name(this, "ChatDebugGenericEvent");
+  }
+  static {
+    __name58(this, "ChatDebugGenericEvent");
   }
   constructor(name, level, created) {
     this._kind = "generic";
@@ -18359,6 +19785,9 @@ var ChatDebugSubagentInvocationEvent = class {
   static {
     __name(this, "ChatDebugSubagentInvocationEvent");
   }
+  static {
+    __name58(this, "ChatDebugSubagentInvocationEvent");
+  }
   constructor(agentName, created) {
     this._kind = "subagentInvocation";
     this.agentName = agentName;
@@ -18369,6 +19798,9 @@ var ChatDebugMessageSection = class {
   static {
     __name(this, "ChatDebugMessageSection");
   }
+  static {
+    __name58(this, "ChatDebugMessageSection");
+  }
   constructor(name, content) {
     this.name = name;
     this.content = content;
@@ -18377,6 +19809,9 @@ var ChatDebugMessageSection = class {
 var ChatDebugUserMessageEvent = class {
   static {
     __name(this, "ChatDebugUserMessageEvent");
+  }
+  static {
+    __name58(this, "ChatDebugUserMessageEvent");
   }
   constructor(message, created) {
     this._kind = "userMessage";
@@ -18389,6 +19824,9 @@ var ChatDebugAgentResponseEvent = class {
   static {
     __name(this, "ChatDebugAgentResponseEvent");
   }
+  static {
+    __name58(this, "ChatDebugAgentResponseEvent");
+  }
   constructor(message, created) {
     this._kind = "agentResponse";
     this.message = message;
@@ -18399,6 +19837,9 @@ var ChatDebugAgentResponseEvent = class {
 var ChatDebugEventTextContent = class {
   static {
     __name(this, "ChatDebugEventTextContent");
+  }
+  static {
+    __name58(this, "ChatDebugEventTextContent");
   }
   constructor(value) {
     this._kind = "text";
@@ -18414,6 +19855,9 @@ var ChatDebugEventMessageContent = class {
   static {
     __name(this, "ChatDebugEventMessageContent");
   }
+  static {
+    __name58(this, "ChatDebugEventMessageContent");
+  }
   constructor(type, message, sections) {
     this._kind = "messageContent";
     this.type = type;
@@ -18425,6 +19869,9 @@ var ChatDebugEventToolCallContent = class {
   static {
     __name(this, "ChatDebugEventToolCallContent");
   }
+  static {
+    __name58(this, "ChatDebugEventToolCallContent");
+  }
   constructor(toolName) {
     this._kind = "toolCallContent";
     this.toolName = toolName;
@@ -18433,6 +19880,9 @@ var ChatDebugEventToolCallContent = class {
 var ChatDebugEventModelTurnContent = class {
   static {
     __name(this, "ChatDebugEventModelTurnContent");
+  }
+  static {
+    __name58(this, "ChatDebugEventModelTurnContent");
   }
   constructor(requestName) {
     this._kind = "modelTurnContent";
@@ -18443,6 +19893,9 @@ var ChatDebugEventHookContent = class {
   static {
     __name(this, "ChatDebugEventHookContent");
   }
+  static {
+    __name58(this, "ChatDebugEventHookContent");
+  }
   constructor(hookType) {
     this._kind = "hookContent";
     this.hookType = hookType;
@@ -18451,6 +19904,9 @@ var ChatDebugEventHookContent = class {
 var ChatSessionChangedFile = class {
   static {
     __name(this, "ChatSessionChangedFile");
+  }
+  static {
+    __name58(this, "ChatSessionChangedFile");
   }
   constructor(uri, originalUri, modifiedUri, insertions, deletions) {
     this.uri = uri;
@@ -18476,6 +19932,9 @@ var ChatRequestEditorData = class {
   static {
     __name(this, "ChatRequestEditorData");
   }
+  static {
+    __name58(this, "ChatRequestEditorData");
+  }
   constructor(editor, document2, selection, wholeRange) {
     this.editor = editor;
     this.document = document2;
@@ -18487,6 +19946,9 @@ var ChatRequestNotebookData = class {
   static {
     __name(this, "ChatRequestNotebookData");
   }
+  static {
+    __name58(this, "ChatRequestNotebookData");
+  }
   constructor(cell) {
     this.cell = cell;
   }
@@ -18494,6 +19956,9 @@ var ChatRequestNotebookData = class {
 var ChatReferenceBinaryData = class {
   static {
     __name(this, "ChatReferenceBinaryData");
+  }
+  static {
+    __name58(this, "ChatReferenceBinaryData");
   }
   constructor(mimeType, data, reference) {
     this.mimeType = mimeType;
@@ -18504,6 +19969,9 @@ var ChatReferenceBinaryData = class {
 var ChatReferenceDiagnostic = class {
   static {
     __name(this, "ChatReferenceDiagnostic");
+  }
+  static {
+    __name58(this, "ChatReferenceDiagnostic");
   }
   constructor(diagnostics) {
     this.diagnostics = diagnostics;
@@ -18518,6 +19986,9 @@ var LanguageModelChatMessageRole;
 var LanguageModelToolResultPart = class {
   static {
     __name(this, "LanguageModelToolResultPart");
+  }
+  static {
+    __name58(this, "LanguageModelToolResultPart");
   }
   constructor(callId, content, isError) {
     this.callId = callId;
@@ -18534,6 +20005,9 @@ var ChatErrorLevel;
 var LanguageModelChatMessage = class _LanguageModelChatMessage {
   static {
     __name(this, "LanguageModelChatMessage");
+  }
+  static {
+    __name58(this, "LanguageModelChatMessage");
   }
   static User(content, name) {
     return new _LanguageModelChatMessage(LanguageModelChatMessageRole.User, content, name);
@@ -18561,6 +20035,9 @@ var LanguageModelChatMessage = class _LanguageModelChatMessage {
 var LanguageModelChatMessage2 = class _LanguageModelChatMessage2 {
   static {
     __name(this, "LanguageModelChatMessage2");
+  }
+  static {
+    __name58(this, "LanguageModelChatMessage2");
   }
   static User(content, name) {
     return new _LanguageModelChatMessage2(LanguageModelChatMessageRole.User, content, name);
@@ -18608,6 +20085,9 @@ var LanguageModelToolCallPart = class {
   static {
     __name(this, "LanguageModelToolCallPart");
   }
+  static {
+    __name58(this, "LanguageModelToolCallPart");
+  }
   constructor(callId, name, input) {
     this.callId = callId;
     this.name = name;
@@ -18624,6 +20104,9 @@ var LanguageModelTextPart = class {
   static {
     __name(this, "LanguageModelTextPart");
   }
+  static {
+    __name58(this, "LanguageModelTextPart");
+  }
   constructor(value, audience) {
     this.value = value;
     audience = audience;
@@ -18639,6 +20122,9 @@ var LanguageModelTextPart = class {
 var LanguageModelDataPart = class _LanguageModelDataPart {
   static {
     __name(this, "LanguageModelDataPart");
+  }
+  static {
+    __name58(this, "LanguageModelDataPart");
   }
   constructor(data, mimeType, audience) {
     this.mimeType = mimeType;
@@ -18676,6 +20162,9 @@ var LanguageModelThinkingPart = class {
   static {
     __name(this, "LanguageModelThinkingPart");
   }
+  static {
+    __name58(this, "LanguageModelThinkingPart");
+  }
   constructor(value, id2, metadata) {
     this.value = value;
     this.id = id2;
@@ -18694,6 +20183,9 @@ var LanguageModelPromptTsxPart = class {
   static {
     __name(this, "LanguageModelPromptTsxPart");
   }
+  static {
+    __name58(this, "LanguageModelPromptTsxPart");
+  }
   constructor(value) {
     this.value = value;
   }
@@ -18708,6 +20200,9 @@ var LanguageModelChatSystemMessage = class {
   static {
     __name(this, "LanguageModelChatSystemMessage");
   }
+  static {
+    __name58(this, "LanguageModelChatSystemMessage");
+  }
   constructor(content) {
     this.content = content;
   }
@@ -18715,6 +20210,9 @@ var LanguageModelChatSystemMessage = class {
 var LanguageModelChatUserMessage = class {
   static {
     __name(this, "LanguageModelChatUserMessage");
+  }
+  static {
+    __name58(this, "LanguageModelChatUserMessage");
   }
   constructor(content, name) {
     this.content = content;
@@ -18725,6 +20223,9 @@ var LanguageModelChatAssistantMessage = class {
   static {
     __name(this, "LanguageModelChatAssistantMessage");
   }
+  static {
+    __name58(this, "LanguageModelChatAssistantMessage");
+  }
   constructor(content, name) {
     this.content = content;
     this.name = name;
@@ -18733,6 +20234,9 @@ var LanguageModelChatAssistantMessage = class {
 var LanguageModelError = class _LanguageModelError extends Error {
   static {
     __name(this, "LanguageModelError");
+  }
+  static {
+    __name58(this, "LanguageModelError");
   }
   static #name = "LanguageModelError";
   static NotFound(message) {
@@ -18760,6 +20264,9 @@ var LanguageModelToolResult = class {
   static {
     __name(this, "LanguageModelToolResult");
   }
+  static {
+    __name58(this, "LanguageModelToolResult");
+  }
   constructor(content) {
     this.content = content;
   }
@@ -18773,6 +20280,9 @@ var LanguageModelToolResult = class {
 var LanguageModelToolResult2 = class {
   static {
     __name(this, "LanguageModelToolResult2");
+  }
+  static {
+    __name58(this, "LanguageModelToolResult2");
   }
   constructor(content) {
     this.content = content;
@@ -18788,6 +20298,9 @@ var ExtendedLanguageModelToolResult = class extends LanguageModelToolResult {
   static {
     __name(this, "ExtendedLanguageModelToolResult");
   }
+  static {
+    __name58(this, "ExtendedLanguageModelToolResult");
+  }
 };
 var LanguageModelChatToolMode;
 (function(LanguageModelChatToolMode2) {
@@ -18798,6 +20311,9 @@ var LanguageModelToolExtensionSource = class {
   static {
     __name(this, "LanguageModelToolExtensionSource");
   }
+  static {
+    __name58(this, "LanguageModelToolExtensionSource");
+  }
   constructor(id2, label) {
     this.id = id2;
     this.label = label;
@@ -18806,6 +20322,9 @@ var LanguageModelToolExtensionSource = class {
 var LanguageModelToolMCPSource = class {
   static {
     __name(this, "LanguageModelToolMCPSource");
+  }
+  static {
+    __name58(this, "LanguageModelToolMCPSource");
   }
   constructor(label, name, instructions) {
     this.label = label;
@@ -18854,6 +20373,9 @@ var McpStdioServerDefinition = class {
   static {
     __name(this, "McpStdioServerDefinition");
   }
+  static {
+    __name58(this, "McpStdioServerDefinition");
+  }
   constructor(label, command, args, env2 = {}, version, metadata) {
     this.label = label;
     this.command = command;
@@ -18866,6 +20388,9 @@ var McpStdioServerDefinition = class {
 var McpHttpServerDefinition = class {
   static {
     __name(this, "McpHttpServerDefinition");
+  }
+  static {
+    __name58(this, "McpHttpServerDefinition");
   }
   constructor(label, uri, headers = {}, version, metadata, authentication) {
     this.label = label;
@@ -18924,10 +20449,10 @@ var FromAPI3 = /* @__PURE__ */ __name((_extension, item, handle, parentHandle, c
     command: Command,
     accessibilityInformation: AccessibilityInformation
   } = item;
-  let ThemeIcon4;
+  let ThemeIcon3;
   let Icon;
   if (IconPath instanceof ThemeIcon2) {
-    ThemeIcon4 = {
+    ThemeIcon3 = {
       id: IconPath.id,
       color: IconPath.color?.id
     };
@@ -18945,7 +20470,7 @@ var FromAPI3 = /* @__PURE__ */ __name((_extension, item, handle, parentHandle, c
     command: Command ? commandConverter.ToInternal(Command, []) : void 0,
     collapsibleState: CollapsibleStateValue ?? TreeItemCollapsibleState2.None,
     contextValue: ContextValue,
-    themeIcon: ThemeIcon4,
+    themeIcon: ThemeIcon3,
     icon: Icon ? "light" in Icon && "dark" in Icon ? {
       light: FromAPI2(Icon.light),
       dark: FromAPI2(Icon.dark)

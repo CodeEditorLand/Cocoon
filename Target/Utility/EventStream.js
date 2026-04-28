@@ -1,7 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/collections.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
+var __defProp2 = Object.defineProperty;
+var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var _a;
 function groupBy(data, groupFn) {
   const result = /* @__PURE__ */ Object.create(null);
@@ -16,6 +18,7 @@ function groupBy(data, groupFn) {
   return result;
 }
 __name(groupBy, "groupBy");
+__name2(groupBy, "groupBy");
 function groupByMap(data, groupFn) {
   const result = /* @__PURE__ */ new Map();
   for (const element of data) {
@@ -30,6 +33,7 @@ function groupByMap(data, groupFn) {
   return result;
 }
 __name(groupByMap, "groupByMap");
+__name2(groupByMap, "groupByMap");
 function diffSets(before, after) {
   const removed = [];
   const added = [];
@@ -46,6 +50,7 @@ function diffSets(before, after) {
   return { removed, added };
 }
 __name(diffSets, "diffSets");
+__name2(diffSets, "diffSets");
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -62,6 +67,7 @@ function diffMaps(before, after) {
   return { removed, added };
 }
 __name(diffMaps, "diffMaps");
+__name2(diffMaps, "diffMaps");
 function intersection(setA, setB) {
   const result = /* @__PURE__ */ new Set();
   for (const elem of setB) {
@@ -72,9 +78,13 @@ function intersection(setA, setB) {
   return result;
 }
 __name(intersection, "intersection");
+__name2(intersection, "intersection");
 var SetWithKey = class {
   static {
     __name(this, "SetWithKey");
+  }
+  static {
+    __name2(this, "SetWithKey");
   }
   static {
     _a = Symbol.toStringTag;
@@ -125,10 +135,15 @@ var SetWithKey = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/errors.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
+var __defProp3 = Object.defineProperty;
+var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
 var ErrorHandler = class {
   static {
     __name(this, "ErrorHandler");
+  }
+  static {
+    __name3(this, "ErrorHandler");
   }
   constructor() {
     this.listeners = [];
@@ -178,6 +193,7 @@ function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
   errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
 }
 __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+__name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
 function isSigPipeError(e) {
   if (!e || typeof e !== "object") {
     return false;
@@ -186,11 +202,13 @@ function isSigPipeError(e) {
   return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
 }
 __name(isSigPipeError, "isSigPipeError");
+__name3(isSigPipeError, "isSigPipeError");
 function onBugIndicatingError(e) {
   errorHandler.onUnexpectedError(e);
   return void 0;
 }
 __name(onBugIndicatingError, "onBugIndicatingError");
+__name3(onBugIndicatingError, "onBugIndicatingError");
 function onUnexpectedError(e) {
   if (!isCancellationError(e)) {
     errorHandler.onUnexpectedError(e);
@@ -198,6 +216,7 @@ function onUnexpectedError(e) {
   return void 0;
 }
 __name(onUnexpectedError, "onUnexpectedError");
+__name3(onUnexpectedError, "onUnexpectedError");
 function onUnexpectedExternalError(e) {
   if (!isCancellationError(e)) {
     errorHandler.onUnexpectedExternalError(e);
@@ -205,6 +224,7 @@ function onUnexpectedExternalError(e) {
   return void 0;
 }
 __name(onUnexpectedExternalError, "onUnexpectedExternalError");
+__name3(onUnexpectedExternalError, "onUnexpectedExternalError");
 function transformErrorForSerialization(error) {
   if (error instanceof Error) {
     const { name, message, cause } = error;
@@ -222,6 +242,7 @@ function transformErrorForSerialization(error) {
   return error;
 }
 __name(transformErrorForSerialization, "transformErrorForSerialization");
+__name3(transformErrorForSerialization, "transformErrorForSerialization");
 function transformErrorFromSerialization(data) {
   let error;
   if (data.noTelemetry) {
@@ -241,6 +262,7 @@ function transformErrorFromSerialization(data) {
   return error;
 }
 __name(transformErrorFromSerialization, "transformErrorFromSerialization");
+__name3(transformErrorFromSerialization, "transformErrorFromSerialization");
 var canceledName = "Canceled";
 function isCancellationError(error) {
   if (error instanceof CancellationError) {
@@ -249,9 +271,13 @@ function isCancellationError(error) {
   return error instanceof Error && error.name === canceledName && error.message === canceledName;
 }
 __name(isCancellationError, "isCancellationError");
+__name3(isCancellationError, "isCancellationError");
 var CancellationError = class extends Error {
   static {
     __name(this, "CancellationError");
+  }
+  static {
+    __name3(this, "CancellationError");
   }
   constructor() {
     super(canceledName);
@@ -261,6 +287,9 @@ var CancellationError = class extends Error {
 var PendingMigrationError = class _PendingMigrationError extends Error {
   static {
     __name(this, "PendingMigrationError");
+  }
+  static {
+    __name3(this, "PendingMigrationError");
   }
   static {
     this._name = "PendingMigrationError";
@@ -279,6 +308,7 @@ function canceled() {
   return error;
 }
 __name(canceled, "canceled");
+__name3(canceled, "canceled");
 function illegalArgument(name) {
   if (name) {
     return new Error(`Illegal argument: ${name}`);
@@ -287,6 +317,7 @@ function illegalArgument(name) {
   }
 }
 __name(illegalArgument, "illegalArgument");
+__name3(illegalArgument, "illegalArgument");
 function illegalState(name) {
   if (name) {
     return new Error(`Illegal state: ${name}`);
@@ -295,9 +326,13 @@ function illegalState(name) {
   }
 }
 __name(illegalState, "illegalState");
+__name3(illegalState, "illegalState");
 var ReadonlyError = class extends TypeError {
   static {
     __name(this, "ReadonlyError");
+  }
+  static {
+    __name3(this, "ReadonlyError");
   }
   constructor(name) {
     super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
@@ -316,9 +351,13 @@ function getErrorMessage(err) {
   return String(err);
 }
 __name(getErrorMessage, "getErrorMessage");
+__name3(getErrorMessage, "getErrorMessage");
 var NotImplementedError = class extends Error {
   static {
     __name(this, "NotImplementedError");
+  }
+  static {
+    __name3(this, "NotImplementedError");
   }
   constructor(message) {
     super("NotImplemented");
@@ -331,6 +370,9 @@ var NotSupportedError = class extends Error {
   static {
     __name(this, "NotSupportedError");
   }
+  static {
+    __name3(this, "NotSupportedError");
+  }
   constructor(message) {
     super("NotSupported");
     if (message) {
@@ -342,6 +384,9 @@ var ExpectedError = class extends Error {
   static {
     __name(this, "ExpectedError");
   }
+  static {
+    __name3(this, "ExpectedError");
+  }
   constructor() {
     super(...arguments);
     this.isExpected = true;
@@ -350,6 +395,9 @@ var ExpectedError = class extends Error {
 var ErrorNoTelemetry = class _ErrorNoTelemetry extends Error {
   static {
     __name(this, "ErrorNoTelemetry");
+  }
+  static {
+    __name3(this, "ErrorNoTelemetry");
   }
   constructor(msg) {
     super(msg);
@@ -372,13 +420,18 @@ var BugIndicatingError = class _BugIndicatingError extends Error {
   static {
     __name(this, "BugIndicatingError");
   }
+  static {
+    __name3(this, "BugIndicatingError");
+  }
   constructor(message) {
     super(message || "An unexpected bug occurred.");
     Object.setPrototypeOf(this, _BugIndicatingError.prototype);
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/functional.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
+var __defProp4 = Object.defineProperty;
+var __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
 function createSingleCallFunction(fn, fnDidRunCallback) {
   const _this = this;
   let didCall = false;
@@ -401,8 +454,11 @@ function createSingleCallFunction(fn, fnDidRunCallback) {
   };
 }
 __name(createSingleCallFunction, "createSingleCallFunction");
+__name4(createSingleCallFunction, "createSingleCallFunction");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arraysFind.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
+var __defProp5 = Object.defineProperty;
+var __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
 function findLast(array, predicate, fromIndex = array.length - 1) {
   const idx = findLastIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -411,6 +467,7 @@ function findLast(array, predicate, fromIndex = array.length - 1) {
   return array[idx];
 }
 __name(findLast, "findLast");
+__name5(findLast, "findLast");
 function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   for (let i = fromIndex; i >= 0; i--) {
     const element = array[i];
@@ -421,6 +478,7 @@ function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   return -1;
 }
 __name(findLastIdx, "findLastIdx");
+__name5(findLastIdx, "findLastIdx");
 function findFirst(array, predicate, fromIndex = 0) {
   const idx = findFirstIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -429,6 +487,7 @@ function findFirst(array, predicate, fromIndex = 0) {
   return array[idx];
 }
 __name(findFirst, "findFirst");
+__name5(findFirst, "findFirst");
 function findFirstIdx(array, predicate, fromIndex = 0) {
   for (let i = fromIndex; i < array.length; i++) {
     const element = array[i];
@@ -439,11 +498,13 @@ function findFirstIdx(array, predicate, fromIndex = 0) {
   return -1;
 }
 __name(findFirstIdx, "findFirstIdx");
+__name5(findFirstIdx, "findFirstIdx");
 function findLastMonotonous(array, predicate) {
   const idx = findLastIdxMonotonous(array, predicate);
   return idx === -1 ? void 0 : array[idx];
 }
 __name(findLastMonotonous, "findLastMonotonous");
+__name5(findLastMonotonous, "findLastMonotonous");
 function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -458,11 +519,13 @@ function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.
   return i - 1;
 }
 __name(findLastIdxMonotonous, "findLastIdxMonotonous");
+__name5(findLastIdxMonotonous, "findLastIdxMonotonous");
 function findFirstMonotonous(array, predicate) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
   return idx === array.length ? void 0 : array[idx];
 }
 __name(findFirstMonotonous, "findFirstMonotonous");
+__name5(findFirstMonotonous, "findFirstMonotonous");
 function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -477,14 +540,19 @@ function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx
   return i;
 }
 __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+__name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
 function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
   return idx === array.length ? -1 : idx;
 }
 __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+__name5(findFirstIdxMonotonous, "findFirstIdxMonotonous");
 var MonotonousArray = class _MonotonousArray {
   static {
     __name(this, "MonotonousArray");
+  }
+  static {
+    __name5(this, "MonotonousArray");
   }
   static {
     this.assertInvariants = false;
@@ -527,6 +595,7 @@ function findFirstMax(array, comparator) {
   return max;
 }
 __name(findFirstMax, "findFirstMax");
+__name5(findFirstMax, "findFirstMax");
 function findLastMax(array, comparator) {
   if (array.length === 0) {
     return void 0;
@@ -541,10 +610,12 @@ function findLastMax(array, comparator) {
   return max;
 }
 __name(findLastMax, "findLastMax");
+__name5(findLastMax, "findLastMax");
 function findFirstMin(array, comparator) {
   return findFirstMax(array, (a, b) => -comparator(a, b));
 }
 __name(findFirstMin, "findFirstMin");
+__name5(findFirstMin, "findFirstMin");
 function findMaxIdx(array, comparator) {
   if (array.length === 0) {
     return -1;
@@ -559,6 +630,7 @@ function findMaxIdx(array, comparator) {
   return maxIdx;
 }
 __name(findMaxIdx, "findMaxIdx");
+__name5(findMaxIdx, "findMaxIdx");
 function mapFindFirst(items, mapFn) {
   for (const value of items) {
     const mapped = mapFn(value);
@@ -569,8 +641,11 @@ function mapFindFirst(items, mapFn) {
   return void 0;
 }
 __name(mapFindFirst, "mapFindFirst");
+__name5(mapFindFirst, "mapFindFirst");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arrays.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
+var __defProp6 = Object.defineProperty;
+var __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
 function tail(arr) {
   if (arr.length === 0) {
     throw new Error("Invalid tail call");
@@ -578,6 +653,7 @@ function tail(arr) {
   return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];
 }
 __name(tail, "tail");
+__name6(tail, "tail");
 function equals(one, other, itemEquals = (a, b) => a === b) {
   if (one === other) {
     return true;
@@ -596,6 +672,7 @@ function equals(one, other, itemEquals = (a, b) => a === b) {
   return true;
 }
 __name(equals, "equals");
+__name6(equals, "equals");
 function removeFastWithoutKeepingOrder(array, index2) {
   const last = array.length - 1;
   if (index2 < last) {
@@ -604,10 +681,12 @@ function removeFastWithoutKeepingOrder(array, index2) {
   array.pop();
 }
 __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+__name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
 function binarySearch(array, key, comparator) {
   return binarySearch2(array.length, (i) => comparator(array[i], key));
 }
 __name(binarySearch, "binarySearch");
+__name6(binarySearch, "binarySearch");
 function binarySearch2(length, compareToKey) {
   let low = 0, high = length - 1;
   while (low <= high) {
@@ -624,6 +703,7 @@ function binarySearch2(length, compareToKey) {
   return -(low + 1);
 }
 __name(binarySearch2, "binarySearch2");
+__name6(binarySearch2, "binarySearch2");
 function quickSelect(nth, data, compare) {
   nth = nth | 0;
   if (nth >= data.length) {
@@ -652,6 +732,7 @@ function quickSelect(nth, data, compare) {
   }
 }
 __name(quickSelect, "quickSelect");
+__name6(quickSelect, "quickSelect");
 function groupBy2(data, compare) {
   const result = [];
   let currentGroup = void 0;
@@ -666,6 +747,7 @@ function groupBy2(data, compare) {
   return result;
 }
 __name(groupBy2, "groupBy");
+__name6(groupBy2, "groupBy");
 function* groupAdjacentBy(items, shouldBeGrouped) {
   let currentGroup;
   let last;
@@ -685,22 +767,26 @@ function* groupAdjacentBy(items, shouldBeGrouped) {
   }
 }
 __name(groupAdjacentBy, "groupAdjacentBy");
+__name6(groupAdjacentBy, "groupAdjacentBy");
 function forEachAdjacent(arr, f) {
   for (let i = 0; i <= arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
   }
 }
 __name(forEachAdjacent, "forEachAdjacent");
+__name6(forEachAdjacent, "forEachAdjacent");
 function forEachWithNeighbors(arr, f) {
   for (let i = 0; i < arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
   }
 }
 __name(forEachWithNeighbors, "forEachWithNeighbors");
+__name6(forEachWithNeighbors, "forEachWithNeighbors");
 function concatArrays(...arrays) {
   return [].concat(...arrays);
 }
 __name(concatArrays, "concatArrays");
+__name6(concatArrays, "concatArrays");
 function sortedDiff(before, after, compare) {
   const result = [];
   function pushSplice(start, deleteCount, toInsert) {
@@ -716,6 +802,7 @@ function sortedDiff(before, after, compare) {
     }
   }
   __name(pushSplice, "pushSplice");
+  __name6(pushSplice, "pushSplice");
   let beforeIdx = 0;
   let afterIdx = 0;
   while (true) {
@@ -744,6 +831,7 @@ function sortedDiff(before, after, compare) {
   return result;
 }
 __name(sortedDiff, "sortedDiff");
+__name6(sortedDiff, "sortedDiff");
 function delta(before, after, compare) {
   const splices = sortedDiff(before, after, compare);
   const removed = [];
@@ -755,6 +843,7 @@ function delta(before, after, compare) {
   return { removed, added };
 }
 __name(delta, "delta");
+__name6(delta, "delta");
 function top(array, compare, n) {
   if (n === 0) {
     return [];
@@ -764,6 +853,7 @@ function top(array, compare, n) {
   return result;
 }
 __name(top, "top");
+__name6(top, "top");
 function topAsync(array, compare, n, batch, token) {
   if (n === 0) {
     return Promise.resolve([]);
@@ -786,6 +876,7 @@ function topAsync(array, compare, n, batch, token) {
   });
 }
 __name(topAsync, "topAsync");
+__name6(topAsync, "topAsync");
 function topStep(array, compare, result, i, m) {
   for (const n = result.length; i < m; i++) {
     const element = array[i];
@@ -797,10 +888,12 @@ function topStep(array, compare, result, i, m) {
   }
 }
 __name(topStep, "topStep");
+__name6(topStep, "topStep");
 function coalesce(array) {
   return array.filter((e) => !!e);
 }
 __name(coalesce, "coalesce");
+__name6(coalesce, "coalesce");
 function coalesceInPlace(array) {
   let to = 0;
   for (let i = 0; i < array.length; i++) {
@@ -812,18 +905,22 @@ function coalesceInPlace(array) {
   array.length = to;
 }
 __name(coalesceInPlace, "coalesceInPlace");
+__name6(coalesceInPlace, "coalesceInPlace");
 function move(array, from, to) {
   array.splice(to, 0, array.splice(from, 1)[0]);
 }
 __name(move, "move");
+__name6(move, "move");
 function isFalsyOrEmpty(obj) {
   return !Array.isArray(obj) || obj.length === 0;
 }
 __name(isFalsyOrEmpty, "isFalsyOrEmpty");
+__name6(isFalsyOrEmpty, "isFalsyOrEmpty");
 function isNonEmptyArray(obj) {
   return Array.isArray(obj) && obj.length > 0;
 }
 __name(isNonEmptyArray, "isNonEmptyArray");
+__name6(isNonEmptyArray, "isNonEmptyArray");
 function distinct(array, keyFn = (value) => value) {
   const seen = /* @__PURE__ */ new Set();
   return array.filter((element) => {
@@ -836,6 +933,7 @@ function distinct(array, keyFn = (value) => value) {
   });
 }
 __name(distinct, "distinct");
+__name6(distinct, "distinct");
 function uniqueFilter(keyFn) {
   const seen = /* @__PURE__ */ new Set();
   return (element) => {
@@ -848,6 +946,7 @@ function uniqueFilter(keyFn) {
   };
 }
 __name(uniqueFilter, "uniqueFilter");
+__name6(uniqueFilter, "uniqueFilter");
 function commonPrefixLength(one, other, equals2 = (a, b) => a === b) {
   let result = 0;
   for (let i = 0, len = Math.min(one.length, other.length); i < len && equals2(one[i], other[i]); i++) {
@@ -856,6 +955,7 @@ function commonPrefixLength(one, other, equals2 = (a, b) => a === b) {
   return result;
 }
 __name(commonPrefixLength, "commonPrefixLength");
+__name6(commonPrefixLength, "commonPrefixLength");
 function range(arg, to) {
   let from = typeof to === "number" ? arg : 0;
   if (typeof to === "number") {
@@ -877,6 +977,7 @@ function range(arg, to) {
   return result;
 }
 __name(range, "range");
+__name6(range, "range");
 function index(array, indexer, mapper) {
   return array.reduce((r, t) => {
     r[indexer(t)] = mapper ? mapper(t) : t;
@@ -884,11 +985,13 @@ function index(array, indexer, mapper) {
   }, /* @__PURE__ */ Object.create(null));
 }
 __name(index, "index");
+__name6(index, "index");
 function insert(array, element) {
   array.push(element);
   return () => remove(array, element);
 }
 __name(insert, "insert");
+__name6(insert, "insert");
 function remove(array, element) {
   const index2 = array.indexOf(element);
   if (index2 > -1) {
@@ -898,17 +1001,19 @@ function remove(array, element) {
   return void 0;
 }
 __name(remove, "remove");
+__name6(remove, "remove");
 function arrayInsert(target, insertIndex, insertArr) {
   const before = target.slice(0, insertIndex);
   const after = target.slice(insertIndex);
   return before.concat(insertArr, after);
 }
 __name(arrayInsert, "arrayInsert");
+__name6(arrayInsert, "arrayInsert");
 function shuffle(array, _seed) {
   let rand;
   if (typeof _seed === "number") {
     let seed = _seed;
-    rand = /* @__PURE__ */ __name(() => {
+    rand = /* @__PURE__ */ __name6(() => {
       const x = Math.sin(seed++) * 179426549;
       return x - Math.floor(x);
     }, "rand");
@@ -923,6 +1028,7 @@ function shuffle(array, _seed) {
   }
 }
 __name(shuffle, "shuffle");
+__name6(shuffle, "shuffle");
 function pushToStart(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -931,6 +1037,7 @@ function pushToStart(arr, value) {
   }
 }
 __name(pushToStart, "pushToStart");
+__name6(pushToStart, "pushToStart");
 function pushToEnd(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -939,16 +1046,19 @@ function pushToEnd(arr, value) {
   }
 }
 __name(pushToEnd, "pushToEnd");
+__name6(pushToEnd, "pushToEnd");
 function pushMany(arr, items) {
   for (const item of items) {
     arr.push(item);
   }
 }
 __name(pushMany, "pushMany");
+__name6(pushMany, "pushMany");
 function mapArrayOrNot(items, fn) {
   return Array.isArray(items) ? items.map(fn) : fn(items);
 }
 __name(mapArrayOrNot, "mapArrayOrNot");
+__name6(mapArrayOrNot, "mapArrayOrNot");
 function mapFilter(array, fn) {
   const result = [];
   for (const item of array) {
@@ -960,19 +1070,23 @@ function mapFilter(array, fn) {
   return result;
 }
 __name(mapFilter, "mapFilter");
+__name6(mapFilter, "mapFilter");
 function withoutDuplicates(array) {
   const s = new Set(array);
   return Array.from(s);
 }
 __name(withoutDuplicates, "withoutDuplicates");
+__name6(withoutDuplicates, "withoutDuplicates");
 function asArray(x) {
   return Array.isArray(x) ? x : [x];
 }
 __name(asArray, "asArray");
+__name6(asArray, "asArray");
 function getRandomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 __name(getRandomElement, "getRandomElement");
+__name6(getRandomElement, "getRandomElement");
 function insertInto(array, start, newItems) {
   const startIdx = getActualStartIndex(array, start);
   const originalLength = array.length;
@@ -986,6 +1100,7 @@ function insertInto(array, start, newItems) {
   }
 }
 __name(insertInto, "insertInto");
+__name6(insertInto, "insertInto");
 function splice(array, start, deleteCount, newItems) {
   const index2 = getActualStartIndex(array, start);
   let result = array.splice(index2, deleteCount);
@@ -996,31 +1111,37 @@ function splice(array, start, deleteCount, newItems) {
   return result;
 }
 __name(splice, "splice");
+__name6(splice, "splice");
 function getActualStartIndex(array, start) {
   return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
 }
 __name(getActualStartIndex, "getActualStartIndex");
+__name6(getActualStartIndex, "getActualStartIndex");
 var CompareResult;
 (function(CompareResult2) {
   function isLessThan(result) {
     return result < 0;
   }
   __name(isLessThan, "isLessThan");
+  __name6(isLessThan, "isLessThan");
   CompareResult2.isLessThan = isLessThan;
   function isLessThanOrEqual(result) {
     return result <= 0;
   }
   __name(isLessThanOrEqual, "isLessThanOrEqual");
+  __name6(isLessThanOrEqual, "isLessThanOrEqual");
   CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
   function isGreaterThan(result) {
     return result > 0;
   }
   __name(isGreaterThan, "isGreaterThan");
+  __name6(isGreaterThan, "isGreaterThan");
   CompareResult2.isGreaterThan = isGreaterThan;
   function isNeitherLessOrGreaterThan(result) {
     return result === 0;
   }
   __name(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
+  __name6(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
   CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
   CompareResult2.greaterThan = 1;
   CompareResult2.lessThan = -1;
@@ -1030,6 +1151,7 @@ function compareBy(selector, comparator) {
   return (a, b) => comparator(selector(a), selector(b));
 }
 __name(compareBy, "compareBy");
+__name6(compareBy, "compareBy");
 function tieBreakComparators(...comparators) {
   return (item1, item2) => {
     for (const comparator of comparators) {
@@ -1042,12 +1164,14 @@ function tieBreakComparators(...comparators) {
   };
 }
 __name(tieBreakComparators, "tieBreakComparators");
-var numberComparator = /* @__PURE__ */ __name((a, b) => a - b, "numberComparator");
-var booleanComparator = /* @__PURE__ */ __name((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
+__name6(tieBreakComparators, "tieBreakComparators");
+var numberComparator = /* @__PURE__ */ __name6((a, b) => a - b, "numberComparator");
+var booleanComparator = /* @__PURE__ */ __name6((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
 function reverseOrder(comparator) {
   return (a, b) => -comparator(a, b);
 }
 __name(reverseOrder, "reverseOrder");
+__name6(reverseOrder, "reverseOrder");
 function compareUndefinedSmallest(comparator) {
   return (a, b) => {
     if (a === void 0) {
@@ -1059,9 +1183,13 @@ function compareUndefinedSmallest(comparator) {
   };
 }
 __name(compareUndefinedSmallest, "compareUndefinedSmallest");
+__name6(compareUndefinedSmallest, "compareUndefinedSmallest");
 var ArrayQueue = class {
   static {
     __name(this, "ArrayQueue");
+  }
+  static {
+    __name6(this, "ArrayQueue");
   }
   /**
    * Constructs a queue that is backed by the given array. Runtime is O(1).
@@ -1132,6 +1260,9 @@ var ArrayQueue = class {
 var CallbackIterable = class _CallbackIterable {
   static {
     __name(this, "CallbackIterable");
+  }
+  static {
+    __name6(this, "CallbackIterable");
   }
   static {
     this.empty = new _CallbackIterable((_callback) => {
@@ -1206,6 +1337,9 @@ var Permutation = class _Permutation {
   static {
     __name(this, "Permutation");
   }
+  static {
+    __name6(this, "Permutation");
+  }
   constructor(_indexMap) {
     this._indexMap = _indexMap;
   }
@@ -1238,16 +1372,21 @@ async function findAsync(array, predicate) {
   return results.find((r) => r.ok)?.element;
 }
 __name(findAsync, "findAsync");
+__name6(findAsync, "findAsync");
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
 }
 __name(sum, "sum");
+__name6(sum, "sum");
 function sumBy(array, selector) {
   return array.reduce((acc, value) => acc + selector(value), 0);
 }
 __name(sumBy, "sumBy");
+__name6(sumBy, "sumBy");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/map.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
+var __defProp7 = Object.defineProperty;
+var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
 var _a2, _b, _c;
 function getOrSet(map, key, value) {
   let result = map.get(key);
@@ -1258,6 +1397,7 @@ function getOrSet(map, key, value) {
   return result;
 }
 __name(getOrSet, "getOrSet");
+__name7(getOrSet, "getOrSet");
 function mapToString(map) {
   const entries = [];
   map.forEach((value, key) => {
@@ -1266,6 +1406,7 @@ function mapToString(map) {
   return `Map(${map.size}) {${entries.join(", ")}}`;
 }
 __name(mapToString, "mapToString");
+__name7(mapToString, "mapToString");
 function setToString(set) {
   const entries = [];
   set.forEach((value) => {
@@ -1274,9 +1415,13 @@ function setToString(set) {
   return `Set(${set.size}) {${entries.join(", ")}}`;
 }
 __name(setToString, "setToString");
+__name7(setToString, "setToString");
 var ResourceMapEntry = class {
   static {
     __name(this, "ResourceMapEntry");
+  }
+  static {
+    __name7(this, "ResourceMapEntry");
   }
   constructor(uri, value) {
     this.uri = uri;
@@ -1287,9 +1432,13 @@ function isEntries(arg) {
   return Array.isArray(arg);
 }
 __name(isEntries, "isEntries");
+__name7(isEntries, "isEntries");
 var ResourceMap = class _ResourceMap {
   static {
     __name(this, "ResourceMap");
+  }
+  static {
+    __name7(this, "ResourceMap");
   }
   static {
     this.defaultToKey = (resource) => resource.toString();
@@ -1362,6 +1511,9 @@ var ResourceSet = class {
   static {
     __name(this, "ResourceSet");
   }
+  static {
+    __name7(this, "ResourceSet");
+  }
   constructor(entriesOrKey, toKey) {
     this[_b] = "ResourceSet";
     if (!entriesOrKey || typeof entriesOrKey === "function") {
@@ -1412,6 +1564,9 @@ var Touch;
 var LinkedMap = class {
   static {
     __name(this, "LinkedMap");
+  }
+  static {
+    __name7(this, "LinkedMap");
   }
   constructor() {
     this[_c] = "LinkedMap";
@@ -1754,6 +1909,9 @@ var Cache = class extends LinkedMap {
   static {
     __name(this, "Cache");
   }
+  static {
+    __name7(this, "Cache");
+  }
   constructor(limit, ratio = 1) {
     super();
     this._limit = limit;
@@ -1802,6 +1960,9 @@ var LRUCache = class extends Cache {
   static {
     __name(this, "LRUCache");
   }
+  static {
+    __name7(this, "LRUCache");
+  }
   constructor(limit, ratio = 1) {
     super(limit, ratio);
   }
@@ -1817,6 +1978,9 @@ var LRUCache = class extends Cache {
 var MRUCache = class extends Cache {
   static {
     __name(this, "MRUCache");
+  }
+  static {
+    __name7(this, "MRUCache");
   }
   constructor(limit, ratio = 1) {
     super(limit, ratio);
@@ -1835,6 +1999,9 @@ var MRUCache = class extends Cache {
 var CounterSet = class {
   static {
     __name(this, "CounterSet");
+  }
+  static {
+    __name7(this, "CounterSet");
   }
   constructor() {
     this.map = /* @__PURE__ */ new Map();
@@ -1863,6 +2030,9 @@ var CounterSet = class {
 var BidirectionalMap = class {
   static {
     __name(this, "BidirectionalMap");
+  }
+  static {
+    __name7(this, "BidirectionalMap");
   }
   constructor(entries) {
     this._m1 = /* @__PURE__ */ new Map();
@@ -1911,6 +2081,9 @@ var BidirectionalMap = class {
 var SetMap = class {
   static {
     __name(this, "SetMap");
+  }
+  static {
+    __name7(this, "SetMap");
   }
   constructor() {
     this.map = /* @__PURE__ */ new Map();
@@ -1968,9 +2141,13 @@ function mapsStrictEqualIgnoreOrder(a, b) {
   return true;
 }
 __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+__name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
 var NKeyMap = class {
   static {
     __name(this, "NKeyMap");
+  }
+  static {
+    __name7(this, "NKeyMap");
   }
   constructor() {
     this._data = /* @__PURE__ */ new Map();
@@ -2018,13 +2195,14 @@ var NKeyMap = class {
       }
     }
     __name(iterate, "iterate");
+    __name7(iterate, "iterate");
     yield* iterate(this._data);
   }
   /**
    * Get a textual representation of the map for debugging purposes.
    */
   toString() {
-    const printMap = /* @__PURE__ */ __name((map, depth) => {
+    const printMap = /* @__PURE__ */ __name7((map, depth) => {
       let result = "";
       for (const [key, value] of map) {
         result += `${"  ".repeat(depth)}${key}: `;
@@ -2041,20 +2219,25 @@ var NKeyMap = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/assert.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/assert.js
+var __defProp8 = Object.defineProperty;
+var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
 function ok(value, message) {
   if (!value) {
     throw new Error(message ? `Assertion failed (${message})` : "Assertion Failed");
   }
 }
 __name(ok, "ok");
+__name8(ok, "ok");
 function assertNever(value, message = "Unreachable") {
   throw new Error(message);
 }
 __name(assertNever, "assertNever");
+__name8(assertNever, "assertNever");
 function softAssertNever(value) {
 }
 __name(softAssertNever, "softAssertNever");
+__name8(softAssertNever, "softAssertNever");
 function assert(condition, messageOrError = "unexpected state") {
   if (!condition) {
     const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
@@ -2062,12 +2245,14 @@ function assert(condition, messageOrError = "unexpected state") {
   }
 }
 __name(assert, "assert");
+__name8(assert, "assert");
 function softAssert(condition, message = "Soft Assertion Failed") {
   if (!condition) {
     onUnexpectedError(new BugIndicatingError(message));
   }
 }
 __name(softAssert, "softAssert");
+__name8(softAssert, "softAssert");
 function assertFn(condition) {
   if (!condition()) {
     debugger;
@@ -2076,6 +2261,7 @@ function assertFn(condition) {
   }
 }
 __name(assertFn, "assertFn");
+__name8(assertFn, "assertFn");
 function checkAdjacentItems(items, predicate) {
   let i = 0;
   while (i < items.length - 1) {
@@ -2089,68 +2275,85 @@ function checkAdjacentItems(items, predicate) {
   return true;
 }
 __name(checkAdjacentItems, "checkAdjacentItems");
+__name8(checkAdjacentItems, "checkAdjacentItems");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/types.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
+var __defProp9 = Object.defineProperty;
+var __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
 function isString(str) {
   return typeof str === "string";
 }
 __name(isString, "isString");
+__name9(isString, "isString");
 function isStringArray(value) {
   return isArrayOf(value, isString);
 }
 __name(isStringArray, "isStringArray");
+__name9(isStringArray, "isStringArray");
 function isArrayOf(value, check) {
   return Array.isArray(value) && value.every(check);
 }
 __name(isArrayOf, "isArrayOf");
+__name9(isArrayOf, "isArrayOf");
 function isObject(obj) {
   return typeof obj === "object" && obj !== null && !Array.isArray(obj) && !(obj instanceof RegExp) && !(obj instanceof Date);
 }
 __name(isObject, "isObject");
+__name9(isObject, "isObject");
 function isTypedArray(obj) {
   const TypedArray = Object.getPrototypeOf(Uint8Array);
   return typeof obj === "object" && obj instanceof TypedArray;
 }
 __name(isTypedArray, "isTypedArray");
+__name9(isTypedArray, "isTypedArray");
 function isNumber(obj) {
   return typeof obj === "number" && !isNaN(obj);
 }
 __name(isNumber, "isNumber");
+__name9(isNumber, "isNumber");
 function isIterable(obj) {
   return !!obj && typeof obj[Symbol.iterator] === "function";
 }
 __name(isIterable, "isIterable");
+__name9(isIterable, "isIterable");
 function isAsyncIterable(obj) {
   return !!obj && typeof obj[Symbol.asyncIterator] === "function";
 }
 __name(isAsyncIterable, "isAsyncIterable");
+__name9(isAsyncIterable, "isAsyncIterable");
 function isBoolean(obj) {
   return obj === true || obj === false;
 }
 __name(isBoolean, "isBoolean");
+__name9(isBoolean, "isBoolean");
 function isUndefined(obj) {
   return typeof obj === "undefined";
 }
 __name(isUndefined, "isUndefined");
+__name9(isUndefined, "isUndefined");
 function isDefined(arg) {
   return !isUndefinedOrNull(arg);
 }
 __name(isDefined, "isDefined");
+__name9(isDefined, "isDefined");
 function isUndefinedOrNull(obj) {
   return isUndefined(obj) || obj === null;
 }
 __name(isUndefinedOrNull, "isUndefinedOrNull");
+__name9(isUndefinedOrNull, "isUndefinedOrNull");
 function assertType(condition, type) {
   if (!condition) {
     throw new Error(type ? `Unexpected type, expected '${type}'` : "Unexpected type");
   }
 }
 __name(assertType, "assertType");
+__name9(assertType, "assertType");
 function assertReturnsDefined(arg) {
   assert(arg !== null && arg !== void 0, "Argument is `undefined` or `null`.");
   return arg;
 }
 __name(assertReturnsDefined, "assertReturnsDefined");
+__name9(assertReturnsDefined, "assertReturnsDefined");
 function assertDefined(value, error) {
   if (value === null || value === void 0) {
     const errorToThrow = typeof error === "string" ? new Error(error) : error;
@@ -2158,6 +2361,7 @@ function assertDefined(value, error) {
   }
 }
 __name(assertDefined, "assertDefined");
+__name9(assertDefined, "assertDefined");
 function assertReturnsAllDefined(...args) {
   const result = [];
   for (let i = 0; i < args.length; i++) {
@@ -2170,12 +2374,14 @@ function assertReturnsAllDefined(...args) {
   return result;
 }
 __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-var isOneOf = /* @__PURE__ */ __name((value, validValues) => {
+__name9(assertReturnsAllDefined, "assertReturnsAllDefined");
+var isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
   return validValues.includes(value);
 }, "isOneOf");
 function typeCheck(_thing) {
 }
 __name(typeCheck, "typeCheck");
+__name9(typeCheck, "typeCheck");
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 function isEmptyObject(obj) {
   if (!isObject(obj)) {
@@ -2189,14 +2395,17 @@ function isEmptyObject(obj) {
   return true;
 }
 __name(isEmptyObject, "isEmptyObject");
+__name9(isEmptyObject, "isEmptyObject");
 function isFunction(obj) {
   return typeof obj === "function";
 }
 __name(isFunction, "isFunction");
+__name9(isFunction, "isFunction");
 function areFunctions(...objects) {
   return objects.length > 0 && objects.every(isFunction);
 }
 __name(areFunctions, "areFunctions");
+__name9(areFunctions, "areFunctions");
 function validateConstraints(args, constraints) {
   const len = Math.min(args.length, constraints.length);
   for (let i = 0; i < len; i++) {
@@ -2204,6 +2413,7 @@ function validateConstraints(args, constraints) {
   }
 }
 __name(validateConstraints, "validateConstraints");
+__name9(validateConstraints, "validateConstraints");
 function validateConstraint(arg, constraint) {
   if (isString(constraint)) {
     if (typeof arg !== constraint) {
@@ -2226,10 +2436,12 @@ function validateConstraint(arg, constraint) {
   }
 }
 __name(validateConstraint, "validateConstraint");
+__name9(validateConstraint, "validateConstraint");
 function upcast(x) {
   return x;
 }
 __name(upcast, "upcast");
+__name9(upcast, "upcast");
 function hasKey(x, key) {
   for (const k in key) {
     if (!(k in x)) {
@@ -2239,25 +2451,31 @@ function hasKey(x, key) {
   return true;
 }
 __name(hasKey, "hasKey");
+__name9(hasKey, "hasKey");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/iterator.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
+var __defProp10 = Object.defineProperty;
+var __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
 var Iterable;
 (function(Iterable2) {
   function is(thing) {
     return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
   }
   __name(is, "is");
+  __name10(is, "is");
   Iterable2.is = is;
   const _empty = Object.freeze([]);
   function empty() {
     return _empty;
   }
   __name(empty, "empty");
+  __name10(empty, "empty");
   Iterable2.empty = empty;
   function* single(element) {
     yield element;
   }
   __name(single, "single");
+  __name10(single, "single");
   Iterable2.single = single;
   function wrap(iterableOrElement) {
     if (is(iterableOrElement)) {
@@ -2267,11 +2485,13 @@ var Iterable;
     }
   }
   __name(wrap, "wrap");
+  __name10(wrap, "wrap");
   Iterable2.wrap = wrap;
   function from(iterable) {
     return iterable ?? _empty;
   }
   __name(from, "from");
+  __name10(from, "from");
   Iterable2.from = from;
   function* reverse(array) {
     for (let i = array.length - 1; i >= 0; i--) {
@@ -2279,16 +2499,19 @@ var Iterable;
     }
   }
   __name(reverse, "reverse");
+  __name10(reverse, "reverse");
   Iterable2.reverse = reverse;
   function isEmpty(iterable) {
     return !iterable || iterable[Symbol.iterator]().next().done === true;
   }
   __name(isEmpty, "isEmpty");
+  __name10(isEmpty, "isEmpty");
   Iterable2.isEmpty = isEmpty;
   function first(iterable) {
     return iterable[Symbol.iterator]().next().value;
   }
   __name(first, "first");
+  __name10(first, "first");
   Iterable2.first = first;
   function some(iterable, predicate) {
     let i = 0;
@@ -2300,6 +2523,7 @@ var Iterable;
     return false;
   }
   __name(some, "some");
+  __name10(some, "some");
   Iterable2.some = some;
   function every(iterable, predicate) {
     let i = 0;
@@ -2311,6 +2535,7 @@ var Iterable;
     return true;
   }
   __name(every, "every");
+  __name10(every, "every");
   Iterable2.every = every;
   function find(iterable, predicate) {
     for (const element of iterable) {
@@ -2321,6 +2546,7 @@ var Iterable;
     return void 0;
   }
   __name(find, "find");
+  __name10(find, "find");
   Iterable2.find = find;
   function* filter(iterable, predicate) {
     for (const element of iterable) {
@@ -2330,6 +2556,7 @@ var Iterable;
     }
   }
   __name(filter, "filter");
+  __name10(filter, "filter");
   Iterable2.filter = filter;
   function* map(iterable, fn) {
     let index2 = 0;
@@ -2338,6 +2565,7 @@ var Iterable;
     }
   }
   __name(map, "map");
+  __name10(map, "map");
   Iterable2.map = map;
   function* flatMap(iterable, fn) {
     let index2 = 0;
@@ -2346,6 +2574,7 @@ var Iterable;
     }
   }
   __name(flatMap, "flatMap");
+  __name10(flatMap, "flatMap");
   Iterable2.flatMap = flatMap;
   function* concat(...iterables) {
     for (const item of iterables) {
@@ -2357,6 +2586,7 @@ var Iterable;
     }
   }
   __name(concat, "concat");
+  __name10(concat, "concat");
   Iterable2.concat = concat;
   function reduce(iterable, reducer, initialValue) {
     let value = initialValue;
@@ -2366,6 +2596,7 @@ var Iterable;
     return value;
   }
   __name(reduce, "reduce");
+  __name10(reduce, "reduce");
   Iterable2.reduce = reduce;
   function length(iterable) {
     let count = 0;
@@ -2375,6 +2606,7 @@ var Iterable;
     return count;
   }
   __name(length, "length");
+  __name10(length, "length");
   Iterable2.length = length;
   function* slice(arr, from2, to = arr.length) {
     if (from2 < -arr.length) {
@@ -2393,6 +2625,7 @@ var Iterable;
     }
   }
   __name(slice, "slice");
+  __name10(slice, "slice");
   Iterable2.slice = slice;
   function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
     const consumed = [];
@@ -2412,6 +2645,7 @@ var Iterable;
     } }];
   }
   __name(consume, "consume");
+  __name10(consume, "consume");
   Iterable2.consume = consume;
   async function asyncToArray(iterable) {
     const result = [];
@@ -2421,6 +2655,7 @@ var Iterable;
     return result;
   }
   __name(asyncToArray, "asyncToArray");
+  __name10(asyncToArray, "asyncToArray");
   Iterable2.asyncToArray = asyncToArray;
   async function asyncToArrayFlat(iterable) {
     let result = [];
@@ -2430,15 +2665,21 @@ var Iterable;
     return result;
   }
   __name(asyncToArrayFlat, "asyncToArrayFlat");
+  __name10(asyncToArrayFlat, "asyncToArrayFlat");
   Iterable2.asyncToArrayFlat = asyncToArrayFlat;
 })(Iterable || (Iterable = {}));
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/lifecycle.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
+var __defProp11 = Object.defineProperty;
+var __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
 var TRACK_DISPOSABLES = false;
 var disposableTracker = null;
 var GCBasedDisposableTracker = class {
   static {
     __name(this, "GCBasedDisposableTracker");
+  }
+  static {
+    __name11(this, "GCBasedDisposableTracker");
   }
   constructor() {
     this._registry = new FinalizationRegistry((heldValue) => {
@@ -2466,6 +2707,9 @@ var GCBasedDisposableTracker = class {
 var DisposableTracker = class _DisposableTracker {
   static {
     __name(this, "DisposableTracker");
+  }
+  static {
+    __name11(this, "DisposableTracker");
   }
   constructor() {
     this.livingDisposables = /* @__PURE__ */ new Map();
@@ -2539,11 +2783,13 @@ var DisposableTracker = class _DisposableTracker {
         }
       }
       __name(removePrefix, "removePrefix");
+      __name11(removePrefix, "removePrefix");
       const lines = leaking.source.split("\n").map((p) => p.trim().replace("at ", "")).filter((l) => l !== "");
       removePrefix(lines, ["Error", /^trackDisposable \(.*\)$/, /^DisposableTracker.trackDisposable \(.*\)$/]);
       return lines.reverse();
     }
     __name(getStackTracePath, "getStackTracePath");
+    __name11(getStackTracePath, "getStackTracePath");
     const stackTraceStarts = new SetMap();
     for (const leaking of uncoveredLeakingObjs) {
       const stackTracePath = getStackTracePath(leaking);
@@ -2596,6 +2842,7 @@ function setDisposableTracker(tracker) {
   disposableTracker = tracker;
 }
 __name(setDisposableTracker, "setDisposableTracker");
+__name11(setDisposableTracker, "setDisposableTracker");
 if (TRACK_DISPOSABLES) {
   const __is_disposable_tracked__ = "__is_disposable_tracked__";
   setDisposableTracker(new class {
@@ -2632,14 +2879,17 @@ function trackDisposable(x) {
   return x;
 }
 __name(trackDisposable, "trackDisposable");
+__name11(trackDisposable, "trackDisposable");
 function markAsDisposed(disposable) {
   disposableTracker?.markAsDisposed(disposable);
 }
 __name(markAsDisposed, "markAsDisposed");
+__name11(markAsDisposed, "markAsDisposed");
 function setParentOfDisposable(child, parent) {
   disposableTracker?.setParent(child, parent);
 }
 __name(setParentOfDisposable, "setParentOfDisposable");
+__name11(setParentOfDisposable, "setParentOfDisposable");
 function setParentOfDisposables(children, parent) {
   if (!disposableTracker) {
     return;
@@ -2649,15 +2899,18 @@ function setParentOfDisposables(children, parent) {
   }
 }
 __name(setParentOfDisposables, "setParentOfDisposables");
+__name11(setParentOfDisposables, "setParentOfDisposables");
 function markAsSingleton(singleton) {
   disposableTracker?.markAsSingleton(singleton);
   return singleton;
 }
 __name(markAsSingleton, "markAsSingleton");
+__name11(markAsSingleton, "markAsSingleton");
 function isDisposable(thing) {
   return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
 }
 __name(isDisposable, "isDisposable");
+__name11(isDisposable, "isDisposable");
 function dispose(arg) {
   if (Iterable.is(arg)) {
     const errors = [];
@@ -2682,6 +2935,7 @@ function dispose(arg) {
   }
 }
 __name(dispose, "dispose");
+__name11(dispose, "dispose");
 function disposeIfDisposable(disposables) {
   for (const d of disposables) {
     if (isDisposable(d)) {
@@ -2691,15 +2945,20 @@ function disposeIfDisposable(disposables) {
   return [];
 }
 __name(disposeIfDisposable, "disposeIfDisposable");
+__name11(disposeIfDisposable, "disposeIfDisposable");
 function combinedDisposable(...disposables) {
   const parent = toDisposable(() => dispose(disposables));
   setParentOfDisposables(disposables, parent);
   return parent;
 }
 __name(combinedDisposable, "combinedDisposable");
+__name11(combinedDisposable, "combinedDisposable");
 var FunctionDisposable = class {
   static {
     __name(this, "FunctionDisposable");
+  }
+  static {
+    __name11(this, "FunctionDisposable");
   }
   constructor(fn) {
     this._isDisposed = false;
@@ -2722,9 +2981,13 @@ function toDisposable(fn) {
   return new FunctionDisposable(fn);
 }
 __name(toDisposable, "toDisposable");
+__name11(toDisposable, "toDisposable");
 var DisposableStore = class _DisposableStore {
   static {
     __name(this, "DisposableStore");
+  }
+  static {
+    __name11(this, "DisposableStore");
   }
   static {
     this.DISABLE_DISPOSED_WARNING = false;
@@ -2822,6 +3085,9 @@ var Disposable = class {
     __name(this, "Disposable");
   }
   static {
+    __name11(this, "Disposable");
+  }
+  static {
     this.None = Object.freeze({ dispose() {
     } });
   }
@@ -2847,6 +3113,9 @@ var Disposable = class {
 var MutableDisposable = class {
   static {
     __name(this, "MutableDisposable");
+  }
+  static {
+    __name11(this, "MutableDisposable");
   }
   constructor() {
     this._isDisposed = false;
@@ -2909,6 +3178,9 @@ var MandatoryMutableDisposable = class {
   static {
     __name(this, "MandatoryMutableDisposable");
   }
+  static {
+    __name11(this, "MandatoryMutableDisposable");
+  }
   constructor(initialValue) {
     this._disposable = new MutableDisposable();
     this._isDisposed = false;
@@ -2932,6 +3204,9 @@ var RefCountedDisposable = class {
   static {
     __name(this, "RefCountedDisposable");
   }
+  static {
+    __name11(this, "RefCountedDisposable");
+  }
   constructor(_disposable) {
     this._disposable = _disposable;
     this._counter = 1;
@@ -2950,6 +3225,9 @@ var RefCountedDisposable = class {
 var ReferenceCollection = class {
   static {
     __name(this, "ReferenceCollection");
+  }
+  static {
+    __name11(this, "ReferenceCollection");
   }
   constructor() {
     this.references = /* @__PURE__ */ new Map();
@@ -2975,6 +3253,9 @@ var AsyncReferenceCollection = class {
   static {
     __name(this, "AsyncReferenceCollection");
   }
+  static {
+    __name11(this, "AsyncReferenceCollection");
+  }
   constructor(referenceCollection) {
     this.referenceCollection = referenceCollection;
   }
@@ -2984,7 +3265,7 @@ var AsyncReferenceCollection = class {
       const object = await ref.object;
       return {
         object,
-        dispose: /* @__PURE__ */ __name(() => ref.dispose(), "dispose")
+        dispose: /* @__PURE__ */ __name11(() => ref.dispose(), "dispose")
       };
     } catch (error) {
       ref.dispose();
@@ -2995,6 +3276,9 @@ var AsyncReferenceCollection = class {
 var ImmortalReference = class {
   static {
     __name(this, "ImmortalReference");
+  }
+  static {
+    __name11(this, "ImmortalReference");
   }
   constructor(object) {
     this.object = object;
@@ -3011,9 +3295,13 @@ function disposeOnReturn(fn) {
   }
 }
 __name(disposeOnReturn, "disposeOnReturn");
+__name11(disposeOnReturn, "disposeOnReturn");
 var DisposableMap = class {
   static {
     __name(this, "DisposableMap");
+  }
+  static {
+    __name11(this, "DisposableMap");
   }
   constructor(store = /* @__PURE__ */ new Map()) {
     this._isDisposed = false;
@@ -3095,6 +3383,9 @@ var DisposableSet = class {
   static {
     __name(this, "DisposableSet");
   }
+  static {
+    __name11(this, "DisposableSet");
+  }
   constructor(store = /* @__PURE__ */ new Set()) {
     this._isDisposed = false;
     this._store = store;
@@ -3175,6 +3466,7 @@ function thenIfNotDisposed(promise, then) {
   });
 }
 __name(thenIfNotDisposed, "thenIfNotDisposed");
+__name11(thenIfNotDisposed, "thenIfNotDisposed");
 function thenRegisterOrDispose(promise, store) {
   return promise.then((disposable) => {
     if (store.isDisposed) {
@@ -3186,19 +3478,28 @@ function thenRegisterOrDispose(promise, store) {
   });
 }
 __name(thenRegisterOrDispose, "thenRegisterOrDispose");
+__name11(thenRegisterOrDispose, "thenRegisterOrDispose");
 var DisposableResourceMap = class extends DisposableMap {
   static {
     __name(this, "DisposableResourceMap");
+  }
+  static {
+    __name11(this, "DisposableResourceMap");
   }
   constructor() {
     super(new ResourceMap());
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/linkedList.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js
+var __defProp12 = Object.defineProperty;
+var __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
 var Node = class _Node {
   static {
     __name(this, "Node");
+  }
+  static {
+    __name12(this, "Node");
   }
   static {
     this.Undefined = new _Node(void 0);
@@ -3212,6 +3513,9 @@ var Node = class _Node {
 var LinkedList = class {
   static {
     __name(this, "LinkedList");
+  }
+  static {
+    __name12(this, "LinkedList");
   }
   constructor() {
     this._first = Node.Undefined;
@@ -3319,15 +3623,19 @@ var LinkedList = class {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/nls.js
+// ../Output/Target/Microsoft/VSCode/vs/nls.js
+var __defProp13 = Object.defineProperty;
+var __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
 function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
 }
 __name(getNLSMessages, "getNLSMessages");
+__name13(getNLSMessages, "getNLSMessages");
 function getNLSLanguage() {
   return globalThis._VSCODE_NLS_LANGUAGE;
 }
 __name(getNLSLanguage, "getNLSLanguage");
+__name13(getNLSLanguage, "getNLSLanguage");
 var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
 function _format(message, args) {
   let result;
@@ -3352,6 +3660,7 @@ function _format(message, args) {
   return result;
 }
 __name(_format, "_format");
+__name13(_format, "_format");
 function localize(data, message, ...args) {
   if (typeof data === "number") {
     return _format(lookupMessage(data, message), args);
@@ -3359,6 +3668,7 @@ function localize(data, message, ...args) {
   return _format(message, args);
 }
 __name(localize, "localize");
+__name13(localize, "localize");
 function lookupMessage(index2, fallback) {
   const message = getNLSMessages()?.[index2];
   if (typeof message !== "string") {
@@ -3370,6 +3680,7 @@ function lookupMessage(index2, fallback) {
   return message;
 }
 __name(lookupMessage, "lookupMessage");
+__name13(lookupMessage, "lookupMessage");
 function localize2(data, originalMessage, ...args) {
   let message;
   if (typeof data === "number") {
@@ -3384,8 +3695,11 @@ function localize2(data, originalMessage, ...args) {
   };
 }
 __name(localize2, "localize2");
+__name13(localize2, "localize2");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/platform.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
+var __defProp14 = Object.defineProperty;
+var __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
 var LANGUAGE_DEFAULT = "en";
 var _isWindows = false;
 var _isMacintosh = false;
@@ -3453,8 +3767,8 @@ var Platform;
   Platform2[Platform2["Linux"] = 2] = "Linux";
   Platform2[Platform2["Windows"] = 3] = "Windows";
 })(Platform || (Platform = {}));
-function PlatformToString(platform3) {
-  switch (platform3) {
+function PlatformToString(platform22) {
+  switch (platform22) {
     case 0:
       return "Web";
     case 1:
@@ -3466,6 +3780,7 @@ function PlatformToString(platform3) {
   }
 }
 __name(PlatformToString, "PlatformToString");
+__name14(PlatformToString, "PlatformToString");
 var _platform = 0;
 if (_isMacintosh) {
   _platform = 1;
@@ -3495,6 +3810,7 @@ var Language;
     return language;
   }
   __name(value, "value");
+  __name14(value, "value");
   Language2.value = value;
   function isDefaultVariant() {
     if (language.length === 2) {
@@ -3506,11 +3822,13 @@ var Language;
     }
   }
   __name(isDefaultVariant, "isDefaultVariant");
+  __name14(isDefaultVariant, "isDefaultVariant");
   Language2.isDefaultVariant = isDefaultVariant;
   function isDefault() {
     return language === "en";
   }
   __name(isDefault, "isDefault");
+  __name14(isDefault, "isDefault");
   Language2.isDefault = isDefault;
 })(Language || (Language = {}));
 var locale = _locale;
@@ -3565,6 +3883,7 @@ function isLittleEndian() {
   return _isLittleEndian;
 }
 __name(isLittleEndian, "isLittleEndian");
+__name14(isLittleEndian, "isLittleEndian");
 var isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
 var isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
 var isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
@@ -3574,8 +3893,9 @@ function isTahoeOrNewer(osVersion) {
   return parseFloat(osVersion) >= 25;
 }
 __name(isTahoeOrNewer, "isTahoeOrNewer");
+__name14(isTahoeOrNewer, "isTahoeOrNewer");
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/process.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
 var safeProcess;
 var vscodeGlobal = globalThis.vscode;
 if (typeof vscodeGlobal !== "undefined" && typeof vscodeGlobal.process !== "undefined") {
@@ -3632,11 +3952,16 @@ var env = safeProcess.env;
 var platform2 = safeProcess.platform;
 var arch = safeProcess.arch;
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/stopwatch.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js
+var __defProp15 = Object.defineProperty;
+var __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
 var performanceNow = globalThis.performance.now.bind(globalThis.performance);
 var StopWatch = class _StopWatch {
   static {
     __name(this, "StopWatch");
+  }
+  static {
+    __name15(this, "StopWatch");
   }
   static create(highResolution) {
     return new _StopWatch(highResolution);
@@ -3661,7 +3986,9 @@ var StopWatch = class _StopWatch {
   }
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/event.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
+var __defProp16 = Object.defineProperty;
+var __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
 var _enableDisposeWithListenerWarning = false;
 var _enableSnapshotPotentialLeakWarning = false;
 var _bufferLeakWarnCountThreshold = 100;
@@ -3670,6 +3997,7 @@ function _isBufferLeakWarningEnabled() {
   return !!env["VSCODE_DEV"];
 }
 __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+__name16(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
 var Event;
 (function(Event2) {
   Event2.None = () => Disposable.None;
@@ -3688,10 +4016,12 @@ var Event;
     }
   }
   __name(_addLeakageTraceLogic, "_addLeakageTraceLogic");
+  __name16(_addLeakageTraceLogic, "_addLeakageTraceLogic");
   function defer(event, flushOnListenerRemove, disposable) {
     return debounce(event, () => void 0, 0, void 0, flushOnListenerRemove ?? true, void 0, disposable);
   }
   __name(defer, "defer");
+  __name16(defer, "defer");
   Event2.defer = defer;
   function once(event) {
     return (listener, thisArgs = null, disposables) => {
@@ -3714,16 +4044,19 @@ var Event;
     };
   }
   __name(once, "once");
+  __name16(once, "once");
   Event2.once = once;
   function onceIf(event, condition) {
     return Event2.once(Event2.filter(event, condition));
   }
   __name(onceIf, "onceIf");
+  __name16(onceIf, "onceIf");
   Event2.onceIf = onceIf;
   function map(event, map2, disposable) {
     return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
   }
   __name(map, "map");
+  __name16(map, "map");
   Event2.map = map;
   function forEach(event, each, disposable) {
     return snapshot((listener, thisArgs = null, disposables) => event((i) => {
@@ -3732,16 +4065,19 @@ var Event;
     }, null, disposables), disposable);
   }
   __name(forEach, "forEach");
+  __name16(forEach, "forEach");
   Event2.forEach = forEach;
   function filter(event, filter2, disposable) {
     return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
   }
   __name(filter, "filter");
+  __name16(filter, "filter");
   Event2.filter = filter;
   function signal(event) {
     return event;
   }
   __name(signal, "signal");
+  __name16(signal, "signal");
   Event2.signal = signal;
   function any(...events) {
     return (listener, thisArgs = null, disposables) => {
@@ -3750,6 +4086,7 @@ var Event;
     };
   }
   __name(any, "any");
+  __name16(any, "any");
   Event2.any = any;
   function reduce(event, merge, initial, disposable) {
     let output = initial;
@@ -3759,6 +4096,7 @@ var Event;
     }, disposable);
   }
   __name(reduce, "reduce");
+  __name16(reduce, "reduce");
   Event2.reduce = reduce;
   function snapshot(event, disposable) {
     let listener;
@@ -3778,6 +4116,7 @@ var Event;
     return emitter.event;
   }
   __name(snapshot, "snapshot");
+  __name16(snapshot, "snapshot");
   function addAndReturnDisposable(d, store) {
     if (store instanceof Array) {
       store.push(d);
@@ -3787,6 +4126,7 @@ var Event;
     return d;
   }
   __name(addAndReturnDisposable, "addAndReturnDisposable");
+  __name16(addAndReturnDisposable, "addAndReturnDisposable");
   function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
     let subscription;
     let output = void 0;
@@ -3803,7 +4143,7 @@ var Event;
             emitter.fire(output);
             output = void 0;
           }
-          doFire = /* @__PURE__ */ __name(() => {
+          doFire = /* @__PURE__ */ __name16(() => {
             const _output = output;
             output = void 0;
             handle = void 0;
@@ -3843,6 +4183,7 @@ var Event;
     return emitter.event;
   }
   __name(debounce, "debounce");
+  __name16(debounce, "debounce");
   Event2.debounce = debounce;
   function accumulate(event, delay = 0, flushOnListenerRemove, disposable) {
     return Event2.debounce(event, (last, e) => {
@@ -3854,6 +4195,7 @@ var Event;
     }, delay, void 0, flushOnListenerRemove ?? true, void 0, disposable);
   }
   __name(accumulate, "accumulate");
+  __name16(accumulate, "accumulate");
   Event2.accumulate = accumulate;
   function throttle(event, merge, delay = 100, leading = true, trailing = true, leakWarningThreshold, disposable) {
     let subscription;
@@ -3907,6 +4249,7 @@ var Event;
     return emitter.event;
   }
   __name(throttle, "throttle");
+  __name16(throttle, "throttle");
   Event2.throttle = throttle;
   function latch(event, equals2 = (a, b) => a === b, disposable) {
     let firstCall = true;
@@ -3919,6 +4262,7 @@ var Event;
     }, disposable);
   }
   __name(latch, "latch");
+  __name16(latch, "latch");
   Event2.latch = latch;
   function split(event, isT, disposable) {
     return [
@@ -3927,6 +4271,7 @@ var Event;
     ];
   }
   __name(split, "split");
+  __name16(split, "split");
   Event2.split = split;
   function buffer(event, debugName, flushAfterTimeout = false, _buffer = [], disposable) {
     let buffer2 = _buffer.slice();
@@ -3947,7 +4292,7 @@ var Event;
         disposable.add(toDisposable(() => clearTimeout(bufferLeakWarningData.timerId)));
       }
     }
-    const clearLeakWarningTimer = /* @__PURE__ */ __name(() => {
+    const clearLeakWarningTimer = /* @__PURE__ */ __name16(() => {
       if (bufferLeakWarningData) {
         clearTimeout(bufferLeakWarningData.timerId);
       }
@@ -3967,7 +4312,7 @@ var Event;
     if (disposable) {
       disposable.add(listener);
     }
-    const flush = /* @__PURE__ */ __name(() => {
+    const flush = /* @__PURE__ */ __name16(() => {
       buffer2?.forEach((e) => emitter.fire(e));
       buffer2 = null;
       clearLeakWarningTimer();
@@ -4004,9 +4349,10 @@ var Event;
     return emitter.event;
   }
   __name(buffer, "buffer");
+  __name16(buffer, "buffer");
   Event2.buffer = buffer;
   function chain(event, sythensize) {
-    const fn = /* @__PURE__ */ __name((listener, thisArgs, disposables) => {
+    const fn = /* @__PURE__ */ __name16((listener, thisArgs, disposables) => {
       const cs = sythensize(new ChainableSynthesis());
       return event(function(value) {
         const result = cs.evaluate(value);
@@ -4018,11 +4364,15 @@ var Event;
     return fn;
   }
   __name(chain, "chain");
+  __name16(chain, "chain");
   Event2.chain = chain;
   const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
   class ChainableSynthesis {
     static {
       __name(this, "ChainableSynthesis");
+    }
+    static {
+      __name16(this, "ChainableSynthesis");
     }
     constructor() {
       this.steps = [];
@@ -4072,22 +4422,24 @@ var Event;
     }
   }
   function fromNodeEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-    const fn = /* @__PURE__ */ __name((...args) => result.fire(map2(...args)), "fn");
-    const onFirstListenerAdd = /* @__PURE__ */ __name(() => emitter.on(eventName, fn), "onFirstListenerAdd");
-    const onLastListenerRemove = /* @__PURE__ */ __name(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
+    const fn = /* @__PURE__ */ __name16((...args) => result.fire(map2(...args)), "fn");
+    const onFirstListenerAdd = /* @__PURE__ */ __name16(() => emitter.on(eventName, fn), "onFirstListenerAdd");
+    const onLastListenerRemove = /* @__PURE__ */ __name16(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
     const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
     return result.event;
   }
   __name(fromNodeEventEmitter, "fromNodeEventEmitter");
+  __name16(fromNodeEventEmitter, "fromNodeEventEmitter");
   Event2.fromNodeEventEmitter = fromNodeEventEmitter;
   function fromDOMEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-    const fn = /* @__PURE__ */ __name((...args) => result.fire(map2(...args)), "fn");
-    const onFirstListenerAdd = /* @__PURE__ */ __name(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
-    const onLastListenerRemove = /* @__PURE__ */ __name(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
+    const fn = /* @__PURE__ */ __name16((...args) => result.fire(map2(...args)), "fn");
+    const onFirstListenerAdd = /* @__PURE__ */ __name16(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
+    const onLastListenerRemove = /* @__PURE__ */ __name16(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
     const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
     return result.event;
   }
   __name(fromDOMEventEmitter, "fromDOMEventEmitter");
+  __name16(fromDOMEventEmitter, "fromDOMEventEmitter");
   Event2.fromDOMEventEmitter = fromDOMEventEmitter;
   function toPromise(event, disposables) {
     let cancelRef;
@@ -4095,7 +4447,7 @@ var Event;
     const promise = new Promise((resolve) => {
       listener = once(event)(resolve);
       addToDisposables(listener, disposables);
-      cancelRef = /* @__PURE__ */ __name(() => {
+      cancelRef = /* @__PURE__ */ __name16(() => {
         disposeAndRemove(listener, disposables);
       }, "cancelRef");
     });
@@ -4106,32 +4458,38 @@ var Event;
     return promise;
   }
   __name(toPromise, "toPromise");
+  __name16(toPromise, "toPromise");
   Event2.toPromise = toPromise;
   function forward(from, to) {
     return from((e) => to.fire(e));
   }
   __name(forward, "forward");
+  __name16(forward, "forward");
   Event2.forward = forward;
   function runAndSubscribe(event, handler, initial) {
     handler(initial);
     return event((e) => handler(e));
   }
   __name(runAndSubscribe, "runAndSubscribe");
+  __name16(runAndSubscribe, "runAndSubscribe");
   Event2.runAndSubscribe = runAndSubscribe;
   class EmitterObserver {
     static {
       __name(this, "EmitterObserver");
+    }
+    static {
+      __name16(this, "EmitterObserver");
     }
     constructor(_observable, store) {
       this._observable = _observable;
       this._counter = 0;
       this._hasChanged = false;
       const options = {
-        onWillAddFirstListener: /* @__PURE__ */ __name(() => {
+        onWillAddFirstListener: /* @__PURE__ */ __name16(() => {
           _observable.addObserver(this);
           this._observable.reportChanges();
         }, "onWillAddFirstListener"),
-        onDidRemoveLastListener: /* @__PURE__ */ __name(() => {
+        onDidRemoveLastListener: /* @__PURE__ */ __name16(() => {
           _observable.removeObserver(this);
         }, "onDidRemoveLastListener")
       };
@@ -4167,6 +4525,7 @@ var Event;
     return observer.emitter.event;
   }
   __name(fromObservable, "fromObservable");
+  __name16(fromObservable, "fromObservable");
   Event2.fromObservable = fromObservable;
   function fromObservableLight(observable) {
     return (listener, thisArgs, disposables) => {
@@ -4204,11 +4563,15 @@ var Event;
     };
   }
   __name(fromObservableLight, "fromObservableLight");
+  __name16(fromObservableLight, "fromObservableLight");
   Event2.fromObservableLight = fromObservableLight;
 })(Event || (Event = {}));
 var EventProfiling = class _EventProfiling {
   static {
     __name(this, "EventProfiling");
+  }
+  static {
+    __name16(this, "EventProfiling");
   }
   static {
     this.all = /* @__PURE__ */ new Set();
@@ -4249,9 +4612,13 @@ function setGlobalLeakWarningThreshold(n) {
   };
 }
 __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+__name16(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
 var LeakageMonitor = class _LeakageMonitor {
   static {
     __name(this, "LeakageMonitor");
+  }
+  static {
+    __name16(this, "LeakageMonitor");
   }
   static {
     this._idPool = 1;
@@ -4311,6 +4678,9 @@ var Stacktrace = class _Stacktrace {
   static {
     __name(this, "Stacktrace");
   }
+  static {
+    __name16(this, "Stacktrace");
+  }
   static create() {
     const err = new Error();
     return new _Stacktrace(err.stack ?? "");
@@ -4325,6 +4695,9 @@ var Stacktrace = class _Stacktrace {
 var ListenerLeakError = class _ListenerLeakError extends Error {
   static {
     __name(this, "ListenerLeakError");
+  }
+  static {
+    __name16(this, "ListenerLeakError");
   }
   constructor(kind, details, stack, listenerCount, emitterName) {
     super(emitterName ? `[${emitterName}] potential listener LEAK detected, ${kind}` : `potential listener LEAK detected, ${kind}`);
@@ -4342,6 +4715,9 @@ var ListenerRefusalError = class extends ListenerLeakError {
   static {
     __name(this, "ListenerRefusalError");
   }
+  static {
+    __name16(this, "ListenerRefusalError");
+  }
   constructor(kind, details, stack, listenerCount, emitterName) {
     super(kind, details, stack, listenerCount, emitterName);
     this.name = "ListenerRefusalError";
@@ -4352,13 +4728,16 @@ var UniqueContainer = class {
   static {
     __name(this, "UniqueContainer");
   }
+  static {
+    __name16(this, "UniqueContainer");
+  }
   constructor(value) {
     this.value = value;
     this.id = id++;
   }
 };
 var compactionThreshold = 2;
-var forEachListener = /* @__PURE__ */ __name((listeners, fn) => {
+var forEachListener = /* @__PURE__ */ __name16((listeners, fn) => {
   if (listeners instanceof UniqueContainer) {
     fn(listeners);
   } else {
@@ -4373,6 +4752,9 @@ var forEachListener = /* @__PURE__ */ __name((listeners, fn) => {
 var Emitter = class {
   static {
     __name(this, "Emitter");
+  }
+  static {
+    __name16(this, "Emitter");
   }
   constructor(options) {
     this._size = 0;
@@ -4538,10 +4920,13 @@ var Emitter = class {
     return this._size > 0;
   }
 };
-var createEventDeliveryQueue = /* @__PURE__ */ __name(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
+var createEventDeliveryQueue = /* @__PURE__ */ __name16(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
 var EventDeliveryQueuePrivate = class {
   static {
     __name(this, "EventDeliveryQueuePrivate");
+  }
+  static {
+    __name16(this, "EventDeliveryQueuePrivate");
   }
   constructor() {
     this.i = -1;
@@ -4563,6 +4948,9 @@ var AsyncEmitter = class extends Emitter {
   static {
     __name(this, "AsyncEmitter");
   }
+  static {
+    __name16(this, "AsyncEmitter");
+  }
   async fireAsync(data, token, promiseJoin) {
     if (!this._listeners) {
       return;
@@ -4577,7 +4965,7 @@ var AsyncEmitter = class extends Emitter {
       const event = {
         ...data2,
         token,
-        waitUntil: /* @__PURE__ */ __name((p) => {
+        waitUntil: /* @__PURE__ */ __name16((p) => {
           if (Object.isFrozen(thenables)) {
             throw new Error("waitUntil can NOT be called asynchronous");
           }
@@ -4607,6 +4995,9 @@ var AsyncEmitter = class extends Emitter {
 var PauseableEmitter = class extends Emitter {
   static {
     __name(this, "PauseableEmitter");
+  }
+  static {
+    __name16(this, "PauseableEmitter");
   }
   get isPaused() {
     return this._isPaused !== 0;
@@ -4649,6 +5040,9 @@ var DebounceEmitter = class extends PauseableEmitter {
   static {
     __name(this, "DebounceEmitter");
   }
+  static {
+    __name16(this, "DebounceEmitter");
+  }
   constructor(options) {
     super(options);
     this._delay = options.delay ?? 100;
@@ -4667,6 +5061,9 @@ var DebounceEmitter = class extends PauseableEmitter {
 var MicrotaskEmitter = class extends Emitter {
   static {
     __name(this, "MicrotaskEmitter");
+  }
+  static {
+    __name16(this, "MicrotaskEmitter");
   }
   constructor(options) {
     super(options);
@@ -4694,12 +5091,15 @@ var EventMultiplexer = class {
   static {
     __name(this, "EventMultiplexer");
   }
+  static {
+    __name16(this, "EventMultiplexer");
+  }
   constructor() {
     this.hasListeners = false;
     this.events = [];
     this.emitter = new Emitter({
-      onWillAddFirstListener: /* @__PURE__ */ __name(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
-      onDidRemoveLastListener: /* @__PURE__ */ __name(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
+      onWillAddFirstListener: /* @__PURE__ */ __name16(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
+      onDidRemoveLastListener: /* @__PURE__ */ __name16(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
     });
   }
   get event() {
@@ -4711,7 +5111,7 @@ var EventMultiplexer = class {
     if (this.hasListeners) {
       this.hook(e);
     }
-    const dispose2 = /* @__PURE__ */ __name(() => {
+    const dispose2 = /* @__PURE__ */ __name16(() => {
       if (this.hasListeners) {
         this.unhook(e);
       }
@@ -4747,6 +5147,9 @@ var DynamicListEventMultiplexer = class {
   static {
     __name(this, "DynamicListEventMultiplexer");
   }
+  static {
+    __name16(this, "DynamicListEventMultiplexer");
+  }
   constructor(items, onAddItem, onRemoveItem, getEvent) {
     this._store = new DisposableStore();
     const multiplexer = this._store.add(new EventMultiplexer());
@@ -4755,6 +5158,7 @@ var DynamicListEventMultiplexer = class {
       itemListeners.set(instance, multiplexer.add(getEvent(instance)));
     }
     __name(addItem, "addItem");
+    __name16(addItem, "addItem");
     for (const instance of items) {
       addItem(instance);
     }
@@ -4773,6 +5177,9 @@ var DynamicListEventMultiplexer = class {
 var EventBufferer = class {
   static {
     __name(this, "EventBufferer");
+  }
+  static {
+    __name16(this, "EventBufferer");
   }
   constructor() {
     this.data = [];
@@ -4818,16 +5225,19 @@ var Relay = class {
   static {
     __name(this, "Relay");
   }
+  static {
+    __name16(this, "Relay");
+  }
   constructor() {
     this.listening = false;
     this.inputEvent = Event.None;
     this.inputEventListener = Disposable.None;
     this.emitter = new Emitter({
-      onDidAddFirstListener: /* @__PURE__ */ __name(() => {
+      onDidAddFirstListener: /* @__PURE__ */ __name16(() => {
         this.listening = true;
         this.inputEventListener = this.inputEvent(this.emitter.fire, this.emitter);
       }, "onDidAddFirstListener"),
-      onDidRemoveLastListener: /* @__PURE__ */ __name(() => {
+      onDidRemoveLastListener: /* @__PURE__ */ __name16(() => {
         this.listening = false;
         this.inputEventListener.dispose();
       }, "onDidRemoveLastListener")
@@ -4850,6 +5260,9 @@ var ValueWithChangeEvent = class {
   static {
     __name(this, "ValueWithChangeEvent");
   }
+  static {
+    __name16(this, "ValueWithChangeEvent");
+  }
   static const(value) {
     return new ConstValueWithChangeEvent(value);
   }
@@ -4871,6 +5284,9 @@ var ValueWithChangeEvent = class {
 var ConstValueWithChangeEvent = class {
   static {
     __name(this, "ConstValueWithChangeEvent");
+  }
+  static {
+    __name16(this, "ConstValueWithChangeEvent");
   }
   constructor(value) {
     this.value = value;
@@ -4899,6 +5315,7 @@ function trackSetChanges(getData, onDidChangeData, handleItem) {
   return store;
 }
 __name(trackSetChanges, "trackSetChanges");
+__name16(trackSetChanges, "trackSetChanges");
 function addToDisposables(result, disposables) {
   if (disposables instanceof DisposableStore) {
     disposables.add(result);
@@ -4907,6 +5324,7 @@ function addToDisposables(result, disposables) {
   }
 }
 __name(addToDisposables, "addToDisposables");
+__name16(addToDisposables, "addToDisposables");
 function disposeAndRemove(result, disposables) {
   if (disposables instanceof DisposableStore) {
     disposables.delete(result);
@@ -4919,6 +5337,7 @@ function disposeAndRemove(result, disposables) {
   result.dispose();
 }
 __name(disposeAndRemove, "disposeAndRemove");
+__name16(disposeAndRemove, "disposeAndRemove");
 
 // Source/Utility/EventStream.ts
 import { Effect, PubSub } from "effect";

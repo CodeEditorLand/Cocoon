@@ -163,7 +163,7 @@ const stage2_Configuration = withSpan(
 
 		// Real bootstrap configuration comes in through the environment -
 		// Mountain spawns Cocoon with `MOUNTAIN_GRPC_PORT`, `COCOON_GRPC_PORT`,
-		// `LAND_DEV_LOG`, `NODE_ENV`, etc. Extension-host settings arrive later
+		// `Trace`, `NODE_ENV`, etc. Extension-host settings arrive later
 		// via `InitializeExtensionHost`. Here we:
 		//   (a) parse + validate the bootstrap env vars once,
 		//   (b) report each resolved value via telemetry so a pasted log makes
@@ -185,7 +185,7 @@ const stage2_Configuration = withSpan(
 			MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
 			CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
 			NodeEnv: process.env["NODE_ENV"] ?? "production",
-			DevLog: process.env["LAND_DEV_LOG"] ?? "",
+			DevLog: process.env["Trace"] ?? "",
 			DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true",
 		};
 

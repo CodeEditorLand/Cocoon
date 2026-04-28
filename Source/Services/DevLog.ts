@@ -2,12 +2,12 @@
  * @module Services/DevLog
  * @description
  * Cocoon-side tag-filtered logger. Mirrors Mountain's `dev_log!` macro:
- * reads `LAND_DEV_LOG=tag1,tag2,...` at startup and only emits lines
+ * reads `Trace=tag1,tag2,...` at startup and only emits lines
  * whose tag is in that set (or `all` / `short`).
  *
  * Output goes to `process.stdout`. Mountain captures Cocoon's stdout
  * into its own dev-log file under `[Cocoon stdout] ...` so
- * `LAND_DEV_LOG=config-prime tail -f Mountain.dev.log` shows Cocoon's
+ * `Trace=config-prime tail -f Mountain.dev.log` shows Cocoon's
  * tagged lines alongside Mountain's own `dev_log!` output.
  *
  * ## Usage
@@ -23,7 +23,7 @@
  * the log.
  */
 
-const Raw = process.env["LAND_DEV_LOG"] ?? "";
+const Raw = process.env["Trace"] ?? "";
 const ParsedTags = Raw.split(",")
 	.map((Segment) => Segment.trim().toLowerCase())
 	.filter((Segment) => Segment.length > 0);
@@ -39,7 +39,7 @@ const IsEnabled = (Tag: string): boolean => {
 
 /**
  * Emit a tagged diagnostic line to stdout. Silent when the tag isn't
- * enabled via `LAND_DEV_LOG`. Line format matches Mountain's
+ * enabled via `Trace`. Line format matches Mountain's
  * `[DEV:<TAG>]` prefix so grep patterns work across both sources.
  */
 export const CocoonDevLog = (Tag: string, Message: string): void => {

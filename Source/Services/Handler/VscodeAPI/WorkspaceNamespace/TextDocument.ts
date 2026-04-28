@@ -38,7 +38,7 @@ export const BuildOpenTextDocument =
 			if (Decision === "native") {
 				const Path = ExtractFsPath(UriOrPath);
 				if (Path !== undefined) {
-					if (process.env["LAND_DEV_LOG"]) {
+					if (process.env["Trace"]) {
 						process.stdout.write(
 							`[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}\n`,
 						);
@@ -55,7 +55,7 @@ export const BuildOpenTextDocument =
 						])) ?? "";
 				}
 			} else {
-				if (process.env["LAND_DEV_LOG"]) {
+				if (process.env["Trace"]) {
 					process.stdout.write(
 						`[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}\n`,
 					);

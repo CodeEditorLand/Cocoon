@@ -9,7 +9,7 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/collections.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
 function groupBy(data, groupFn) {
   const result = /* @__PURE__ */ Object.create(null);
   for (const element of data) {
@@ -74,18 +74,28 @@ function intersection(setA, setB) {
   }
   return result;
 }
-var _a, SetWithKey;
+var __defProp2, __name2, _a, SetWithKey;
 var init_collections = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/collections.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/collections.js"() {
     "use strict";
+    __defProp2 = Object.defineProperty;
+    __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
     __name(groupBy, "groupBy");
+    __name2(groupBy, "groupBy");
     __name(groupByMap, "groupByMap");
+    __name2(groupByMap, "groupByMap");
     __name(diffSets, "diffSets");
+    __name2(diffSets, "diffSets");
     __name(diffMaps, "diffMaps");
+    __name2(diffMaps, "diffMaps");
     __name(intersection, "intersection");
+    __name2(intersection, "intersection");
     SetWithKey = class {
       static {
         __name(this, "SetWithKey");
+      }
+      static {
+        __name2(this, "SetWithKey");
       }
       static {
         _a = Symbol.toStringTag;
@@ -138,7 +148,7 @@ var init_collections = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/errors.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
 function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
   errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
 }
@@ -236,13 +246,18 @@ function getErrorMessage(err) {
   }
   return String(err);
 }
-var ErrorHandler, errorHandler, canceledName, CancellationError, PendingMigrationError, ReadonlyError, NotImplementedError, NotSupportedError, ExpectedError, ErrorNoTelemetry, BugIndicatingError;
+var __defProp3, __name3, ErrorHandler, errorHandler, canceledName, CancellationError, PendingMigrationError, ReadonlyError, NotImplementedError, NotSupportedError, ExpectedError, ErrorNoTelemetry, BugIndicatingError;
 var init_errors = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/errors.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/errors.js"() {
     "use strict";
+    __defProp3 = Object.defineProperty;
+    __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
     ErrorHandler = class {
       static {
         __name(this, "ErrorHandler");
+      }
+      static {
+        __name3(this, "ErrorHandler");
       }
       constructor() {
         this.listeners = [];
@@ -289,17 +304,28 @@ var init_errors = __esm({
     };
     errorHandler = new ErrorHandler();
     __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+    __name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
     __name(isSigPipeError, "isSigPipeError");
+    __name3(isSigPipeError, "isSigPipeError");
     __name(onBugIndicatingError, "onBugIndicatingError");
+    __name3(onBugIndicatingError, "onBugIndicatingError");
     __name(onUnexpectedError, "onUnexpectedError");
+    __name3(onUnexpectedError, "onUnexpectedError");
     __name(onUnexpectedExternalError, "onUnexpectedExternalError");
+    __name3(onUnexpectedExternalError, "onUnexpectedExternalError");
     __name(transformErrorForSerialization, "transformErrorForSerialization");
+    __name3(transformErrorForSerialization, "transformErrorForSerialization");
     __name(transformErrorFromSerialization, "transformErrorFromSerialization");
+    __name3(transformErrorFromSerialization, "transformErrorFromSerialization");
     canceledName = "Canceled";
     __name(isCancellationError, "isCancellationError");
+    __name3(isCancellationError, "isCancellationError");
     CancellationError = class extends Error {
       static {
         __name(this, "CancellationError");
+      }
+      static {
+        __name3(this, "CancellationError");
       }
       constructor() {
         super(canceledName);
@@ -309,6 +335,9 @@ var init_errors = __esm({
     PendingMigrationError = class _PendingMigrationError extends Error {
       static {
         __name(this, "PendingMigrationError");
+      }
+      static {
+        __name3(this, "PendingMigrationError");
       }
       static {
         this._name = "PendingMigrationError";
@@ -322,20 +351,30 @@ var init_errors = __esm({
       }
     };
     __name(canceled, "canceled");
+    __name3(canceled, "canceled");
     __name(illegalArgument, "illegalArgument");
+    __name3(illegalArgument, "illegalArgument");
     __name(illegalState, "illegalState");
+    __name3(illegalState, "illegalState");
     ReadonlyError = class extends TypeError {
       static {
         __name(this, "ReadonlyError");
+      }
+      static {
+        __name3(this, "ReadonlyError");
       }
       constructor(name) {
         super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
       }
     };
     __name(getErrorMessage, "getErrorMessage");
+    __name3(getErrorMessage, "getErrorMessage");
     NotImplementedError = class extends Error {
       static {
         __name(this, "NotImplementedError");
+      }
+      static {
+        __name3(this, "NotImplementedError");
       }
       constructor(message) {
         super("NotImplemented");
@@ -348,6 +387,9 @@ var init_errors = __esm({
       static {
         __name(this, "NotSupportedError");
       }
+      static {
+        __name3(this, "NotSupportedError");
+      }
       constructor(message) {
         super("NotSupported");
         if (message) {
@@ -359,6 +401,9 @@ var init_errors = __esm({
       static {
         __name(this, "ExpectedError");
       }
+      static {
+        __name3(this, "ExpectedError");
+      }
       constructor() {
         super(...arguments);
         this.isExpected = true;
@@ -367,6 +412,9 @@ var init_errors = __esm({
     ErrorNoTelemetry = class _ErrorNoTelemetry extends Error {
       static {
         __name(this, "ErrorNoTelemetry");
+      }
+      static {
+        __name3(this, "ErrorNoTelemetry");
       }
       constructor(msg) {
         super(msg);
@@ -389,6 +437,9 @@ var init_errors = __esm({
       static {
         __name(this, "BugIndicatingError");
       }
+      static {
+        __name3(this, "BugIndicatingError");
+      }
       constructor(message) {
         super(message || "An unexpected bug occurred.");
         Object.setPrototypeOf(this, _BugIndicatingError.prototype);
@@ -397,7 +448,7 @@ var init_errors = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/functional.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
 function createSingleCallFunction(fn, fnDidRunCallback) {
   const _this = this;
   let didCall = false;
@@ -419,14 +470,18 @@ function createSingleCallFunction(fn, fnDidRunCallback) {
     return result;
   };
 }
+var __defProp4, __name4;
 var init_functional = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/functional.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/functional.js"() {
     "use strict";
+    __defProp4 = Object.defineProperty;
+    __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
     __name(createSingleCallFunction, "createSingleCallFunction");
+    __name4(createSingleCallFunction, "createSingleCallFunction");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arraysFind.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
 function findLast(array, predicate, fromIndex = array.length - 1) {
   const idx = findLastIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -548,22 +603,36 @@ function mapFindFirst(items, mapFn) {
   }
   return void 0;
 }
-var MonotonousArray;
+var __defProp5, __name5, MonotonousArray;
 var init_arraysFind = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arraysFind.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js"() {
     "use strict";
+    __defProp5 = Object.defineProperty;
+    __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
     __name(findLast, "findLast");
+    __name5(findLast, "findLast");
     __name(findLastIdx, "findLastIdx");
+    __name5(findLastIdx, "findLastIdx");
     __name(findFirst, "findFirst");
+    __name5(findFirst, "findFirst");
     __name(findFirstIdx, "findFirstIdx");
+    __name5(findFirstIdx, "findFirstIdx");
     __name(findLastMonotonous, "findLastMonotonous");
+    __name5(findLastMonotonous, "findLastMonotonous");
     __name(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name5(findLastIdxMonotonous, "findLastIdxMonotonous");
     __name(findFirstMonotonous, "findFirstMonotonous");
+    __name5(findFirstMonotonous, "findFirstMonotonous");
     __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+    __name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
     __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    __name5(findFirstIdxMonotonous, "findFirstIdxMonotonous");
     MonotonousArray = class _MonotonousArray {
       static {
         __name(this, "MonotonousArray");
+      }
+      static {
+        __name5(this, "MonotonousArray");
       }
       static {
         this.assertInvariants = false;
@@ -593,14 +662,19 @@ var init_arraysFind = __esm({
       }
     };
     __name(findFirstMax, "findFirstMax");
+    __name5(findFirstMax, "findFirstMax");
     __name(findLastMax, "findLastMax");
+    __name5(findLastMax, "findLastMax");
     __name(findFirstMin, "findFirstMin");
+    __name5(findFirstMin, "findFirstMin");
     __name(findMaxIdx, "findMaxIdx");
+    __name5(findMaxIdx, "findMaxIdx");
     __name(mapFindFirst, "mapFindFirst");
+    __name5(mapFindFirst, "mapFindFirst");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arrays.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
 function tail(arr) {
   if (arr.length === 0) {
     throw new Error("Invalid tail call");
@@ -735,6 +809,7 @@ function sortedDiff(before, after, compare) {
     }
   }
   __name(pushSplice, "pushSplice");
+  __name6(pushSplice, "pushSplice");
   let beforeIdx = 0;
   let afterIdx = 0;
   while (true) {
@@ -909,7 +984,7 @@ function shuffle(array, _seed) {
   let rand;
   if (typeof _seed === "number") {
     let seed = _seed;
-    rand = /* @__PURE__ */ __name(() => {
+    rand = /* @__PURE__ */ __name6(() => {
       const x = Math.sin(seed++) * 179426549;
       return x - Math.floor(x);
     }, "rand");
@@ -1026,87 +1101,141 @@ function sum(array) {
 function sumBy(array, selector) {
   return array.reduce((acc, value) => acc + selector(value), 0);
 }
-var CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
+var __defProp6, __name6, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
 var init_arrays = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/arrays.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js"() {
     "use strict";
     init_arraysFind();
     init_errors();
+    __defProp6 = Object.defineProperty;
+    __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
     __name(tail, "tail");
+    __name6(tail, "tail");
     __name(equals, "equals");
+    __name6(equals, "equals");
     __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+    __name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
     __name(binarySearch, "binarySearch");
+    __name6(binarySearch, "binarySearch");
     __name(binarySearch2, "binarySearch2");
+    __name6(binarySearch2, "binarySearch2");
     __name(quickSelect, "quickSelect");
+    __name6(quickSelect, "quickSelect");
     __name(groupBy2, "groupBy");
+    __name6(groupBy2, "groupBy");
     __name(groupAdjacentBy, "groupAdjacentBy");
+    __name6(groupAdjacentBy, "groupAdjacentBy");
     __name(forEachAdjacent, "forEachAdjacent");
+    __name6(forEachAdjacent, "forEachAdjacent");
     __name(forEachWithNeighbors, "forEachWithNeighbors");
+    __name6(forEachWithNeighbors, "forEachWithNeighbors");
     __name(concatArrays, "concatArrays");
+    __name6(concatArrays, "concatArrays");
     __name(sortedDiff, "sortedDiff");
+    __name6(sortedDiff, "sortedDiff");
     __name(delta, "delta");
+    __name6(delta, "delta");
     __name(top, "top");
+    __name6(top, "top");
     __name(topAsync, "topAsync");
+    __name6(topAsync, "topAsync");
     __name(topStep, "topStep");
+    __name6(topStep, "topStep");
     __name(coalesce, "coalesce");
+    __name6(coalesce, "coalesce");
     __name(coalesceInPlace, "coalesceInPlace");
+    __name6(coalesceInPlace, "coalesceInPlace");
     __name(move, "move");
+    __name6(move, "move");
     __name(isFalsyOrEmpty, "isFalsyOrEmpty");
+    __name6(isFalsyOrEmpty, "isFalsyOrEmpty");
     __name(isNonEmptyArray, "isNonEmptyArray");
+    __name6(isNonEmptyArray, "isNonEmptyArray");
     __name(distinct, "distinct");
+    __name6(distinct, "distinct");
     __name(uniqueFilter, "uniqueFilter");
+    __name6(uniqueFilter, "uniqueFilter");
     __name(commonPrefixLength, "commonPrefixLength");
+    __name6(commonPrefixLength, "commonPrefixLength");
     __name(range, "range");
+    __name6(range, "range");
     __name(index, "index");
+    __name6(index, "index");
     __name(insert, "insert");
+    __name6(insert, "insert");
     __name(remove, "remove");
+    __name6(remove, "remove");
     __name(arrayInsert, "arrayInsert");
+    __name6(arrayInsert, "arrayInsert");
     __name(shuffle, "shuffle");
+    __name6(shuffle, "shuffle");
     __name(pushToStart, "pushToStart");
+    __name6(pushToStart, "pushToStart");
     __name(pushToEnd, "pushToEnd");
+    __name6(pushToEnd, "pushToEnd");
     __name(pushMany, "pushMany");
+    __name6(pushMany, "pushMany");
     __name(mapArrayOrNot, "mapArrayOrNot");
+    __name6(mapArrayOrNot, "mapArrayOrNot");
     __name(mapFilter, "mapFilter");
+    __name6(mapFilter, "mapFilter");
     __name(withoutDuplicates, "withoutDuplicates");
+    __name6(withoutDuplicates, "withoutDuplicates");
     __name(asArray, "asArray");
+    __name6(asArray, "asArray");
     __name(getRandomElement, "getRandomElement");
+    __name6(getRandomElement, "getRandomElement");
     __name(insertInto, "insertInto");
+    __name6(insertInto, "insertInto");
     __name(splice, "splice");
+    __name6(splice, "splice");
     __name(getActualStartIndex, "getActualStartIndex");
+    __name6(getActualStartIndex, "getActualStartIndex");
     (function(CompareResult2) {
       function isLessThan(result) {
         return result < 0;
       }
       __name(isLessThan, "isLessThan");
+      __name6(isLessThan, "isLessThan");
       CompareResult2.isLessThan = isLessThan;
       function isLessThanOrEqual(result) {
         return result <= 0;
       }
       __name(isLessThanOrEqual, "isLessThanOrEqual");
+      __name6(isLessThanOrEqual, "isLessThanOrEqual");
       CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
       function isGreaterThan(result) {
         return result > 0;
       }
       __name(isGreaterThan, "isGreaterThan");
+      __name6(isGreaterThan, "isGreaterThan");
       CompareResult2.isGreaterThan = isGreaterThan;
       function isNeitherLessOrGreaterThan(result) {
         return result === 0;
       }
       __name(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
+      __name6(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
       CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
       CompareResult2.greaterThan = 1;
       CompareResult2.lessThan = -1;
       CompareResult2.neitherLessOrGreaterThan = 0;
     })(CompareResult || (CompareResult = {}));
     __name(compareBy, "compareBy");
+    __name6(compareBy, "compareBy");
     __name(tieBreakComparators, "tieBreakComparators");
-    numberComparator = /* @__PURE__ */ __name((a, b) => a - b, "numberComparator");
-    booleanComparator = /* @__PURE__ */ __name((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
+    __name6(tieBreakComparators, "tieBreakComparators");
+    numberComparator = /* @__PURE__ */ __name6((a, b) => a - b, "numberComparator");
+    booleanComparator = /* @__PURE__ */ __name6((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
     __name(reverseOrder, "reverseOrder");
+    __name6(reverseOrder, "reverseOrder");
     __name(compareUndefinedSmallest, "compareUndefinedSmallest");
+    __name6(compareUndefinedSmallest, "compareUndefinedSmallest");
     ArrayQueue = class {
       static {
         __name(this, "ArrayQueue");
+      }
+      static {
+        __name6(this, "ArrayQueue");
       }
       /**
        * Constructs a queue that is backed by the given array. Runtime is O(1).
@@ -1177,6 +1306,9 @@ var init_arrays = __esm({
     CallbackIterable = class _CallbackIterable {
       static {
         __name(this, "CallbackIterable");
+      }
+      static {
+        __name6(this, "CallbackIterable");
       }
       static {
         this.empty = new _CallbackIterable((_callback) => {
@@ -1251,6 +1383,9 @@ var init_arrays = __esm({
       static {
         __name(this, "Permutation");
       }
+      static {
+        __name6(this, "Permutation");
+      }
       constructor(_indexMap) {
         this._indexMap = _indexMap;
       }
@@ -1279,12 +1414,15 @@ var init_arrays = __esm({
       }
     };
     __name(findAsync, "findAsync");
+    __name6(findAsync, "findAsync");
     __name(sum, "sum");
+    __name6(sum, "sum");
     __name(sumBy, "sumBy");
+    __name6(sumBy, "sumBy");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/map.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
 function getOrSet(map, key, value) {
   let result = map.get(key);
   if (result === void 0) {
@@ -1329,16 +1467,24 @@ function mapsStrictEqualIgnoreOrder(a, b) {
   }
   return true;
 }
-var _a2, _b, _c, ResourceMapEntry, ResourceMap, ResourceSet, Touch, LinkedMap, Cache, LRUCache, MRUCache, CounterSet, BidirectionalMap, SetMap, NKeyMap;
+var __defProp7, __name7, _a2, _b, _c, ResourceMapEntry, ResourceMap, ResourceSet, Touch, LinkedMap, Cache, LRUCache, MRUCache, CounterSet, BidirectionalMap, SetMap, NKeyMap;
 var init_map = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/map.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/map.js"() {
     "use strict";
+    __defProp7 = Object.defineProperty;
+    __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
     __name(getOrSet, "getOrSet");
+    __name7(getOrSet, "getOrSet");
     __name(mapToString, "mapToString");
+    __name7(mapToString, "mapToString");
     __name(setToString, "setToString");
+    __name7(setToString, "setToString");
     ResourceMapEntry = class {
       static {
         __name(this, "ResourceMapEntry");
+      }
+      static {
+        __name7(this, "ResourceMapEntry");
       }
       constructor(uri, value) {
         this.uri = uri;
@@ -1346,9 +1492,13 @@ var init_map = __esm({
       }
     };
     __name(isEntries, "isEntries");
+    __name7(isEntries, "isEntries");
     ResourceMap = class _ResourceMap {
       static {
         __name(this, "ResourceMap");
+      }
+      static {
+        __name7(this, "ResourceMap");
       }
       static {
         this.defaultToKey = (resource) => resource.toString();
@@ -1421,6 +1571,9 @@ var init_map = __esm({
       static {
         __name(this, "ResourceSet");
       }
+      static {
+        __name7(this, "ResourceSet");
+      }
       constructor(entriesOrKey, toKey) {
         this[_b] = "ResourceSet";
         if (!entriesOrKey || typeof entriesOrKey === "function") {
@@ -1470,6 +1623,9 @@ var init_map = __esm({
     LinkedMap = class {
       static {
         __name(this, "LinkedMap");
+      }
+      static {
+        __name7(this, "LinkedMap");
       }
       constructor() {
         this[_c] = "LinkedMap";
@@ -1812,6 +1968,9 @@ var init_map = __esm({
       static {
         __name(this, "Cache");
       }
+      static {
+        __name7(this, "Cache");
+      }
       constructor(limit, ratio = 1) {
         super();
         this._limit = limit;
@@ -1860,6 +2019,9 @@ var init_map = __esm({
       static {
         __name(this, "LRUCache");
       }
+      static {
+        __name7(this, "LRUCache");
+      }
       constructor(limit, ratio = 1) {
         super(limit, ratio);
       }
@@ -1875,6 +2037,9 @@ var init_map = __esm({
     MRUCache = class extends Cache {
       static {
         __name(this, "MRUCache");
+      }
+      static {
+        __name7(this, "MRUCache");
       }
       constructor(limit, ratio = 1) {
         super(limit, ratio);
@@ -1893,6 +2058,9 @@ var init_map = __esm({
     CounterSet = class {
       static {
         __name(this, "CounterSet");
+      }
+      static {
+        __name7(this, "CounterSet");
       }
       constructor() {
         this.map = /* @__PURE__ */ new Map();
@@ -1921,6 +2089,9 @@ var init_map = __esm({
     BidirectionalMap = class {
       static {
         __name(this, "BidirectionalMap");
+      }
+      static {
+        __name7(this, "BidirectionalMap");
       }
       constructor(entries) {
         this._m1 = /* @__PURE__ */ new Map();
@@ -1970,6 +2141,9 @@ var init_map = __esm({
       static {
         __name(this, "SetMap");
       }
+      static {
+        __name7(this, "SetMap");
+      }
       constructor() {
         this.map = /* @__PURE__ */ new Map();
       }
@@ -2007,9 +2181,13 @@ var init_map = __esm({
       }
     };
     __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+    __name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
     NKeyMap = class {
       static {
         __name(this, "NKeyMap");
+      }
+      static {
+        __name7(this, "NKeyMap");
       }
       constructor() {
         this._data = /* @__PURE__ */ new Map();
@@ -2057,13 +2235,14 @@ var init_map = __esm({
           }
         }
         __name(iterate, "iterate");
+        __name7(iterate, "iterate");
         yield* iterate(this._data);
       }
       /**
        * Get a textual representation of the map for debugging purposes.
        */
       toString() {
-        const printMap = /* @__PURE__ */ __name((map, depth) => {
+        const printMap = /* @__PURE__ */ __name7((map, depth) => {
           let result = "";
           for (const [key, value] of map) {
             result += `${"  ".repeat(depth)}${key}: `;
@@ -2082,7 +2261,7 @@ var init_map = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/assert.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/assert.js
 function ok(value, message) {
   if (!value) {
     throw new Error(message ? `Assertion failed (${message})` : "Assertion Failed");
@@ -2123,21 +2302,31 @@ function checkAdjacentItems(items, predicate) {
   }
   return true;
 }
+var __defProp8, __name8;
 var init_assert = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/assert.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/assert.js"() {
     "use strict";
     init_errors();
+    __defProp8 = Object.defineProperty;
+    __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
     __name(ok, "ok");
+    __name8(ok, "ok");
     __name(assertNever, "assertNever");
+    __name8(assertNever, "assertNever");
     __name(softAssertNever, "softAssertNever");
+    __name8(softAssertNever, "softAssertNever");
     __name(assert, "assert");
+    __name8(assert, "assert");
     __name(softAssert, "softAssert");
+    __name8(softAssert, "softAssert");
     __name(assertFn, "assertFn");
+    __name8(assertFn, "assertFn");
     __name(checkAdjacentItems, "checkAdjacentItems");
+    __name8(checkAdjacentItems, "checkAdjacentItems");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/types.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
 function isString(str) {
   return typeof str === "string";
 }
@@ -2258,64 +2447,95 @@ function hasKey(x, key) {
   }
   return true;
 }
-var isOneOf, hasOwnProperty;
+var __defProp9, __name9, isOneOf, hasOwnProperty;
 var init_types = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/types.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/types.js"() {
     "use strict";
     init_assert();
+    __defProp9 = Object.defineProperty;
+    __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
     __name(isString, "isString");
+    __name9(isString, "isString");
     __name(isStringArray, "isStringArray");
+    __name9(isStringArray, "isStringArray");
     __name(isArrayOf, "isArrayOf");
+    __name9(isArrayOf, "isArrayOf");
     __name(isObject, "isObject");
+    __name9(isObject, "isObject");
     __name(isTypedArray, "isTypedArray");
+    __name9(isTypedArray, "isTypedArray");
     __name(isNumber, "isNumber");
+    __name9(isNumber, "isNumber");
     __name(isIterable, "isIterable");
+    __name9(isIterable, "isIterable");
     __name(isAsyncIterable, "isAsyncIterable");
+    __name9(isAsyncIterable, "isAsyncIterable");
     __name(isBoolean, "isBoolean");
+    __name9(isBoolean, "isBoolean");
     __name(isUndefined, "isUndefined");
+    __name9(isUndefined, "isUndefined");
     __name(isDefined, "isDefined");
+    __name9(isDefined, "isDefined");
     __name(isUndefinedOrNull, "isUndefinedOrNull");
+    __name9(isUndefinedOrNull, "isUndefinedOrNull");
     __name(assertType, "assertType");
+    __name9(assertType, "assertType");
     __name(assertReturnsDefined, "assertReturnsDefined");
+    __name9(assertReturnsDefined, "assertReturnsDefined");
     __name(assertDefined, "assertDefined");
+    __name9(assertDefined, "assertDefined");
     __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-    isOneOf = /* @__PURE__ */ __name((value, validValues) => {
+    __name9(assertReturnsAllDefined, "assertReturnsAllDefined");
+    isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
       return validValues.includes(value);
     }, "isOneOf");
     __name(typeCheck, "typeCheck");
+    __name9(typeCheck, "typeCheck");
     hasOwnProperty = Object.prototype.hasOwnProperty;
     __name(isEmptyObject, "isEmptyObject");
+    __name9(isEmptyObject, "isEmptyObject");
     __name(isFunction, "isFunction");
+    __name9(isFunction, "isFunction");
     __name(areFunctions, "areFunctions");
+    __name9(areFunctions, "areFunctions");
     __name(validateConstraints, "validateConstraints");
+    __name9(validateConstraints, "validateConstraints");
     __name(validateConstraint, "validateConstraint");
+    __name9(validateConstraint, "validateConstraint");
     __name(upcast, "upcast");
+    __name9(upcast, "upcast");
     __name(hasKey, "hasKey");
+    __name9(hasKey, "hasKey");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/iterator.js
-var Iterable;
+// ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
+var __defProp10, __name10, Iterable;
 var init_iterator = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/iterator.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js"() {
     "use strict";
     init_types();
+    __defProp10 = Object.defineProperty;
+    __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
     (function(Iterable2) {
       function is(thing) {
         return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
       }
       __name(is, "is");
+      __name10(is, "is");
       Iterable2.is = is;
       const _empty = Object.freeze([]);
       function empty() {
         return _empty;
       }
       __name(empty, "empty");
+      __name10(empty, "empty");
       Iterable2.empty = empty;
       function* single(element) {
         yield element;
       }
       __name(single, "single");
+      __name10(single, "single");
       Iterable2.single = single;
       function wrap(iterableOrElement) {
         if (is(iterableOrElement)) {
@@ -2325,11 +2545,13 @@ var init_iterator = __esm({
         }
       }
       __name(wrap, "wrap");
+      __name10(wrap, "wrap");
       Iterable2.wrap = wrap;
       function from(iterable) {
         return iterable ?? _empty;
       }
       __name(from, "from");
+      __name10(from, "from");
       Iterable2.from = from;
       function* reverse(array) {
         for (let i = array.length - 1; i >= 0; i--) {
@@ -2337,16 +2559,19 @@ var init_iterator = __esm({
         }
       }
       __name(reverse, "reverse");
+      __name10(reverse, "reverse");
       Iterable2.reverse = reverse;
       function isEmpty(iterable) {
         return !iterable || iterable[Symbol.iterator]().next().done === true;
       }
       __name(isEmpty, "isEmpty");
+      __name10(isEmpty, "isEmpty");
       Iterable2.isEmpty = isEmpty;
       function first(iterable) {
         return iterable[Symbol.iterator]().next().value;
       }
       __name(first, "first");
+      __name10(first, "first");
       Iterable2.first = first;
       function some(iterable, predicate) {
         let i = 0;
@@ -2358,6 +2583,7 @@ var init_iterator = __esm({
         return false;
       }
       __name(some, "some");
+      __name10(some, "some");
       Iterable2.some = some;
       function every(iterable, predicate) {
         let i = 0;
@@ -2369,6 +2595,7 @@ var init_iterator = __esm({
         return true;
       }
       __name(every, "every");
+      __name10(every, "every");
       Iterable2.every = every;
       function find(iterable, predicate) {
         for (const element of iterable) {
@@ -2379,6 +2606,7 @@ var init_iterator = __esm({
         return void 0;
       }
       __name(find, "find");
+      __name10(find, "find");
       Iterable2.find = find;
       function* filter(iterable, predicate) {
         for (const element of iterable) {
@@ -2388,6 +2616,7 @@ var init_iterator = __esm({
         }
       }
       __name(filter, "filter");
+      __name10(filter, "filter");
       Iterable2.filter = filter;
       function* map(iterable, fn) {
         let index2 = 0;
@@ -2396,6 +2625,7 @@ var init_iterator = __esm({
         }
       }
       __name(map, "map");
+      __name10(map, "map");
       Iterable2.map = map;
       function* flatMap(iterable, fn) {
         let index2 = 0;
@@ -2404,6 +2634,7 @@ var init_iterator = __esm({
         }
       }
       __name(flatMap, "flatMap");
+      __name10(flatMap, "flatMap");
       Iterable2.flatMap = flatMap;
       function* concat(...iterables) {
         for (const item of iterables) {
@@ -2415,6 +2646,7 @@ var init_iterator = __esm({
         }
       }
       __name(concat, "concat");
+      __name10(concat, "concat");
       Iterable2.concat = concat;
       function reduce(iterable, reducer, initialValue) {
         let value = initialValue;
@@ -2424,6 +2656,7 @@ var init_iterator = __esm({
         return value;
       }
       __name(reduce, "reduce");
+      __name10(reduce, "reduce");
       Iterable2.reduce = reduce;
       function length(iterable) {
         let count = 0;
@@ -2433,6 +2666,7 @@ var init_iterator = __esm({
         return count;
       }
       __name(length, "length");
+      __name10(length, "length");
       Iterable2.length = length;
       function* slice(arr, from2, to = arr.length) {
         if (from2 < -arr.length) {
@@ -2451,6 +2685,7 @@ var init_iterator = __esm({
         }
       }
       __name(slice, "slice");
+      __name10(slice, "slice");
       Iterable2.slice = slice;
       function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
         const consumed = [];
@@ -2470,6 +2705,7 @@ var init_iterator = __esm({
         } }];
       }
       __name(consume, "consume");
+      __name10(consume, "consume");
       Iterable2.consume = consume;
       async function asyncToArray(iterable) {
         const result = [];
@@ -2479,6 +2715,7 @@ var init_iterator = __esm({
         return result;
       }
       __name(asyncToArray, "asyncToArray");
+      __name10(asyncToArray, "asyncToArray");
       Iterable2.asyncToArray = asyncToArray;
       async function asyncToArrayFlat(iterable) {
         let result = [];
@@ -2488,12 +2725,13 @@ var init_iterator = __esm({
         return result;
       }
       __name(asyncToArrayFlat, "asyncToArrayFlat");
+      __name10(asyncToArrayFlat, "asyncToArrayFlat");
       Iterable2.asyncToArrayFlat = asyncToArrayFlat;
     })(Iterable || (Iterable = {}));
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/lifecycle.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
 function setDisposableTracker(tracker) {
   disposableTracker = tracker;
 }
@@ -2591,9 +2829,9 @@ function thenRegisterOrDispose(promise, store) {
     return disposable;
   });
 }
-var TRACK_DISPOSABLES, disposableTracker, GCBasedDisposableTracker, DisposableTracker, FunctionDisposable, DisposableStore, Disposable, MutableDisposable, MandatoryMutableDisposable, RefCountedDisposable, ReferenceCollection, AsyncReferenceCollection, ImmortalReference, DisposableMap, DisposableSet, DisposableResourceMap;
+var __defProp11, __name11, TRACK_DISPOSABLES, disposableTracker, GCBasedDisposableTracker, DisposableTracker, FunctionDisposable, DisposableStore, Disposable, MutableDisposable, MandatoryMutableDisposable, RefCountedDisposable, ReferenceCollection, AsyncReferenceCollection, ImmortalReference, DisposableMap, DisposableSet, DisposableResourceMap;
 var init_lifecycle = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/lifecycle.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js"() {
     "use strict";
     init_arrays();
     init_collections();
@@ -2601,11 +2839,16 @@ var init_lifecycle = __esm({
     init_functional();
     init_iterator();
     init_errors();
+    __defProp11 = Object.defineProperty;
+    __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
     TRACK_DISPOSABLES = false;
     disposableTracker = null;
     GCBasedDisposableTracker = class {
       static {
         __name(this, "GCBasedDisposableTracker");
+      }
+      static {
+        __name11(this, "GCBasedDisposableTracker");
       }
       constructor() {
         this._registry = new FinalizationRegistry((heldValue) => {
@@ -2633,6 +2876,9 @@ var init_lifecycle = __esm({
     DisposableTracker = class _DisposableTracker {
       static {
         __name(this, "DisposableTracker");
+      }
+      static {
+        __name11(this, "DisposableTracker");
       }
       constructor() {
         this.livingDisposables = /* @__PURE__ */ new Map();
@@ -2706,11 +2952,13 @@ var init_lifecycle = __esm({
             }
           }
           __name(removePrefix, "removePrefix");
+          __name11(removePrefix, "removePrefix");
           const lines = leaking.source.split("\n").map((p) => p.trim().replace("at ", "")).filter((l) => l !== "");
           removePrefix(lines, ["Error", /^trackDisposable \(.*\)$/, /^DisposableTracker.trackDisposable \(.*\)$/]);
           return lines.reverse();
         }
         __name(getStackTracePath, "getStackTracePath");
+        __name11(getStackTracePath, "getStackTracePath");
         const stackTraceStarts = new SetMap();
         for (const leaking of uncoveredLeakingObjs) {
           const stackTracePath = getStackTracePath(leaking);
@@ -2760,6 +3008,7 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(setDisposableTracker, "setDisposableTracker");
+    __name11(setDisposableTracker, "setDisposableTracker");
     if (TRACK_DISPOSABLES) {
       const __is_disposable_tracked__ = "__is_disposable_tracked__";
       setDisposableTracker(new class {
@@ -2792,17 +3041,29 @@ ${stackTraceFormattedLines.join("\n")}
       }());
     }
     __name(trackDisposable, "trackDisposable");
+    __name11(trackDisposable, "trackDisposable");
     __name(markAsDisposed, "markAsDisposed");
+    __name11(markAsDisposed, "markAsDisposed");
     __name(setParentOfDisposable, "setParentOfDisposable");
+    __name11(setParentOfDisposable, "setParentOfDisposable");
     __name(setParentOfDisposables, "setParentOfDisposables");
+    __name11(setParentOfDisposables, "setParentOfDisposables");
     __name(markAsSingleton, "markAsSingleton");
+    __name11(markAsSingleton, "markAsSingleton");
     __name(isDisposable, "isDisposable");
+    __name11(isDisposable, "isDisposable");
     __name(dispose, "dispose");
+    __name11(dispose, "dispose");
     __name(disposeIfDisposable, "disposeIfDisposable");
+    __name11(disposeIfDisposable, "disposeIfDisposable");
     __name(combinedDisposable, "combinedDisposable");
+    __name11(combinedDisposable, "combinedDisposable");
     FunctionDisposable = class {
       static {
         __name(this, "FunctionDisposable");
+      }
+      static {
+        __name11(this, "FunctionDisposable");
       }
       constructor(fn) {
         this._isDisposed = false;
@@ -2822,9 +3083,13 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(toDisposable, "toDisposable");
+    __name11(toDisposable, "toDisposable");
     DisposableStore = class _DisposableStore {
       static {
         __name(this, "DisposableStore");
+      }
+      static {
+        __name11(this, "DisposableStore");
       }
       static {
         this.DISABLE_DISPOSED_WARNING = false;
@@ -2922,6 +3187,9 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "Disposable");
       }
       static {
+        __name11(this, "Disposable");
+      }
+      static {
         this.None = Object.freeze({ dispose() {
         } });
       }
@@ -2947,6 +3215,9 @@ ${stackTraceFormattedLines.join("\n")}
     MutableDisposable = class {
       static {
         __name(this, "MutableDisposable");
+      }
+      static {
+        __name11(this, "MutableDisposable");
       }
       constructor() {
         this._isDisposed = false;
@@ -3009,6 +3280,9 @@ ${stackTraceFormattedLines.join("\n")}
       static {
         __name(this, "MandatoryMutableDisposable");
       }
+      static {
+        __name11(this, "MandatoryMutableDisposable");
+      }
       constructor(initialValue) {
         this._disposable = new MutableDisposable();
         this._isDisposed = false;
@@ -3032,6 +3306,9 @@ ${stackTraceFormattedLines.join("\n")}
       static {
         __name(this, "RefCountedDisposable");
       }
+      static {
+        __name11(this, "RefCountedDisposable");
+      }
       constructor(_disposable) {
         this._disposable = _disposable;
         this._counter = 1;
@@ -3050,6 +3327,9 @@ ${stackTraceFormattedLines.join("\n")}
     ReferenceCollection = class {
       static {
         __name(this, "ReferenceCollection");
+      }
+      static {
+        __name11(this, "ReferenceCollection");
       }
       constructor() {
         this.references = /* @__PURE__ */ new Map();
@@ -3075,6 +3355,9 @@ ${stackTraceFormattedLines.join("\n")}
       static {
         __name(this, "AsyncReferenceCollection");
       }
+      static {
+        __name11(this, "AsyncReferenceCollection");
+      }
       constructor(referenceCollection) {
         this.referenceCollection = referenceCollection;
       }
@@ -3084,7 +3367,7 @@ ${stackTraceFormattedLines.join("\n")}
           const object = await ref.object;
           return {
             object,
-            dispose: /* @__PURE__ */ __name(() => ref.dispose(), "dispose")
+            dispose: /* @__PURE__ */ __name11(() => ref.dispose(), "dispose")
           };
         } catch (error) {
           ref.dispose();
@@ -3096,6 +3379,9 @@ ${stackTraceFormattedLines.join("\n")}
       static {
         __name(this, "ImmortalReference");
       }
+      static {
+        __name11(this, "ImmortalReference");
+      }
       constructor(object) {
         this.object = object;
       }
@@ -3103,9 +3389,13 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(disposeOnReturn, "disposeOnReturn");
+    __name11(disposeOnReturn, "disposeOnReturn");
     DisposableMap = class {
       static {
         __name(this, "DisposableMap");
+      }
+      static {
+        __name11(this, "DisposableMap");
       }
       constructor(store = /* @__PURE__ */ new Map()) {
         this._isDisposed = false;
@@ -3187,6 +3477,9 @@ ${stackTraceFormattedLines.join("\n")}
       static {
         __name(this, "DisposableSet");
       }
+      static {
+        __name11(this, "DisposableSet");
+      }
       constructor(store = /* @__PURE__ */ new Set()) {
         this._isDisposed = false;
         this._store = store;
@@ -3255,10 +3548,15 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(thenIfNotDisposed, "thenIfNotDisposed");
+    __name11(thenIfNotDisposed, "thenIfNotDisposed");
     __name(thenRegisterOrDispose, "thenRegisterOrDispose");
+    __name11(thenRegisterOrDispose, "thenRegisterOrDispose");
     DisposableResourceMap = class extends DisposableMap {
       static {
         __name(this, "DisposableResourceMap");
+      }
+      static {
+        __name11(this, "DisposableResourceMap");
       }
       constructor() {
         super(new ResourceMap());
@@ -3267,14 +3565,19 @@ ${stackTraceFormattedLines.join("\n")}
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/linkedList.js
-var Node, LinkedList;
+// ../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js
+var __defProp12, __name12, Node, LinkedList;
 var init_linkedList = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/linkedList.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js"() {
     "use strict";
+    __defProp12 = Object.defineProperty;
+    __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
     Node = class _Node {
       static {
         __name(this, "Node");
+      }
+      static {
+        __name12(this, "Node");
       }
       static {
         this.Undefined = new _Node(void 0);
@@ -3288,6 +3591,9 @@ var init_linkedList = __esm({
     LinkedList = class {
       static {
         __name(this, "LinkedList");
+      }
+      static {
+        __name12(this, "LinkedList");
       }
       constructor() {
         this._first = Node.Undefined;
@@ -3397,7 +3703,7 @@ var init_linkedList = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/nls.js
+// ../Output/Target/Microsoft/VSCode/vs/nls.js
 function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
 }
@@ -3455,23 +3761,31 @@ function localize2(data, originalMessage, ...args) {
     original: originalMessage === message ? value : _format(originalMessage, args)
   };
 }
-var isPseudo;
+var __defProp13, __name13, isPseudo;
 var init_nls = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/nls.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/nls.js"() {
     "use strict";
+    __defProp13 = Object.defineProperty;
+    __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
     __name(getNLSMessages, "getNLSMessages");
+    __name13(getNLSMessages, "getNLSMessages");
     __name(getNLSLanguage, "getNLSLanguage");
+    __name13(getNLSLanguage, "getNLSLanguage");
     isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
     __name(_format, "_format");
+    __name13(_format, "_format");
     __name(localize, "localize");
+    __name13(localize, "localize");
     __name(lookupMessage, "lookupMessage");
+    __name13(lookupMessage, "lookupMessage");
     __name(localize2, "localize2");
+    __name13(localize2, "localize2");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/platform.js
-function PlatformToString(platform3) {
-  switch (platform3) {
+// ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
+function PlatformToString(platform22) {
+  switch (platform22) {
     case 0:
       return "Web";
     case 1:
@@ -3496,11 +3810,13 @@ function isLittleEndian() {
 function isTahoeOrNewer(osVersion) {
   return parseFloat(osVersion) >= 25;
 }
-var LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
+var __defProp14, __name14, LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
 var init_platform = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/platform.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/platform.js"() {
     "use strict";
     init_nls();
+    __defProp14 = Object.defineProperty;
+    __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
     LANGUAGE_DEFAULT = "en";
     _isWindows = false;
     _isMacintosh = false;
@@ -3568,6 +3884,7 @@ var init_platform = __esm({
       Platform2[Platform2["Windows"] = 3] = "Windows";
     })(Platform || (Platform = {}));
     __name(PlatformToString, "PlatformToString");
+    __name14(PlatformToString, "PlatformToString");
     _platform = 0;
     if (_isMacintosh) {
       _platform = 1;
@@ -3596,6 +3913,7 @@ var init_platform = __esm({
         return language;
       }
       __name(value, "value");
+      __name14(value, "value");
       Language2.value = value;
       function isDefaultVariant() {
         if (language.length === 2) {
@@ -3607,11 +3925,13 @@ var init_platform = __esm({
         }
       }
       __name(isDefaultVariant, "isDefaultVariant");
+      __name14(isDefaultVariant, "isDefaultVariant");
       Language2.isDefaultVariant = isDefaultVariant;
       function isDefault() {
         return language === "en";
       }
       __name(isDefault, "isDefault");
+      __name14(isDefault, "isDefault");
       Language2.isDefault = isDefault;
     })(Language || (Language = {}));
     locale = _locale;
@@ -3654,19 +3974,21 @@ var init_platform = __esm({
     _isLittleEndian = true;
     _isLittleEndianComputed = false;
     __name(isLittleEndian, "isLittleEndian");
+    __name14(isLittleEndian, "isLittleEndian");
     isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
     isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
     isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
     isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
     isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
     __name(isTahoeOrNewer, "isTahoeOrNewer");
+    __name14(isTahoeOrNewer, "isTahoeOrNewer");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/process.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
 var safeProcess, vscodeGlobal, cwd, env, platform2, arch;
 var init_process = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/process.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/process.js"() {
     "use strict";
     init_platform();
     vscodeGlobal = globalThis.vscode;
@@ -3726,15 +4048,20 @@ var init_process = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/stopwatch.js
-var performanceNow, StopWatch;
+// ../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js
+var __defProp15, __name15, performanceNow, StopWatch;
 var init_stopwatch = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/stopwatch.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js"() {
     "use strict";
+    __defProp15 = Object.defineProperty;
+    __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
     performanceNow = globalThis.performance.now.bind(globalThis.performance);
     StopWatch = class _StopWatch {
       static {
         __name(this, "StopWatch");
+      }
+      static {
+        __name15(this, "StopWatch");
       }
       static create(highResolution) {
         return new _StopWatch(highResolution);
@@ -3761,7 +4088,7 @@ var init_stopwatch = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/event.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
 function _isBufferLeakWarningEnabled() {
   return !!env["VSCODE_DEV"];
 }
@@ -3813,9 +4140,9 @@ function disposeAndRemove(result, disposables) {
   }
   result.dispose();
 }
-var _enableDisposeWithListenerWarning, _enableSnapshotPotentialLeakWarning, _bufferLeakWarnCountThreshold, _bufferLeakWarnTimeThreshold, Event, EventProfiling, _globalLeakWarningThreshold, LeakageMonitor, Stacktrace, ListenerLeakError, ListenerRefusalError, id, UniqueContainer, compactionThreshold, forEachListener, Emitter, createEventDeliveryQueue, EventDeliveryQueuePrivate, AsyncEmitter, PauseableEmitter, DebounceEmitter, MicrotaskEmitter, EventMultiplexer, DynamicListEventMultiplexer, EventBufferer, Relay, ValueWithChangeEvent, ConstValueWithChangeEvent;
+var __defProp16, __name16, _enableDisposeWithListenerWarning, _enableSnapshotPotentialLeakWarning, _bufferLeakWarnCountThreshold, _bufferLeakWarnTimeThreshold, Event, EventProfiling, _globalLeakWarningThreshold, LeakageMonitor, Stacktrace, ListenerLeakError, ListenerRefusalError, id, UniqueContainer, compactionThreshold, forEachListener, Emitter, createEventDeliveryQueue, EventDeliveryQueuePrivate, AsyncEmitter, PauseableEmitter, DebounceEmitter, MicrotaskEmitter, EventMultiplexer, DynamicListEventMultiplexer, EventBufferer, Relay, ValueWithChangeEvent, ConstValueWithChangeEvent;
 var init_event = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/event.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/event.js"() {
     "use strict";
     init_collections();
     init_errors();
@@ -3824,11 +4151,14 @@ var init_event = __esm({
     init_linkedList();
     init_process();
     init_stopwatch();
+    __defProp16 = Object.defineProperty;
+    __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
     _enableDisposeWithListenerWarning = false;
     _enableSnapshotPotentialLeakWarning = false;
     _bufferLeakWarnCountThreshold = 100;
     _bufferLeakWarnTimeThreshold = 6e4;
     __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+    __name16(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
     (function(Event2) {
       Event2.None = () => Disposable.None;
       function _addLeakageTraceLogic(options) {
@@ -3846,10 +4176,12 @@ var init_event = __esm({
         }
       }
       __name(_addLeakageTraceLogic, "_addLeakageTraceLogic");
+      __name16(_addLeakageTraceLogic, "_addLeakageTraceLogic");
       function defer(event, flushOnListenerRemove, disposable) {
         return debounce(event, () => void 0, 0, void 0, flushOnListenerRemove ?? true, void 0, disposable);
       }
       __name(defer, "defer");
+      __name16(defer, "defer");
       Event2.defer = defer;
       function once(event) {
         return (listener, thisArgs = null, disposables) => {
@@ -3872,16 +4204,19 @@ var init_event = __esm({
         };
       }
       __name(once, "once");
+      __name16(once, "once");
       Event2.once = once;
       function onceIf(event, condition) {
         return Event2.once(Event2.filter(event, condition));
       }
       __name(onceIf, "onceIf");
+      __name16(onceIf, "onceIf");
       Event2.onceIf = onceIf;
       function map(event, map2, disposable) {
         return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
       }
       __name(map, "map");
+      __name16(map, "map");
       Event2.map = map;
       function forEach(event, each, disposable) {
         return snapshot((listener, thisArgs = null, disposables) => event((i) => {
@@ -3890,16 +4225,19 @@ var init_event = __esm({
         }, null, disposables), disposable);
       }
       __name(forEach, "forEach");
+      __name16(forEach, "forEach");
       Event2.forEach = forEach;
       function filter(event, filter2, disposable) {
         return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
       }
       __name(filter, "filter");
+      __name16(filter, "filter");
       Event2.filter = filter;
       function signal(event) {
         return event;
       }
       __name(signal, "signal");
+      __name16(signal, "signal");
       Event2.signal = signal;
       function any(...events) {
         return (listener, thisArgs = null, disposables) => {
@@ -3908,6 +4246,7 @@ var init_event = __esm({
         };
       }
       __name(any, "any");
+      __name16(any, "any");
       Event2.any = any;
       function reduce(event, merge, initial, disposable) {
         let output = initial;
@@ -3917,6 +4256,7 @@ var init_event = __esm({
         }, disposable);
       }
       __name(reduce, "reduce");
+      __name16(reduce, "reduce");
       Event2.reduce = reduce;
       function snapshot(event, disposable) {
         let listener;
@@ -3936,6 +4276,7 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(snapshot, "snapshot");
+      __name16(snapshot, "snapshot");
       function addAndReturnDisposable(d, store) {
         if (store instanceof Array) {
           store.push(d);
@@ -3945,6 +4286,7 @@ var init_event = __esm({
         return d;
       }
       __name(addAndReturnDisposable, "addAndReturnDisposable");
+      __name16(addAndReturnDisposable, "addAndReturnDisposable");
       function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
         let subscription;
         let output = void 0;
@@ -3961,7 +4303,7 @@ var init_event = __esm({
                 emitter.fire(output);
                 output = void 0;
               }
-              doFire = /* @__PURE__ */ __name(() => {
+              doFire = /* @__PURE__ */ __name16(() => {
                 const _output = output;
                 output = void 0;
                 handle = void 0;
@@ -4001,6 +4343,7 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(debounce, "debounce");
+      __name16(debounce, "debounce");
       Event2.debounce = debounce;
       function accumulate(event, delay = 0, flushOnListenerRemove, disposable) {
         return Event2.debounce(event, (last, e) => {
@@ -4012,6 +4355,7 @@ var init_event = __esm({
         }, delay, void 0, flushOnListenerRemove ?? true, void 0, disposable);
       }
       __name(accumulate, "accumulate");
+      __name16(accumulate, "accumulate");
       Event2.accumulate = accumulate;
       function throttle(event, merge, delay = 100, leading = true, trailing = true, leakWarningThreshold, disposable) {
         let subscription;
@@ -4065,6 +4409,7 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(throttle, "throttle");
+      __name16(throttle, "throttle");
       Event2.throttle = throttle;
       function latch(event, equals2 = (a, b) => a === b, disposable) {
         let firstCall = true;
@@ -4077,6 +4422,7 @@ var init_event = __esm({
         }, disposable);
       }
       __name(latch, "latch");
+      __name16(latch, "latch");
       Event2.latch = latch;
       function split(event, isT, disposable) {
         return [
@@ -4085,6 +4431,7 @@ var init_event = __esm({
         ];
       }
       __name(split, "split");
+      __name16(split, "split");
       Event2.split = split;
       function buffer(event, debugName, flushAfterTimeout = false, _buffer = [], disposable) {
         let buffer2 = _buffer.slice();
@@ -4105,7 +4452,7 @@ var init_event = __esm({
             disposable.add(toDisposable(() => clearTimeout(bufferLeakWarningData.timerId)));
           }
         }
-        const clearLeakWarningTimer = /* @__PURE__ */ __name(() => {
+        const clearLeakWarningTimer = /* @__PURE__ */ __name16(() => {
           if (bufferLeakWarningData) {
             clearTimeout(bufferLeakWarningData.timerId);
           }
@@ -4125,7 +4472,7 @@ var init_event = __esm({
         if (disposable) {
           disposable.add(listener);
         }
-        const flush = /* @__PURE__ */ __name(() => {
+        const flush = /* @__PURE__ */ __name16(() => {
           buffer2?.forEach((e) => emitter.fire(e));
           buffer2 = null;
           clearLeakWarningTimer();
@@ -4162,9 +4509,10 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(buffer, "buffer");
+      __name16(buffer, "buffer");
       Event2.buffer = buffer;
       function chain(event, sythensize) {
-        const fn = /* @__PURE__ */ __name((listener, thisArgs, disposables) => {
+        const fn = /* @__PURE__ */ __name16((listener, thisArgs, disposables) => {
           const cs = sythensize(new ChainableSynthesis());
           return event(function(value) {
             const result = cs.evaluate(value);
@@ -4176,11 +4524,15 @@ var init_event = __esm({
         return fn;
       }
       __name(chain, "chain");
+      __name16(chain, "chain");
       Event2.chain = chain;
       const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
       class ChainableSynthesis {
         static {
           __name(this, "ChainableSynthesis");
+        }
+        static {
+          __name16(this, "ChainableSynthesis");
         }
         constructor() {
           this.steps = [];
@@ -4230,22 +4582,24 @@ var init_event = __esm({
         }
       }
       function fromNodeEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-        const fn = /* @__PURE__ */ __name((...args) => result.fire(map2(...args)), "fn");
-        const onFirstListenerAdd = /* @__PURE__ */ __name(() => emitter.on(eventName, fn), "onFirstListenerAdd");
-        const onLastListenerRemove = /* @__PURE__ */ __name(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
+        const fn = /* @__PURE__ */ __name16((...args) => result.fire(map2(...args)), "fn");
+        const onFirstListenerAdd = /* @__PURE__ */ __name16(() => emitter.on(eventName, fn), "onFirstListenerAdd");
+        const onLastListenerRemove = /* @__PURE__ */ __name16(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
         const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
         return result.event;
       }
       __name(fromNodeEventEmitter, "fromNodeEventEmitter");
+      __name16(fromNodeEventEmitter, "fromNodeEventEmitter");
       Event2.fromNodeEventEmitter = fromNodeEventEmitter;
       function fromDOMEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-        const fn = /* @__PURE__ */ __name((...args) => result.fire(map2(...args)), "fn");
-        const onFirstListenerAdd = /* @__PURE__ */ __name(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
-        const onLastListenerRemove = /* @__PURE__ */ __name(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
+        const fn = /* @__PURE__ */ __name16((...args) => result.fire(map2(...args)), "fn");
+        const onFirstListenerAdd = /* @__PURE__ */ __name16(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
+        const onLastListenerRemove = /* @__PURE__ */ __name16(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
         const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
         return result.event;
       }
       __name(fromDOMEventEmitter, "fromDOMEventEmitter");
+      __name16(fromDOMEventEmitter, "fromDOMEventEmitter");
       Event2.fromDOMEventEmitter = fromDOMEventEmitter;
       function toPromise(event, disposables) {
         let cancelRef;
@@ -4253,7 +4607,7 @@ var init_event = __esm({
         const promise = new Promise((resolve) => {
           listener = once(event)(resolve);
           addToDisposables(listener, disposables);
-          cancelRef = /* @__PURE__ */ __name(() => {
+          cancelRef = /* @__PURE__ */ __name16(() => {
             disposeAndRemove(listener, disposables);
           }, "cancelRef");
         });
@@ -4264,32 +4618,38 @@ var init_event = __esm({
         return promise;
       }
       __name(toPromise, "toPromise");
+      __name16(toPromise, "toPromise");
       Event2.toPromise = toPromise;
       function forward(from, to) {
         return from((e) => to.fire(e));
       }
       __name(forward, "forward");
+      __name16(forward, "forward");
       Event2.forward = forward;
       function runAndSubscribe(event, handler, initial) {
         handler(initial);
         return event((e) => handler(e));
       }
       __name(runAndSubscribe, "runAndSubscribe");
+      __name16(runAndSubscribe, "runAndSubscribe");
       Event2.runAndSubscribe = runAndSubscribe;
       class EmitterObserver {
         static {
           __name(this, "EmitterObserver");
+        }
+        static {
+          __name16(this, "EmitterObserver");
         }
         constructor(_observable, store) {
           this._observable = _observable;
           this._counter = 0;
           this._hasChanged = false;
           const options = {
-            onWillAddFirstListener: /* @__PURE__ */ __name(() => {
+            onWillAddFirstListener: /* @__PURE__ */ __name16(() => {
               _observable.addObserver(this);
               this._observable.reportChanges();
             }, "onWillAddFirstListener"),
-            onDidRemoveLastListener: /* @__PURE__ */ __name(() => {
+            onDidRemoveLastListener: /* @__PURE__ */ __name16(() => {
               _observable.removeObserver(this);
             }, "onDidRemoveLastListener")
           };
@@ -4325,6 +4685,7 @@ var init_event = __esm({
         return observer.emitter.event;
       }
       __name(fromObservable, "fromObservable");
+      __name16(fromObservable, "fromObservable");
       Event2.fromObservable = fromObservable;
       function fromObservableLight(observable) {
         return (listener, thisArgs, disposables) => {
@@ -4362,11 +4723,15 @@ var init_event = __esm({
         };
       }
       __name(fromObservableLight, "fromObservableLight");
+      __name16(fromObservableLight, "fromObservableLight");
       Event2.fromObservableLight = fromObservableLight;
     })(Event || (Event = {}));
     EventProfiling = class _EventProfiling {
       static {
         __name(this, "EventProfiling");
+      }
+      static {
+        __name16(this, "EventProfiling");
       }
       static {
         this.all = /* @__PURE__ */ new Set();
@@ -4398,9 +4763,13 @@ var init_event = __esm({
     };
     _globalLeakWarningThreshold = -1;
     __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+    __name16(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
     LeakageMonitor = class _LeakageMonitor {
       static {
         __name(this, "LeakageMonitor");
+      }
+      static {
+        __name16(this, "LeakageMonitor");
       }
       static {
         this._idPool = 1;
@@ -4460,6 +4829,9 @@ var init_event = __esm({
       static {
         __name(this, "Stacktrace");
       }
+      static {
+        __name16(this, "Stacktrace");
+      }
       static create() {
         const err = new Error();
         return new _Stacktrace(err.stack ?? "");
@@ -4474,6 +4846,9 @@ var init_event = __esm({
     ListenerLeakError = class _ListenerLeakError extends Error {
       static {
         __name(this, "ListenerLeakError");
+      }
+      static {
+        __name16(this, "ListenerLeakError");
       }
       constructor(kind, details, stack, listenerCount, emitterName) {
         super(emitterName ? `[${emitterName}] potential listener LEAK detected, ${kind}` : `potential listener LEAK detected, ${kind}`);
@@ -4491,6 +4866,9 @@ var init_event = __esm({
       static {
         __name(this, "ListenerRefusalError");
       }
+      static {
+        __name16(this, "ListenerRefusalError");
+      }
       constructor(kind, details, stack, listenerCount, emitterName) {
         super(kind, details, stack, listenerCount, emitterName);
         this.name = "ListenerRefusalError";
@@ -4501,13 +4879,16 @@ var init_event = __esm({
       static {
         __name(this, "UniqueContainer");
       }
+      static {
+        __name16(this, "UniqueContainer");
+      }
       constructor(value) {
         this.value = value;
         this.id = id++;
       }
     };
     compactionThreshold = 2;
-    forEachListener = /* @__PURE__ */ __name((listeners, fn) => {
+    forEachListener = /* @__PURE__ */ __name16((listeners, fn) => {
       if (listeners instanceof UniqueContainer) {
         fn(listeners);
       } else {
@@ -4522,6 +4903,9 @@ var init_event = __esm({
     Emitter = class {
       static {
         __name(this, "Emitter");
+      }
+      static {
+        __name16(this, "Emitter");
       }
       constructor(options) {
         this._size = 0;
@@ -4687,10 +5071,13 @@ var init_event = __esm({
         return this._size > 0;
       }
     };
-    createEventDeliveryQueue = /* @__PURE__ */ __name(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
+    createEventDeliveryQueue = /* @__PURE__ */ __name16(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
     EventDeliveryQueuePrivate = class {
       static {
         __name(this, "EventDeliveryQueuePrivate");
+      }
+      static {
+        __name16(this, "EventDeliveryQueuePrivate");
       }
       constructor() {
         this.i = -1;
@@ -4712,6 +5099,9 @@ var init_event = __esm({
       static {
         __name(this, "AsyncEmitter");
       }
+      static {
+        __name16(this, "AsyncEmitter");
+      }
       async fireAsync(data, token, promiseJoin) {
         if (!this._listeners) {
           return;
@@ -4726,7 +5116,7 @@ var init_event = __esm({
           const event = {
             ...data2,
             token,
-            waitUntil: /* @__PURE__ */ __name((p) => {
+            waitUntil: /* @__PURE__ */ __name16((p) => {
               if (Object.isFrozen(thenables)) {
                 throw new Error("waitUntil can NOT be called asynchronous");
               }
@@ -4756,6 +5146,9 @@ var init_event = __esm({
     PauseableEmitter = class extends Emitter {
       static {
         __name(this, "PauseableEmitter");
+      }
+      static {
+        __name16(this, "PauseableEmitter");
       }
       get isPaused() {
         return this._isPaused !== 0;
@@ -4798,6 +5191,9 @@ var init_event = __esm({
       static {
         __name(this, "DebounceEmitter");
       }
+      static {
+        __name16(this, "DebounceEmitter");
+      }
       constructor(options) {
         super(options);
         this._delay = options.delay ?? 100;
@@ -4816,6 +5212,9 @@ var init_event = __esm({
     MicrotaskEmitter = class extends Emitter {
       static {
         __name(this, "MicrotaskEmitter");
+      }
+      static {
+        __name16(this, "MicrotaskEmitter");
       }
       constructor(options) {
         super(options);
@@ -4843,12 +5242,15 @@ var init_event = __esm({
       static {
         __name(this, "EventMultiplexer");
       }
+      static {
+        __name16(this, "EventMultiplexer");
+      }
       constructor() {
         this.hasListeners = false;
         this.events = [];
         this.emitter = new Emitter({
-          onWillAddFirstListener: /* @__PURE__ */ __name(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
-          onDidRemoveLastListener: /* @__PURE__ */ __name(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
+          onWillAddFirstListener: /* @__PURE__ */ __name16(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
+          onDidRemoveLastListener: /* @__PURE__ */ __name16(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
         });
       }
       get event() {
@@ -4860,7 +5262,7 @@ var init_event = __esm({
         if (this.hasListeners) {
           this.hook(e);
         }
-        const dispose2 = /* @__PURE__ */ __name(() => {
+        const dispose2 = /* @__PURE__ */ __name16(() => {
           if (this.hasListeners) {
             this.unhook(e);
           }
@@ -4896,6 +5298,9 @@ var init_event = __esm({
       static {
         __name(this, "DynamicListEventMultiplexer");
       }
+      static {
+        __name16(this, "DynamicListEventMultiplexer");
+      }
       constructor(items, onAddItem, onRemoveItem, getEvent) {
         this._store = new DisposableStore();
         const multiplexer = this._store.add(new EventMultiplexer());
@@ -4904,6 +5309,7 @@ var init_event = __esm({
           itemListeners.set(instance, multiplexer.add(getEvent(instance)));
         }
         __name(addItem, "addItem");
+        __name16(addItem, "addItem");
         for (const instance of items) {
           addItem(instance);
         }
@@ -4922,6 +5328,9 @@ var init_event = __esm({
     EventBufferer = class {
       static {
         __name(this, "EventBufferer");
+      }
+      static {
+        __name16(this, "EventBufferer");
       }
       constructor() {
         this.data = [];
@@ -4967,16 +5376,19 @@ var init_event = __esm({
       static {
         __name(this, "Relay");
       }
+      static {
+        __name16(this, "Relay");
+      }
       constructor() {
         this.listening = false;
         this.inputEvent = Event.None;
         this.inputEventListener = Disposable.None;
         this.emitter = new Emitter({
-          onDidAddFirstListener: /* @__PURE__ */ __name(() => {
+          onDidAddFirstListener: /* @__PURE__ */ __name16(() => {
             this.listening = true;
             this.inputEventListener = this.inputEvent(this.emitter.fire, this.emitter);
           }, "onDidAddFirstListener"),
-          onDidRemoveLastListener: /* @__PURE__ */ __name(() => {
+          onDidRemoveLastListener: /* @__PURE__ */ __name16(() => {
             this.listening = false;
             this.inputEventListener.dispose();
           }, "onDidRemoveLastListener")
@@ -4998,6 +5410,9 @@ var init_event = __esm({
     ValueWithChangeEvent = class {
       static {
         __name(this, "ValueWithChangeEvent");
+      }
+      static {
+        __name16(this, "ValueWithChangeEvent");
       }
       static const(value) {
         return new ConstValueWithChangeEvent(value);
@@ -5021,18 +5436,24 @@ var init_event = __esm({
       static {
         __name(this, "ConstValueWithChangeEvent");
       }
+      static {
+        __name16(this, "ConstValueWithChangeEvent");
+      }
       constructor(value) {
         this.value = value;
         this.onDidChange = Event.None;
       }
     };
     __name(trackSetChanges, "trackSetChanges");
+    __name16(trackSetChanges, "trackSetChanges");
     __name(addToDisposables, "addToDisposables");
+    __name16(addToDisposables, "addToDisposables");
     __name(disposeAndRemove, "disposeAndRemove");
+    __name16(disposeAndRemove, "disposeAndRemove");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/cancellation.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/cancellation.js
 var cancellation_exports = {};
 __export(cancellation_exports, {
   CancellationToken: () => CancellationToken,
@@ -5047,12 +5468,14 @@ function cancelOnDispose(store) {
   } });
   return source.token;
 }
-var shortcutEvent, CancellationToken, MutableToken, CancellationTokenSource, CancellationTokenPool;
+var __defProp17, __name17, shortcutEvent, CancellationToken, MutableToken, CancellationTokenSource, CancellationTokenPool;
 var init_cancellation = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/cancellation.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/cancellation.js"() {
     "use strict";
     init_event();
     init_lifecycle();
+    __defProp17 = Object.defineProperty;
+    __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
     shortcutEvent = Object.freeze(function(callback, context) {
       const handle = setTimeout(callback.bind(context), 0);
       return { dispose() {
@@ -5073,6 +5496,7 @@ var init_cancellation = __esm({
         return typeof thing.isCancellationRequested === "boolean" && typeof thing.onCancellationRequested === "function";
       }
       __name(isCancellationToken, "isCancellationToken");
+      __name17(isCancellationToken, "isCancellationToken");
       CancellationToken2.isCancellationToken = isCancellationToken;
       CancellationToken2.None = Object.freeze({
         isCancellationRequested: false,
@@ -5086,6 +5510,9 @@ var init_cancellation = __esm({
     MutableToken = class {
       static {
         __name(this, "MutableToken");
+      }
+      static {
+        __name17(this, "MutableToken");
       }
       constructor() {
         this._isCancelled = false;
@@ -5123,6 +5550,9 @@ var init_cancellation = __esm({
       static {
         __name(this, "CancellationTokenSource");
       }
+      static {
+        __name17(this, "CancellationTokenSource");
+      }
       constructor(parent) {
         this._token = void 0;
         this._parentListener = void 0;
@@ -5154,9 +5584,13 @@ var init_cancellation = __esm({
       }
     };
     __name(cancelOnDispose, "cancelOnDispose");
+    __name17(cancelOnDispose, "cancelOnDispose");
     CancellationTokenPool = class {
       static {
         __name(this, "CancellationTokenPool");
+      }
+      static {
+        __name17(this, "CancellationTokenPool");
       }
       constructor() {
         this._source = new CancellationTokenSource();

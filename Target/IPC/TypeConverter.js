@@ -9,7 +9,7 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/nls.js
+// ../Output/Target/Microsoft/VSCode/vs/nls.js
 function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
 }
@@ -67,23 +67,31 @@ function localize2(data, originalMessage, ...args) {
     original: originalMessage === message ? value : _format(originalMessage, args)
   };
 }
-var isPseudo;
+var __defProp2, __name2, isPseudo;
 var init_nls = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/nls.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/nls.js"() {
     "use strict";
+    __defProp2 = Object.defineProperty;
+    __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
     __name(getNLSMessages, "getNLSMessages");
+    __name2(getNLSMessages, "getNLSMessages");
     __name(getNLSLanguage, "getNLSLanguage");
+    __name2(getNLSLanguage, "getNLSLanguage");
     isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
     __name(_format, "_format");
+    __name2(_format, "_format");
     __name(localize, "localize");
+    __name2(localize, "localize");
     __name(lookupMessage, "lookupMessage");
+    __name2(lookupMessage, "lookupMessage");
     __name(localize2, "localize2");
+    __name2(localize2, "localize2");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/platform.js
-function PlatformToString(platform3) {
-  switch (platform3) {
+// ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
+function PlatformToString(platform22) {
+  switch (platform22) {
     case 0:
       return "Web";
     case 1:
@@ -108,11 +116,13 @@ function isLittleEndian() {
 function isTahoeOrNewer(osVersion) {
   return parseFloat(osVersion) >= 25;
 }
-var LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
+var __defProp3, __name3, LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
 var init_platform = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/platform.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/platform.js"() {
     "use strict";
     init_nls();
+    __defProp3 = Object.defineProperty;
+    __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
     LANGUAGE_DEFAULT = "en";
     _isWindows = false;
     _isMacintosh = false;
@@ -180,6 +190,7 @@ var init_platform = __esm({
       Platform2[Platform2["Windows"] = 3] = "Windows";
     })(Platform || (Platform = {}));
     __name(PlatformToString, "PlatformToString");
+    __name3(PlatformToString, "PlatformToString");
     _platform = 0;
     if (_isMacintosh) {
       _platform = 1;
@@ -208,6 +219,7 @@ var init_platform = __esm({
         return language;
       }
       __name(value, "value");
+      __name3(value, "value");
       Language2.value = value;
       function isDefaultVariant() {
         if (language.length === 2) {
@@ -219,11 +231,13 @@ var init_platform = __esm({
         }
       }
       __name(isDefaultVariant, "isDefaultVariant");
+      __name3(isDefaultVariant, "isDefaultVariant");
       Language2.isDefaultVariant = isDefaultVariant;
       function isDefault() {
         return language === "en";
       }
       __name(isDefault, "isDefault");
+      __name3(isDefault, "isDefault");
       Language2.isDefault = isDefault;
     })(Language || (Language = {}));
     locale = _locale;
@@ -266,19 +280,21 @@ var init_platform = __esm({
     _isLittleEndian = true;
     _isLittleEndianComputed = false;
     __name(isLittleEndian, "isLittleEndian");
+    __name3(isLittleEndian, "isLittleEndian");
     isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
     isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
     isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
     isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
     isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
     __name(isTahoeOrNewer, "isTahoeOrNewer");
+    __name3(isTahoeOrNewer, "isTahoeOrNewer");
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/process.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
 var safeProcess, vscodeGlobal, cwd, env, platform2, arch;
 var init_process = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/process.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/process.js"() {
     "use strict";
     init_platform();
     vscodeGlobal = globalThis.vscode;
@@ -338,7 +354,7 @@ var init_process = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/path.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/path.js
 function validateObject(pathObject, name) {
   if (pathObject === null || typeof pathObject !== "object") {
     throw new ErrorInvalidArgType(name, "Object", pathObject);
@@ -430,11 +446,13 @@ function _format2(sep2, pathObject) {
   }
   return dir === pathObject.root ? `${dir}${base}` : `${dir}${sep2}${base}`;
 }
-var CHAR_UPPERCASE_A, CHAR_LOWERCASE_A, CHAR_UPPERCASE_Z, CHAR_LOWERCASE_Z, CHAR_DOT, CHAR_FORWARD_SLASH, CHAR_BACKWARD_SLASH, CHAR_COLON, CHAR_QUESTION_MARK, ErrorInvalidArgType, platformIsWin32, win32, posixCwd, posix, normalize, isAbsolute, join, resolve, relative, dirname, basename, extname, format, parse, toNamespacedPath, sep, delimiter;
+var __defProp4, __name4, CHAR_UPPERCASE_A, CHAR_LOWERCASE_A, CHAR_UPPERCASE_Z, CHAR_LOWERCASE_Z, CHAR_DOT, CHAR_FORWARD_SLASH, CHAR_BACKWARD_SLASH, CHAR_COLON, CHAR_QUESTION_MARK, ErrorInvalidArgType, platformIsWin32, win32, posixCwd, posix, normalize, isAbsolute, join, resolve, relative, dirname, basename, extname, format, parse, toNamespacedPath, sep, delimiter;
 var init_path = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/path.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/path.js"() {
     "use strict";
     init_process();
+    __defProp4 = Object.defineProperty;
+    __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
     CHAR_UPPERCASE_A = 65;
     CHAR_LOWERCASE_A = 97;
     CHAR_UPPERCASE_Z = 90;
@@ -447,6 +465,9 @@ var init_path = __esm({
     ErrorInvalidArgType = class extends Error {
       static {
         __name(this, "ErrorInvalidArgType");
+      }
+      static {
+        __name4(this, "ErrorInvalidArgType");
       }
       constructor(name, expected, actual) {
         let determiner;
@@ -464,14 +485,22 @@ var init_path = __esm({
       }
     };
     __name(validateObject, "validateObject");
+    __name4(validateObject, "validateObject");
     __name(validateString, "validateString");
+    __name4(validateString, "validateString");
     platformIsWin32 = platform2 === "win32";
     __name(isPathSeparator, "isPathSeparator");
+    __name4(isPathSeparator, "isPathSeparator");
     __name(isPosixPathSeparator, "isPosixPathSeparator");
+    __name4(isPosixPathSeparator, "isPosixPathSeparator");
     __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+    __name4(isWindowsDeviceRoot, "isWindowsDeviceRoot");
     __name(normalizeString, "normalizeString");
+    __name4(normalizeString, "normalizeString");
     __name(formatExt, "formatExt");
+    __name4(formatExt, "formatExt");
     __name(_format2, "_format");
+    __name4(_format2, "_format");
     win32 = {
       // path.resolve([from ...], to)
       resolve(...pathSegments) {
@@ -1456,7 +1485,7 @@ var init_path = __esm({
   }
 });
 
-// ../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/uri.js
+// ../Output/Target/Microsoft/VSCode/vs/base/common/uri.js
 var uri_exports = {};
 __export(uri_exports, {
   URI: () => URI,
@@ -1656,24 +1685,32 @@ function percentDecode(str) {
   }
   return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));
 }
-var _schemePattern, _singleSlashStart, _doubleSlashStart, _empty, _slash, _regexp, URI, _pathSepMarker, Uri, encodeTable, _rEncodedAsHex;
+var __defProp5, __name5, _schemePattern, _singleSlashStart, _doubleSlashStart, _empty, _slash, _regexp, URI, _pathSepMarker, Uri, encodeTable, _rEncodedAsHex;
 var init_uri = __esm({
-  "../../Dependency/Microsoft/Dependency/Editor/out/vs/base/common/uri.js"() {
+  "../Output/Target/Microsoft/VSCode/vs/base/common/uri.js"() {
     "use strict";
     init_path();
     init_platform();
+    __defProp5 = Object.defineProperty;
+    __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
     _schemePattern = /^\w[\w\d+.-]*$/;
     _singleSlashStart = /^\//;
     _doubleSlashStart = /^\/\//;
     __name(_validateUri, "_validateUri");
+    __name5(_validateUri, "_validateUri");
     __name(_schemeFix, "_schemeFix");
+    __name5(_schemeFix, "_schemeFix");
     __name(_referenceResolution, "_referenceResolution");
+    __name5(_referenceResolution, "_referenceResolution");
     _empty = "";
     _slash = "/";
     _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
     URI = class _URI {
       static {
         __name(this, "URI");
+      }
+      static {
+        __name5(this, "URI");
       }
       static isUri(thing) {
         if (thing instanceof _URI) {
@@ -1884,10 +1921,14 @@ var init_uri = __esm({
       }
     };
     __name(isUriComponents, "isUriComponents");
+    __name5(isUriComponents, "isUriComponents");
     _pathSepMarker = isWindows ? 1 : void 0;
     Uri = class extends URI {
       static {
         __name(this, "Uri");
+      }
+      static {
+        __name5(this, "Uri");
       }
       constructor() {
         super(...arguments);
@@ -2021,12 +2062,18 @@ var init_uri = __esm({
       ]: "%20"
     };
     __name(encodeURIComponentFast, "encodeURIComponentFast");
+    __name5(encodeURIComponentFast, "encodeURIComponentFast");
     __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+    __name5(encodeURIComponentMinimal, "encodeURIComponentMinimal");
     __name(uriToFsPath, "uriToFsPath");
+    __name5(uriToFsPath, "uriToFsPath");
     __name(_asFormatted, "_asFormatted");
+    __name5(_asFormatted, "_asFormatted");
     __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+    __name5(decodeURIComponentGraceful, "decodeURIComponentGraceful");
     _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
     __name(percentDecode, "percentDecode");
+    __name5(percentDecode, "percentDecode");
   }
 });
 

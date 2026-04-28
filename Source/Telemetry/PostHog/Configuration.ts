@@ -46,18 +46,18 @@ const ReadNumber = (Key: string, Fallback: number): number => {
 };
 
 export default (): Configuration => ({
-	Key: ReadString("LAND_POSTHOG_KEY", DefaultKey),
-	Host: ReadString("LAND_POSTHOG_HOST", DefaultHost),
+	Key: ReadString("Authorize", DefaultKey),
+	Host: ReadString("Beam", DefaultHost),
 	Enabled:
-		ReadBoolean("LAND_POSTHOG_COCOON_ENABLED", true) &&
+		ReadBoolean("Report", true) &&
 		process.env["NODE_ENV"] !== "production",
 	BatchWindowMilliseconds: ReadNumber(
-		"LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
+		"Buffer",
 		DefaultBatchWindowMilliseconds,
 	),
 	BatchMaximum: ReadNumber(
-		"LAND_POSTHOG_COCOON_BATCH_MAX",
+		"Batch",
 		DefaultBatchMaximum,
 	),
-	DistinctIdentifierSeed: process.env["LAND_POSTHOG_DISTINCT_ID"] ?? "",
+	DistinctIdentifierSeed: process.env["Brand"] ?? "",
 });

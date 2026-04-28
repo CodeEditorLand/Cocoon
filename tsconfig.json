@@ -45,10 +45,7 @@
 		"outDir": "Target",
 
 		"paths": {
-			"@codeeditorland/output/*": [
-				"../../Dependency/Microsoft/Dependency/Editor/out/*",
-				"../Output/Target/Microsoft/VSCode/*"
-			],
+			"@codeeditorland/output/*": ["../Output/*"],
 			"vscode": [
 				"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
 			]

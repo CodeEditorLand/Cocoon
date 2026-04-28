@@ -383,7 +383,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		},
 		applyEdit: BuildApplyEdit(Context),
 		// `asRelativePath` - lifts stock VS Code's `resources.relativePath`
-		// from `@codeeditorland/output/vs/base/common/resources.js`
+		// from `@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js`
 		// rather than hand-rolling prefix matching. Stock handles Windows
 		// drive-letter casing, authority comparison, and trailing-slash
 		// normalisation that our previous `.startsWith()` missed. Falls
@@ -419,7 +419,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// every URI-handling extension does
 		// `workspace.getWorkspaceFolder(uri).name/uri/index`. Lifts
 		// stock `resources.isEqualOrParent` (from
-		// `@codeeditorland/output/vs/base/common/resources.js`) which
+		// `@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js`) which
 		// handles URI authority, casing, and path-separator edge cases
 		// correctly - our previous `.startsWith()` missed e.g. Windows
 		// case-insensitive file URIs and URIs with query/fragment parts.

@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Services/DevLog.ts
-var Raw = process.env["LAND_DEV_LOG"] ?? "";
+var Raw = process.env["Trace"] ?? "";
 var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
 var TagSet = new Set(ParsedTags);
 var IsShort = TagSet.has("short");

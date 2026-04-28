@@ -46,7 +46,7 @@ export function Unregister(Handle: number): void {
  */
 export function Get(Handle: number): ProviderObject | undefined {
 	const Provider = Callbacks.get(Handle);
-	if (process.env.LAND_DEV_LOG) {
+	if (process.env.Trace) {
 		console.warn(
 			`[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`,
 		);

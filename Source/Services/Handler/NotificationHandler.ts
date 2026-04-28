@@ -70,7 +70,7 @@ type WorkspaceDeltaPayload = {
  * reference and we only register once per process.
  */
 const { URI: LazyURI } =
-	await import("@codeeditorland/output/vs/base/common/uri");
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
 type UriObject = {
 	scheme: string;
 	authority: string;
@@ -137,7 +137,7 @@ if (
 			// `[LandFix:UnhandledRejection]` log is intended for *real*
 			// crashes - downgrade per-extension lazy-creation ENOENTs +
 			// known extension-internal type errors to
-			// `landfix-rejection-verbose` so `LAND_DEV_LOG=short` runs
+			// `landfix-rejection-verbose` so `Trace=short` runs
 			// only surface unexpected rejections.
 			const Text = Stack ?? "unknown";
 			const IsBenignEnoent =
@@ -195,7 +195,7 @@ if (
 				: "LandFix:UnhandledRejection";
 			if (
 				IsBenign &&
-				!process.env["LAND_DEV_LOG"]?.includes(
+				!process.env["Trace"]?.includes(
 					"landfix-rejection-verbose",
 				)
 			) {
