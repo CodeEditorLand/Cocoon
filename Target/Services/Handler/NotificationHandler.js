@@ -9934,10 +9934,10 @@ var init_network = __esm({
     };
     RemoteAuthorities = new RemoteAuthoritiesImpl();
     __name28(getServerProductSegment, "getServerProductSegment");
-    builtinExtensionsPath = "vs/../../extensions";
-    nodeModulesPath = "vs/../../node_modules";
-    nodeModulesAsarPath = "vs/../../node_modules.asar";
-    nodeModulesAsarUnpackedPath = "vs/../../node_modules.asar.unpacked";
+    builtinExtensionsPath = "vs/../extensions";
+    nodeModulesPath = "vs/../node_modules";
+    nodeModulesAsarPath = "vs/../node_modules.asar";
+    nodeModulesAsarUnpackedPath = "vs/../node_modules.asar.unpacked";
     VSCODE_AUTHORITY = "vscode-app";
     FileAccessImpl = class _FileAccessImpl {
       static {
@@ -22613,7 +22613,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-28T21:51:30Z"
+      generatedAt: "2026-04-28T22:56:09Z"
     };
   }
 });
@@ -28004,10 +28004,7 @@ var init_LanguagesNamespace = __esm({
             }
             Context.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => ({
-                uri: U,
-                diagnostics: D
-              }))
+              [...Store.entries()].map(([U, D]) => [U, D])
             ]).catch(() => {
             });
           }, "set"),
@@ -28015,10 +28012,7 @@ var init_LanguagesNamespace = __esm({
             Store.delete(UriKey(Uri2));
             Context.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => ({
-                uri: U,
-                diagnostics: D
-              }))
+              [...Store.entries()].map(([U, D]) => [U, D])
             ]).catch(() => {
             });
           }, "delete"),

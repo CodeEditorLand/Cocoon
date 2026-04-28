@@ -8947,10 +8947,10 @@ var RemoteAuthoritiesImpl = class {
 };
 var RemoteAuthorities = new RemoteAuthoritiesImpl();
 __name24(getServerProductSegment, "getServerProductSegment");
-var builtinExtensionsPath = "vs/../../extensions";
-var nodeModulesPath = "vs/../../node_modules";
-var nodeModulesAsarPath = "vs/../../node_modules.asar";
-var nodeModulesAsarUnpackedPath = "vs/../../node_modules.asar.unpacked";
+var builtinExtensionsPath = "vs/../extensions";
+var nodeModulesPath = "vs/../node_modules";
+var nodeModulesAsarPath = "vs/../node_modules.asar";
+var nodeModulesAsarUnpackedPath = "vs/../node_modules.asar.unpacked";
 var VSCODE_AUTHORITY = "vscode-app";
 var FileAccessImpl = class _FileAccessImpl {
   static {

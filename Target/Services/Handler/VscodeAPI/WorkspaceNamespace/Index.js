@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-28T21:51:30Z"
+  generatedAt: "2026-04-28T22:56:09Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -9160,10 +9160,10 @@ var RemoteAuthoritiesImpl = class {
 };
 var RemoteAuthorities = new RemoteAuthoritiesImpl();
 __name24(getServerProductSegment, "getServerProductSegment");
-var builtinExtensionsPath = "vs/../../extensions";
-var nodeModulesPath = "vs/../../node_modules";
-var nodeModulesAsarPath = "vs/../../node_modules.asar";
-var nodeModulesAsarUnpackedPath = "vs/../../node_modules.asar.unpacked";
+var builtinExtensionsPath = "vs/../extensions";
+var nodeModulesPath = "vs/../node_modules";
+var nodeModulesAsarPath = "vs/../node_modules.asar";
+var nodeModulesAsarUnpackedPath = "vs/../node_modules.asar.unpacked";
 var VSCODE_AUTHORITY = "vscode-app";
 var FileAccessImpl = class _FileAccessImpl {
   static {

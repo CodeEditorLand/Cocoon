@@ -358,22 +358,25 @@ const CreateLanguagesNamespace = (
 						Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
 					}
 					// Single-shot Diagnostic.Set over the whole collection.
+					// Wire shape MUST be a 2-tuple `[uri, markers]` (NOT
+					// `{uri, diagnostics}`) - Mountain's
+					// `DiagnosticProvider::SetDiagnostics` deserialises with
+					// `Vec<(Value, Option<Vec<MarkerDataDTO>>)>` and rejects
+					// the object form with `invalid type: map, expected a
+					// tuple of size 2`. Sending the map form silently
+					// dropped EVERY diagnostic - compiler errors, linter
+					// warnings, type errors all invisible across every
+					// language extension.
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
-						[...Store.entries()].map(([U, D]) => ({
-							uri: U,
-							diagnostics: D,
-						})),
+						[...Store.entries()].map(([U, D]) => [U, D]),
 					]).catch(() => {});
 				},
 				delete: (Uri: unknown) => {
 					Store.delete(UriKey(Uri));
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
-						[...Store.entries()].map(([U, D]) => ({
-							uri: U,
-							diagnostics: D,
-						})),
+						[...Store.entries()].map(([U, D]) => [U, D]),
 					]).catch(() => {});
 				},
 				clear: () => {

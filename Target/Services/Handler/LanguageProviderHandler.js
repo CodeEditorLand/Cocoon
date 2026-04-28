@@ -9914,10 +9914,10 @@ var init_network = __esm({
     };
     RemoteAuthorities = new RemoteAuthoritiesImpl();
     __name28(getServerProductSegment, "getServerProductSegment");
-    builtinExtensionsPath = "vs/../../extensions";
-    nodeModulesPath = "vs/../../node_modules";
-    nodeModulesAsarPath = "vs/../../node_modules.asar";
-    nodeModulesAsarUnpackedPath = "vs/../../node_modules.asar.unpacked";
+    builtinExtensionsPath = "vs/../extensions";
+    nodeModulesPath = "vs/../node_modules";
+    nodeModulesAsarPath = "vs/../node_modules.asar";
+    nodeModulesAsarUnpackedPath = "vs/../node_modules.asar.unpacked";
     VSCODE_AUTHORITY = "vscode-app";
     FileAccessImpl = class _FileAccessImpl {
       static {
