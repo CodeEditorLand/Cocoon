@@ -15,11 +15,15 @@ var IMountainClientService = Effect.Service()(
 // ../Output/Target/Microsoft/VSCode/vs/base/common/uuid.js
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
-var _UUIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isUUID(value) {
   return _UUIDPattern.test(value);
 }
 __name(isUUID, "isUUID");
+function prefixedUuid(namespace) {
+  return `${namespace}-${generateUuid()}`;
+}
+__name(prefixedUuid, "prefixedUuid");
+var _UUIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 __name2(isUUID, "isUUID");
 var generateUuid = (function() {
   if (typeof crypto.randomUUID === "function") {
@@ -59,10 +63,6 @@ var generateUuid = (function() {
     return result;
   }, "generateUuid2"), "generateUuid");
 })();
-function prefixedUuid(namespace) {
-  return `${namespace}-${generateUuid()}`;
-}
-__name(prefixedUuid, "prefixedUuid");
 __name2(prefixedUuid, "prefixedUuid");
 
 // Source/TypeConverter/Command.ts

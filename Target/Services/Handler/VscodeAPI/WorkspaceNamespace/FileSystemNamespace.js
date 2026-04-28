@@ -12,7 +12,6 @@ function findLast(array, predicate, fromIndex = array.length - 1) {
   return array[idx];
 }
 __name(findLast, "findLast");
-__name2(findLast, "findLast");
 function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   for (let i = fromIndex; i >= 0; i--) {
     const element = array[i];
@@ -23,7 +22,6 @@ function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   return -1;
 }
 __name(findLastIdx, "findLastIdx");
-__name2(findLastIdx, "findLastIdx");
 function findFirst(array, predicate, fromIndex = 0) {
   const idx = findFirstIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -32,7 +30,6 @@ function findFirst(array, predicate, fromIndex = 0) {
   return array[idx];
 }
 __name(findFirst, "findFirst");
-__name2(findFirst, "findFirst");
 function findFirstIdx(array, predicate, fromIndex = 0) {
   for (let i = fromIndex; i < array.length; i++) {
     const element = array[i];
@@ -43,13 +40,11 @@ function findFirstIdx(array, predicate, fromIndex = 0) {
   return -1;
 }
 __name(findFirstIdx, "findFirstIdx");
-__name2(findFirstIdx, "findFirstIdx");
 function findLastMonotonous(array, predicate) {
   const idx = findLastIdxMonotonous(array, predicate);
   return idx === -1 ? void 0 : array[idx];
 }
 __name(findLastMonotonous, "findLastMonotonous");
-__name2(findLastMonotonous, "findLastMonotonous");
 function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -64,13 +59,11 @@ function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.
   return i - 1;
 }
 __name(findLastIdxMonotonous, "findLastIdxMonotonous");
-__name2(findLastIdxMonotonous, "findLastIdxMonotonous");
 function findFirstMonotonous(array, predicate) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
   return idx === array.length ? void 0 : array[idx];
 }
 __name(findFirstMonotonous, "findFirstMonotonous");
-__name2(findFirstMonotonous, "findFirstMonotonous");
 function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -85,12 +78,75 @@ function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx
   return i;
 }
 __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-__name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
 function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
   return idx === array.length ? -1 : idx;
 }
 __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+function findFirstMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) > 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+__name(findFirstMax, "findFirstMax");
+function findLastMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) >= 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+__name(findLastMax, "findLastMax");
+function findFirstMin(array, comparator) {
+  return findFirstMax(array, (a, b) => -comparator(a, b));
+}
+__name(findFirstMin, "findFirstMin");
+function findMaxIdx(array, comparator) {
+  if (array.length === 0) {
+    return -1;
+  }
+  let maxIdx = 0;
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, array[maxIdx]) > 0) {
+      maxIdx = i;
+    }
+  }
+  return maxIdx;
+}
+__name(findMaxIdx, "findMaxIdx");
+function mapFindFirst(items, mapFn) {
+  for (const value of items) {
+    const mapped = mapFn(value);
+    if (mapped !== void 0) {
+      return mapped;
+    }
+  }
+  return void 0;
+}
+__name(mapFindFirst, "mapFindFirst");
+__name2(findLast, "findLast");
+__name2(findLastIdx, "findLastIdx");
+__name2(findFirst, "findFirst");
+__name2(findFirstIdx, "findFirstIdx");
+__name2(findLastMonotonous, "findLastMonotonous");
+__name2(findLastIdxMonotonous, "findLastIdxMonotonous");
+__name2(findFirstMonotonous, "findFirstMonotonous");
+__name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
 __name2(findFirstIdxMonotonous, "findFirstIdxMonotonous");
 var MonotonousArray = class _MonotonousArray {
   static {
@@ -126,71 +182,124 @@ var MonotonousArray = class _MonotonousArray {
     return idx === -1 ? void 0 : this._array[idx];
   }
 };
-function findFirstMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) > 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-__name(findFirstMax, "findFirstMax");
 __name2(findFirstMax, "findFirstMax");
-function findLastMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) >= 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-__name(findLastMax, "findLastMax");
 __name2(findLastMax, "findLastMax");
-function findFirstMin(array, comparator) {
-  return findFirstMax(array, (a, b) => -comparator(a, b));
-}
-__name(findFirstMin, "findFirstMin");
 __name2(findFirstMin, "findFirstMin");
-function findMaxIdx(array, comparator) {
-  if (array.length === 0) {
-    return -1;
-  }
-  let maxIdx = 0;
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, array[maxIdx]) > 0) {
-      maxIdx = i;
-    }
-  }
-  return maxIdx;
-}
-__name(findMaxIdx, "findMaxIdx");
 __name2(findMaxIdx, "findMaxIdx");
-function mapFindFirst(items, mapFn) {
-  for (const value of items) {
-    const mapped = mapFn(value);
-    if (mapped !== void 0) {
-      return mapped;
-    }
-  }
-  return void 0;
-}
-__name(mapFindFirst, "mapFindFirst");
 __name2(mapFindFirst, "mapFindFirst");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
 var __defProp3 = Object.defineProperty;
 var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
+function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
+  errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
+}
+__name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+function isSigPipeError(e) {
+  if (!e || typeof e !== "object") {
+    return false;
+  }
+  const cast = e;
+  return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
+}
+__name(isSigPipeError, "isSigPipeError");
+function onBugIndicatingError(e) {
+  errorHandler.onUnexpectedError(e);
+  return void 0;
+}
+__name(onBugIndicatingError, "onBugIndicatingError");
+function onUnexpectedError(e) {
+  if (!isCancellationError(e)) {
+    errorHandler.onUnexpectedError(e);
+  }
+  return void 0;
+}
+__name(onUnexpectedError, "onUnexpectedError");
+function onUnexpectedExternalError(e) {
+  if (!isCancellationError(e)) {
+    errorHandler.onUnexpectedExternalError(e);
+  }
+  return void 0;
+}
+__name(onUnexpectedExternalError, "onUnexpectedExternalError");
+function transformErrorForSerialization(error) {
+  if (error instanceof Error) {
+    const { name, message, cause } = error;
+    const stack = error.stacktrace || error.stack;
+    return {
+      $isError: true,
+      name,
+      message,
+      stack,
+      noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
+      cause: cause ? transformErrorForSerialization(cause) : void 0,
+      code: error.code
+    };
+  }
+  return error;
+}
+__name(transformErrorForSerialization, "transformErrorForSerialization");
+function transformErrorFromSerialization(data) {
+  let error;
+  if (data.noTelemetry) {
+    error = new ErrorNoTelemetry();
+  } else {
+    error = new Error();
+    error.name = data.name;
+  }
+  error.message = data.message;
+  error.stack = data.stack;
+  if (data.code) {
+    error.code = data.code;
+  }
+  if (data.cause) {
+    error.cause = transformErrorFromSerialization(data.cause);
+  }
+  return error;
+}
+__name(transformErrorFromSerialization, "transformErrorFromSerialization");
+function isCancellationError(error) {
+  if (error instanceof CancellationError) {
+    return true;
+  }
+  return error instanceof Error && error.name === canceledName && error.message === canceledName;
+}
+__name(isCancellationError, "isCancellationError");
+function canceled() {
+  const error = new Error(canceledName);
+  error.name = error.message;
+  return error;
+}
+__name(canceled, "canceled");
+function illegalArgument(name) {
+  if (name) {
+    return new Error(`Illegal argument: ${name}`);
+  } else {
+    return new Error("Illegal argument");
+  }
+}
+__name(illegalArgument, "illegalArgument");
+function illegalState(name) {
+  if (name) {
+    return new Error(`Illegal state: ${name}`);
+  } else {
+    return new Error("Illegal state");
+  }
+}
+__name(illegalState, "illegalState");
+function getErrorMessage(err) {
+  if (!err) {
+    return "Error";
+  }
+  if (err.message) {
+    return err.message;
+  }
+  if (err.stack) {
+    return err.stack.split("\n")[0];
+  }
+  return String(err);
+}
+__name(getErrorMessage, "getErrorMessage");
 var ErrorHandler = class {
   static {
     __name(this, "ErrorHandler");
@@ -242,88 +351,14 @@ var ErrorHandler = class {
   }
 };
 var errorHandler = new ErrorHandler();
-function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
-  errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
-}
-__name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
 __name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
-function isSigPipeError(e) {
-  if (!e || typeof e !== "object") {
-    return false;
-  }
-  const cast = e;
-  return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
-}
-__name(isSigPipeError, "isSigPipeError");
 __name3(isSigPipeError, "isSigPipeError");
-function onBugIndicatingError(e) {
-  errorHandler.onUnexpectedError(e);
-  return void 0;
-}
-__name(onBugIndicatingError, "onBugIndicatingError");
 __name3(onBugIndicatingError, "onBugIndicatingError");
-function onUnexpectedError(e) {
-  if (!isCancellationError(e)) {
-    errorHandler.onUnexpectedError(e);
-  }
-  return void 0;
-}
-__name(onUnexpectedError, "onUnexpectedError");
 __name3(onUnexpectedError, "onUnexpectedError");
-function onUnexpectedExternalError(e) {
-  if (!isCancellationError(e)) {
-    errorHandler.onUnexpectedExternalError(e);
-  }
-  return void 0;
-}
-__name(onUnexpectedExternalError, "onUnexpectedExternalError");
 __name3(onUnexpectedExternalError, "onUnexpectedExternalError");
-function transformErrorForSerialization(error) {
-  if (error instanceof Error) {
-    const { name, message, cause } = error;
-    const stack = error.stacktrace || error.stack;
-    return {
-      $isError: true,
-      name,
-      message,
-      stack,
-      noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
-      cause: cause ? transformErrorForSerialization(cause) : void 0,
-      code: error.code
-    };
-  }
-  return error;
-}
-__name(transformErrorForSerialization, "transformErrorForSerialization");
 __name3(transformErrorForSerialization, "transformErrorForSerialization");
-function transformErrorFromSerialization(data) {
-  let error;
-  if (data.noTelemetry) {
-    error = new ErrorNoTelemetry();
-  } else {
-    error = new Error();
-    error.name = data.name;
-  }
-  error.message = data.message;
-  error.stack = data.stack;
-  if (data.code) {
-    error.code = data.code;
-  }
-  if (data.cause) {
-    error.cause = transformErrorFromSerialization(data.cause);
-  }
-  return error;
-}
-__name(transformErrorFromSerialization, "transformErrorFromSerialization");
 __name3(transformErrorFromSerialization, "transformErrorFromSerialization");
 var canceledName = "Canceled";
-function isCancellationError(error) {
-  if (error instanceof CancellationError) {
-    return true;
-  }
-  return error instanceof Error && error.name === canceledName && error.message === canceledName;
-}
-__name(isCancellationError, "isCancellationError");
 __name3(isCancellationError, "isCancellationError");
 var CancellationError = class extends Error {
   static {
@@ -355,30 +390,8 @@ var PendingMigrationError = class _PendingMigrationError extends Error {
     this.name = _PendingMigrationError._name;
   }
 };
-function canceled() {
-  const error = new Error(canceledName);
-  error.name = error.message;
-  return error;
-}
-__name(canceled, "canceled");
 __name3(canceled, "canceled");
-function illegalArgument(name) {
-  if (name) {
-    return new Error(`Illegal argument: ${name}`);
-  } else {
-    return new Error("Illegal argument");
-  }
-}
-__name(illegalArgument, "illegalArgument");
 __name3(illegalArgument, "illegalArgument");
-function illegalState(name) {
-  if (name) {
-    return new Error(`Illegal state: ${name}`);
-  } else {
-    return new Error("Illegal state");
-  }
-}
-__name(illegalState, "illegalState");
 __name3(illegalState, "illegalState");
 var ReadonlyError = class extends TypeError {
   static {
@@ -391,19 +404,6 @@ var ReadonlyError = class extends TypeError {
     super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
   }
 };
-function getErrorMessage(err) {
-  if (!err) {
-    return "Error";
-  }
-  if (err.message) {
-    return err.message;
-  }
-  if (err.stack) {
-    return err.stack.split("\n")[0];
-  }
-  return String(err);
-}
-__name(getErrorMessage, "getErrorMessage");
 __name3(getErrorMessage, "getErrorMessage");
 var NotImplementedError = class extends Error {
   static {
@@ -492,7 +492,6 @@ function tail(arr) {
   return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];
 }
 __name(tail, "tail");
-__name4(tail, "tail");
 function equals(one, other, itemEquals = (a, b) => a === b) {
   if (one === other) {
     return true;
@@ -511,7 +510,6 @@ function equals(one, other, itemEquals = (a, b) => a === b) {
   return true;
 }
 __name(equals, "equals");
-__name4(equals, "equals");
 function removeFastWithoutKeepingOrder(array, index2) {
   const last = array.length - 1;
   if (index2 < last) {
@@ -520,12 +518,10 @@ function removeFastWithoutKeepingOrder(array, index2) {
   array.pop();
 }
 __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-__name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
 function binarySearch(array, key, comparator) {
   return binarySearch2(array.length, (i) => comparator(array[i], key));
 }
 __name(binarySearch, "binarySearch");
-__name4(binarySearch, "binarySearch");
 function binarySearch2(length, compareToKey) {
   let low = 0, high = length - 1;
   while (low <= high) {
@@ -542,7 +538,6 @@ function binarySearch2(length, compareToKey) {
   return -(low + 1);
 }
 __name(binarySearch2, "binarySearch2");
-__name4(binarySearch2, "binarySearch2");
 function quickSelect(nth, data, compare2) {
   nth = nth | 0;
   if (nth >= data.length) {
@@ -571,7 +566,6 @@ function quickSelect(nth, data, compare2) {
   }
 }
 __name(quickSelect, "quickSelect");
-__name4(quickSelect, "quickSelect");
 function groupBy(data, compare2) {
   const result = [];
   let currentGroup = void 0;
@@ -586,46 +580,22 @@ function groupBy(data, compare2) {
   return result;
 }
 __name(groupBy, "groupBy");
-__name4(groupBy, "groupBy");
-function* groupAdjacentBy(items, shouldBeGrouped) {
-  let currentGroup;
-  let last;
-  for (const item of items) {
-    if (last !== void 0 && shouldBeGrouped(last, item)) {
-      currentGroup.push(item);
-    } else {
-      if (currentGroup) {
-        yield currentGroup;
-      }
-      currentGroup = [item];
-    }
-    last = item;
-  }
-  if (currentGroup) {
-    yield currentGroup;
-  }
-}
-__name(groupAdjacentBy, "groupAdjacentBy");
-__name4(groupAdjacentBy, "groupAdjacentBy");
 function forEachAdjacent(arr, f) {
   for (let i = 0; i <= arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
   }
 }
 __name(forEachAdjacent, "forEachAdjacent");
-__name4(forEachAdjacent, "forEachAdjacent");
 function forEachWithNeighbors(arr, f) {
   for (let i = 0; i < arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
   }
 }
 __name(forEachWithNeighbors, "forEachWithNeighbors");
-__name4(forEachWithNeighbors, "forEachWithNeighbors");
 function concatArrays(...arrays) {
   return [].concat(...arrays);
 }
 __name(concatArrays, "concatArrays");
-__name4(concatArrays, "concatArrays");
 function sortedDiff(before, after, compare2) {
   const result = [];
   function pushSplice(start, deleteCount, toInsert) {
@@ -670,7 +640,6 @@ function sortedDiff(before, after, compare2) {
   return result;
 }
 __name(sortedDiff, "sortedDiff");
-__name4(sortedDiff, "sortedDiff");
 function delta(before, after, compare2) {
   const splices = sortedDiff(before, after, compare2);
   const removed = [];
@@ -682,7 +651,6 @@ function delta(before, after, compare2) {
   return { removed, added };
 }
 __name(delta, "delta");
-__name4(delta, "delta");
 function top(array, compare2, n) {
   if (n === 0) {
     return [];
@@ -692,7 +660,6 @@ function top(array, compare2, n) {
   return result;
 }
 __name(top, "top");
-__name4(top, "top");
 function topAsync(array, compare2, n, batch, token) {
   if (n === 0) {
     return Promise.resolve([]);
@@ -715,7 +682,6 @@ function topAsync(array, compare2, n, batch, token) {
   });
 }
 __name(topAsync, "topAsync");
-__name4(topAsync, "topAsync");
 function topStep(array, compare2, result, i, m) {
   for (const n = result.length; i < m; i++) {
     const element = array[i];
@@ -727,12 +693,10 @@ function topStep(array, compare2, result, i, m) {
   }
 }
 __name(topStep, "topStep");
-__name4(topStep, "topStep");
 function coalesce(array) {
   return array.filter((e) => !!e);
 }
 __name(coalesce, "coalesce");
-__name4(coalesce, "coalesce");
 function coalesceInPlace(array) {
   let to = 0;
   for (let i = 0; i < array.length; i++) {
@@ -744,22 +708,18 @@ function coalesceInPlace(array) {
   array.length = to;
 }
 __name(coalesceInPlace, "coalesceInPlace");
-__name4(coalesceInPlace, "coalesceInPlace");
 function move(array, from, to) {
   array.splice(to, 0, array.splice(from, 1)[0]);
 }
 __name(move, "move");
-__name4(move, "move");
 function isFalsyOrEmpty(obj) {
   return !Array.isArray(obj) || obj.length === 0;
 }
 __name(isFalsyOrEmpty, "isFalsyOrEmpty");
-__name4(isFalsyOrEmpty, "isFalsyOrEmpty");
 function isNonEmptyArray(obj) {
   return Array.isArray(obj) && obj.length > 0;
 }
 __name(isNonEmptyArray, "isNonEmptyArray");
-__name4(isNonEmptyArray, "isNonEmptyArray");
 function distinct(array, keyFn = (value) => value) {
   const seen = /* @__PURE__ */ new Set();
   return array.filter((element) => {
@@ -772,7 +732,6 @@ function distinct(array, keyFn = (value) => value) {
   });
 }
 __name(distinct, "distinct");
-__name4(distinct, "distinct");
 function uniqueFilter(keyFn) {
   const seen = /* @__PURE__ */ new Set();
   return (element) => {
@@ -785,7 +744,6 @@ function uniqueFilter(keyFn) {
   };
 }
 __name(uniqueFilter, "uniqueFilter");
-__name4(uniqueFilter, "uniqueFilter");
 function commonPrefixLength(one, other, equals22 = (a, b) => a === b) {
   let result = 0;
   for (let i = 0, len = Math.min(one.length, other.length); i < len && equals22(one[i], other[i]); i++) {
@@ -794,7 +752,6 @@ function commonPrefixLength(one, other, equals22 = (a, b) => a === b) {
   return result;
 }
 __name(commonPrefixLength, "commonPrefixLength");
-__name4(commonPrefixLength, "commonPrefixLength");
 function range(arg, to) {
   let from = typeof to === "number" ? arg : 0;
   if (typeof to === "number") {
@@ -816,7 +773,6 @@ function range(arg, to) {
   return result;
 }
 __name(range, "range");
-__name4(range, "range");
 function index(array, indexer, mapper) {
   return array.reduce((r, t) => {
     r[indexer(t)] = mapper ? mapper(t) : t;
@@ -824,13 +780,11 @@ function index(array, indexer, mapper) {
   }, /* @__PURE__ */ Object.create(null));
 }
 __name(index, "index");
-__name4(index, "index");
 function insert(array, element) {
   array.push(element);
   return () => remove(array, element);
 }
 __name(insert, "insert");
-__name4(insert, "insert");
 function remove(array, element) {
   const index2 = array.indexOf(element);
   if (index2 > -1) {
@@ -840,14 +794,12 @@ function remove(array, element) {
   return void 0;
 }
 __name(remove, "remove");
-__name4(remove, "remove");
 function arrayInsert(target, insertIndex, insertArr) {
   const before = target.slice(0, insertIndex);
   const after = target.slice(insertIndex);
   return before.concat(insertArr, after);
 }
 __name(arrayInsert, "arrayInsert");
-__name4(arrayInsert, "arrayInsert");
 function shuffle(array, _seed) {
   let rand;
   if (typeof _seed === "number") {
@@ -867,7 +819,6 @@ function shuffle(array, _seed) {
   }
 }
 __name(shuffle, "shuffle");
-__name4(shuffle, "shuffle");
 function pushToStart(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -876,7 +827,6 @@ function pushToStart(arr, value) {
   }
 }
 __name(pushToStart, "pushToStart");
-__name4(pushToStart, "pushToStart");
 function pushToEnd(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -885,19 +835,16 @@ function pushToEnd(arr, value) {
   }
 }
 __name(pushToEnd, "pushToEnd");
-__name4(pushToEnd, "pushToEnd");
 function pushMany(arr, items) {
   for (const item of items) {
     arr.push(item);
   }
 }
 __name(pushMany, "pushMany");
-__name4(pushMany, "pushMany");
 function mapArrayOrNot(items, fn) {
   return Array.isArray(items) ? items.map(fn) : fn(items);
 }
 __name(mapArrayOrNot, "mapArrayOrNot");
-__name4(mapArrayOrNot, "mapArrayOrNot");
 function mapFilter(array, fn) {
   const result = [];
   for (const item of array) {
@@ -909,23 +856,19 @@ function mapFilter(array, fn) {
   return result;
 }
 __name(mapFilter, "mapFilter");
-__name4(mapFilter, "mapFilter");
 function withoutDuplicates(array) {
   const s = new Set(array);
   return Array.from(s);
 }
 __name(withoutDuplicates, "withoutDuplicates");
-__name4(withoutDuplicates, "withoutDuplicates");
 function asArray(x) {
   return Array.isArray(x) ? x : [x];
 }
 __name(asArray, "asArray");
-__name4(asArray, "asArray");
 function getRandomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 __name(getRandomElement, "getRandomElement");
-__name4(getRandomElement, "getRandomElement");
 function insertInto(array, start, newItems) {
   const startIdx = getActualStartIndex(array, start);
   const originalLength = array.length;
@@ -939,7 +882,6 @@ function insertInto(array, start, newItems) {
   }
 }
 __name(insertInto, "insertInto");
-__name4(insertInto, "insertInto");
 function splice(array, start, deleteCount, newItems) {
   const index2 = getActualStartIndex(array, start);
   let result = array.splice(index2, deleteCount);
@@ -950,11 +892,108 @@ function splice(array, start, deleteCount, newItems) {
   return result;
 }
 __name(splice, "splice");
-__name4(splice, "splice");
 function getActualStartIndex(array, start) {
   return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
 }
 __name(getActualStartIndex, "getActualStartIndex");
+function compareBy(selector, comparator) {
+  return (a, b) => comparator(selector(a), selector(b));
+}
+__name(compareBy, "compareBy");
+function tieBreakComparators(...comparators) {
+  return (item1, item2) => {
+    for (const comparator of comparators) {
+      const result = comparator(item1, item2);
+      if (!CompareResult.isNeitherLessOrGreaterThan(result)) {
+        return result;
+      }
+    }
+    return CompareResult.neitherLessOrGreaterThan;
+  };
+}
+__name(tieBreakComparators, "tieBreakComparators");
+function reverseOrder(comparator) {
+  return (a, b) => -comparator(a, b);
+}
+__name(reverseOrder, "reverseOrder");
+function compareUndefinedSmallest(comparator) {
+  return (a, b) => {
+    if (a === void 0) {
+      return b === void 0 ? CompareResult.neitherLessOrGreaterThan : CompareResult.lessThan;
+    } else if (b === void 0) {
+      return CompareResult.greaterThan;
+    }
+    return comparator(a, b);
+  };
+}
+__name(compareUndefinedSmallest, "compareUndefinedSmallest");
+function sum(array) {
+  return array.reduce((acc, value) => acc + value, 0);
+}
+__name(sum, "sum");
+function sumBy(array, selector) {
+  return array.reduce((acc, value) => acc + selector(value), 0);
+}
+__name(sumBy, "sumBy");
+__name4(tail, "tail");
+__name4(equals, "equals");
+__name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+__name4(binarySearch, "binarySearch");
+__name4(binarySearch2, "binarySearch2");
+__name4(quickSelect, "quickSelect");
+__name4(groupBy, "groupBy");
+function* groupAdjacentBy(items, shouldBeGrouped) {
+  let currentGroup;
+  let last;
+  for (const item of items) {
+    if (last !== void 0 && shouldBeGrouped(last, item)) {
+      currentGroup.push(item);
+    } else {
+      if (currentGroup) {
+        yield currentGroup;
+      }
+      currentGroup = [item];
+    }
+    last = item;
+  }
+  if (currentGroup) {
+    yield currentGroup;
+  }
+}
+__name(groupAdjacentBy, "groupAdjacentBy");
+__name4(groupAdjacentBy, "groupAdjacentBy");
+__name4(forEachAdjacent, "forEachAdjacent");
+__name4(forEachWithNeighbors, "forEachWithNeighbors");
+__name4(concatArrays, "concatArrays");
+__name4(sortedDiff, "sortedDiff");
+__name4(delta, "delta");
+__name4(top, "top");
+__name4(topAsync, "topAsync");
+__name4(topStep, "topStep");
+__name4(coalesce, "coalesce");
+__name4(coalesceInPlace, "coalesceInPlace");
+__name4(move, "move");
+__name4(isFalsyOrEmpty, "isFalsyOrEmpty");
+__name4(isNonEmptyArray, "isNonEmptyArray");
+__name4(distinct, "distinct");
+__name4(uniqueFilter, "uniqueFilter");
+__name4(commonPrefixLength, "commonPrefixLength");
+__name4(range, "range");
+__name4(index, "index");
+__name4(insert, "insert");
+__name4(remove, "remove");
+__name4(arrayInsert, "arrayInsert");
+__name4(shuffle, "shuffle");
+__name4(pushToStart, "pushToStart");
+__name4(pushToEnd, "pushToEnd");
+__name4(pushMany, "pushMany");
+__name4(mapArrayOrNot, "mapArrayOrNot");
+__name4(mapFilter, "mapFilter");
+__name4(withoutDuplicates, "withoutDuplicates");
+__name4(asArray, "asArray");
+__name4(getRandomElement, "getRandomElement");
+__name4(insertInto, "insertInto");
+__name4(splice, "splice");
 __name4(getActualStartIndex, "getActualStartIndex");
 var CompareResult;
 (function(CompareResult2) {
@@ -986,42 +1025,11 @@ var CompareResult;
   CompareResult2.lessThan = -1;
   CompareResult2.neitherLessOrGreaterThan = 0;
 })(CompareResult || (CompareResult = {}));
-function compareBy(selector, comparator) {
-  return (a, b) => comparator(selector(a), selector(b));
-}
-__name(compareBy, "compareBy");
 __name4(compareBy, "compareBy");
-function tieBreakComparators(...comparators) {
-  return (item1, item2) => {
-    for (const comparator of comparators) {
-      const result = comparator(item1, item2);
-      if (!CompareResult.isNeitherLessOrGreaterThan(result)) {
-        return result;
-      }
-    }
-    return CompareResult.neitherLessOrGreaterThan;
-  };
-}
-__name(tieBreakComparators, "tieBreakComparators");
 __name4(tieBreakComparators, "tieBreakComparators");
 var numberComparator = /* @__PURE__ */ __name4((a, b) => a - b, "numberComparator");
 var booleanComparator = /* @__PURE__ */ __name4((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
-function reverseOrder(comparator) {
-  return (a, b) => -comparator(a, b);
-}
-__name(reverseOrder, "reverseOrder");
 __name4(reverseOrder, "reverseOrder");
-function compareUndefinedSmallest(comparator) {
-  return (a, b) => {
-    if (a === void 0) {
-      return b === void 0 ? CompareResult.neitherLessOrGreaterThan : CompareResult.lessThan;
-    } else if (b === void 0) {
-      return CompareResult.greaterThan;
-    }
-    return comparator(a, b);
-  };
-}
-__name(compareUndefinedSmallest, "compareUndefinedSmallest");
 __name4(compareUndefinedSmallest, "compareUndefinedSmallest");
 var ArrayQueue = class {
   static {
@@ -1212,21 +1220,12 @@ async function findAsync(array, predicate) {
 }
 __name(findAsync, "findAsync");
 __name4(findAsync, "findAsync");
-function sum(array) {
-  return array.reduce((acc, value) => acc + value, 0);
-}
-__name(sum, "sum");
 __name4(sum, "sum");
-function sumBy(array, selector) {
-  return array.reduce((acc, value) => acc + selector(value), 0);
-}
-__name(sumBy, "sumBy");
 __name4(sumBy, "sumBy");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
 var __defProp5 = Object.defineProperty;
 var __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
-var _a;
 function groupBy2(data, groupFn) {
   const result = /* @__PURE__ */ Object.create(null);
   for (const element of data) {
@@ -1240,7 +1239,6 @@ function groupBy2(data, groupFn) {
   return result;
 }
 __name(groupBy2, "groupBy");
-__name5(groupBy2, "groupBy");
 function groupByMap(data, groupFn) {
   const result = /* @__PURE__ */ new Map();
   for (const element of data) {
@@ -1255,7 +1253,6 @@ function groupByMap(data, groupFn) {
   return result;
 }
 __name(groupByMap, "groupByMap");
-__name5(groupByMap, "groupByMap");
 function diffSets(before, after) {
   const removed = [];
   const added = [];
@@ -1272,7 +1269,6 @@ function diffSets(before, after) {
   return { removed, added };
 }
 __name(diffSets, "diffSets");
-__name5(diffSets, "diffSets");
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -1289,7 +1285,6 @@ function diffMaps(before, after) {
   return { removed, added };
 }
 __name(diffMaps, "diffMaps");
-__name5(diffMaps, "diffMaps");
 function intersection(setA, setB) {
   const result = /* @__PURE__ */ new Set();
   for (const elem of setB) {
@@ -1300,6 +1295,11 @@ function intersection(setA, setB) {
   return result;
 }
 __name(intersection, "intersection");
+var _a;
+__name5(groupBy2, "groupBy");
+__name5(groupByMap, "groupByMap");
+__name5(diffSets, "diffSets");
+__name5(diffMaps, "diffMaps");
 __name5(intersection, "intersection");
 var SetWithKey = class {
   static {
@@ -1387,7 +1387,6 @@ __name6(createSingleCallFunction, "createSingleCallFunction");
 // ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
 var __defProp7 = Object.defineProperty;
 var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
-var _a2, _b, _c;
 function getOrSet(map, key, value) {
   let result = map.get(key);
   if (result === void 0) {
@@ -1397,7 +1396,6 @@ function getOrSet(map, key, value) {
   return result;
 }
 __name(getOrSet, "getOrSet");
-__name7(getOrSet, "getOrSet");
 function mapToString(map) {
   const entries = [];
   map.forEach((value, key) => {
@@ -1406,7 +1404,6 @@ function mapToString(map) {
   return `Map(${map.size}) {${entries.join(", ")}}`;
 }
 __name(mapToString, "mapToString");
-__name7(mapToString, "mapToString");
 function setToString(set) {
   const entries = [];
   set.forEach((value) => {
@@ -1415,6 +1412,33 @@ function setToString(set) {
   return `Set(${set.size}) {${entries.join(", ")}}`;
 }
 __name(setToString, "setToString");
+function isEntries(arg) {
+  return Array.isArray(arg);
+}
+__name(isEntries, "isEntries");
+function mapsStrictEqualIgnoreOrder(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const [key, value] of a) {
+    if (!b.has(key) || b.get(key) !== value) {
+      return false;
+    }
+  }
+  for (const [key] of b) {
+    if (!a.has(key)) {
+      return false;
+    }
+  }
+  return true;
+}
+__name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+var _a2, _b, _c;
+__name7(getOrSet, "getOrSet");
+__name7(mapToString, "mapToString");
 __name7(setToString, "setToString");
 var ResourceMapEntry = class {
   static {
@@ -1428,10 +1452,6 @@ var ResourceMapEntry = class {
     this.value = value;
   }
 };
-function isEntries(arg) {
-  return Array.isArray(arg);
-}
-__name(isEntries, "isEntries");
 __name7(isEntries, "isEntries");
 var ResourceMap = class _ResourceMap {
   static {
@@ -2121,26 +2141,6 @@ var SetMap = class {
     return values;
   }
 };
-function mapsStrictEqualIgnoreOrder(a, b) {
-  if (a === b) {
-    return true;
-  }
-  if (a.size !== b.size) {
-    return false;
-  }
-  for (const [key, value] of a) {
-    if (!b.has(key) || b.get(key) !== value) {
-      return false;
-    }
-  }
-  for (const [key] of b) {
-    if (!a.has(key)) {
-      return false;
-    }
-  }
-  return true;
-}
-__name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
 __name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
 var NKeyMap = class {
   static {
@@ -2228,16 +2228,13 @@ function ok(value, message) {
   }
 }
 __name(ok, "ok");
-__name8(ok, "ok");
 function assertNever(value, message = "Unreachable") {
   throw new Error(message);
 }
 __name(assertNever, "assertNever");
-__name8(assertNever, "assertNever");
 function softAssertNever(value) {
 }
 __name(softAssertNever, "softAssertNever");
-__name8(softAssertNever, "softAssertNever");
 function assert(condition, messageOrError = "unexpected state") {
   if (!condition) {
     const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
@@ -2245,14 +2242,12 @@ function assert(condition, messageOrError = "unexpected state") {
   }
 }
 __name(assert, "assert");
-__name8(assert, "assert");
 function softAssert(condition, message = "Soft Assertion Failed") {
   if (!condition) {
     onUnexpectedError(new BugIndicatingError(message));
   }
 }
 __name(softAssert, "softAssert");
-__name8(softAssert, "softAssert");
 function assertFn(condition) {
   if (!condition()) {
     debugger;
@@ -2261,7 +2256,6 @@ function assertFn(condition) {
   }
 }
 __name(assertFn, "assertFn");
-__name8(assertFn, "assertFn");
 function checkAdjacentItems(items, predicate) {
   let i = 0;
   while (i < items.length - 1) {
@@ -2275,6 +2269,12 @@ function checkAdjacentItems(items, predicate) {
   return true;
 }
 __name(checkAdjacentItems, "checkAdjacentItems");
+__name8(ok, "ok");
+__name8(assertNever, "assertNever");
+__name8(softAssertNever, "softAssertNever");
+__name8(assert, "assert");
+__name8(softAssert, "softAssert");
+__name8(assertFn, "assertFn");
 __name8(checkAdjacentItems, "checkAdjacentItems");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
@@ -2284,76 +2284,62 @@ function isString(str) {
   return typeof str === "string";
 }
 __name(isString, "isString");
-__name9(isString, "isString");
 function isStringArray(value) {
   return isArrayOf(value, isString);
 }
 __name(isStringArray, "isStringArray");
-__name9(isStringArray, "isStringArray");
 function isArrayOf(value, check) {
   return Array.isArray(value) && value.every(check);
 }
 __name(isArrayOf, "isArrayOf");
-__name9(isArrayOf, "isArrayOf");
 function isObject(obj) {
   return typeof obj === "object" && obj !== null && !Array.isArray(obj) && !(obj instanceof RegExp) && !(obj instanceof Date);
 }
 __name(isObject, "isObject");
-__name9(isObject, "isObject");
 function isTypedArray(obj) {
   const TypedArray = Object.getPrototypeOf(Uint8Array);
   return typeof obj === "object" && obj instanceof TypedArray;
 }
 __name(isTypedArray, "isTypedArray");
-__name9(isTypedArray, "isTypedArray");
 function isNumber(obj) {
   return typeof obj === "number" && !isNaN(obj);
 }
 __name(isNumber, "isNumber");
-__name9(isNumber, "isNumber");
 function isIterable(obj) {
   return !!obj && typeof obj[Symbol.iterator] === "function";
 }
 __name(isIterable, "isIterable");
-__name9(isIterable, "isIterable");
 function isAsyncIterable(obj) {
   return !!obj && typeof obj[Symbol.asyncIterator] === "function";
 }
 __name(isAsyncIterable, "isAsyncIterable");
-__name9(isAsyncIterable, "isAsyncIterable");
 function isBoolean(obj) {
   return obj === true || obj === false;
 }
 __name(isBoolean, "isBoolean");
-__name9(isBoolean, "isBoolean");
 function isUndefined(obj) {
   return typeof obj === "undefined";
 }
 __name(isUndefined, "isUndefined");
-__name9(isUndefined, "isUndefined");
 function isDefined(arg) {
   return !isUndefinedOrNull(arg);
 }
 __name(isDefined, "isDefined");
-__name9(isDefined, "isDefined");
 function isUndefinedOrNull(obj) {
   return isUndefined(obj) || obj === null;
 }
 __name(isUndefinedOrNull, "isUndefinedOrNull");
-__name9(isUndefinedOrNull, "isUndefinedOrNull");
 function assertType(condition, type) {
   if (!condition) {
     throw new Error(type ? `Unexpected type, expected '${type}'` : "Unexpected type");
   }
 }
 __name(assertType, "assertType");
-__name9(assertType, "assertType");
 function assertReturnsDefined(arg) {
   assert(arg !== null && arg !== void 0, "Argument is `undefined` or `null`.");
   return arg;
 }
 __name(assertReturnsDefined, "assertReturnsDefined");
-__name9(assertReturnsDefined, "assertReturnsDefined");
 function assertDefined(value, error) {
   if (value === null || value === void 0) {
     const errorToThrow = typeof error === "string" ? new Error(error) : error;
@@ -2361,7 +2347,6 @@ function assertDefined(value, error) {
   }
 }
 __name(assertDefined, "assertDefined");
-__name9(assertDefined, "assertDefined");
 function assertReturnsAllDefined(...args) {
   const result = [];
   for (let i = 0; i < args.length; i++) {
@@ -2374,15 +2359,9 @@ function assertReturnsAllDefined(...args) {
   return result;
 }
 __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-__name9(assertReturnsAllDefined, "assertReturnsAllDefined");
-var isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
-  return validValues.includes(value);
-}, "isOneOf");
 function typeCheck(_thing) {
 }
 __name(typeCheck, "typeCheck");
-__name9(typeCheck, "typeCheck");
-var hasOwnProperty = Object.prototype.hasOwnProperty;
 function isEmptyObject(obj) {
   if (!isObject(obj)) {
     return false;
@@ -2395,17 +2374,14 @@ function isEmptyObject(obj) {
   return true;
 }
 __name(isEmptyObject, "isEmptyObject");
-__name9(isEmptyObject, "isEmptyObject");
 function isFunction(obj) {
   return typeof obj === "function";
 }
 __name(isFunction, "isFunction");
-__name9(isFunction, "isFunction");
 function areFunctions(...objects) {
   return objects.length > 0 && objects.every(isFunction);
 }
 __name(areFunctions, "areFunctions");
-__name9(areFunctions, "areFunctions");
 function validateConstraints(args, constraints) {
   const len = Math.min(args.length, constraints.length);
   for (let i = 0; i < len; i++) {
@@ -2413,7 +2389,6 @@ function validateConstraints(args, constraints) {
   }
 }
 __name(validateConstraints, "validateConstraints");
-__name9(validateConstraints, "validateConstraints");
 function validateConstraint(arg, constraint) {
   if (isString(constraint)) {
     if (typeof arg !== constraint) {
@@ -2436,12 +2411,10 @@ function validateConstraint(arg, constraint) {
   }
 }
 __name(validateConstraint, "validateConstraint");
-__name9(validateConstraint, "validateConstraint");
 function upcast(x) {
   return x;
 }
 __name(upcast, "upcast");
-__name9(upcast, "upcast");
 function hasKey(x, key) {
   for (const k in key) {
     if (!(k in x)) {
@@ -2451,6 +2424,33 @@ function hasKey(x, key) {
   return true;
 }
 __name(hasKey, "hasKey");
+__name9(isString, "isString");
+__name9(isStringArray, "isStringArray");
+__name9(isArrayOf, "isArrayOf");
+__name9(isObject, "isObject");
+__name9(isTypedArray, "isTypedArray");
+__name9(isNumber, "isNumber");
+__name9(isIterable, "isIterable");
+__name9(isAsyncIterable, "isAsyncIterable");
+__name9(isBoolean, "isBoolean");
+__name9(isUndefined, "isUndefined");
+__name9(isDefined, "isDefined");
+__name9(isUndefinedOrNull, "isUndefinedOrNull");
+__name9(assertType, "assertType");
+__name9(assertReturnsDefined, "assertReturnsDefined");
+__name9(assertDefined, "assertDefined");
+__name9(assertReturnsAllDefined, "assertReturnsAllDefined");
+var isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
+  return validValues.includes(value);
+}, "isOneOf");
+__name9(typeCheck, "typeCheck");
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+__name9(isEmptyObject, "isEmptyObject");
+__name9(isFunction, "isFunction");
+__name9(areFunctions, "areFunctions");
+__name9(validateConstraints, "validateConstraints");
+__name9(validateConstraint, "validateConstraint");
+__name9(upcast, "upcast");
 __name9(hasKey, "hasKey");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
@@ -2672,6 +2672,117 @@ var Iterable;
 // ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
 var __defProp11 = Object.defineProperty;
 var __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
+function setDisposableTracker(tracker) {
+  disposableTracker = tracker;
+}
+__name(setDisposableTracker, "setDisposableTracker");
+function trackDisposable(x) {
+  disposableTracker?.trackDisposable(x);
+  return x;
+}
+__name(trackDisposable, "trackDisposable");
+function markAsDisposed(disposable) {
+  disposableTracker?.markAsDisposed(disposable);
+}
+__name(markAsDisposed, "markAsDisposed");
+function setParentOfDisposable(child, parent) {
+  disposableTracker?.setParent(child, parent);
+}
+__name(setParentOfDisposable, "setParentOfDisposable");
+function setParentOfDisposables(children, parent) {
+  if (!disposableTracker) {
+    return;
+  }
+  for (const child of children) {
+    disposableTracker.setParent(child, parent);
+  }
+}
+__name(setParentOfDisposables, "setParentOfDisposables");
+function markAsSingleton(singleton) {
+  disposableTracker?.markAsSingleton(singleton);
+  return singleton;
+}
+__name(markAsSingleton, "markAsSingleton");
+function isDisposable(thing) {
+  return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
+}
+__name(isDisposable, "isDisposable");
+function dispose(arg) {
+  if (Iterable.is(arg)) {
+    const errors = [];
+    for (const d of arg) {
+      if (d) {
+        try {
+          d.dispose();
+        } catch (e) {
+          errors.push(e);
+        }
+      }
+    }
+    if (errors.length === 1) {
+      throw errors[0];
+    } else if (errors.length > 1) {
+      throw new AggregateError(errors, "Encountered errors while disposing of store");
+    }
+    return Array.isArray(arg) ? [] : arg;
+  } else if (arg) {
+    arg.dispose();
+    return arg;
+  }
+}
+__name(dispose, "dispose");
+function disposeIfDisposable(disposables) {
+  for (const d of disposables) {
+    if (isDisposable(d)) {
+      d.dispose();
+    }
+  }
+  return [];
+}
+__name(disposeIfDisposable, "disposeIfDisposable");
+function combinedDisposable(...disposables) {
+  const parent = toDisposable(() => dispose(disposables));
+  setParentOfDisposables(disposables, parent);
+  return parent;
+}
+__name(combinedDisposable, "combinedDisposable");
+function toDisposable(fn) {
+  return new FunctionDisposable(fn);
+}
+__name(toDisposable, "toDisposable");
+function disposeOnReturn(fn) {
+  const store = new DisposableStore();
+  try {
+    fn(store);
+  } finally {
+    store.dispose();
+  }
+}
+__name(disposeOnReturn, "disposeOnReturn");
+function thenIfNotDisposed(promise, then) {
+  let disposed = false;
+  promise.then((result) => {
+    if (disposed) {
+      return;
+    }
+    then(result);
+  });
+  return toDisposable(() => {
+    disposed = true;
+  });
+}
+__name(thenIfNotDisposed, "thenIfNotDisposed");
+function thenRegisterOrDispose(promise, store) {
+  return promise.then((disposable) => {
+    if (store.isDisposed) {
+      disposable.dispose();
+    } else {
+      store.add(disposable);
+    }
+    return disposable;
+  });
+}
+__name(thenRegisterOrDispose, "thenRegisterOrDispose");
 var TRACK_DISPOSABLES = false;
 var disposableTracker = null;
 var GCBasedDisposableTracker = class {
@@ -2838,10 +2949,6 @@ ${stackTraceFormattedLines.join("\n")}
     return { leaks: uncoveredLeakingObjs, details: message };
   }
 };
-function setDisposableTracker(tracker) {
-  disposableTracker = tracker;
-}
-__name(setDisposableTracker, "setDisposableTracker");
 __name11(setDisposableTracker, "setDisposableTracker");
 if (TRACK_DISPOSABLES) {
   const __is_disposable_tracked__ = "__is_disposable_tracked__";
@@ -2874,84 +2981,14 @@ if (TRACK_DISPOSABLES) {
     }
   }());
 }
-function trackDisposable(x) {
-  disposableTracker?.trackDisposable(x);
-  return x;
-}
-__name(trackDisposable, "trackDisposable");
 __name11(trackDisposable, "trackDisposable");
-function markAsDisposed(disposable) {
-  disposableTracker?.markAsDisposed(disposable);
-}
-__name(markAsDisposed, "markAsDisposed");
 __name11(markAsDisposed, "markAsDisposed");
-function setParentOfDisposable(child, parent) {
-  disposableTracker?.setParent(child, parent);
-}
-__name(setParentOfDisposable, "setParentOfDisposable");
 __name11(setParentOfDisposable, "setParentOfDisposable");
-function setParentOfDisposables(children, parent) {
-  if (!disposableTracker) {
-    return;
-  }
-  for (const child of children) {
-    disposableTracker.setParent(child, parent);
-  }
-}
-__name(setParentOfDisposables, "setParentOfDisposables");
 __name11(setParentOfDisposables, "setParentOfDisposables");
-function markAsSingleton(singleton) {
-  disposableTracker?.markAsSingleton(singleton);
-  return singleton;
-}
-__name(markAsSingleton, "markAsSingleton");
 __name11(markAsSingleton, "markAsSingleton");
-function isDisposable(thing) {
-  return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
-}
-__name(isDisposable, "isDisposable");
 __name11(isDisposable, "isDisposable");
-function dispose(arg) {
-  if (Iterable.is(arg)) {
-    const errors = [];
-    for (const d of arg) {
-      if (d) {
-        try {
-          d.dispose();
-        } catch (e) {
-          errors.push(e);
-        }
-      }
-    }
-    if (errors.length === 1) {
-      throw errors[0];
-    } else if (errors.length > 1) {
-      throw new AggregateError(errors, "Encountered errors while disposing of store");
-    }
-    return Array.isArray(arg) ? [] : arg;
-  } else if (arg) {
-    arg.dispose();
-    return arg;
-  }
-}
-__name(dispose, "dispose");
 __name11(dispose, "dispose");
-function disposeIfDisposable(disposables) {
-  for (const d of disposables) {
-    if (isDisposable(d)) {
-      d.dispose();
-    }
-  }
-  return [];
-}
-__name(disposeIfDisposable, "disposeIfDisposable");
 __name11(disposeIfDisposable, "disposeIfDisposable");
-function combinedDisposable(...disposables) {
-  const parent = toDisposable(() => dispose(disposables));
-  setParentOfDisposables(disposables, parent);
-  return parent;
-}
-__name(combinedDisposable, "combinedDisposable");
 __name11(combinedDisposable, "combinedDisposable");
 var FunctionDisposable = class {
   static {
@@ -2977,10 +3014,6 @@ var FunctionDisposable = class {
     this._fn();
   }
 };
-function toDisposable(fn) {
-  return new FunctionDisposable(fn);
-}
-__name(toDisposable, "toDisposable");
 __name11(toDisposable, "toDisposable");
 var DisposableStore = class _DisposableStore {
   static {
@@ -3286,15 +3319,6 @@ var ImmortalReference = class {
   dispose() {
   }
 };
-function disposeOnReturn(fn) {
-  const store = new DisposableStore();
-  try {
-    fn(store);
-  } finally {
-    store.dispose();
-  }
-}
-__name(disposeOnReturn, "disposeOnReturn");
 __name11(disposeOnReturn, "disposeOnReturn");
 var DisposableMap = class {
   static {
@@ -3453,31 +3477,7 @@ var DisposableSet = class {
     return this._store[Symbol.iterator]();
   }
 };
-function thenIfNotDisposed(promise, then) {
-  let disposed = false;
-  promise.then((result) => {
-    if (disposed) {
-      return;
-    }
-    then(result);
-  });
-  return toDisposable(() => {
-    disposed = true;
-  });
-}
-__name(thenIfNotDisposed, "thenIfNotDisposed");
 __name11(thenIfNotDisposed, "thenIfNotDisposed");
-function thenRegisterOrDispose(promise, store) {
-  return promise.then((disposable) => {
-    if (store.isDisposed) {
-      disposable.dispose();
-    } else {
-      store.add(disposable);
-    }
-    return disposable;
-  });
-}
-__name(thenRegisterOrDispose, "thenRegisterOrDispose");
 __name11(thenRegisterOrDispose, "thenRegisterOrDispose");
 var DisposableResourceMap = class extends DisposableMap {
   static {
@@ -3630,13 +3630,10 @@ function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
 }
 __name(getNLSMessages, "getNLSMessages");
-__name13(getNLSMessages, "getNLSMessages");
 function getNLSLanguage() {
   return globalThis._VSCODE_NLS_LANGUAGE;
 }
 __name(getNLSLanguage, "getNLSLanguage");
-__name13(getNLSLanguage, "getNLSLanguage");
-var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
 function _format(message, args) {
   let result;
   if (args.length === 0) {
@@ -3660,7 +3657,6 @@ function _format(message, args) {
   return result;
 }
 __name(_format, "_format");
-__name13(_format, "_format");
 function localize(data, message, ...args) {
   if (typeof data === "number") {
     return _format(lookupMessage(data, message), args);
@@ -3668,7 +3664,6 @@ function localize(data, message, ...args) {
   return _format(message, args);
 }
 __name(localize, "localize");
-__name13(localize, "localize");
 function lookupMessage(index2, fallback) {
   const message = getNLSMessages()?.[index2];
   if (typeof message !== "string") {
@@ -3680,7 +3675,6 @@ function lookupMessage(index2, fallback) {
   return message;
 }
 __name(lookupMessage, "lookupMessage");
-__name13(lookupMessage, "lookupMessage");
 function localize2(data, originalMessage, ...args) {
   let message;
   if (typeof data === "number") {
@@ -3695,11 +3689,46 @@ function localize2(data, originalMessage, ...args) {
   };
 }
 __name(localize2, "localize2");
+__name13(getNLSMessages, "getNLSMessages");
+__name13(getNLSLanguage, "getNLSLanguage");
+var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
+__name13(_format, "_format");
+__name13(localize, "localize");
+__name13(lookupMessage, "lookupMessage");
 __name13(localize2, "localize2");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
 var __defProp14 = Object.defineProperty;
 var __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+function PlatformToString(platform22) {
+  switch (platform22) {
+    case 0:
+      return "Web";
+    case 1:
+      return "Mac";
+    case 2:
+      return "Linux";
+    case 3:
+      return "Windows";
+  }
+}
+__name(PlatformToString, "PlatformToString");
+function isLittleEndian() {
+  if (!_isLittleEndianComputed) {
+    _isLittleEndianComputed = true;
+    const test = new Uint8Array(2);
+    test[0] = 1;
+    test[1] = 2;
+    const view = new Uint16Array(test.buffer);
+    _isLittleEndian = view[0] === (2 << 8) + 1;
+  }
+  return _isLittleEndian;
+}
+__name(isLittleEndian, "isLittleEndian");
+function isTahoeOrNewer(osVersion) {
+  return parseFloat(osVersion) >= 25;
+}
+__name(isTahoeOrNewer, "isTahoeOrNewer");
 var LANGUAGE_DEFAULT = "en";
 var _isWindows = false;
 var _isMacintosh = false;
@@ -3767,19 +3796,6 @@ var Platform;
   Platform2[Platform2["Linux"] = 2] = "Linux";
   Platform2[Platform2["Windows"] = 3] = "Windows";
 })(Platform || (Platform = {}));
-function PlatformToString(platform22) {
-  switch (platform22) {
-    case 0:
-      return "Web";
-    case 1:
-      return "Mac";
-    case 2:
-      return "Linux";
-    case 3:
-      return "Windows";
-  }
-}
-__name(PlatformToString, "PlatformToString");
 __name14(PlatformToString, "PlatformToString");
 var _platform = 0;
 if (_isMacintosh) {
@@ -3871,28 +3887,12 @@ var OperatingSystem;
 var OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
 var _isLittleEndian = true;
 var _isLittleEndianComputed = false;
-function isLittleEndian() {
-  if (!_isLittleEndianComputed) {
-    _isLittleEndianComputed = true;
-    const test = new Uint8Array(2);
-    test[0] = 1;
-    test[1] = 2;
-    const view = new Uint16Array(test.buffer);
-    _isLittleEndian = view[0] === (2 << 8) + 1;
-  }
-  return _isLittleEndian;
-}
-__name(isLittleEndian, "isLittleEndian");
 __name14(isLittleEndian, "isLittleEndian");
 var isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
 var isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
 var isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
 var isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
 var isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
-function isTahoeOrNewer(osVersion) {
-  return parseFloat(osVersion) >= 25;
-}
-__name(isTahoeOrNewer, "isTahoeOrNewer");
 __name14(isTahoeOrNewer, "isTahoeOrNewer");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
@@ -3989,14 +3989,66 @@ var StopWatch = class _StopWatch {
 // ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
 var __defProp16 = Object.defineProperty;
 var __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
-var _enableDisposeWithListenerWarning = false;
-var _enableSnapshotPotentialLeakWarning = false;
-var _bufferLeakWarnCountThreshold = 100;
-var _bufferLeakWarnTimeThreshold = 6e4;
 function _isBufferLeakWarningEnabled() {
   return !!env["VSCODE_DEV"];
 }
 __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+function setGlobalLeakWarningThreshold(n) {
+  const oldValue = _globalLeakWarningThreshold;
+  _globalLeakWarningThreshold = n;
+  return {
+    dispose() {
+      _globalLeakWarningThreshold = oldValue;
+    }
+  };
+}
+__name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+function trackSetChanges(getData, onDidChangeData, handleItem) {
+  const map = new DisposableMap();
+  let oldData = new Set(getData());
+  for (const d of oldData) {
+    map.set(d, handleItem(d));
+  }
+  const store = new DisposableStore();
+  store.add(onDidChangeData(() => {
+    const newData = getData();
+    const diff = diffSets(oldData, newData);
+    for (const r of diff.removed) {
+      map.deleteAndDispose(r);
+    }
+    for (const a of diff.added) {
+      map.set(a, handleItem(a));
+    }
+    oldData = new Set(newData);
+  }));
+  store.add(map);
+  return store;
+}
+__name(trackSetChanges, "trackSetChanges");
+function addToDisposables(result, disposables) {
+  if (disposables instanceof DisposableStore) {
+    disposables.add(result);
+  } else if (Array.isArray(disposables)) {
+    disposables.push(result);
+  }
+}
+__name(addToDisposables, "addToDisposables");
+function disposeAndRemove(result, disposables) {
+  if (disposables instanceof DisposableStore) {
+    disposables.delete(result);
+  } else if (Array.isArray(disposables)) {
+    const index2 = disposables.indexOf(result);
+    if (index2 !== -1) {
+      disposables.splice(index2, 1);
+    }
+  }
+  result.dispose();
+}
+__name(disposeAndRemove, "disposeAndRemove");
+var _enableDisposeWithListenerWarning = false;
+var _enableSnapshotPotentialLeakWarning = false;
+var _bufferLeakWarnCountThreshold = 100;
+var _bufferLeakWarnTimeThreshold = 6e4;
 __name16(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
 var Event;
 (function(Event2) {
@@ -4602,16 +4654,6 @@ var EventProfiling = class _EventProfiling {
   }
 };
 var _globalLeakWarningThreshold = -1;
-function setGlobalLeakWarningThreshold(n) {
-  const oldValue = _globalLeakWarningThreshold;
-  _globalLeakWarningThreshold = n;
-  return {
-    dispose() {
-      _globalLeakWarningThreshold = oldValue;
-    }
-  };
-}
-__name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
 __name16(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
 var LeakageMonitor = class _LeakageMonitor {
   static {
@@ -5293,55 +5335,21 @@ var ConstValueWithChangeEvent = class {
     this.onDidChange = Event.None;
   }
 };
-function trackSetChanges(getData, onDidChangeData, handleItem) {
-  const map = new DisposableMap();
-  let oldData = new Set(getData());
-  for (const d of oldData) {
-    map.set(d, handleItem(d));
-  }
-  const store = new DisposableStore();
-  store.add(onDidChangeData(() => {
-    const newData = getData();
-    const diff = diffSets(oldData, newData);
-    for (const r of diff.removed) {
-      map.deleteAndDispose(r);
-    }
-    for (const a of diff.added) {
-      map.set(a, handleItem(a));
-    }
-    oldData = new Set(newData);
-  }));
-  store.add(map);
-  return store;
-}
-__name(trackSetChanges, "trackSetChanges");
 __name16(trackSetChanges, "trackSetChanges");
-function addToDisposables(result, disposables) {
-  if (disposables instanceof DisposableStore) {
-    disposables.add(result);
-  } else if (Array.isArray(disposables)) {
-    disposables.push(result);
-  }
-}
-__name(addToDisposables, "addToDisposables");
 __name16(addToDisposables, "addToDisposables");
-function disposeAndRemove(result, disposables) {
-  if (disposables instanceof DisposableStore) {
-    disposables.delete(result);
-  } else if (Array.isArray(disposables)) {
-    const index2 = disposables.indexOf(result);
-    if (index2 !== -1) {
-      disposables.splice(index2, 1);
-    }
-  }
-  result.dispose();
-}
-__name(disposeAndRemove, "disposeAndRemove");
 __name16(disposeAndRemove, "disposeAndRemove");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/cancellation.js
 var __defProp17 = Object.defineProperty;
 var __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+function cancelOnDispose(store) {
+  const source = new CancellationTokenSource();
+  store.add({ dispose() {
+    source.cancel();
+  } });
+  return source.token;
+}
+__name(cancelOnDispose, "cancelOnDispose");
 var shortcutEvent = Object.freeze(function(callback, context) {
   const handle = setTimeout(callback.bind(context), 0);
   return { dispose() {
@@ -5450,14 +5458,6 @@ var CancellationTokenSource = class {
     }
   }
 };
-function cancelOnDispose(store) {
-  const source = new CancellationTokenSource();
-  store.add({ dispose() {
-    source.cancel();
-  } });
-  return source.token;
-}
-__name(cancelOnDispose, "cancelOnDispose");
 __name17(cancelOnDispose, "cancelOnDispose");
 var CancellationTokenPool = class {
   static {
@@ -5513,67 +5513,30 @@ var CancellationTokenPool = class {
 // ../Output/Target/Microsoft/VSCode/vs/base/common/path.js
 var __defProp18 = Object.defineProperty;
 var __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
-var CHAR_UPPERCASE_A = 65;
-var CHAR_LOWERCASE_A = 97;
-var CHAR_UPPERCASE_Z = 90;
-var CHAR_LOWERCASE_Z = 122;
-var CHAR_DOT = 46;
-var CHAR_FORWARD_SLASH = 47;
-var CHAR_BACKWARD_SLASH = 92;
-var CHAR_COLON = 58;
-var CHAR_QUESTION_MARK = 63;
-var ErrorInvalidArgType = class extends Error {
-  static {
-    __name(this, "ErrorInvalidArgType");
-  }
-  static {
-    __name18(this, "ErrorInvalidArgType");
-  }
-  constructor(name, expected, actual) {
-    let determiner;
-    if (typeof expected === "string" && expected.indexOf("not ") === 0) {
-      determiner = "must not be";
-      expected = expected.replace(/^not /, "");
-    } else {
-      determiner = "must be";
-    }
-    const type = name.indexOf(".") !== -1 ? "property" : "argument";
-    let msg = `The "${name}" ${type} ${determiner} of type ${expected}`;
-    msg += `. Received type ${typeof actual}`;
-    super(msg);
-    this.code = "ERR_INVALID_ARG_TYPE";
-  }
-};
 function validateObject(pathObject, name) {
   if (pathObject === null || typeof pathObject !== "object") {
     throw new ErrorInvalidArgType(name, "Object", pathObject);
   }
 }
 __name(validateObject, "validateObject");
-__name18(validateObject, "validateObject");
 function validateString(value, name) {
   if (typeof value !== "string") {
     throw new ErrorInvalidArgType(name, "string", value);
   }
 }
 __name(validateString, "validateString");
-__name18(validateString, "validateString");
-var platformIsWin32 = platform2 === "win32";
 function isPathSeparator(code) {
   return code === CHAR_FORWARD_SLASH || code === CHAR_BACKWARD_SLASH;
 }
 __name(isPathSeparator, "isPathSeparator");
-__name18(isPathSeparator, "isPathSeparator");
 function isPosixPathSeparator(code) {
   return code === CHAR_FORWARD_SLASH;
 }
 __name(isPosixPathSeparator, "isPosixPathSeparator");
-__name18(isPosixPathSeparator, "isPosixPathSeparator");
 function isWindowsDeviceRoot(code) {
   return code >= CHAR_UPPERCASE_A && code <= CHAR_UPPERCASE_Z || code >= CHAR_LOWERCASE_A && code <= CHAR_LOWERCASE_Z;
 }
 __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
-__name18(isWindowsDeviceRoot, "isWindowsDeviceRoot");
 function normalizeString(path, allowAboveRoot, separator, isPathSeparator22) {
   let res = "";
   let lastSegmentLength = 0;
@@ -5635,12 +5598,10 @@ function normalizeString(path, allowAboveRoot, separator, isPathSeparator22) {
   return res;
 }
 __name(normalizeString, "normalizeString");
-__name18(normalizeString, "normalizeString");
 function formatExt(ext) {
   return ext ? `${ext[0] === "." ? "" : "."}${ext}` : "";
 }
 __name(formatExt, "formatExt");
-__name18(formatExt, "formatExt");
 function _format2(sep2, pathObject) {
   validateObject(pathObject, "pathObject");
   const dir = pathObject.dir || pathObject.root;
@@ -5651,6 +5612,45 @@ function _format2(sep2, pathObject) {
   return dir === pathObject.root ? `${dir}${base}` : `${dir}${sep2}${base}`;
 }
 __name(_format2, "_format");
+var CHAR_UPPERCASE_A = 65;
+var CHAR_LOWERCASE_A = 97;
+var CHAR_UPPERCASE_Z = 90;
+var CHAR_LOWERCASE_Z = 122;
+var CHAR_DOT = 46;
+var CHAR_FORWARD_SLASH = 47;
+var CHAR_BACKWARD_SLASH = 92;
+var CHAR_COLON = 58;
+var CHAR_QUESTION_MARK = 63;
+var ErrorInvalidArgType = class extends Error {
+  static {
+    __name(this, "ErrorInvalidArgType");
+  }
+  static {
+    __name18(this, "ErrorInvalidArgType");
+  }
+  constructor(name, expected, actual) {
+    let determiner;
+    if (typeof expected === "string" && expected.indexOf("not ") === 0) {
+      determiner = "must not be";
+      expected = expected.replace(/^not /, "");
+    } else {
+      determiner = "must be";
+    }
+    const type = name.indexOf(".") !== -1 ? "property" : "argument";
+    let msg = `The "${name}" ${type} ${determiner} of type ${expected}`;
+    msg += `. Received type ${typeof actual}`;
+    super(msg);
+    this.code = "ERR_INVALID_ARG_TYPE";
+  }
+};
+__name18(validateObject, "validateObject");
+__name18(validateString, "validateString");
+var platformIsWin32 = platform2 === "win32";
+__name18(isPathSeparator, "isPathSeparator");
+__name18(isPosixPathSeparator, "isPosixPathSeparator");
+__name18(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+__name18(normalizeString, "normalizeString");
+__name18(formatExt, "formatExt");
 __name18(_format2, "_format");
 var win32 = {
   // path.resolve([from ...], to)
@@ -6637,6 +6637,10 @@ var delimiter = platformIsWin32 ? win32.delimiter : posix.delimiter;
 // ../Output/Target/Microsoft/VSCode/vs/base/common/cache.js
 var __defProp19 = Object.defineProperty;
 var __name19 = /* @__PURE__ */ __name((target, value) => __defProp19(target, "name", { value, configurable: true }), "__name");
+function identity(t) {
+  return t;
+}
+__name(identity, "identity");
 var Cache2 = class {
   static {
     __name(this, "Cache");
@@ -6665,10 +6669,6 @@ var Cache2 = class {
     return this.result;
   }
 };
-function identity(t) {
-  return t;
-}
-__name(identity, "identity");
 __name19(identity, "identity");
 var LRUCachedFunction = class {
   static {
@@ -6825,8 +6825,6 @@ function isFalsyOrWhitespace(str) {
   return str.trim().length === 0;
 }
 __name(isFalsyOrWhitespace, "isFalsyOrWhitespace");
-__name21(isFalsyOrWhitespace, "isFalsyOrWhitespace");
-var _formatRegexp = /{(\d+)}/g;
 function format2(value, ...args) {
   if (args.length === 0) {
     return value;
@@ -6837,8 +6835,6 @@ function format2(value, ...args) {
   });
 }
 __name(format2, "format");
-__name21(format2, "format");
-var _format2Regexp = /{([^}]+)}/g;
 function format22(template, values) {
   if (Object.keys(values).length === 0) {
     return template;
@@ -6846,7 +6842,6 @@ function format22(template, values) {
   return template.replace(_format2Regexp, (match2, group) => values[group] ?? match2);
 }
 __name(format22, "format2");
-__name21(format22, "format2");
 function htmlAttributeEncodeValue(value) {
   return value.replace(/[<>"'&]/g, (ch) => {
     switch (ch) {
@@ -6865,7 +6860,6 @@ function htmlAttributeEncodeValue(value) {
   });
 }
 __name(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
-__name21(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
 function escape(html) {
   return html.replace(/[<>&]/g, function(match2) {
     switch (match2) {
@@ -6881,12 +6875,10 @@ function escape(html) {
   });
 }
 __name(escape, "escape");
-__name21(escape, "escape");
 function escapeRegExpCharacters(value) {
   return value.replace(/[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]/g, "\\$&");
 }
 __name(escapeRegExpCharacters, "escapeRegExpCharacters");
-__name21(escapeRegExpCharacters, "escapeRegExpCharacters");
 function count(value, substr) {
   let result = 0;
   let index2 = value.indexOf(substr);
@@ -6897,7 +6889,6 @@ function count(value, substr) {
   return result;
 }
 __name(count, "count");
-__name21(count, "count");
 function truncate(value, maxLength, suffix = Ellipsis) {
   if (value.length <= maxLength) {
     return value;
@@ -6905,7 +6896,6 @@ function truncate(value, maxLength, suffix = Ellipsis) {
   return `${value.substr(0, maxLength)}${suffix}`;
 }
 __name(truncate, "truncate");
-__name21(truncate, "truncate");
 function truncateMiddle(value, maxLength, suffix = Ellipsis) {
   if (value.length <= maxLength) {
     return value;
@@ -6915,13 +6905,11 @@ function truncateMiddle(value, maxLength, suffix = Ellipsis) {
   return `${value.substr(0, prefixLength)}${suffix}${value.substr(value.length - suffixLength)}`;
 }
 __name(truncateMiddle, "truncateMiddle");
-__name21(truncateMiddle, "truncateMiddle");
 function trim(haystack, needle = " ") {
   const trimmed = ltrim(haystack, needle);
   return rtrim(trimmed, needle);
 }
 __name(trim, "trim");
-__name21(trim, "trim");
 function ltrim(haystack, needle) {
   if (!haystack || !needle) {
     return haystack;
@@ -6941,7 +6929,6 @@ function ltrim(haystack, needle) {
   return haystack.substring(offset);
 }
 __name(ltrim, "ltrim");
-__name21(ltrim, "ltrim");
 function rtrim(haystack, needle) {
   if (!haystack || !needle) {
     return haystack;
@@ -6962,12 +6949,10 @@ function rtrim(haystack, needle) {
   return haystack.substring(0, offset);
 }
 __name(rtrim, "rtrim");
-__name21(rtrim, "rtrim");
 function convertSimple2RegExpPattern(pattern) {
   return pattern.replace(/[\-\\\{\}\+\?\|\^\$\.\,\[\]\(\)\#\s]/g, "\\$&").replace(/[\*]/g, ".*");
 }
 __name(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
-__name21(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
 function createRegExp(searchString, isRegex, options = {}) {
   if (!searchString) {
     throw new Error("Cannot create regex from empty string");
@@ -6999,7 +6984,6 @@ function createRegExp(searchString, isRegex, options = {}) {
   return new RegExp(searchString, modifiers);
 }
 __name(createRegExp, "createRegExp");
-__name21(createRegExp, "createRegExp");
 function regExpLeadsToEndlessLoop(regexp) {
   if (regexp.source === "^" || regexp.source === "^$" || regexp.source === "$" || regexp.source === "^\\s*$") {
     return false;
@@ -7008,17 +6992,14 @@ function regExpLeadsToEndlessLoop(regexp) {
   return !!(match2 && regexp.lastIndex === 0);
 }
 __name(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
-__name21(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
 function joinStrings(items, separator) {
   return items.filter((item) => item !== void 0 && item !== null && item !== false).join(separator);
 }
 __name(joinStrings, "joinStrings");
-__name21(joinStrings, "joinStrings");
 function splitLines(str) {
   return str.split(/\r\n|\r|\n/);
 }
 __name(splitLines, "splitLines");
-__name21(splitLines, "splitLines");
 function splitLinesIncludeSeparators(str) {
   const linesWithSeparators = [];
   const splitLinesAndSeparators = str.split(/(\r\n|\r|\n)/);
@@ -7028,7 +7009,6 @@ function splitLinesIncludeSeparators(str) {
   return linesWithSeparators;
 }
 __name(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
-__name21(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
 function indexOfPattern(str, re) {
   const match2 = re.exec(str);
   if (match2) {
@@ -7037,7 +7017,6 @@ function indexOfPattern(str, re) {
   return -1;
 }
 __name(indexOfPattern, "indexOfPattern");
-__name21(indexOfPattern, "indexOfPattern");
 function firstNonWhitespaceIndex(str) {
   for (let i = 0, len = str.length; i < len; i++) {
     const chCode = str.charCodeAt(i);
@@ -7048,7 +7027,6 @@ function firstNonWhitespaceIndex(str) {
   return -1;
 }
 __name(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
-__name21(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
 function getLeadingWhitespace(str, start = 0, end = str.length) {
   for (let i = start; i < end; i++) {
     const chCode = str.charCodeAt(i);
@@ -7059,7 +7037,6 @@ function getLeadingWhitespace(str, start = 0, end = str.length) {
   return str.substring(start, end);
 }
 __name(getLeadingWhitespace, "getLeadingWhitespace");
-__name21(getLeadingWhitespace, "getLeadingWhitespace");
 function lastNonWhitespaceIndex(str, startIndex = str.length - 1) {
   for (let i = startIndex; i >= 0; i--) {
     const chCode = str.charCodeAt(i);
@@ -7070,7 +7047,6 @@ function lastNonWhitespaceIndex(str, startIndex = str.length - 1) {
   return -1;
 }
 __name(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
-__name21(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
 function getIndentationLength(str) {
   const idx = firstNonWhitespaceIndex(str);
   if (idx === -1) {
@@ -7079,7 +7055,6 @@ function getIndentationLength(str) {
   return idx;
 }
 __name(getIndentationLength, "getIndentationLength");
-__name21(getIndentationLength, "getIndentationLength");
 function replaceAsync(str, search, replacer) {
   const parts = [];
   let last = 0;
@@ -7095,7 +7070,6 @@ function replaceAsync(str, search, replacer) {
   return Promise.all(parts).then((p) => p.join(""));
 }
 __name(replaceAsync, "replaceAsync");
-__name21(replaceAsync, "replaceAsync");
 function compare(a, b) {
   if (a < b) {
     return -1;
@@ -7106,7 +7080,6 @@ function compare(a, b) {
   }
 }
 __name(compare, "compare");
-__name21(compare, "compare");
 function compareSubstring(a, b, aStart = 0, aEnd = a.length, bStart = 0, bEnd = b.length) {
   for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
     const codeA = a.charCodeAt(aStart);
@@ -7127,12 +7100,10 @@ function compareSubstring(a, b, aStart = 0, aEnd = a.length, bStart = 0, bEnd = 
   return 0;
 }
 __name(compareSubstring, "compareSubstring");
-__name21(compareSubstring, "compareSubstring");
 function compareIgnoreCase(a, b) {
   return compareSubstringIgnoreCase(a, b, 0, a.length, 0, b.length);
 }
 __name(compareIgnoreCase, "compareIgnoreCase");
-__name21(compareIgnoreCase, "compareIgnoreCase");
 function compareSubstringIgnoreCase(a, b, aStart = 0, aEnd = a.length, bStart = 0, bEnd = b.length) {
   for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
     let codeA = a.charCodeAt(aStart);
@@ -7165,45 +7136,37 @@ function compareSubstringIgnoreCase(a, b, aStart = 0, aEnd = a.length, bStart = 
   return 0;
 }
 __name(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
-__name21(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
 function isAsciiDigit(code) {
   return code >= 48 && code <= 57;
 }
 __name(isAsciiDigit, "isAsciiDigit");
-__name21(isAsciiDigit, "isAsciiDigit");
 function isLowerAsciiLetter(code) {
   return code >= 97 && code <= 122;
 }
 __name(isLowerAsciiLetter, "isLowerAsciiLetter");
-__name21(isLowerAsciiLetter, "isLowerAsciiLetter");
 function isUpperAsciiLetter(code) {
   return code >= 65 && code <= 90;
 }
 __name(isUpperAsciiLetter, "isUpperAsciiLetter");
-__name21(isUpperAsciiLetter, "isUpperAsciiLetter");
 function equalsIgnoreCase(a, b) {
   return a.length === b.length && compareSubstringIgnoreCase(a, b) === 0;
 }
 __name(equalsIgnoreCase, "equalsIgnoreCase");
-__name21(equalsIgnoreCase, "equalsIgnoreCase");
 function equals2(a, b, ignoreCase) {
   return a === b || !!ignoreCase && a !== void 0 && b !== void 0 && equalsIgnoreCase(a, b);
 }
 __name(equals2, "equals");
-__name21(equals2, "equals");
 function startsWithIgnoreCase(str, candidate) {
   const len = candidate.length;
   return len <= str.length && compareSubstringIgnoreCase(str, candidate, 0, len) === 0;
 }
 __name(startsWithIgnoreCase, "startsWithIgnoreCase");
-__name21(startsWithIgnoreCase, "startsWithIgnoreCase");
 function endsWithIgnoreCase(str, candidate) {
   const len = str.length;
   const start = len - candidate.length;
   return start >= 0 && compareSubstringIgnoreCase(str, candidate, start, len) === 0;
 }
 __name(endsWithIgnoreCase, "endsWithIgnoreCase");
-__name21(endsWithIgnoreCase, "endsWithIgnoreCase");
 function commonPrefixLength2(a, b) {
   const len = Math.min(a.length, b.length);
   let i;
@@ -7215,7 +7178,6 @@ function commonPrefixLength2(a, b) {
   return len;
 }
 __name(commonPrefixLength2, "commonPrefixLength");
-__name21(commonPrefixLength2, "commonPrefixLength");
 function commonSuffixLength(a, b) {
   const len = Math.min(a.length, b.length);
   let i;
@@ -7229,22 +7191,18 @@ function commonSuffixLength(a, b) {
   return len;
 }
 __name(commonSuffixLength, "commonSuffixLength");
-__name21(commonSuffixLength, "commonSuffixLength");
 function isHighSurrogate(charCode) {
   return 55296 <= charCode && charCode <= 56319;
 }
 __name(isHighSurrogate, "isHighSurrogate");
-__name21(isHighSurrogate, "isHighSurrogate");
 function isLowSurrogate(charCode) {
   return 56320 <= charCode && charCode <= 57343;
 }
 __name(isLowSurrogate, "isLowSurrogate");
-__name21(isLowSurrogate, "isLowSurrogate");
 function computeCodePoint(highSurrogate, lowSurrogate) {
   return (highSurrogate - 55296 << 10) + (lowSurrogate - 56320) + 65536;
 }
 __name(computeCodePoint, "computeCodePoint");
-__name21(computeCodePoint, "computeCodePoint");
 function getNextCodePoint(str, len, offset) {
   const charCode = str.charCodeAt(offset);
   if (isHighSurrogate(charCode) && offset + 1 < len) {
@@ -7256,7 +7214,6 @@ function getNextCodePoint(str, len, offset) {
   return charCode;
 }
 __name(getNextCodePoint, "getNextCodePoint");
-__name21(getNextCodePoint, "getNextCodePoint");
 function getPrevCodePoint(str, offset) {
   const charCode = str.charCodeAt(offset - 1);
   if (isLowSurrogate(charCode) && offset > 1) {
@@ -7268,6 +7225,349 @@ function getPrevCodePoint(str, offset) {
   return charCode;
 }
 __name(getPrevCodePoint, "getPrevCodePoint");
+function nextCharLength(str, initialOffset) {
+  const iterator = new GraphemeIterator(str, initialOffset);
+  return iterator.nextGraphemeLength();
+}
+__name(nextCharLength, "nextCharLength");
+function prevCharLength(str, initialOffset) {
+  const iterator = new GraphemeIterator(str, initialOffset);
+  return iterator.prevGraphemeLength();
+}
+__name(prevCharLength, "prevCharLength");
+function getCharContainingOffset(str, offset) {
+  if (offset > 0 && isLowSurrogate(str.charCodeAt(offset))) {
+    offset--;
+  }
+  const endOffset = offset + nextCharLength(str, offset);
+  const startOffset = endOffset - prevCharLength(str, endOffset);
+  return [startOffset, endOffset];
+}
+__name(getCharContainingOffset, "getCharContainingOffset");
+function charCount(str) {
+  const iterator = new GraphemeIterator(str);
+  let length = 0;
+  while (!iterator.eol()) {
+    length++;
+    iterator.nextGraphemeLength();
+  }
+  return length;
+}
+__name(charCount, "charCount");
+function makeContainsRtl() {
+  return /(?:[\u05BE\u05C0\u05C3\u05C6\u05D0-\u05F4\u0608\u060B\u060D\u061B-\u064A\u066D-\u066F\u0671-\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u0710\u0712-\u072F\u074D-\u07A5\u07B1-\u07EA\u07F4\u07F5\u07FA\u07FE-\u0815\u081A\u0824\u0828\u0830-\u0858\u085E-\u088E\u08A0-\u08C9\u200F\uFB1D\uFB1F-\uFB28\uFB2A-\uFD3D\uFD50-\uFDC7\uFDF0-\uFDFC\uFE70-\uFEFC]|\uD802[\uDC00-\uDD1B\uDD20-\uDE00\uDE10-\uDE35\uDE40-\uDEE4\uDEEB-\uDF35\uDF40-\uDFFF]|\uD803[\uDC00-\uDD23\uDE80-\uDEA9\uDEAD-\uDF45\uDF51-\uDF81\uDF86-\uDFF6]|\uD83A[\uDC00-\uDCCF\uDD00-\uDD43\uDD4B-\uDFFF]|\uD83B[\uDC00-\uDEBB])/;
+}
+__name(makeContainsRtl, "makeContainsRtl");
+function containsRTL(str) {
+  if (!CONTAINS_RTL) {
+    CONTAINS_RTL = makeContainsRtl();
+  }
+  return CONTAINS_RTL.test(str);
+}
+__name(containsRTL, "containsRTL");
+function isBasicASCII(str) {
+  return IS_BASIC_ASCII.test(str);
+}
+__name(isBasicASCII, "isBasicASCII");
+function containsUnusualLineTerminators(str) {
+  return UNUSUAL_LINE_TERMINATORS.test(str);
+}
+__name(containsUnusualLineTerminators, "containsUnusualLineTerminators");
+function isFullWidthCharacter(charCode) {
+  return charCode >= 11904 && charCode <= 55215 || charCode >= 63744 && charCode <= 64255 || charCode >= 65281 && charCode <= 65374 || charCode >= 65504 && charCode <= 65510;
+}
+__name(isFullWidthCharacter, "isFullWidthCharacter");
+function isEmojiImprecise(x) {
+  return x >= 127462 && x <= 127487 || x === 8986 || x === 8987 || x === 9200 || x === 9203 || x >= 9728 && x <= 10175 || x === 11088 || x === 11093 || x >= 127744 && x <= 128591 || x >= 128640 && x <= 128764 || x >= 128992 && x <= 129008 || x >= 129280 && x <= 129535 || x >= 129648 && x <= 129782;
+}
+__name(isEmojiImprecise, "isEmojiImprecise");
+function lcut(text, n, prefix = "") {
+  const trimmed = text.trimStart();
+  if (trimmed.length < n) {
+    return trimmed;
+  }
+  const re = /\b/g;
+  let i = 0;
+  while (re.test(trimmed)) {
+    if (trimmed.length - re.lastIndex < n) {
+      break;
+    }
+    i = re.lastIndex;
+    re.lastIndex += 1;
+  }
+  if (i === 0) {
+    return trimmed;
+  }
+  return prefix + trimmed.substring(i).trimStart();
+}
+__name(lcut, "lcut");
+function rcut(text, n, suffix = "") {
+  const trimmed = text.trimEnd();
+  if (trimmed.length <= n) {
+    return trimmed;
+  }
+  const re = /\b/g;
+  let lastGoodBreak = 0;
+  let foundBoundaryAfterN = false;
+  while (re.test(trimmed)) {
+    if (re.lastIndex > n) {
+      foundBoundaryAfterN = true;
+      break;
+    }
+    lastGoodBreak = re.lastIndex;
+    re.lastIndex += 1;
+  }
+  if (!foundBoundaryAfterN) {
+    return trimmed;
+  }
+  if (lastGoodBreak === 0) {
+    return suffix;
+  }
+  const result = trimmed.substring(0, lastGoodBreak).trimEnd();
+  if (result.length < lastGoodBreak / 2) {
+    return trimmed;
+  }
+  return result + suffix;
+}
+__name(rcut, "rcut");
+function removeAnsiEscapeCodes(str) {
+  if (str) {
+    str = str.replace(CONTROL_SEQUENCES, "");
+  }
+  return str;
+}
+__name(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
+function removeAnsiEscapeCodesFromPrompt(str) {
+  return removeAnsiEscapeCodes(str).replace(PROMPT_NON_PRINTABLE, "");
+}
+__name(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
+function startsWithUTF8BOM(str) {
+  return !!(str && str.length > 0 && str.charCodeAt(0) === 65279);
+}
+__name(startsWithUTF8BOM, "startsWithUTF8BOM");
+function stripUTF8BOM(str) {
+  return startsWithUTF8BOM(str) ? str.substr(1) : str;
+}
+__name(stripUTF8BOM, "stripUTF8BOM");
+function fuzzyContains(target, query) {
+  if (!target || !query) {
+    return false;
+  }
+  if (target.length < query.length) {
+    return false;
+  }
+  const queryLen = query.length;
+  const targetLower = target.toLowerCase();
+  let index2 = 0;
+  let lastIndexOf = -1;
+  while (index2 < queryLen) {
+    const indexOf = targetLower.indexOf(query[index2], lastIndexOf + 1);
+    if (indexOf < 0) {
+      return false;
+    }
+    lastIndexOf = indexOf;
+    index2++;
+  }
+  return true;
+}
+__name(fuzzyContains, "fuzzyContains");
+function containsUppercaseCharacter(target, ignoreEscapedChars = false) {
+  if (!target) {
+    return false;
+  }
+  if (ignoreEscapedChars) {
+    target = target.replace(/\\./g, "");
+  }
+  return target.toLowerCase() !== target;
+}
+__name(containsUppercaseCharacter, "containsUppercaseCharacter");
+function uppercaseFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+__name(uppercaseFirstLetter, "uppercaseFirstLetter");
+function getNLines(str, n = 1) {
+  if (n === 0) {
+    return "";
+  }
+  let idx = -1;
+  do {
+    idx = str.indexOf("\n", idx + 1);
+    n--;
+  } while (n > 0 && idx >= 0);
+  if (idx === -1) {
+    return str;
+  }
+  if (str[idx - 1] === "\r") {
+    idx--;
+  }
+  return str.substr(0, idx);
+}
+__name(getNLines, "getNLines");
+function singleLetterHash(n) {
+  const LETTERS_CNT = 90 - 65 + 1;
+  n = n % (2 * LETTERS_CNT);
+  if (n < LETTERS_CNT) {
+    return String.fromCharCode(97 + n);
+  }
+  return String.fromCharCode(65 + n - LETTERS_CNT);
+}
+__name(singleLetterHash, "singleLetterHash");
+function getGraphemeBreakType(codePoint) {
+  const graphemeBreakTree = GraphemeBreakTree.getInstance();
+  return graphemeBreakTree.getGraphemeBreakType(codePoint);
+}
+__name(getGraphemeBreakType, "getGraphemeBreakType");
+function breakBetweenGraphemeBreakType(breakTypeA, breakTypeB) {
+  if (breakTypeA === 0) {
+    return breakTypeB !== 5 && breakTypeB !== 7;
+  }
+  if (breakTypeA === 2) {
+    if (breakTypeB === 3) {
+      return false;
+    }
+  }
+  if (breakTypeA === 4 || breakTypeA === 2 || breakTypeA === 3) {
+    return true;
+  }
+  if (breakTypeB === 4 || breakTypeB === 2 || breakTypeB === 3) {
+    return true;
+  }
+  if (breakTypeA === 8) {
+    if (breakTypeB === 8 || breakTypeB === 9 || breakTypeB === 11 || breakTypeB === 12) {
+      return false;
+    }
+  }
+  if (breakTypeA === 11 || breakTypeA === 9) {
+    if (breakTypeB === 9 || breakTypeB === 10) {
+      return false;
+    }
+  }
+  if (breakTypeA === 12 || breakTypeA === 10) {
+    if (breakTypeB === 10) {
+      return false;
+    }
+  }
+  if (breakTypeB === 5 || breakTypeB === 13) {
+    return false;
+  }
+  if (breakTypeB === 7) {
+    return false;
+  }
+  if (breakTypeA === 1) {
+    return false;
+  }
+  if (breakTypeA === 13 && breakTypeB === 14) {
+    return false;
+  }
+  if (breakTypeA === 6 && breakTypeB === 6) {
+    return false;
+  }
+  return true;
+}
+__name(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
+function getGraphemeBreakRawData() {
+  return JSON.parse("[0,0,0,51229,51255,12,44061,44087,12,127462,127487,6,7083,7085,5,47645,47671,12,54813,54839,12,128678,128678,14,3270,3270,5,9919,9923,14,45853,45879,12,49437,49463,12,53021,53047,12,71216,71218,7,128398,128399,14,129360,129374,14,2519,2519,5,4448,4519,9,9742,9742,14,12336,12336,14,44957,44983,12,46749,46775,12,48541,48567,12,50333,50359,12,52125,52151,12,53917,53943,12,69888,69890,5,73018,73018,5,127990,127990,14,128558,128559,14,128759,128760,14,129653,129655,14,2027,2035,5,2891,2892,7,3761,3761,5,6683,6683,5,8293,8293,4,9825,9826,14,9999,9999,14,43452,43453,5,44509,44535,12,45405,45431,12,46301,46327,12,47197,47223,12,48093,48119,12,48989,49015,12,49885,49911,12,50781,50807,12,51677,51703,12,52573,52599,12,53469,53495,12,54365,54391,12,65279,65279,4,70471,70472,7,72145,72147,7,119173,119179,5,127799,127818,14,128240,128244,14,128512,128512,14,128652,128652,14,128721,128722,14,129292,129292,14,129445,129450,14,129734,129743,14,1476,1477,5,2366,2368,7,2750,2752,7,3076,3076,5,3415,3415,5,4141,4144,5,6109,6109,5,6964,6964,5,7394,7400,5,9197,9198,14,9770,9770,14,9877,9877,14,9968,9969,14,10084,10084,14,43052,43052,5,43713,43713,5,44285,44311,12,44733,44759,12,45181,45207,12,45629,45655,12,46077,46103,12,46525,46551,12,46973,46999,12,47421,47447,12,47869,47895,12,48317,48343,12,48765,48791,12,49213,49239,12,49661,49687,12,50109,50135,12,50557,50583,12,51005,51031,12,51453,51479,12,51901,51927,12,52349,52375,12,52797,52823,12,53245,53271,12,53693,53719,12,54141,54167,12,54589,54615,12,55037,55063,12,69506,69509,5,70191,70193,5,70841,70841,7,71463,71467,5,72330,72342,5,94031,94031,5,123628,123631,5,127763,127765,14,127941,127941,14,128043,128062,14,128302,128317,14,128465,128467,14,128539,128539,14,128640,128640,14,128662,128662,14,128703,128703,14,128745,128745,14,129004,129007,14,129329,129330,14,129402,129402,14,129483,129483,14,129686,129704,14,130048,131069,14,173,173,4,1757,1757,1,2200,2207,5,2434,2435,7,2631,2632,5,2817,2817,5,3008,3008,5,3201,3201,5,3387,3388,5,3542,3542,5,3902,3903,7,4190,4192,5,6002,6003,5,6439,6440,5,6765,6770,7,7019,7027,5,7154,7155,7,8205,8205,13,8505,8505,14,9654,9654,14,9757,9757,14,9792,9792,14,9852,9853,14,9890,9894,14,9937,9937,14,9981,9981,14,10035,10036,14,11035,11036,14,42654,42655,5,43346,43347,7,43587,43587,5,44006,44007,7,44173,44199,12,44397,44423,12,44621,44647,12,44845,44871,12,45069,45095,12,45293,45319,12,45517,45543,12,45741,45767,12,45965,45991,12,46189,46215,12,46413,46439,12,46637,46663,12,46861,46887,12,47085,47111,12,47309,47335,12,47533,47559,12,47757,47783,12,47981,48007,12,48205,48231,12,48429,48455,12,48653,48679,12,48877,48903,12,49101,49127,12,49325,49351,12,49549,49575,12,49773,49799,12,49997,50023,12,50221,50247,12,50445,50471,12,50669,50695,12,50893,50919,12,51117,51143,12,51341,51367,12,51565,51591,12,51789,51815,12,52013,52039,12,52237,52263,12,52461,52487,12,52685,52711,12,52909,52935,12,53133,53159,12,53357,53383,12,53581,53607,12,53805,53831,12,54029,54055,12,54253,54279,12,54477,54503,12,54701,54727,12,54925,54951,12,55149,55175,12,68101,68102,5,69762,69762,7,70067,70069,7,70371,70378,5,70720,70721,7,71087,71087,5,71341,71341,5,71995,71996,5,72249,72249,7,72850,72871,5,73109,73109,5,118576,118598,5,121505,121519,5,127245,127247,14,127568,127569,14,127777,127777,14,127872,127891,14,127956,127967,14,128015,128016,14,128110,128172,14,128259,128259,14,128367,128368,14,128424,128424,14,128488,128488,14,128530,128532,14,128550,128551,14,128566,128566,14,128647,128647,14,128656,128656,14,128667,128673,14,128691,128693,14,128715,128715,14,128728,128732,14,128752,128752,14,128765,128767,14,129096,129103,14,129311,129311,14,129344,129349,14,129394,129394,14,129413,129425,14,129466,129471,14,129511,129535,14,129664,129666,14,129719,129722,14,129760,129767,14,917536,917631,5,13,13,2,1160,1161,5,1564,1564,4,1807,1807,1,2085,2087,5,2307,2307,7,2382,2383,7,2497,2500,5,2563,2563,7,2677,2677,5,2763,2764,7,2879,2879,5,2914,2915,5,3021,3021,5,3142,3144,5,3263,3263,5,3285,3286,5,3398,3400,7,3530,3530,5,3633,3633,5,3864,3865,5,3974,3975,5,4155,4156,7,4229,4230,5,5909,5909,7,6078,6085,7,6277,6278,5,6451,6456,7,6744,6750,5,6846,6846,5,6972,6972,5,7074,7077,5,7146,7148,7,7222,7223,5,7416,7417,5,8234,8238,4,8417,8417,5,9000,9000,14,9203,9203,14,9730,9731,14,9748,9749,14,9762,9763,14,9776,9783,14,9800,9811,14,9831,9831,14,9872,9873,14,9882,9882,14,9900,9903,14,9929,9933,14,9941,9960,14,9974,9974,14,9989,9989,14,10006,10006,14,10062,10062,14,10160,10160,14,11647,11647,5,12953,12953,14,43019,43019,5,43232,43249,5,43443,43443,5,43567,43568,7,43696,43696,5,43765,43765,7,44013,44013,5,44117,44143,12,44229,44255,12,44341,44367,12,44453,44479,12,44565,44591,12,44677,44703,12,44789,44815,12,44901,44927,12,45013,45039,12,45125,45151,12,45237,45263,12,45349,45375,12,45461,45487,12,45573,45599,12,45685,45711,12,45797,45823,12,45909,45935,12,46021,46047,12,46133,46159,12,46245,46271,12,46357,46383,12,46469,46495,12,46581,46607,12,46693,46719,12,46805,46831,12,46917,46943,12,47029,47055,12,47141,47167,12,47253,47279,12,47365,47391,12,47477,47503,12,47589,47615,12,47701,47727,12,47813,47839,12,47925,47951,12,48037,48063,12,48149,48175,12,48261,48287,12,48373,48399,12,48485,48511,12,48597,48623,12,48709,48735,12,48821,48847,12,48933,48959,12,49045,49071,12,49157,49183,12,49269,49295,12,49381,49407,12,49493,49519,12,49605,49631,12,49717,49743,12,49829,49855,12,49941,49967,12,50053,50079,12,50165,50191,12,50277,50303,12,50389,50415,12,50501,50527,12,50613,50639,12,50725,50751,12,50837,50863,12,50949,50975,12,51061,51087,12,51173,51199,12,51285,51311,12,51397,51423,12,51509,51535,12,51621,51647,12,51733,51759,12,51845,51871,12,51957,51983,12,52069,52095,12,52181,52207,12,52293,52319,12,52405,52431,12,52517,52543,12,52629,52655,12,52741,52767,12,52853,52879,12,52965,52991,12,53077,53103,12,53189,53215,12,53301,53327,12,53413,53439,12,53525,53551,12,53637,53663,12,53749,53775,12,53861,53887,12,53973,53999,12,54085,54111,12,54197,54223,12,54309,54335,12,54421,54447,12,54533,54559,12,54645,54671,12,54757,54783,12,54869,54895,12,54981,55007,12,55093,55119,12,55243,55291,10,66045,66045,5,68325,68326,5,69688,69702,5,69817,69818,5,69957,69958,7,70089,70092,5,70198,70199,5,70462,70462,5,70502,70508,5,70750,70750,5,70846,70846,7,71100,71101,5,71230,71230,7,71351,71351,5,71737,71738,5,72000,72000,7,72160,72160,5,72273,72278,5,72752,72758,5,72882,72883,5,73031,73031,5,73461,73462,7,94192,94193,7,119149,119149,7,121403,121452,5,122915,122916,5,126980,126980,14,127358,127359,14,127535,127535,14,127759,127759,14,127771,127771,14,127792,127793,14,127825,127867,14,127897,127899,14,127945,127945,14,127985,127986,14,128000,128007,14,128021,128021,14,128066,128100,14,128184,128235,14,128249,128252,14,128266,128276,14,128335,128335,14,128379,128390,14,128407,128419,14,128444,128444,14,128481,128481,14,128499,128499,14,128526,128526,14,128536,128536,14,128543,128543,14,128556,128556,14,128564,128564,14,128577,128580,14,128643,128645,14,128649,128649,14,128654,128654,14,128660,128660,14,128664,128664,14,128675,128675,14,128686,128689,14,128695,128696,14,128705,128709,14,128717,128719,14,128725,128725,14,128736,128741,14,128747,128748,14,128755,128755,14,128762,128762,14,128981,128991,14,129009,129023,14,129160,129167,14,129296,129304,14,129320,129327,14,129340,129342,14,129356,129356,14,129388,129392,14,129399,129400,14,129404,129407,14,129432,129442,14,129454,129455,14,129473,129474,14,129485,129487,14,129648,129651,14,129659,129660,14,129671,129679,14,129709,129711,14,129728,129730,14,129751,129753,14,129776,129782,14,917505,917505,4,917760,917999,5,10,10,3,127,159,4,768,879,5,1471,1471,5,1536,1541,1,1648,1648,5,1767,1768,5,1840,1866,5,2070,2073,5,2137,2139,5,2274,2274,1,2363,2363,7,2377,2380,7,2402,2403,5,2494,2494,5,2507,2508,7,2558,2558,5,2622,2624,7,2641,2641,5,2691,2691,7,2759,2760,5,2786,2787,5,2876,2876,5,2881,2884,5,2901,2902,5,3006,3006,5,3014,3016,7,3072,3072,5,3134,3136,5,3157,3158,5,3260,3260,5,3266,3266,5,3274,3275,7,3328,3329,5,3391,3392,7,3405,3405,5,3457,3457,5,3536,3537,7,3551,3551,5,3636,3642,5,3764,3772,5,3895,3895,5,3967,3967,7,3993,4028,5,4146,4151,5,4182,4183,7,4226,4226,5,4253,4253,5,4957,4959,5,5940,5940,7,6070,6070,7,6087,6088,7,6158,6158,4,6432,6434,5,6448,6449,7,6679,6680,5,6742,6742,5,6754,6754,5,6783,6783,5,6912,6915,5,6966,6970,5,6978,6978,5,7042,7042,7,7080,7081,5,7143,7143,7,7150,7150,7,7212,7219,5,7380,7392,5,7412,7412,5,8203,8203,4,8232,8232,4,8265,8265,14,8400,8412,5,8421,8432,5,8617,8618,14,9167,9167,14,9200,9200,14,9410,9410,14,9723,9726,14,9733,9733,14,9745,9745,14,9752,9752,14,9760,9760,14,9766,9766,14,9774,9774,14,9786,9786,14,9794,9794,14,9823,9823,14,9828,9828,14,9833,9850,14,9855,9855,14,9875,9875,14,9880,9880,14,9885,9887,14,9896,9897,14,9906,9916,14,9926,9927,14,9935,9935,14,9939,9939,14,9962,9962,14,9972,9972,14,9978,9978,14,9986,9986,14,9997,9997,14,10002,10002,14,10017,10017,14,10055,10055,14,10071,10071,14,10133,10135,14,10548,10549,14,11093,11093,14,12330,12333,5,12441,12442,5,42608,42610,5,43010,43010,5,43045,43046,5,43188,43203,7,43302,43309,5,43392,43394,5,43446,43449,5,43493,43493,5,43571,43572,7,43597,43597,7,43703,43704,5,43756,43757,5,44003,44004,7,44009,44010,7,44033,44059,12,44089,44115,12,44145,44171,12,44201,44227,12,44257,44283,12,44313,44339,12,44369,44395,12,44425,44451,12,44481,44507,12,44537,44563,12,44593,44619,12,44649,44675,12,44705,44731,12,44761,44787,12,44817,44843,12,44873,44899,12,44929,44955,12,44985,45011,12,45041,45067,12,45097,45123,12,45153,45179,12,45209,45235,12,45265,45291,12,45321,45347,12,45377,45403,12,45433,45459,12,45489,45515,12,45545,45571,12,45601,45627,12,45657,45683,12,45713,45739,12,45769,45795,12,45825,45851,12,45881,45907,12,45937,45963,12,45993,46019,12,46049,46075,12,46105,46131,12,46161,46187,12,46217,46243,12,46273,46299,12,46329,46355,12,46385,46411,12,46441,46467,12,46497,46523,12,46553,46579,12,46609,46635,12,46665,46691,12,46721,46747,12,46777,46803,12,46833,46859,12,46889,46915,12,46945,46971,12,47001,47027,12,47057,47083,12,47113,47139,12,47169,47195,12,47225,47251,12,47281,47307,12,47337,47363,12,47393,47419,12,47449,47475,12,47505,47531,12,47561,47587,12,47617,47643,12,47673,47699,12,47729,47755,12,47785,47811,12,47841,47867,12,47897,47923,12,47953,47979,12,48009,48035,12,48065,48091,12,48121,48147,12,48177,48203,12,48233,48259,12,48289,48315,12,48345,48371,12,48401,48427,12,48457,48483,12,48513,48539,12,48569,48595,12,48625,48651,12,48681,48707,12,48737,48763,12,48793,48819,12,48849,48875,12,48905,48931,12,48961,48987,12,49017,49043,12,49073,49099,12,49129,49155,12,49185,49211,12,49241,49267,12,49297,49323,12,49353,49379,12,49409,49435,12,49465,49491,12,49521,49547,12,49577,49603,12,49633,49659,12,49689,49715,12,49745,49771,12,49801,49827,12,49857,49883,12,49913,49939,12,49969,49995,12,50025,50051,12,50081,50107,12,50137,50163,12,50193,50219,12,50249,50275,12,50305,50331,12,50361,50387,12,50417,50443,12,50473,50499,12,50529,50555,12,50585,50611,12,50641,50667,12,50697,50723,12,50753,50779,12,50809,50835,12,50865,50891,12,50921,50947,12,50977,51003,12,51033,51059,12,51089,51115,12,51145,51171,12,51201,51227,12,51257,51283,12,51313,51339,12,51369,51395,12,51425,51451,12,51481,51507,12,51537,51563,12,51593,51619,12,51649,51675,12,51705,51731,12,51761,51787,12,51817,51843,12,51873,51899,12,51929,51955,12,51985,52011,12,52041,52067,12,52097,52123,12,52153,52179,12,52209,52235,12,52265,52291,12,52321,52347,12,52377,52403,12,52433,52459,12,52489,52515,12,52545,52571,12,52601,52627,12,52657,52683,12,52713,52739,12,52769,52795,12,52825,52851,12,52881,52907,12,52937,52963,12,52993,53019,12,53049,53075,12,53105,53131,12,53161,53187,12,53217,53243,12,53273,53299,12,53329,53355,12,53385,53411,12,53441,53467,12,53497,53523,12,53553,53579,12,53609,53635,12,53665,53691,12,53721,53747,12,53777,53803,12,53833,53859,12,53889,53915,12,53945,53971,12,54001,54027,12,54057,54083,12,54113,54139,12,54169,54195,12,54225,54251,12,54281,54307,12,54337,54363,12,54393,54419,12,54449,54475,12,54505,54531,12,54561,54587,12,54617,54643,12,54673,54699,12,54729,54755,12,54785,54811,12,54841,54867,12,54897,54923,12,54953,54979,12,55009,55035,12,55065,55091,12,55121,55147,12,55177,55203,12,65024,65039,5,65520,65528,4,66422,66426,5,68152,68154,5,69291,69292,5,69633,69633,5,69747,69748,5,69811,69814,5,69826,69826,5,69932,69932,7,70016,70017,5,70079,70080,7,70095,70095,5,70196,70196,5,70367,70367,5,70402,70403,7,70464,70464,5,70487,70487,5,70709,70711,7,70725,70725,7,70833,70834,7,70843,70844,7,70849,70849,7,71090,71093,5,71103,71104,5,71227,71228,7,71339,71339,5,71344,71349,5,71458,71461,5,71727,71735,5,71985,71989,7,71998,71998,5,72002,72002,7,72154,72155,5,72193,72202,5,72251,72254,5,72281,72283,5,72344,72345,5,72766,72766,7,72874,72880,5,72885,72886,5,73023,73029,5,73104,73105,5,73111,73111,5,92912,92916,5,94095,94098,5,113824,113827,4,119142,119142,7,119155,119162,4,119362,119364,5,121476,121476,5,122888,122904,5,123184,123190,5,125252,125258,5,127183,127183,14,127340,127343,14,127377,127386,14,127491,127503,14,127548,127551,14,127744,127756,14,127761,127761,14,127769,127769,14,127773,127774,14,127780,127788,14,127796,127797,14,127820,127823,14,127869,127869,14,127894,127895,14,127902,127903,14,127943,127943,14,127947,127950,14,127972,127972,14,127988,127988,14,127992,127994,14,128009,128011,14,128019,128019,14,128023,128041,14,128064,128064,14,128102,128107,14,128174,128181,14,128238,128238,14,128246,128247,14,128254,128254,14,128264,128264,14,128278,128299,14,128329,128330,14,128348,128359,14,128371,128377,14,128392,128393,14,128401,128404,14,128421,128421,14,128433,128434,14,128450,128452,14,128476,128478,14,128483,128483,14,128495,128495,14,128506,128506,14,128519,128520,14,128528,128528,14,128534,128534,14,128538,128538,14,128540,128542,14,128544,128549,14,128552,128555,14,128557,128557,14,128560,128563,14,128565,128565,14,128567,128576,14,128581,128591,14,128641,128642,14,128646,128646,14,128648,128648,14,128650,128651,14,128653,128653,14,128655,128655,14,128657,128659,14,128661,128661,14,128663,128663,14,128665,128666,14,128674,128674,14,128676,128677,14,128679,128685,14,128690,128690,14,128694,128694,14,128697,128702,14,128704,128704,14,128710,128714,14,128716,128716,14,128720,128720,14,128723,128724,14,128726,128727,14,128733,128735,14,128742,128744,14,128746,128746,14,128749,128751,14,128753,128754,14,128756,128758,14,128761,128761,14,128763,128764,14,128884,128895,14,128992,129003,14,129008,129008,14,129036,129039,14,129114,129119,14,129198,129279,14,129293,129295,14,129305,129310,14,129312,129319,14,129328,129328,14,129331,129338,14,129343,129343,14,129351,129355,14,129357,129359,14,129375,129387,14,129393,129393,14,129395,129398,14,129401,129401,14,129403,129403,14,129408,129412,14,129426,129431,14,129443,129444,14,129451,129453,14,129456,129465,14,129472,129472,14,129475,129482,14,129484,129484,14,129488,129510,14,129536,129647,14,129652,129652,14,129656,129658,14,129661,129663,14,129667,129670,14,129680,129685,14,129705,129708,14,129712,129718,14,129723,129727,14,129731,129733,14,129744,129750,14,129754,129759,14,129768,129775,14,129783,129791,14,917504,917504,4,917506,917535,4,917632,917759,4,918000,921599,4,0,9,4,11,12,4,14,31,4,169,169,14,174,174,14,1155,1159,5,1425,1469,5,1473,1474,5,1479,1479,5,1552,1562,5,1611,1631,5,1750,1756,5,1759,1764,5,1770,1773,5,1809,1809,5,1958,1968,5,2045,2045,5,2075,2083,5,2089,2093,5,2192,2193,1,2250,2273,5,2275,2306,5,2362,2362,5,2364,2364,5,2369,2376,5,2381,2381,5,2385,2391,5,2433,2433,5,2492,2492,5,2495,2496,7,2503,2504,7,2509,2509,5,2530,2531,5,2561,2562,5,2620,2620,5,2625,2626,5,2635,2637,5,2672,2673,5,2689,2690,5,2748,2748,5,2753,2757,5,2761,2761,7,2765,2765,5,2810,2815,5,2818,2819,7,2878,2878,5,2880,2880,7,2887,2888,7,2893,2893,5,2903,2903,5,2946,2946,5,3007,3007,7,3009,3010,7,3018,3020,7,3031,3031,5,3073,3075,7,3132,3132,5,3137,3140,7,3146,3149,5,3170,3171,5,3202,3203,7,3262,3262,7,3264,3265,7,3267,3268,7,3271,3272,7,3276,3277,5,3298,3299,5,3330,3331,7,3390,3390,5,3393,3396,5,3402,3404,7,3406,3406,1,3426,3427,5,3458,3459,7,3535,3535,5,3538,3540,5,3544,3550,7,3570,3571,7,3635,3635,7,3655,3662,5,3763,3763,7,3784,3789,5,3893,3893,5,3897,3897,5,3953,3966,5,3968,3972,5,3981,3991,5,4038,4038,5,4145,4145,7,4153,4154,5,4157,4158,5,4184,4185,5,4209,4212,5,4228,4228,7,4237,4237,5,4352,4447,8,4520,4607,10,5906,5908,5,5938,5939,5,5970,5971,5,6068,6069,5,6071,6077,5,6086,6086,5,6089,6099,5,6155,6157,5,6159,6159,5,6313,6313,5,6435,6438,7,6441,6443,7,6450,6450,5,6457,6459,5,6681,6682,7,6741,6741,7,6743,6743,7,6752,6752,5,6757,6764,5,6771,6780,5,6832,6845,5,6847,6862,5,6916,6916,7,6965,6965,5,6971,6971,7,6973,6977,7,6979,6980,7,7040,7041,5,7073,7073,7,7078,7079,7,7082,7082,7,7142,7142,5,7144,7145,5,7149,7149,5,7151,7153,5,7204,7211,7,7220,7221,7,7376,7378,5,7393,7393,7,7405,7405,5,7415,7415,7,7616,7679,5,8204,8204,5,8206,8207,4,8233,8233,4,8252,8252,14,8288,8292,4,8294,8303,4,8413,8416,5,8418,8420,5,8482,8482,14,8596,8601,14,8986,8987,14,9096,9096,14,9193,9196,14,9199,9199,14,9201,9202,14,9208,9210,14,9642,9643,14,9664,9664,14,9728,9729,14,9732,9732,14,9735,9741,14,9743,9744,14,9746,9746,14,9750,9751,14,9753,9756,14,9758,9759,14,9761,9761,14,9764,9765,14,9767,9769,14,9771,9773,14,9775,9775,14,9784,9785,14,9787,9791,14,9793,9793,14,9795,9799,14,9812,9822,14,9824,9824,14,9827,9827,14,9829,9830,14,9832,9832,14,9851,9851,14,9854,9854,14,9856,9861,14,9874,9874,14,9876,9876,14,9878,9879,14,9881,9881,14,9883,9884,14,9888,9889,14,9895,9895,14,9898,9899,14,9904,9905,14,9917,9918,14,9924,9925,14,9928,9928,14,9934,9934,14,9936,9936,14,9938,9938,14,9940,9940,14,9961,9961,14,9963,9967,14,9970,9971,14,9973,9973,14,9975,9977,14,9979,9980,14,9982,9985,14,9987,9988,14,9992,9996,14,9998,9998,14,10000,10001,14,10004,10004,14,10013,10013,14,10024,10024,14,10052,10052,14,10060,10060,14,10067,10069,14,10083,10083,14,10085,10087,14,10145,10145,14,10175,10175,14,11013,11015,14,11088,11088,14,11503,11505,5,11744,11775,5,12334,12335,5,12349,12349,14,12951,12951,14,42607,42607,5,42612,42621,5,42736,42737,5,43014,43014,5,43043,43044,7,43047,43047,7,43136,43137,7,43204,43205,5,43263,43263,5,43335,43345,5,43360,43388,8,43395,43395,7,43444,43445,7,43450,43451,7,43454,43456,7,43561,43566,5,43569,43570,5,43573,43574,5,43596,43596,5,43644,43644,5,43698,43700,5,43710,43711,5,43755,43755,7,43758,43759,7,43766,43766,5,44005,44005,5,44008,44008,5,44012,44012,7,44032,44032,11,44060,44060,11,44088,44088,11,44116,44116,11,44144,44144,11,44172,44172,11,44200,44200,11,44228,44228,11,44256,44256,11,44284,44284,11,44312,44312,11,44340,44340,11,44368,44368,11,44396,44396,11,44424,44424,11,44452,44452,11,44480,44480,11,44508,44508,11,44536,44536,11,44564,44564,11,44592,44592,11,44620,44620,11,44648,44648,11,44676,44676,11,44704,44704,11,44732,44732,11,44760,44760,11,44788,44788,11,44816,44816,11,44844,44844,11,44872,44872,11,44900,44900,11,44928,44928,11,44956,44956,11,44984,44984,11,45012,45012,11,45040,45040,11,45068,45068,11,45096,45096,11,45124,45124,11,45152,45152,11,45180,45180,11,45208,45208,11,45236,45236,11,45264,45264,11,45292,45292,11,45320,45320,11,45348,45348,11,45376,45376,11,45404,45404,11,45432,45432,11,45460,45460,11,45488,45488,11,45516,45516,11,45544,45544,11,45572,45572,11,45600,45600,11,45628,45628,11,45656,45656,11,45684,45684,11,45712,45712,11,45740,45740,11,45768,45768,11,45796,45796,11,45824,45824,11,45852,45852,11,45880,45880,11,45908,45908,11,45936,45936,11,45964,45964,11,45992,45992,11,46020,46020,11,46048,46048,11,46076,46076,11,46104,46104,11,46132,46132,11,46160,46160,11,46188,46188,11,46216,46216,11,46244,46244,11,46272,46272,11,46300,46300,11,46328,46328,11,46356,46356,11,46384,46384,11,46412,46412,11,46440,46440,11,46468,46468,11,46496,46496,11,46524,46524,11,46552,46552,11,46580,46580,11,46608,46608,11,46636,46636,11,46664,46664,11,46692,46692,11,46720,46720,11,46748,46748,11,46776,46776,11,46804,46804,11,46832,46832,11,46860,46860,11,46888,46888,11,46916,46916,11,46944,46944,11,46972,46972,11,47000,47000,11,47028,47028,11,47056,47056,11,47084,47084,11,47112,47112,11,47140,47140,11,47168,47168,11,47196,47196,11,47224,47224,11,47252,47252,11,47280,47280,11,47308,47308,11,47336,47336,11,47364,47364,11,47392,47392,11,47420,47420,11,47448,47448,11,47476,47476,11,47504,47504,11,47532,47532,11,47560,47560,11,47588,47588,11,47616,47616,11,47644,47644,11,47672,47672,11,47700,47700,11,47728,47728,11,47756,47756,11,47784,47784,11,47812,47812,11,47840,47840,11,47868,47868,11,47896,47896,11,47924,47924,11,47952,47952,11,47980,47980,11,48008,48008,11,48036,48036,11,48064,48064,11,48092,48092,11,48120,48120,11,48148,48148,11,48176,48176,11,48204,48204,11,48232,48232,11,48260,48260,11,48288,48288,11,48316,48316,11,48344,48344,11,48372,48372,11,48400,48400,11,48428,48428,11,48456,48456,11,48484,48484,11,48512,48512,11,48540,48540,11,48568,48568,11,48596,48596,11,48624,48624,11,48652,48652,11,48680,48680,11,48708,48708,11,48736,48736,11,48764,48764,11,48792,48792,11,48820,48820,11,48848,48848,11,48876,48876,11,48904,48904,11,48932,48932,11,48960,48960,11,48988,48988,11,49016,49016,11,49044,49044,11,49072,49072,11,49100,49100,11,49128,49128,11,49156,49156,11,49184,49184,11,49212,49212,11,49240,49240,11,49268,49268,11,49296,49296,11,49324,49324,11,49352,49352,11,49380,49380,11,49408,49408,11,49436,49436,11,49464,49464,11,49492,49492,11,49520,49520,11,49548,49548,11,49576,49576,11,49604,49604,11,49632,49632,11,49660,49660,11,49688,49688,11,49716,49716,11,49744,49744,11,49772,49772,11,49800,49800,11,49828,49828,11,49856,49856,11,49884,49884,11,49912,49912,11,49940,49940,11,49968,49968,11,49996,49996,11,50024,50024,11,50052,50052,11,50080,50080,11,50108,50108,11,50136,50136,11,50164,50164,11,50192,50192,11,50220,50220,11,50248,50248,11,50276,50276,11,50304,50304,11,50332,50332,11,50360,50360,11,50388,50388,11,50416,50416,11,50444,50444,11,50472,50472,11,50500,50500,11,50528,50528,11,50556,50556,11,50584,50584,11,50612,50612,11,50640,50640,11,50668,50668,11,50696,50696,11,50724,50724,11,50752,50752,11,50780,50780,11,50808,50808,11,50836,50836,11,50864,50864,11,50892,50892,11,50920,50920,11,50948,50948,11,50976,50976,11,51004,51004,11,51032,51032,11,51060,51060,11,51088,51088,11,51116,51116,11,51144,51144,11,51172,51172,11,51200,51200,11,51228,51228,11,51256,51256,11,51284,51284,11,51312,51312,11,51340,51340,11,51368,51368,11,51396,51396,11,51424,51424,11,51452,51452,11,51480,51480,11,51508,51508,11,51536,51536,11,51564,51564,11,51592,51592,11,51620,51620,11,51648,51648,11,51676,51676,11,51704,51704,11,51732,51732,11,51760,51760,11,51788,51788,11,51816,51816,11,51844,51844,11,51872,51872,11,51900,51900,11,51928,51928,11,51956,51956,11,51984,51984,11,52012,52012,11,52040,52040,11,52068,52068,11,52096,52096,11,52124,52124,11,52152,52152,11,52180,52180,11,52208,52208,11,52236,52236,11,52264,52264,11,52292,52292,11,52320,52320,11,52348,52348,11,52376,52376,11,52404,52404,11,52432,52432,11,52460,52460,11,52488,52488,11,52516,52516,11,52544,52544,11,52572,52572,11,52600,52600,11,52628,52628,11,52656,52656,11,52684,52684,11,52712,52712,11,52740,52740,11,52768,52768,11,52796,52796,11,52824,52824,11,52852,52852,11,52880,52880,11,52908,52908,11,52936,52936,11,52964,52964,11,52992,52992,11,53020,53020,11,53048,53048,11,53076,53076,11,53104,53104,11,53132,53132,11,53160,53160,11,53188,53188,11,53216,53216,11,53244,53244,11,53272,53272,11,53300,53300,11,53328,53328,11,53356,53356,11,53384,53384,11,53412,53412,11,53440,53440,11,53468,53468,11,53496,53496,11,53524,53524,11,53552,53552,11,53580,53580,11,53608,53608,11,53636,53636,11,53664,53664,11,53692,53692,11,53720,53720,11,53748,53748,11,53776,53776,11,53804,53804,11,53832,53832,11,53860,53860,11,53888,53888,11,53916,53916,11,53944,53944,11,53972,53972,11,54000,54000,11,54028,54028,11,54056,54056,11,54084,54084,11,54112,54112,11,54140,54140,11,54168,54168,11,54196,54196,11,54224,54224,11,54252,54252,11,54280,54280,11,54308,54308,11,54336,54336,11,54364,54364,11,54392,54392,11,54420,54420,11,54448,54448,11,54476,54476,11,54504,54504,11,54532,54532,11,54560,54560,11,54588,54588,11,54616,54616,11,54644,54644,11,54672,54672,11,54700,54700,11,54728,54728,11,54756,54756,11,54784,54784,11,54812,54812,11,54840,54840,11,54868,54868,11,54896,54896,11,54924,54924,11,54952,54952,11,54980,54980,11,55008,55008,11,55036,55036,11,55064,55064,11,55092,55092,11,55120,55120,11,55148,55148,11,55176,55176,11,55216,55238,9,64286,64286,5,65056,65071,5,65438,65439,5,65529,65531,4,66272,66272,5,68097,68099,5,68108,68111,5,68159,68159,5,68900,68903,5,69446,69456,5,69632,69632,7,69634,69634,7,69744,69744,5,69759,69761,5,69808,69810,7,69815,69816,7,69821,69821,1,69837,69837,1,69927,69931,5,69933,69940,5,70003,70003,5,70018,70018,7,70070,70078,5,70082,70083,1,70094,70094,7,70188,70190,7,70194,70195,7,70197,70197,7,70206,70206,5,70368,70370,7,70400,70401,5,70459,70460,5,70463,70463,7,70465,70468,7,70475,70477,7,70498,70499,7,70512,70516,5,70712,70719,5,70722,70724,5,70726,70726,5,70832,70832,5,70835,70840,5,70842,70842,5,70845,70845,5,70847,70848,5,70850,70851,5,71088,71089,7,71096,71099,7,71102,71102,7,71132,71133,5,71219,71226,5,71229,71229,5,71231,71232,5,71340,71340,7,71342,71343,7,71350,71350,7,71453,71455,5,71462,71462,7,71724,71726,7,71736,71736,7,71984,71984,5,71991,71992,7,71997,71997,7,71999,71999,1,72001,72001,1,72003,72003,5,72148,72151,5,72156,72159,7,72164,72164,7,72243,72248,5,72250,72250,1,72263,72263,5,72279,72280,7,72324,72329,1,72343,72343,7,72751,72751,7,72760,72765,5,72767,72767,5,72873,72873,7,72881,72881,7,72884,72884,7,73009,73014,5,73020,73021,5,73030,73030,1,73098,73102,7,73107,73108,7,73110,73110,7,73459,73460,5,78896,78904,4,92976,92982,5,94033,94087,7,94180,94180,5,113821,113822,5,118528,118573,5,119141,119141,5,119143,119145,5,119150,119154,5,119163,119170,5,119210,119213,5,121344,121398,5,121461,121461,5,121499,121503,5,122880,122886,5,122907,122913,5,122918,122922,5,123566,123566,5,125136,125142,5,126976,126979,14,126981,127182,14,127184,127231,14,127279,127279,14,127344,127345,14,127374,127374,14,127405,127461,14,127489,127490,14,127514,127514,14,127538,127546,14,127561,127567,14,127570,127743,14,127757,127758,14,127760,127760,14,127762,127762,14,127766,127768,14,127770,127770,14,127772,127772,14,127775,127776,14,127778,127779,14,127789,127791,14,127794,127795,14,127798,127798,14,127819,127819,14,127824,127824,14,127868,127868,14,127870,127871,14,127892,127893,14,127896,127896,14,127900,127901,14,127904,127940,14,127942,127942,14,127944,127944,14,127946,127946,14,127951,127955,14,127968,127971,14,127973,127984,14,127987,127987,14,127989,127989,14,127991,127991,14,127995,127999,5,128008,128008,14,128012,128014,14,128017,128018,14,128020,128020,14,128022,128022,14,128042,128042,14,128063,128063,14,128065,128065,14,128101,128101,14,128108,128109,14,128173,128173,14,128182,128183,14,128236,128237,14,128239,128239,14,128245,128245,14,128248,128248,14,128253,128253,14,128255,128258,14,128260,128263,14,128265,128265,14,128277,128277,14,128300,128301,14,128326,128328,14,128331,128334,14,128336,128347,14,128360,128366,14,128369,128370,14,128378,128378,14,128391,128391,14,128394,128397,14,128400,128400,14,128405,128406,14,128420,128420,14,128422,128423,14,128425,128432,14,128435,128443,14,128445,128449,14,128453,128464,14,128468,128475,14,128479,128480,14,128482,128482,14,128484,128487,14,128489,128494,14,128496,128498,14,128500,128505,14,128507,128511,14,128513,128518,14,128521,128525,14,128527,128527,14,128529,128529,14,128533,128533,14,128535,128535,14,128537,128537,14]");
+}
+__name(getGraphemeBreakRawData, "getGraphemeBreakRawData");
+function getLeftDeleteOffset(offset, str) {
+  if (offset === 0) {
+    return 0;
+  }
+  const emojiOffset = getOffsetBeforeLastEmojiComponent(offset, str);
+  if (emojiOffset !== void 0) {
+    return emojiOffset;
+  }
+  const iterator = new CodePointIterator(str, offset);
+  iterator.prevCodePoint();
+  return iterator.offset;
+}
+__name(getLeftDeleteOffset, "getLeftDeleteOffset");
+function getOffsetBeforeLastEmojiComponent(initialOffset, str) {
+  const iterator = new CodePointIterator(str, initialOffset);
+  let codePoint = iterator.prevCodePoint();
+  while (isEmojiModifier(codePoint) || codePoint === 65039 || codePoint === 8419) {
+    if (iterator.offset === 0) {
+      return void 0;
+    }
+    codePoint = iterator.prevCodePoint();
+  }
+  if (!isEmojiImprecise(codePoint)) {
+    return void 0;
+  }
+  let resultOffset = iterator.offset;
+  if (resultOffset > 0) {
+    const optionalZwjCodePoint = iterator.prevCodePoint();
+    if (optionalZwjCodePoint === 8205) {
+      resultOffset = iterator.offset;
+    }
+  }
+  return resultOffset;
+}
+__name(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
+function isEmojiModifier(codePoint) {
+  return 127995 <= codePoint && codePoint <= 127999;
+}
+__name(isEmojiModifier, "isEmojiModifier");
+function toBinary(str) {
+  const codeUnits = new Uint16Array(str.length);
+  for (let i = 0; i < codeUnits.length; i++) {
+    codeUnits[i] = str.charCodeAt(i);
+  }
+  let binary = "";
+  const uint8array = new Uint8Array(codeUnits.buffer);
+  for (let i = 0; i < uint8array.length; i++) {
+    binary += String.fromCharCode(uint8array[i]);
+  }
+  return binary;
+}
+__name(toBinary, "toBinary");
+function multibyteAwareBtoa(str) {
+  return btoa(toBinary(str));
+}
+__name(multibyteAwareBtoa, "multibyteAwareBtoa");
+__name21(isFalsyOrWhitespace, "isFalsyOrWhitespace");
+var _formatRegexp = /{(\d+)}/g;
+__name21(format2, "format");
+var _format2Regexp = /{([^}]+)}/g;
+__name21(format22, "format2");
+__name21(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
+__name21(escape, "escape");
+__name21(escapeRegExpCharacters, "escapeRegExpCharacters");
+__name21(count, "count");
+__name21(truncate, "truncate");
+__name21(truncateMiddle, "truncateMiddle");
+__name21(trim, "trim");
+__name21(ltrim, "ltrim");
+__name21(rtrim, "rtrim");
+__name21(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
+__name21(createRegExp, "createRegExp");
+__name21(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
+__name21(joinStrings, "joinStrings");
+__name21(splitLines, "splitLines");
+__name21(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
+__name21(indexOfPattern, "indexOfPattern");
+__name21(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
+__name21(getLeadingWhitespace, "getLeadingWhitespace");
+__name21(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
+__name21(getIndentationLength, "getIndentationLength");
+__name21(replaceAsync, "replaceAsync");
+__name21(compare, "compare");
+__name21(compareSubstring, "compareSubstring");
+__name21(compareIgnoreCase, "compareIgnoreCase");
+__name21(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
+__name21(isAsciiDigit, "isAsciiDigit");
+__name21(isLowerAsciiLetter, "isLowerAsciiLetter");
+__name21(isUpperAsciiLetter, "isUpperAsciiLetter");
+__name21(equalsIgnoreCase, "equalsIgnoreCase");
+__name21(equals2, "equals");
+__name21(startsWithIgnoreCase, "startsWithIgnoreCase");
+__name21(endsWithIgnoreCase, "endsWithIgnoreCase");
+__name21(commonPrefixLength2, "commonPrefixLength");
+__name21(commonSuffixLength, "commonSuffixLength");
+__name21(isHighSurrogate, "isHighSurrogate");
+__name21(isLowSurrogate, "isLowSurrogate");
+__name21(computeCodePoint, "computeCodePoint");
+__name21(getNextCodePoint, "getNextCodePoint");
 __name21(getPrevCodePoint, "getPrevCodePoint");
 var CodePointIterator = class {
   static {
@@ -7350,125 +7650,20 @@ var GraphemeIterator = class {
     return this._iterator.eol();
   }
 };
-function nextCharLength(str, initialOffset) {
-  const iterator = new GraphemeIterator(str, initialOffset);
-  return iterator.nextGraphemeLength();
-}
-__name(nextCharLength, "nextCharLength");
 __name21(nextCharLength, "nextCharLength");
-function prevCharLength(str, initialOffset) {
-  const iterator = new GraphemeIterator(str, initialOffset);
-  return iterator.prevGraphemeLength();
-}
-__name(prevCharLength, "prevCharLength");
 __name21(prevCharLength, "prevCharLength");
-function getCharContainingOffset(str, offset) {
-  if (offset > 0 && isLowSurrogate(str.charCodeAt(offset))) {
-    offset--;
-  }
-  const endOffset = offset + nextCharLength(str, offset);
-  const startOffset = endOffset - prevCharLength(str, endOffset);
-  return [startOffset, endOffset];
-}
-__name(getCharContainingOffset, "getCharContainingOffset");
 __name21(getCharContainingOffset, "getCharContainingOffset");
-function charCount(str) {
-  const iterator = new GraphemeIterator(str);
-  let length = 0;
-  while (!iterator.eol()) {
-    length++;
-    iterator.nextGraphemeLength();
-  }
-  return length;
-}
-__name(charCount, "charCount");
 __name21(charCount, "charCount");
 var CONTAINS_RTL = void 0;
-function makeContainsRtl() {
-  return /(?:[\u05BE\u05C0\u05C3\u05C6\u05D0-\u05F4\u0608\u060B\u060D\u061B-\u064A\u066D-\u066F\u0671-\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u0710\u0712-\u072F\u074D-\u07A5\u07B1-\u07EA\u07F4\u07F5\u07FA\u07FE-\u0815\u081A\u0824\u0828\u0830-\u0858\u085E-\u088E\u08A0-\u08C9\u200F\uFB1D\uFB1F-\uFB28\uFB2A-\uFD3D\uFD50-\uFDC7\uFDF0-\uFDFC\uFE70-\uFEFC]|\uD802[\uDC00-\uDD1B\uDD20-\uDE00\uDE10-\uDE35\uDE40-\uDEE4\uDEEB-\uDF35\uDF40-\uDFFF]|\uD803[\uDC00-\uDD23\uDE80-\uDEA9\uDEAD-\uDF45\uDF51-\uDF81\uDF86-\uDFF6]|\uD83A[\uDC00-\uDCCF\uDD00-\uDD43\uDD4B-\uDFFF]|\uD83B[\uDC00-\uDEBB])/;
-}
-__name(makeContainsRtl, "makeContainsRtl");
 __name21(makeContainsRtl, "makeContainsRtl");
-function containsRTL(str) {
-  if (!CONTAINS_RTL) {
-    CONTAINS_RTL = makeContainsRtl();
-  }
-  return CONTAINS_RTL.test(str);
-}
-__name(containsRTL, "containsRTL");
 __name21(containsRTL, "containsRTL");
 var IS_BASIC_ASCII = /^[\t\n\r\x20-\x7E]*$/;
-function isBasicASCII(str) {
-  return IS_BASIC_ASCII.test(str);
-}
-__name(isBasicASCII, "isBasicASCII");
 __name21(isBasicASCII, "isBasicASCII");
 var UNUSUAL_LINE_TERMINATORS = /[\u2028\u2029]/;
-function containsUnusualLineTerminators(str) {
-  return UNUSUAL_LINE_TERMINATORS.test(str);
-}
-__name(containsUnusualLineTerminators, "containsUnusualLineTerminators");
 __name21(containsUnusualLineTerminators, "containsUnusualLineTerminators");
-function isFullWidthCharacter(charCode) {
-  return charCode >= 11904 && charCode <= 55215 || charCode >= 63744 && charCode <= 64255 || charCode >= 65281 && charCode <= 65374 || charCode >= 65504 && charCode <= 65510;
-}
-__name(isFullWidthCharacter, "isFullWidthCharacter");
 __name21(isFullWidthCharacter, "isFullWidthCharacter");
-function isEmojiImprecise(x) {
-  return x >= 127462 && x <= 127487 || x === 8986 || x === 8987 || x === 9200 || x === 9203 || x >= 9728 && x <= 10175 || x === 11088 || x === 11093 || x >= 127744 && x <= 128591 || x >= 128640 && x <= 128764 || x >= 128992 && x <= 129008 || x >= 129280 && x <= 129535 || x >= 129648 && x <= 129782;
-}
-__name(isEmojiImprecise, "isEmojiImprecise");
 __name21(isEmojiImprecise, "isEmojiImprecise");
-function lcut(text, n, prefix = "") {
-  const trimmed = text.trimStart();
-  if (trimmed.length < n) {
-    return trimmed;
-  }
-  const re = /\b/g;
-  let i = 0;
-  while (re.test(trimmed)) {
-    if (trimmed.length - re.lastIndex < n) {
-      break;
-    }
-    i = re.lastIndex;
-    re.lastIndex += 1;
-  }
-  if (i === 0) {
-    return trimmed;
-  }
-  return prefix + trimmed.substring(i).trimStart();
-}
-__name(lcut, "lcut");
 __name21(lcut, "lcut");
-function rcut(text, n, suffix = "") {
-  const trimmed = text.trimEnd();
-  if (trimmed.length <= n) {
-    return trimmed;
-  }
-  const re = /\b/g;
-  let lastGoodBreak = 0;
-  let foundBoundaryAfterN = false;
-  while (re.test(trimmed)) {
-    if (re.lastIndex > n) {
-      foundBoundaryAfterN = true;
-      break;
-    }
-    lastGoodBreak = re.lastIndex;
-    re.lastIndex += 1;
-  }
-  if (!foundBoundaryAfterN) {
-    return trimmed;
-  }
-  if (lastGoodBreak === 0) {
-    return suffix;
-  }
-  const result = trimmed.substring(0, lastGoodBreak).trimEnd();
-  if (result.length < lastGoodBreak / 2) {
-    return trimmed;
-  }
-  return result + suffix;
-}
-__name(rcut, "rcut");
 __name21(rcut, "rcut");
 var CSI_SEQUENCE = /(?:\x1b\[|\x9b)[=?>!]?[\d;:]*["$#'* ]?[a-zA-Z@^`{}|~]/;
 var OSC_SEQUENCE = /(?:\x1b\]|\x9d).*?(?:\x1b\\|\x07|\x9c)/;
@@ -7493,156 +7688,21 @@ function* forAnsiStringParts(str) {
 }
 __name(forAnsiStringParts, "forAnsiStringParts");
 __name21(forAnsiStringParts, "forAnsiStringParts");
-function removeAnsiEscapeCodes(str) {
-  if (str) {
-    str = str.replace(CONTROL_SEQUENCES, "");
-  }
-  return str;
-}
-__name(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
 __name21(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
 var PROMPT_NON_PRINTABLE = /\\\[.*?\\\]/g;
-function removeAnsiEscapeCodesFromPrompt(str) {
-  return removeAnsiEscapeCodes(str).replace(PROMPT_NON_PRINTABLE, "");
-}
-__name(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
 __name21(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
 var UTF8_BOM_CHARACTER = String.fromCharCode(
   65279
   /* CharCode.UTF8_BOM */
 );
-function startsWithUTF8BOM(str) {
-  return !!(str && str.length > 0 && str.charCodeAt(0) === 65279);
-}
-__name(startsWithUTF8BOM, "startsWithUTF8BOM");
 __name21(startsWithUTF8BOM, "startsWithUTF8BOM");
-function stripUTF8BOM(str) {
-  return startsWithUTF8BOM(str) ? str.substr(1) : str;
-}
-__name(stripUTF8BOM, "stripUTF8BOM");
 __name21(stripUTF8BOM, "stripUTF8BOM");
-function fuzzyContains(target, query) {
-  if (!target || !query) {
-    return false;
-  }
-  if (target.length < query.length) {
-    return false;
-  }
-  const queryLen = query.length;
-  const targetLower = target.toLowerCase();
-  let index2 = 0;
-  let lastIndexOf = -1;
-  while (index2 < queryLen) {
-    const indexOf = targetLower.indexOf(query[index2], lastIndexOf + 1);
-    if (indexOf < 0) {
-      return false;
-    }
-    lastIndexOf = indexOf;
-    index2++;
-  }
-  return true;
-}
-__name(fuzzyContains, "fuzzyContains");
 __name21(fuzzyContains, "fuzzyContains");
-function containsUppercaseCharacter(target, ignoreEscapedChars = false) {
-  if (!target) {
-    return false;
-  }
-  if (ignoreEscapedChars) {
-    target = target.replace(/\\./g, "");
-  }
-  return target.toLowerCase() !== target;
-}
-__name(containsUppercaseCharacter, "containsUppercaseCharacter");
 __name21(containsUppercaseCharacter, "containsUppercaseCharacter");
-function uppercaseFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-__name(uppercaseFirstLetter, "uppercaseFirstLetter");
 __name21(uppercaseFirstLetter, "uppercaseFirstLetter");
-function getNLines(str, n = 1) {
-  if (n === 0) {
-    return "";
-  }
-  let idx = -1;
-  do {
-    idx = str.indexOf("\n", idx + 1);
-    n--;
-  } while (n > 0 && idx >= 0);
-  if (idx === -1) {
-    return str;
-  }
-  if (str[idx - 1] === "\r") {
-    idx--;
-  }
-  return str.substr(0, idx);
-}
-__name(getNLines, "getNLines");
 __name21(getNLines, "getNLines");
-function singleLetterHash(n) {
-  const LETTERS_CNT = 90 - 65 + 1;
-  n = n % (2 * LETTERS_CNT);
-  if (n < LETTERS_CNT) {
-    return String.fromCharCode(97 + n);
-  }
-  return String.fromCharCode(65 + n - LETTERS_CNT);
-}
-__name(singleLetterHash, "singleLetterHash");
 __name21(singleLetterHash, "singleLetterHash");
-function getGraphemeBreakType(codePoint) {
-  const graphemeBreakTree = GraphemeBreakTree.getInstance();
-  return graphemeBreakTree.getGraphemeBreakType(codePoint);
-}
-__name(getGraphemeBreakType, "getGraphemeBreakType");
 __name21(getGraphemeBreakType, "getGraphemeBreakType");
-function breakBetweenGraphemeBreakType(breakTypeA, breakTypeB) {
-  if (breakTypeA === 0) {
-    return breakTypeB !== 5 && breakTypeB !== 7;
-  }
-  if (breakTypeA === 2) {
-    if (breakTypeB === 3) {
-      return false;
-    }
-  }
-  if (breakTypeA === 4 || breakTypeA === 2 || breakTypeA === 3) {
-    return true;
-  }
-  if (breakTypeB === 4 || breakTypeB === 2 || breakTypeB === 3) {
-    return true;
-  }
-  if (breakTypeA === 8) {
-    if (breakTypeB === 8 || breakTypeB === 9 || breakTypeB === 11 || breakTypeB === 12) {
-      return false;
-    }
-  }
-  if (breakTypeA === 11 || breakTypeA === 9) {
-    if (breakTypeB === 9 || breakTypeB === 10) {
-      return false;
-    }
-  }
-  if (breakTypeA === 12 || breakTypeA === 10) {
-    if (breakTypeB === 10) {
-      return false;
-    }
-  }
-  if (breakTypeB === 5 || breakTypeB === 13) {
-    return false;
-  }
-  if (breakTypeB === 7) {
-    return false;
-  }
-  if (breakTypeA === 1) {
-    return false;
-  }
-  if (breakTypeA === 13 && breakTypeB === 14) {
-    return false;
-  }
-  if (breakTypeA === 6 && breakTypeB === 6) {
-    return false;
-  }
-  return true;
-}
-__name(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
 __name21(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
 var GraphemeBreakType;
 (function(GraphemeBreakType2) {
@@ -7709,52 +7769,9 @@ var GraphemeBreakTree = class _GraphemeBreakTree {
     return 0;
   }
 };
-function getGraphemeBreakRawData() {
-  return JSON.parse("[0,0,0,51229,51255,12,44061,44087,12,127462,127487,6,7083,7085,5,47645,47671,12,54813,54839,12,128678,128678,14,3270,3270,5,9919,9923,14,45853,45879,12,49437,49463,12,53021,53047,12,71216,71218,7,128398,128399,14,129360,129374,14,2519,2519,5,4448,4519,9,9742,9742,14,12336,12336,14,44957,44983,12,46749,46775,12,48541,48567,12,50333,50359,12,52125,52151,12,53917,53943,12,69888,69890,5,73018,73018,5,127990,127990,14,128558,128559,14,128759,128760,14,129653,129655,14,2027,2035,5,2891,2892,7,3761,3761,5,6683,6683,5,8293,8293,4,9825,9826,14,9999,9999,14,43452,43453,5,44509,44535,12,45405,45431,12,46301,46327,12,47197,47223,12,48093,48119,12,48989,49015,12,49885,49911,12,50781,50807,12,51677,51703,12,52573,52599,12,53469,53495,12,54365,54391,12,65279,65279,4,70471,70472,7,72145,72147,7,119173,119179,5,127799,127818,14,128240,128244,14,128512,128512,14,128652,128652,14,128721,128722,14,129292,129292,14,129445,129450,14,129734,129743,14,1476,1477,5,2366,2368,7,2750,2752,7,3076,3076,5,3415,3415,5,4141,4144,5,6109,6109,5,6964,6964,5,7394,7400,5,9197,9198,14,9770,9770,14,9877,9877,14,9968,9969,14,10084,10084,14,43052,43052,5,43713,43713,5,44285,44311,12,44733,44759,12,45181,45207,12,45629,45655,12,46077,46103,12,46525,46551,12,46973,46999,12,47421,47447,12,47869,47895,12,48317,48343,12,48765,48791,12,49213,49239,12,49661,49687,12,50109,50135,12,50557,50583,12,51005,51031,12,51453,51479,12,51901,51927,12,52349,52375,12,52797,52823,12,53245,53271,12,53693,53719,12,54141,54167,12,54589,54615,12,55037,55063,12,69506,69509,5,70191,70193,5,70841,70841,7,71463,71467,5,72330,72342,5,94031,94031,5,123628,123631,5,127763,127765,14,127941,127941,14,128043,128062,14,128302,128317,14,128465,128467,14,128539,128539,14,128640,128640,14,128662,128662,14,128703,128703,14,128745,128745,14,129004,129007,14,129329,129330,14,129402,129402,14,129483,129483,14,129686,129704,14,130048,131069,14,173,173,4,1757,1757,1,2200,2207,5,2434,2435,7,2631,2632,5,2817,2817,5,3008,3008,5,3201,3201,5,3387,3388,5,3542,3542,5,3902,3903,7,4190,4192,5,6002,6003,5,6439,6440,5,6765,6770,7,7019,7027,5,7154,7155,7,8205,8205,13,8505,8505,14,9654,9654,14,9757,9757,14,9792,9792,14,9852,9853,14,9890,9894,14,9937,9937,14,9981,9981,14,10035,10036,14,11035,11036,14,42654,42655,5,43346,43347,7,43587,43587,5,44006,44007,7,44173,44199,12,44397,44423,12,44621,44647,12,44845,44871,12,45069,45095,12,45293,45319,12,45517,45543,12,45741,45767,12,45965,45991,12,46189,46215,12,46413,46439,12,46637,46663,12,46861,46887,12,47085,47111,12,47309,47335,12,47533,47559,12,47757,47783,12,47981,48007,12,48205,48231,12,48429,48455,12,48653,48679,12,48877,48903,12,49101,49127,12,49325,49351,12,49549,49575,12,49773,49799,12,49997,50023,12,50221,50247,12,50445,50471,12,50669,50695,12,50893,50919,12,51117,51143,12,51341,51367,12,51565,51591,12,51789,51815,12,52013,52039,12,52237,52263,12,52461,52487,12,52685,52711,12,52909,52935,12,53133,53159,12,53357,53383,12,53581,53607,12,53805,53831,12,54029,54055,12,54253,54279,12,54477,54503,12,54701,54727,12,54925,54951,12,55149,55175,12,68101,68102,5,69762,69762,7,70067,70069,7,70371,70378,5,70720,70721,7,71087,71087,5,71341,71341,5,71995,71996,5,72249,72249,7,72850,72871,5,73109,73109,5,118576,118598,5,121505,121519,5,127245,127247,14,127568,127569,14,127777,127777,14,127872,127891,14,127956,127967,14,128015,128016,14,128110,128172,14,128259,128259,14,128367,128368,14,128424,128424,14,128488,128488,14,128530,128532,14,128550,128551,14,128566,128566,14,128647,128647,14,128656,128656,14,128667,128673,14,128691,128693,14,128715,128715,14,128728,128732,14,128752,128752,14,128765,128767,14,129096,129103,14,129311,129311,14,129344,129349,14,129394,129394,14,129413,129425,14,129466,129471,14,129511,129535,14,129664,129666,14,129719,129722,14,129760,129767,14,917536,917631,5,13,13,2,1160,1161,5,1564,1564,4,1807,1807,1,2085,2087,5,2307,2307,7,2382,2383,7,2497,2500,5,2563,2563,7,2677,2677,5,2763,2764,7,2879,2879,5,2914,2915,5,3021,3021,5,3142,3144,5,3263,3263,5,3285,3286,5,3398,3400,7,3530,3530,5,3633,3633,5,3864,3865,5,3974,3975,5,4155,4156,7,4229,4230,5,5909,5909,7,6078,6085,7,6277,6278,5,6451,6456,7,6744,6750,5,6846,6846,5,6972,6972,5,7074,7077,5,7146,7148,7,7222,7223,5,7416,7417,5,8234,8238,4,8417,8417,5,9000,9000,14,9203,9203,14,9730,9731,14,9748,9749,14,9762,9763,14,9776,9783,14,9800,9811,14,9831,9831,14,9872,9873,14,9882,9882,14,9900,9903,14,9929,9933,14,9941,9960,14,9974,9974,14,9989,9989,14,10006,10006,14,10062,10062,14,10160,10160,14,11647,11647,5,12953,12953,14,43019,43019,5,43232,43249,5,43443,43443,5,43567,43568,7,43696,43696,5,43765,43765,7,44013,44013,5,44117,44143,12,44229,44255,12,44341,44367,12,44453,44479,12,44565,44591,12,44677,44703,12,44789,44815,12,44901,44927,12,45013,45039,12,45125,45151,12,45237,45263,12,45349,45375,12,45461,45487,12,45573,45599,12,45685,45711,12,45797,45823,12,45909,45935,12,46021,46047,12,46133,46159,12,46245,46271,12,46357,46383,12,46469,46495,12,46581,46607,12,46693,46719,12,46805,46831,12,46917,46943,12,47029,47055,12,47141,47167,12,47253,47279,12,47365,47391,12,47477,47503,12,47589,47615,12,47701,47727,12,47813,47839,12,47925,47951,12,48037,48063,12,48149,48175,12,48261,48287,12,48373,48399,12,48485,48511,12,48597,48623,12,48709,48735,12,48821,48847,12,48933,48959,12,49045,49071,12,49157,49183,12,49269,49295,12,49381,49407,12,49493,49519,12,49605,49631,12,49717,49743,12,49829,49855,12,49941,49967,12,50053,50079,12,50165,50191,12,50277,50303,12,50389,50415,12,50501,50527,12,50613,50639,12,50725,50751,12,50837,50863,12,50949,50975,12,51061,51087,12,51173,51199,12,51285,51311,12,51397,51423,12,51509,51535,12,51621,51647,12,51733,51759,12,51845,51871,12,51957,51983,12,52069,52095,12,52181,52207,12,52293,52319,12,52405,52431,12,52517,52543,12,52629,52655,12,52741,52767,12,52853,52879,12,52965,52991,12,53077,53103,12,53189,53215,12,53301,53327,12,53413,53439,12,53525,53551,12,53637,53663,12,53749,53775,12,53861,53887,12,53973,53999,12,54085,54111,12,54197,54223,12,54309,54335,12,54421,54447,12,54533,54559,12,54645,54671,12,54757,54783,12,54869,54895,12,54981,55007,12,55093,55119,12,55243,55291,10,66045,66045,5,68325,68326,5,69688,69702,5,69817,69818,5,69957,69958,7,70089,70092,5,70198,70199,5,70462,70462,5,70502,70508,5,70750,70750,5,70846,70846,7,71100,71101,5,71230,71230,7,71351,71351,5,71737,71738,5,72000,72000,7,72160,72160,5,72273,72278,5,72752,72758,5,72882,72883,5,73031,73031,5,73461,73462,7,94192,94193,7,119149,119149,7,121403,121452,5,122915,122916,5,126980,126980,14,127358,127359,14,127535,127535,14,127759,127759,14,127771,127771,14,127792,127793,14,127825,127867,14,127897,127899,14,127945,127945,14,127985,127986,14,128000,128007,14,128021,128021,14,128066,128100,14,128184,128235,14,128249,128252,14,128266,128276,14,128335,128335,14,128379,128390,14,128407,128419,14,128444,128444,14,128481,128481,14,128499,128499,14,128526,128526,14,128536,128536,14,128543,128543,14,128556,128556,14,128564,128564,14,128577,128580,14,128643,128645,14,128649,128649,14,128654,128654,14,128660,128660,14,128664,128664,14,128675,128675,14,128686,128689,14,128695,128696,14,128705,128709,14,128717,128719,14,128725,128725,14,128736,128741,14,128747,128748,14,128755,128755,14,128762,128762,14,128981,128991,14,129009,129023,14,129160,129167,14,129296,129304,14,129320,129327,14,129340,129342,14,129356,129356,14,129388,129392,14,129399,129400,14,129404,129407,14,129432,129442,14,129454,129455,14,129473,129474,14,129485,129487,14,129648,129651,14,129659,129660,14,129671,129679,14,129709,129711,14,129728,129730,14,129751,129753,14,129776,129782,14,917505,917505,4,917760,917999,5,10,10,3,127,159,4,768,879,5,1471,1471,5,1536,1541,1,1648,1648,5,1767,1768,5,1840,1866,5,2070,2073,5,2137,2139,5,2274,2274,1,2363,2363,7,2377,2380,7,2402,2403,5,2494,2494,5,2507,2508,7,2558,2558,5,2622,2624,7,2641,2641,5,2691,2691,7,2759,2760,5,2786,2787,5,2876,2876,5,2881,2884,5,2901,2902,5,3006,3006,5,3014,3016,7,3072,3072,5,3134,3136,5,3157,3158,5,3260,3260,5,3266,3266,5,3274,3275,7,3328,3329,5,3391,3392,7,3405,3405,5,3457,3457,5,3536,3537,7,3551,3551,5,3636,3642,5,3764,3772,5,3895,3895,5,3967,3967,7,3993,4028,5,4146,4151,5,4182,4183,7,4226,4226,5,4253,4253,5,4957,4959,5,5940,5940,7,6070,6070,7,6087,6088,7,6158,6158,4,6432,6434,5,6448,6449,7,6679,6680,5,6742,6742,5,6754,6754,5,6783,6783,5,6912,6915,5,6966,6970,5,6978,6978,5,7042,7042,7,7080,7081,5,7143,7143,7,7150,7150,7,7212,7219,5,7380,7392,5,7412,7412,5,8203,8203,4,8232,8232,4,8265,8265,14,8400,8412,5,8421,8432,5,8617,8618,14,9167,9167,14,9200,9200,14,9410,9410,14,9723,9726,14,9733,9733,14,9745,9745,14,9752,9752,14,9760,9760,14,9766,9766,14,9774,9774,14,9786,9786,14,9794,9794,14,9823,9823,14,9828,9828,14,9833,9850,14,9855,9855,14,9875,9875,14,9880,9880,14,9885,9887,14,9896,9897,14,9906,9916,14,9926,9927,14,9935,9935,14,9939,9939,14,9962,9962,14,9972,9972,14,9978,9978,14,9986,9986,14,9997,9997,14,10002,10002,14,10017,10017,14,10055,10055,14,10071,10071,14,10133,10135,14,10548,10549,14,11093,11093,14,12330,12333,5,12441,12442,5,42608,42610,5,43010,43010,5,43045,43046,5,43188,43203,7,43302,43309,5,43392,43394,5,43446,43449,5,43493,43493,5,43571,43572,7,43597,43597,7,43703,43704,5,43756,43757,5,44003,44004,7,44009,44010,7,44033,44059,12,44089,44115,12,44145,44171,12,44201,44227,12,44257,44283,12,44313,44339,12,44369,44395,12,44425,44451,12,44481,44507,12,44537,44563,12,44593,44619,12,44649,44675,12,44705,44731,12,44761,44787,12,44817,44843,12,44873,44899,12,44929,44955,12,44985,45011,12,45041,45067,12,45097,45123,12,45153,45179,12,45209,45235,12,45265,45291,12,45321,45347,12,45377,45403,12,45433,45459,12,45489,45515,12,45545,45571,12,45601,45627,12,45657,45683,12,45713,45739,12,45769,45795,12,45825,45851,12,45881,45907,12,45937,45963,12,45993,46019,12,46049,46075,12,46105,46131,12,46161,46187,12,46217,46243,12,46273,46299,12,46329,46355,12,46385,46411,12,46441,46467,12,46497,46523,12,46553,46579,12,46609,46635,12,46665,46691,12,46721,46747,12,46777,46803,12,46833,46859,12,46889,46915,12,46945,46971,12,47001,47027,12,47057,47083,12,47113,47139,12,47169,47195,12,47225,47251,12,47281,47307,12,47337,47363,12,47393,47419,12,47449,47475,12,47505,47531,12,47561,47587,12,47617,47643,12,47673,47699,12,47729,47755,12,47785,47811,12,47841,47867,12,47897,47923,12,47953,47979,12,48009,48035,12,48065,48091,12,48121,48147,12,48177,48203,12,48233,48259,12,48289,48315,12,48345,48371,12,48401,48427,12,48457,48483,12,48513,48539,12,48569,48595,12,48625,48651,12,48681,48707,12,48737,48763,12,48793,48819,12,48849,48875,12,48905,48931,12,48961,48987,12,49017,49043,12,49073,49099,12,49129,49155,12,49185,49211,12,49241,49267,12,49297,49323,12,49353,49379,12,49409,49435,12,49465,49491,12,49521,49547,12,49577,49603,12,49633,49659,12,49689,49715,12,49745,49771,12,49801,49827,12,49857,49883,12,49913,49939,12,49969,49995,12,50025,50051,12,50081,50107,12,50137,50163,12,50193,50219,12,50249,50275,12,50305,50331,12,50361,50387,12,50417,50443,12,50473,50499,12,50529,50555,12,50585,50611,12,50641,50667,12,50697,50723,12,50753,50779,12,50809,50835,12,50865,50891,12,50921,50947,12,50977,51003,12,51033,51059,12,51089,51115,12,51145,51171,12,51201,51227,12,51257,51283,12,51313,51339,12,51369,51395,12,51425,51451,12,51481,51507,12,51537,51563,12,51593,51619,12,51649,51675,12,51705,51731,12,51761,51787,12,51817,51843,12,51873,51899,12,51929,51955,12,51985,52011,12,52041,52067,12,52097,52123,12,52153,52179,12,52209,52235,12,52265,52291,12,52321,52347,12,52377,52403,12,52433,52459,12,52489,52515,12,52545,52571,12,52601,52627,12,52657,52683,12,52713,52739,12,52769,52795,12,52825,52851,12,52881,52907,12,52937,52963,12,52993,53019,12,53049,53075,12,53105,53131,12,53161,53187,12,53217,53243,12,53273,53299,12,53329,53355,12,53385,53411,12,53441,53467,12,53497,53523,12,53553,53579,12,53609,53635,12,53665,53691,12,53721,53747,12,53777,53803,12,53833,53859,12,53889,53915,12,53945,53971,12,54001,54027,12,54057,54083,12,54113,54139,12,54169,54195,12,54225,54251,12,54281,54307,12,54337,54363,12,54393,54419,12,54449,54475,12,54505,54531,12,54561,54587,12,54617,54643,12,54673,54699,12,54729,54755,12,54785,54811,12,54841,54867,12,54897,54923,12,54953,54979,12,55009,55035,12,55065,55091,12,55121,55147,12,55177,55203,12,65024,65039,5,65520,65528,4,66422,66426,5,68152,68154,5,69291,69292,5,69633,69633,5,69747,69748,5,69811,69814,5,69826,69826,5,69932,69932,7,70016,70017,5,70079,70080,7,70095,70095,5,70196,70196,5,70367,70367,5,70402,70403,7,70464,70464,5,70487,70487,5,70709,70711,7,70725,70725,7,70833,70834,7,70843,70844,7,70849,70849,7,71090,71093,5,71103,71104,5,71227,71228,7,71339,71339,5,71344,71349,5,71458,71461,5,71727,71735,5,71985,71989,7,71998,71998,5,72002,72002,7,72154,72155,5,72193,72202,5,72251,72254,5,72281,72283,5,72344,72345,5,72766,72766,7,72874,72880,5,72885,72886,5,73023,73029,5,73104,73105,5,73111,73111,5,92912,92916,5,94095,94098,5,113824,113827,4,119142,119142,7,119155,119162,4,119362,119364,5,121476,121476,5,122888,122904,5,123184,123190,5,125252,125258,5,127183,127183,14,127340,127343,14,127377,127386,14,127491,127503,14,127548,127551,14,127744,127756,14,127761,127761,14,127769,127769,14,127773,127774,14,127780,127788,14,127796,127797,14,127820,127823,14,127869,127869,14,127894,127895,14,127902,127903,14,127943,127943,14,127947,127950,14,127972,127972,14,127988,127988,14,127992,127994,14,128009,128011,14,128019,128019,14,128023,128041,14,128064,128064,14,128102,128107,14,128174,128181,14,128238,128238,14,128246,128247,14,128254,128254,14,128264,128264,14,128278,128299,14,128329,128330,14,128348,128359,14,128371,128377,14,128392,128393,14,128401,128404,14,128421,128421,14,128433,128434,14,128450,128452,14,128476,128478,14,128483,128483,14,128495,128495,14,128506,128506,14,128519,128520,14,128528,128528,14,128534,128534,14,128538,128538,14,128540,128542,14,128544,128549,14,128552,128555,14,128557,128557,14,128560,128563,14,128565,128565,14,128567,128576,14,128581,128591,14,128641,128642,14,128646,128646,14,128648,128648,14,128650,128651,14,128653,128653,14,128655,128655,14,128657,128659,14,128661,128661,14,128663,128663,14,128665,128666,14,128674,128674,14,128676,128677,14,128679,128685,14,128690,128690,14,128694,128694,14,128697,128702,14,128704,128704,14,128710,128714,14,128716,128716,14,128720,128720,14,128723,128724,14,128726,128727,14,128733,128735,14,128742,128744,14,128746,128746,14,128749,128751,14,128753,128754,14,128756,128758,14,128761,128761,14,128763,128764,14,128884,128895,14,128992,129003,14,129008,129008,14,129036,129039,14,129114,129119,14,129198,129279,14,129293,129295,14,129305,129310,14,129312,129319,14,129328,129328,14,129331,129338,14,129343,129343,14,129351,129355,14,129357,129359,14,129375,129387,14,129393,129393,14,129395,129398,14,129401,129401,14,129403,129403,14,129408,129412,14,129426,129431,14,129443,129444,14,129451,129453,14,129456,129465,14,129472,129472,14,129475,129482,14,129484,129484,14,129488,129510,14,129536,129647,14,129652,129652,14,129656,129658,14,129661,129663,14,129667,129670,14,129680,129685,14,129705,129708,14,129712,129718,14,129723,129727,14,129731,129733,14,129744,129750,14,129754,129759,14,129768,129775,14,129783,129791,14,917504,917504,4,917506,917535,4,917632,917759,4,918000,921599,4,0,9,4,11,12,4,14,31,4,169,169,14,174,174,14,1155,1159,5,1425,1469,5,1473,1474,5,1479,1479,5,1552,1562,5,1611,1631,5,1750,1756,5,1759,1764,5,1770,1773,5,1809,1809,5,1958,1968,5,2045,2045,5,2075,2083,5,2089,2093,5,2192,2193,1,2250,2273,5,2275,2306,5,2362,2362,5,2364,2364,5,2369,2376,5,2381,2381,5,2385,2391,5,2433,2433,5,2492,2492,5,2495,2496,7,2503,2504,7,2509,2509,5,2530,2531,5,2561,2562,5,2620,2620,5,2625,2626,5,2635,2637,5,2672,2673,5,2689,2690,5,2748,2748,5,2753,2757,5,2761,2761,7,2765,2765,5,2810,2815,5,2818,2819,7,2878,2878,5,2880,2880,7,2887,2888,7,2893,2893,5,2903,2903,5,2946,2946,5,3007,3007,7,3009,3010,7,3018,3020,7,3031,3031,5,3073,3075,7,3132,3132,5,3137,3140,7,3146,3149,5,3170,3171,5,3202,3203,7,3262,3262,7,3264,3265,7,3267,3268,7,3271,3272,7,3276,3277,5,3298,3299,5,3330,3331,7,3390,3390,5,3393,3396,5,3402,3404,7,3406,3406,1,3426,3427,5,3458,3459,7,3535,3535,5,3538,3540,5,3544,3550,7,3570,3571,7,3635,3635,7,3655,3662,5,3763,3763,7,3784,3789,5,3893,3893,5,3897,3897,5,3953,3966,5,3968,3972,5,3981,3991,5,4038,4038,5,4145,4145,7,4153,4154,5,4157,4158,5,4184,4185,5,4209,4212,5,4228,4228,7,4237,4237,5,4352,4447,8,4520,4607,10,5906,5908,5,5938,5939,5,5970,5971,5,6068,6069,5,6071,6077,5,6086,6086,5,6089,6099,5,6155,6157,5,6159,6159,5,6313,6313,5,6435,6438,7,6441,6443,7,6450,6450,5,6457,6459,5,6681,6682,7,6741,6741,7,6743,6743,7,6752,6752,5,6757,6764,5,6771,6780,5,6832,6845,5,6847,6862,5,6916,6916,7,6965,6965,5,6971,6971,7,6973,6977,7,6979,6980,7,7040,7041,5,7073,7073,7,7078,7079,7,7082,7082,7,7142,7142,5,7144,7145,5,7149,7149,5,7151,7153,5,7204,7211,7,7220,7221,7,7376,7378,5,7393,7393,7,7405,7405,5,7415,7415,7,7616,7679,5,8204,8204,5,8206,8207,4,8233,8233,4,8252,8252,14,8288,8292,4,8294,8303,4,8413,8416,5,8418,8420,5,8482,8482,14,8596,8601,14,8986,8987,14,9096,9096,14,9193,9196,14,9199,9199,14,9201,9202,14,9208,9210,14,9642,9643,14,9664,9664,14,9728,9729,14,9732,9732,14,9735,9741,14,9743,9744,14,9746,9746,14,9750,9751,14,9753,9756,14,9758,9759,14,9761,9761,14,9764,9765,14,9767,9769,14,9771,9773,14,9775,9775,14,9784,9785,14,9787,9791,14,9793,9793,14,9795,9799,14,9812,9822,14,9824,9824,14,9827,9827,14,9829,9830,14,9832,9832,14,9851,9851,14,9854,9854,14,9856,9861,14,9874,9874,14,9876,9876,14,9878,9879,14,9881,9881,14,9883,9884,14,9888,9889,14,9895,9895,14,9898,9899,14,9904,9905,14,9917,9918,14,9924,9925,14,9928,9928,14,9934,9934,14,9936,9936,14,9938,9938,14,9940,9940,14,9961,9961,14,9963,9967,14,9970,9971,14,9973,9973,14,9975,9977,14,9979,9980,14,9982,9985,14,9987,9988,14,9992,9996,14,9998,9998,14,10000,10001,14,10004,10004,14,10013,10013,14,10024,10024,14,10052,10052,14,10060,10060,14,10067,10069,14,10083,10083,14,10085,10087,14,10145,10145,14,10175,10175,14,11013,11015,14,11088,11088,14,11503,11505,5,11744,11775,5,12334,12335,5,12349,12349,14,12951,12951,14,42607,42607,5,42612,42621,5,42736,42737,5,43014,43014,5,43043,43044,7,43047,43047,7,43136,43137,7,43204,43205,5,43263,43263,5,43335,43345,5,43360,43388,8,43395,43395,7,43444,43445,7,43450,43451,7,43454,43456,7,43561,43566,5,43569,43570,5,43573,43574,5,43596,43596,5,43644,43644,5,43698,43700,5,43710,43711,5,43755,43755,7,43758,43759,7,43766,43766,5,44005,44005,5,44008,44008,5,44012,44012,7,44032,44032,11,44060,44060,11,44088,44088,11,44116,44116,11,44144,44144,11,44172,44172,11,44200,44200,11,44228,44228,11,44256,44256,11,44284,44284,11,44312,44312,11,44340,44340,11,44368,44368,11,44396,44396,11,44424,44424,11,44452,44452,11,44480,44480,11,44508,44508,11,44536,44536,11,44564,44564,11,44592,44592,11,44620,44620,11,44648,44648,11,44676,44676,11,44704,44704,11,44732,44732,11,44760,44760,11,44788,44788,11,44816,44816,11,44844,44844,11,44872,44872,11,44900,44900,11,44928,44928,11,44956,44956,11,44984,44984,11,45012,45012,11,45040,45040,11,45068,45068,11,45096,45096,11,45124,45124,11,45152,45152,11,45180,45180,11,45208,45208,11,45236,45236,11,45264,45264,11,45292,45292,11,45320,45320,11,45348,45348,11,45376,45376,11,45404,45404,11,45432,45432,11,45460,45460,11,45488,45488,11,45516,45516,11,45544,45544,11,45572,45572,11,45600,45600,11,45628,45628,11,45656,45656,11,45684,45684,11,45712,45712,11,45740,45740,11,45768,45768,11,45796,45796,11,45824,45824,11,45852,45852,11,45880,45880,11,45908,45908,11,45936,45936,11,45964,45964,11,45992,45992,11,46020,46020,11,46048,46048,11,46076,46076,11,46104,46104,11,46132,46132,11,46160,46160,11,46188,46188,11,46216,46216,11,46244,46244,11,46272,46272,11,46300,46300,11,46328,46328,11,46356,46356,11,46384,46384,11,46412,46412,11,46440,46440,11,46468,46468,11,46496,46496,11,46524,46524,11,46552,46552,11,46580,46580,11,46608,46608,11,46636,46636,11,46664,46664,11,46692,46692,11,46720,46720,11,46748,46748,11,46776,46776,11,46804,46804,11,46832,46832,11,46860,46860,11,46888,46888,11,46916,46916,11,46944,46944,11,46972,46972,11,47000,47000,11,47028,47028,11,47056,47056,11,47084,47084,11,47112,47112,11,47140,47140,11,47168,47168,11,47196,47196,11,47224,47224,11,47252,47252,11,47280,47280,11,47308,47308,11,47336,47336,11,47364,47364,11,47392,47392,11,47420,47420,11,47448,47448,11,47476,47476,11,47504,47504,11,47532,47532,11,47560,47560,11,47588,47588,11,47616,47616,11,47644,47644,11,47672,47672,11,47700,47700,11,47728,47728,11,47756,47756,11,47784,47784,11,47812,47812,11,47840,47840,11,47868,47868,11,47896,47896,11,47924,47924,11,47952,47952,11,47980,47980,11,48008,48008,11,48036,48036,11,48064,48064,11,48092,48092,11,48120,48120,11,48148,48148,11,48176,48176,11,48204,48204,11,48232,48232,11,48260,48260,11,48288,48288,11,48316,48316,11,48344,48344,11,48372,48372,11,48400,48400,11,48428,48428,11,48456,48456,11,48484,48484,11,48512,48512,11,48540,48540,11,48568,48568,11,48596,48596,11,48624,48624,11,48652,48652,11,48680,48680,11,48708,48708,11,48736,48736,11,48764,48764,11,48792,48792,11,48820,48820,11,48848,48848,11,48876,48876,11,48904,48904,11,48932,48932,11,48960,48960,11,48988,48988,11,49016,49016,11,49044,49044,11,49072,49072,11,49100,49100,11,49128,49128,11,49156,49156,11,49184,49184,11,49212,49212,11,49240,49240,11,49268,49268,11,49296,49296,11,49324,49324,11,49352,49352,11,49380,49380,11,49408,49408,11,49436,49436,11,49464,49464,11,49492,49492,11,49520,49520,11,49548,49548,11,49576,49576,11,49604,49604,11,49632,49632,11,49660,49660,11,49688,49688,11,49716,49716,11,49744,49744,11,49772,49772,11,49800,49800,11,49828,49828,11,49856,49856,11,49884,49884,11,49912,49912,11,49940,49940,11,49968,49968,11,49996,49996,11,50024,50024,11,50052,50052,11,50080,50080,11,50108,50108,11,50136,50136,11,50164,50164,11,50192,50192,11,50220,50220,11,50248,50248,11,50276,50276,11,50304,50304,11,50332,50332,11,50360,50360,11,50388,50388,11,50416,50416,11,50444,50444,11,50472,50472,11,50500,50500,11,50528,50528,11,50556,50556,11,50584,50584,11,50612,50612,11,50640,50640,11,50668,50668,11,50696,50696,11,50724,50724,11,50752,50752,11,50780,50780,11,50808,50808,11,50836,50836,11,50864,50864,11,50892,50892,11,50920,50920,11,50948,50948,11,50976,50976,11,51004,51004,11,51032,51032,11,51060,51060,11,51088,51088,11,51116,51116,11,51144,51144,11,51172,51172,11,51200,51200,11,51228,51228,11,51256,51256,11,51284,51284,11,51312,51312,11,51340,51340,11,51368,51368,11,51396,51396,11,51424,51424,11,51452,51452,11,51480,51480,11,51508,51508,11,51536,51536,11,51564,51564,11,51592,51592,11,51620,51620,11,51648,51648,11,51676,51676,11,51704,51704,11,51732,51732,11,51760,51760,11,51788,51788,11,51816,51816,11,51844,51844,11,51872,51872,11,51900,51900,11,51928,51928,11,51956,51956,11,51984,51984,11,52012,52012,11,52040,52040,11,52068,52068,11,52096,52096,11,52124,52124,11,52152,52152,11,52180,52180,11,52208,52208,11,52236,52236,11,52264,52264,11,52292,52292,11,52320,52320,11,52348,52348,11,52376,52376,11,52404,52404,11,52432,52432,11,52460,52460,11,52488,52488,11,52516,52516,11,52544,52544,11,52572,52572,11,52600,52600,11,52628,52628,11,52656,52656,11,52684,52684,11,52712,52712,11,52740,52740,11,52768,52768,11,52796,52796,11,52824,52824,11,52852,52852,11,52880,52880,11,52908,52908,11,52936,52936,11,52964,52964,11,52992,52992,11,53020,53020,11,53048,53048,11,53076,53076,11,53104,53104,11,53132,53132,11,53160,53160,11,53188,53188,11,53216,53216,11,53244,53244,11,53272,53272,11,53300,53300,11,53328,53328,11,53356,53356,11,53384,53384,11,53412,53412,11,53440,53440,11,53468,53468,11,53496,53496,11,53524,53524,11,53552,53552,11,53580,53580,11,53608,53608,11,53636,53636,11,53664,53664,11,53692,53692,11,53720,53720,11,53748,53748,11,53776,53776,11,53804,53804,11,53832,53832,11,53860,53860,11,53888,53888,11,53916,53916,11,53944,53944,11,53972,53972,11,54000,54000,11,54028,54028,11,54056,54056,11,54084,54084,11,54112,54112,11,54140,54140,11,54168,54168,11,54196,54196,11,54224,54224,11,54252,54252,11,54280,54280,11,54308,54308,11,54336,54336,11,54364,54364,11,54392,54392,11,54420,54420,11,54448,54448,11,54476,54476,11,54504,54504,11,54532,54532,11,54560,54560,11,54588,54588,11,54616,54616,11,54644,54644,11,54672,54672,11,54700,54700,11,54728,54728,11,54756,54756,11,54784,54784,11,54812,54812,11,54840,54840,11,54868,54868,11,54896,54896,11,54924,54924,11,54952,54952,11,54980,54980,11,55008,55008,11,55036,55036,11,55064,55064,11,55092,55092,11,55120,55120,11,55148,55148,11,55176,55176,11,55216,55238,9,64286,64286,5,65056,65071,5,65438,65439,5,65529,65531,4,66272,66272,5,68097,68099,5,68108,68111,5,68159,68159,5,68900,68903,5,69446,69456,5,69632,69632,7,69634,69634,7,69744,69744,5,69759,69761,5,69808,69810,7,69815,69816,7,69821,69821,1,69837,69837,1,69927,69931,5,69933,69940,5,70003,70003,5,70018,70018,7,70070,70078,5,70082,70083,1,70094,70094,7,70188,70190,7,70194,70195,7,70197,70197,7,70206,70206,5,70368,70370,7,70400,70401,5,70459,70460,5,70463,70463,7,70465,70468,7,70475,70477,7,70498,70499,7,70512,70516,5,70712,70719,5,70722,70724,5,70726,70726,5,70832,70832,5,70835,70840,5,70842,70842,5,70845,70845,5,70847,70848,5,70850,70851,5,71088,71089,7,71096,71099,7,71102,71102,7,71132,71133,5,71219,71226,5,71229,71229,5,71231,71232,5,71340,71340,7,71342,71343,7,71350,71350,7,71453,71455,5,71462,71462,7,71724,71726,7,71736,71736,7,71984,71984,5,71991,71992,7,71997,71997,7,71999,71999,1,72001,72001,1,72003,72003,5,72148,72151,5,72156,72159,7,72164,72164,7,72243,72248,5,72250,72250,1,72263,72263,5,72279,72280,7,72324,72329,1,72343,72343,7,72751,72751,7,72760,72765,5,72767,72767,5,72873,72873,7,72881,72881,7,72884,72884,7,73009,73014,5,73020,73021,5,73030,73030,1,73098,73102,7,73107,73108,7,73110,73110,7,73459,73460,5,78896,78904,4,92976,92982,5,94033,94087,7,94180,94180,5,113821,113822,5,118528,118573,5,119141,119141,5,119143,119145,5,119150,119154,5,119163,119170,5,119210,119213,5,121344,121398,5,121461,121461,5,121499,121503,5,122880,122886,5,122907,122913,5,122918,122922,5,123566,123566,5,125136,125142,5,126976,126979,14,126981,127182,14,127184,127231,14,127279,127279,14,127344,127345,14,127374,127374,14,127405,127461,14,127489,127490,14,127514,127514,14,127538,127546,14,127561,127567,14,127570,127743,14,127757,127758,14,127760,127760,14,127762,127762,14,127766,127768,14,127770,127770,14,127772,127772,14,127775,127776,14,127778,127779,14,127789,127791,14,127794,127795,14,127798,127798,14,127819,127819,14,127824,127824,14,127868,127868,14,127870,127871,14,127892,127893,14,127896,127896,14,127900,127901,14,127904,127940,14,127942,127942,14,127944,127944,14,127946,127946,14,127951,127955,14,127968,127971,14,127973,127984,14,127987,127987,14,127989,127989,14,127991,127991,14,127995,127999,5,128008,128008,14,128012,128014,14,128017,128018,14,128020,128020,14,128022,128022,14,128042,128042,14,128063,128063,14,128065,128065,14,128101,128101,14,128108,128109,14,128173,128173,14,128182,128183,14,128236,128237,14,128239,128239,14,128245,128245,14,128248,128248,14,128253,128253,14,128255,128258,14,128260,128263,14,128265,128265,14,128277,128277,14,128300,128301,14,128326,128328,14,128331,128334,14,128336,128347,14,128360,128366,14,128369,128370,14,128378,128378,14,128391,128391,14,128394,128397,14,128400,128400,14,128405,128406,14,128420,128420,14,128422,128423,14,128425,128432,14,128435,128443,14,128445,128449,14,128453,128464,14,128468,128475,14,128479,128480,14,128482,128482,14,128484,128487,14,128489,128494,14,128496,128498,14,128500,128505,14,128507,128511,14,128513,128518,14,128521,128525,14,128527,128527,14,128529,128529,14,128533,128533,14,128535,128535,14,128537,128537,14]");
-}
-__name(getGraphemeBreakRawData, "getGraphemeBreakRawData");
 __name21(getGraphemeBreakRawData, "getGraphemeBreakRawData");
-function getLeftDeleteOffset(offset, str) {
-  if (offset === 0) {
-    return 0;
-  }
-  const emojiOffset = getOffsetBeforeLastEmojiComponent(offset, str);
-  if (emojiOffset !== void 0) {
-    return emojiOffset;
-  }
-  const iterator = new CodePointIterator(str, offset);
-  iterator.prevCodePoint();
-  return iterator.offset;
-}
-__name(getLeftDeleteOffset, "getLeftDeleteOffset");
 __name21(getLeftDeleteOffset, "getLeftDeleteOffset");
-function getOffsetBeforeLastEmojiComponent(initialOffset, str) {
-  const iterator = new CodePointIterator(str, initialOffset);
-  let codePoint = iterator.prevCodePoint();
-  while (isEmojiModifier(codePoint) || codePoint === 65039 || codePoint === 8419) {
-    if (iterator.offset === 0) {
-      return void 0;
-    }
-    codePoint = iterator.prevCodePoint();
-  }
-  if (!isEmojiImprecise(codePoint)) {
-    return void 0;
-  }
-  let resultOffset = iterator.offset;
-  if (resultOffset > 0) {
-    const optionalZwjCodePoint = iterator.prevCodePoint();
-    if (optionalZwjCodePoint === 8205) {
-      resultOffset = iterator.offset;
-    }
-  }
-  return resultOffset;
-}
-__name(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
 __name21(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
-function isEmojiModifier(codePoint) {
-  return 127995 <= codePoint && codePoint <= 127999;
-}
-__name(isEmojiModifier, "isEmojiModifier");
 __name21(isEmojiModifier, "isEmojiModifier");
 var CodePoint;
 (function(CodePoint2) {
@@ -7897,24 +7914,7 @@ var InvisibleCharacters = class _InvisibleCharacters {
   }
 };
 var Ellipsis = "\u2026";
-function toBinary(str) {
-  const codeUnits = new Uint16Array(str.length);
-  for (let i = 0; i < codeUnits.length; i++) {
-    codeUnits[i] = str.charCodeAt(i);
-  }
-  let binary = "";
-  const uint8array = new Uint8Array(codeUnits.buffer);
-  for (let i = 0; i < uint8array.length; i++) {
-    binary += String.fromCharCode(uint8array[i]);
-  }
-  return binary;
-}
-__name(toBinary, "toBinary");
 __name21(toBinary, "toBinary");
-function multibyteAwareBtoa(str) {
-  return btoa(toBinary(str));
-}
-__name(multibyteAwareBtoa, "multibyteAwareBtoa");
 __name21(multibyteAwareBtoa, "multibyteAwareBtoa");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/extpath.js
@@ -7924,12 +7924,10 @@ function isPathSeparator2(code) {
   return code === 47 || code === 92;
 }
 __name(isPathSeparator2, "isPathSeparator");
-__name22(isPathSeparator2, "isPathSeparator");
 function toSlashes(osPath) {
   return osPath.replace(/[\\/]/g, posix.sep);
 }
 __name(toSlashes, "toSlashes");
-__name22(toSlashes, "toSlashes");
 function toPosixPath(osPath) {
   if (osPath.indexOf("/") === -1) {
     osPath = toSlashes(osPath);
@@ -7940,7 +7938,6 @@ function toPosixPath(osPath) {
   return osPath;
 }
 __name(toPosixPath, "toPosixPath");
-__name22(toPosixPath, "toPosixPath");
 function getRoot(path, sep2 = posix.sep) {
   if (!path) {
     return "";
@@ -7989,7 +7986,6 @@ function getRoot(path, sep2 = posix.sep) {
   return "";
 }
 __name(getRoot, "getRoot");
-__name22(getRoot, "getRoot");
 function isUNC(path) {
   if (!isWindows) {
     return false;
@@ -8023,10 +8019,6 @@ function isUNC(path) {
   return true;
 }
 __name(isUNC, "isUNC");
-__name22(isUNC, "isUNC");
-var WINDOWS_INVALID_FILE_CHARS = /[\\/:\*\?"<>\|]/g;
-var UNIX_INVALID_FILE_CHARS = /[/]/g;
-var WINDOWS_FORBIDDEN_NAMES = /^(con|prn|aux|clock\$|nul|lpt[0-9]|com[0-9])(\.(.*?))?$/i;
 function isValidBasename(name, isWindowsOS = isWindows) {
   const invalidFileChars = isWindowsOS ? WINDOWS_INVALID_FILE_CHARS : UNIX_INVALID_FILE_CHARS;
   if (!name || name.length === 0 || /^\s+$/.test(name)) {
@@ -8054,7 +8046,6 @@ function isValidBasename(name, isWindowsOS = isWindows) {
   return true;
 }
 __name(isValidBasename, "isValidBasename");
-__name22(isValidBasename, "isValidBasename");
 function isEqual(pathA, pathB, ignoreCase) {
   const identityEquals = pathA === pathB;
   if (!ignoreCase || identityEquals) {
@@ -8066,7 +8057,6 @@ function isEqual(pathA, pathB, ignoreCase) {
   return equalsIgnoreCase(pathA, pathB);
 }
 __name(isEqual, "isEqual");
-__name22(isEqual, "isEqual");
 function isEqualOrParent(base, parentCandidate, ignoreCase, separator = sep) {
   if (base === parentCandidate) {
     return true;
@@ -8097,12 +8087,10 @@ function isEqualOrParent(base, parentCandidate, ignoreCase, separator = sep) {
   return base.indexOf(parentCandidate) === 0;
 }
 __name(isEqualOrParent, "isEqualOrParent");
-__name22(isEqualOrParent, "isEqualOrParent");
 function isWindowsDriveLetter(char0) {
   return char0 >= 65 && char0 <= 90 || char0 >= 97 && char0 <= 122;
 }
 __name(isWindowsDriveLetter, "isWindowsDriveLetter");
-__name22(isWindowsDriveLetter, "isWindowsDriveLetter");
 function sanitizeFilePath(candidate, cwd2) {
   if (isWindows && candidate.endsWith(":")) {
     candidate += sep;
@@ -8114,7 +8102,6 @@ function sanitizeFilePath(candidate, cwd2) {
   return removeTrailingPathSeparator(candidate);
 }
 __name(sanitizeFilePath, "sanitizeFilePath");
-__name22(sanitizeFilePath, "sanitizeFilePath");
 function removeTrailingPathSeparator(candidate) {
   if (isWindows) {
     candidate = rtrim(candidate, sep);
@@ -8130,7 +8117,6 @@ function removeTrailingPathSeparator(candidate) {
   return candidate;
 }
 __name(removeTrailingPathSeparator, "removeTrailingPathSeparator");
-__name22(removeTrailingPathSeparator, "removeTrailingPathSeparator");
 function isRootOrDriveLetter(path) {
   const pathNormalized = normalize(path);
   if (isWindows) {
@@ -8142,7 +8128,6 @@ function isRootOrDriveLetter(path) {
   return pathNormalized === posix.sep;
 }
 __name(isRootOrDriveLetter, "isRootOrDriveLetter");
-__name22(isRootOrDriveLetter, "isRootOrDriveLetter");
 function hasDriveLetter(path, isWindowsOS = isWindows) {
   if (isWindowsOS) {
     return isWindowsDriveLetter(path.charCodeAt(0)) && path.charCodeAt(1) === 58;
@@ -8150,12 +8135,10 @@ function hasDriveLetter(path, isWindowsOS = isWindows) {
   return false;
 }
 __name(hasDriveLetter, "hasDriveLetter");
-__name22(hasDriveLetter, "hasDriveLetter");
 function getDriveLetter(path, isWindowsOS = isWindows) {
   return hasDriveLetter(path, isWindowsOS) ? path[0] : void 0;
 }
 __name(getDriveLetter, "getDriveLetter");
-__name22(getDriveLetter, "getDriveLetter");
 function indexOfPath(path, candidate, ignoreCase) {
   if (candidate.length > path.length) {
     return -1;
@@ -8170,7 +8153,6 @@ function indexOfPath(path, candidate, ignoreCase) {
   return path.indexOf(candidate);
 }
 __name(indexOfPath, "indexOfPath");
-__name22(indexOfPath, "indexOfPath");
 function parseLineAndColumnAware(rawPath) {
   const segments = rawPath.split(":");
   let path;
@@ -8197,9 +8179,6 @@ function parseLineAndColumnAware(rawPath) {
   };
 }
 __name(parseLineAndColumnAware, "parseLineAndColumnAware");
-__name22(parseLineAndColumnAware, "parseLineAndColumnAware");
-var pathChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-var windowsSafePathFirstChars = "BDEFGHIJKMOQRSTUVWXYZbdefghijkmoqrstuvwxyz0123456789";
 function randomPath(parent, prefix, randomLength = 8) {
   let suffix = "";
   for (let i = 0; i < randomLength; i++) {
@@ -8223,14 +8202,32 @@ function randomPath(parent, prefix, randomLength = 8) {
   return randomFileName;
 }
 __name(randomPath, "randomPath");
+__name22(isPathSeparator2, "isPathSeparator");
+__name22(toSlashes, "toSlashes");
+__name22(toPosixPath, "toPosixPath");
+__name22(getRoot, "getRoot");
+__name22(isUNC, "isUNC");
+var WINDOWS_INVALID_FILE_CHARS = /[\\/:\*\?"<>\|]/g;
+var UNIX_INVALID_FILE_CHARS = /[/]/g;
+var WINDOWS_FORBIDDEN_NAMES = /^(con|prn|aux|clock\$|nul|lpt[0-9]|com[0-9])(\.(.*?))?$/i;
+__name22(isValidBasename, "isValidBasename");
+__name22(isEqual, "isEqual");
+__name22(isEqualOrParent, "isEqualOrParent");
+__name22(isWindowsDriveLetter, "isWindowsDriveLetter");
+__name22(sanitizeFilePath, "sanitizeFilePath");
+__name22(removeTrailingPathSeparator, "removeTrailingPathSeparator");
+__name22(isRootOrDriveLetter, "isRootOrDriveLetter");
+__name22(hasDriveLetter, "hasDriveLetter");
+__name22(getDriveLetter, "getDriveLetter");
+__name22(indexOfPath, "indexOfPath");
+__name22(parseLineAndColumnAware, "parseLineAndColumnAware");
+var pathChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+var windowsSafePathFirstChars = "BDEFGHIJKMOQRSTUVWXYZbdefghijkmoqrstuvwxyz0123456789";
 __name22(randomPath, "randomPath");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/uri.js
 var __defProp23 = Object.defineProperty;
 var __name23 = /* @__PURE__ */ __name((target, value) => __defProp23(target, "name", { value, configurable: true }), "__name");
-var _schemePattern = /^\w[\w\d+.-]*$/;
-var _singleSlashStart = /^\//;
-var _doubleSlashStart = /^\/\//;
 function _validateUri(ret, _strict) {
   if (!ret.scheme && _strict) {
     throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
@@ -8253,7 +8250,6 @@ function _validateUri(ret, _strict) {
   }
 }
 __name(_validateUri, "_validateUri");
-__name23(_validateUri, "_validateUri");
 function _schemeFix(scheme, _strict) {
   if (!scheme && !_strict) {
     return "file";
@@ -8261,7 +8257,6 @@ function _schemeFix(scheme, _strict) {
   return scheme;
 }
 __name(_schemeFix, "_schemeFix");
-__name23(_schemeFix, "_schemeFix");
 function _referenceResolution(scheme, path) {
   switch (scheme) {
     case "https":
@@ -8277,6 +8272,170 @@ function _referenceResolution(scheme, path) {
   return path;
 }
 __name(_referenceResolution, "_referenceResolution");
+function isUriComponents(thing) {
+  if (!thing || typeof thing !== "object") {
+    return false;
+  }
+  return typeof thing.scheme === "string" && (typeof thing.authority === "string" || typeof thing.authority === "undefined") && (typeof thing.path === "string" || typeof thing.path === "undefined") && (typeof thing.query === "string" || typeof thing.query === "undefined") && (typeof thing.fragment === "string" || typeof thing.fragment === "undefined");
+}
+__name(isUriComponents, "isUriComponents");
+function encodeURIComponentFast(uriComponent, isPath, isAuthority) {
+  let res = void 0;
+  let nativeEncodePos = -1;
+  for (let pos = 0; pos < uriComponent.length; pos++) {
+    const code = uriComponent.charCodeAt(pos);
+    if (code >= 97 && code <= 122 || code >= 65 && code <= 90 || code >= 48 && code <= 57 || code === 45 || code === 46 || code === 95 || code === 126 || isPath && code === 47 || isAuthority && code === 91 || isAuthority && code === 93 || isAuthority && code === 58) {
+      if (nativeEncodePos !== -1) {
+        res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
+        nativeEncodePos = -1;
+      }
+      if (res !== void 0) {
+        res += uriComponent.charAt(pos);
+      }
+    } else {
+      if (res === void 0) {
+        res = uriComponent.substr(0, pos);
+      }
+      const escaped = encodeTable[code];
+      if (escaped !== void 0) {
+        if (nativeEncodePos !== -1) {
+          res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
+          nativeEncodePos = -1;
+        }
+        res += escaped;
+      } else if (nativeEncodePos === -1) {
+        nativeEncodePos = pos;
+      }
+    }
+  }
+  if (nativeEncodePos !== -1) {
+    res += encodeURIComponent(uriComponent.substring(nativeEncodePos));
+  }
+  return res !== void 0 ? res : uriComponent;
+}
+__name(encodeURIComponentFast, "encodeURIComponentFast");
+function encodeURIComponentMinimal(path) {
+  let res = void 0;
+  for (let pos = 0; pos < path.length; pos++) {
+    const code = path.charCodeAt(pos);
+    if (code === 35 || code === 63) {
+      if (res === void 0) {
+        res = path.substr(0, pos);
+      }
+      res += encodeTable[code];
+    } else {
+      if (res !== void 0) {
+        res += path[pos];
+      }
+    }
+  }
+  return res !== void 0 ? res : path;
+}
+__name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+function uriToFsPath(uri, keepDriveLetterCasing) {
+  let value;
+  if (uri.authority && uri.path.length > 1 && uri.scheme === "file") {
+    value = `//${uri.authority}${uri.path}`;
+  } else if (uri.path.charCodeAt(0) === 47 && (uri.path.charCodeAt(1) >= 65 && uri.path.charCodeAt(1) <= 90 || uri.path.charCodeAt(1) >= 97 && uri.path.charCodeAt(1) <= 122) && uri.path.charCodeAt(2) === 58) {
+    if (!keepDriveLetterCasing) {
+      value = uri.path[1].toLowerCase() + uri.path.substr(2);
+    } else {
+      value = uri.path.substr(1);
+    }
+  } else {
+    value = uri.path;
+  }
+  if (isWindows) {
+    value = value.replace(/\//g, "\\");
+  }
+  return value;
+}
+__name(uriToFsPath, "uriToFsPath");
+function _asFormatted(uri, skipEncoding) {
+  const encoder = !skipEncoding ? encodeURIComponentFast : encodeURIComponentMinimal;
+  let res = "";
+  let { scheme, authority, path, query, fragment } = uri;
+  if (scheme) {
+    res += scheme;
+    res += ":";
+  }
+  if (authority || scheme === "file") {
+    res += _slash;
+    res += _slash;
+  }
+  if (authority) {
+    let idx = authority.indexOf("@");
+    if (idx !== -1) {
+      const userinfo = authority.substr(0, idx);
+      authority = authority.substr(idx + 1);
+      idx = userinfo.lastIndexOf(":");
+      if (idx === -1) {
+        res += encoder(userinfo, false, false);
+      } else {
+        res += encoder(userinfo.substr(0, idx), false, false);
+        res += ":";
+        res += encoder(userinfo.substr(idx + 1), false, true);
+      }
+      res += "@";
+    }
+    authority = authority.toLowerCase();
+    idx = authority.lastIndexOf(":");
+    if (idx === -1) {
+      res += encoder(authority, false, true);
+    } else {
+      res += encoder(authority.substr(0, idx), false, true);
+      res += authority.substr(idx);
+    }
+  }
+  if (path) {
+    if (path.length >= 3 && path.charCodeAt(0) === 47 && path.charCodeAt(2) === 58) {
+      const code = path.charCodeAt(1);
+      if (code >= 65 && code <= 90) {
+        path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`;
+      }
+    } else if (path.length >= 2 && path.charCodeAt(1) === 58) {
+      const code = path.charCodeAt(0);
+      if (code >= 65 && code <= 90) {
+        path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`;
+      }
+    }
+    res += encoder(path, true, false);
+  }
+  if (query) {
+    res += "?";
+    res += encoder(query, false, false);
+  }
+  if (fragment) {
+    res += "#";
+    res += !skipEncoding ? encodeURIComponentFast(fragment, false, false) : fragment;
+  }
+  return res;
+}
+__name(_asFormatted, "_asFormatted");
+function decodeURIComponentGraceful(str) {
+  try {
+    return decodeURIComponent(str);
+  } catch {
+    if (str.length > 3) {
+      return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));
+    } else {
+      return str;
+    }
+  }
+}
+__name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+function percentDecode(str) {
+  if (!str.match(_rEncodedAsHex)) {
+    return str;
+  }
+  return str.replace(_rEncodedAsHex, (match2) => decodeURIComponentGraceful(match2));
+}
+__name(percentDecode, "percentDecode");
+var _schemePattern = /^\w[\w\d+.-]*$/;
+var _singleSlashStart = /^\//;
+var _doubleSlashStart = /^\/\//;
+__name23(_validateUri, "_validateUri");
+__name23(_schemeFix, "_schemeFix");
 __name23(_referenceResolution, "_referenceResolution");
 var _empty = "";
 var _slash = "/";
@@ -8496,13 +8655,6 @@ var URI = class _URI {
     return `URI(${this.toString()})`;
   }
 };
-function isUriComponents(thing) {
-  if (!thing || typeof thing !== "object") {
-    return false;
-  }
-  return typeof thing.scheme === "string" && (typeof thing.authority === "string" || typeof thing.authority === "undefined") && (typeof thing.path === "string" || typeof thing.path === "undefined") && (typeof thing.query === "string" || typeof thing.query === "undefined") && (typeof thing.fragment === "string" || typeof thing.fragment === "undefined");
-}
-__name(isUriComponents, "isUriComponents");
 __name23(isUriComponents, "isUriComponents");
 var _pathSepMarker = isWindows ? 1 : void 0;
 var Uri = class extends URI {
@@ -8643,169 +8795,33 @@ var encodeTable = {
     /* CharCode.Space */
   ]: "%20"
 };
-function encodeURIComponentFast(uriComponent, isPath, isAuthority) {
-  let res = void 0;
-  let nativeEncodePos = -1;
-  for (let pos = 0; pos < uriComponent.length; pos++) {
-    const code = uriComponent.charCodeAt(pos);
-    if (code >= 97 && code <= 122 || code >= 65 && code <= 90 || code >= 48 && code <= 57 || code === 45 || code === 46 || code === 95 || code === 126 || isPath && code === 47 || isAuthority && code === 91 || isAuthority && code === 93 || isAuthority && code === 58) {
-      if (nativeEncodePos !== -1) {
-        res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
-        nativeEncodePos = -1;
-      }
-      if (res !== void 0) {
-        res += uriComponent.charAt(pos);
-      }
-    } else {
-      if (res === void 0) {
-        res = uriComponent.substr(0, pos);
-      }
-      const escaped = encodeTable[code];
-      if (escaped !== void 0) {
-        if (nativeEncodePos !== -1) {
-          res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
-          nativeEncodePos = -1;
-        }
-        res += escaped;
-      } else if (nativeEncodePos === -1) {
-        nativeEncodePos = pos;
-      }
-    }
-  }
-  if (nativeEncodePos !== -1) {
-    res += encodeURIComponent(uriComponent.substring(nativeEncodePos));
-  }
-  return res !== void 0 ? res : uriComponent;
-}
-__name(encodeURIComponentFast, "encodeURIComponentFast");
 __name23(encodeURIComponentFast, "encodeURIComponentFast");
-function encodeURIComponentMinimal(path) {
-  let res = void 0;
-  for (let pos = 0; pos < path.length; pos++) {
-    const code = path.charCodeAt(pos);
-    if (code === 35 || code === 63) {
-      if (res === void 0) {
-        res = path.substr(0, pos);
-      }
-      res += encodeTable[code];
-    } else {
-      if (res !== void 0) {
-        res += path[pos];
-      }
-    }
-  }
-  return res !== void 0 ? res : path;
-}
-__name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
 __name23(encodeURIComponentMinimal, "encodeURIComponentMinimal");
-function uriToFsPath(uri, keepDriveLetterCasing) {
-  let value;
-  if (uri.authority && uri.path.length > 1 && uri.scheme === "file") {
-    value = `//${uri.authority}${uri.path}`;
-  } else if (uri.path.charCodeAt(0) === 47 && (uri.path.charCodeAt(1) >= 65 && uri.path.charCodeAt(1) <= 90 || uri.path.charCodeAt(1) >= 97 && uri.path.charCodeAt(1) <= 122) && uri.path.charCodeAt(2) === 58) {
-    if (!keepDriveLetterCasing) {
-      value = uri.path[1].toLowerCase() + uri.path.substr(2);
-    } else {
-      value = uri.path.substr(1);
-    }
-  } else {
-    value = uri.path;
-  }
-  if (isWindows) {
-    value = value.replace(/\//g, "\\");
-  }
-  return value;
-}
-__name(uriToFsPath, "uriToFsPath");
 __name23(uriToFsPath, "uriToFsPath");
-function _asFormatted(uri, skipEncoding) {
-  const encoder = !skipEncoding ? encodeURIComponentFast : encodeURIComponentMinimal;
-  let res = "";
-  let { scheme, authority, path, query, fragment } = uri;
-  if (scheme) {
-    res += scheme;
-    res += ":";
-  }
-  if (authority || scheme === "file") {
-    res += _slash;
-    res += _slash;
-  }
-  if (authority) {
-    let idx = authority.indexOf("@");
-    if (idx !== -1) {
-      const userinfo = authority.substr(0, idx);
-      authority = authority.substr(idx + 1);
-      idx = userinfo.lastIndexOf(":");
-      if (idx === -1) {
-        res += encoder(userinfo, false, false);
-      } else {
-        res += encoder(userinfo.substr(0, idx), false, false);
-        res += ":";
-        res += encoder(userinfo.substr(idx + 1), false, true);
-      }
-      res += "@";
-    }
-    authority = authority.toLowerCase();
-    idx = authority.lastIndexOf(":");
-    if (idx === -1) {
-      res += encoder(authority, false, true);
-    } else {
-      res += encoder(authority.substr(0, idx), false, true);
-      res += authority.substr(idx);
-    }
-  }
-  if (path) {
-    if (path.length >= 3 && path.charCodeAt(0) === 47 && path.charCodeAt(2) === 58) {
-      const code = path.charCodeAt(1);
-      if (code >= 65 && code <= 90) {
-        path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`;
-      }
-    } else if (path.length >= 2 && path.charCodeAt(1) === 58) {
-      const code = path.charCodeAt(0);
-      if (code >= 65 && code <= 90) {
-        path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`;
-      }
-    }
-    res += encoder(path, true, false);
-  }
-  if (query) {
-    res += "?";
-    res += encoder(query, false, false);
-  }
-  if (fragment) {
-    res += "#";
-    res += !skipEncoding ? encodeURIComponentFast(fragment, false, false) : fragment;
-  }
-  return res;
-}
-__name(_asFormatted, "_asFormatted");
 __name23(_asFormatted, "_asFormatted");
-function decodeURIComponentGraceful(str) {
-  try {
-    return decodeURIComponent(str);
-  } catch {
-    if (str.length > 3) {
-      return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));
-    } else {
-      return str;
-    }
-  }
-}
-__name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
 __name23(decodeURIComponentGraceful, "decodeURIComponentGraceful");
 var _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
-function percentDecode(str) {
-  if (!str.match(_rEncodedAsHex)) {
-    return str;
-  }
-  return str.replace(_rEncodedAsHex, (match2) => decodeURIComponentGraceful(match2));
-}
-__name(percentDecode, "percentDecode");
 __name23(percentDecode, "percentDecode");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/network.js
 var __defProp24 = Object.defineProperty;
 var __name24 = /* @__PURE__ */ __name((target, value) => __defProp24(target, "name", { value, configurable: true }), "__name");
+function matchesScheme(target, scheme) {
+  if (URI.isUri(target)) {
+    return equalsIgnoreCase(target.scheme, scheme);
+  } else {
+    return startsWithIgnoreCase(target, scheme + ":");
+  }
+}
+__name(matchesScheme, "matchesScheme");
+function matchesSomeScheme(target, ...schemes) {
+  return schemes.some((scheme) => matchesScheme(target, scheme));
+}
+__name(matchesSomeScheme, "matchesSomeScheme");
+function getServerProductSegment(product) {
+  return `${product.quality ?? "oss"}-${product.commit ?? "dev"}`;
+}
+__name(getServerProductSegment, "getServerProductSegment");
 var Schemas;
 (function(Schemas2) {
   Schemas2.inMemory = "inmemory";
@@ -8857,19 +8873,7 @@ var Schemas;
   Schemas2.chatEditingModel = "chat-editing-text-model";
   Schemas2.copilotPr = "copilot-pr";
 })(Schemas || (Schemas = {}));
-function matchesScheme(target, scheme) {
-  if (URI.isUri(target)) {
-    return equalsIgnoreCase(target.scheme, scheme);
-  } else {
-    return startsWithIgnoreCase(target, scheme + ":");
-  }
-}
-__name(matchesScheme, "matchesScheme");
 __name24(matchesScheme, "matchesScheme");
-function matchesSomeScheme(target, ...schemes) {
-  return schemes.some((scheme) => matchesScheme(target, scheme));
-}
-__name(matchesSomeScheme, "matchesSomeScheme");
 __name24(matchesSomeScheme, "matchesSomeScheme");
 var connectionTokenCookieName = "vscode-tkn";
 var connectionTokenQueryName = "tkn";
@@ -8942,10 +8946,6 @@ var RemoteAuthoritiesImpl = class {
   }
 };
 var RemoteAuthorities = new RemoteAuthoritiesImpl();
-function getServerProductSegment(product) {
-  return `${product.quality ?? "oss"}-${product.commit ?? "dev"}`;
-}
-__name(getServerProductSegment, "getServerProductSegment");
 __name24(getServerProductSegment, "getServerProductSegment");
 var builtinExtensionsPath = "vs/../../extensions";
 var nodeModulesPath = "vs/../../node_modules";
@@ -9099,6 +9099,34 @@ function originalFSPath(uri) {
   return uriToFsPath(uri, true);
 }
 __name(originalFSPath, "originalFSPath");
+function distinctParents(items, resourceAccessor) {
+  const distinctParents2 = [];
+  for (let i = 0; i < items.length; i++) {
+    const candidateResource = resourceAccessor(items[i]);
+    if (items.some((otherItem, index2) => {
+      if (index2 === i) {
+        return false;
+      }
+      return isEqualOrParent2(candidateResource, resourceAccessor(otherItem));
+    })) {
+      continue;
+    }
+    distinctParents2.push(items[i]);
+  }
+  return distinctParents2;
+}
+__name(distinctParents, "distinctParents");
+function toLocalResource(resource, authority, localScheme) {
+  if (authority) {
+    let path = resource.path;
+    if (path && path[0] !== posix.sep) {
+      path = posix.sep + path;
+    }
+    return resource.with({ scheme: localScheme, authority, path });
+  }
+  return resource.with({ scheme: localScheme });
+}
+__name(toLocalResource, "toLocalResource");
 __name25(originalFSPath, "originalFSPath");
 var ExtUri = class {
   static {
@@ -9285,23 +9313,6 @@ var isEqualAuthority = extUri.isEqualAuthority.bind(extUri);
 var hasTrailingPathSeparator = extUri.hasTrailingPathSeparator.bind(extUri);
 var removeTrailingPathSeparator2 = extUri.removeTrailingPathSeparator.bind(extUri);
 var addTrailingPathSeparator = extUri.addTrailingPathSeparator.bind(extUri);
-function distinctParents(items, resourceAccessor) {
-  const distinctParents2 = [];
-  for (let i = 0; i < items.length; i++) {
-    const candidateResource = resourceAccessor(items[i]);
-    if (items.some((otherItem, index2) => {
-      if (index2 === i) {
-        return false;
-      }
-      return isEqualOrParent2(candidateResource, resourceAccessor(otherItem));
-    })) {
-      continue;
-    }
-    distinctParents2.push(items[i]);
-  }
-  return distinctParents2;
-}
-__name(distinctParents, "distinctParents");
 __name25(distinctParents, "distinctParents");
 var DataUri;
 (function(DataUri2) {
@@ -9328,17 +9339,6 @@ var DataUri;
   __name25(parseMetaData, "parseMetaData");
   DataUri2.parseMetaData = parseMetaData;
 })(DataUri || (DataUri = {}));
-function toLocalResource(resource, authority, localScheme) {
-  if (authority) {
-    let path = resource.path;
-    if (path && path[0] !== posix.sep) {
-      path = posix.sep + path;
-    }
-    return resource.with({ scheme: localScheme, authority, path });
-  }
-  return resource.with({ scheme: localScheme });
-}
-__name(toLocalResource, "toLocalResource");
 __name25(toLocalResource, "toLocalResource");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/symbols.js
@@ -9351,7 +9351,6 @@ function isThenable(obj) {
   return !!obj && typeof obj.then === "function";
 }
 __name(isThenable, "isThenable");
-__name26(isThenable, "isThenable");
 function createCancelablePromise(callback) {
   const source = new CancellationTokenSource();
   const thenable = callback(source.token);
@@ -9393,7 +9392,6 @@ function createCancelablePromise(callback) {
   }();
 }
 __name(createCancelablePromise, "createCancelablePromise");
-__name26(createCancelablePromise, "createCancelablePromise");
 function raceCancellation(promise, token, defaultValue) {
   return new Promise((resolve2, reject) => {
     const ref = token.onCancellationRequested(() => {
@@ -9404,7 +9402,6 @@ function raceCancellation(promise, token, defaultValue) {
   });
 }
 __name(raceCancellation, "raceCancellation");
-__name26(raceCancellation, "raceCancellation");
 function raceCancellationError(promise, token) {
   return new Promise((resolve2, reject) => {
     const ref = token.onCancellationRequested(() => {
@@ -9415,14 +9412,12 @@ function raceCancellationError(promise, token) {
   });
 }
 __name(raceCancellationError, "raceCancellationError");
-__name26(raceCancellationError, "raceCancellationError");
 function notCancellablePromise(promise) {
   return new Promise((resolve2, reject) => {
     promise.then(resolve2, reject);
   });
 }
 __name(notCancellablePromise, "notCancellablePromise");
-__name26(notCancellablePromise, "notCancellablePromise");
 function raceCancellablePromises(cancellablePromises) {
   let resolvedPromiseIndex = -1;
   const promises = cancellablePromises.map((promise2, index2) => promise2.then((result) => {
@@ -9443,7 +9438,6 @@ function raceCancellablePromises(cancellablePromises) {
   return promise;
 }
 __name(raceCancellablePromises, "raceCancellablePromises");
-__name26(raceCancellablePromises, "raceCancellablePromises");
 function raceTimeout(promise, timeout2, onTimeout) {
   let promiseResolve = void 0;
   const timer = setTimeout(() => {
@@ -9456,7 +9450,6 @@ function raceTimeout(promise, timeout2, onTimeout) {
   ]);
 }
 __name(raceTimeout, "raceTimeout");
-__name26(raceTimeout, "raceTimeout");
 function asPromise(callback) {
   return new Promise((resolve2, reject) => {
     const item = callback();
@@ -9468,7 +9461,6 @@ function asPromise(callback) {
   });
 }
 __name(asPromise, "asPromise");
-__name26(asPromise, "asPromise");
 function promiseWithResolvers() {
   let resolve2;
   let reject;
@@ -9479,6 +9471,174 @@ function promiseWithResolvers() {
   return { promise, resolve: resolve2, reject };
 }
 __name(promiseWithResolvers, "promiseWithResolvers");
+function timeout(millis, token) {
+  if (!token) {
+    return createCancelablePromise((token2) => timeout(millis, token2));
+  }
+  return new Promise((resolve2, reject) => {
+    const handle = setTimeout(() => {
+      disposable.dispose();
+      resolve2();
+    }, millis);
+    const disposable = token.onCancellationRequested(() => {
+      clearTimeout(handle);
+      disposable.dispose();
+      reject(new CancellationError());
+    });
+  });
+}
+__name(timeout, "timeout");
+function disposableTimeout(handler, timeout2 = 0, store) {
+  const timer = setTimeout(() => {
+    handler();
+    if (store) {
+      disposable.dispose();
+    }
+  }, timeout2);
+  const disposable = toDisposable(() => {
+    clearTimeout(timer);
+    store?.delete(disposable);
+  });
+  store?.add(disposable);
+  return disposable;
+}
+__name(disposableTimeout, "disposableTimeout");
+function sequence(promiseFactories) {
+  const results = [];
+  let index2 = 0;
+  const len = promiseFactories.length;
+  function next() {
+    return index2 < len ? promiseFactories[index2++]() : null;
+  }
+  __name(next, "next");
+  __name26(next, "next");
+  function thenHandler(result) {
+    if (result !== void 0 && result !== null) {
+      results.push(result);
+    }
+    const n = next();
+    if (n) {
+      return n.then(thenHandler);
+    }
+    return Promise.resolve(results);
+  }
+  __name(thenHandler, "thenHandler");
+  __name26(thenHandler, "thenHandler");
+  return Promise.resolve(null).then(thenHandler);
+}
+__name(sequence, "sequence");
+function first(promiseFactories, shouldStop = (t) => !!t, defaultValue = null) {
+  let index2 = 0;
+  const len = promiseFactories.length;
+  const loop = /* @__PURE__ */ __name26(() => {
+    if (index2 >= len) {
+      return Promise.resolve(defaultValue);
+    }
+    const factory = promiseFactories[index2++];
+    const promise = Promise.resolve(factory());
+    return promise.then((result) => {
+      if (shouldStop(result)) {
+        return Promise.resolve(result);
+      }
+      return loop();
+    });
+  }, "loop");
+  return loop();
+}
+__name(first, "first");
+function firstParallel(promiseList, shouldStop = (t) => !!t, defaultValue = null) {
+  if (promiseList.length === 0) {
+    return Promise.resolve(defaultValue);
+  }
+  let todo = promiseList.length;
+  const finish = /* @__PURE__ */ __name26(() => {
+    todo = -1;
+    for (const promise of promiseList) {
+      promise.cancel?.();
+    }
+  }, "finish");
+  return new Promise((resolve2, reject) => {
+    for (const promise of promiseList) {
+      promise.then((result) => {
+        if (--todo >= 0 && shouldStop(result)) {
+          finish();
+          resolve2(result);
+        } else if (todo === 0) {
+          resolve2(defaultValue);
+        }
+      }).catch((err) => {
+        if (--todo >= 0) {
+          finish();
+          reject(err);
+        }
+      });
+    }
+  });
+}
+__name(firstParallel, "firstParallel");
+function installFakeRunWhenIdle(fakeImpl) {
+  const origRunWhenIdle = _runWhenIdle;
+  const origRunWhenGlobalIdle = runWhenGlobalIdle;
+  _runWhenIdle = fakeImpl;
+  runWhenGlobalIdle = /* @__PURE__ */ __name26((runner, timeout2) => fakeImpl(globalThis, runner, timeout2), "runWhenGlobalIdle");
+  return toDisposable(() => {
+    _runWhenIdle = origRunWhenIdle;
+    runWhenGlobalIdle = origRunWhenGlobalIdle;
+  });
+}
+__name(installFakeRunWhenIdle, "installFakeRunWhenIdle");
+function createCancelableAsyncIterableProducer(callback) {
+  const source = new CancellationTokenSource();
+  const innerIterable = callback(source.token);
+  return new CancelableAsyncIterableProducer(source, async (emitter) => {
+    const subscription = source.token.onCancellationRequested(() => {
+      subscription.dispose();
+      source.dispose();
+      emitter.reject(new CancellationError());
+    });
+    try {
+      for await (const item of innerIterable) {
+        if (source.token.isCancellationRequested) {
+          return;
+        }
+        emitter.emitOne(item);
+      }
+      subscription.dispose();
+      source.dispose();
+    } catch (err) {
+      subscription.dispose();
+      source.dispose();
+      emitter.reject(err);
+    }
+  });
+}
+__name(createCancelableAsyncIterableProducer, "createCancelableAsyncIterableProducer");
+function cancellableIterable(iterableOrIterator, token) {
+  const iterator = Symbol.asyncIterator in iterableOrIterator ? iterableOrIterator[Symbol.asyncIterator]() : iterableOrIterator;
+  return {
+    async next() {
+      if (token.isCancellationRequested) {
+        return { done: true, value: void 0 };
+      }
+      const result = await raceCancellation(iterator.next(), token);
+      return result || { done: true, value: void 0 };
+    },
+    throw: iterator.throw?.bind(iterator),
+    return: iterator.return?.bind(iterator),
+    [Symbol.asyncIterator]() {
+      return this;
+    }
+  };
+}
+__name(cancellableIterable, "cancellableIterable");
+__name26(isThenable, "isThenable");
+__name26(createCancelablePromise, "createCancelablePromise");
+__name26(raceCancellation, "raceCancellation");
+__name26(raceCancellationError, "raceCancellationError");
+__name26(notCancellablePromise, "notCancellablePromise");
+__name26(raceCancellablePromises, "raceCancellablePromises");
+__name26(raceTimeout, "raceTimeout");
+__name26(asPromise, "asPromise");
 __name26(promiseWithResolvers, "promiseWithResolvers");
 var Throttler = class {
   static {
@@ -9726,115 +9886,10 @@ var AutoOpenBarrier = class extends Barrier {
     super.open();
   }
 };
-function timeout(millis, token) {
-  if (!token) {
-    return createCancelablePromise((token2) => timeout(millis, token2));
-  }
-  return new Promise((resolve2, reject) => {
-    const handle = setTimeout(() => {
-      disposable.dispose();
-      resolve2();
-    }, millis);
-    const disposable = token.onCancellationRequested(() => {
-      clearTimeout(handle);
-      disposable.dispose();
-      reject(new CancellationError());
-    });
-  });
-}
-__name(timeout, "timeout");
 __name26(timeout, "timeout");
-function disposableTimeout(handler, timeout2 = 0, store) {
-  const timer = setTimeout(() => {
-    handler();
-    if (store) {
-      disposable.dispose();
-    }
-  }, timeout2);
-  const disposable = toDisposable(() => {
-    clearTimeout(timer);
-    store?.delete(disposable);
-  });
-  store?.add(disposable);
-  return disposable;
-}
-__name(disposableTimeout, "disposableTimeout");
 __name26(disposableTimeout, "disposableTimeout");
-function sequence(promiseFactories) {
-  const results = [];
-  let index2 = 0;
-  const len = promiseFactories.length;
-  function next() {
-    return index2 < len ? promiseFactories[index2++]() : null;
-  }
-  __name(next, "next");
-  __name26(next, "next");
-  function thenHandler(result) {
-    if (result !== void 0 && result !== null) {
-      results.push(result);
-    }
-    const n = next();
-    if (n) {
-      return n.then(thenHandler);
-    }
-    return Promise.resolve(results);
-  }
-  __name(thenHandler, "thenHandler");
-  __name26(thenHandler, "thenHandler");
-  return Promise.resolve(null).then(thenHandler);
-}
-__name(sequence, "sequence");
 __name26(sequence, "sequence");
-function first(promiseFactories, shouldStop = (t) => !!t, defaultValue = null) {
-  let index2 = 0;
-  const len = promiseFactories.length;
-  const loop = /* @__PURE__ */ __name26(() => {
-    if (index2 >= len) {
-      return Promise.resolve(defaultValue);
-    }
-    const factory = promiseFactories[index2++];
-    const promise = Promise.resolve(factory());
-    return promise.then((result) => {
-      if (shouldStop(result)) {
-        return Promise.resolve(result);
-      }
-      return loop();
-    });
-  }, "loop");
-  return loop();
-}
-__name(first, "first");
 __name26(first, "first");
-function firstParallel(promiseList, shouldStop = (t) => !!t, defaultValue = null) {
-  if (promiseList.length === 0) {
-    return Promise.resolve(defaultValue);
-  }
-  let todo = promiseList.length;
-  const finish = /* @__PURE__ */ __name26(() => {
-    todo = -1;
-    for (const promise of promiseList) {
-      promise.cancel?.();
-    }
-  }, "finish");
-  return new Promise((resolve2, reject) => {
-    for (const promise of promiseList) {
-      promise.then((result) => {
-        if (--todo >= 0 && shouldStop(result)) {
-          finish();
-          resolve2(result);
-        } else if (todo === 0) {
-          resolve2(defaultValue);
-        }
-      }).catch((err) => {
-        if (--todo >= 0) {
-          finish();
-          reject(err);
-        }
-      });
-    }
-  });
-}
-__name(firstParallel, "firstParallel");
 __name26(firstParallel, "firstParallel");
 var Limiter = class {
   static {
@@ -10442,17 +10497,6 @@ var _runWhenIdle;
   }
   runWhenGlobalIdle = /* @__PURE__ */ __name26((runner, timeout2) => _runWhenIdle(globalThis, runner, timeout2), "runWhenGlobalIdle");
 })();
-function installFakeRunWhenIdle(fakeImpl) {
-  const origRunWhenIdle = _runWhenIdle;
-  const origRunWhenGlobalIdle = runWhenGlobalIdle;
-  _runWhenIdle = fakeImpl;
-  runWhenGlobalIdle = /* @__PURE__ */ __name26((runner, timeout2) => fakeImpl(globalThis, runner, timeout2), "runWhenGlobalIdle");
-  return toDisposable(() => {
-    _runWhenIdle = origRunWhenIdle;
-    runWhenGlobalIdle = origRunWhenGlobalIdle;
-  });
-}
-__name(installFakeRunWhenIdle, "installFakeRunWhenIdle");
 __name26(installFakeRunWhenIdle, "installFakeRunWhenIdle");
 var AbstractIdleValue = class {
   static {
@@ -10948,32 +10992,6 @@ var AsyncIterableObject = class _AsyncIterableObject {
     this._onStateChanged.fire();
   }
 };
-function createCancelableAsyncIterableProducer(callback) {
-  const source = new CancellationTokenSource();
-  const innerIterable = callback(source.token);
-  return new CancelableAsyncIterableProducer(source, async (emitter) => {
-    const subscription = source.token.onCancellationRequested(() => {
-      subscription.dispose();
-      source.dispose();
-      emitter.reject(new CancellationError());
-    });
-    try {
-      for await (const item of innerIterable) {
-        if (source.token.isCancellationRequested) {
-          return;
-        }
-        emitter.emitOne(item);
-      }
-      subscription.dispose();
-      source.dispose();
-    } catch (err) {
-      subscription.dispose();
-      source.dispose();
-      emitter.reject(err);
-    }
-  });
-}
-__name(createCancelableAsyncIterableProducer, "createCancelableAsyncIterableProducer");
 __name26(createCancelableAsyncIterableProducer, "createCancelableAsyncIterableProducer");
 var AsyncIterableSource = class {
   static {
@@ -11041,24 +11059,6 @@ var AsyncIterableSource = class {
     this._emitManyFn(items);
   }
 };
-function cancellableIterable(iterableOrIterator, token) {
-  const iterator = Symbol.asyncIterator in iterableOrIterator ? iterableOrIterator[Symbol.asyncIterator]() : iterableOrIterator;
-  return {
-    async next() {
-      if (token.isCancellationRequested) {
-        return { done: true, value: void 0 };
-      }
-      const result = await raceCancellation(iterator.next(), token);
-      return result || { done: true, value: void 0 };
-    },
-    throw: iterator.throw?.bind(iterator),
-    return: iterator.return?.bind(iterator),
-    [Symbol.asyncIterator]() {
-      return this;
-    }
-  };
-}
-__name(cancellableIterable, "cancellableIterable");
 __name26(cancellableIterable, "cancellableIterable");
 var ProducerConsumer = class {
   static {
@@ -11379,12 +11379,6 @@ function getEmptyExpression() {
   return /* @__PURE__ */ Object.create(null);
 }
 __name(getEmptyExpression, "getEmptyExpression");
-__name27(getEmptyExpression, "getEmptyExpression");
-var GLOBSTAR = "**";
-var GLOB_SPLIT = "/";
-var PATH_REGEX = "[/\\\\]";
-var NO_PATH_REGEX = "[^/\\\\]";
-var ALL_FORWARD_SLASHES = /\//g;
 function starsToRegExp(starCount, isLastPattern) {
   switch (starCount) {
     case 0:
@@ -11397,7 +11391,6 @@ function starsToRegExp(starCount, isLastPattern) {
   }
 }
 __name(starsToRegExp, "starsToRegExp");
-__name27(starsToRegExp, "starsToRegExp");
 function splitGlobAware(pattern, splitChar) {
   if (!pattern) {
     return [];
@@ -11436,7 +11429,6 @@ function splitGlobAware(pattern, splitChar) {
   return segments;
 }
 __name(splitGlobAware, "splitGlobAware");
-__name27(splitGlobAware, "splitGlobAware");
 function parseRegExp(pattern) {
   if (!pattern) {
     return "";
@@ -11520,20 +11512,6 @@ function parseRegExp(pattern) {
   return regEx;
 }
 __name(parseRegExp, "parseRegExp");
-__name27(parseRegExp, "parseRegExp");
-var T1 = /^\*\*\/\*\.[\w\.-]+$/;
-var T2 = /^\*\*\/([\w\.-]+)\/?$/;
-var T3 = /^{\*\*\/\*?[\w\.-]+\/?(,\*\*\/\*?[\w\.-]+\/?)*}$/;
-var T3_2 = /^{\*\*\/\*?[\w\.-]+(\/(\*\*)?)?(,\*\*\/\*?[\w\.-]+(\/(\*\*)?)?)*}$/;
-var T4 = /^\*\*((\/[\w\.-]+)+)\/?$/;
-var T5 = /^([\w\.-]+(\/[\w\.-]+)*)\/?$/;
-var CACHE = new LRUCache(1e4);
-var FALSE = /* @__PURE__ */ __name27(function() {
-  return false;
-}, "FALSE");
-var NULL = /* @__PURE__ */ __name27(function() {
-  return null;
-}, "NULL");
 function isEmptyPattern(pattern) {
   if (pattern === FALSE) {
     return true;
@@ -11544,7 +11522,6 @@ function isEmptyPattern(pattern) {
   return false;
 }
 __name(isEmptyPattern, "isEmptyPattern");
-__name27(isEmptyPattern, "isEmptyPattern");
 function parsePattern(arg1, options) {
   if (!arg1) {
     return NULL;
@@ -11591,7 +11568,6 @@ function parsePattern(arg1, options) {
   return wrapRelativePattern(parsedPattern, arg1, internalOptions);
 }
 __name(parsePattern, "parsePattern");
-__name27(parsePattern, "parsePattern");
 function wrapRelativePattern(parsedPattern, arg2, options) {
   if (typeof arg2 === "string") {
     return parsedPattern;
@@ -11609,19 +11585,16 @@ function wrapRelativePattern(parsedPattern, arg2, options) {
   return wrappedPattern;
 }
 __name(wrapRelativePattern, "wrapRelativePattern");
-__name27(wrapRelativePattern, "wrapRelativePattern");
 function trimForExclusions(pattern, options) {
   return options.trimForExclusions && pattern.endsWith("/**") ? pattern.substring(0, pattern.length - 2) : pattern;
 }
 __name(trimForExclusions, "trimForExclusions");
-__name27(trimForExclusions, "trimForExclusions");
 function trivia1(base, pattern, options) {
   return function(path, basename22) {
     return typeof path === "string" && options.endsWith(path, base) ? pattern : null;
   };
 }
 __name(trivia1, "trivia1");
-__name27(trivia1, "trivia1");
 function trivia2(base, pattern, options) {
   const slashBase = `/${base}`;
   const backslashBase = `\\${base}`;
@@ -11641,7 +11614,6 @@ function trivia2(base, pattern, options) {
   return parsedPattern;
 }
 __name(trivia2, "trivia2");
-__name27(trivia2, "trivia2");
 function trivia3(pattern, options) {
   const parsedPatterns = aggregateBasenameMatches(pattern.slice(1, -1).split(",").map((pattern2) => parsePattern(pattern2, options)).filter((pattern2) => pattern2 !== NULL), pattern);
   const patternsLength = parsedPatterns.length;
@@ -11670,7 +11642,6 @@ function trivia3(pattern, options) {
   return parsedPattern;
 }
 __name(trivia3, "trivia3");
-__name27(trivia3, "trivia3");
 function trivia4and5(targetPath, pattern, matchPathEnds, options) {
   const usingPosixSep = sep === posix.sep;
   const nativePath = usingPosixSep ? targetPath : targetPath.replace(ALL_FORWARD_SLASHES, sep);
@@ -11690,7 +11661,6 @@ function trivia4and5(targetPath, pattern, matchPathEnds, options) {
   return parsedPattern;
 }
 __name(trivia4and5, "trivia4and5");
-__name27(trivia4and5, "trivia4and5");
 function toRegExp(pattern, options) {
   try {
     const regExp = new RegExp(`^${parseRegExp(pattern)}$`, options.ignoreCase ? "i" : void 0);
@@ -11703,7 +11673,6 @@ function toRegExp(pattern, options) {
   }
 }
 __name(toRegExp, "toRegExp");
-__name27(toRegExp, "toRegExp");
 function match(arg1, path, options) {
   if (!arg1 || typeof path !== "string") {
     return false;
@@ -11711,7 +11680,6 @@ function match(arg1, path, options) {
   return parse2(arg1, options)(path);
 }
 __name(match, "match");
-__name27(match, "match");
 function parse2(arg1, options = {}) {
   if (!arg1) {
     return FALSE;
@@ -11735,7 +11703,6 @@ function parse2(arg1, options = {}) {
   return parsedExpression(arg1, options);
 }
 __name(parse2, "parse");
-__name27(parse2, "parse");
 function isRelativePattern(obj) {
   const rp = obj;
   if (!rp) {
@@ -11744,17 +11711,14 @@ function isRelativePattern(obj) {
   return typeof rp.base === "string" && typeof rp.pattern === "string";
 }
 __name(isRelativePattern, "isRelativePattern");
-__name27(isRelativePattern, "isRelativePattern");
 function getBasenameTerms(patternOrExpression) {
   return patternOrExpression.allBasenames || [];
 }
 __name(getBasenameTerms, "getBasenameTerms");
-__name27(getBasenameTerms, "getBasenameTerms");
 function getPathTerms(patternOrExpression) {
   return patternOrExpression.allPaths || [];
 }
 __name(getPathTerms, "getPathTerms");
-__name27(getPathTerms, "getPathTerms");
 function parsedExpression(expression, options) {
   const parsedPatterns = aggregateBasenameMatches(Object.getOwnPropertyNames(expression).map((pattern) => parseExpressionPattern(pattern, expression[pattern], options)).filter((pattern) => pattern !== NULL));
   const patternsLength = parsedPatterns.length;
@@ -11850,7 +11814,6 @@ function parsedExpression(expression, options) {
   return resultExpression;
 }
 __name(parsedExpression, "parsedExpression");
-__name27(parsedExpression, "parsedExpression");
 function parseExpressionPattern(pattern, value, options) {
   if (value === false) {
     return NULL;
@@ -11880,7 +11843,6 @@ function parseExpressionPattern(pattern, value, options) {
   return parsedPattern;
 }
 __name(parseExpressionPattern, "parseExpressionPattern");
-__name27(parseExpressionPattern, "parseExpressionPattern");
 function aggregateBasenameMatches(parsedPatterns, result) {
   const basenamePatterns = parsedPatterns.filter((parsedPattern) => !!parsedPattern.basenames);
   if (basenamePatterns.length < 2) {
@@ -11927,7 +11889,6 @@ function aggregateBasenameMatches(parsedPatterns, result) {
   return aggregatedPatterns;
 }
 __name(aggregateBasenameMatches, "aggregateBasenameMatches");
-__name27(aggregateBasenameMatches, "aggregateBasenameMatches");
 function patternsEquals(patternsA, patternsB) {
   return equals(patternsA, patternsB, (a, b) => {
     if (typeof a === "string" && typeof b === "string") {
@@ -11940,6 +11901,45 @@ function patternsEquals(patternsA, patternsB) {
   });
 }
 __name(patternsEquals, "patternsEquals");
+__name27(getEmptyExpression, "getEmptyExpression");
+var GLOBSTAR = "**";
+var GLOB_SPLIT = "/";
+var PATH_REGEX = "[/\\\\]";
+var NO_PATH_REGEX = "[^/\\\\]";
+var ALL_FORWARD_SLASHES = /\//g;
+__name27(starsToRegExp, "starsToRegExp");
+__name27(splitGlobAware, "splitGlobAware");
+__name27(parseRegExp, "parseRegExp");
+var T1 = /^\*\*\/\*\.[\w\.-]+$/;
+var T2 = /^\*\*\/([\w\.-]+)\/?$/;
+var T3 = /^{\*\*\/\*?[\w\.-]+\/?(,\*\*\/\*?[\w\.-]+\/?)*}$/;
+var T3_2 = /^{\*\*\/\*?[\w\.-]+(\/(\*\*)?)?(,\*\*\/\*?[\w\.-]+(\/(\*\*)?)?)*}$/;
+var T4 = /^\*\*((\/[\w\.-]+)+)\/?$/;
+var T5 = /^([\w\.-]+(\/[\w\.-]+)*)\/?$/;
+var CACHE = new LRUCache(1e4);
+var FALSE = /* @__PURE__ */ __name27(function() {
+  return false;
+}, "FALSE");
+var NULL = /* @__PURE__ */ __name27(function() {
+  return null;
+}, "NULL");
+__name27(isEmptyPattern, "isEmptyPattern");
+__name27(parsePattern, "parsePattern");
+__name27(wrapRelativePattern, "wrapRelativePattern");
+__name27(trimForExclusions, "trimForExclusions");
+__name27(trivia1, "trivia1");
+__name27(trivia2, "trivia2");
+__name27(trivia3, "trivia3");
+__name27(trivia4and5, "trivia4and5");
+__name27(toRegExp, "toRegExp");
+__name27(match, "match");
+__name27(parse2, "parse");
+__name27(isRelativePattern, "isRelativePattern");
+__name27(getBasenameTerms, "getBasenameTerms");
+__name27(getPathTerms, "getPathTerms");
+__name27(parsedExpression, "parsedExpression");
+__name27(parseExpressionPattern, "parseExpressionPattern");
+__name27(aggregateBasenameMatches, "aggregateBasenameMatches");
 __name27(patternsEquals, "patternsEquals");
 
 // Source/Services/Handler/VscodeAPI/StockLift.ts

@@ -2760,22 +2760,27 @@ var init_arraysFind = __esm({
     __defProp2 = Object.defineProperty;
     __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
     __name(findLast, "findLast");
-    __name2(findLast, "findLast");
     __name(findLastIdx, "findLastIdx");
-    __name2(findLastIdx, "findLastIdx");
     __name(findFirst, "findFirst");
-    __name2(findFirst, "findFirst");
     __name(findFirstIdx, "findFirstIdx");
-    __name2(findFirstIdx, "findFirstIdx");
     __name(findLastMonotonous, "findLastMonotonous");
-    __name2(findLastMonotonous, "findLastMonotonous");
     __name(findLastIdxMonotonous, "findLastIdxMonotonous");
-    __name2(findLastIdxMonotonous, "findLastIdxMonotonous");
     __name(findFirstMonotonous, "findFirstMonotonous");
-    __name2(findFirstMonotonous, "findFirstMonotonous");
     __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-    __name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
     __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    __name(findFirstMax, "findFirstMax");
+    __name(findLastMax, "findLastMax");
+    __name(findFirstMin, "findFirstMin");
+    __name(findMaxIdx, "findMaxIdx");
+    __name(mapFindFirst, "mapFindFirst");
+    __name2(findLast, "findLast");
+    __name2(findLastIdx, "findLastIdx");
+    __name2(findFirst, "findFirst");
+    __name2(findFirstIdx, "findFirstIdx");
+    __name2(findLastMonotonous, "findLastMonotonous");
+    __name2(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name2(findFirstMonotonous, "findFirstMonotonous");
+    __name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
     __name2(findFirstIdxMonotonous, "findFirstIdxMonotonous");
     MonotonousArray = class _MonotonousArray {
       static {
@@ -2811,15 +2816,10 @@ var init_arraysFind = __esm({
         return idx === -1 ? void 0 : this._array[idx];
       }
     };
-    __name(findFirstMax, "findFirstMax");
     __name2(findFirstMax, "findFirstMax");
-    __name(findLastMax, "findLastMax");
     __name2(findLastMax, "findLastMax");
-    __name(findFirstMin, "findFirstMin");
     __name2(findFirstMin, "findFirstMin");
-    __name(findMaxIdx, "findMaxIdx");
     __name2(findMaxIdx, "findMaxIdx");
-    __name(mapFindFirst, "mapFindFirst");
     __name2(mapFindFirst, "mapFindFirst");
   }
 });
@@ -2928,6 +2928,18 @@ var init_errors = __esm({
     "use strict";
     __defProp3 = Object.defineProperty;
     __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
+    __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+    __name(isSigPipeError, "isSigPipeError");
+    __name(onBugIndicatingError, "onBugIndicatingError");
+    __name(onUnexpectedError, "onUnexpectedError");
+    __name(onUnexpectedExternalError, "onUnexpectedExternalError");
+    __name(transformErrorForSerialization, "transformErrorForSerialization");
+    __name(transformErrorFromSerialization, "transformErrorFromSerialization");
+    __name(isCancellationError, "isCancellationError");
+    __name(canceled, "canceled");
+    __name(illegalArgument, "illegalArgument");
+    __name(illegalState, "illegalState");
+    __name(getErrorMessage, "getErrorMessage");
     ErrorHandler = class {
       static {
         __name(this, "ErrorHandler");
@@ -2979,22 +2991,14 @@ var init_errors = __esm({
       }
     };
     errorHandler = new ErrorHandler();
-    __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
     __name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
-    __name(isSigPipeError, "isSigPipeError");
     __name3(isSigPipeError, "isSigPipeError");
-    __name(onBugIndicatingError, "onBugIndicatingError");
     __name3(onBugIndicatingError, "onBugIndicatingError");
-    __name(onUnexpectedError, "onUnexpectedError");
     __name3(onUnexpectedError, "onUnexpectedError");
-    __name(onUnexpectedExternalError, "onUnexpectedExternalError");
     __name3(onUnexpectedExternalError, "onUnexpectedExternalError");
-    __name(transformErrorForSerialization, "transformErrorForSerialization");
     __name3(transformErrorForSerialization, "transformErrorForSerialization");
-    __name(transformErrorFromSerialization, "transformErrorFromSerialization");
     __name3(transformErrorFromSerialization, "transformErrorFromSerialization");
     canceledName = "Canceled";
-    __name(isCancellationError, "isCancellationError");
     __name3(isCancellationError, "isCancellationError");
     CancellationError = class extends Error {
       static {
@@ -3026,11 +3030,8 @@ var init_errors = __esm({
         this.name = _PendingMigrationError._name;
       }
     };
-    __name(canceled, "canceled");
     __name3(canceled, "canceled");
-    __name(illegalArgument, "illegalArgument");
     __name3(illegalArgument, "illegalArgument");
-    __name(illegalState, "illegalState");
     __name3(illegalState, "illegalState");
     ReadonlyError = class extends TypeError {
       static {
@@ -3043,7 +3044,6 @@ var init_errors = __esm({
         super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
       }
     };
-    __name(getErrorMessage, "getErrorMessage");
     __name3(getErrorMessage, "getErrorMessage");
     NotImplementedError = class extends Error {
       static {
@@ -3212,24 +3212,6 @@ function groupBy(data, compare2) {
     }
   }
   return result;
-}
-function* groupAdjacentBy(items, shouldBeGrouped) {
-  let currentGroup;
-  let last;
-  for (const item of items) {
-    if (last !== void 0 && shouldBeGrouped(last, item)) {
-      currentGroup.push(item);
-    } else {
-      if (currentGroup) {
-        yield currentGroup;
-      }
-      currentGroup = [item];
-    }
-    last = item;
-  }
-  if (currentGroup) {
-    yield currentGroup;
-  }
 }
 function forEachAdjacent(arr, f) {
   for (let i = 0; i <= arr.length; i++) {
@@ -3541,15 +3523,33 @@ function compareUndefinedSmallest(comparator) {
     return comparator(a, b);
   };
 }
-async function findAsync(array, predicate) {
-  const results = await Promise.all(array.map(async (element, index2) => ({ element, ok: await predicate(element, index2) })));
-  return results.find((r) => r.ok)?.element;
-}
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
 }
 function sumBy(array, selector) {
   return array.reduce((acc, value) => acc + selector(value), 0);
+}
+function* groupAdjacentBy(items, shouldBeGrouped) {
+  let currentGroup;
+  let last;
+  for (const item of items) {
+    if (last !== void 0 && shouldBeGrouped(last, item)) {
+      currentGroup.push(item);
+    } else {
+      if (currentGroup) {
+        yield currentGroup;
+      }
+      currentGroup = [item];
+    }
+    last = item;
+  }
+  if (currentGroup) {
+    yield currentGroup;
+  }
+}
+async function findAsync(array, predicate) {
+  const results = await Promise.all(array.map(async (element, index2) => ({ element, ok: await predicate(element, index2) })));
+  return results.find((r) => r.ok)?.element;
 }
 var __defProp4, __name4, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
 var init_arrays = __esm({
@@ -3560,86 +3560,92 @@ var init_arrays = __esm({
     __defProp4 = Object.defineProperty;
     __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
     __name(tail, "tail");
-    __name4(tail, "tail");
     __name(equals, "equals");
-    __name4(equals, "equals");
     __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-    __name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
     __name(binarySearch, "binarySearch");
-    __name4(binarySearch, "binarySearch");
     __name(binarySearch2, "binarySearch2");
-    __name4(binarySearch2, "binarySearch2");
     __name(quickSelect, "quickSelect");
-    __name4(quickSelect, "quickSelect");
     __name(groupBy, "groupBy");
+    __name(forEachAdjacent, "forEachAdjacent");
+    __name(forEachWithNeighbors, "forEachWithNeighbors");
+    __name(concatArrays, "concatArrays");
+    __name(sortedDiff, "sortedDiff");
+    __name(delta, "delta");
+    __name(top, "top");
+    __name(topAsync, "topAsync");
+    __name(topStep, "topStep");
+    __name(coalesce, "coalesce");
+    __name(coalesceInPlace, "coalesceInPlace");
+    __name(move, "move");
+    __name(isFalsyOrEmpty, "isFalsyOrEmpty");
+    __name(isNonEmptyArray, "isNonEmptyArray");
+    __name(distinct, "distinct");
+    __name(uniqueFilter, "uniqueFilter");
+    __name(commonPrefixLength, "commonPrefixLength");
+    __name(range, "range");
+    __name(index, "index");
+    __name(insert, "insert");
+    __name(remove, "remove");
+    __name(arrayInsert, "arrayInsert");
+    __name(shuffle, "shuffle");
+    __name(pushToStart, "pushToStart");
+    __name(pushToEnd, "pushToEnd");
+    __name(pushMany, "pushMany");
+    __name(mapArrayOrNot, "mapArrayOrNot");
+    __name(mapFilter, "mapFilter");
+    __name(withoutDuplicates, "withoutDuplicates");
+    __name(asArray, "asArray");
+    __name(getRandomElement, "getRandomElement");
+    __name(insertInto, "insertInto");
+    __name(splice, "splice");
+    __name(getActualStartIndex, "getActualStartIndex");
+    __name(compareBy, "compareBy");
+    __name(tieBreakComparators, "tieBreakComparators");
+    __name(reverseOrder, "reverseOrder");
+    __name(compareUndefinedSmallest, "compareUndefinedSmallest");
+    __name(sum, "sum");
+    __name(sumBy, "sumBy");
+    __name4(tail, "tail");
+    __name4(equals, "equals");
+    __name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+    __name4(binarySearch, "binarySearch");
+    __name4(binarySearch2, "binarySearch2");
+    __name4(quickSelect, "quickSelect");
     __name4(groupBy, "groupBy");
     __name(groupAdjacentBy, "groupAdjacentBy");
     __name4(groupAdjacentBy, "groupAdjacentBy");
-    __name(forEachAdjacent, "forEachAdjacent");
     __name4(forEachAdjacent, "forEachAdjacent");
-    __name(forEachWithNeighbors, "forEachWithNeighbors");
     __name4(forEachWithNeighbors, "forEachWithNeighbors");
-    __name(concatArrays, "concatArrays");
     __name4(concatArrays, "concatArrays");
-    __name(sortedDiff, "sortedDiff");
     __name4(sortedDiff, "sortedDiff");
-    __name(delta, "delta");
     __name4(delta, "delta");
-    __name(top, "top");
     __name4(top, "top");
-    __name(topAsync, "topAsync");
     __name4(topAsync, "topAsync");
-    __name(topStep, "topStep");
     __name4(topStep, "topStep");
-    __name(coalesce, "coalesce");
     __name4(coalesce, "coalesce");
-    __name(coalesceInPlace, "coalesceInPlace");
     __name4(coalesceInPlace, "coalesceInPlace");
-    __name(move, "move");
     __name4(move, "move");
-    __name(isFalsyOrEmpty, "isFalsyOrEmpty");
     __name4(isFalsyOrEmpty, "isFalsyOrEmpty");
-    __name(isNonEmptyArray, "isNonEmptyArray");
     __name4(isNonEmptyArray, "isNonEmptyArray");
-    __name(distinct, "distinct");
     __name4(distinct, "distinct");
-    __name(uniqueFilter, "uniqueFilter");
     __name4(uniqueFilter, "uniqueFilter");
-    __name(commonPrefixLength, "commonPrefixLength");
     __name4(commonPrefixLength, "commonPrefixLength");
-    __name(range, "range");
     __name4(range, "range");
-    __name(index, "index");
     __name4(index, "index");
-    __name(insert, "insert");
     __name4(insert, "insert");
-    __name(remove, "remove");
     __name4(remove, "remove");
-    __name(arrayInsert, "arrayInsert");
     __name4(arrayInsert, "arrayInsert");
-    __name(shuffle, "shuffle");
     __name4(shuffle, "shuffle");
-    __name(pushToStart, "pushToStart");
     __name4(pushToStart, "pushToStart");
-    __name(pushToEnd, "pushToEnd");
     __name4(pushToEnd, "pushToEnd");
-    __name(pushMany, "pushMany");
     __name4(pushMany, "pushMany");
-    __name(mapArrayOrNot, "mapArrayOrNot");
     __name4(mapArrayOrNot, "mapArrayOrNot");
-    __name(mapFilter, "mapFilter");
     __name4(mapFilter, "mapFilter");
-    __name(withoutDuplicates, "withoutDuplicates");
     __name4(withoutDuplicates, "withoutDuplicates");
-    __name(asArray, "asArray");
     __name4(asArray, "asArray");
-    __name(getRandomElement, "getRandomElement");
     __name4(getRandomElement, "getRandomElement");
-    __name(insertInto, "insertInto");
     __name4(insertInto, "insertInto");
-    __name(splice, "splice");
     __name4(splice, "splice");
-    __name(getActualStartIndex, "getActualStartIndex");
     __name4(getActualStartIndex, "getActualStartIndex");
     (function(CompareResult2) {
       function isLessThan(result) {
@@ -3670,15 +3676,11 @@ var init_arrays = __esm({
       CompareResult2.lessThan = -1;
       CompareResult2.neitherLessOrGreaterThan = 0;
     })(CompareResult || (CompareResult = {}));
-    __name(compareBy, "compareBy");
     __name4(compareBy, "compareBy");
-    __name(tieBreakComparators, "tieBreakComparators");
     __name4(tieBreakComparators, "tieBreakComparators");
     numberComparator = /* @__PURE__ */ __name4((a, b) => a - b, "numberComparator");
     booleanComparator = /* @__PURE__ */ __name4((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
-    __name(reverseOrder, "reverseOrder");
     __name4(reverseOrder, "reverseOrder");
-    __name(compareUndefinedSmallest, "compareUndefinedSmallest");
     __name4(compareUndefinedSmallest, "compareUndefinedSmallest");
     ArrayQueue = class {
       static {
@@ -3865,9 +3867,7 @@ var init_arrays = __esm({
     };
     __name(findAsync, "findAsync");
     __name4(findAsync, "findAsync");
-    __name(sum, "sum");
     __name4(sum, "sum");
-    __name(sumBy, "sumBy");
     __name4(sumBy, "sumBy");
   }
 });
@@ -4007,14 +4007,14 @@ var init_collections = __esm({
     __defProp6 = Object.defineProperty;
     __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
     __name(groupBy2, "groupBy");
-    __name6(groupBy2, "groupBy");
     __name(groupByMap, "groupByMap");
-    __name6(groupByMap, "groupByMap");
     __name(diffSets, "diffSets");
-    __name6(diffSets, "diffSets");
     __name(diffMaps, "diffMaps");
-    __name6(diffMaps, "diffMaps");
     __name(intersection, "intersection");
+    __name6(groupBy2, "groupBy");
+    __name6(groupByMap, "groupByMap");
+    __name6(diffSets, "diffSets");
+    __name6(diffMaps, "diffMaps");
     __name6(intersection, "intersection");
     SetWithKey = class {
       static {
@@ -4126,10 +4126,12 @@ var init_map = __esm({
     __defProp7 = Object.defineProperty;
     __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
     __name(getOrSet, "getOrSet");
-    __name7(getOrSet, "getOrSet");
     __name(mapToString, "mapToString");
-    __name7(mapToString, "mapToString");
     __name(setToString, "setToString");
+    __name(isEntries, "isEntries");
+    __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+    __name7(getOrSet, "getOrSet");
+    __name7(mapToString, "mapToString");
     __name7(setToString, "setToString");
     ResourceMapEntry = class {
       static {
@@ -4143,7 +4145,6 @@ var init_map = __esm({
         this.value = value;
       }
     };
-    __name(isEntries, "isEntries");
     __name7(isEntries, "isEntries");
     ResourceMap = class _ResourceMap {
       static {
@@ -4832,7 +4833,6 @@ var init_map = __esm({
         return values;
       }
     };
-    __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
     __name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
     NKeyMap = class {
       static {
@@ -4995,18 +4995,18 @@ var init_assert = __esm({
     __defProp9 = Object.defineProperty;
     __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
     __name(ok, "ok");
-    __name9(ok, "ok");
     __name(assertNever, "assertNever");
-    __name9(assertNever, "assertNever");
     __name(softAssertNever, "softAssertNever");
-    __name9(softAssertNever, "softAssertNever");
     __name(assert, "assert");
-    __name9(assert, "assert");
     __name(softAssert, "softAssert");
-    __name9(softAssert, "softAssert");
     __name(assertFn, "assertFn");
-    __name9(assertFn, "assertFn");
     __name(checkAdjacentItems, "checkAdjacentItems");
+    __name9(ok, "ok");
+    __name9(assertNever, "assertNever");
+    __name9(softAssertNever, "softAssertNever");
+    __name9(assert, "assert");
+    __name9(softAssert, "softAssert");
+    __name9(assertFn, "assertFn");
     __name9(checkAdjacentItems, "checkAdjacentItems");
   }
 });
@@ -5140,56 +5140,56 @@ var init_types = __esm({
     __defProp10 = Object.defineProperty;
     __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
     __name(isString, "isString");
-    __name10(isString, "isString");
     __name(isStringArray, "isStringArray");
-    __name10(isStringArray, "isStringArray");
     __name(isArrayOf, "isArrayOf");
-    __name10(isArrayOf, "isArrayOf");
     __name(isObject, "isObject");
-    __name10(isObject, "isObject");
     __name(isTypedArray, "isTypedArray");
-    __name10(isTypedArray, "isTypedArray");
     __name(isNumber, "isNumber");
-    __name10(isNumber, "isNumber");
     __name(isIterable, "isIterable");
-    __name10(isIterable, "isIterable");
     __name(isAsyncIterable, "isAsyncIterable");
-    __name10(isAsyncIterable, "isAsyncIterable");
     __name(isBoolean, "isBoolean");
-    __name10(isBoolean, "isBoolean");
     __name(isUndefined, "isUndefined");
-    __name10(isUndefined, "isUndefined");
     __name(isDefined, "isDefined");
-    __name10(isDefined, "isDefined");
     __name(isUndefinedOrNull, "isUndefinedOrNull");
-    __name10(isUndefinedOrNull, "isUndefinedOrNull");
     __name(assertType, "assertType");
-    __name10(assertType, "assertType");
     __name(assertReturnsDefined, "assertReturnsDefined");
-    __name10(assertReturnsDefined, "assertReturnsDefined");
     __name(assertDefined, "assertDefined");
-    __name10(assertDefined, "assertDefined");
     __name(assertReturnsAllDefined, "assertReturnsAllDefined");
+    __name(typeCheck, "typeCheck");
+    __name(isEmptyObject, "isEmptyObject");
+    __name(isFunction, "isFunction");
+    __name(areFunctions, "areFunctions");
+    __name(validateConstraints, "validateConstraints");
+    __name(validateConstraint, "validateConstraint");
+    __name(upcast, "upcast");
+    __name(hasKey, "hasKey");
+    __name10(isString, "isString");
+    __name10(isStringArray, "isStringArray");
+    __name10(isArrayOf, "isArrayOf");
+    __name10(isObject, "isObject");
+    __name10(isTypedArray, "isTypedArray");
+    __name10(isNumber, "isNumber");
+    __name10(isIterable, "isIterable");
+    __name10(isAsyncIterable, "isAsyncIterable");
+    __name10(isBoolean, "isBoolean");
+    __name10(isUndefined, "isUndefined");
+    __name10(isDefined, "isDefined");
+    __name10(isUndefinedOrNull, "isUndefinedOrNull");
+    __name10(assertType, "assertType");
+    __name10(assertReturnsDefined, "assertReturnsDefined");
+    __name10(assertDefined, "assertDefined");
     __name10(assertReturnsAllDefined, "assertReturnsAllDefined");
     isOneOf = /* @__PURE__ */ __name10((value, validValues) => {
       return validValues.includes(value);
     }, "isOneOf");
-    __name(typeCheck, "typeCheck");
     __name10(typeCheck, "typeCheck");
     hasOwnProperty = Object.prototype.hasOwnProperty;
-    __name(isEmptyObject, "isEmptyObject");
     __name10(isEmptyObject, "isEmptyObject");
-    __name(isFunction, "isFunction");
     __name10(isFunction, "isFunction");
-    __name(areFunctions, "areFunctions");
     __name10(areFunctions, "areFunctions");
-    __name(validateConstraints, "validateConstraints");
     __name10(validateConstraints, "validateConstraints");
-    __name(validateConstraint, "validateConstraint");
     __name10(validateConstraint, "validateConstraint");
-    __name(upcast, "upcast");
     __name10(upcast, "upcast");
-    __name(hasKey, "hasKey");
     __name10(hasKey, "hasKey");
   }
 });
@@ -5526,6 +5526,20 @@ var init_lifecycle = __esm({
     init_errors();
     __defProp12 = Object.defineProperty;
     __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
+    __name(setDisposableTracker, "setDisposableTracker");
+    __name(trackDisposable, "trackDisposable");
+    __name(markAsDisposed, "markAsDisposed");
+    __name(setParentOfDisposable, "setParentOfDisposable");
+    __name(setParentOfDisposables, "setParentOfDisposables");
+    __name(markAsSingleton, "markAsSingleton");
+    __name(isDisposable, "isDisposable");
+    __name(dispose, "dispose");
+    __name(disposeIfDisposable, "disposeIfDisposable");
+    __name(combinedDisposable, "combinedDisposable");
+    __name(toDisposable, "toDisposable");
+    __name(disposeOnReturn, "disposeOnReturn");
+    __name(thenIfNotDisposed, "thenIfNotDisposed");
+    __name(thenRegisterOrDispose, "thenRegisterOrDispose");
     TRACK_DISPOSABLES = false;
     disposableTracker = null;
     GCBasedDisposableTracker = class {
@@ -5692,7 +5706,6 @@ ${stackTraceFormattedLines.join("\n")}
         return { leaks: uncoveredLeakingObjs, details: message };
       }
     };
-    __name(setDisposableTracker, "setDisposableTracker");
     __name12(setDisposableTracker, "setDisposableTracker");
     if (TRACK_DISPOSABLES) {
       const __is_disposable_tracked__ = "__is_disposable_tracked__";
@@ -5725,23 +5738,14 @@ ${stackTraceFormattedLines.join("\n")}
         }
       }());
     }
-    __name(trackDisposable, "trackDisposable");
     __name12(trackDisposable, "trackDisposable");
-    __name(markAsDisposed, "markAsDisposed");
     __name12(markAsDisposed, "markAsDisposed");
-    __name(setParentOfDisposable, "setParentOfDisposable");
     __name12(setParentOfDisposable, "setParentOfDisposable");
-    __name(setParentOfDisposables, "setParentOfDisposables");
     __name12(setParentOfDisposables, "setParentOfDisposables");
-    __name(markAsSingleton, "markAsSingleton");
     __name12(markAsSingleton, "markAsSingleton");
-    __name(isDisposable, "isDisposable");
     __name12(isDisposable, "isDisposable");
-    __name(dispose, "dispose");
     __name12(dispose, "dispose");
-    __name(disposeIfDisposable, "disposeIfDisposable");
     __name12(disposeIfDisposable, "disposeIfDisposable");
-    __name(combinedDisposable, "combinedDisposable");
     __name12(combinedDisposable, "combinedDisposable");
     FunctionDisposable = class {
       static {
@@ -5767,7 +5771,6 @@ ${stackTraceFormattedLines.join("\n")}
         this._fn();
       }
     };
-    __name(toDisposable, "toDisposable");
     __name12(toDisposable, "toDisposable");
     DisposableStore = class _DisposableStore {
       static {
@@ -6073,7 +6076,6 @@ ${stackTraceFormattedLines.join("\n")}
       dispose() {
       }
     };
-    __name(disposeOnReturn, "disposeOnReturn");
     __name12(disposeOnReturn, "disposeOnReturn");
     DisposableMap = class {
       static {
@@ -6232,9 +6234,7 @@ ${stackTraceFormattedLines.join("\n")}
         return this._store[Symbol.iterator]();
       }
     };
-    __name(thenIfNotDisposed, "thenIfNotDisposed");
     __name12(thenIfNotDisposed, "thenIfNotDisposed");
-    __name(thenRegisterOrDispose, "thenRegisterOrDispose");
     __name12(thenRegisterOrDispose, "thenRegisterOrDispose");
     DisposableResourceMap = class extends DisposableMap {
       static {
@@ -6457,12 +6457,23 @@ var init_stream = __esm({
     __defProp13 = Object.defineProperty;
     __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
     __name(isReadable, "isReadable");
-    __name13(isReadable, "isReadable");
     __name(isReadableStream, "isReadableStream");
-    __name13(isReadableStream, "isReadableStream");
     __name(isReadableBufferedStream, "isReadableBufferedStream");
-    __name13(isReadableBufferedStream, "isReadableBufferedStream");
     __name(newWriteableStream, "newWriteableStream");
+    __name(consumeReadable, "consumeReadable");
+    __name(peekReadable, "peekReadable");
+    __name(consumeStream, "consumeStream");
+    __name(listenStream, "listenStream");
+    __name(peekStream, "peekStream");
+    __name(toStream, "toStream");
+    __name(emptyStream, "emptyStream");
+    __name(toReadable, "toReadable");
+    __name(transform, "transform");
+    __name(prefixedReadable, "prefixedReadable");
+    __name(prefixedStream, "prefixedStream");
+    __name13(isReadable, "isReadable");
+    __name13(isReadableStream, "isReadableStream");
+    __name13(isReadableBufferedStream, "isReadableBufferedStream");
     __name13(newWriteableStream, "newWriteableStream");
     WriteableStreamImpl = class {
       static {
@@ -6654,27 +6665,16 @@ var init_stream = __esm({
         }
       }
     };
-    __name(consumeReadable, "consumeReadable");
     __name13(consumeReadable, "consumeReadable");
-    __name(peekReadable, "peekReadable");
     __name13(peekReadable, "peekReadable");
-    __name(consumeStream, "consumeStream");
     __name13(consumeStream, "consumeStream");
-    __name(listenStream, "listenStream");
     __name13(listenStream, "listenStream");
-    __name(peekStream, "peekStream");
     __name13(peekStream, "peekStream");
-    __name(toStream, "toStream");
     __name13(toStream, "toStream");
-    __name(emptyStream, "emptyStream");
     __name13(emptyStream, "emptyStream");
-    __name(toReadable, "toReadable");
     __name13(toReadable, "toReadable");
-    __name(transform, "transform");
     __name13(transform, "transform");
-    __name(prefixedReadable, "prefixedReadable");
     __name13(prefixedReadable, "prefixedReadable");
-    __name(prefixedStream, "prefixedStream");
     __name13(prefixedStream, "prefixedStream");
   }
 });
@@ -6761,17 +6761,6 @@ function bufferToReadable(buffer) {
 }
 function streamToBuffer(stream) {
   return consumeStream(stream, (chunks) => VSBuffer.concat(chunks));
-}
-async function bufferedStreamToBuffer(bufferedStream) {
-  if (bufferedStream.ended) {
-    return VSBuffer.concat(bufferedStream.buffer);
-  }
-  return VSBuffer.concat([
-    // Include already read chunks...
-    ...bufferedStream.buffer,
-    // ...and all additional chunks
-    await streamToBuffer(bufferedStream.stream)
-  ]);
 }
 function bufferToStream(buffer) {
   return toStream(buffer, (chunks) => VSBuffer.concat(chunks));
@@ -6902,6 +6891,17 @@ function decodeHexChar(str, position) {
     throw new SyntaxError(`Invalid hex character at position ${position}`);
   }
 }
+async function bufferedStreamToBuffer(bufferedStream) {
+  if (bufferedStream.ended) {
+    return VSBuffer.concat(bufferedStream.buffer);
+  }
+  return VSBuffer.concat([
+    // Include already read chunks...
+    ...bufferedStream.buffer,
+    // ...and all additional chunks
+    await streamToBuffer(bufferedStream.stream)
+  ]);
+}
 var __defProp14, __name14, hasBuffer, indexOfTable, textEncoder, textDecoder, VSBuffer, base64Alphabet, base64UrlSafeAlphabet, hexChars;
 var init_buffer = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js"() {
@@ -6910,6 +6910,28 @@ var init_buffer = __esm({
     init_stream();
     __defProp14 = Object.defineProperty;
     __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+    __name(binaryIndexOf, "binaryIndexOf");
+    __name(readUInt16LE, "readUInt16LE");
+    __name(writeUInt16LE, "writeUInt16LE");
+    __name(readUInt32BE, "readUInt32BE");
+    __name(writeUInt32BE, "writeUInt32BE");
+    __name(readUInt32LE, "readUInt32LE");
+    __name(writeUInt32LE, "writeUInt32LE");
+    __name(readUInt8, "readUInt8");
+    __name(writeUInt8, "writeUInt8");
+    __name(readableToBuffer, "readableToBuffer");
+    __name(bufferToReadable, "bufferToReadable");
+    __name(streamToBuffer, "streamToBuffer");
+    __name(bufferToStream, "bufferToStream");
+    __name(streamToBufferReadableStream, "streamToBufferReadableStream");
+    __name(newWriteableBufferStream, "newWriteableBufferStream");
+    __name(prefixedBufferReadable, "prefixedBufferReadable");
+    __name(prefixedBufferStream, "prefixedBufferStream");
+    __name(decodeBase64, "decodeBase64");
+    __name(encodeBase64, "encodeBase64");
+    __name(encodeHex, "encodeHex");
+    __name(decodeHex, "decodeHex");
+    __name(decodeHexChar, "decodeHexChar");
     hasBuffer = typeof Buffer !== "undefined";
     indexOfTable = new Lazy(() => new Uint8Array(256));
     VSBuffer = class _VSBuffer {
@@ -7060,54 +7082,32 @@ var init_buffer = __esm({
         return this.buffer.every((value, index2) => value === other.buffer[index2]);
       }
     };
-    __name(binaryIndexOf, "binaryIndexOf");
     __name14(binaryIndexOf, "binaryIndexOf");
-    __name(readUInt16LE, "readUInt16LE");
     __name14(readUInt16LE, "readUInt16LE");
-    __name(writeUInt16LE, "writeUInt16LE");
     __name14(writeUInt16LE, "writeUInt16LE");
-    __name(readUInt32BE, "readUInt32BE");
     __name14(readUInt32BE, "readUInt32BE");
-    __name(writeUInt32BE, "writeUInt32BE");
     __name14(writeUInt32BE, "writeUInt32BE");
-    __name(readUInt32LE, "readUInt32LE");
     __name14(readUInt32LE, "readUInt32LE");
-    __name(writeUInt32LE, "writeUInt32LE");
     __name14(writeUInt32LE, "writeUInt32LE");
-    __name(readUInt8, "readUInt8");
     __name14(readUInt8, "readUInt8");
-    __name(writeUInt8, "writeUInt8");
     __name14(writeUInt8, "writeUInt8");
-    __name(readableToBuffer, "readableToBuffer");
     __name14(readableToBuffer, "readableToBuffer");
-    __name(bufferToReadable, "bufferToReadable");
     __name14(bufferToReadable, "bufferToReadable");
-    __name(streamToBuffer, "streamToBuffer");
     __name14(streamToBuffer, "streamToBuffer");
     __name(bufferedStreamToBuffer, "bufferedStreamToBuffer");
     __name14(bufferedStreamToBuffer, "bufferedStreamToBuffer");
-    __name(bufferToStream, "bufferToStream");
     __name14(bufferToStream, "bufferToStream");
-    __name(streamToBufferReadableStream, "streamToBufferReadableStream");
     __name14(streamToBufferReadableStream, "streamToBufferReadableStream");
-    __name(newWriteableBufferStream, "newWriteableBufferStream");
     __name14(newWriteableBufferStream, "newWriteableBufferStream");
-    __name(prefixedBufferReadable, "prefixedBufferReadable");
     __name14(prefixedBufferReadable, "prefixedBufferReadable");
-    __name(prefixedBufferStream, "prefixedBufferStream");
     __name14(prefixedBufferStream, "prefixedBufferStream");
-    __name(decodeBase64, "decodeBase64");
     __name14(decodeBase64, "decodeBase64");
     base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     base64UrlSafeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    __name(encodeBase64, "encodeBase64");
     __name14(encodeBase64, "encodeBase64");
     hexChars = "0123456789abcdef";
-    __name(encodeHex, "encodeHex");
     __name14(encodeHex, "encodeHex");
-    __name(decodeHex, "decodeHex");
     __name14(decodeHex, "decodeHex");
-    __name(decodeHexChar, "decodeHexChar");
     __name14(decodeHexChar, "decodeHexChar");
   }
 });
@@ -7177,17 +7177,17 @@ var init_nls = __esm({
     __defProp15 = Object.defineProperty;
     __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
     __name(getNLSMessages, "getNLSMessages");
-    __name15(getNLSMessages, "getNLSMessages");
     __name(getNLSLanguage, "getNLSLanguage");
+    __name(_format, "_format");
+    __name(localize, "localize");
+    __name(lookupMessage, "lookupMessage");
+    __name(localize2, "localize2");
+    __name15(getNLSMessages, "getNLSMessages");
     __name15(getNLSLanguage, "getNLSLanguage");
     isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
-    __name(_format, "_format");
     __name15(_format, "_format");
-    __name(localize, "localize");
     __name15(localize, "localize");
-    __name(lookupMessage, "lookupMessage");
     __name15(lookupMessage, "lookupMessage");
-    __name(localize2, "localize2");
     __name15(localize2, "localize2");
   }
 });
@@ -7226,6 +7226,9 @@ var init_platform = __esm({
     init_nls();
     __defProp16 = Object.defineProperty;
     __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
+    __name(PlatformToString, "PlatformToString");
+    __name(isLittleEndian, "isLittleEndian");
+    __name(isTahoeOrNewer, "isTahoeOrNewer");
     LANGUAGE_DEFAULT = "en";
     _isWindows = false;
     _isMacintosh = false;
@@ -7292,7 +7295,6 @@ var init_platform = __esm({
       Platform2[Platform2["Linux"] = 2] = "Linux";
       Platform2[Platform2["Windows"] = 3] = "Windows";
     })(Platform || (Platform = {}));
-    __name(PlatformToString, "PlatformToString");
     __name16(PlatformToString, "PlatformToString");
     _platform = 0;
     if (_isMacintosh) {
@@ -7382,14 +7384,12 @@ var init_platform = __esm({
     OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
     _isLittleEndian = true;
     _isLittleEndianComputed = false;
-    __name(isLittleEndian, "isLittleEndian");
     __name16(isLittleEndian, "isLittleEndian");
     isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
     isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
     isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
     isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
     isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
-    __name(isTahoeOrNewer, "isTahoeOrNewer");
     __name16(isTahoeOrNewer, "isTahoeOrNewer");
   }
 });
@@ -7556,6 +7556,14 @@ var init_path = __esm({
     init_process();
     __defProp17 = Object.defineProperty;
     __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+    __name(validateObject, "validateObject");
+    __name(validateString, "validateString");
+    __name(isPathSeparator, "isPathSeparator");
+    __name(isPosixPathSeparator, "isPosixPathSeparator");
+    __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+    __name(normalizeString, "normalizeString");
+    __name(formatExt, "formatExt");
+    __name(_format2, "_format");
     CHAR_UPPERCASE_A = 65;
     CHAR_LOWERCASE_A = 97;
     CHAR_UPPERCASE_Z = 90;
@@ -7587,22 +7595,14 @@ var init_path = __esm({
         this.code = "ERR_INVALID_ARG_TYPE";
       }
     };
-    __name(validateObject, "validateObject");
     __name17(validateObject, "validateObject");
-    __name(validateString, "validateString");
     __name17(validateString, "validateString");
     platformIsWin32 = platform2 === "win32";
-    __name(isPathSeparator, "isPathSeparator");
     __name17(isPathSeparator, "isPathSeparator");
-    __name(isPosixPathSeparator, "isPosixPathSeparator");
     __name17(isPosixPathSeparator, "isPosixPathSeparator");
-    __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
     __name17(isWindowsDeviceRoot, "isWindowsDeviceRoot");
-    __name(normalizeString, "normalizeString");
     __name17(normalizeString, "normalizeString");
-    __name(formatExt, "formatExt");
     __name17(formatExt, "formatExt");
-    __name(_format2, "_format");
     __name17(_format2, "_format");
     win32 = {
       // path.resolve([from ...], to)
@@ -8629,6 +8629,11 @@ var init_mime = __esm({
     init_path();
     __defProp18 = Object.defineProperty;
     __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
+    __name(getMediaOrTextMime, "getMediaOrTextMime");
+    __name(getMediaMime, "getMediaMime");
+    __name(getExtensionForMimeType, "getExtensionForMimeType");
+    __name(normalizeMimeType, "normalizeMimeType");
+    __name(isTextStreamMime, "isTextStreamMime");
     Mimes = Object.freeze({
       text: "text/plain",
       binary: "application/octet-stream",
@@ -8700,16 +8705,11 @@ var init_mime = __esm({
       ".wmv": "video/x-ms-wmv",
       ".woff": "application/font-woff"
     };
-    __name(getMediaOrTextMime, "getMediaOrTextMime");
     __name18(getMediaOrTextMime, "getMediaOrTextMime");
-    __name(getMediaMime, "getMediaMime");
     __name18(getMediaMime, "getMediaMime");
-    __name(getExtensionForMimeType, "getExtensionForMimeType");
     __name18(getExtensionForMimeType, "getExtensionForMimeType");
     _simplePattern = /^(.+)\/(.+?)(;.+)?$/;
-    __name(normalizeMimeType, "normalizeMimeType");
     __name18(normalizeMimeType, "normalizeMimeType");
-    __name(isTextStreamMime, "isTextStreamMime");
     __name18(isTextStreamMime, "isTextStreamMime");
   }
 });
@@ -8977,11 +8977,15 @@ var init_event = __esm({
     init_stopwatch();
     __defProp21 = Object.defineProperty;
     __name21 = /* @__PURE__ */ __name((target, value) => __defProp21(target, "name", { value, configurable: true }), "__name");
+    __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+    __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+    __name(trackSetChanges, "trackSetChanges");
+    __name(addToDisposables, "addToDisposables");
+    __name(disposeAndRemove, "disposeAndRemove");
     _enableDisposeWithListenerWarning = false;
     _enableSnapshotPotentialLeakWarning = false;
     _bufferLeakWarnCountThreshold = 100;
     _bufferLeakWarnTimeThreshold = 6e4;
-    __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
     __name21(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
     (function(Event2) {
       Event2.None = () => Disposable.None;
@@ -9586,7 +9590,6 @@ var init_event = __esm({
       }
     };
     _globalLeakWarningThreshold = -1;
-    __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
     __name21(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
     LeakageMonitor = class _LeakageMonitor {
       static {
@@ -10268,11 +10271,8 @@ var init_event = __esm({
         this.onDidChange = Event.None;
       }
     };
-    __name(trackSetChanges, "trackSetChanges");
     __name21(trackSetChanges, "trackSetChanges");
-    __name(addToDisposables, "addToDisposables");
     __name21(addToDisposables, "addToDisposables");
-    __name(disposeAndRemove, "disposeAndRemove");
     __name21(disposeAndRemove, "disposeAndRemove");
   }
 });
@@ -10300,6 +10300,7 @@ var init_cancellation = __esm({
     init_lifecycle();
     __defProp22 = Object.defineProperty;
     __name22 = /* @__PURE__ */ __name((target, value) => __defProp22(target, "name", { value, configurable: true }), "__name");
+    __name(cancelOnDispose, "cancelOnDispose");
     shortcutEvent = Object.freeze(function(callback, context) {
       const handle = setTimeout(callback.bind(context), 0);
       return { dispose() {
@@ -10407,7 +10408,6 @@ var init_cancellation = __esm({
         }
       }
     };
-    __name(cancelOnDispose, "cancelOnDispose");
     __name22(cancelOnDispose, "cancelOnDispose");
     CancellationTokenPool = class {
       static {
@@ -10473,6 +10473,7 @@ var init_cache = __esm({
     init_cancellation();
     __defProp23 = Object.defineProperty;
     __name23 = /* @__PURE__ */ __name((target, value) => __defProp23(target, "name", { value, configurable: true }), "__name");
+    __name(identity, "identity");
     Cache2 = class {
       static {
         __name(this, "Cache");
@@ -10501,7 +10502,6 @@ var init_cache = __esm({
         return this.result;
       }
     };
-    __name(identity, "identity");
     __name23(identity, "identity");
     LRUCachedFunction = class {
       static {
@@ -11051,19 +11051,6 @@ function rcut(text, n, suffix = "") {
   }
   return result + suffix;
 }
-function* forAnsiStringParts(str) {
-  let last = 0;
-  for (const match2 of str.matchAll(CONTROL_SEQUENCES)) {
-    if (last !== match2.index) {
-      yield { isCode: false, str: str.substring(last, match2.index) };
-    }
-    yield { isCode: true, str: match2[0] };
-    last = match2.index + match2[0].length;
-  }
-  if (last !== str.length) {
-    yield { isCode: false, str: str.substring(last) };
-  }
-}
 function removeAnsiEscapeCodes(str) {
   if (str) {
     str = str.replace(CONTROL_SEQUENCES, "");
@@ -11242,6 +11229,19 @@ function toBinary(str) {
 function multibyteAwareBtoa(str) {
   return btoa(toBinary(str));
 }
+function* forAnsiStringParts(str) {
+  let last = 0;
+  for (const match2 of str.matchAll(CONTROL_SEQUENCES)) {
+    if (last !== match2.index) {
+      yield { isCode: false, str: str.substring(last, match2.index) };
+    }
+    yield { isCode: true, str: match2[0] };
+    last = match2.index + match2[0].length;
+  }
+  if (last !== str.length) {
+    yield { isCode: false, str: str.substring(last) };
+  }
+}
 var __defProp24, __name24, _formatRegexp, _format2Regexp, CodePointIterator, GraphemeIterator, CONTAINS_RTL, IS_BASIC_ASCII, UNUSUAL_LINE_TERMINATORS, CSI_SEQUENCE, OSC_SEQUENCE, ESC_SEQUENCE, CONTROL_SEQUENCES, PROMPT_NON_PRINTABLE, UTF8_BOM_CHARACTER, GraphemeBreakType, GraphemeBreakTree, CodePoint, noBreakWhitespace, AmbiguousCharacters, InvisibleCharacters, Ellipsis;
 var init_strings = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/strings.js"() {
@@ -11251,90 +11251,119 @@ var init_strings = __esm({
     __defProp24 = Object.defineProperty;
     __name24 = /* @__PURE__ */ __name((target, value) => __defProp24(target, "name", { value, configurable: true }), "__name");
     __name(isFalsyOrWhitespace, "isFalsyOrWhitespace");
+    __name(format2, "format");
+    __name(format22, "format2");
+    __name(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
+    __name(escape, "escape");
+    __name(escapeRegExpCharacters, "escapeRegExpCharacters");
+    __name(count, "count");
+    __name(truncate, "truncate");
+    __name(truncateMiddle, "truncateMiddle");
+    __name(trim, "trim");
+    __name(ltrim, "ltrim");
+    __name(rtrim, "rtrim");
+    __name(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
+    __name(createRegExp, "createRegExp");
+    __name(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
+    __name(joinStrings, "joinStrings");
+    __name(splitLines, "splitLines");
+    __name(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
+    __name(indexOfPattern, "indexOfPattern");
+    __name(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
+    __name(getLeadingWhitespace, "getLeadingWhitespace");
+    __name(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
+    __name(getIndentationLength, "getIndentationLength");
+    __name(replaceAsync, "replaceAsync");
+    __name(compare, "compare");
+    __name(compareSubstring, "compareSubstring");
+    __name(compareIgnoreCase, "compareIgnoreCase");
+    __name(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
+    __name(isAsciiDigit, "isAsciiDigit");
+    __name(isLowerAsciiLetter, "isLowerAsciiLetter");
+    __name(isUpperAsciiLetter, "isUpperAsciiLetter");
+    __name(equalsIgnoreCase, "equalsIgnoreCase");
+    __name(equals2, "equals");
+    __name(startsWithIgnoreCase, "startsWithIgnoreCase");
+    __name(endsWithIgnoreCase, "endsWithIgnoreCase");
+    __name(commonPrefixLength2, "commonPrefixLength");
+    __name(commonSuffixLength, "commonSuffixLength");
+    __name(isHighSurrogate, "isHighSurrogate");
+    __name(isLowSurrogate, "isLowSurrogate");
+    __name(computeCodePoint, "computeCodePoint");
+    __name(getNextCodePoint, "getNextCodePoint");
+    __name(getPrevCodePoint, "getPrevCodePoint");
+    __name(nextCharLength, "nextCharLength");
+    __name(prevCharLength, "prevCharLength");
+    __name(getCharContainingOffset, "getCharContainingOffset");
+    __name(charCount, "charCount");
+    __name(makeContainsRtl, "makeContainsRtl");
+    __name(containsRTL, "containsRTL");
+    __name(isBasicASCII, "isBasicASCII");
+    __name(containsUnusualLineTerminators, "containsUnusualLineTerminators");
+    __name(isFullWidthCharacter, "isFullWidthCharacter");
+    __name(isEmojiImprecise, "isEmojiImprecise");
+    __name(lcut, "lcut");
+    __name(rcut, "rcut");
+    __name(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
+    __name(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
+    __name(startsWithUTF8BOM, "startsWithUTF8BOM");
+    __name(stripUTF8BOM, "stripUTF8BOM");
+    __name(fuzzyContains, "fuzzyContains");
+    __name(containsUppercaseCharacter, "containsUppercaseCharacter");
+    __name(uppercaseFirstLetter, "uppercaseFirstLetter");
+    __name(getNLines, "getNLines");
+    __name(singleLetterHash, "singleLetterHash");
+    __name(getGraphemeBreakType, "getGraphemeBreakType");
+    __name(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
+    __name(getGraphemeBreakRawData, "getGraphemeBreakRawData");
+    __name(getLeftDeleteOffset, "getLeftDeleteOffset");
+    __name(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
+    __name(isEmojiModifier, "isEmojiModifier");
+    __name(toBinary, "toBinary");
+    __name(multibyteAwareBtoa, "multibyteAwareBtoa");
     __name24(isFalsyOrWhitespace, "isFalsyOrWhitespace");
     _formatRegexp = /{(\d+)}/g;
-    __name(format2, "format");
     __name24(format2, "format");
     _format2Regexp = /{([^}]+)}/g;
-    __name(format22, "format2");
     __name24(format22, "format2");
-    __name(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
     __name24(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
-    __name(escape, "escape");
     __name24(escape, "escape");
-    __name(escapeRegExpCharacters, "escapeRegExpCharacters");
     __name24(escapeRegExpCharacters, "escapeRegExpCharacters");
-    __name(count, "count");
     __name24(count, "count");
-    __name(truncate, "truncate");
     __name24(truncate, "truncate");
-    __name(truncateMiddle, "truncateMiddle");
     __name24(truncateMiddle, "truncateMiddle");
-    __name(trim, "trim");
     __name24(trim, "trim");
-    __name(ltrim, "ltrim");
     __name24(ltrim, "ltrim");
-    __name(rtrim, "rtrim");
     __name24(rtrim, "rtrim");
-    __name(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
     __name24(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
-    __name(createRegExp, "createRegExp");
     __name24(createRegExp, "createRegExp");
-    __name(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
     __name24(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
-    __name(joinStrings, "joinStrings");
     __name24(joinStrings, "joinStrings");
-    __name(splitLines, "splitLines");
     __name24(splitLines, "splitLines");
-    __name(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
     __name24(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
-    __name(indexOfPattern, "indexOfPattern");
     __name24(indexOfPattern, "indexOfPattern");
-    __name(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
     __name24(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
-    __name(getLeadingWhitespace, "getLeadingWhitespace");
     __name24(getLeadingWhitespace, "getLeadingWhitespace");
-    __name(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
     __name24(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
-    __name(getIndentationLength, "getIndentationLength");
     __name24(getIndentationLength, "getIndentationLength");
-    __name(replaceAsync, "replaceAsync");
     __name24(replaceAsync, "replaceAsync");
-    __name(compare, "compare");
     __name24(compare, "compare");
-    __name(compareSubstring, "compareSubstring");
     __name24(compareSubstring, "compareSubstring");
-    __name(compareIgnoreCase, "compareIgnoreCase");
     __name24(compareIgnoreCase, "compareIgnoreCase");
-    __name(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
     __name24(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
-    __name(isAsciiDigit, "isAsciiDigit");
     __name24(isAsciiDigit, "isAsciiDigit");
-    __name(isLowerAsciiLetter, "isLowerAsciiLetter");
     __name24(isLowerAsciiLetter, "isLowerAsciiLetter");
-    __name(isUpperAsciiLetter, "isUpperAsciiLetter");
     __name24(isUpperAsciiLetter, "isUpperAsciiLetter");
-    __name(equalsIgnoreCase, "equalsIgnoreCase");
     __name24(equalsIgnoreCase, "equalsIgnoreCase");
-    __name(equals2, "equals");
     __name24(equals2, "equals");
-    __name(startsWithIgnoreCase, "startsWithIgnoreCase");
     __name24(startsWithIgnoreCase, "startsWithIgnoreCase");
-    __name(endsWithIgnoreCase, "endsWithIgnoreCase");
     __name24(endsWithIgnoreCase, "endsWithIgnoreCase");
-    __name(commonPrefixLength2, "commonPrefixLength");
     __name24(commonPrefixLength2, "commonPrefixLength");
-    __name(commonSuffixLength, "commonSuffixLength");
     __name24(commonSuffixLength, "commonSuffixLength");
-    __name(isHighSurrogate, "isHighSurrogate");
     __name24(isHighSurrogate, "isHighSurrogate");
-    __name(isLowSurrogate, "isLowSurrogate");
     __name24(isLowSurrogate, "isLowSurrogate");
-    __name(computeCodePoint, "computeCodePoint");
     __name24(computeCodePoint, "computeCodePoint");
-    __name(getNextCodePoint, "getNextCodePoint");
     __name24(getNextCodePoint, "getNextCodePoint");
-    __name(getPrevCodePoint, "getPrevCodePoint");
     __name24(getPrevCodePoint, "getPrevCodePoint");
     CodePointIterator = class {
       static {
@@ -11417,32 +11446,20 @@ var init_strings = __esm({
         return this._iterator.eol();
       }
     };
-    __name(nextCharLength, "nextCharLength");
     __name24(nextCharLength, "nextCharLength");
-    __name(prevCharLength, "prevCharLength");
     __name24(prevCharLength, "prevCharLength");
-    __name(getCharContainingOffset, "getCharContainingOffset");
     __name24(getCharContainingOffset, "getCharContainingOffset");
-    __name(charCount, "charCount");
     __name24(charCount, "charCount");
     CONTAINS_RTL = void 0;
-    __name(makeContainsRtl, "makeContainsRtl");
     __name24(makeContainsRtl, "makeContainsRtl");
-    __name(containsRTL, "containsRTL");
     __name24(containsRTL, "containsRTL");
     IS_BASIC_ASCII = /^[\t\n\r\x20-\x7E]*$/;
-    __name(isBasicASCII, "isBasicASCII");
     __name24(isBasicASCII, "isBasicASCII");
     UNUSUAL_LINE_TERMINATORS = /[\u2028\u2029]/;
-    __name(containsUnusualLineTerminators, "containsUnusualLineTerminators");
     __name24(containsUnusualLineTerminators, "containsUnusualLineTerminators");
-    __name(isFullWidthCharacter, "isFullWidthCharacter");
     __name24(isFullWidthCharacter, "isFullWidthCharacter");
-    __name(isEmojiImprecise, "isEmojiImprecise");
     __name24(isEmojiImprecise, "isEmojiImprecise");
-    __name(lcut, "lcut");
     __name24(lcut, "lcut");
-    __name(rcut, "rcut");
     __name24(rcut, "rcut");
     CSI_SEQUENCE = /(?:\x1b\[|\x9b)[=?>!]?[\d;:]*["$#'* ]?[a-zA-Z@^`{}|~]/;
     OSC_SEQUENCE = /(?:\x1b\]|\x9d).*?(?:\x1b\\|\x07|\x9c)/;
@@ -11454,32 +11471,21 @@ var init_strings = __esm({
     ].join("|") + ")", "g");
     __name(forAnsiStringParts, "forAnsiStringParts");
     __name24(forAnsiStringParts, "forAnsiStringParts");
-    __name(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
     __name24(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
     PROMPT_NON_PRINTABLE = /\\\[.*?\\\]/g;
-    __name(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
     __name24(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
     UTF8_BOM_CHARACTER = String.fromCharCode(
       65279
       /* CharCode.UTF8_BOM */
     );
-    __name(startsWithUTF8BOM, "startsWithUTF8BOM");
     __name24(startsWithUTF8BOM, "startsWithUTF8BOM");
-    __name(stripUTF8BOM, "stripUTF8BOM");
     __name24(stripUTF8BOM, "stripUTF8BOM");
-    __name(fuzzyContains, "fuzzyContains");
     __name24(fuzzyContains, "fuzzyContains");
-    __name(containsUppercaseCharacter, "containsUppercaseCharacter");
     __name24(containsUppercaseCharacter, "containsUppercaseCharacter");
-    __name(uppercaseFirstLetter, "uppercaseFirstLetter");
     __name24(uppercaseFirstLetter, "uppercaseFirstLetter");
-    __name(getNLines, "getNLines");
     __name24(getNLines, "getNLines");
-    __name(singleLetterHash, "singleLetterHash");
     __name24(singleLetterHash, "singleLetterHash");
-    __name(getGraphemeBreakType, "getGraphemeBreakType");
     __name24(getGraphemeBreakType, "getGraphemeBreakType");
-    __name(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
     __name24(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
     (function(GraphemeBreakType2) {
       GraphemeBreakType2[GraphemeBreakType2["Other"] = 0] = "Other";
@@ -11545,13 +11551,9 @@ var init_strings = __esm({
         return 0;
       }
     };
-    __name(getGraphemeBreakRawData, "getGraphemeBreakRawData");
     __name24(getGraphemeBreakRawData, "getGraphemeBreakRawData");
-    __name(getLeftDeleteOffset, "getLeftDeleteOffset");
     __name24(getLeftDeleteOffset, "getLeftDeleteOffset");
-    __name(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
     __name24(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
-    __name(isEmojiModifier, "isEmojiModifier");
     __name24(isEmojiModifier, "isEmojiModifier");
     (function(CodePoint2) {
       CodePoint2[CodePoint2["zwj"] = 8205] = "zwj";
@@ -11693,9 +11695,7 @@ var init_strings = __esm({
       }
     };
     Ellipsis = "\u2026";
-    __name(toBinary, "toBinary");
     __name24(toBinary, "toBinary");
-    __name(multibyteAwareBtoa, "multibyteAwareBtoa");
     __name24(multibyteAwareBtoa, "multibyteAwareBtoa");
   }
 });
@@ -11908,14 +11908,21 @@ var init_uri = __esm({
     init_platform();
     __defProp25 = Object.defineProperty;
     __name25 = /* @__PURE__ */ __name((target, value) => __defProp25(target, "name", { value, configurable: true }), "__name");
+    __name(_validateUri, "_validateUri");
+    __name(_schemeFix, "_schemeFix");
+    __name(_referenceResolution, "_referenceResolution");
+    __name(isUriComponents, "isUriComponents");
+    __name(encodeURIComponentFast, "encodeURIComponentFast");
+    __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+    __name(uriToFsPath, "uriToFsPath");
+    __name(_asFormatted, "_asFormatted");
+    __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+    __name(percentDecode, "percentDecode");
     _schemePattern = /^\w[\w\d+.-]*$/;
     _singleSlashStart = /^\//;
     _doubleSlashStart = /^\/\//;
-    __name(_validateUri, "_validateUri");
     __name25(_validateUri, "_validateUri");
-    __name(_schemeFix, "_schemeFix");
     __name25(_schemeFix, "_schemeFix");
-    __name(_referenceResolution, "_referenceResolution");
     __name25(_referenceResolution, "_referenceResolution");
     _empty = "";
     _slash = "/";
@@ -12135,7 +12142,6 @@ var init_uri = __esm({
         return `URI(${this.toString()})`;
       }
     };
-    __name(isUriComponents, "isUriComponents");
     __name25(isUriComponents, "isUriComponents");
     _pathSepMarker = isWindows ? 1 : void 0;
     Uri = class extends URI {
@@ -12276,18 +12282,12 @@ var init_uri = __esm({
         /* CharCode.Space */
       ]: "%20"
     };
-    __name(encodeURIComponentFast, "encodeURIComponentFast");
     __name25(encodeURIComponentFast, "encodeURIComponentFast");
-    __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
     __name25(encodeURIComponentMinimal, "encodeURIComponentMinimal");
-    __name(uriToFsPath, "uriToFsPath");
     __name25(uriToFsPath, "uriToFsPath");
-    __name(_asFormatted, "_asFormatted");
     __name25(_asFormatted, "_asFormatted");
-    __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
     __name25(decodeURIComponentGraceful, "decodeURIComponentGraceful");
     _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
-    __name(percentDecode, "percentDecode");
     __name25(percentDecode, "percentDecode");
   }
 });
@@ -12305,8 +12305,9 @@ var init_uuid = __esm({
     "use strict";
     __defProp26 = Object.defineProperty;
     __name26 = /* @__PURE__ */ __name((target, value) => __defProp26(target, "name", { value, configurable: true }), "__name");
-    _UUIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     __name(isUUID, "isUUID");
+    __name(prefixedUuid, "prefixedUuid");
+    _UUIDPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     __name26(isUUID, "isUUID");
     generateUuid = (function() {
       if (typeof crypto.randomUUID === "function") {
@@ -12346,7 +12347,6 @@ var init_uuid = __esm({
         return result;
       }, "generateUuid2"), "generateUuid");
     })();
-    __name(prefixedUuid, "prefixedUuid");
     __name26(prefixedUuid, "prefixedUuid");
   }
 });
@@ -12383,6 +12383,9 @@ var init_instantiation = __esm({
     "use strict";
     __defProp27 = Object.defineProperty;
     __name27 = /* @__PURE__ */ __name((target, value) => __defProp27(target, "name", { value, configurable: true }), "__name");
+    __name(storeServiceDependency, "storeServiceDependency");
+    __name(createDecorator, "createDecorator");
+    __name(refineServiceDecorator, "refineServiceDecorator");
     (function(_util2) {
       _util2.serviceIds = /* @__PURE__ */ new Map();
       _util2.DI_TARGET = "$di$target";
@@ -12395,11 +12398,8 @@ var init_instantiation = __esm({
       _util2.getServiceDependencies = getServiceDependencies;
     })(_util || (_util = {}));
     IInstantiationService = createDecorator("instantiationService");
-    __name(storeServiceDependency, "storeServiceDependency");
     __name27(storeServiceDependency, "storeServiceDependency");
-    __name(createDecorator, "createDecorator");
     __name27(createDecorator, "createDecorator");
-    __name(refineServiceDecorator, "refineServiceDecorator");
     __name27(refineServiceDecorator, "refineServiceDecorator");
   }
 });
@@ -12429,6 +12429,9 @@ var init_network = __esm({
     init_path();
     __defProp28 = Object.defineProperty;
     __name28 = /* @__PURE__ */ __name((target, value) => __defProp28(target, "name", { value, configurable: true }), "__name");
+    __name(matchesScheme, "matchesScheme");
+    __name(matchesSomeScheme, "matchesSomeScheme");
+    __name(getServerProductSegment, "getServerProductSegment");
     (function(Schemas2) {
       Schemas2.inMemory = "inmemory";
       Schemas2.vscode = "vscode";
@@ -12479,9 +12482,7 @@ var init_network = __esm({
       Schemas2.chatEditingModel = "chat-editing-text-model";
       Schemas2.copilotPr = "copilot-pr";
     })(Schemas || (Schemas = {}));
-    __name(matchesScheme, "matchesScheme");
     __name28(matchesScheme, "matchesScheme");
-    __name(matchesSomeScheme, "matchesSomeScheme");
     __name28(matchesSomeScheme, "matchesSomeScheme");
     connectionTokenCookieName = "vscode-tkn";
     connectionTokenQueryName = "tkn";
@@ -12554,7 +12555,6 @@ var init_network = __esm({
       }
     };
     RemoteAuthorities = new RemoteAuthoritiesImpl();
-    __name(getServerProductSegment, "getServerProductSegment");
     __name28(getServerProductSegment, "getServerProductSegment");
     builtinExtensionsPath = "vs/../../extensions";
     nodeModulesPath = "vs/../../node_modules";
@@ -12763,16 +12763,16 @@ var init_remoteHosts = __esm({
     __defProp29 = Object.defineProperty;
     __name29 = /* @__PURE__ */ __name((target, value) => __defProp29(target, "name", { value, configurable: true }), "__name");
     __name(getRemoteAuthority, "getRemoteAuthority");
-    __name29(getRemoteAuthority, "getRemoteAuthority");
     __name(getRemoteName, "getRemoteName");
-    __name29(getRemoteName, "getRemoteName");
     __name(getRemoteServerRootPath, "getRemoteServerRootPath");
-    __name29(getRemoteServerRootPath, "getRemoteServerRootPath");
     __name(parseAuthorityWithPort, "parseAuthorityWithPort");
-    __name29(parseAuthorityWithPort, "parseAuthorityWithPort");
     __name(parseAuthorityWithOptionalPort, "parseAuthorityWithOptionalPort");
-    __name29(parseAuthorityWithOptionalPort, "parseAuthorityWithOptionalPort");
     __name(parseAuthority, "parseAuthority");
+    __name29(getRemoteAuthority, "getRemoteAuthority");
+    __name29(getRemoteName, "getRemoteName");
+    __name29(getRemoteServerRootPath, "getRemoteServerRootPath");
+    __name29(parseAuthorityWithPort, "parseAuthorityWithPort");
+    __name29(parseAuthorityWithOptionalPort, "parseAuthorityWithOptionalPort");
     __name29(parseAuthority, "parseAuthority");
   }
 });
@@ -12820,11 +12820,17 @@ var init_extensions = __esm({
     init_remoteHosts();
     __defProp30 = Object.defineProperty;
     __name30 = /* @__PURE__ */ __name((target, value) => __defProp30(target, "name", { value, configurable: true }), "__name");
+    __name(getWorkspaceSupportTypeMessage, "getWorkspaceSupportTypeMessage");
+    __name(isApplicationScopedExtension, "isApplicationScopedExtension");
+    __name(isLanguagePackExtension, "isLanguagePackExtension");
+    __name(isAuthenticationProviderExtension, "isAuthenticationProviderExtension");
+    __name(isResolverExtension, "isResolverExtension");
+    __name(parseApiProposals, "parseApiProposals");
+    __name(parseEnabledApiProposalNames, "parseEnabledApiProposalNames");
     USER_MANIFEST_CACHE_FILE = "extensions.user.cache";
     BUILTIN_MANIFEST_CACHE_FILE = "extensions.builtin.cache";
     UNDEFINED_PUBLISHER = "undefined_publisher";
     ALL_EXTENSION_KINDS = ["ui", "workspace", "web"];
-    __name(getWorkspaceSupportTypeMessage, "getWorkspaceSupportTypeMessage");
     __name30(getWorkspaceSupportTypeMessage, "getWorkspaceSupportTypeMessage");
     EXTENSION_CATEGORIES = [
       "AI",
@@ -12978,17 +12984,11 @@ var init_extensions = __esm({
         this.extension = extensionIdentifier;
       }
     };
-    __name(isApplicationScopedExtension, "isApplicationScopedExtension");
     __name30(isApplicationScopedExtension, "isApplicationScopedExtension");
-    __name(isLanguagePackExtension, "isLanguagePackExtension");
     __name30(isLanguagePackExtension, "isLanguagePackExtension");
-    __name(isAuthenticationProviderExtension, "isAuthenticationProviderExtension");
     __name30(isAuthenticationProviderExtension, "isAuthenticationProviderExtension");
-    __name(isResolverExtension, "isResolverExtension");
     __name30(isResolverExtension, "isResolverExtension");
-    __name(parseApiProposals, "parseApiProposals");
     __name30(parseApiProposals, "parseApiProposals");
-    __name(parseEnabledApiProposalNames, "parseEnabledApiProposalNames");
     __name30(parseEnabledApiProposalNames, "parseEnabledApiProposalNames");
     IBuiltinExtensionsScannerService = createDecorator("IBuiltinExtensionsScannerService");
   }
@@ -13826,19 +13826,6 @@ function etag(stat) {
   }
   return stat.mtime.toString(29) + stat.size.toString(31);
 }
-async function whenProviderRegistered(file, fileService) {
-  if (fileService.hasProvider(URI.from({ scheme: file.scheme }))) {
-    return;
-  }
-  return new Promise((resolve2) => {
-    const disposable = fileService.onDidChangeFileSystemProviderRegistrations((e) => {
-      if (e.scheme === file.scheme && e.added) {
-        disposable.dispose();
-        resolve2();
-      }
-    });
-  });
-}
 function getLargeFileConfirmationLimit(arg) {
   const isRemote = typeof arg === "string" || arg?.scheme === Schemas.vscodeRemote;
   const isLocal = typeof arg !== "string" && arg?.scheme === Schemas.file;
@@ -13852,6 +13839,19 @@ function getLargeFileConfirmationLimit(arg) {
     return 50 * ByteSize.MB;
   }
   return 1024 * ByteSize.MB;
+}
+async function whenProviderRegistered(file, fileService) {
+  if (fileService.hasProvider(URI.from({ scheme: file.scheme }))) {
+    return;
+  }
+  return new Promise((resolve2) => {
+    const disposable = fileService.onDidChangeFileSystemProviderRegistrations((e) => {
+      if (e.scheme === file.scheme && e.added) {
+        disposable.dispose();
+        resolve2();
+      }
+    });
+  });
 }
 var __defProp32, __name32, IFileService, FileType, FilePermission, FileChangeFilter, FileSystemProviderCapabilities, FileSystemProviderErrorCode, FileSystemProviderError, FileOperation, FileOperationEvent, FileChangeType, FileChangesEvent, FileOperationError, TooLargeFileOperationError, NotModifiedSinceFileOperationError, FileOperationResult, AutoSaveConfiguration, HotExitConfiguration, FILES_ASSOCIATIONS_CONFIG, FILES_EXCLUDE_CONFIG, FILES_READONLY_INCLUDE_CONFIG, FILES_READONLY_EXCLUDE_CONFIG, FILES_READONLY_FROM_PERMISSIONS_CONFIG, FileKind, ETAG_DISABLED, ByteSize;
 var init_files = __esm({
@@ -13869,8 +13869,28 @@ var init_files = __esm({
     init_lazy();
     __defProp32 = Object.defineProperty;
     __name32 = /* @__PURE__ */ __name((target, value) => __defProp32(target, "name", { value, configurable: true }), "__name");
-    IFileService = createDecorator("fileService");
     __name(isFileOpenForWriteOptions, "isFileOpenForWriteOptions");
+    __name(isFileSystemWatcher, "isFileSystemWatcher");
+    __name(hasReadWriteCapability, "hasReadWriteCapability");
+    __name(hasFileAppendCapability, "hasFileAppendCapability");
+    __name(hasFileFolderCopyCapability, "hasFileFolderCopyCapability");
+    __name(hasFileCloneCapability, "hasFileCloneCapability");
+    __name(hasFileRealpathCapability, "hasFileRealpathCapability");
+    __name(hasOpenReadWriteCloseCapability, "hasOpenReadWriteCloseCapability");
+    __name(hasFileReadStreamCapability, "hasFileReadStreamCapability");
+    __name(hasFileAtomicReadCapability, "hasFileAtomicReadCapability");
+    __name(hasFileAtomicWriteCapability, "hasFileAtomicWriteCapability");
+    __name(hasFileAtomicDeleteCapability, "hasFileAtomicDeleteCapability");
+    __name(hasReadonlyCapability, "hasReadonlyCapability");
+    __name(createFileSystemProviderError, "createFileSystemProviderError");
+    __name(ensureFileSystemProviderError, "ensureFileSystemProviderError");
+    __name(markAsFileSystemProviderError, "markAsFileSystemProviderError");
+    __name(toFileSystemProviderErrorCode, "toFileSystemProviderErrorCode");
+    __name(toFileOperationResult, "toFileOperationResult");
+    __name(isParent, "isParent");
+    __name(etag, "etag");
+    __name(getLargeFileConfirmationLimit, "getLargeFileConfirmationLimit");
+    IFileService = createDecorator("fileService");
     __name32(isFileOpenForWriteOptions, "isFileOpenForWriteOptions");
     (function(FileType22) {
       FileType22[FileType22["Unknown"] = 0] = "Unknown";
@@ -13888,7 +13908,6 @@ var init_files = __esm({
       FileChangeFilter2[FileChangeFilter2["ADDED"] = 4] = "ADDED";
       FileChangeFilter2[FileChangeFilter2["DELETED"] = 8] = "DELETED";
     })(FileChangeFilter || (FileChangeFilter = {}));
-    __name(isFileSystemWatcher, "isFileSystemWatcher");
     __name32(isFileSystemWatcher, "isFileSystemWatcher");
     (function(FileSystemProviderCapabilities2) {
       FileSystemProviderCapabilities2[FileSystemProviderCapabilities2["None"] = 0] = "None";
@@ -13907,27 +13926,16 @@ var init_files = __esm({
       FileSystemProviderCapabilities2[FileSystemProviderCapabilities2["FileRealpath"] = 262144] = "FileRealpath";
       FileSystemProviderCapabilities2[FileSystemProviderCapabilities2["FileAppend"] = 524288] = "FileAppend";
     })(FileSystemProviderCapabilities || (FileSystemProviderCapabilities = {}));
-    __name(hasReadWriteCapability, "hasReadWriteCapability");
     __name32(hasReadWriteCapability, "hasReadWriteCapability");
-    __name(hasFileAppendCapability, "hasFileAppendCapability");
     __name32(hasFileAppendCapability, "hasFileAppendCapability");
-    __name(hasFileFolderCopyCapability, "hasFileFolderCopyCapability");
     __name32(hasFileFolderCopyCapability, "hasFileFolderCopyCapability");
-    __name(hasFileCloneCapability, "hasFileCloneCapability");
     __name32(hasFileCloneCapability, "hasFileCloneCapability");
-    __name(hasFileRealpathCapability, "hasFileRealpathCapability");
     __name32(hasFileRealpathCapability, "hasFileRealpathCapability");
-    __name(hasOpenReadWriteCloseCapability, "hasOpenReadWriteCloseCapability");
     __name32(hasOpenReadWriteCloseCapability, "hasOpenReadWriteCloseCapability");
-    __name(hasFileReadStreamCapability, "hasFileReadStreamCapability");
     __name32(hasFileReadStreamCapability, "hasFileReadStreamCapability");
-    __name(hasFileAtomicReadCapability, "hasFileAtomicReadCapability");
     __name32(hasFileAtomicReadCapability, "hasFileAtomicReadCapability");
-    __name(hasFileAtomicWriteCapability, "hasFileAtomicWriteCapability");
     __name32(hasFileAtomicWriteCapability, "hasFileAtomicWriteCapability");
-    __name(hasFileAtomicDeleteCapability, "hasFileAtomicDeleteCapability");
     __name32(hasFileAtomicDeleteCapability, "hasFileAtomicDeleteCapability");
-    __name(hasReadonlyCapability, "hasReadonlyCapability");
     __name32(hasReadonlyCapability, "hasReadonlyCapability");
     (function(FileSystemProviderErrorCode2) {
       FileSystemProviderErrorCode2["FileExists"] = "EntryExists";
@@ -13958,15 +13966,10 @@ var init_files = __esm({
         this.code = code;
       }
     };
-    __name(createFileSystemProviderError, "createFileSystemProviderError");
     __name32(createFileSystemProviderError, "createFileSystemProviderError");
-    __name(ensureFileSystemProviderError, "ensureFileSystemProviderError");
     __name32(ensureFileSystemProviderError, "ensureFileSystemProviderError");
-    __name(markAsFileSystemProviderError, "markAsFileSystemProviderError");
     __name32(markAsFileSystemProviderError, "markAsFileSystemProviderError");
-    __name(toFileSystemProviderErrorCode, "toFileSystemProviderErrorCode");
     __name32(toFileSystemProviderErrorCode, "toFileSystemProviderErrorCode");
-    __name(toFileOperationResult, "toFileOperationResult");
     __name32(toFileOperationResult, "toFileOperationResult");
     (function(FileOperation2) {
       FileOperation2[FileOperation2["CREATE"] = 0] = "CREATE";
@@ -14153,7 +14156,6 @@ var init_files = __esm({
         return typeof this.correlationId === "number";
       }
     };
-    __name(isParent, "isParent");
     __name32(isParent, "isParent");
     FileOperationError = class extends Error {
       static {
@@ -14228,7 +14230,6 @@ var init_files = __esm({
       FileKind2[FileKind2["ROOT_FOLDER"] = 2] = "ROOT_FOLDER";
     })(FileKind || (FileKind = {}));
     ETAG_DISABLED = "";
-    __name(etag, "etag");
     __name32(etag, "etag");
     __name(whenProviderRegistered, "whenProviderRegistered");
     __name32(whenProviderRegistered, "whenProviderRegistered");
@@ -14270,7 +14271,6 @@ var init_files = __esm({
         return localize("sizeTB", "{0}TB", (size / _ByteSize.TB).toFixed(2));
       }
     };
-    __name(getLargeFileConfirmationLimit, "getLargeFileConfirmationLimit");
     __name32(getLargeFileConfirmationLimit, "getLargeFileConfirmationLimit");
   }
 });
@@ -14291,6 +14291,7 @@ var init_remoteAuthorityResolver = __esm({
     init_instantiation();
     __defProp33 = Object.defineProperty;
     __name33 = /* @__PURE__ */ __name((target, value) => __defProp33(target, "name", { value, configurable: true }), "__name");
+    __name(getRemoteAuthorityPrefix, "getRemoteAuthorityPrefix");
     IRemoteAuthorityResolverService = createDecorator("remoteAuthorityResolverService");
     (function(RemoteConnectionType2) {
       RemoteConnectionType2[RemoteConnectionType2["WebSocket"] = 0] = "WebSocket";
@@ -14365,7 +14366,6 @@ var init_remoteAuthorityResolver = __esm({
         Object.setPrototypeOf(this, _RemoteAuthorityResolverError.prototype);
       }
     };
-    __name(getRemoteAuthorityPrefix, "getRemoteAuthorityPrefix");
     __name33(getRemoteAuthorityPrefix, "getRemoteAuthorityPrefix");
   }
 });
@@ -14517,14 +14517,14 @@ var init_korean = __esm({
     __defProp35 = Object.defineProperty;
     __name35 = /* @__PURE__ */ __name((target, value) => __defProp35(target, "name", { value, configurable: true }), "__name");
     __name(getKoreanAltChars, "getKoreanAltChars");
+    __name(disassembleKorean, "disassembleKorean");
+    __name(getCodesFromArray, "getCodesFromArray");
+    __name(addCodesToBuffer, "addCodesToBuffer");
     __name35(getKoreanAltChars, "getKoreanAltChars");
     codeBufferLength = 0;
     codeBuffer = new Uint32Array(10);
-    __name(disassembleKorean, "disassembleKorean");
     __name35(disassembleKorean, "disassembleKorean");
-    __name(getCodesFromArray, "getCodesFromArray");
     __name35(getCodesFromArray, "getCodesFromArray");
-    __name(addCodesToBuffer, "addCodesToBuffer");
     __name35(addCodesToBuffer, "addCodesToBuffer");
     (function(HangulRangeStartCode2) {
       HangulRangeStartCode2[HangulRangeStartCode2["InitialConsonant"] = 4352] = "InitialConsonant";
@@ -14927,14 +14927,14 @@ var init_normalization = __esm({
     init_map();
     __defProp36 = Object.defineProperty;
     __name36 = /* @__PURE__ */ __name((target, value) => __defProp36(target, "name", { value, configurable: true }), "__name");
-    nfcCache = new LRUCache(1e4);
     __name(normalizeNFC, "normalizeNFC");
+    __name(normalizeNFD, "normalizeNFD");
+    __name(normalize2, "normalize");
+    nfcCache = new LRUCache(1e4);
     __name36(normalizeNFC, "normalizeNFC");
     nfdCache = new LRUCache(1e4);
-    __name(normalizeNFD, "normalizeNFD");
     __name36(normalizeNFD, "normalizeNFD");
     nonAsciiCharactersPattern = /[^\u0000-\u0080]/;
-    __name(normalize2, "normalize");
     __name36(normalize2, "normalize");
     tryNormalizeToBase = (function() {
       const cache = new LRUCache(1e4);
@@ -15592,75 +15592,88 @@ var init_filters = __esm({
     __defProp37 = Object.defineProperty;
     __name37 = /* @__PURE__ */ __name((target, value) => __defProp37(target, "name", { value, configurable: true }), "__name");
     __name(or, "or");
+    __name(_matchesPrefix, "_matchesPrefix");
+    __name(matchesContiguousSubString, "matchesContiguousSubString");
+    __name(matchesBaseContiguousSubString, "matchesBaseContiguousSubString");
+    __name(matchesSubString, "matchesSubString");
+    __name(_matchesSubString, "_matchesSubString");
+    __name(isLower, "isLower");
+    __name(isUpper, "isUpper");
+    __name(isNumber2, "isNumber");
+    __name(isWhitespace, "isWhitespace");
+    __name(isWordSeparator, "isWordSeparator");
+    __name(charactersMatch, "charactersMatch");
+    __name(getAlternateCodes, "getAlternateCodes");
+    __name(isAlphanumeric, "isAlphanumeric");
+    __name(join2, "join");
+    __name(nextAnchor, "nextAnchor");
+    __name(_matchesCamelCase, "_matchesCamelCase");
+    __name(analyzeCamelCaseWord, "analyzeCamelCaseWord");
+    __name(isUpperCaseWord, "isUpperCaseWord");
+    __name(isCamelCaseWord, "isCamelCaseWord");
+    __name(isCamelCasePattern, "isCamelCasePattern");
+    __name(matchesCamelCase, "matchesCamelCase");
+    __name(matchesWords, "matchesWords");
+    __name(_matchesWords, "_matchesWords");
+    __name(nextWord, "nextWord");
+    __name(matchesFuzzy, "matchesFuzzy");
+    __name(matchesFuzzy2, "matchesFuzzy2");
+    __name(anyScore, "anyScore");
+    __name(createMatches, "createMatches");
+    __name(initTable, "initTable");
+    __name(initArr, "initArr");
+    __name(printTable, "printTable");
+    __name(printTables, "printTables");
+    __name(isSeparatorAtPos, "isSeparatorAtPos");
+    __name(isWhitespaceAtPos, "isWhitespaceAtPos");
+    __name(isUpperCaseAtPos, "isUpperCaseAtPos");
+    __name(isPatternInWord, "isPatternInWord");
+    __name(fuzzyScore, "fuzzyScore");
+    __name(_fillInMaxWordMatchPos, "_fillInMaxWordMatchPos");
+    __name(_doScore, "_doScore");
+    __name(fuzzyScoreGracefulAggressive, "fuzzyScoreGracefulAggressive");
+    __name(fuzzyScoreGraceful, "fuzzyScoreGraceful");
+    __name(fuzzyScoreWithPermutations, "fuzzyScoreWithPermutations");
+    __name(nextTypoPermutation, "nextTypoPermutation");
     __name37(or, "or");
     matchesStrictPrefix = _matchesPrefix.bind(void 0, false);
     matchesPrefix = _matchesPrefix.bind(void 0, true);
-    __name(_matchesPrefix, "_matchesPrefix");
     __name37(_matchesPrefix, "_matchesPrefix");
-    __name(matchesContiguousSubString, "matchesContiguousSubString");
     __name37(matchesContiguousSubString, "matchesContiguousSubString");
-    __name(matchesBaseContiguousSubString, "matchesBaseContiguousSubString");
     __name37(matchesBaseContiguousSubString, "matchesBaseContiguousSubString");
-    __name(matchesSubString, "matchesSubString");
     __name37(matchesSubString, "matchesSubString");
-    __name(_matchesSubString, "_matchesSubString");
     __name37(_matchesSubString, "_matchesSubString");
-    __name(isLower, "isLower");
     __name37(isLower, "isLower");
-    __name(isUpper, "isUpper");
     __name37(isUpper, "isUpper");
-    __name(isNumber2, "isNumber");
     __name37(isNumber2, "isNumber");
-    __name(isWhitespace, "isWhitespace");
     __name37(isWhitespace, "isWhitespace");
     wordSeparators = /* @__PURE__ */ new Set();
     "()[]{}<>`'\"-/;:,.?!".split("").forEach((s) => wordSeparators.add(s.charCodeAt(0)));
-    __name(isWordSeparator, "isWordSeparator");
     __name37(isWordSeparator, "isWordSeparator");
-    __name(charactersMatch, "charactersMatch");
     __name37(charactersMatch, "charactersMatch");
     alternateCharsCache = /* @__PURE__ */ new Map();
-    __name(getAlternateCodes, "getAlternateCodes");
     __name37(getAlternateCodes, "getAlternateCodes");
-    __name(isAlphanumeric, "isAlphanumeric");
     __name37(isAlphanumeric, "isAlphanumeric");
-    __name(join2, "join");
     __name37(join2, "join");
-    __name(nextAnchor, "nextAnchor");
     __name37(nextAnchor, "nextAnchor");
-    __name(_matchesCamelCase, "_matchesCamelCase");
     __name37(_matchesCamelCase, "_matchesCamelCase");
-    __name(analyzeCamelCaseWord, "analyzeCamelCaseWord");
     __name37(analyzeCamelCaseWord, "analyzeCamelCaseWord");
-    __name(isUpperCaseWord, "isUpperCaseWord");
     __name37(isUpperCaseWord, "isUpperCaseWord");
-    __name(isCamelCaseWord, "isCamelCaseWord");
     __name37(isCamelCaseWord, "isCamelCaseWord");
-    __name(isCamelCasePattern, "isCamelCasePattern");
     __name37(isCamelCasePattern, "isCamelCasePattern");
-    __name(matchesCamelCase, "matchesCamelCase");
     __name37(matchesCamelCase, "matchesCamelCase");
-    __name(matchesWords, "matchesWords");
     __name37(matchesWords, "matchesWords");
-    __name(_matchesWords, "_matchesWords");
     __name37(_matchesWords, "_matchesWords");
-    __name(nextWord, "nextWord");
     __name37(nextWord, "nextWord");
     fuzzyContiguousFilter = or(matchesPrefix, matchesCamelCase, matchesContiguousSubString);
     fuzzySeparateFilter = or(matchesPrefix, matchesCamelCase, matchesSubString);
     fuzzyRegExpCache = new LRUCache(1e4);
-    __name(matchesFuzzy, "matchesFuzzy");
     __name37(matchesFuzzy, "matchesFuzzy");
-    __name(matchesFuzzy2, "matchesFuzzy2");
     __name37(matchesFuzzy2, "matchesFuzzy2");
-    __name(anyScore, "anyScore");
     __name37(anyScore, "anyScore");
-    __name(createMatches, "createMatches");
     __name37(createMatches, "createMatches");
     _maxLen = 128;
-    __name(initTable, "initTable");
     __name37(initTable, "initTable");
-    __name(initArr, "initArr");
     __name37(initArr, "initArr");
     _minWordMatchPos = initArr(2 * _maxLen);
     _maxWordMatchPos = initArr(2 * _maxLen);
@@ -15668,17 +15681,11 @@ var init_filters = __esm({
     _table = initTable();
     _arrows = initTable();
     _debug = false;
-    __name(printTable, "printTable");
     __name37(printTable, "printTable");
-    __name(printTables, "printTables");
     __name37(printTables, "printTables");
-    __name(isSeparatorAtPos, "isSeparatorAtPos");
     __name37(isSeparatorAtPos, "isSeparatorAtPos");
-    __name(isWhitespaceAtPos, "isWhitespaceAtPos");
     __name37(isWhitespaceAtPos, "isWhitespaceAtPos");
-    __name(isUpperCaseAtPos, "isUpperCaseAtPos");
     __name37(isUpperCaseAtPos, "isUpperCaseAtPos");
-    __name(isPatternInWord, "isPatternInWord");
     __name37(isPatternInWord, "isPatternInWord");
     (function(Arrow2) {
       Arrow2[Arrow2["Diag"] = 1] = "Diag";
@@ -15709,19 +15716,12 @@ var init_filters = __esm({
         this.boostFullMatch = boostFullMatch;
       }
     };
-    __name(fuzzyScore, "fuzzyScore");
     __name37(fuzzyScore, "fuzzyScore");
-    __name(_fillInMaxWordMatchPos, "_fillInMaxWordMatchPos");
     __name37(_fillInMaxWordMatchPos, "_fillInMaxWordMatchPos");
-    __name(_doScore, "_doScore");
     __name37(_doScore, "_doScore");
-    __name(fuzzyScoreGracefulAggressive, "fuzzyScoreGracefulAggressive");
     __name37(fuzzyScoreGracefulAggressive, "fuzzyScoreGracefulAggressive");
-    __name(fuzzyScoreGraceful, "fuzzyScoreGraceful");
     __name37(fuzzyScoreGraceful, "fuzzyScoreGraceful");
-    __name(fuzzyScoreWithPermutations, "fuzzyScoreWithPermutations");
     __name37(fuzzyScoreWithPermutations, "fuzzyScoreWithPermutations");
-    __name(nextTypoPermutation, "nextTypoPermutation");
     __name37(nextTypoPermutation, "nextTypoPermutation");
   }
 });
@@ -15748,10 +15748,10 @@ var init_codiconsUtil = __esm({
     init_types();
     __defProp38 = Object.defineProperty;
     __name38 = /* @__PURE__ */ __name((target, value) => __defProp38(target, "name", { value, configurable: true }), "__name");
-    _codiconFontCharacters = /* @__PURE__ */ Object.create(null);
     __name(register, "register");
-    __name38(register, "register");
     __name(getCodiconFontCharacters, "getCodiconFontCharacters");
+    _codiconFontCharacters = /* @__PURE__ */ Object.create(null);
+    __name38(register, "register");
     __name38(getCodiconFontCharacters, "getCodiconFontCharacters");
   }
 });
@@ -16480,6 +16480,7 @@ var init_themables = __esm({
     init_codicons();
     __defProp40 = Object.defineProperty;
     __name40 = /* @__PURE__ */ __name((target, value) => __defProp40(target, "name", { value, configurable: true }), "__name");
+    __name(themeColorFromId, "themeColorFromId");
     (function(ThemeColor23) {
       function isThemeColor(obj) {
         return !!obj && typeof obj === "object" && typeof obj.id === "string";
@@ -16488,7 +16489,6 @@ var init_themables = __esm({
       __name40(isThemeColor, "isThemeColor");
       ThemeColor23.isThemeColor = isThemeColor;
     })(ThemeColor || (ThemeColor = {}));
-    __name(themeColorFromId, "themeColorFromId");
     __name40(themeColorFromId, "themeColorFromId");
     (function(ThemeIcon23) {
       ThemeIcon23.iconNameSegment = "[A-Za-z0-9]+";
@@ -16660,23 +16660,23 @@ var init_iconLabels = __esm({
     init_themables();
     __defProp41 = Object.defineProperty;
     __name41 = /* @__PURE__ */ __name((target, value) => __defProp41(target, "name", { value, configurable: true }), "__name");
+    __name(escapeIcons, "escapeIcons");
+    __name(markdownEscapeEscapedIcons, "markdownEscapeEscapedIcons");
+    __name(stripIcons, "stripIcons");
+    __name(getCodiconAriaLabel, "getCodiconAriaLabel");
+    __name(parseLabelWithIcons, "parseLabelWithIcons");
+    __name(matchesFuzzyIconAware, "matchesFuzzyIconAware");
     iconStartMarker = "$(";
     iconsRegex = new RegExp(`\\$\\(${ThemeIcon.iconNameExpression}(?:${ThemeIcon.iconModifierExpression})?\\)`, "g");
     escapeIconsRegex = new RegExp(`(\\\\)?${iconsRegex.source}`, "g");
-    __name(escapeIcons, "escapeIcons");
     __name41(escapeIcons, "escapeIcons");
     markdownEscapedIconsRegex = new RegExp(`\\\\${iconsRegex.source}`, "g");
-    __name(markdownEscapeEscapedIcons, "markdownEscapeEscapedIcons");
     __name41(markdownEscapeEscapedIcons, "markdownEscapeEscapedIcons");
     stripIconsRegex = new RegExp(`(\\s)?(\\\\)?${iconsRegex.source}(\\s)?`, "g");
-    __name(stripIcons, "stripIcons");
     __name41(stripIcons, "stripIcons");
-    __name(getCodiconAriaLabel, "getCodiconAriaLabel");
     __name41(getCodiconAriaLabel, "getCodiconAriaLabel");
     _parseIconsRegex = new RegExp(`\\$\\(${ThemeIcon.iconNameCharacter}+\\)`, "g");
-    __name(parseLabelWithIcons, "parseLabelWithIcons");
     __name41(parseLabelWithIcons, "parseLabelWithIcons");
-    __name(matchesFuzzyIconAware, "matchesFuzzyIconAware");
     __name41(matchesFuzzyIconAware, "matchesFuzzyIconAware");
   }
 });
@@ -16958,43 +16958,43 @@ var init_extpath = __esm({
     __defProp42 = Object.defineProperty;
     __name42 = /* @__PURE__ */ __name((target, value) => __defProp42(target, "name", { value, configurable: true }), "__name");
     __name(isPathSeparator2, "isPathSeparator");
-    __name42(isPathSeparator2, "isPathSeparator");
     __name(toSlashes, "toSlashes");
-    __name42(toSlashes, "toSlashes");
     __name(toPosixPath, "toPosixPath");
-    __name42(toPosixPath, "toPosixPath");
     __name(getRoot, "getRoot");
-    __name42(getRoot, "getRoot");
     __name(isUNC, "isUNC");
+    __name(isValidBasename, "isValidBasename");
+    __name(isEqual, "isEqual");
+    __name(isEqualOrParent, "isEqualOrParent");
+    __name(isWindowsDriveLetter, "isWindowsDriveLetter");
+    __name(sanitizeFilePath, "sanitizeFilePath");
+    __name(removeTrailingPathSeparator, "removeTrailingPathSeparator");
+    __name(isRootOrDriveLetter, "isRootOrDriveLetter");
+    __name(hasDriveLetter, "hasDriveLetter");
+    __name(getDriveLetter, "getDriveLetter");
+    __name(indexOfPath, "indexOfPath");
+    __name(parseLineAndColumnAware, "parseLineAndColumnAware");
+    __name(randomPath, "randomPath");
+    __name42(isPathSeparator2, "isPathSeparator");
+    __name42(toSlashes, "toSlashes");
+    __name42(toPosixPath, "toPosixPath");
+    __name42(getRoot, "getRoot");
     __name42(isUNC, "isUNC");
     WINDOWS_INVALID_FILE_CHARS = /[\\/:\*\?"<>\|]/g;
     UNIX_INVALID_FILE_CHARS = /[/]/g;
     WINDOWS_FORBIDDEN_NAMES = /^(con|prn|aux|clock\$|nul|lpt[0-9]|com[0-9])(\.(.*?))?$/i;
-    __name(isValidBasename, "isValidBasename");
     __name42(isValidBasename, "isValidBasename");
-    __name(isEqual, "isEqual");
     __name42(isEqual, "isEqual");
-    __name(isEqualOrParent, "isEqualOrParent");
     __name42(isEqualOrParent, "isEqualOrParent");
-    __name(isWindowsDriveLetter, "isWindowsDriveLetter");
     __name42(isWindowsDriveLetter, "isWindowsDriveLetter");
-    __name(sanitizeFilePath, "sanitizeFilePath");
     __name42(sanitizeFilePath, "sanitizeFilePath");
-    __name(removeTrailingPathSeparator, "removeTrailingPathSeparator");
     __name42(removeTrailingPathSeparator, "removeTrailingPathSeparator");
-    __name(isRootOrDriveLetter, "isRootOrDriveLetter");
     __name42(isRootOrDriveLetter, "isRootOrDriveLetter");
-    __name(hasDriveLetter, "hasDriveLetter");
     __name42(hasDriveLetter, "hasDriveLetter");
-    __name(getDriveLetter, "getDriveLetter");
     __name42(getDriveLetter, "getDriveLetter");
-    __name(indexOfPath, "indexOfPath");
     __name42(indexOfPath, "indexOfPath");
-    __name(parseLineAndColumnAware, "parseLineAndColumnAware");
     __name42(parseLineAndColumnAware, "parseLineAndColumnAware");
     pathChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     windowsSafePathFirstChars = "BDEFGHIJKMOQRSTUVWXYZbdefghijkmoqrstuvwxyz0123456789";
-    __name(randomPath, "randomPath");
     __name42(randomPath, "randomPath");
   }
 });
@@ -17042,6 +17042,8 @@ var init_resources = __esm({
     __defProp43 = Object.defineProperty;
     __name43 = /* @__PURE__ */ __name((target, value) => __defProp43(target, "name", { value, configurable: true }), "__name");
     __name(originalFSPath, "originalFSPath");
+    __name(distinctParents, "distinctParents");
+    __name(toLocalResource, "toLocalResource");
     __name43(originalFSPath, "originalFSPath");
     ExtUri = class {
       static {
@@ -17228,7 +17230,6 @@ var init_resources = __esm({
     hasTrailingPathSeparator = extUri.hasTrailingPathSeparator.bind(extUri);
     removeTrailingPathSeparator2 = extUri.removeTrailingPathSeparator.bind(extUri);
     addTrailingPathSeparator = extUri.addTrailingPathSeparator.bind(extUri);
-    __name(distinctParents, "distinctParents");
     __name43(distinctParents, "distinctParents");
     (function(DataUri2) {
       DataUri2.META_DATA_LABEL = "label";
@@ -17254,7 +17255,6 @@ var init_resources = __esm({
       __name43(parseMetaData, "parseMetaData");
       DataUri2.parseMetaData = parseMetaData;
     })(DataUri || (DataUri = {}));
-    __name(toLocalResource, "toLocalResource");
     __name43(toLocalResource, "toLocalResource");
   }
 });
@@ -17361,6 +17361,18 @@ var init_htmlContent = __esm({
     init_uri();
     __defProp44 = Object.defineProperty;
     __name44 = /* @__PURE__ */ __name((target, value) => __defProp44(target, "name", { value, configurable: true }), "__name");
+    __name(isEmptyMarkdownString, "isEmptyMarkdownString");
+    __name(isMarkdownString, "isMarkdownString");
+    __name(markdownStringEqual, "markdownStringEqual");
+    __name(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
+    __name(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
+    __name(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
+    __name(escapeDoubleQuotes, "escapeDoubleQuotes");
+    __name(removeMarkdownEscapes, "removeMarkdownEscapes");
+    __name(parseHrefAndDimensions, "parseHrefAndDimensions");
+    __name(createMarkdownLink, "createMarkdownLink");
+    __name(createMarkdownCommandLink, "createMarkdownCommandLink");
+    __name(createCommandUri, "createCommandUri");
     (function(MarkdownStringTextNewlineStyle2) {
       MarkdownStringTextNewlineStyle2[MarkdownStringTextNewlineStyle2["Paragraph"] = 0] = "Paragraph";
       MarkdownStringTextNewlineStyle2[MarkdownStringTextNewlineStyle2["Break"] = 1] = "Break";
@@ -17431,29 +17443,17 @@ ${appendEscapedMarkdownCodeBlockFence(code, langId)}
         });
       }
     };
-    __name(isEmptyMarkdownString, "isEmptyMarkdownString");
     __name44(isEmptyMarkdownString, "isEmptyMarkdownString");
-    __name(isMarkdownString, "isMarkdownString");
     __name44(isMarkdownString, "isMarkdownString");
-    __name(markdownStringEqual, "markdownStringEqual");
     __name44(markdownStringEqual, "markdownStringEqual");
-    __name(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
     __name44(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
-    __name(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
     __name44(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
-    __name(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
     __name44(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
-    __name(escapeDoubleQuotes, "escapeDoubleQuotes");
     __name44(escapeDoubleQuotes, "escapeDoubleQuotes");
-    __name(removeMarkdownEscapes, "removeMarkdownEscapes");
     __name44(removeMarkdownEscapes, "removeMarkdownEscapes");
-    __name(parseHrefAndDimensions, "parseHrefAndDimensions");
     __name44(parseHrefAndDimensions, "parseHrefAndDimensions");
-    __name(createMarkdownLink, "createMarkdownLink");
     __name44(createMarkdownLink, "createMarkdownLink");
-    __name(createMarkdownCommandLink, "createMarkdownCommandLink");
     __name44(createMarkdownCommandLink, "createMarkdownCommandLink");
-    __name(createCommandUri, "createCommandUri");
     __name44(createCommandUri, "createCommandUri");
   }
 });
@@ -17743,6 +17743,7 @@ var init_range = __esm({
       else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
       return c > 3 && r && Object.defineProperty(target, key, r), r;
     }, "__decorate");
+    __name(getDebugDescriptionOfRange, "getDebugDescriptionOfRange");
     Range = Range_1 = class Range2 {
       static {
         __name(this, "Range2");
@@ -17864,7 +17865,6 @@ var init_range = __esm({
     Range = Range_1 = __decorate3([
       es5ClassCompat
     ], Range);
-    __name(getDebugDescriptionOfRange, "getDebugDescriptionOfRange");
     __name47(getDebugDescriptionOfRange, "getDebugDescriptionOfRange");
   }
 });
@@ -18377,6 +18377,7 @@ var init_selection = __esm({
       else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
       return c > 3 && r && Object.defineProperty(target, key, r), r;
     }, "__decorate");
+    __name(getDebugDescriptionOfSelection, "getDebugDescriptionOfSelection");
     Selection = Selection_1 = class Selection2 extends Range {
       static {
         __name(this, "Selection2");
@@ -18434,7 +18435,6 @@ var init_selection = __esm({
     Selection = Selection_1 = __decorate8([
       es5ClassCompat
     ], Selection);
-    __name(getDebugDescriptionOfSelection, "getDebugDescriptionOfSelection");
     __name52(getDebugDescriptionOfSelection, "getDebugDescriptionOfSelection");
   }
 });
@@ -19299,6 +19299,11 @@ var init_extHostTypes = __esm({
       else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
       return c > 3 && r && Object.defineProperty(target, key, r), r;
     }, "__decorate");
+    __name(asStatusBarItemIdentifier, "asStatusBarItemIdentifier");
+    __name(computeTaskExecutionId, "computeTaskExecutionId");
+    __name(setBreakpointId, "setBreakpointId");
+    __name(isStrArrayOrUndefined, "isStrArrayOrUndefined");
+    __name(validateTestCoverageCount, "validateTestCoverageCount");
     (function(TerminalOutputAnchor2) {
       TerminalOutputAnchor2[TerminalOutputAnchor2["Top"] = 0] = "Top";
       TerminalOutputAnchor2[TerminalOutputAnchor2["Bottom"] = 1] = "Bottom";
@@ -19864,7 +19869,6 @@ var init_extHostTypes = __esm({
       StatusBarAlignment2[StatusBarAlignment2["Left"] = 1] = "Left";
       StatusBarAlignment2[StatusBarAlignment2["Right"] = 2] = "Right";
     })(StatusBarAlignment || (StatusBarAlignment = {}));
-    __name(asStatusBarItemIdentifier, "asStatusBarItemIdentifier");
     __name58(asStatusBarItemIdentifier, "asStatusBarItemIdentifier");
     (function(TextEditorLineNumbersStyle2) {
       TextEditorLineNumbersStyle2[TextEditorLineNumbersStyle2["Off"] = 0] = "Off";
@@ -20254,7 +20258,6 @@ var init_extHostTypes = __esm({
     TaskGroup = TaskGroup_1 = __decorate13([
       es5ClassCompat
     ], TaskGroup);
-    __name(computeTaskExecutionId, "computeTaskExecutionId");
     __name58(computeTaskExecutionId, "computeTaskExecutionId");
     ProcessExecution = class ProcessExecution2 {
       static {
@@ -21020,7 +21023,6 @@ var init_extHostTypes = __esm({
       es5ClassCompat
     ], RelativePattern);
     breakpointIds = /* @__PURE__ */ new WeakMap();
-    __name(setBreakpointId, "setBreakpointId");
     __name58(setBreakpointId, "setBreakpointId");
     Breakpoint = class Breakpoint2 {
       static {
@@ -21397,7 +21399,6 @@ var init_extHostTypes = __esm({
         this.tokenModifiers = tokenModifiers;
       }
     };
-    __name(isStrArrayOrUndefined, "isStrArrayOrUndefined");
     __name58(isStrArrayOrUndefined, "isStrArrayOrUndefined");
     SemanticTokensBuilder = class _SemanticTokensBuilder {
       static {
@@ -21930,7 +21931,6 @@ var init_extHostTypes = __esm({
         validateTestCoverageCount(this);
       }
     };
-    __name(validateTestCoverageCount, "validateTestCoverageCount");
     __name58(validateTestCoverageCount, "validateTestCoverageCount");
     FileCoverage = class _FileCoverage {
       static {
@@ -29725,7 +29725,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-28T05:20:10Z"
+      generatedAt: "2026-04-28T20:31:17Z"
     };
   }
 });
@@ -30451,18 +30451,6 @@ function installFakeRunWhenIdle(fakeImpl) {
     runWhenGlobalIdle = origRunWhenGlobalIdle;
   });
 }
-async function retry(task, delay, retries) {
-  let lastError;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await task();
-    } catch (error) {
-      lastError = error;
-      await timeout(delay);
-    }
-  }
-  throw lastError;
-}
 function createCancelableAsyncIterableProducer(callback) {
   const source = new CancellationTokenSource();
   const innerIterable = callback(source.token);
@@ -30505,6 +30493,18 @@ function cancellableIterable(iterableOrIterator, token) {
     }
   };
 }
+async function retry(task, delay, retries) {
+  let lastError;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      await timeout(delay);
+    }
+  }
+  throw lastError;
+}
 var __defProp59, __name59, Throttler, Sequencer, SequencerByKey, timeoutDeferred, microtaskDeferred, Delayer, ThrottledDelayer, Barrier, AutoOpenBarrier, Limiter, Queue, LimitedQueue, ResourceQueue, TaskQueue, TimeoutTimer, IntervalTimer, RunOnceScheduler, ProcessTimeRunOnceScheduler, RunOnceWorker, ThrottledWorker, runWhenGlobalIdle, _runWhenIdle, AbstractIdleValue, GlobalIdleValue, TaskSequentializer, IntervalCounter, DeferredOutcome, DeferredPromise, Promises, StatefulPromise, LazyStatefulPromise, AsyncIterableSourceState, AsyncIterableObject, AsyncIterableSource, ProducerConsumer, AsyncIterableProducer, CancelableAsyncIterableProducer, AsyncReaderEndOfStream, AsyncReader;
 var init_async = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/async.js"() {
@@ -30520,22 +30520,30 @@ var init_async = __esm({
     __defProp59 = Object.defineProperty;
     __name59 = /* @__PURE__ */ __name((target, value) => __defProp59(target, "name", { value, configurable: true }), "__name");
     __name(isThenable, "isThenable");
-    __name59(isThenable, "isThenable");
     __name(createCancelablePromise, "createCancelablePromise");
-    __name59(createCancelablePromise, "createCancelablePromise");
     __name(raceCancellation, "raceCancellation");
-    __name59(raceCancellation, "raceCancellation");
     __name(raceCancellationError, "raceCancellationError");
-    __name59(raceCancellationError, "raceCancellationError");
     __name(notCancellablePromise, "notCancellablePromise");
-    __name59(notCancellablePromise, "notCancellablePromise");
     __name(raceCancellablePromises, "raceCancellablePromises");
-    __name59(raceCancellablePromises, "raceCancellablePromises");
     __name(raceTimeout, "raceTimeout");
-    __name59(raceTimeout, "raceTimeout");
     __name(asPromise, "asPromise");
-    __name59(asPromise, "asPromise");
     __name(promiseWithResolvers, "promiseWithResolvers");
+    __name(timeout, "timeout");
+    __name(disposableTimeout, "disposableTimeout");
+    __name(sequence, "sequence");
+    __name(first, "first");
+    __name(firstParallel, "firstParallel");
+    __name(installFakeRunWhenIdle, "installFakeRunWhenIdle");
+    __name(createCancelableAsyncIterableProducer, "createCancelableAsyncIterableProducer");
+    __name(cancellableIterable, "cancellableIterable");
+    __name59(isThenable, "isThenable");
+    __name59(createCancelablePromise, "createCancelablePromise");
+    __name59(raceCancellation, "raceCancellation");
+    __name59(raceCancellationError, "raceCancellationError");
+    __name59(notCancellablePromise, "notCancellablePromise");
+    __name59(raceCancellablePromises, "raceCancellablePromises");
+    __name59(raceTimeout, "raceTimeout");
+    __name59(asPromise, "asPromise");
     __name59(promiseWithResolvers, "promiseWithResolvers");
     Throttler = class {
       static {
@@ -30783,15 +30791,10 @@ var init_async = __esm({
         super.open();
       }
     };
-    __name(timeout, "timeout");
     __name59(timeout, "timeout");
-    __name(disposableTimeout, "disposableTimeout");
     __name59(disposableTimeout, "disposableTimeout");
-    __name(sequence, "sequence");
     __name59(sequence, "sequence");
-    __name(first, "first");
     __name59(first, "first");
-    __name(firstParallel, "firstParallel");
     __name59(firstParallel, "firstParallel");
     Limiter = class {
       static {
@@ -31397,7 +31400,6 @@ var init_async = __esm({
       }
       runWhenGlobalIdle = /* @__PURE__ */ __name59((runner, timeout2) => _runWhenIdle(globalThis, runner, timeout2), "runWhenGlobalIdle");
     })();
-    __name(installFakeRunWhenIdle, "installFakeRunWhenIdle");
     __name59(installFakeRunWhenIdle, "installFakeRunWhenIdle");
     AbstractIdleValue = class {
       static {
@@ -31878,7 +31880,6 @@ var init_async = __esm({
         this._onStateChanged.fire();
       }
     };
-    __name(createCancelableAsyncIterableProducer, "createCancelableAsyncIterableProducer");
     __name59(createCancelableAsyncIterableProducer, "createCancelableAsyncIterableProducer");
     AsyncIterableSource = class {
       static {
@@ -31946,7 +31947,6 @@ var init_async = __esm({
         this._emitManyFn(items);
       }
     };
-    __name(cancellableIterable, "cancellableIterable");
     __name59(cancellableIterable, "cancellableIterable");
     ProducerConsumer = class {
       static {
@@ -32781,17 +32781,35 @@ var init_glob = __esm({
     __defProp60 = Object.defineProperty;
     __name60 = /* @__PURE__ */ __name((target, value) => __defProp60(target, "name", { value, configurable: true }), "__name");
     __name(getEmptyExpression, "getEmptyExpression");
+    __name(starsToRegExp, "starsToRegExp");
+    __name(splitGlobAware, "splitGlobAware");
+    __name(parseRegExp, "parseRegExp");
+    __name(isEmptyPattern, "isEmptyPattern");
+    __name(parsePattern, "parsePattern");
+    __name(wrapRelativePattern, "wrapRelativePattern");
+    __name(trimForExclusions, "trimForExclusions");
+    __name(trivia1, "trivia1");
+    __name(trivia2, "trivia2");
+    __name(trivia3, "trivia3");
+    __name(trivia4and5, "trivia4and5");
+    __name(toRegExp, "toRegExp");
+    __name(match, "match");
+    __name(parse3, "parse");
+    __name(isRelativePattern, "isRelativePattern");
+    __name(getBasenameTerms, "getBasenameTerms");
+    __name(getPathTerms, "getPathTerms");
+    __name(parsedExpression, "parsedExpression");
+    __name(parseExpressionPattern, "parseExpressionPattern");
+    __name(aggregateBasenameMatches, "aggregateBasenameMatches");
+    __name(patternsEquals, "patternsEquals");
     __name60(getEmptyExpression, "getEmptyExpression");
     GLOBSTAR = "**";
     GLOB_SPLIT = "/";
     PATH_REGEX = "[/\\\\]";
     NO_PATH_REGEX = "[^/\\\\]";
     ALL_FORWARD_SLASHES = /\//g;
-    __name(starsToRegExp, "starsToRegExp");
     __name60(starsToRegExp, "starsToRegExp");
-    __name(splitGlobAware, "splitGlobAware");
     __name60(splitGlobAware, "splitGlobAware");
-    __name(parseRegExp, "parseRegExp");
     __name60(parseRegExp, "parseRegExp");
     T1 = /^\*\*\/\*\.[\w\.-]+$/;
     T2 = /^\*\*\/([\w\.-]+)\/?$/;
@@ -32806,41 +32824,23 @@ var init_glob = __esm({
     NULL = /* @__PURE__ */ __name60(function() {
       return null;
     }, "NULL");
-    __name(isEmptyPattern, "isEmptyPattern");
     __name60(isEmptyPattern, "isEmptyPattern");
-    __name(parsePattern, "parsePattern");
     __name60(parsePattern, "parsePattern");
-    __name(wrapRelativePattern, "wrapRelativePattern");
     __name60(wrapRelativePattern, "wrapRelativePattern");
-    __name(trimForExclusions, "trimForExclusions");
     __name60(trimForExclusions, "trimForExclusions");
-    __name(trivia1, "trivia1");
     __name60(trivia1, "trivia1");
-    __name(trivia2, "trivia2");
     __name60(trivia2, "trivia2");
-    __name(trivia3, "trivia3");
     __name60(trivia3, "trivia3");
-    __name(trivia4and5, "trivia4and5");
     __name60(trivia4and5, "trivia4and5");
-    __name(toRegExp, "toRegExp");
     __name60(toRegExp, "toRegExp");
-    __name(match, "match");
     __name60(match, "match");
-    __name(parse3, "parse");
     __name60(parse3, "parse");
-    __name(isRelativePattern, "isRelativePattern");
     __name60(isRelativePattern, "isRelativePattern");
-    __name(getBasenameTerms, "getBasenameTerms");
     __name60(getBasenameTerms, "getBasenameTerms");
-    __name(getPathTerms, "getPathTerms");
     __name60(getPathTerms, "getPathTerms");
-    __name(parsedExpression, "parsedExpression");
     __name60(parsedExpression, "parsedExpression");
-    __name(parseExpressionPattern, "parseExpressionPattern");
     __name60(parseExpressionPattern, "parseExpressionPattern");
-    __name(aggregateBasenameMatches, "aggregateBasenameMatches");
     __name60(aggregateBasenameMatches, "aggregateBasenameMatches");
-    __name(patternsEquals, "patternsEquals");
     __name60(patternsEquals, "patternsEquals");
   }
 });

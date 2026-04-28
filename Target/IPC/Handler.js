@@ -81,14 +81,14 @@ var init_collections = __esm({
     __defProp2 = Object.defineProperty;
     __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
     __name(groupBy, "groupBy");
-    __name2(groupBy, "groupBy");
     __name(groupByMap, "groupByMap");
-    __name2(groupByMap, "groupByMap");
     __name(diffSets, "diffSets");
-    __name2(diffSets, "diffSets");
     __name(diffMaps, "diffMaps");
-    __name2(diffMaps, "diffMaps");
     __name(intersection, "intersection");
+    __name2(groupBy, "groupBy");
+    __name2(groupByMap, "groupByMap");
+    __name2(diffSets, "diffSets");
+    __name2(diffMaps, "diffMaps");
     __name2(intersection, "intersection");
     SetWithKey = class {
       static {
@@ -252,6 +252,18 @@ var init_errors = __esm({
     "use strict";
     __defProp3 = Object.defineProperty;
     __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
+    __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+    __name(isSigPipeError, "isSigPipeError");
+    __name(onBugIndicatingError, "onBugIndicatingError");
+    __name(onUnexpectedError, "onUnexpectedError");
+    __name(onUnexpectedExternalError, "onUnexpectedExternalError");
+    __name(transformErrorForSerialization, "transformErrorForSerialization");
+    __name(transformErrorFromSerialization, "transformErrorFromSerialization");
+    __name(isCancellationError, "isCancellationError");
+    __name(canceled, "canceled");
+    __name(illegalArgument, "illegalArgument");
+    __name(illegalState, "illegalState");
+    __name(getErrorMessage, "getErrorMessage");
     ErrorHandler = class {
       static {
         __name(this, "ErrorHandler");
@@ -303,22 +315,14 @@ var init_errors = __esm({
       }
     };
     errorHandler = new ErrorHandler();
-    __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
     __name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
-    __name(isSigPipeError, "isSigPipeError");
     __name3(isSigPipeError, "isSigPipeError");
-    __name(onBugIndicatingError, "onBugIndicatingError");
     __name3(onBugIndicatingError, "onBugIndicatingError");
-    __name(onUnexpectedError, "onUnexpectedError");
     __name3(onUnexpectedError, "onUnexpectedError");
-    __name(onUnexpectedExternalError, "onUnexpectedExternalError");
     __name3(onUnexpectedExternalError, "onUnexpectedExternalError");
-    __name(transformErrorForSerialization, "transformErrorForSerialization");
     __name3(transformErrorForSerialization, "transformErrorForSerialization");
-    __name(transformErrorFromSerialization, "transformErrorFromSerialization");
     __name3(transformErrorFromSerialization, "transformErrorFromSerialization");
     canceledName = "Canceled";
-    __name(isCancellationError, "isCancellationError");
     __name3(isCancellationError, "isCancellationError");
     CancellationError = class extends Error {
       static {
@@ -350,11 +354,8 @@ var init_errors = __esm({
         this.name = _PendingMigrationError._name;
       }
     };
-    __name(canceled, "canceled");
     __name3(canceled, "canceled");
-    __name(illegalArgument, "illegalArgument");
     __name3(illegalArgument, "illegalArgument");
-    __name(illegalState, "illegalState");
     __name3(illegalState, "illegalState");
     ReadonlyError = class extends TypeError {
       static {
@@ -367,7 +368,6 @@ var init_errors = __esm({
         super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
       }
     };
-    __name(getErrorMessage, "getErrorMessage");
     __name3(getErrorMessage, "getErrorMessage");
     NotImplementedError = class extends Error {
       static {
@@ -610,22 +610,27 @@ var init_arraysFind = __esm({
     __defProp5 = Object.defineProperty;
     __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
     __name(findLast, "findLast");
-    __name5(findLast, "findLast");
     __name(findLastIdx, "findLastIdx");
-    __name5(findLastIdx, "findLastIdx");
     __name(findFirst, "findFirst");
-    __name5(findFirst, "findFirst");
     __name(findFirstIdx, "findFirstIdx");
-    __name5(findFirstIdx, "findFirstIdx");
     __name(findLastMonotonous, "findLastMonotonous");
-    __name5(findLastMonotonous, "findLastMonotonous");
     __name(findLastIdxMonotonous, "findLastIdxMonotonous");
-    __name5(findLastIdxMonotonous, "findLastIdxMonotonous");
     __name(findFirstMonotonous, "findFirstMonotonous");
-    __name5(findFirstMonotonous, "findFirstMonotonous");
     __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-    __name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
     __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    __name(findFirstMax, "findFirstMax");
+    __name(findLastMax, "findLastMax");
+    __name(findFirstMin, "findFirstMin");
+    __name(findMaxIdx, "findMaxIdx");
+    __name(mapFindFirst, "mapFindFirst");
+    __name5(findLast, "findLast");
+    __name5(findLastIdx, "findLastIdx");
+    __name5(findFirst, "findFirst");
+    __name5(findFirstIdx, "findFirstIdx");
+    __name5(findLastMonotonous, "findLastMonotonous");
+    __name5(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name5(findFirstMonotonous, "findFirstMonotonous");
+    __name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
     __name5(findFirstIdxMonotonous, "findFirstIdxMonotonous");
     MonotonousArray = class _MonotonousArray {
       static {
@@ -661,15 +666,10 @@ var init_arraysFind = __esm({
         return idx === -1 ? void 0 : this._array[idx];
       }
     };
-    __name(findFirstMax, "findFirstMax");
     __name5(findFirstMax, "findFirstMax");
-    __name(findLastMax, "findLastMax");
     __name5(findLastMax, "findLastMax");
-    __name(findFirstMin, "findFirstMin");
     __name5(findFirstMin, "findFirstMin");
-    __name(findMaxIdx, "findMaxIdx");
     __name5(findMaxIdx, "findMaxIdx");
-    __name(mapFindFirst, "mapFindFirst");
     __name5(mapFindFirst, "mapFindFirst");
   }
 });
@@ -762,24 +762,6 @@ function groupBy2(data, compare) {
     }
   }
   return result;
-}
-function* groupAdjacentBy(items, shouldBeGrouped) {
-  let currentGroup;
-  let last;
-  for (const item of items) {
-    if (last !== void 0 && shouldBeGrouped(last, item)) {
-      currentGroup.push(item);
-    } else {
-      if (currentGroup) {
-        yield currentGroup;
-      }
-      currentGroup = [item];
-    }
-    last = item;
-  }
-  if (currentGroup) {
-    yield currentGroup;
-  }
 }
 function forEachAdjacent(arr, f) {
   for (let i = 0; i <= arr.length; i++) {
@@ -1091,15 +1073,33 @@ function compareUndefinedSmallest(comparator) {
     return comparator(a, b);
   };
 }
-async function findAsync(array, predicate) {
-  const results = await Promise.all(array.map(async (element, index2) => ({ element, ok: await predicate(element, index2) })));
-  return results.find((r) => r.ok)?.element;
-}
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
 }
 function sumBy(array, selector) {
   return array.reduce((acc, value) => acc + selector(value), 0);
+}
+function* groupAdjacentBy(items, shouldBeGrouped) {
+  let currentGroup;
+  let last;
+  for (const item of items) {
+    if (last !== void 0 && shouldBeGrouped(last, item)) {
+      currentGroup.push(item);
+    } else {
+      if (currentGroup) {
+        yield currentGroup;
+      }
+      currentGroup = [item];
+    }
+    last = item;
+  }
+  if (currentGroup) {
+    yield currentGroup;
+  }
+}
+async function findAsync(array, predicate) {
+  const results = await Promise.all(array.map(async (element, index2) => ({ element, ok: await predicate(element, index2) })));
+  return results.find((r) => r.ok)?.element;
 }
 var __defProp6, __name6, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
 var init_arrays = __esm({
@@ -1110,86 +1110,92 @@ var init_arrays = __esm({
     __defProp6 = Object.defineProperty;
     __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
     __name(tail, "tail");
-    __name6(tail, "tail");
     __name(equals, "equals");
-    __name6(equals, "equals");
     __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-    __name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
     __name(binarySearch, "binarySearch");
-    __name6(binarySearch, "binarySearch");
     __name(binarySearch2, "binarySearch2");
-    __name6(binarySearch2, "binarySearch2");
     __name(quickSelect, "quickSelect");
-    __name6(quickSelect, "quickSelect");
     __name(groupBy2, "groupBy");
+    __name(forEachAdjacent, "forEachAdjacent");
+    __name(forEachWithNeighbors, "forEachWithNeighbors");
+    __name(concatArrays, "concatArrays");
+    __name(sortedDiff, "sortedDiff");
+    __name(delta, "delta");
+    __name(top, "top");
+    __name(topAsync, "topAsync");
+    __name(topStep, "topStep");
+    __name(coalesce, "coalesce");
+    __name(coalesceInPlace, "coalesceInPlace");
+    __name(move, "move");
+    __name(isFalsyOrEmpty, "isFalsyOrEmpty");
+    __name(isNonEmptyArray, "isNonEmptyArray");
+    __name(distinct, "distinct");
+    __name(uniqueFilter, "uniqueFilter");
+    __name(commonPrefixLength, "commonPrefixLength");
+    __name(range, "range");
+    __name(index, "index");
+    __name(insert, "insert");
+    __name(remove, "remove");
+    __name(arrayInsert, "arrayInsert");
+    __name(shuffle, "shuffle");
+    __name(pushToStart, "pushToStart");
+    __name(pushToEnd, "pushToEnd");
+    __name(pushMany, "pushMany");
+    __name(mapArrayOrNot, "mapArrayOrNot");
+    __name(mapFilter, "mapFilter");
+    __name(withoutDuplicates, "withoutDuplicates");
+    __name(asArray, "asArray");
+    __name(getRandomElement, "getRandomElement");
+    __name(insertInto, "insertInto");
+    __name(splice, "splice");
+    __name(getActualStartIndex, "getActualStartIndex");
+    __name(compareBy, "compareBy");
+    __name(tieBreakComparators, "tieBreakComparators");
+    __name(reverseOrder, "reverseOrder");
+    __name(compareUndefinedSmallest, "compareUndefinedSmallest");
+    __name(sum, "sum");
+    __name(sumBy, "sumBy");
+    __name6(tail, "tail");
+    __name6(equals, "equals");
+    __name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+    __name6(binarySearch, "binarySearch");
+    __name6(binarySearch2, "binarySearch2");
+    __name6(quickSelect, "quickSelect");
     __name6(groupBy2, "groupBy");
     __name(groupAdjacentBy, "groupAdjacentBy");
     __name6(groupAdjacentBy, "groupAdjacentBy");
-    __name(forEachAdjacent, "forEachAdjacent");
     __name6(forEachAdjacent, "forEachAdjacent");
-    __name(forEachWithNeighbors, "forEachWithNeighbors");
     __name6(forEachWithNeighbors, "forEachWithNeighbors");
-    __name(concatArrays, "concatArrays");
     __name6(concatArrays, "concatArrays");
-    __name(sortedDiff, "sortedDiff");
     __name6(sortedDiff, "sortedDiff");
-    __name(delta, "delta");
     __name6(delta, "delta");
-    __name(top, "top");
     __name6(top, "top");
-    __name(topAsync, "topAsync");
     __name6(topAsync, "topAsync");
-    __name(topStep, "topStep");
     __name6(topStep, "topStep");
-    __name(coalesce, "coalesce");
     __name6(coalesce, "coalesce");
-    __name(coalesceInPlace, "coalesceInPlace");
     __name6(coalesceInPlace, "coalesceInPlace");
-    __name(move, "move");
     __name6(move, "move");
-    __name(isFalsyOrEmpty, "isFalsyOrEmpty");
     __name6(isFalsyOrEmpty, "isFalsyOrEmpty");
-    __name(isNonEmptyArray, "isNonEmptyArray");
     __name6(isNonEmptyArray, "isNonEmptyArray");
-    __name(distinct, "distinct");
     __name6(distinct, "distinct");
-    __name(uniqueFilter, "uniqueFilter");
     __name6(uniqueFilter, "uniqueFilter");
-    __name(commonPrefixLength, "commonPrefixLength");
     __name6(commonPrefixLength, "commonPrefixLength");
-    __name(range, "range");
     __name6(range, "range");
-    __name(index, "index");
     __name6(index, "index");
-    __name(insert, "insert");
     __name6(insert, "insert");
-    __name(remove, "remove");
     __name6(remove, "remove");
-    __name(arrayInsert, "arrayInsert");
     __name6(arrayInsert, "arrayInsert");
-    __name(shuffle, "shuffle");
     __name6(shuffle, "shuffle");
-    __name(pushToStart, "pushToStart");
     __name6(pushToStart, "pushToStart");
-    __name(pushToEnd, "pushToEnd");
     __name6(pushToEnd, "pushToEnd");
-    __name(pushMany, "pushMany");
     __name6(pushMany, "pushMany");
-    __name(mapArrayOrNot, "mapArrayOrNot");
     __name6(mapArrayOrNot, "mapArrayOrNot");
-    __name(mapFilter, "mapFilter");
     __name6(mapFilter, "mapFilter");
-    __name(withoutDuplicates, "withoutDuplicates");
     __name6(withoutDuplicates, "withoutDuplicates");
-    __name(asArray, "asArray");
     __name6(asArray, "asArray");
-    __name(getRandomElement, "getRandomElement");
     __name6(getRandomElement, "getRandomElement");
-    __name(insertInto, "insertInto");
     __name6(insertInto, "insertInto");
-    __name(splice, "splice");
     __name6(splice, "splice");
-    __name(getActualStartIndex, "getActualStartIndex");
     __name6(getActualStartIndex, "getActualStartIndex");
     (function(CompareResult2) {
       function isLessThan(result) {
@@ -1220,15 +1226,11 @@ var init_arrays = __esm({
       CompareResult2.lessThan = -1;
       CompareResult2.neitherLessOrGreaterThan = 0;
     })(CompareResult || (CompareResult = {}));
-    __name(compareBy, "compareBy");
     __name6(compareBy, "compareBy");
-    __name(tieBreakComparators, "tieBreakComparators");
     __name6(tieBreakComparators, "tieBreakComparators");
     numberComparator = /* @__PURE__ */ __name6((a, b) => a - b, "numberComparator");
     booleanComparator = /* @__PURE__ */ __name6((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
-    __name(reverseOrder, "reverseOrder");
     __name6(reverseOrder, "reverseOrder");
-    __name(compareUndefinedSmallest, "compareUndefinedSmallest");
     __name6(compareUndefinedSmallest, "compareUndefinedSmallest");
     ArrayQueue = class {
       static {
@@ -1415,9 +1417,7 @@ var init_arrays = __esm({
     };
     __name(findAsync, "findAsync");
     __name6(findAsync, "findAsync");
-    __name(sum, "sum");
     __name6(sum, "sum");
-    __name(sumBy, "sumBy");
     __name6(sumBy, "sumBy");
   }
 });
@@ -1474,10 +1474,12 @@ var init_map = __esm({
     __defProp7 = Object.defineProperty;
     __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
     __name(getOrSet, "getOrSet");
-    __name7(getOrSet, "getOrSet");
     __name(mapToString, "mapToString");
-    __name7(mapToString, "mapToString");
     __name(setToString, "setToString");
+    __name(isEntries, "isEntries");
+    __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+    __name7(getOrSet, "getOrSet");
+    __name7(mapToString, "mapToString");
     __name7(setToString, "setToString");
     ResourceMapEntry = class {
       static {
@@ -1491,7 +1493,6 @@ var init_map = __esm({
         this.value = value;
       }
     };
-    __name(isEntries, "isEntries");
     __name7(isEntries, "isEntries");
     ResourceMap = class _ResourceMap {
       static {
@@ -2180,7 +2181,6 @@ var init_map = __esm({
         return values;
       }
     };
-    __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
     __name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
     NKeyMap = class {
       static {
@@ -2310,18 +2310,18 @@ var init_assert = __esm({
     __defProp8 = Object.defineProperty;
     __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
     __name(ok, "ok");
-    __name8(ok, "ok");
     __name(assertNever, "assertNever");
-    __name8(assertNever, "assertNever");
     __name(softAssertNever, "softAssertNever");
-    __name8(softAssertNever, "softAssertNever");
     __name(assert, "assert");
-    __name8(assert, "assert");
     __name(softAssert, "softAssert");
-    __name8(softAssert, "softAssert");
     __name(assertFn, "assertFn");
-    __name8(assertFn, "assertFn");
     __name(checkAdjacentItems, "checkAdjacentItems");
+    __name8(ok, "ok");
+    __name8(assertNever, "assertNever");
+    __name8(softAssertNever, "softAssertNever");
+    __name8(assert, "assert");
+    __name8(softAssert, "softAssert");
+    __name8(assertFn, "assertFn");
     __name8(checkAdjacentItems, "checkAdjacentItems");
   }
 });
@@ -2455,56 +2455,56 @@ var init_types = __esm({
     __defProp9 = Object.defineProperty;
     __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
     __name(isString, "isString");
-    __name9(isString, "isString");
     __name(isStringArray, "isStringArray");
-    __name9(isStringArray, "isStringArray");
     __name(isArrayOf, "isArrayOf");
-    __name9(isArrayOf, "isArrayOf");
     __name(isObject, "isObject");
-    __name9(isObject, "isObject");
     __name(isTypedArray, "isTypedArray");
-    __name9(isTypedArray, "isTypedArray");
     __name(isNumber, "isNumber");
-    __name9(isNumber, "isNumber");
     __name(isIterable, "isIterable");
-    __name9(isIterable, "isIterable");
     __name(isAsyncIterable, "isAsyncIterable");
-    __name9(isAsyncIterable, "isAsyncIterable");
     __name(isBoolean, "isBoolean");
-    __name9(isBoolean, "isBoolean");
     __name(isUndefined, "isUndefined");
-    __name9(isUndefined, "isUndefined");
     __name(isDefined, "isDefined");
-    __name9(isDefined, "isDefined");
     __name(isUndefinedOrNull, "isUndefinedOrNull");
-    __name9(isUndefinedOrNull, "isUndefinedOrNull");
     __name(assertType, "assertType");
-    __name9(assertType, "assertType");
     __name(assertReturnsDefined, "assertReturnsDefined");
-    __name9(assertReturnsDefined, "assertReturnsDefined");
     __name(assertDefined, "assertDefined");
-    __name9(assertDefined, "assertDefined");
     __name(assertReturnsAllDefined, "assertReturnsAllDefined");
+    __name(typeCheck, "typeCheck");
+    __name(isEmptyObject, "isEmptyObject");
+    __name(isFunction, "isFunction");
+    __name(areFunctions, "areFunctions");
+    __name(validateConstraints, "validateConstraints");
+    __name(validateConstraint, "validateConstraint");
+    __name(upcast, "upcast");
+    __name(hasKey, "hasKey");
+    __name9(isString, "isString");
+    __name9(isStringArray, "isStringArray");
+    __name9(isArrayOf, "isArrayOf");
+    __name9(isObject, "isObject");
+    __name9(isTypedArray, "isTypedArray");
+    __name9(isNumber, "isNumber");
+    __name9(isIterable, "isIterable");
+    __name9(isAsyncIterable, "isAsyncIterable");
+    __name9(isBoolean, "isBoolean");
+    __name9(isUndefined, "isUndefined");
+    __name9(isDefined, "isDefined");
+    __name9(isUndefinedOrNull, "isUndefinedOrNull");
+    __name9(assertType, "assertType");
+    __name9(assertReturnsDefined, "assertReturnsDefined");
+    __name9(assertDefined, "assertDefined");
     __name9(assertReturnsAllDefined, "assertReturnsAllDefined");
     isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
       return validValues.includes(value);
     }, "isOneOf");
-    __name(typeCheck, "typeCheck");
     __name9(typeCheck, "typeCheck");
     hasOwnProperty = Object.prototype.hasOwnProperty;
-    __name(isEmptyObject, "isEmptyObject");
     __name9(isEmptyObject, "isEmptyObject");
-    __name(isFunction, "isFunction");
     __name9(isFunction, "isFunction");
-    __name(areFunctions, "areFunctions");
     __name9(areFunctions, "areFunctions");
-    __name(validateConstraints, "validateConstraints");
     __name9(validateConstraints, "validateConstraints");
-    __name(validateConstraint, "validateConstraint");
     __name9(validateConstraint, "validateConstraint");
-    __name(upcast, "upcast");
     __name9(upcast, "upcast");
-    __name(hasKey, "hasKey");
     __name9(hasKey, "hasKey");
   }
 });
@@ -2841,6 +2841,20 @@ var init_lifecycle = __esm({
     init_errors();
     __defProp11 = Object.defineProperty;
     __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
+    __name(setDisposableTracker, "setDisposableTracker");
+    __name(trackDisposable, "trackDisposable");
+    __name(markAsDisposed, "markAsDisposed");
+    __name(setParentOfDisposable, "setParentOfDisposable");
+    __name(setParentOfDisposables, "setParentOfDisposables");
+    __name(markAsSingleton, "markAsSingleton");
+    __name(isDisposable, "isDisposable");
+    __name(dispose, "dispose");
+    __name(disposeIfDisposable, "disposeIfDisposable");
+    __name(combinedDisposable, "combinedDisposable");
+    __name(toDisposable, "toDisposable");
+    __name(disposeOnReturn, "disposeOnReturn");
+    __name(thenIfNotDisposed, "thenIfNotDisposed");
+    __name(thenRegisterOrDispose, "thenRegisterOrDispose");
     TRACK_DISPOSABLES = false;
     disposableTracker = null;
     GCBasedDisposableTracker = class {
@@ -3007,7 +3021,6 @@ ${stackTraceFormattedLines.join("\n")}
         return { leaks: uncoveredLeakingObjs, details: message };
       }
     };
-    __name(setDisposableTracker, "setDisposableTracker");
     __name11(setDisposableTracker, "setDisposableTracker");
     if (TRACK_DISPOSABLES) {
       const __is_disposable_tracked__ = "__is_disposable_tracked__";
@@ -3040,23 +3053,14 @@ ${stackTraceFormattedLines.join("\n")}
         }
       }());
     }
-    __name(trackDisposable, "trackDisposable");
     __name11(trackDisposable, "trackDisposable");
-    __name(markAsDisposed, "markAsDisposed");
     __name11(markAsDisposed, "markAsDisposed");
-    __name(setParentOfDisposable, "setParentOfDisposable");
     __name11(setParentOfDisposable, "setParentOfDisposable");
-    __name(setParentOfDisposables, "setParentOfDisposables");
     __name11(setParentOfDisposables, "setParentOfDisposables");
-    __name(markAsSingleton, "markAsSingleton");
     __name11(markAsSingleton, "markAsSingleton");
-    __name(isDisposable, "isDisposable");
     __name11(isDisposable, "isDisposable");
-    __name(dispose, "dispose");
     __name11(dispose, "dispose");
-    __name(disposeIfDisposable, "disposeIfDisposable");
     __name11(disposeIfDisposable, "disposeIfDisposable");
-    __name(combinedDisposable, "combinedDisposable");
     __name11(combinedDisposable, "combinedDisposable");
     FunctionDisposable = class {
       static {
@@ -3082,7 +3086,6 @@ ${stackTraceFormattedLines.join("\n")}
         this._fn();
       }
     };
-    __name(toDisposable, "toDisposable");
     __name11(toDisposable, "toDisposable");
     DisposableStore = class _DisposableStore {
       static {
@@ -3388,7 +3391,6 @@ ${stackTraceFormattedLines.join("\n")}
       dispose() {
       }
     };
-    __name(disposeOnReturn, "disposeOnReturn");
     __name11(disposeOnReturn, "disposeOnReturn");
     DisposableMap = class {
       static {
@@ -3547,9 +3549,7 @@ ${stackTraceFormattedLines.join("\n")}
         return this._store[Symbol.iterator]();
       }
     };
-    __name(thenIfNotDisposed, "thenIfNotDisposed");
     __name11(thenIfNotDisposed, "thenIfNotDisposed");
-    __name(thenRegisterOrDispose, "thenRegisterOrDispose");
     __name11(thenRegisterOrDispose, "thenRegisterOrDispose");
     DisposableResourceMap = class extends DisposableMap {
       static {
@@ -3768,17 +3768,17 @@ var init_nls = __esm({
     __defProp13 = Object.defineProperty;
     __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
     __name(getNLSMessages, "getNLSMessages");
-    __name13(getNLSMessages, "getNLSMessages");
     __name(getNLSLanguage, "getNLSLanguage");
+    __name(_format, "_format");
+    __name(localize, "localize");
+    __name(lookupMessage, "lookupMessage");
+    __name(localize2, "localize2");
+    __name13(getNLSMessages, "getNLSMessages");
     __name13(getNLSLanguage, "getNLSLanguage");
     isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
-    __name(_format, "_format");
     __name13(_format, "_format");
-    __name(localize, "localize");
     __name13(localize, "localize");
-    __name(lookupMessage, "lookupMessage");
     __name13(lookupMessage, "lookupMessage");
-    __name(localize2, "localize2");
     __name13(localize2, "localize2");
   }
 });
@@ -3817,6 +3817,9 @@ var init_platform = __esm({
     init_nls();
     __defProp14 = Object.defineProperty;
     __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+    __name(PlatformToString, "PlatformToString");
+    __name(isLittleEndian, "isLittleEndian");
+    __name(isTahoeOrNewer, "isTahoeOrNewer");
     LANGUAGE_DEFAULT = "en";
     _isWindows = false;
     _isMacintosh = false;
@@ -3883,7 +3886,6 @@ var init_platform = __esm({
       Platform2[Platform2["Linux"] = 2] = "Linux";
       Platform2[Platform2["Windows"] = 3] = "Windows";
     })(Platform || (Platform = {}));
-    __name(PlatformToString, "PlatformToString");
     __name14(PlatformToString, "PlatformToString");
     _platform = 0;
     if (_isMacintosh) {
@@ -3973,14 +3975,12 @@ var init_platform = __esm({
     OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
     _isLittleEndian = true;
     _isLittleEndianComputed = false;
-    __name(isLittleEndian, "isLittleEndian");
     __name14(isLittleEndian, "isLittleEndian");
     isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
     isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
     isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
     isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
     isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
-    __name(isTahoeOrNewer, "isTahoeOrNewer");
     __name14(isTahoeOrNewer, "isTahoeOrNewer");
   }
 });
@@ -4153,11 +4153,15 @@ var init_event = __esm({
     init_stopwatch();
     __defProp16 = Object.defineProperty;
     __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
+    __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+    __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+    __name(trackSetChanges, "trackSetChanges");
+    __name(addToDisposables, "addToDisposables");
+    __name(disposeAndRemove, "disposeAndRemove");
     _enableDisposeWithListenerWarning = false;
     _enableSnapshotPotentialLeakWarning = false;
     _bufferLeakWarnCountThreshold = 100;
     _bufferLeakWarnTimeThreshold = 6e4;
-    __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
     __name16(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
     (function(Event2) {
       Event2.None = () => Disposable.None;
@@ -4762,7 +4766,6 @@ var init_event = __esm({
       }
     };
     _globalLeakWarningThreshold = -1;
-    __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
     __name16(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
     LeakageMonitor = class _LeakageMonitor {
       static {
@@ -5444,11 +5447,8 @@ var init_event = __esm({
         this.onDidChange = Event.None;
       }
     };
-    __name(trackSetChanges, "trackSetChanges");
     __name16(trackSetChanges, "trackSetChanges");
-    __name(addToDisposables, "addToDisposables");
     __name16(addToDisposables, "addToDisposables");
-    __name(disposeAndRemove, "disposeAndRemove");
     __name16(disposeAndRemove, "disposeAndRemove");
   }
 });
@@ -5476,6 +5476,7 @@ var init_cancellation = __esm({
     init_lifecycle();
     __defProp17 = Object.defineProperty;
     __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+    __name(cancelOnDispose, "cancelOnDispose");
     shortcutEvent = Object.freeze(function(callback, context) {
       const handle = setTimeout(callback.bind(context), 0);
       return { dispose() {
@@ -5583,7 +5584,6 @@ var init_cancellation = __esm({
         }
       }
     };
-    __name(cancelOnDispose, "cancelOnDispose");
     __name17(cancelOnDispose, "cancelOnDispose");
     CancellationTokenPool = class {
       static {

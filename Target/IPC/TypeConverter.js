@@ -74,17 +74,17 @@ var init_nls = __esm({
     __defProp2 = Object.defineProperty;
     __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
     __name(getNLSMessages, "getNLSMessages");
-    __name2(getNLSMessages, "getNLSMessages");
     __name(getNLSLanguage, "getNLSLanguage");
+    __name(_format, "_format");
+    __name(localize, "localize");
+    __name(lookupMessage, "lookupMessage");
+    __name(localize2, "localize2");
+    __name2(getNLSMessages, "getNLSMessages");
     __name2(getNLSLanguage, "getNLSLanguage");
     isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
-    __name(_format, "_format");
     __name2(_format, "_format");
-    __name(localize, "localize");
     __name2(localize, "localize");
-    __name(lookupMessage, "lookupMessage");
     __name2(lookupMessage, "lookupMessage");
-    __name(localize2, "localize2");
     __name2(localize2, "localize2");
   }
 });
@@ -123,6 +123,9 @@ var init_platform = __esm({
     init_nls();
     __defProp3 = Object.defineProperty;
     __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
+    __name(PlatformToString, "PlatformToString");
+    __name(isLittleEndian, "isLittleEndian");
+    __name(isTahoeOrNewer, "isTahoeOrNewer");
     LANGUAGE_DEFAULT = "en";
     _isWindows = false;
     _isMacintosh = false;
@@ -189,7 +192,6 @@ var init_platform = __esm({
       Platform2[Platform2["Linux"] = 2] = "Linux";
       Platform2[Platform2["Windows"] = 3] = "Windows";
     })(Platform || (Platform = {}));
-    __name(PlatformToString, "PlatformToString");
     __name3(PlatformToString, "PlatformToString");
     _platform = 0;
     if (_isMacintosh) {
@@ -279,14 +281,12 @@ var init_platform = __esm({
     OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
     _isLittleEndian = true;
     _isLittleEndianComputed = false;
-    __name(isLittleEndian, "isLittleEndian");
     __name3(isLittleEndian, "isLittleEndian");
     isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
     isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
     isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
     isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
     isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
-    __name(isTahoeOrNewer, "isTahoeOrNewer");
     __name3(isTahoeOrNewer, "isTahoeOrNewer");
   }
 });
@@ -453,6 +453,14 @@ var init_path = __esm({
     init_process();
     __defProp4 = Object.defineProperty;
     __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
+    __name(validateObject, "validateObject");
+    __name(validateString, "validateString");
+    __name(isPathSeparator, "isPathSeparator");
+    __name(isPosixPathSeparator, "isPosixPathSeparator");
+    __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+    __name(normalizeString, "normalizeString");
+    __name(formatExt, "formatExt");
+    __name(_format2, "_format");
     CHAR_UPPERCASE_A = 65;
     CHAR_LOWERCASE_A = 97;
     CHAR_UPPERCASE_Z = 90;
@@ -484,22 +492,14 @@ var init_path = __esm({
         this.code = "ERR_INVALID_ARG_TYPE";
       }
     };
-    __name(validateObject, "validateObject");
     __name4(validateObject, "validateObject");
-    __name(validateString, "validateString");
     __name4(validateString, "validateString");
     platformIsWin32 = platform2 === "win32";
-    __name(isPathSeparator, "isPathSeparator");
     __name4(isPathSeparator, "isPathSeparator");
-    __name(isPosixPathSeparator, "isPosixPathSeparator");
     __name4(isPosixPathSeparator, "isPosixPathSeparator");
-    __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
     __name4(isWindowsDeviceRoot, "isWindowsDeviceRoot");
-    __name(normalizeString, "normalizeString");
     __name4(normalizeString, "normalizeString");
-    __name(formatExt, "formatExt");
     __name4(formatExt, "formatExt");
-    __name(_format2, "_format");
     __name4(_format2, "_format");
     win32 = {
       // path.resolve([from ...], to)
@@ -1693,14 +1693,21 @@ var init_uri = __esm({
     init_platform();
     __defProp5 = Object.defineProperty;
     __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
+    __name(_validateUri, "_validateUri");
+    __name(_schemeFix, "_schemeFix");
+    __name(_referenceResolution, "_referenceResolution");
+    __name(isUriComponents, "isUriComponents");
+    __name(encodeURIComponentFast, "encodeURIComponentFast");
+    __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+    __name(uriToFsPath, "uriToFsPath");
+    __name(_asFormatted, "_asFormatted");
+    __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+    __name(percentDecode, "percentDecode");
     _schemePattern = /^\w[\w\d+.-]*$/;
     _singleSlashStart = /^\//;
     _doubleSlashStart = /^\/\//;
-    __name(_validateUri, "_validateUri");
     __name5(_validateUri, "_validateUri");
-    __name(_schemeFix, "_schemeFix");
     __name5(_schemeFix, "_schemeFix");
-    __name(_referenceResolution, "_referenceResolution");
     __name5(_referenceResolution, "_referenceResolution");
     _empty = "";
     _slash = "/";
@@ -1920,7 +1927,6 @@ var init_uri = __esm({
         return `URI(${this.toString()})`;
       }
     };
-    __name(isUriComponents, "isUriComponents");
     __name5(isUriComponents, "isUriComponents");
     _pathSepMarker = isWindows ? 1 : void 0;
     Uri = class extends URI {
@@ -2061,18 +2067,12 @@ var init_uri = __esm({
         /* CharCode.Space */
       ]: "%20"
     };
-    __name(encodeURIComponentFast, "encodeURIComponentFast");
     __name5(encodeURIComponentFast, "encodeURIComponentFast");
-    __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
     __name5(encodeURIComponentMinimal, "encodeURIComponentMinimal");
-    __name(uriToFsPath, "uriToFsPath");
     __name5(uriToFsPath, "uriToFsPath");
-    __name(_asFormatted, "_asFormatted");
     __name5(_asFormatted, "_asFormatted");
-    __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
     __name5(decodeURIComponentGraceful, "decodeURIComponentGraceful");
     _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
-    __name(percentDecode, "percentDecode");
     __name5(percentDecode, "percentDecode");
   }
 });

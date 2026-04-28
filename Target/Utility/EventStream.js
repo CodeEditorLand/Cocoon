@@ -4,7 +4,6 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
-var _a;
 function groupBy(data, groupFn) {
   const result = /* @__PURE__ */ Object.create(null);
   for (const element of data) {
@@ -18,7 +17,6 @@ function groupBy(data, groupFn) {
   return result;
 }
 __name(groupBy, "groupBy");
-__name2(groupBy, "groupBy");
 function groupByMap(data, groupFn) {
   const result = /* @__PURE__ */ new Map();
   for (const element of data) {
@@ -33,7 +31,6 @@ function groupByMap(data, groupFn) {
   return result;
 }
 __name(groupByMap, "groupByMap");
-__name2(groupByMap, "groupByMap");
 function diffSets(before, after) {
   const removed = [];
   const added = [];
@@ -50,7 +47,6 @@ function diffSets(before, after) {
   return { removed, added };
 }
 __name(diffSets, "diffSets");
-__name2(diffSets, "diffSets");
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -67,7 +63,6 @@ function diffMaps(before, after) {
   return { removed, added };
 }
 __name(diffMaps, "diffMaps");
-__name2(diffMaps, "diffMaps");
 function intersection(setA, setB) {
   const result = /* @__PURE__ */ new Set();
   for (const elem of setB) {
@@ -78,6 +73,11 @@ function intersection(setA, setB) {
   return result;
 }
 __name(intersection, "intersection");
+var _a;
+__name2(groupBy, "groupBy");
+__name2(groupByMap, "groupByMap");
+__name2(diffSets, "diffSets");
+__name2(diffMaps, "diffMaps");
 __name2(intersection, "intersection");
 var SetWithKey = class {
   static {
@@ -138,6 +138,115 @@ var SetWithKey = class {
 // ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
 var __defProp3 = Object.defineProperty;
 var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
+function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
+  errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
+}
+__name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+function isSigPipeError(e) {
+  if (!e || typeof e !== "object") {
+    return false;
+  }
+  const cast = e;
+  return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
+}
+__name(isSigPipeError, "isSigPipeError");
+function onBugIndicatingError(e) {
+  errorHandler.onUnexpectedError(e);
+  return void 0;
+}
+__name(onBugIndicatingError, "onBugIndicatingError");
+function onUnexpectedError(e) {
+  if (!isCancellationError(e)) {
+    errorHandler.onUnexpectedError(e);
+  }
+  return void 0;
+}
+__name(onUnexpectedError, "onUnexpectedError");
+function onUnexpectedExternalError(e) {
+  if (!isCancellationError(e)) {
+    errorHandler.onUnexpectedExternalError(e);
+  }
+  return void 0;
+}
+__name(onUnexpectedExternalError, "onUnexpectedExternalError");
+function transformErrorForSerialization(error) {
+  if (error instanceof Error) {
+    const { name, message, cause } = error;
+    const stack = error.stacktrace || error.stack;
+    return {
+      $isError: true,
+      name,
+      message,
+      stack,
+      noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
+      cause: cause ? transformErrorForSerialization(cause) : void 0,
+      code: error.code
+    };
+  }
+  return error;
+}
+__name(transformErrorForSerialization, "transformErrorForSerialization");
+function transformErrorFromSerialization(data) {
+  let error;
+  if (data.noTelemetry) {
+    error = new ErrorNoTelemetry();
+  } else {
+    error = new Error();
+    error.name = data.name;
+  }
+  error.message = data.message;
+  error.stack = data.stack;
+  if (data.code) {
+    error.code = data.code;
+  }
+  if (data.cause) {
+    error.cause = transformErrorFromSerialization(data.cause);
+  }
+  return error;
+}
+__name(transformErrorFromSerialization, "transformErrorFromSerialization");
+function isCancellationError(error) {
+  if (error instanceof CancellationError) {
+    return true;
+  }
+  return error instanceof Error && error.name === canceledName && error.message === canceledName;
+}
+__name(isCancellationError, "isCancellationError");
+function canceled() {
+  const error = new Error(canceledName);
+  error.name = error.message;
+  return error;
+}
+__name(canceled, "canceled");
+function illegalArgument(name) {
+  if (name) {
+    return new Error(`Illegal argument: ${name}`);
+  } else {
+    return new Error("Illegal argument");
+  }
+}
+__name(illegalArgument, "illegalArgument");
+function illegalState(name) {
+  if (name) {
+    return new Error(`Illegal state: ${name}`);
+  } else {
+    return new Error("Illegal state");
+  }
+}
+__name(illegalState, "illegalState");
+function getErrorMessage(err) {
+  if (!err) {
+    return "Error";
+  }
+  if (err.message) {
+    return err.message;
+  }
+  if (err.stack) {
+    return err.stack.split("\n")[0];
+  }
+  return String(err);
+}
+__name(getErrorMessage, "getErrorMessage");
 var ErrorHandler = class {
   static {
     __name(this, "ErrorHandler");
@@ -189,88 +298,14 @@ var ErrorHandler = class {
   }
 };
 var errorHandler = new ErrorHandler();
-function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
-  errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
-}
-__name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
 __name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
-function isSigPipeError(e) {
-  if (!e || typeof e !== "object") {
-    return false;
-  }
-  const cast = e;
-  return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
-}
-__name(isSigPipeError, "isSigPipeError");
 __name3(isSigPipeError, "isSigPipeError");
-function onBugIndicatingError(e) {
-  errorHandler.onUnexpectedError(e);
-  return void 0;
-}
-__name(onBugIndicatingError, "onBugIndicatingError");
 __name3(onBugIndicatingError, "onBugIndicatingError");
-function onUnexpectedError(e) {
-  if (!isCancellationError(e)) {
-    errorHandler.onUnexpectedError(e);
-  }
-  return void 0;
-}
-__name(onUnexpectedError, "onUnexpectedError");
 __name3(onUnexpectedError, "onUnexpectedError");
-function onUnexpectedExternalError(e) {
-  if (!isCancellationError(e)) {
-    errorHandler.onUnexpectedExternalError(e);
-  }
-  return void 0;
-}
-__name(onUnexpectedExternalError, "onUnexpectedExternalError");
 __name3(onUnexpectedExternalError, "onUnexpectedExternalError");
-function transformErrorForSerialization(error) {
-  if (error instanceof Error) {
-    const { name, message, cause } = error;
-    const stack = error.stacktrace || error.stack;
-    return {
-      $isError: true,
-      name,
-      message,
-      stack,
-      noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
-      cause: cause ? transformErrorForSerialization(cause) : void 0,
-      code: error.code
-    };
-  }
-  return error;
-}
-__name(transformErrorForSerialization, "transformErrorForSerialization");
 __name3(transformErrorForSerialization, "transformErrorForSerialization");
-function transformErrorFromSerialization(data) {
-  let error;
-  if (data.noTelemetry) {
-    error = new ErrorNoTelemetry();
-  } else {
-    error = new Error();
-    error.name = data.name;
-  }
-  error.message = data.message;
-  error.stack = data.stack;
-  if (data.code) {
-    error.code = data.code;
-  }
-  if (data.cause) {
-    error.cause = transformErrorFromSerialization(data.cause);
-  }
-  return error;
-}
-__name(transformErrorFromSerialization, "transformErrorFromSerialization");
 __name3(transformErrorFromSerialization, "transformErrorFromSerialization");
 var canceledName = "Canceled";
-function isCancellationError(error) {
-  if (error instanceof CancellationError) {
-    return true;
-  }
-  return error instanceof Error && error.name === canceledName && error.message === canceledName;
-}
-__name(isCancellationError, "isCancellationError");
 __name3(isCancellationError, "isCancellationError");
 var CancellationError = class extends Error {
   static {
@@ -302,30 +337,8 @@ var PendingMigrationError = class _PendingMigrationError extends Error {
     this.name = _PendingMigrationError._name;
   }
 };
-function canceled() {
-  const error = new Error(canceledName);
-  error.name = error.message;
-  return error;
-}
-__name(canceled, "canceled");
 __name3(canceled, "canceled");
-function illegalArgument(name) {
-  if (name) {
-    return new Error(`Illegal argument: ${name}`);
-  } else {
-    return new Error("Illegal argument");
-  }
-}
-__name(illegalArgument, "illegalArgument");
 __name3(illegalArgument, "illegalArgument");
-function illegalState(name) {
-  if (name) {
-    return new Error(`Illegal state: ${name}`);
-  } else {
-    return new Error("Illegal state");
-  }
-}
-__name(illegalState, "illegalState");
 __name3(illegalState, "illegalState");
 var ReadonlyError = class extends TypeError {
   static {
@@ -338,19 +351,6 @@ var ReadonlyError = class extends TypeError {
     super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
   }
 };
-function getErrorMessage(err) {
-  if (!err) {
-    return "Error";
-  }
-  if (err.message) {
-    return err.message;
-  }
-  if (err.stack) {
-    return err.stack.split("\n")[0];
-  }
-  return String(err);
-}
-__name(getErrorMessage, "getErrorMessage");
 __name3(getErrorMessage, "getErrorMessage");
 var NotImplementedError = class extends Error {
   static {
@@ -467,7 +467,6 @@ function findLast(array, predicate, fromIndex = array.length - 1) {
   return array[idx];
 }
 __name(findLast, "findLast");
-__name5(findLast, "findLast");
 function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   for (let i = fromIndex; i >= 0; i--) {
     const element = array[i];
@@ -478,7 +477,6 @@ function findLastIdx(array, predicate, fromIndex = array.length - 1) {
   return -1;
 }
 __name(findLastIdx, "findLastIdx");
-__name5(findLastIdx, "findLastIdx");
 function findFirst(array, predicate, fromIndex = 0) {
   const idx = findFirstIdx(array, predicate, fromIndex);
   if (idx === -1) {
@@ -487,7 +485,6 @@ function findFirst(array, predicate, fromIndex = 0) {
   return array[idx];
 }
 __name(findFirst, "findFirst");
-__name5(findFirst, "findFirst");
 function findFirstIdx(array, predicate, fromIndex = 0) {
   for (let i = fromIndex; i < array.length; i++) {
     const element = array[i];
@@ -498,13 +495,11 @@ function findFirstIdx(array, predicate, fromIndex = 0) {
   return -1;
 }
 __name(findFirstIdx, "findFirstIdx");
-__name5(findFirstIdx, "findFirstIdx");
 function findLastMonotonous(array, predicate) {
   const idx = findLastIdxMonotonous(array, predicate);
   return idx === -1 ? void 0 : array[idx];
 }
 __name(findLastMonotonous, "findLastMonotonous");
-__name5(findLastMonotonous, "findLastMonotonous");
 function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -519,13 +514,11 @@ function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.
   return i - 1;
 }
 __name(findLastIdxMonotonous, "findLastIdxMonotonous");
-__name5(findLastIdxMonotonous, "findLastIdxMonotonous");
 function findFirstMonotonous(array, predicate) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
   return idx === array.length ? void 0 : array[idx];
 }
 __name(findFirstMonotonous, "findFirstMonotonous");
-__name5(findFirstMonotonous, "findFirstMonotonous");
 function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
   let i = startIdx;
   let j = endIdxEx;
@@ -540,12 +533,75 @@ function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx
   return i;
 }
 __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-__name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
 function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
   const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
   return idx === array.length ? -1 : idx;
 }
 __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+function findFirstMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) > 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+__name(findFirstMax, "findFirstMax");
+function findLastMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) >= 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+__name(findLastMax, "findLastMax");
+function findFirstMin(array, comparator) {
+  return findFirstMax(array, (a, b) => -comparator(a, b));
+}
+__name(findFirstMin, "findFirstMin");
+function findMaxIdx(array, comparator) {
+  if (array.length === 0) {
+    return -1;
+  }
+  let maxIdx = 0;
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, array[maxIdx]) > 0) {
+      maxIdx = i;
+    }
+  }
+  return maxIdx;
+}
+__name(findMaxIdx, "findMaxIdx");
+function mapFindFirst(items, mapFn) {
+  for (const value of items) {
+    const mapped = mapFn(value);
+    if (mapped !== void 0) {
+      return mapped;
+    }
+  }
+  return void 0;
+}
+__name(mapFindFirst, "mapFindFirst");
+__name5(findLast, "findLast");
+__name5(findLastIdx, "findLastIdx");
+__name5(findFirst, "findFirst");
+__name5(findFirstIdx, "findFirstIdx");
+__name5(findLastMonotonous, "findLastMonotonous");
+__name5(findLastIdxMonotonous, "findLastIdxMonotonous");
+__name5(findFirstMonotonous, "findFirstMonotonous");
+__name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
 __name5(findFirstIdxMonotonous, "findFirstIdxMonotonous");
 var MonotonousArray = class _MonotonousArray {
   static {
@@ -581,66 +637,10 @@ var MonotonousArray = class _MonotonousArray {
     return idx === -1 ? void 0 : this._array[idx];
   }
 };
-function findFirstMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) > 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-__name(findFirstMax, "findFirstMax");
 __name5(findFirstMax, "findFirstMax");
-function findLastMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) >= 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-__name(findLastMax, "findLastMax");
 __name5(findLastMax, "findLastMax");
-function findFirstMin(array, comparator) {
-  return findFirstMax(array, (a, b) => -comparator(a, b));
-}
-__name(findFirstMin, "findFirstMin");
 __name5(findFirstMin, "findFirstMin");
-function findMaxIdx(array, comparator) {
-  if (array.length === 0) {
-    return -1;
-  }
-  let maxIdx = 0;
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, array[maxIdx]) > 0) {
-      maxIdx = i;
-    }
-  }
-  return maxIdx;
-}
-__name(findMaxIdx, "findMaxIdx");
 __name5(findMaxIdx, "findMaxIdx");
-function mapFindFirst(items, mapFn) {
-  for (const value of items) {
-    const mapped = mapFn(value);
-    if (mapped !== void 0) {
-      return mapped;
-    }
-  }
-  return void 0;
-}
-__name(mapFindFirst, "mapFindFirst");
 __name5(mapFindFirst, "mapFindFirst");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
@@ -653,7 +653,6 @@ function tail(arr) {
   return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];
 }
 __name(tail, "tail");
-__name6(tail, "tail");
 function equals(one, other, itemEquals = (a, b) => a === b) {
   if (one === other) {
     return true;
@@ -672,7 +671,6 @@ function equals(one, other, itemEquals = (a, b) => a === b) {
   return true;
 }
 __name(equals, "equals");
-__name6(equals, "equals");
 function removeFastWithoutKeepingOrder(array, index2) {
   const last = array.length - 1;
   if (index2 < last) {
@@ -681,12 +679,10 @@ function removeFastWithoutKeepingOrder(array, index2) {
   array.pop();
 }
 __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-__name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
 function binarySearch(array, key, comparator) {
   return binarySearch2(array.length, (i) => comparator(array[i], key));
 }
 __name(binarySearch, "binarySearch");
-__name6(binarySearch, "binarySearch");
 function binarySearch2(length, compareToKey) {
   let low = 0, high = length - 1;
   while (low <= high) {
@@ -703,7 +699,6 @@ function binarySearch2(length, compareToKey) {
   return -(low + 1);
 }
 __name(binarySearch2, "binarySearch2");
-__name6(binarySearch2, "binarySearch2");
 function quickSelect(nth, data, compare) {
   nth = nth | 0;
   if (nth >= data.length) {
@@ -732,7 +727,6 @@ function quickSelect(nth, data, compare) {
   }
 }
 __name(quickSelect, "quickSelect");
-__name6(quickSelect, "quickSelect");
 function groupBy2(data, compare) {
   const result = [];
   let currentGroup = void 0;
@@ -747,46 +741,22 @@ function groupBy2(data, compare) {
   return result;
 }
 __name(groupBy2, "groupBy");
-__name6(groupBy2, "groupBy");
-function* groupAdjacentBy(items, shouldBeGrouped) {
-  let currentGroup;
-  let last;
-  for (const item of items) {
-    if (last !== void 0 && shouldBeGrouped(last, item)) {
-      currentGroup.push(item);
-    } else {
-      if (currentGroup) {
-        yield currentGroup;
-      }
-      currentGroup = [item];
-    }
-    last = item;
-  }
-  if (currentGroup) {
-    yield currentGroup;
-  }
-}
-__name(groupAdjacentBy, "groupAdjacentBy");
-__name6(groupAdjacentBy, "groupAdjacentBy");
 function forEachAdjacent(arr, f) {
   for (let i = 0; i <= arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
   }
 }
 __name(forEachAdjacent, "forEachAdjacent");
-__name6(forEachAdjacent, "forEachAdjacent");
 function forEachWithNeighbors(arr, f) {
   for (let i = 0; i < arr.length; i++) {
     f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
   }
 }
 __name(forEachWithNeighbors, "forEachWithNeighbors");
-__name6(forEachWithNeighbors, "forEachWithNeighbors");
 function concatArrays(...arrays) {
   return [].concat(...arrays);
 }
 __name(concatArrays, "concatArrays");
-__name6(concatArrays, "concatArrays");
 function sortedDiff(before, after, compare) {
   const result = [];
   function pushSplice(start, deleteCount, toInsert) {
@@ -831,7 +801,6 @@ function sortedDiff(before, after, compare) {
   return result;
 }
 __name(sortedDiff, "sortedDiff");
-__name6(sortedDiff, "sortedDiff");
 function delta(before, after, compare) {
   const splices = sortedDiff(before, after, compare);
   const removed = [];
@@ -843,7 +812,6 @@ function delta(before, after, compare) {
   return { removed, added };
 }
 __name(delta, "delta");
-__name6(delta, "delta");
 function top(array, compare, n) {
   if (n === 0) {
     return [];
@@ -853,7 +821,6 @@ function top(array, compare, n) {
   return result;
 }
 __name(top, "top");
-__name6(top, "top");
 function topAsync(array, compare, n, batch, token) {
   if (n === 0) {
     return Promise.resolve([]);
@@ -876,7 +843,6 @@ function topAsync(array, compare, n, batch, token) {
   });
 }
 __name(topAsync, "topAsync");
-__name6(topAsync, "topAsync");
 function topStep(array, compare, result, i, m) {
   for (const n = result.length; i < m; i++) {
     const element = array[i];
@@ -888,12 +854,10 @@ function topStep(array, compare, result, i, m) {
   }
 }
 __name(topStep, "topStep");
-__name6(topStep, "topStep");
 function coalesce(array) {
   return array.filter((e) => !!e);
 }
 __name(coalesce, "coalesce");
-__name6(coalesce, "coalesce");
 function coalesceInPlace(array) {
   let to = 0;
   for (let i = 0; i < array.length; i++) {
@@ -905,22 +869,18 @@ function coalesceInPlace(array) {
   array.length = to;
 }
 __name(coalesceInPlace, "coalesceInPlace");
-__name6(coalesceInPlace, "coalesceInPlace");
 function move(array, from, to) {
   array.splice(to, 0, array.splice(from, 1)[0]);
 }
 __name(move, "move");
-__name6(move, "move");
 function isFalsyOrEmpty(obj) {
   return !Array.isArray(obj) || obj.length === 0;
 }
 __name(isFalsyOrEmpty, "isFalsyOrEmpty");
-__name6(isFalsyOrEmpty, "isFalsyOrEmpty");
 function isNonEmptyArray(obj) {
   return Array.isArray(obj) && obj.length > 0;
 }
 __name(isNonEmptyArray, "isNonEmptyArray");
-__name6(isNonEmptyArray, "isNonEmptyArray");
 function distinct(array, keyFn = (value) => value) {
   const seen = /* @__PURE__ */ new Set();
   return array.filter((element) => {
@@ -933,7 +893,6 @@ function distinct(array, keyFn = (value) => value) {
   });
 }
 __name(distinct, "distinct");
-__name6(distinct, "distinct");
 function uniqueFilter(keyFn) {
   const seen = /* @__PURE__ */ new Set();
   return (element) => {
@@ -946,7 +905,6 @@ function uniqueFilter(keyFn) {
   };
 }
 __name(uniqueFilter, "uniqueFilter");
-__name6(uniqueFilter, "uniqueFilter");
 function commonPrefixLength(one, other, equals2 = (a, b) => a === b) {
   let result = 0;
   for (let i = 0, len = Math.min(one.length, other.length); i < len && equals2(one[i], other[i]); i++) {
@@ -955,7 +913,6 @@ function commonPrefixLength(one, other, equals2 = (a, b) => a === b) {
   return result;
 }
 __name(commonPrefixLength, "commonPrefixLength");
-__name6(commonPrefixLength, "commonPrefixLength");
 function range(arg, to) {
   let from = typeof to === "number" ? arg : 0;
   if (typeof to === "number") {
@@ -977,7 +934,6 @@ function range(arg, to) {
   return result;
 }
 __name(range, "range");
-__name6(range, "range");
 function index(array, indexer, mapper) {
   return array.reduce((r, t) => {
     r[indexer(t)] = mapper ? mapper(t) : t;
@@ -985,13 +941,11 @@ function index(array, indexer, mapper) {
   }, /* @__PURE__ */ Object.create(null));
 }
 __name(index, "index");
-__name6(index, "index");
 function insert(array, element) {
   array.push(element);
   return () => remove(array, element);
 }
 __name(insert, "insert");
-__name6(insert, "insert");
 function remove(array, element) {
   const index2 = array.indexOf(element);
   if (index2 > -1) {
@@ -1001,14 +955,12 @@ function remove(array, element) {
   return void 0;
 }
 __name(remove, "remove");
-__name6(remove, "remove");
 function arrayInsert(target, insertIndex, insertArr) {
   const before = target.slice(0, insertIndex);
   const after = target.slice(insertIndex);
   return before.concat(insertArr, after);
 }
 __name(arrayInsert, "arrayInsert");
-__name6(arrayInsert, "arrayInsert");
 function shuffle(array, _seed) {
   let rand;
   if (typeof _seed === "number") {
@@ -1028,7 +980,6 @@ function shuffle(array, _seed) {
   }
 }
 __name(shuffle, "shuffle");
-__name6(shuffle, "shuffle");
 function pushToStart(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -1037,7 +988,6 @@ function pushToStart(arr, value) {
   }
 }
 __name(pushToStart, "pushToStart");
-__name6(pushToStart, "pushToStart");
 function pushToEnd(arr, value) {
   const index2 = arr.indexOf(value);
   if (index2 > -1) {
@@ -1046,19 +996,16 @@ function pushToEnd(arr, value) {
   }
 }
 __name(pushToEnd, "pushToEnd");
-__name6(pushToEnd, "pushToEnd");
 function pushMany(arr, items) {
   for (const item of items) {
     arr.push(item);
   }
 }
 __name(pushMany, "pushMany");
-__name6(pushMany, "pushMany");
 function mapArrayOrNot(items, fn) {
   return Array.isArray(items) ? items.map(fn) : fn(items);
 }
 __name(mapArrayOrNot, "mapArrayOrNot");
-__name6(mapArrayOrNot, "mapArrayOrNot");
 function mapFilter(array, fn) {
   const result = [];
   for (const item of array) {
@@ -1070,23 +1017,19 @@ function mapFilter(array, fn) {
   return result;
 }
 __name(mapFilter, "mapFilter");
-__name6(mapFilter, "mapFilter");
 function withoutDuplicates(array) {
   const s = new Set(array);
   return Array.from(s);
 }
 __name(withoutDuplicates, "withoutDuplicates");
-__name6(withoutDuplicates, "withoutDuplicates");
 function asArray(x) {
   return Array.isArray(x) ? x : [x];
 }
 __name(asArray, "asArray");
-__name6(asArray, "asArray");
 function getRandomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 __name(getRandomElement, "getRandomElement");
-__name6(getRandomElement, "getRandomElement");
 function insertInto(array, start, newItems) {
   const startIdx = getActualStartIndex(array, start);
   const originalLength = array.length;
@@ -1100,7 +1043,6 @@ function insertInto(array, start, newItems) {
   }
 }
 __name(insertInto, "insertInto");
-__name6(insertInto, "insertInto");
 function splice(array, start, deleteCount, newItems) {
   const index2 = getActualStartIndex(array, start);
   let result = array.splice(index2, deleteCount);
@@ -1111,11 +1053,108 @@ function splice(array, start, deleteCount, newItems) {
   return result;
 }
 __name(splice, "splice");
-__name6(splice, "splice");
 function getActualStartIndex(array, start) {
   return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
 }
 __name(getActualStartIndex, "getActualStartIndex");
+function compareBy(selector, comparator) {
+  return (a, b) => comparator(selector(a), selector(b));
+}
+__name(compareBy, "compareBy");
+function tieBreakComparators(...comparators) {
+  return (item1, item2) => {
+    for (const comparator of comparators) {
+      const result = comparator(item1, item2);
+      if (!CompareResult.isNeitherLessOrGreaterThan(result)) {
+        return result;
+      }
+    }
+    return CompareResult.neitherLessOrGreaterThan;
+  };
+}
+__name(tieBreakComparators, "tieBreakComparators");
+function reverseOrder(comparator) {
+  return (a, b) => -comparator(a, b);
+}
+__name(reverseOrder, "reverseOrder");
+function compareUndefinedSmallest(comparator) {
+  return (a, b) => {
+    if (a === void 0) {
+      return b === void 0 ? CompareResult.neitherLessOrGreaterThan : CompareResult.lessThan;
+    } else if (b === void 0) {
+      return CompareResult.greaterThan;
+    }
+    return comparator(a, b);
+  };
+}
+__name(compareUndefinedSmallest, "compareUndefinedSmallest");
+function sum(array) {
+  return array.reduce((acc, value) => acc + value, 0);
+}
+__name(sum, "sum");
+function sumBy(array, selector) {
+  return array.reduce((acc, value) => acc + selector(value), 0);
+}
+__name(sumBy, "sumBy");
+__name6(tail, "tail");
+__name6(equals, "equals");
+__name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+__name6(binarySearch, "binarySearch");
+__name6(binarySearch2, "binarySearch2");
+__name6(quickSelect, "quickSelect");
+__name6(groupBy2, "groupBy");
+function* groupAdjacentBy(items, shouldBeGrouped) {
+  let currentGroup;
+  let last;
+  for (const item of items) {
+    if (last !== void 0 && shouldBeGrouped(last, item)) {
+      currentGroup.push(item);
+    } else {
+      if (currentGroup) {
+        yield currentGroup;
+      }
+      currentGroup = [item];
+    }
+    last = item;
+  }
+  if (currentGroup) {
+    yield currentGroup;
+  }
+}
+__name(groupAdjacentBy, "groupAdjacentBy");
+__name6(groupAdjacentBy, "groupAdjacentBy");
+__name6(forEachAdjacent, "forEachAdjacent");
+__name6(forEachWithNeighbors, "forEachWithNeighbors");
+__name6(concatArrays, "concatArrays");
+__name6(sortedDiff, "sortedDiff");
+__name6(delta, "delta");
+__name6(top, "top");
+__name6(topAsync, "topAsync");
+__name6(topStep, "topStep");
+__name6(coalesce, "coalesce");
+__name6(coalesceInPlace, "coalesceInPlace");
+__name6(move, "move");
+__name6(isFalsyOrEmpty, "isFalsyOrEmpty");
+__name6(isNonEmptyArray, "isNonEmptyArray");
+__name6(distinct, "distinct");
+__name6(uniqueFilter, "uniqueFilter");
+__name6(commonPrefixLength, "commonPrefixLength");
+__name6(range, "range");
+__name6(index, "index");
+__name6(insert, "insert");
+__name6(remove, "remove");
+__name6(arrayInsert, "arrayInsert");
+__name6(shuffle, "shuffle");
+__name6(pushToStart, "pushToStart");
+__name6(pushToEnd, "pushToEnd");
+__name6(pushMany, "pushMany");
+__name6(mapArrayOrNot, "mapArrayOrNot");
+__name6(mapFilter, "mapFilter");
+__name6(withoutDuplicates, "withoutDuplicates");
+__name6(asArray, "asArray");
+__name6(getRandomElement, "getRandomElement");
+__name6(insertInto, "insertInto");
+__name6(splice, "splice");
 __name6(getActualStartIndex, "getActualStartIndex");
 var CompareResult;
 (function(CompareResult2) {
@@ -1147,42 +1186,11 @@ var CompareResult;
   CompareResult2.lessThan = -1;
   CompareResult2.neitherLessOrGreaterThan = 0;
 })(CompareResult || (CompareResult = {}));
-function compareBy(selector, comparator) {
-  return (a, b) => comparator(selector(a), selector(b));
-}
-__name(compareBy, "compareBy");
 __name6(compareBy, "compareBy");
-function tieBreakComparators(...comparators) {
-  return (item1, item2) => {
-    for (const comparator of comparators) {
-      const result = comparator(item1, item2);
-      if (!CompareResult.isNeitherLessOrGreaterThan(result)) {
-        return result;
-      }
-    }
-    return CompareResult.neitherLessOrGreaterThan;
-  };
-}
-__name(tieBreakComparators, "tieBreakComparators");
 __name6(tieBreakComparators, "tieBreakComparators");
 var numberComparator = /* @__PURE__ */ __name6((a, b) => a - b, "numberComparator");
 var booleanComparator = /* @__PURE__ */ __name6((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
-function reverseOrder(comparator) {
-  return (a, b) => -comparator(a, b);
-}
-__name(reverseOrder, "reverseOrder");
 __name6(reverseOrder, "reverseOrder");
-function compareUndefinedSmallest(comparator) {
-  return (a, b) => {
-    if (a === void 0) {
-      return b === void 0 ? CompareResult.neitherLessOrGreaterThan : CompareResult.lessThan;
-    } else if (b === void 0) {
-      return CompareResult.greaterThan;
-    }
-    return comparator(a, b);
-  };
-}
-__name(compareUndefinedSmallest, "compareUndefinedSmallest");
 __name6(compareUndefinedSmallest, "compareUndefinedSmallest");
 var ArrayQueue = class {
   static {
@@ -1373,21 +1381,12 @@ async function findAsync(array, predicate) {
 }
 __name(findAsync, "findAsync");
 __name6(findAsync, "findAsync");
-function sum(array) {
-  return array.reduce((acc, value) => acc + value, 0);
-}
-__name(sum, "sum");
 __name6(sum, "sum");
-function sumBy(array, selector) {
-  return array.reduce((acc, value) => acc + selector(value), 0);
-}
-__name(sumBy, "sumBy");
 __name6(sumBy, "sumBy");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
 var __defProp7 = Object.defineProperty;
 var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
-var _a2, _b, _c;
 function getOrSet(map, key, value) {
   let result = map.get(key);
   if (result === void 0) {
@@ -1397,7 +1396,6 @@ function getOrSet(map, key, value) {
   return result;
 }
 __name(getOrSet, "getOrSet");
-__name7(getOrSet, "getOrSet");
 function mapToString(map) {
   const entries = [];
   map.forEach((value, key) => {
@@ -1406,7 +1404,6 @@ function mapToString(map) {
   return `Map(${map.size}) {${entries.join(", ")}}`;
 }
 __name(mapToString, "mapToString");
-__name7(mapToString, "mapToString");
 function setToString(set) {
   const entries = [];
   set.forEach((value) => {
@@ -1415,6 +1412,33 @@ function setToString(set) {
   return `Set(${set.size}) {${entries.join(", ")}}`;
 }
 __name(setToString, "setToString");
+function isEntries(arg) {
+  return Array.isArray(arg);
+}
+__name(isEntries, "isEntries");
+function mapsStrictEqualIgnoreOrder(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const [key, value] of a) {
+    if (!b.has(key) || b.get(key) !== value) {
+      return false;
+    }
+  }
+  for (const [key] of b) {
+    if (!a.has(key)) {
+      return false;
+    }
+  }
+  return true;
+}
+__name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+var _a2, _b, _c;
+__name7(getOrSet, "getOrSet");
+__name7(mapToString, "mapToString");
 __name7(setToString, "setToString");
 var ResourceMapEntry = class {
   static {
@@ -1428,10 +1452,6 @@ var ResourceMapEntry = class {
     this.value = value;
   }
 };
-function isEntries(arg) {
-  return Array.isArray(arg);
-}
-__name(isEntries, "isEntries");
 __name7(isEntries, "isEntries");
 var ResourceMap = class _ResourceMap {
   static {
@@ -2121,26 +2141,6 @@ var SetMap = class {
     return values;
   }
 };
-function mapsStrictEqualIgnoreOrder(a, b) {
-  if (a === b) {
-    return true;
-  }
-  if (a.size !== b.size) {
-    return false;
-  }
-  for (const [key, value] of a) {
-    if (!b.has(key) || b.get(key) !== value) {
-      return false;
-    }
-  }
-  for (const [key] of b) {
-    if (!a.has(key)) {
-      return false;
-    }
-  }
-  return true;
-}
-__name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
 __name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
 var NKeyMap = class {
   static {
@@ -2228,16 +2228,13 @@ function ok(value, message) {
   }
 }
 __name(ok, "ok");
-__name8(ok, "ok");
 function assertNever(value, message = "Unreachable") {
   throw new Error(message);
 }
 __name(assertNever, "assertNever");
-__name8(assertNever, "assertNever");
 function softAssertNever(value) {
 }
 __name(softAssertNever, "softAssertNever");
-__name8(softAssertNever, "softAssertNever");
 function assert(condition, messageOrError = "unexpected state") {
   if (!condition) {
     const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
@@ -2245,14 +2242,12 @@ function assert(condition, messageOrError = "unexpected state") {
   }
 }
 __name(assert, "assert");
-__name8(assert, "assert");
 function softAssert(condition, message = "Soft Assertion Failed") {
   if (!condition) {
     onUnexpectedError(new BugIndicatingError(message));
   }
 }
 __name(softAssert, "softAssert");
-__name8(softAssert, "softAssert");
 function assertFn(condition) {
   if (!condition()) {
     debugger;
@@ -2261,7 +2256,6 @@ function assertFn(condition) {
   }
 }
 __name(assertFn, "assertFn");
-__name8(assertFn, "assertFn");
 function checkAdjacentItems(items, predicate) {
   let i = 0;
   while (i < items.length - 1) {
@@ -2275,6 +2269,12 @@ function checkAdjacentItems(items, predicate) {
   return true;
 }
 __name(checkAdjacentItems, "checkAdjacentItems");
+__name8(ok, "ok");
+__name8(assertNever, "assertNever");
+__name8(softAssertNever, "softAssertNever");
+__name8(assert, "assert");
+__name8(softAssert, "softAssert");
+__name8(assertFn, "assertFn");
 __name8(checkAdjacentItems, "checkAdjacentItems");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
@@ -2284,76 +2284,62 @@ function isString(str) {
   return typeof str === "string";
 }
 __name(isString, "isString");
-__name9(isString, "isString");
 function isStringArray(value) {
   return isArrayOf(value, isString);
 }
 __name(isStringArray, "isStringArray");
-__name9(isStringArray, "isStringArray");
 function isArrayOf(value, check) {
   return Array.isArray(value) && value.every(check);
 }
 __name(isArrayOf, "isArrayOf");
-__name9(isArrayOf, "isArrayOf");
 function isObject(obj) {
   return typeof obj === "object" && obj !== null && !Array.isArray(obj) && !(obj instanceof RegExp) && !(obj instanceof Date);
 }
 __name(isObject, "isObject");
-__name9(isObject, "isObject");
 function isTypedArray(obj) {
   const TypedArray = Object.getPrototypeOf(Uint8Array);
   return typeof obj === "object" && obj instanceof TypedArray;
 }
 __name(isTypedArray, "isTypedArray");
-__name9(isTypedArray, "isTypedArray");
 function isNumber(obj) {
   return typeof obj === "number" && !isNaN(obj);
 }
 __name(isNumber, "isNumber");
-__name9(isNumber, "isNumber");
 function isIterable(obj) {
   return !!obj && typeof obj[Symbol.iterator] === "function";
 }
 __name(isIterable, "isIterable");
-__name9(isIterable, "isIterable");
 function isAsyncIterable(obj) {
   return !!obj && typeof obj[Symbol.asyncIterator] === "function";
 }
 __name(isAsyncIterable, "isAsyncIterable");
-__name9(isAsyncIterable, "isAsyncIterable");
 function isBoolean(obj) {
   return obj === true || obj === false;
 }
 __name(isBoolean, "isBoolean");
-__name9(isBoolean, "isBoolean");
 function isUndefined(obj) {
   return typeof obj === "undefined";
 }
 __name(isUndefined, "isUndefined");
-__name9(isUndefined, "isUndefined");
 function isDefined(arg) {
   return !isUndefinedOrNull(arg);
 }
 __name(isDefined, "isDefined");
-__name9(isDefined, "isDefined");
 function isUndefinedOrNull(obj) {
   return isUndefined(obj) || obj === null;
 }
 __name(isUndefinedOrNull, "isUndefinedOrNull");
-__name9(isUndefinedOrNull, "isUndefinedOrNull");
 function assertType(condition, type) {
   if (!condition) {
     throw new Error(type ? `Unexpected type, expected '${type}'` : "Unexpected type");
   }
 }
 __name(assertType, "assertType");
-__name9(assertType, "assertType");
 function assertReturnsDefined(arg) {
   assert(arg !== null && arg !== void 0, "Argument is `undefined` or `null`.");
   return arg;
 }
 __name(assertReturnsDefined, "assertReturnsDefined");
-__name9(assertReturnsDefined, "assertReturnsDefined");
 function assertDefined(value, error) {
   if (value === null || value === void 0) {
     const errorToThrow = typeof error === "string" ? new Error(error) : error;
@@ -2361,7 +2347,6 @@ function assertDefined(value, error) {
   }
 }
 __name(assertDefined, "assertDefined");
-__name9(assertDefined, "assertDefined");
 function assertReturnsAllDefined(...args) {
   const result = [];
   for (let i = 0; i < args.length; i++) {
@@ -2374,15 +2359,9 @@ function assertReturnsAllDefined(...args) {
   return result;
 }
 __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-__name9(assertReturnsAllDefined, "assertReturnsAllDefined");
-var isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
-  return validValues.includes(value);
-}, "isOneOf");
 function typeCheck(_thing) {
 }
 __name(typeCheck, "typeCheck");
-__name9(typeCheck, "typeCheck");
-var hasOwnProperty = Object.prototype.hasOwnProperty;
 function isEmptyObject(obj) {
   if (!isObject(obj)) {
     return false;
@@ -2395,17 +2374,14 @@ function isEmptyObject(obj) {
   return true;
 }
 __name(isEmptyObject, "isEmptyObject");
-__name9(isEmptyObject, "isEmptyObject");
 function isFunction(obj) {
   return typeof obj === "function";
 }
 __name(isFunction, "isFunction");
-__name9(isFunction, "isFunction");
 function areFunctions(...objects) {
   return objects.length > 0 && objects.every(isFunction);
 }
 __name(areFunctions, "areFunctions");
-__name9(areFunctions, "areFunctions");
 function validateConstraints(args, constraints) {
   const len = Math.min(args.length, constraints.length);
   for (let i = 0; i < len; i++) {
@@ -2413,7 +2389,6 @@ function validateConstraints(args, constraints) {
   }
 }
 __name(validateConstraints, "validateConstraints");
-__name9(validateConstraints, "validateConstraints");
 function validateConstraint(arg, constraint) {
   if (isString(constraint)) {
     if (typeof arg !== constraint) {
@@ -2436,12 +2411,10 @@ function validateConstraint(arg, constraint) {
   }
 }
 __name(validateConstraint, "validateConstraint");
-__name9(validateConstraint, "validateConstraint");
 function upcast(x) {
   return x;
 }
 __name(upcast, "upcast");
-__name9(upcast, "upcast");
 function hasKey(x, key) {
   for (const k in key) {
     if (!(k in x)) {
@@ -2451,6 +2424,33 @@ function hasKey(x, key) {
   return true;
 }
 __name(hasKey, "hasKey");
+__name9(isString, "isString");
+__name9(isStringArray, "isStringArray");
+__name9(isArrayOf, "isArrayOf");
+__name9(isObject, "isObject");
+__name9(isTypedArray, "isTypedArray");
+__name9(isNumber, "isNumber");
+__name9(isIterable, "isIterable");
+__name9(isAsyncIterable, "isAsyncIterable");
+__name9(isBoolean, "isBoolean");
+__name9(isUndefined, "isUndefined");
+__name9(isDefined, "isDefined");
+__name9(isUndefinedOrNull, "isUndefinedOrNull");
+__name9(assertType, "assertType");
+__name9(assertReturnsDefined, "assertReturnsDefined");
+__name9(assertDefined, "assertDefined");
+__name9(assertReturnsAllDefined, "assertReturnsAllDefined");
+var isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
+  return validValues.includes(value);
+}, "isOneOf");
+__name9(typeCheck, "typeCheck");
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+__name9(isEmptyObject, "isEmptyObject");
+__name9(isFunction, "isFunction");
+__name9(areFunctions, "areFunctions");
+__name9(validateConstraints, "validateConstraints");
+__name9(validateConstraint, "validateConstraint");
+__name9(upcast, "upcast");
 __name9(hasKey, "hasKey");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
@@ -2672,6 +2672,117 @@ var Iterable;
 // ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
 var __defProp11 = Object.defineProperty;
 var __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
+function setDisposableTracker(tracker) {
+  disposableTracker = tracker;
+}
+__name(setDisposableTracker, "setDisposableTracker");
+function trackDisposable(x) {
+  disposableTracker?.trackDisposable(x);
+  return x;
+}
+__name(trackDisposable, "trackDisposable");
+function markAsDisposed(disposable) {
+  disposableTracker?.markAsDisposed(disposable);
+}
+__name(markAsDisposed, "markAsDisposed");
+function setParentOfDisposable(child, parent) {
+  disposableTracker?.setParent(child, parent);
+}
+__name(setParentOfDisposable, "setParentOfDisposable");
+function setParentOfDisposables(children, parent) {
+  if (!disposableTracker) {
+    return;
+  }
+  for (const child of children) {
+    disposableTracker.setParent(child, parent);
+  }
+}
+__name(setParentOfDisposables, "setParentOfDisposables");
+function markAsSingleton(singleton) {
+  disposableTracker?.markAsSingleton(singleton);
+  return singleton;
+}
+__name(markAsSingleton, "markAsSingleton");
+function isDisposable(thing) {
+  return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
+}
+__name(isDisposable, "isDisposable");
+function dispose(arg) {
+  if (Iterable.is(arg)) {
+    const errors = [];
+    for (const d of arg) {
+      if (d) {
+        try {
+          d.dispose();
+        } catch (e) {
+          errors.push(e);
+        }
+      }
+    }
+    if (errors.length === 1) {
+      throw errors[0];
+    } else if (errors.length > 1) {
+      throw new AggregateError(errors, "Encountered errors while disposing of store");
+    }
+    return Array.isArray(arg) ? [] : arg;
+  } else if (arg) {
+    arg.dispose();
+    return arg;
+  }
+}
+__name(dispose, "dispose");
+function disposeIfDisposable(disposables) {
+  for (const d of disposables) {
+    if (isDisposable(d)) {
+      d.dispose();
+    }
+  }
+  return [];
+}
+__name(disposeIfDisposable, "disposeIfDisposable");
+function combinedDisposable(...disposables) {
+  const parent = toDisposable(() => dispose(disposables));
+  setParentOfDisposables(disposables, parent);
+  return parent;
+}
+__name(combinedDisposable, "combinedDisposable");
+function toDisposable(fn) {
+  return new FunctionDisposable(fn);
+}
+__name(toDisposable, "toDisposable");
+function disposeOnReturn(fn) {
+  const store = new DisposableStore();
+  try {
+    fn(store);
+  } finally {
+    store.dispose();
+  }
+}
+__name(disposeOnReturn, "disposeOnReturn");
+function thenIfNotDisposed(promise, then) {
+  let disposed = false;
+  promise.then((result) => {
+    if (disposed) {
+      return;
+    }
+    then(result);
+  });
+  return toDisposable(() => {
+    disposed = true;
+  });
+}
+__name(thenIfNotDisposed, "thenIfNotDisposed");
+function thenRegisterOrDispose(promise, store) {
+  return promise.then((disposable) => {
+    if (store.isDisposed) {
+      disposable.dispose();
+    } else {
+      store.add(disposable);
+    }
+    return disposable;
+  });
+}
+__name(thenRegisterOrDispose, "thenRegisterOrDispose");
 var TRACK_DISPOSABLES = false;
 var disposableTracker = null;
 var GCBasedDisposableTracker = class {
@@ -2838,10 +2949,6 @@ ${stackTraceFormattedLines.join("\n")}
     return { leaks: uncoveredLeakingObjs, details: message };
   }
 };
-function setDisposableTracker(tracker) {
-  disposableTracker = tracker;
-}
-__name(setDisposableTracker, "setDisposableTracker");
 __name11(setDisposableTracker, "setDisposableTracker");
 if (TRACK_DISPOSABLES) {
   const __is_disposable_tracked__ = "__is_disposable_tracked__";
@@ -2874,84 +2981,14 @@ if (TRACK_DISPOSABLES) {
     }
   }());
 }
-function trackDisposable(x) {
-  disposableTracker?.trackDisposable(x);
-  return x;
-}
-__name(trackDisposable, "trackDisposable");
 __name11(trackDisposable, "trackDisposable");
-function markAsDisposed(disposable) {
-  disposableTracker?.markAsDisposed(disposable);
-}
-__name(markAsDisposed, "markAsDisposed");
 __name11(markAsDisposed, "markAsDisposed");
-function setParentOfDisposable(child, parent) {
-  disposableTracker?.setParent(child, parent);
-}
-__name(setParentOfDisposable, "setParentOfDisposable");
 __name11(setParentOfDisposable, "setParentOfDisposable");
-function setParentOfDisposables(children, parent) {
-  if (!disposableTracker) {
-    return;
-  }
-  for (const child of children) {
-    disposableTracker.setParent(child, parent);
-  }
-}
-__name(setParentOfDisposables, "setParentOfDisposables");
 __name11(setParentOfDisposables, "setParentOfDisposables");
-function markAsSingleton(singleton) {
-  disposableTracker?.markAsSingleton(singleton);
-  return singleton;
-}
-__name(markAsSingleton, "markAsSingleton");
 __name11(markAsSingleton, "markAsSingleton");
-function isDisposable(thing) {
-  return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
-}
-__name(isDisposable, "isDisposable");
 __name11(isDisposable, "isDisposable");
-function dispose(arg) {
-  if (Iterable.is(arg)) {
-    const errors = [];
-    for (const d of arg) {
-      if (d) {
-        try {
-          d.dispose();
-        } catch (e) {
-          errors.push(e);
-        }
-      }
-    }
-    if (errors.length === 1) {
-      throw errors[0];
-    } else if (errors.length > 1) {
-      throw new AggregateError(errors, "Encountered errors while disposing of store");
-    }
-    return Array.isArray(arg) ? [] : arg;
-  } else if (arg) {
-    arg.dispose();
-    return arg;
-  }
-}
-__name(dispose, "dispose");
 __name11(dispose, "dispose");
-function disposeIfDisposable(disposables) {
-  for (const d of disposables) {
-    if (isDisposable(d)) {
-      d.dispose();
-    }
-  }
-  return [];
-}
-__name(disposeIfDisposable, "disposeIfDisposable");
 __name11(disposeIfDisposable, "disposeIfDisposable");
-function combinedDisposable(...disposables) {
-  const parent = toDisposable(() => dispose(disposables));
-  setParentOfDisposables(disposables, parent);
-  return parent;
-}
-__name(combinedDisposable, "combinedDisposable");
 __name11(combinedDisposable, "combinedDisposable");
 var FunctionDisposable = class {
   static {
@@ -2977,10 +3014,6 @@ var FunctionDisposable = class {
     this._fn();
   }
 };
-function toDisposable(fn) {
-  return new FunctionDisposable(fn);
-}
-__name(toDisposable, "toDisposable");
 __name11(toDisposable, "toDisposable");
 var DisposableStore = class _DisposableStore {
   static {
@@ -3286,15 +3319,6 @@ var ImmortalReference = class {
   dispose() {
   }
 };
-function disposeOnReturn(fn) {
-  const store = new DisposableStore();
-  try {
-    fn(store);
-  } finally {
-    store.dispose();
-  }
-}
-__name(disposeOnReturn, "disposeOnReturn");
 __name11(disposeOnReturn, "disposeOnReturn");
 var DisposableMap = class {
   static {
@@ -3453,31 +3477,7 @@ var DisposableSet = class {
     return this._store[Symbol.iterator]();
   }
 };
-function thenIfNotDisposed(promise, then) {
-  let disposed = false;
-  promise.then((result) => {
-    if (disposed) {
-      return;
-    }
-    then(result);
-  });
-  return toDisposable(() => {
-    disposed = true;
-  });
-}
-__name(thenIfNotDisposed, "thenIfNotDisposed");
 __name11(thenIfNotDisposed, "thenIfNotDisposed");
-function thenRegisterOrDispose(promise, store) {
-  return promise.then((disposable) => {
-    if (store.isDisposed) {
-      disposable.dispose();
-    } else {
-      store.add(disposable);
-    }
-    return disposable;
-  });
-}
-__name(thenRegisterOrDispose, "thenRegisterOrDispose");
 __name11(thenRegisterOrDispose, "thenRegisterOrDispose");
 var DisposableResourceMap = class extends DisposableMap {
   static {
@@ -3630,13 +3630,10 @@ function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
 }
 __name(getNLSMessages, "getNLSMessages");
-__name13(getNLSMessages, "getNLSMessages");
 function getNLSLanguage() {
   return globalThis._VSCODE_NLS_LANGUAGE;
 }
 __name(getNLSLanguage, "getNLSLanguage");
-__name13(getNLSLanguage, "getNLSLanguage");
-var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
 function _format(message, args) {
   let result;
   if (args.length === 0) {
@@ -3660,7 +3657,6 @@ function _format(message, args) {
   return result;
 }
 __name(_format, "_format");
-__name13(_format, "_format");
 function localize(data, message, ...args) {
   if (typeof data === "number") {
     return _format(lookupMessage(data, message), args);
@@ -3668,7 +3664,6 @@ function localize(data, message, ...args) {
   return _format(message, args);
 }
 __name(localize, "localize");
-__name13(localize, "localize");
 function lookupMessage(index2, fallback) {
   const message = getNLSMessages()?.[index2];
   if (typeof message !== "string") {
@@ -3680,7 +3675,6 @@ function lookupMessage(index2, fallback) {
   return message;
 }
 __name(lookupMessage, "lookupMessage");
-__name13(lookupMessage, "lookupMessage");
 function localize2(data, originalMessage, ...args) {
   let message;
   if (typeof data === "number") {
@@ -3695,11 +3689,46 @@ function localize2(data, originalMessage, ...args) {
   };
 }
 __name(localize2, "localize2");
+__name13(getNLSMessages, "getNLSMessages");
+__name13(getNLSLanguage, "getNLSLanguage");
+var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
+__name13(_format, "_format");
+__name13(localize, "localize");
+__name13(lookupMessage, "lookupMessage");
 __name13(localize2, "localize2");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
 var __defProp14 = Object.defineProperty;
 var __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+function PlatformToString(platform22) {
+  switch (platform22) {
+    case 0:
+      return "Web";
+    case 1:
+      return "Mac";
+    case 2:
+      return "Linux";
+    case 3:
+      return "Windows";
+  }
+}
+__name(PlatformToString, "PlatformToString");
+function isLittleEndian() {
+  if (!_isLittleEndianComputed) {
+    _isLittleEndianComputed = true;
+    const test = new Uint8Array(2);
+    test[0] = 1;
+    test[1] = 2;
+    const view = new Uint16Array(test.buffer);
+    _isLittleEndian = view[0] === (2 << 8) + 1;
+  }
+  return _isLittleEndian;
+}
+__name(isLittleEndian, "isLittleEndian");
+function isTahoeOrNewer(osVersion) {
+  return parseFloat(osVersion) >= 25;
+}
+__name(isTahoeOrNewer, "isTahoeOrNewer");
 var LANGUAGE_DEFAULT = "en";
 var _isWindows = false;
 var _isMacintosh = false;
@@ -3767,19 +3796,6 @@ var Platform;
   Platform2[Platform2["Linux"] = 2] = "Linux";
   Platform2[Platform2["Windows"] = 3] = "Windows";
 })(Platform || (Platform = {}));
-function PlatformToString(platform22) {
-  switch (platform22) {
-    case 0:
-      return "Web";
-    case 1:
-      return "Mac";
-    case 2:
-      return "Linux";
-    case 3:
-      return "Windows";
-  }
-}
-__name(PlatformToString, "PlatformToString");
 __name14(PlatformToString, "PlatformToString");
 var _platform = 0;
 if (_isMacintosh) {
@@ -3871,28 +3887,12 @@ var OperatingSystem;
 var OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
 var _isLittleEndian = true;
 var _isLittleEndianComputed = false;
-function isLittleEndian() {
-  if (!_isLittleEndianComputed) {
-    _isLittleEndianComputed = true;
-    const test = new Uint8Array(2);
-    test[0] = 1;
-    test[1] = 2;
-    const view = new Uint16Array(test.buffer);
-    _isLittleEndian = view[0] === (2 << 8) + 1;
-  }
-  return _isLittleEndian;
-}
-__name(isLittleEndian, "isLittleEndian");
 __name14(isLittleEndian, "isLittleEndian");
 var isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
 var isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
 var isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
 var isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
 var isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
-function isTahoeOrNewer(osVersion) {
-  return parseFloat(osVersion) >= 25;
-}
-__name(isTahoeOrNewer, "isTahoeOrNewer");
 __name14(isTahoeOrNewer, "isTahoeOrNewer");
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
@@ -3989,14 +3989,66 @@ var StopWatch = class _StopWatch {
 // ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
 var __defProp16 = Object.defineProperty;
 var __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
-var _enableDisposeWithListenerWarning = false;
-var _enableSnapshotPotentialLeakWarning = false;
-var _bufferLeakWarnCountThreshold = 100;
-var _bufferLeakWarnTimeThreshold = 6e4;
 function _isBufferLeakWarningEnabled() {
   return !!env["VSCODE_DEV"];
 }
 __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+function setGlobalLeakWarningThreshold(n) {
+  const oldValue = _globalLeakWarningThreshold;
+  _globalLeakWarningThreshold = n;
+  return {
+    dispose() {
+      _globalLeakWarningThreshold = oldValue;
+    }
+  };
+}
+__name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+function trackSetChanges(getData, onDidChangeData, handleItem) {
+  const map = new DisposableMap();
+  let oldData = new Set(getData());
+  for (const d of oldData) {
+    map.set(d, handleItem(d));
+  }
+  const store = new DisposableStore();
+  store.add(onDidChangeData(() => {
+    const newData = getData();
+    const diff = diffSets(oldData, newData);
+    for (const r of diff.removed) {
+      map.deleteAndDispose(r);
+    }
+    for (const a of diff.added) {
+      map.set(a, handleItem(a));
+    }
+    oldData = new Set(newData);
+  }));
+  store.add(map);
+  return store;
+}
+__name(trackSetChanges, "trackSetChanges");
+function addToDisposables(result, disposables) {
+  if (disposables instanceof DisposableStore) {
+    disposables.add(result);
+  } else if (Array.isArray(disposables)) {
+    disposables.push(result);
+  }
+}
+__name(addToDisposables, "addToDisposables");
+function disposeAndRemove(result, disposables) {
+  if (disposables instanceof DisposableStore) {
+    disposables.delete(result);
+  } else if (Array.isArray(disposables)) {
+    const index2 = disposables.indexOf(result);
+    if (index2 !== -1) {
+      disposables.splice(index2, 1);
+    }
+  }
+  result.dispose();
+}
+__name(disposeAndRemove, "disposeAndRemove");
+var _enableDisposeWithListenerWarning = false;
+var _enableSnapshotPotentialLeakWarning = false;
+var _bufferLeakWarnCountThreshold = 100;
+var _bufferLeakWarnTimeThreshold = 6e4;
 __name16(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
 var Event;
 (function(Event2) {
@@ -4602,16 +4654,6 @@ var EventProfiling = class _EventProfiling {
   }
 };
 var _globalLeakWarningThreshold = -1;
-function setGlobalLeakWarningThreshold(n) {
-  const oldValue = _globalLeakWarningThreshold;
-  _globalLeakWarningThreshold = n;
-  return {
-    dispose() {
-      _globalLeakWarningThreshold = oldValue;
-    }
-  };
-}
-__name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
 __name16(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
 var LeakageMonitor = class _LeakageMonitor {
   static {
@@ -5293,50 +5335,8 @@ var ConstValueWithChangeEvent = class {
     this.onDidChange = Event.None;
   }
 };
-function trackSetChanges(getData, onDidChangeData, handleItem) {
-  const map = new DisposableMap();
-  let oldData = new Set(getData());
-  for (const d of oldData) {
-    map.set(d, handleItem(d));
-  }
-  const store = new DisposableStore();
-  store.add(onDidChangeData(() => {
-    const newData = getData();
-    const diff = diffSets(oldData, newData);
-    for (const r of diff.removed) {
-      map.deleteAndDispose(r);
-    }
-    for (const a of diff.added) {
-      map.set(a, handleItem(a));
-    }
-    oldData = new Set(newData);
-  }));
-  store.add(map);
-  return store;
-}
-__name(trackSetChanges, "trackSetChanges");
 __name16(trackSetChanges, "trackSetChanges");
-function addToDisposables(result, disposables) {
-  if (disposables instanceof DisposableStore) {
-    disposables.add(result);
-  } else if (Array.isArray(disposables)) {
-    disposables.push(result);
-  }
-}
-__name(addToDisposables, "addToDisposables");
 __name16(addToDisposables, "addToDisposables");
-function disposeAndRemove(result, disposables) {
-  if (disposables instanceof DisposableStore) {
-    disposables.delete(result);
-  } else if (Array.isArray(disposables)) {
-    const index2 = disposables.indexOf(result);
-    if (index2 !== -1) {
-      disposables.splice(index2, 1);
-    }
-  }
-  result.dispose();
-}
-__name(disposeAndRemove, "disposeAndRemove");
 __name16(disposeAndRemove, "disposeAndRemove");
 
 // Source/Utility/EventStream.ts
