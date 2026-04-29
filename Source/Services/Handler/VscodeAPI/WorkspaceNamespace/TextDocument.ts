@@ -30,6 +30,32 @@ export const BuildOpenTextDocument =
 		if (Cached !== undefined) {
 			Text = Cached;
 		} else {
+			// Mountain serialises `Vec<u8>` as a JSON number-array, not a
+			// string. The native path returns a real string; the Mountain
+			// path needs `Buffer.from(...).toString("utf8")` to match.
+			// Without this conversion, `getText()` returns the raw array
+			// and downstream consumers (jsonc-parser, npm task detection,
+			// language-features schema validators) fail to parse the file.
+			const DecodeRaw = (Raw: unknown): string => {
+				if (typeof Raw === "string") return Raw;
+				if (Array.isArray(Raw)) {
+					return Buffer.from(Raw as number[]).toString("utf8");
+				}
+				if (Raw instanceof Uint8Array) {
+					return Buffer.from(Raw).toString("utf8");
+				}
+				if (Raw && typeof Raw === "object") {
+					const Maybe = (Raw as { content?: unknown }).content;
+					if (Array.isArray(Maybe)) {
+						return Buffer.from(Maybe as number[]).toString("utf8");
+					}
+					if (Maybe instanceof Uint8Array) {
+						return Buffer.from(Maybe).toString("utf8");
+					}
+					if (typeof Maybe === "string") return Maybe;
+				}
+				return Raw == null ? "" : String(Raw);
+			};
 			// Tier-split match: `file://` with no custom provider reads
 			// through Cocoon's own Node backend; everything else (Mountain-
 			// owned schemes, custom-provider schemes) routes through the
@@ -49,10 +75,11 @@ export const BuildOpenTextDocument =
 						Text = "";
 					}
 				} else {
-					Text =
-						(await Call<string>(Context, "FileSystem.ReadFile", [
+					Text = DecodeRaw(
+						await Call<unknown>(Context, "FileSystem.ReadFile", [
 							UriString,
-						])) ?? "";
+						]),
+					);
 				}
 			} else {
 				if (process.env["Trace"]) {
@@ -60,10 +87,11 @@ export const BuildOpenTextDocument =
 						`[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}\n`,
 					);
 				}
-				Text =
-					(await Call<string>(Context, "FileSystem.ReadFile", [
+				Text = DecodeRaw(
+					await Call<unknown>(Context, "FileSystem.ReadFile", [
 						UriString,
-					])) ?? "";
+					]),
+				);
 			}
 		}
 

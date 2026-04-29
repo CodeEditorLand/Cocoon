@@ -656,11 +656,19 @@ message RPCDataPayload {
 				// rejections in extensions that then treat "circuit open" as
 				// a fatal I/O error.
 				const RpcMessage = String(rpcError.Message ?? "");
+				const RpcCode = Number(rpcError.Code ?? 0);
+				const IsFileSystemMethod =
+					method === "FileSystem.ReadFile" ||
+					method === "FileSystem.Stat" ||
+					method === "FileSystem.ReadDirectory";
+				// Mountain stamps -32004 for benign 404s; the regex is a
+				// belt-and-suspenders fallback for older Mountain builds.
 				const IsBenignNotFound =
-					(method === "FileSystem.ReadFile" ||
-						method === "FileSystem.Stat" ||
-						method === "FileSystem.ReadDirectory") &&
-					/resource not found|ENOENT|not found/i.test(RpcMessage);
+					IsFileSystemMethod &&
+					(RpcCode === -32004 ||
+						/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+							RpcMessage,
+						));
 				if (!IsBenignNotFound) {
 					this.circuitBreakerFailureCount++;
 					this.UpdateCircuitBreaker(
@@ -725,11 +733,19 @@ message RPCDataPayload {
 			// yaml, terminal-suggest, schemas-associations).
 			const ErrorMessage =
 				error instanceof Error ? error.message : String(error);
+			const ErrorCode = Number(
+				(error as { code?: number | string } | null)?.code ?? 0,
+			);
+			const IsCatchBenignFsMethod =
+				method === "FileSystem.ReadFile" ||
+				method === "FileSystem.Stat" ||
+				method === "FileSystem.ReadDirectory";
 			const IsBenignNotFound =
-				(method === "FileSystem.ReadFile" ||
-					method === "FileSystem.Stat" ||
-					method === "FileSystem.ReadDirectory") &&
-				/resource not found|ENOENT|not found/i.test(ErrorMessage);
+				IsCatchBenignFsMethod &&
+				(ErrorCode === -32004 ||
+					/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+						ErrorMessage,
+					));
 			// `Command.Execute` rejections for extension-registered commands
 			// that were never registered are equally benign - the
 			// `CommandsNamespace.executeCommand` catch converts them to

@@ -225,9 +225,15 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			return Buffer.from(String(Raw), "utf8");
 		} catch (Err: unknown) {
 			const Message = Err instanceof Error ? Err.message : String(Err);
+			const Code = (Err as { code?: number | string } | null)?.code;
 			const TraceFsRead =
 				process.env["Trace"]?.includes("fs-read");
-			if (/resource not found|ENOENT|not found/i.test(Message)) {
+			if (
+				Code === -32004 ||
+				/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+					Message,
+				)
+			) {
 				// 404 is the expected path for extensions probing for
 				// optional files (terminal-suggest cache, Gemfile.lock,
 				// composer.json, rust-toolchain.toml). Silent by default;

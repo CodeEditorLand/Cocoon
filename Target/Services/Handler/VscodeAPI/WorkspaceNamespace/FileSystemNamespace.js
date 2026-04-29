@@ -12565,7 +12565,9 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
       const TraceFsRead = process.env["Trace"]?.includes("fs-read");
-      if (/resource not found|ENOENT|not found/i.test(Message)) {
+      if (/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+        Message
+      )) {
         if (TraceFsRead) {
           process.stdout.write(
             `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
