@@ -30025,7 +30025,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-28T22:56:09Z"
+      generatedAt: "2026-04-29T00:55:53Z"
     };
   }
 });
@@ -35654,6 +35654,75 @@ var init_LanguagesNamespace = __esm({
       createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
         const Owner = Name ?? "default";
         const Store = /* @__PURE__ */ new Map();
+        const NormaliseSeverity = /* @__PURE__ */ __name((Sev) => {
+          if (typeof Sev === "number") {
+            switch (Sev) {
+              case 0:
+                return 8;
+              // Error
+              case 1:
+                return 4;
+              // Warning
+              case 2:
+                return 2;
+              // Info
+              case 3:
+                return 1;
+              // Hint
+              // LSP DiagnosticSeverity: 1=Error, 2=Warning, 3=Info, 4=Hint
+              // (only reached when caller passed pre-LSP form by mistake;
+              // Monaco bit values 4/2/1/8 already covered above for the
+              // vscode enum 1/2/3/0 - leaving the LSP form as a
+              // best-effort fallthrough.)
+              default:
+                return Sev > 0 && Sev <= 8 ? Sev : 4;
+            }
+          }
+          if (typeof Sev === "string") {
+            const Lower = Sev.toLowerCase();
+            if (Lower.startsWith("err")) return 8;
+            if (Lower.startsWith("warn")) return 4;
+            if (Lower.startsWith("info")) return 2;
+            if (Lower.startsWith("hint")) return 1;
+            return 4;
+          }
+          return 4;
+        }, "NormaliseSeverity");
+        const Pos = /* @__PURE__ */ __name((V) => {
+          const O = V ?? {};
+          return {
+            line: typeof O.line === "number" ? O.line : 0,
+            character: typeof O.character === "number" ? O.character : 0
+          };
+        }, "Pos");
+        const NormaliseDiagnostic = /* @__PURE__ */ __name((D) => {
+          const Obj = D ?? {};
+          const Range3 = Obj.range ?? {};
+          const Start = Pos(Range3.start);
+          const End = Pos(Range3.end);
+          const Out = {
+            severity: NormaliseSeverity(Obj.severity),
+            message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
+            startLineNumber: Start.line,
+            startColumn: Start.character,
+            endLineNumber: End.line,
+            endColumn: End.character
+          };
+          if (Obj.source !== void 0 && Obj.source !== null) {
+            Out.source = String(Obj.source);
+          }
+          if (Obj.code !== void 0 && Obj.code !== null) {
+            Out.code = Obj.code;
+          }
+          if (Array.isArray(Obj.tags)) {
+            Out.tags = Obj.tags.filter((T) => typeof T === "number");
+          }
+          if (Obj.relatedInformation !== void 0) {
+            Out.relatedInformation = Obj.relatedInformation;
+          }
+          return Out;
+        }, "NormaliseDiagnostic");
+        const NormaliseList = /* @__PURE__ */ __name((List) => (Array.isArray(List) ? List : []).map(NormaliseDiagnostic), "NormaliseList");
         let Disposed = false;
         return {
           name: Owner,
@@ -35668,7 +35737,7 @@ var init_LanguagesNamespace = __esm({
             }
             Context21.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => [U, D])
+              [...Store.entries()].map(([U, D]) => [U, NormaliseList(D)])
             ]).catch(() => {
             });
           }, "set"),
@@ -35676,7 +35745,7 @@ var init_LanguagesNamespace = __esm({
             Store.delete(UriKey(Uri2));
             Context21.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => [U, D])
+              [...Store.entries()].map(([U, D]) => [U, NormaliseList(D)])
             ]).catch(() => {
             });
           }, "delete"),

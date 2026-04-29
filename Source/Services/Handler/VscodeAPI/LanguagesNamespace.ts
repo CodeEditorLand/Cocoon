@@ -334,6 +334,98 @@ const CreateLanguagesNamespace = (
 		createDiagnosticCollection: (Name?: string) => {
 			const Owner = Name ?? "default";
 			const Store = new Map<string, unknown[]>();
+
+			// Normalise a `vscode.Diagnostic` (or LSP-shaped diagnostic, or
+			// debug-string-severity diagnostic) to Mountain's
+			// `MarkerDataDTO` shape:
+			//   - `range` (nested) → flat `startLineNumber/startColumn/
+			//     endLineNumber/endColumn` (0-based)
+			//   - `severity`: vscode enum (0-3) OR string label
+			//     ("Error"/"Warning"/"Information"/"Hint") OR LSP integer
+			//     (1-4) → Monaco `MarkerSeverity` bit values
+			//     (Error=8, Warning=4, Info=2, Hint=1) which is what
+			//     Mountain's `MarkerDataDTO::Severity:u32` deserialises.
+			//
+			// Without normalisation Mountain rejects every entry with
+			// `invalid type: string "Warning", expected u32` and the
+			// editor stays free of red squiggles even after the
+			// wire-shape (object→tuple) fix landed.
+			const NormaliseSeverity = (Sev: unknown): number => {
+				if (typeof Sev === "number") {
+					// vscode.DiagnosticSeverity: 0=Error, 1=Warning, 2=Info, 3=Hint
+					switch (Sev) {
+						case 0:
+							return 8; // Error
+						case 1:
+							return 4; // Warning
+						case 2:
+							return 2; // Info
+						case 3:
+							return 1; // Hint
+						// LSP DiagnosticSeverity: 1=Error, 2=Warning, 3=Info, 4=Hint
+						// (only reached when caller passed pre-LSP form by mistake;
+						// Monaco bit values 4/2/1/8 already covered above for the
+						// vscode enum 1/2/3/0 - leaving the LSP form as a
+						// best-effort fallthrough.)
+						default:
+							return Sev > 0 && Sev <= 8 ? Sev : 4;
+					}
+				}
+				if (typeof Sev === "string") {
+					const Lower = Sev.toLowerCase();
+					if (Lower.startsWith("err")) return 8;
+					if (Lower.startsWith("warn")) return 4;
+					if (Lower.startsWith("info")) return 2;
+					if (Lower.startsWith("hint")) return 1;
+					return 4; // unknown label → warning by convention
+				}
+				return 4;
+			};
+			const Pos = (V: unknown): { line: number; character: number } => {
+				const O = (V ?? {}) as { line?: number; character?: number };
+				return {
+					line: typeof O.line === "number" ? O.line : 0,
+					character:
+						typeof O.character === "number" ? O.character : 0,
+				};
+			};
+			const NormaliseDiagnostic = (D: unknown): Record<string, unknown> => {
+				const Obj = (D ?? {}) as {
+					range?: { start?: unknown; end?: unknown };
+					severity?: unknown;
+					message?: unknown;
+					source?: unknown;
+					code?: unknown;
+					tags?: unknown;
+					relatedInformation?: unknown;
+				};
+				const Range = Obj.range ?? {};
+				const Start = Pos((Range as { start?: unknown }).start);
+				const End = Pos((Range as { end?: unknown }).end);
+				const Out: Record<string, unknown> = {
+					severity: NormaliseSeverity(Obj.severity),
+					message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
+					startLineNumber: Start.line,
+					startColumn: Start.character,
+					endLineNumber: End.line,
+					endColumn: End.character,
+				};
+				if (Obj.source !== undefined && Obj.source !== null) {
+					Out.source = String(Obj.source);
+				}
+				if (Obj.code !== undefined && Obj.code !== null) {
+					Out.code = Obj.code;
+				}
+				if (Array.isArray(Obj.tags)) {
+					Out.tags = Obj.tags.filter((T) => typeof T === "number");
+				}
+				if (Obj.relatedInformation !== undefined) {
+					Out.relatedInformation = Obj.relatedInformation;
+				}
+				return Out;
+			};
+			const NormaliseList = (List: unknown): Record<string, unknown>[] =>
+				(Array.isArray(List) ? List : []).map(NormaliseDiagnostic);
 			// LSP clients (json-language-features and others) call `.clear()`
 			// defensively on every doc-update cycle, which otherwise amplifies
 			// to hundreds of Diagnostic.Clear RPCs per second for owner
@@ -369,14 +461,14 @@ const CreateLanguagesNamespace = (
 					// language extension.
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
-						[...Store.entries()].map(([U, D]) => [U, D]),
+						[...Store.entries()].map(([U, D]) => [U, NormaliseList(D)]),
 					]).catch(() => {});
 				},
 				delete: (Uri: unknown) => {
 					Store.delete(UriKey(Uri));
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
-						[...Store.entries()].map(([U, D]) => [U, D]),
+						[...Store.entries()].map(([U, D]) => [U, NormaliseList(D)]),
 					]).catch(() => {});
 				},
 				clear: () => {
