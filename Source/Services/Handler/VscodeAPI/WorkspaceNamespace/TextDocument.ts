@@ -108,6 +108,93 @@ export const BuildOpenTextDocument =
 			FireOnLanguageActivation(Context, LanguageId);
 		}
 
+		// Pre-compute line-start offsets so positionAt/offsetAt/lineAt are
+		// O(log n) per call instead of re-scanning the buffer. npm's
+		// readScripts calls positionAt twice per script (start+end of every
+		// scripts entry) so a 30-script root package.json walks ~60 times.
+		const LineStarts: number[] = [0];
+		for (let I = 0; I < Text.length; I++) {
+			if (Text.charCodeAt(I) === 10 /* \n */) LineStarts.push(I + 1);
+		}
+		const Lines = Text.split("\n");
+		const ClampOffset = (Offset: number): number =>
+			Math.max(0, Math.min(Math.floor(Offset || 0), Text.length));
+		const PositionAt = (Offset: number): { line: number; character: number } => {
+			const Clamped = ClampOffset(Offset);
+			// Binary search for the line whose start is <= Clamped.
+			let Lo = 0;
+			let Hi = LineStarts.length - 1;
+			while (Lo < Hi) {
+				const Mid = (Lo + Hi + 1) >>> 1;
+				if (LineStarts[Mid]! <= Clamped) Lo = Mid;
+				else Hi = Mid - 1;
+			}
+			return { line: Lo, character: Clamped - LineStarts[Lo]! };
+		};
+		const OffsetAt = (Position: {
+			line?: number;
+			character?: number;
+		}): number => {
+			const L = Math.max(
+				0,
+				Math.min(Math.floor(Position?.line ?? 0), Lines.length - 1),
+			);
+			const C = Math.max(0, Math.floor(Position?.character ?? 0));
+			const LineLength = Lines[L]?.length ?? 0;
+			return ClampOffset((LineStarts[L] ?? 0) + Math.min(C, LineLength));
+		};
+		const LineAt = (LineOrPosition: number | { line?: number }) => {
+			const L =
+				typeof LineOrPosition === "number"
+					? LineOrPosition
+					: (LineOrPosition?.line ?? 0);
+			const Clamped = Math.max(0, Math.min(Math.floor(L), Lines.length - 1));
+			const Content = Lines[Clamped] ?? "";
+			const Start = { line: Clamped, character: 0 };
+			const End = { line: Clamped, character: Content.length };
+			return {
+				lineNumber: Clamped,
+				text: Content,
+				range: { start: Start, end: End },
+				rangeIncludingLineBreak: {
+					start: Start,
+					end:
+						Clamped < Lines.length - 1
+							? { line: Clamped + 1, character: 0 }
+							: End,
+				},
+				firstNonWhitespaceCharacterIndex: Content.search(/\S/) >>> 0,
+				isEmptyOrWhitespace: Content.trim().length === 0,
+			};
+		};
+		const ValidateRange = (Range: any) => Range;
+		const ValidatePosition = (Position: any) => Position;
+		const GetWordRangeAtPosition = (
+			Position: { line?: number; character?: number },
+			Regex?: RegExp,
+		) => {
+			const L = Math.max(
+				0,
+				Math.min(Math.floor(Position?.line ?? 0), Lines.length - 1),
+			);
+			const Line = Lines[L] ?? "";
+			const C = Math.max(0, Math.floor(Position?.character ?? 0));
+			const Pattern = Regex ?? /[A-Za-z_$][\w$]*/g;
+			Pattern.lastIndex = 0;
+			let Match: RegExpExecArray | null;
+			while ((Match = Pattern.exec(Line)) !== null) {
+				const Start = Match.index;
+				const End = Start + Match[0].length;
+				if (C >= Start && C <= End) {
+					return {
+						start: { line: L, character: Start },
+						end: { line: L, character: End },
+					};
+				}
+				if (Match.index === Pattern.lastIndex) Pattern.lastIndex++;
+			}
+			return undefined;
+		};
 		return {
 			uri: UriOrPath,
 			fileName: UriString,
@@ -117,8 +204,27 @@ export const BuildOpenTextDocument =
 			isUntitled: false,
 			version: 1,
 			eol: 1,
-			lineCount: Text.split("\n").length,
-			getText: () => Text,
+			lineCount: Lines.length,
+			getText: (Range?: {
+				start?: { line?: number; character?: number };
+				end?: { line?: number; character?: number };
+			}) => {
+				if (!Range) return Text;
+				const Start = OffsetAt(Range.start ?? { line: 0, character: 0 });
+				const End = OffsetAt(
+					Range.end ?? {
+						line: Lines.length - 1,
+						character: Lines[Lines.length - 1]?.length ?? 0,
+					},
+				);
+				return Text.slice(Math.min(Start, End), Math.max(Start, End));
+			},
+			positionAt: PositionAt,
+			offsetAt: OffsetAt,
+			lineAt: LineAt,
+			getWordRangeAtPosition: GetWordRangeAtPosition,
+			validateRange: ValidateRange,
+			validatePosition: ValidatePosition,
 			save: async () => true,
 		};
 	};

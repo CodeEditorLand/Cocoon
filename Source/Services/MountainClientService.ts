@@ -676,7 +676,7 @@ message RPCDataPayload {
 				const IsBenignNotFound =
 					(IsFileSystemMethod &&
 						(RpcCode === -32004 ||
-							/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+							/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
 								RpcMessage,
 							))) ||
 					IsFileWatcherBenign;
@@ -759,7 +759,7 @@ message RPCDataPayload {
 			const IsBenignNotFound =
 				(IsCatchBenignFsMethod &&
 					(ErrorCode === -32004 ||
-						/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+						/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
 							ErrorMessage,
 						))) ||
 				IsCatchBenignFileWatcher;

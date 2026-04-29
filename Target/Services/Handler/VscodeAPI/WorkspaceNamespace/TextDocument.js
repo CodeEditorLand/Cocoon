@@ -654,6 +654,75 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
   if (LanguageId !== "plaintext") {
     FireOnLanguageActivation(Context, LanguageId);
   }
+  const LineStarts = [0];
+  for (let I = 0; I < Text.length; I++) {
+    if (Text.charCodeAt(I) === 10) LineStarts.push(I + 1);
+  }
+  const Lines = Text.split("\n");
+  const ClampOffset = /* @__PURE__ */ __name((Offset) => Math.max(0, Math.min(Math.floor(Offset || 0), Text.length)), "ClampOffset");
+  const PositionAt = /* @__PURE__ */ __name((Offset) => {
+    const Clamped = ClampOffset(Offset);
+    let Lo = 0;
+    let Hi = LineStarts.length - 1;
+    while (Lo < Hi) {
+      const Mid = Lo + Hi + 1 >>> 1;
+      if (LineStarts[Mid] <= Clamped) Lo = Mid;
+      else Hi = Mid - 1;
+    }
+    return { line: Lo, character: Clamped - LineStarts[Lo] };
+  }, "PositionAt");
+  const OffsetAt = /* @__PURE__ */ __name((Position) => {
+    const L = Math.max(
+      0,
+      Math.min(Math.floor(Position?.line ?? 0), Lines.length - 1)
+    );
+    const C = Math.max(0, Math.floor(Position?.character ?? 0));
+    const LineLength = Lines[L]?.length ?? 0;
+    return ClampOffset((LineStarts[L] ?? 0) + Math.min(C, LineLength));
+  }, "OffsetAt");
+  const LineAt = /* @__PURE__ */ __name((LineOrPosition) => {
+    const L = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition?.line ?? 0;
+    const Clamped = Math.max(0, Math.min(Math.floor(L), Lines.length - 1));
+    const Content = Lines[Clamped] ?? "";
+    const Start = { line: Clamped, character: 0 };
+    const End = { line: Clamped, character: Content.length };
+    return {
+      lineNumber: Clamped,
+      text: Content,
+      range: { start: Start, end: End },
+      rangeIncludingLineBreak: {
+        start: Start,
+        end: Clamped < Lines.length - 1 ? { line: Clamped + 1, character: 0 } : End
+      },
+      firstNonWhitespaceCharacterIndex: Content.search(/\S/) >>> 0,
+      isEmptyOrWhitespace: Content.trim().length === 0
+    };
+  }, "LineAt");
+  const ValidateRange = /* @__PURE__ */ __name((Range) => Range, "ValidateRange");
+  const ValidatePosition = /* @__PURE__ */ __name((Position) => Position, "ValidatePosition");
+  const GetWordRangeAtPosition = /* @__PURE__ */ __name((Position, Regex) => {
+    const L = Math.max(
+      0,
+      Math.min(Math.floor(Position?.line ?? 0), Lines.length - 1)
+    );
+    const Line = Lines[L] ?? "";
+    const C = Math.max(0, Math.floor(Position?.character ?? 0));
+    const Pattern = Regex ?? /[A-Za-z_$][\w$]*/g;
+    Pattern.lastIndex = 0;
+    let Match;
+    while ((Match = Pattern.exec(Line)) !== null) {
+      const Start = Match.index;
+      const End = Start + Match[0].length;
+      if (C >= Start && C <= End) {
+        return {
+          start: { line: L, character: Start },
+          end: { line: L, character: End }
+        };
+      }
+      if (Match.index === Pattern.lastIndex) Pattern.lastIndex++;
+    }
+    return void 0;
+  }, "GetWordRangeAtPosition");
   return {
     uri: UriOrPath,
     fileName: UriString,
@@ -663,8 +732,24 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
     isUntitled: false,
     version: 1,
     eol: 1,
-    lineCount: Text.split("\n").length,
-    getText: /* @__PURE__ */ __name(() => Text, "getText"),
+    lineCount: Lines.length,
+    getText: /* @__PURE__ */ __name((Range) => {
+      if (!Range) return Text;
+      const Start = OffsetAt(Range.start ?? { line: 0, character: 0 });
+      const End = OffsetAt(
+        Range.end ?? {
+          line: Lines.length - 1,
+          character: Lines[Lines.length - 1]?.length ?? 0
+        }
+      );
+      return Text.slice(Math.min(Start, End), Math.max(Start, End));
+    }, "getText"),
+    positionAt: PositionAt,
+    offsetAt: OffsetAt,
+    lineAt: LineAt,
+    getWordRangeAtPosition: GetWordRangeAtPosition,
+    validateRange: ValidateRange,
+    validatePosition: ValidatePosition,
     save: /* @__PURE__ */ __name(async () => true, "save")
   };
 }, "BuildOpenTextDocument");

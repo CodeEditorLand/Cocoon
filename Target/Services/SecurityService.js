@@ -553,7 +553,7 @@ message RPCDataPayload {
             const IsFileWatcherBenign = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
               RpcMessage
             );
-            const IsBenignNotFound = IsFileSystemMethod && (RpcCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+            const IsBenignNotFound = IsFileSystemMethod && (RpcCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
               RpcMessage
             )) || IsFileWatcherBenign;
             if (!IsBenignNotFound) {
@@ -592,7 +592,7 @@ message RPCDataPayload {
           const IsCatchBenignFileWatcher = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
             ErrorMessage
           );
-          const IsBenignNotFound = IsCatchBenignFsMethod && (ErrorCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+          const IsBenignNotFound = IsCatchBenignFsMethod && (ErrorCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
             ErrorMessage
           )) || IsCatchBenignFileWatcher;
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);

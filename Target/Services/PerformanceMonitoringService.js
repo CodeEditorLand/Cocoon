@@ -559,7 +559,7 @@ message RPCDataPayload {
             const IsFileWatcherBenign = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
               RpcMessage
             );
-            const IsBenignNotFound = IsFileSystemMethod && (RpcCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+            const IsBenignNotFound = IsFileSystemMethod && (RpcCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
               RpcMessage
             )) || IsFileWatcherBenign;
             if (!IsBenignNotFound) {
@@ -598,7 +598,7 @@ message RPCDataPayload {
           const IsCatchBenignFileWatcher = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
             ErrorMessage
           );
-          const IsBenignNotFound = IsCatchBenignFsMethod && (ErrorCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+          const IsBenignNotFound = IsCatchBenignFsMethod && (ErrorCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
             ErrorMessage
           )) || IsCatchBenignFileWatcher;
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
@@ -30041,7 +30041,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T02:02:30Z"
+      generatedAt: "2026-04-29T02:38:08Z"
     };
   }
 });
@@ -33879,7 +33879,7 @@ var init_FileSystemNamespace = __esm({
           const Message = Err instanceof Error ? Err.message : String(Err);
           const Code = Err?.code;
           const TraceFsRead = process.env["Trace"]?.includes("fs-read");
-          if (Code === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+          if (Code === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(
             Message
           )) {
             if (TraceFsRead) {
@@ -34752,6 +34752,75 @@ var init_TextDocument = __esm({
       if (LanguageId !== "plaintext") {
         FireOnLanguageActivation(Context21, LanguageId);
       }
+      const LineStarts = [0];
+      for (let I = 0; I < Text.length; I++) {
+        if (Text.charCodeAt(I) === 10) LineStarts.push(I + 1);
+      }
+      const Lines = Text.split("\n");
+      const ClampOffset = /* @__PURE__ */ __name((Offset) => Math.max(0, Math.min(Math.floor(Offset || 0), Text.length)), "ClampOffset");
+      const PositionAt = /* @__PURE__ */ __name((Offset) => {
+        const Clamped = ClampOffset(Offset);
+        let Lo = 0;
+        let Hi = LineStarts.length - 1;
+        while (Lo < Hi) {
+          const Mid = Lo + Hi + 1 >>> 1;
+          if (LineStarts[Mid] <= Clamped) Lo = Mid;
+          else Hi = Mid - 1;
+        }
+        return { line: Lo, character: Clamped - LineStarts[Lo] };
+      }, "PositionAt");
+      const OffsetAt = /* @__PURE__ */ __name((Position3) => {
+        const L = Math.max(
+          0,
+          Math.min(Math.floor(Position3?.line ?? 0), Lines.length - 1)
+        );
+        const C = Math.max(0, Math.floor(Position3?.character ?? 0));
+        const LineLength = Lines[L]?.length ?? 0;
+        return ClampOffset((LineStarts[L] ?? 0) + Math.min(C, LineLength));
+      }, "OffsetAt");
+      const LineAt = /* @__PURE__ */ __name((LineOrPosition) => {
+        const L = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition?.line ?? 0;
+        const Clamped = Math.max(0, Math.min(Math.floor(L), Lines.length - 1));
+        const Content = Lines[Clamped] ?? "";
+        const Start = { line: Clamped, character: 0 };
+        const End = { line: Clamped, character: Content.length };
+        return {
+          lineNumber: Clamped,
+          text: Content,
+          range: { start: Start, end: End },
+          rangeIncludingLineBreak: {
+            start: Start,
+            end: Clamped < Lines.length - 1 ? { line: Clamped + 1, character: 0 } : End
+          },
+          firstNonWhitespaceCharacterIndex: Content.search(/\S/) >>> 0,
+          isEmptyOrWhitespace: Content.trim().length === 0
+        };
+      }, "LineAt");
+      const ValidateRange = /* @__PURE__ */ __name((Range3) => Range3, "ValidateRange");
+      const ValidatePosition = /* @__PURE__ */ __name((Position3) => Position3, "ValidatePosition");
+      const GetWordRangeAtPosition = /* @__PURE__ */ __name((Position3, Regex) => {
+        const L = Math.max(
+          0,
+          Math.min(Math.floor(Position3?.line ?? 0), Lines.length - 1)
+        );
+        const Line = Lines[L] ?? "";
+        const C = Math.max(0, Math.floor(Position3?.character ?? 0));
+        const Pattern = Regex ?? /[A-Za-z_$][\w$]*/g;
+        Pattern.lastIndex = 0;
+        let Match;
+        while ((Match = Pattern.exec(Line)) !== null) {
+          const Start = Match.index;
+          const End = Start + Match[0].length;
+          if (C >= Start && C <= End) {
+            return {
+              start: { line: L, character: Start },
+              end: { line: L, character: End }
+            };
+          }
+          if (Match.index === Pattern.lastIndex) Pattern.lastIndex++;
+        }
+        return void 0;
+      }, "GetWordRangeAtPosition");
       return {
         uri: UriOrPath,
         fileName: UriString,
@@ -34761,8 +34830,24 @@ var init_TextDocument = __esm({
         isUntitled: false,
         version: 1,
         eol: 1,
-        lineCount: Text.split("\n").length,
-        getText: /* @__PURE__ */ __name(() => Text, "getText"),
+        lineCount: Lines.length,
+        getText: /* @__PURE__ */ __name((Range3) => {
+          if (!Range3) return Text;
+          const Start = OffsetAt(Range3.start ?? { line: 0, character: 0 });
+          const End = OffsetAt(
+            Range3.end ?? {
+              line: Lines.length - 1,
+              character: Lines[Lines.length - 1]?.length ?? 0
+            }
+          );
+          return Text.slice(Math.min(Start, End), Math.max(Start, End));
+        }, "getText"),
+        positionAt: PositionAt,
+        offsetAt: OffsetAt,
+        lineAt: LineAt,
+        getWordRangeAtPosition: GetWordRangeAtPosition,
+        validateRange: ValidateRange,
+        validatePosition: ValidatePosition,
         save: /* @__PURE__ */ __name(async () => true, "save")
       };
     }, "BuildOpenTextDocument");
