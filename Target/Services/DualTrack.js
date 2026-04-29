@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-29T01:17:19Z"
+  generatedAt: "2026-04-29T02:02:30Z"
 };
 
 // Source/Services/DualTrack.ts

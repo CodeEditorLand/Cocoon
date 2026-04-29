@@ -594,6 +594,26 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
   if (Cached !== void 0) {
     Text = Cached;
   } else {
+    const DecodeRaw = /* @__PURE__ */ __name((Raw) => {
+      if (typeof Raw === "string") return Raw;
+      if (Array.isArray(Raw)) {
+        return Buffer.from(Raw).toString("utf8");
+      }
+      if (Raw instanceof Uint8Array) {
+        return Buffer.from(Raw).toString("utf8");
+      }
+      if (Raw && typeof Raw === "object") {
+        const Maybe = Raw.content;
+        if (Array.isArray(Maybe)) {
+          return Buffer.from(Maybe).toString("utf8");
+        }
+        if (Maybe instanceof Uint8Array) {
+          return Buffer.from(Maybe).toString("utf8");
+        }
+        if (typeof Maybe === "string") return Maybe;
+      }
+      return Raw == null ? "" : String(Raw);
+    }, "DecodeRaw");
     const Decision = Route(UriOrPath);
     if (Decision === "native") {
       const Path = ExtractFsPath(UriOrPath);
@@ -610,9 +630,11 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
           Text = "";
         }
       } else {
-        Text = await Call(Context, "FileSystem.ReadFile", [
-          UriString
-        ]) ?? "";
+        Text = DecodeRaw(
+          await Call(Context, "FileSystem.ReadFile", [
+            UriString
+          ])
+        );
       }
     } else {
       if (process.env["Trace"]) {
@@ -621,9 +643,11 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
 `
         );
       }
-      Text = await Call(Context, "FileSystem.ReadFile", [
-        UriString
-      ]) ?? "";
+      Text = DecodeRaw(
+        await Call(Context, "FileSystem.ReadFile", [
+          UriString
+        ])
+      );
     }
   }
   const LanguageId = DeriveLanguageIdFromUri(UriString);

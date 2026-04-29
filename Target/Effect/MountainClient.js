@@ -519,9 +519,12 @@ message RPCDataPayload {
         const RpcMessage = String(rpcError.Message ?? "");
         const RpcCode = Number(rpcError.Code ?? 0);
         const IsFileSystemMethod = method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory";
+        const IsFileWatcherBenign = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
+          RpcMessage
+        );
         const IsBenignNotFound = IsFileSystemMethod && (RpcCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
           RpcMessage
-        ));
+        )) || IsFileWatcherBenign;
         if (!IsBenignNotFound) {
           this.circuitBreakerFailureCount++;
           this.UpdateCircuitBreaker(
@@ -551,9 +554,16 @@ message RPCDataPayload {
       const duration = Date.now() - startTime;
       this.errorCount++;
       const ErrorMessage = error instanceof Error ? error.message : String(error);
-      const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+      const ErrorCode = Number(
+        error?.code ?? 0
+      );
+      const IsCatchBenignFsMethod = method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory";
+      const IsCatchBenignFileWatcher = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
         ErrorMessage
       );
+      const IsBenignNotFound = IsCatchBenignFsMethod && (ErrorCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+        ErrorMessage
+      )) || IsCatchBenignFileWatcher;
       const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
       const TraceMountainClient = process.env["Trace"]?.includes(
         "mountain-client-verbose"

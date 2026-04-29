@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-29T01:17:19Z"
+  generatedAt: "2026-04-29T02:02:30Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -12994,8 +12994,9 @@ var BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
       return Buffer.from(String(Raw2), "utf8");
     } catch (Err) {
       const Message = Err instanceof Error ? Err.message : String(Err);
+      const Code = Err?.code;
       const TraceFsRead = process.env["Trace"]?.includes("fs-read");
-      if (/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+      if (Code === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
         Message
       )) {
         if (TraceFsRead) {
@@ -13761,6 +13762,26 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
   if (Cached !== void 0) {
     Text = Cached;
   } else {
+    const DecodeRaw = /* @__PURE__ */ __name((Raw2) => {
+      if (typeof Raw2 === "string") return Raw2;
+      if (Array.isArray(Raw2)) {
+        return Buffer.from(Raw2).toString("utf8");
+      }
+      if (Raw2 instanceof Uint8Array) {
+        return Buffer.from(Raw2).toString("utf8");
+      }
+      if (Raw2 && typeof Raw2 === "object") {
+        const Maybe = Raw2.content;
+        if (Array.isArray(Maybe)) {
+          return Buffer.from(Maybe).toString("utf8");
+        }
+        if (Maybe instanceof Uint8Array) {
+          return Buffer.from(Maybe).toString("utf8");
+        }
+        if (typeof Maybe === "string") return Maybe;
+      }
+      return Raw2 == null ? "" : String(Raw2);
+    }, "DecodeRaw");
     const Decision = Route(UriOrPath);
     if (Decision === "native") {
       const Path = ExtractFsPath(UriOrPath);
@@ -13777,9 +13798,11 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
           Text = "";
         }
       } else {
-        Text = await Call(Context, "FileSystem.ReadFile", [
-          UriString
-        ]) ?? "";
+        Text = DecodeRaw(
+          await Call(Context, "FileSystem.ReadFile", [
+            UriString
+          ])
+        );
       }
     } else {
       if (process.env["Trace"]) {
@@ -13788,9 +13811,11 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
 `
         );
       }
-      Text = await Call(Context, "FileSystem.ReadFile", [
-        UriString
-      ]) ?? "";
+      Text = DecodeRaw(
+        await Call(Context, "FileSystem.ReadFile", [
+          UriString
+        ])
+      );
     }
   }
   const LanguageId = DeriveLanguageIdFromUri(UriString);

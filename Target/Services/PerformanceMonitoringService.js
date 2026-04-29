@@ -556,9 +556,12 @@ message RPCDataPayload {
             const RpcMessage = String(rpcError.Message ?? "");
             const RpcCode = Number(rpcError.Code ?? 0);
             const IsFileSystemMethod = method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory";
+            const IsFileWatcherBenign = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
+              RpcMessage
+            );
             const IsBenignNotFound = IsFileSystemMethod && (RpcCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
               RpcMessage
-            ));
+            )) || IsFileWatcherBenign;
             if (!IsBenignNotFound) {
               this.circuitBreakerFailureCount++;
               this.UpdateCircuitBreaker(
@@ -588,9 +591,16 @@ message RPCDataPayload {
           const duration = Date.now() - startTime;
           this.errorCount++;
           const ErrorMessage = error instanceof Error ? error.message : String(error);
-          const IsBenignNotFound = (method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory") && /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+          const ErrorCode = Number(
+            error?.code ?? 0
+          );
+          const IsCatchBenignFsMethod = method === "FileSystem.ReadFile" || method === "FileSystem.Stat" || method === "FileSystem.ReadDirectory";
+          const IsCatchBenignFileWatcher = method === "FileWatcher.Register" && /no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
             ErrorMessage
           );
+          const IsBenignNotFound = IsCatchBenignFsMethod && (ErrorCode === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+            ErrorMessage
+          )) || IsCatchBenignFileWatcher;
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
           const TraceMountainClient = process.env["Trace"]?.includes(
             "mountain-client-verbose"
@@ -30031,7 +30041,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T01:17:19Z"
+      generatedAt: "2026-04-29T02:02:30Z"
     };
   }
 });
@@ -33867,8 +33877,9 @@ var init_FileSystemNamespace = __esm({
           return Buffer.from(String(Raw2), "utf8");
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
+          const Code = Err?.code;
           const TraceFsRead = process.env["Trace"]?.includes("fs-read");
-          if (/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+          if (Code === -32004 || /resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
             Message
           )) {
             if (TraceFsRead) {
@@ -34681,6 +34692,26 @@ var init_TextDocument = __esm({
       if (Cached !== void 0) {
         Text = Cached;
       } else {
+        const DecodeRaw = /* @__PURE__ */ __name((Raw2) => {
+          if (typeof Raw2 === "string") return Raw2;
+          if (Array.isArray(Raw2)) {
+            return Buffer.from(Raw2).toString("utf8");
+          }
+          if (Raw2 instanceof Uint8Array) {
+            return Buffer.from(Raw2).toString("utf8");
+          }
+          if (Raw2 && typeof Raw2 === "object") {
+            const Maybe = Raw2.content;
+            if (Array.isArray(Maybe)) {
+              return Buffer.from(Maybe).toString("utf8");
+            }
+            if (Maybe instanceof Uint8Array) {
+              return Buffer.from(Maybe).toString("utf8");
+            }
+            if (typeof Maybe === "string") return Maybe;
+          }
+          return Raw2 == null ? "" : String(Raw2);
+        }, "DecodeRaw");
         const Decision = Route(UriOrPath);
         if (Decision === "native") {
           const Path = ExtractFsPath(UriOrPath);
@@ -34697,9 +34728,11 @@ var init_TextDocument = __esm({
               Text = "";
             }
           } else {
-            Text = await Call(Context21, "FileSystem.ReadFile", [
-              UriString
-            ]) ?? "";
+            Text = DecodeRaw(
+              await Call(Context21, "FileSystem.ReadFile", [
+                UriString
+              ])
+            );
           }
         } else {
           if (process.env["Trace"]) {
@@ -34708,9 +34741,11 @@ var init_TextDocument = __esm({
 `
             );
           }
-          Text = await Call(Context21, "FileSystem.ReadFile", [
-            UriString
-          ]) ?? "";
+          Text = DecodeRaw(
+            await Call(Context21, "FileSystem.ReadFile", [
+              UriString
+            ])
+          );
         }
       }
       const LanguageId = DeriveLanguageIdFromUri(UriString);

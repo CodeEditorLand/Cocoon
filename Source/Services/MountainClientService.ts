@@ -661,14 +661,25 @@ message RPCDataPayload {
 					method === "FileSystem.ReadFile" ||
 					method === "FileSystem.Stat" ||
 					method === "FileSystem.ReadDirectory";
+				// FileWatcher.Register on a path that doesn't exist yet
+				// (extension probing for an optional config dir) is a normal
+				// case in stock VS Code; the watch silently no-ops until the
+				// dir appears. Counting it against the breaker trips it
+				// during boot.
+				const IsFileWatcherBenign =
+					method === "FileWatcher.Register" &&
+					/no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
+						RpcMessage,
+					);
 				// Mountain stamps -32004 for benign 404s; the regex is a
 				// belt-and-suspenders fallback for older Mountain builds.
 				const IsBenignNotFound =
-					IsFileSystemMethod &&
-					(RpcCode === -32004 ||
-						/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
-							RpcMessage,
-						));
+					(IsFileSystemMethod &&
+						(RpcCode === -32004 ||
+							/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+								RpcMessage,
+							))) ||
+					IsFileWatcherBenign;
 				if (!IsBenignNotFound) {
 					this.circuitBreakerFailureCount++;
 					this.UpdateCircuitBreaker(
@@ -740,12 +751,18 @@ message RPCDataPayload {
 				method === "FileSystem.ReadFile" ||
 				method === "FileSystem.Stat" ||
 				method === "FileSystem.ReadDirectory";
+			const IsCatchBenignFileWatcher =
+				method === "FileWatcher.Register" &&
+				/no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
+					ErrorMessage,
+				);
 			const IsBenignNotFound =
-				IsCatchBenignFsMethod &&
-				(ErrorCode === -32004 ||
-					/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
-						ErrorMessage,
-					));
+				(IsCatchBenignFsMethod &&
+					(ErrorCode === -32004 ||
+						/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2/i.test(
+							ErrorMessage,
+						))) ||
+				IsCatchBenignFileWatcher;
 			// `Command.Execute` rejections for extension-registered commands
 			// that were never registered are equally benign - the
 			// `CommandsNamespace.executeCommand` catch converts them to
