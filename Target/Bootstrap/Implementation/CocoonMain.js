@@ -29796,7 +29796,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T03:26:08Z"
+      generatedAt: "2026-04-29T03:54:25Z"
     };
   }
 });
@@ -40939,5 +40939,26 @@ var mainEffect = mainEffectWithServices.pipe(
   Effect23.provide(EffectServices.composeAppLayer()),
   Effect23.scoped
 );
+var ParentPid = process.ppid;
+if (ParentPid && ParentPid > 1) {
+  const ParentWatchInterval = setInterval(() => {
+    try {
+      process.kill(ParentPid, 0);
+    } catch (Err) {
+      if (Err?.code === "ESRCH") {
+        clearInterval(ParentWatchInterval);
+        try {
+          process.stderr.write(
+            `[CocoonWatchdog] Parent PID ${ParentPid} gone; exiting to release gRPC port.
+`
+          );
+        } catch {
+        }
+        process.exit(130);
+      }
+    }
+  }, 2e3);
+  ParentWatchInterval.unref?.();
+}
 NodeRuntime.runMain(mainEffect);
 //# sourceMappingURL=CocoonMain.js.map

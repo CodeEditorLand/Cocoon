@@ -237,6 +237,56 @@ const mainEffect = mainEffectWithServices.pipe(
 );
 
 // ============================================================================
+// PARENT-PID WATCHDOG
+// ============================================================================
+//
+// Cocoon is spawned by Mountain (the Tauri Rust app). When Mountain exits
+// gracefully via `RunEvent::ExitRequested`, Mountain's `HardKillCocoon`
+// SIGKILLs Cocoon. But when Mountain crashes, segfaults, or is force-quit
+// (Activity Monitor, `kill -9 <mountain-pid>`), Cocoon orphans: keeps
+// running, holds port 50052, prevents the next Mountain boot from binding
+// the gRPC server. The next boot's `[CocoonSweep] PID … survived SIGTERM;
+// sending SIGKILL` line is the band-aid - not a clean architecture.
+//
+// Self-exit on parent death closes the loop. Poll the parent PID every 2 s
+// (cheap: signal-0 kill is a single syscall, doesn't actually signal).
+// When `kill(parent, 0)` returns ESRCH, the parent is gone - exit
+// immediately so the OS reaps Cocoon and frees the port for the next
+// Mountain boot.
+const ParentPid = process.ppid;
+if (ParentPid && ParentPid > 1) {
+	const ParentWatchInterval = setInterval(() => {
+		try {
+			// `kill(pid, 0)` doesn't send a signal - it only checks
+			// permission and existence. Throws `ESRCH` if PID is gone,
+			// `EPERM` if we lost permission (rare, treat as alive).
+			process.kill(ParentPid, 0);
+		} catch (Err: any) {
+			if (Err?.code === "ESRCH") {
+				clearInterval(ParentWatchInterval);
+				try {
+					process.stderr.write(
+						`[CocoonWatchdog] Parent PID ${ParentPid} gone; exiting to release gRPC port.\n`,
+					);
+				} catch {}
+				// Exit code 130 (Ctrl+C convention) so the parent's
+				// $shutdown retry loop, if any, doesn't try to revive us.
+				process.exit(130);
+			}
+			// EPERM and other errors: treat parent as alive, keep
+			// polling. The kill(0) on a same-uid parent is permitted on
+			// every POSIX platform Land targets (macOS / Linux); EPERM
+			// here would mean the parent dropped privileges, which it
+			// doesn't.
+		}
+	}, 2000);
+	// `unref()` lets the interval timer NOT keep the event loop alive on
+	// its own - if the gRPC server closes, Cocoon should exit even if
+	// the watchdog hasn't fired yet.
+	ParentWatchInterval.unref?.();
+}
+
+// ============================================================================
 // MAIN ENTRY POINT
 // ============================================================================
 
