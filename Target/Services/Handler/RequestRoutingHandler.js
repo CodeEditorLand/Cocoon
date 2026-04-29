@@ -2738,7 +2738,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T18:44:06Z"
+      generatedAt: "2026-04-29T21:37:36Z"
     };
   }
 });
@@ -24294,10 +24294,30 @@ var init_WrapNamespaceWithHeuristics = __esm({
     BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
       const SpanName = `vscode.${NamespaceName}.${Property}`;
       const Program = Effect8.gen(function* () {
-        yield* Effect8.sync(
-          () => RecordGap(NamespaceName, Property, Heuristic.Kind)
-        );
-        return Heuristic.Produce(...Arguments);
+        yield* Effect8.sync(() => {
+          try {
+            RecordGap(NamespaceName, Property, Heuristic.Kind);
+          } catch {
+          }
+        });
+        try {
+          return Heuristic.Produce(...Arguments);
+        } catch {
+          switch (Heuristic.Kind) {
+            case "trust":
+              return true;
+            case "event":
+              return NoopDisposable;
+            case "register":
+              return NoopDisposable;
+            case "bool-check":
+              return false;
+            case "factory":
+            case "default":
+            default:
+              return void 0;
+          }
+        }
       }).pipe(
         Effect8.withSpan(SpanName, {
           attributes: {
@@ -24307,7 +24327,21 @@ var init_WrapNamespaceWithHeuristics = __esm({
           }
         })
       );
-      return Heuristic.Sync ? Effect8.runSync(Program) : Effect8.runPromise(Program);
+      try {
+        return Heuristic.Sync ? Effect8.runSync(Program) : Effect8.runPromise(Program);
+      } catch {
+        switch (Heuristic.Kind) {
+          case "trust":
+            return Heuristic.Sync ? true : Promise.resolve(true);
+          case "event":
+          case "register":
+            return NoopDisposable;
+          case "bool-check":
+            return Heuristic.Sync ? false : Promise.resolve(false);
+          default:
+            return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+        }
+      }
     }, "BuildHeuristicMethod");
     WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
       get(Target, Property) {
@@ -28275,6 +28309,7 @@ function ToUri(Input) {
   if (Input == null) return void 0;
   if (Input instanceof URI) return Input;
   if (typeof Input === "string") {
+    if (Input.length === 0) return void 0;
     try {
       if (Input.startsWith("file:") || Input.includes("://")) {
         return URI.parse(Input);
@@ -30065,6 +30100,7 @@ var init_Index = __esm({
       if (!Array.isArray(Raw2)) return [];
       return Raw2.map((Item) => {
         if (typeof Item === "string") {
+          if (Item.length === 0) return Item;
           try {
             return URI.parse(Item);
           } catch {
@@ -30072,8 +30108,11 @@ var init_Index = __esm({
           }
         }
         if (Item && typeof Item === "object") {
-          const Hydrated = ToUri(Item);
-          if (Hydrated) return Hydrated;
+          try {
+            const Hydrated = ToUri(Item);
+            if (Hydrated) return Hydrated;
+          } catch {
+          }
         }
         return Item;
       });
@@ -30664,15 +30703,32 @@ var init_LanguagesNamespace = __esm({
       return Rendered;
     }, "UriKey");
     RegisterProvider = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry, MethodName, Selector, Provider) => {
-      const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-      const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+      if (Provider == null || typeof Provider !== "object") {
+        return { dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") };
+      }
+      let Handle;
+      try {
+        Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+      } catch {
+        return { dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") };
+      }
+      const Language2 = typeof Selector === "string" ? Selector : typeof Selector?.language === "string" ? Selector.language : "*";
       Context21.SendToMountain(MethodName, {
         handle: Handle,
         languageSelector: Language2,
         extensionId: ""
       }).catch(() => {
       });
-      return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          try {
+            LanguageProviderRegistry.Unregister(Handle);
+          } catch {
+          }
+        }, "dispose")
+      };
     }, "RegisterProvider");
     CreateLanguagesNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => WrapLanguagesNamespace_default({
       registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
@@ -30961,7 +31017,17 @@ var init_LanguagesNamespace = __esm({
           }
           return Out;
         }, "NormaliseDiagnostic");
-        const NormaliseList = /* @__PURE__ */ __name((List) => (Array.isArray(List) ? List : []).map(NormaliseDiagnostic), "NormaliseList");
+        const NormaliseList = /* @__PURE__ */ __name((List) => {
+          if (!Array.isArray(List)) return [];
+          const Result = [];
+          for (const Item of List) {
+            try {
+              Result.push(NormaliseDiagnostic(Item));
+            } catch {
+            }
+          }
+          return Result;
+        }, "NormaliseList");
         let Disposed = false;
         return {
           name: Owner,
@@ -30999,7 +31065,10 @@ var init_LanguagesNamespace = __esm({
           forEach: /* @__PURE__ */ __name((Callback) => {
             const Self = null;
             for (const [Uri2, Diagnostics] of Store) {
-              Callback(Uri2, Diagnostics, Self);
+              try {
+                Callback(Uri2, Diagnostics, Self);
+              } catch {
+              }
             }
           }, "forEach"),
           get: /* @__PURE__ */ __name((Uri2) => Store.get(UriKey(Uri2)) ?? [], "get"),
@@ -31239,7 +31308,7 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, SafeExtensionList, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
@@ -31435,26 +31504,48 @@ var init_ExtensionsNamespace = __esm({
       };
     }, "ToExtensionObject");
     IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
+    SafeExtensionList = /* @__PURE__ */ __name((Context21) => {
+      const Out = [];
+      for (const [Id, Raw2] of Context21.ExtensionRegistry.entries()) {
+        if (!IsExtensionKey(Id)) continue;
+        try {
+          Out.push(ToExtensionObject(Context21, Id, Raw2));
+        } catch {
+        }
+      }
+      return Out;
+    }, "SafeExtensionList");
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context21) => WrapExtensionsNamespace_default({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
         const Raw2 = Context21.ExtensionRegistry.get(Identifier);
-        return Raw2 ? ToExtensionObject(Context21, Identifier, Raw2) : void 0;
+        if (!Raw2) return void 0;
+        try {
+          return ToExtensionObject(Context21, Identifier, Raw2);
+        } catch {
+          return void 0;
+        }
       }, "getExtension"),
       get all() {
-        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context21, Id, Raw2));
+        return SafeExtensionList(Context21);
       },
       // Some extensions (html-language-features) iterate
       // `extensions.allAcrossExtensionHosts`; return the same array as `all`
       // so `for (...of...)` does not throw on `is not iterable`.
       get allAcrossExtensionHosts() {
-        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context21, Id, Raw2));
+        return SafeExtensionList(Context21);
       },
       onDidChange: /* @__PURE__ */ __name((Listener) => {
-        Context21.Emitter.on("deltaExtensions", Listener);
+        const SafeListener = /* @__PURE__ */ __name(() => {
+          try {
+            Listener();
+          } catch {
+          }
+        }, "SafeListener");
+        Context21.Emitter.on("deltaExtensions", SafeListener);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.Emitter.off("deltaExtensions", Listener);
+            Context21.Emitter.off("deltaExtensions", SafeListener);
           }, "dispose")
         };
       }, "onDidChange")
@@ -34540,10 +34631,20 @@ var init_NotificationHandler = __esm({
             );
           } catch {
           }
-          Emitter3.emit("unknownNotification", {
-            method: Method,
-            parameters: Parameters
-          });
+          try {
+            Emitter3.emit("unknownNotification", {
+              method: Method,
+              parameters: Parameters
+            });
+          } catch (EmitError) {
+            try {
+              process.stdout.write(
+                `[NotificationHandler] unknownNotification subscriber threw for ${Method}: ${EmitError?.message ?? String(EmitError)}
+`
+              );
+            } catch {
+            }
+          }
       }
     }, "HandleSpecificNotification");
     NotificationHandler_default = HandleSpecificNotification;
@@ -36418,11 +36519,32 @@ var init_APIFactoryService = __esm({
       if (typeof Base.uri !== "undefined") {
         const Uri2 = Base.uri;
         if (Uri2 instanceof URI2) return Base;
-        const Revived2 = typeof Uri2 === "string" ? URI2.parse(Uri2) : URI2.revive(Uri2);
-        return { ...Base, uri: Revived2 };
+        let Revived;
+        if (typeof Uri2 === "string") {
+          if (Uri2.length === 0) {
+            Revived = void 0;
+          } else {
+            try {
+              Revived = URI2.parse(Uri2);
+            } catch {
+              Revived = void 0;
+            }
+          }
+        } else {
+          try {
+            Revived = URI2.revive(Uri2);
+          } catch {
+            Revived = void 0;
+          }
+        }
+        return { ...Base, uri: Revived };
       }
-      const Revived = URI2.revive(Base);
-      return Revived ?? Base;
+      try {
+        const Revived = URI2.revive(Base);
+        return Revived ?? Base;
+      } catch {
+        return Base;
+      }
     }, "HydrateBase");
     PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
       const Safe = HydrateBase(Base);
@@ -38907,32 +39029,38 @@ var init_MountainGRPCClient = __esm({
             yield* logger.debug(
               `[MountainGRPCClient] applyEdit: ${uri}`
             );
+            const SafeEdits = [];
+            for (const edit of edits) {
+              const Start = edit?.range?.start;
+              const End = edit?.range?.end;
+              if (!Start || !End || typeof Start.line !== "number" || typeof End.line !== "number") {
+                continue;
+              }
+              SafeEdits.push({
+                range: {
+                  // `+ 1` converts vscode.Range (0-based)
+                  // to the workbench's `IRange` (1-based).
+                  // Without this, every `workspace.applyEdit`
+                  // from an extension lands one row too high
+                  // and one column too far left - rename
+                  // refactors, quick fixes, snippet inserts
+                  // all shred the file silently.
+                  start: {
+                    line: Start.line + 1,
+                    character: (Start.character ?? 0) + 1
+                  },
+                  end: {
+                    line: End.line + 1,
+                    character: (End.character ?? 0) + 1
+                  }
+                },
+                newText: typeof edit.newText === "string" ? edit.newText : ""
+              });
+            }
             const result = yield* Effect19.tryPromise({
               try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
                 uri: { value: uri },
-                // `+ 1` converts vscode.Range (0-based) to
-                // the workbench's `IRange` (1-based) shape
-                // Mountain forwards verbatim to the
-                // `sky://workspace/applyEdit` listener.
-                // Without this, every `workspace.applyEdit`
-                // from an extension lands one row too high
-                // and one column too far left of the
-                // extension's intent - rename refactors,
-                // quick fixes, and snippet inserts all
-                // shred the file silently.
-                edits: edits.map((edit) => ({
-                  range: {
-                    start: {
-                      line: edit.range.start.line + 1,
-                      character: edit.range.start.character + 1
-                    },
-                    end: {
-                      line: edit.range.end.line + 1,
-                      character: edit.range.end.character + 1
-                    }
-                  },
-                  newText: edit.newText
-                }))
+                edits: SafeEdits
               }), "try"),
               catch: /* @__PURE__ */ __name((error) => new Error(
                 `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
@@ -40756,29 +40884,59 @@ var init_RequestRoutingHandler = __esm({
             case "webview.resolveView": {
               const Provider = WebviewViewProviders2.get(String(Handle));
               if (!Provider) {
-                throw new Error(
-                  `WebviewViewProvider handle not registered: ${Handle}`
-                );
+                try {
+                  console.warn(
+                    `[RequestRoutingHandler] webview.resolveView called with unregistered handle=${Handle}; returning null so the workbench resolver settles`
+                  );
+                } catch {
+                }
+                return null;
               }
               const Builder = WebviewViewBuilders2.get(String(Handle));
               const View = Params?.view ?? Params?.[1] ?? Builder?.() ?? {};
               const Ctx = Params?.context ?? Params?.[2] ?? {
                 state: void 0
               };
-              return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
+              try {
+                return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
+              } catch (ResolveError) {
+                try {
+                  console.warn(
+                    `[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}:`,
+                    ResolveError?.message ?? String(ResolveError)
+                  );
+                } catch {
+                }
+                return null;
+              }
             }
             case "webview.resolveCustomEditor": {
               const Provider = CustomEditorProviders2.get(String(Handle));
               if (!Provider) {
-                throw new Error(
-                  `CustomEditorProvider handle not registered: ${Handle}`
-                );
+                try {
+                  console.warn(
+                    `[RequestRoutingHandler] webview.resolveCustomEditor called with unregistered handle=${Handle}; returning null`
+                  );
+                } catch {
+                }
+                return null;
               }
               const Document = Params?.document ?? Params?.[1];
               const Panel = Params?.panel ?? Params?.[2];
-              return await Provider.resolveCustomEditor?.(Document, Panel, {
-                asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath")
-              }) ?? null;
+              try {
+                return await Provider.resolveCustomEditor?.(Document, Panel, {
+                  asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath")
+                }) ?? null;
+              } catch (ResolveError) {
+                try {
+                  console.warn(
+                    `[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}:`,
+                    ResolveError?.message ?? String(ResolveError)
+                  );
+                } catch {
+                }
+                return null;
+              }
             }
             default: {
               const Panel = WebviewPanels2.get(String(Handle));

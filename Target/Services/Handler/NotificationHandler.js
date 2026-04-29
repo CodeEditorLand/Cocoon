@@ -21254,10 +21254,30 @@ var init_WrapNamespaceWithHeuristics = __esm({
     BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
       const SpanName = `vscode.${NamespaceName}.${Property}`;
       const Program = Effect.gen(function* () {
-        yield* Effect.sync(
-          () => RecordGap(NamespaceName, Property, Heuristic.Kind)
-        );
-        return Heuristic.Produce(...Arguments);
+        yield* Effect.sync(() => {
+          try {
+            RecordGap(NamespaceName, Property, Heuristic.Kind);
+          } catch {
+          }
+        });
+        try {
+          return Heuristic.Produce(...Arguments);
+        } catch {
+          switch (Heuristic.Kind) {
+            case "trust":
+              return true;
+            case "event":
+              return NoopDisposable;
+            case "register":
+              return NoopDisposable;
+            case "bool-check":
+              return false;
+            case "factory":
+            case "default":
+            default:
+              return void 0;
+          }
+        }
       }).pipe(
         Effect.withSpan(SpanName, {
           attributes: {
@@ -21267,7 +21287,21 @@ var init_WrapNamespaceWithHeuristics = __esm({
           }
         })
       );
-      return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+      try {
+        return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+      } catch {
+        switch (Heuristic.Kind) {
+          case "trust":
+            return Heuristic.Sync ? true : Promise.resolve(true);
+          case "event":
+          case "register":
+            return NoopDisposable;
+          case "bool-check":
+            return Heuristic.Sync ? false : Promise.resolve(false);
+          default:
+            return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+        }
+      }
     }, "BuildHeuristicMethod");
     WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
       get(Target, Property) {
@@ -22613,7 +22647,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T18:44:06Z"
+      generatedAt: "2026-04-29T21:37:36Z"
     };
   }
 });
@@ -25461,6 +25495,7 @@ function ToUri(Input) {
   if (Input == null) return void 0;
   if (Input instanceof URI) return Input;
   if (typeof Input === "string") {
+    if (Input.length === 0) return void 0;
     try {
       if (Input.startsWith("file:") || Input.includes("://")) {
         return URI.parse(Input);
@@ -27276,6 +27311,7 @@ var init_Index = __esm({
       if (!Array.isArray(Raw2)) return [];
       return Raw2.map((Item) => {
         if (typeof Item === "string") {
+          if (Item.length === 0) return Item;
           try {
             return URI.parse(Item);
           } catch {
@@ -27283,8 +27319,11 @@ var init_Index = __esm({
           }
         }
         if (Item && typeof Item === "object") {
-          const Hydrated = ToUri(Item);
-          if (Hydrated) return Hydrated;
+          try {
+            const Hydrated = ToUri(Item);
+            if (Hydrated) return Hydrated;
+          } catch {
+          }
         }
         return Item;
       });
@@ -27875,15 +27914,32 @@ var init_LanguagesNamespace = __esm({
       return Rendered;
     }, "UriKey");
     RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
-      const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-      const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+      if (Provider == null || typeof Provider !== "object") {
+        return { dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") };
+      }
+      let Handle;
+      try {
+        Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+      } catch {
+        return { dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") };
+      }
+      const Language2 = typeof Selector === "string" ? Selector : typeof Selector?.language === "string" ? Selector.language : "*";
       Context.SendToMountain(MethodName, {
         handle: Handle,
         languageSelector: Language2,
         extensionId: ""
       }).catch(() => {
       });
-      return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          try {
+            LanguageProviderRegistry.Unregister(Handle);
+          } catch {
+          }
+        }, "dispose")
+      };
     }, "RegisterProvider");
     CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => WrapLanguagesNamespace_default({
       registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
@@ -28172,7 +28228,17 @@ var init_LanguagesNamespace = __esm({
           }
           return Out;
         }, "NormaliseDiagnostic");
-        const NormaliseList = /* @__PURE__ */ __name((List) => (Array.isArray(List) ? List : []).map(NormaliseDiagnostic), "NormaliseList");
+        const NormaliseList = /* @__PURE__ */ __name((List) => {
+          if (!Array.isArray(List)) return [];
+          const Result = [];
+          for (const Item of List) {
+            try {
+              Result.push(NormaliseDiagnostic(Item));
+            } catch {
+            }
+          }
+          return Result;
+        }, "NormaliseList");
         let Disposed = false;
         return {
           name: Owner,
@@ -28210,7 +28276,10 @@ var init_LanguagesNamespace = __esm({
           forEach: /* @__PURE__ */ __name((Callback) => {
             const Self = null;
             for (const [Uri2, Diagnostics] of Store) {
-              Callback(Uri2, Diagnostics, Self);
+              try {
+                Callback(Uri2, Diagnostics, Self);
+              } catch {
+              }
             }
           }, "forEach"),
           get: /* @__PURE__ */ __name((Uri2) => Store.get(UriKey(Uri2)) ?? [], "get"),
@@ -28450,7 +28519,7 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, SafeExtensionList, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
@@ -28646,26 +28715,48 @@ var init_ExtensionsNamespace = __esm({
       };
     }, "ToExtensionObject");
     IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
+    SafeExtensionList = /* @__PURE__ */ __name((Context) => {
+      const Out = [];
+      for (const [Id, Raw2] of Context.ExtensionRegistry.entries()) {
+        if (!IsExtensionKey(Id)) continue;
+        try {
+          Out.push(ToExtensionObject(Context, Id, Raw2));
+        } catch {
+        }
+      }
+      return Out;
+    }, "SafeExtensionList");
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => WrapExtensionsNamespace_default({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
         const Raw2 = Context.ExtensionRegistry.get(Identifier);
-        return Raw2 ? ToExtensionObject(Context, Identifier, Raw2) : void 0;
+        if (!Raw2) return void 0;
+        try {
+          return ToExtensionObject(Context, Identifier, Raw2);
+        } catch {
+          return void 0;
+        }
       }, "getExtension"),
       get all() {
-        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context, Id, Raw2));
+        return SafeExtensionList(Context);
       },
       // Some extensions (html-language-features) iterate
       // `extensions.allAcrossExtensionHosts`; return the same array as `all`
       // so `for (...of...)` does not throw on `is not iterable`.
       get allAcrossExtensionHosts() {
-        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw2]) => ToExtensionObject(Context, Id, Raw2));
+        return SafeExtensionList(Context);
       },
       onDidChange: /* @__PURE__ */ __name((Listener) => {
-        Context.Emitter.on("deltaExtensions", Listener);
+        const SafeListener = /* @__PURE__ */ __name(() => {
+          try {
+            Listener();
+          } catch {
+          }
+        }, "SafeListener");
+        Context.Emitter.on("deltaExtensions", SafeListener);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context.Emitter.off("deltaExtensions", Listener);
+            Context.Emitter.off("deltaExtensions", SafeListener);
           }, "dispose")
         };
       }, "onDidChange")
@@ -31281,10 +31372,20 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
         );
       } catch {
       }
-      Emitter2.emit("unknownNotification", {
-        method: Method,
-        parameters: Parameters
-      });
+      try {
+        Emitter2.emit("unknownNotification", {
+          method: Method,
+          parameters: Parameters
+        });
+      } catch (EmitError) {
+        try {
+          process.stdout.write(
+            `[NotificationHandler] unknownNotification subscriber threw for ${Method}: ${EmitError?.message ?? String(EmitError)}
+`
+          );
+        } catch {
+        }
+      }
   }
 }, "HandleSpecificNotification");
 var NotificationHandler_default = HandleSpecificNotification;

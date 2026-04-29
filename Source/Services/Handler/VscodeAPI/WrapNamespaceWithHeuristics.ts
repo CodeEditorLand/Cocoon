@@ -172,10 +172,38 @@ const BuildHeuristicMethod =
 	(...Arguments: unknown[]): unknown => {
 		const SpanName = `vscode.${NamespaceName}.${Property}`;
 		const Program = Effect.gen(function* () {
-			yield* Effect.sync(() =>
-				RecordGap(NamespaceName, Property, Heuristic.Kind),
-			);
-			return Heuristic.Produce(...Arguments);
+			yield* Effect.sync(() => {
+				try {
+					RecordGap(NamespaceName, Property, Heuristic.Kind);
+				} catch {
+					/* telemetry/log failure must not break the
+					 * heuristic stub itself */
+				}
+			});
+			// Wrap `Produce` so a buggy override (custom heuristic
+			// that throws on certain argument shapes) degrades to the
+			// safe default rather than propagating the throw to the
+			// extension caller. Stock VS Code's missing-API access
+			// returns `undefined`; matching that shape here keeps
+			// extensions defensively coded against `undefined` happy.
+			try {
+				return Heuristic.Produce(...Arguments);
+			} catch {
+				switch (Heuristic.Kind) {
+					case "trust":
+						return true;
+					case "event":
+						return NoopDisposable;
+					case "register":
+						return NoopDisposable;
+					case "bool-check":
+						return false;
+					case "factory":
+					case "default":
+					default:
+						return undefined;
+				}
+			}
 		}).pipe(
 			Effect.withSpan(SpanName, {
 				attributes: {
@@ -185,9 +213,28 @@ const BuildHeuristicMethod =
 				},
 			}),
 		);
-		return Heuristic.Sync
-			? Effect.runSync(Program)
-			: Effect.runPromise(Program);
+		try {
+			return Heuristic.Sync
+				? Effect.runSync(Program)
+				: Effect.runPromise(Program);
+		} catch {
+			// Effect.runSync rethrows the program's error. If the
+			// safe-default fallback above somehow still threw (Effect
+			// runtime panic), return the cheapest no-op shape so the
+			// extension caller doesn't crash. Same kind switch as
+			// above so trust/event/etc. callers see a usable shape.
+			switch (Heuristic.Kind) {
+				case "trust":
+					return Heuristic.Sync ? true : Promise.resolve(true);
+				case "event":
+				case "register":
+					return NoopDisposable;
+				case "bool-check":
+					return Heuristic.Sync ? false : Promise.resolve(false);
+				default:
+					return Heuristic.Sync ? undefined : Promise.resolve(undefined);
+			}
+		}
 	};
 
 /**

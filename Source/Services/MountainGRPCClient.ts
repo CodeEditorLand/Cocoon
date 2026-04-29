@@ -682,35 +682,57 @@ const MountainGRPCClientLive = Layer.effect(
 						`[MountainGRPCClient] applyEdit: ${uri}`,
 					);
 
+					// Defensive: an extension that builds edits with
+					// `new TextEdit(range, text)` ALWAYS produces well-
+					// formed positions, but quick-fix code-action
+					// providers sometimes serialise edits in odd shapes
+					// after revival, leaving `range.start === undefined`.
+					// Filter those out + log so we don't `.line` on
+					// undefined and crash the entire applyEdit batch.
+					const SafeEdits: Array<{
+						range: {
+							start: { line: number; character: number };
+							end: { line: number; character: number };
+						};
+						newText: string;
+					}> = [];
+					for (const edit of edits) {
+						const Start = edit?.range?.start;
+						const End = edit?.range?.end;
+						if (
+							!Start ||
+							!End ||
+							typeof Start.line !== "number" ||
+							typeof End.line !== "number"
+						) {
+							continue;
+						}
+						SafeEdits.push({
+							range: {
+								// `+ 1` converts vscode.Range (0-based)
+								// to the workbench's `IRange` (1-based).
+								// Without this, every `workspace.applyEdit`
+								// from an extension lands one row too high
+								// and one column too far left - rename
+								// refactors, quick fixes, snippet inserts
+								// all shred the file silently.
+								start: {
+									line: Start.line + 1,
+									character: (Start.character ?? 0) + 1,
+								},
+								end: {
+									line: End.line + 1,
+									character: (End.character ?? 0) + 1,
+								},
+							},
+							newText: typeof edit.newText === "string" ? edit.newText : "",
+						});
+					}
 					const result = yield* Effect.tryPromise({
 						try: () =>
 							mountainClient.sendRequest("applyEdit", {
 								uri: { value: uri },
-								// `+ 1` converts vscode.Range (0-based) to
-								// the workbench's `IRange` (1-based) shape
-								// Mountain forwards verbatim to the
-								// `sky://workspace/applyEdit` listener.
-								// Without this, every `workspace.applyEdit`
-								// from an extension lands one row too high
-								// and one column too far left of the
-								// extension's intent - rename refactors,
-								// quick fixes, and snippet inserts all
-								// shred the file silently.
-								edits: edits.map((edit) => ({
-									range: {
-										start: {
-											line: edit.range.start.line + 1,
-											character:
-												edit.range.start.character + 1,
-										},
-										end: {
-											line: edit.range.end.line + 1,
-											character:
-												edit.range.end.character + 1,
-										},
-									},
-									newText: edit.newText,
-								})),
+								edits: SafeEdits,
 							}),
 						catch: (error) =>
 							new Error(

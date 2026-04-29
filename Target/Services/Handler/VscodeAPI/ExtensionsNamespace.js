@@ -348,10 +348,30 @@ var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
 var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
   const SpanName = `vscode.${NamespaceName}.${Property}`;
   const Program = Effect.gen(function* () {
-    yield* Effect.sync(
-      () => RecordGap(NamespaceName, Property, Heuristic.Kind)
-    );
-    return Heuristic.Produce(...Arguments);
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
   }).pipe(
     Effect.withSpan(SpanName, {
       attributes: {
@@ -361,7 +381,21 @@ var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heur
       }
     })
   );
-  return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
 }, "BuildHeuristicMethod");
 var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
   get(Target, Property) {
@@ -591,26 +625,48 @@ var ToExtensionObject = /* @__PURE__ */ __name((_Context, Id, Raw) => {
   };
 }, "ToExtensionObject");
 var IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
+var SafeExtensionList = /* @__PURE__ */ __name((Context) => {
+  const Out = [];
+  for (const [Id, Raw] of Context.ExtensionRegistry.entries()) {
+    if (!IsExtensionKey(Id)) continue;
+    try {
+      Out.push(ToExtensionObject(Context, Id, Raw));
+    } catch {
+    }
+  }
+  return Out;
+}, "SafeExtensionList");
 var CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => WrapExtensionsNamespace_default({
   getExtension: /* @__PURE__ */ __name((Identifier) => {
     if (!IsExtensionKey(Identifier)) return void 0;
     const Raw = Context.ExtensionRegistry.get(Identifier);
-    return Raw ? ToExtensionObject(Context, Identifier, Raw) : void 0;
+    if (!Raw) return void 0;
+    try {
+      return ToExtensionObject(Context, Identifier, Raw);
+    } catch {
+      return void 0;
+    }
   }, "getExtension"),
   get all() {
-    return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+    return SafeExtensionList(Context);
   },
   // Some extensions (html-language-features) iterate
   // `extensions.allAcrossExtensionHosts`; return the same array as `all`
   // so `for (...of...)` does not throw on `is not iterable`.
   get allAcrossExtensionHosts() {
-    return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+    return SafeExtensionList(Context);
   },
   onDidChange: /* @__PURE__ */ __name((Listener) => {
-    Context.Emitter.on("deltaExtensions", Listener);
+    const SafeListener = /* @__PURE__ */ __name(() => {
+      try {
+        Listener();
+      } catch {
+      }
+    }, "SafeListener");
+    Context.Emitter.on("deltaExtensions", SafeListener);
     return {
       dispose: /* @__PURE__ */ __name(() => {
-        Context.Emitter.off("deltaExtensions", Listener);
+        Context.Emitter.off("deltaExtensions", SafeListener);
       }, "dispose")
     };
   }, "onDidChange")

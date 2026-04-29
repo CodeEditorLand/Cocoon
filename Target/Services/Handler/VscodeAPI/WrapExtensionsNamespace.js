@@ -348,10 +348,30 @@ var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
 var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
   const SpanName = `vscode.${NamespaceName}.${Property}`;
   const Program = Effect.gen(function* () {
-    yield* Effect.sync(
-      () => RecordGap(NamespaceName, Property, Heuristic.Kind)
-    );
-    return Heuristic.Produce(...Arguments);
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
   }).pipe(
     Effect.withSpan(SpanName, {
       attributes: {
@@ -361,7 +381,21 @@ var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heur
       }
     })
   );
-  return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
 }, "BuildHeuristicMethod");
 var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
   get(Target, Property) {

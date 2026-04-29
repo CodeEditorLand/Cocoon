@@ -11947,6 +11947,7 @@ function ToUri(Input) {
   if (Input == null) return void 0;
   if (Input instanceof URI) return Input;
   if (typeof Input === "string") {
+    if (Input.length === 0) return void 0;
     try {
       if (Input.startsWith("file:") || Input.includes("://")) {
         return URI.parse(Input);

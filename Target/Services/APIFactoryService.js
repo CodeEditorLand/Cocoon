@@ -20961,11 +20961,32 @@ var HydrateBase = /* @__PURE__ */ __name((Base) => {
   if (typeof Base.uri !== "undefined") {
     const Uri2 = Base.uri;
     if (Uri2 instanceof URI2) return Base;
-    const Revived2 = typeof Uri2 === "string" ? URI2.parse(Uri2) : URI2.revive(Uri2);
-    return { ...Base, uri: Revived2 };
+    let Revived;
+    if (typeof Uri2 === "string") {
+      if (Uri2.length === 0) {
+        Revived = void 0;
+      } else {
+        try {
+          Revived = URI2.parse(Uri2);
+        } catch {
+          Revived = void 0;
+        }
+      }
+    } else {
+      try {
+        Revived = URI2.revive(Uri2);
+      } catch {
+        Revived = void 0;
+      }
+    }
+    return { ...Base, uri: Revived };
   }
-  const Revived = URI2.revive(Base);
-  return Revived ?? Base;
+  try {
+    const Revived = URI2.revive(Base);
+    return Revived ?? Base;
+  } catch {
+    return Base;
+  }
 }, "HydrateBase");
 var PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
   const Safe = HydrateBase(Base);

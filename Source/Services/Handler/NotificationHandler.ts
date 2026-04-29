@@ -844,10 +844,28 @@ const HandleSpecificNotification = (
 					`[NotificationHandler] Generic notification handler for: ${Method}\n`,
 				);
 			} catch {}
-			Emitter.emit("unknownNotification", {
-				method: Method,
-				parameters: Parameters,
-			});
+			try {
+				Emitter.emit("unknownNotification", {
+					method: Method,
+					parameters: Parameters,
+				});
+			} catch (EmitError) {
+				// `EventEmitter.emit` rethrows the FIRST listener that
+				// throws synchronously, abandoning the rest. Wrapping
+				// here keeps the dispatcher itself robust against a
+				// buggy "unknownNotification" subscriber. The error is
+				// swallowed because the only purpose of this branch is
+				// observability for unknown methods - failing the
+				// notification dispatch on a logger crash would be
+				// strictly worse than continuing.
+				try {
+					process.stdout.write(
+						`[NotificationHandler] unknownNotification subscriber threw for ${Method}: ${
+							(EmitError as any)?.message ?? String(EmitError)
+						}\n`,
+					);
+				} catch {}
+			}
 	}
 };
 

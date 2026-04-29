@@ -21164,32 +21164,38 @@ var MountainGRPCClientLive = Layer.effect(
         yield* logger.debug(
           `[MountainGRPCClient] applyEdit: ${uri}`
         );
+        const SafeEdits = [];
+        for (const edit of edits) {
+          const Start = edit?.range?.start;
+          const End = edit?.range?.end;
+          if (!Start || !End || typeof Start.line !== "number" || typeof End.line !== "number") {
+            continue;
+          }
+          SafeEdits.push({
+            range: {
+              // `+ 1` converts vscode.Range (0-based)
+              // to the workbench's `IRange` (1-based).
+              // Without this, every `workspace.applyEdit`
+              // from an extension lands one row too high
+              // and one column too far left - rename
+              // refactors, quick fixes, snippet inserts
+              // all shred the file silently.
+              start: {
+                line: Start.line + 1,
+                character: (Start.character ?? 0) + 1
+              },
+              end: {
+                line: End.line + 1,
+                character: (End.character ?? 0) + 1
+              }
+            },
+            newText: typeof edit.newText === "string" ? edit.newText : ""
+          });
+        }
         const result = yield* Effect4.tryPromise({
           try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
             uri: { value: uri },
-            // `+ 1` converts vscode.Range (0-based) to
-            // the workbench's `IRange` (1-based) shape
-            // Mountain forwards verbatim to the
-            // `sky://workspace/applyEdit` listener.
-            // Without this, every `workspace.applyEdit`
-            // from an extension lands one row too high
-            // and one column too far left of the
-            // extension's intent - rename refactors,
-            // quick fixes, and snippet inserts all
-            // shred the file silently.
-            edits: edits.map((edit) => ({
-              range: {
-                start: {
-                  line: edit.range.start.line + 1,
-                  character: edit.range.start.character + 1
-                },
-                end: {
-                  line: edit.range.end.line + 1,
-                  character: edit.range.end.character + 1
-                }
-              },
-              newText: edit.newText
-            }))
+            edits: SafeEdits
           }), "try"),
           catch: /* @__PURE__ */ __name((error) => new Error(
             `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`

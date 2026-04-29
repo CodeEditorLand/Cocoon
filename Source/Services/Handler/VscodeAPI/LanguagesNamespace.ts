@@ -51,15 +51,44 @@ const RegisterProvider = (
 	Selector: any,
 	Provider: any,
 ) => {
-	const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+	// Defensive: if the extension passes `null`/`undefined` as a
+	// provider (some extensions do this defensively when their feature
+	// flags are off), don't register an empty handle - return a noop
+	// disposable. Avoids subsequent provider lookups picking up a
+	// `null` handler and crashing on `provider.provideHover` etc.
+	if (Provider == null || typeof Provider !== "object") {
+		return { dispose: () => {} };
+	}
+	let Handle: number;
+	try {
+		Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+	} catch {
+		// RegisterAutoHandle should be infallible, but a future
+		// implementation could throw on registry-full or duplicate
+		// registration. Soft-fail to a noop disposable so the
+		// extension's `disposables.push(...)` keeps working.
+		return { dispose: () => {} };
+	}
 	const Language =
-		typeof Selector === "string" ? Selector : (Selector?.language ?? "*");
+		typeof Selector === "string"
+			? Selector
+			: typeof Selector?.language === "string"
+				? Selector.language
+				: "*";
 	Context.SendToMountain(MethodName, {
 		handle: Handle,
 		languageSelector: Language,
 		extensionId: "",
 	}).catch(() => {});
-	return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+	return {
+		dispose: () => {
+			try {
+				LanguageProviderRegistry.Unregister(Handle);
+			} catch {
+				/* registry already cleared on shutdown - swallow */
+			}
+		},
+	};
 };
 
 const CreateLanguagesNamespace = (
@@ -434,8 +463,28 @@ const CreateLanguagesNamespace = (
 				}
 				return Out;
 			};
-			const NormaliseList = (List: unknown): Record<string, unknown>[] =>
-				(Array.isArray(List) ? List : []).map(NormaliseDiagnostic);
+			// Per-item try/catch so a single malformed diagnostic
+			// (extension passed an exotic shape, range with non-numeric
+			// fields, message: Symbol(...), etc.) doesn't drop the
+			// entire batch. Stock VS Code's MainThreadDiagnostics
+			// rejects bad entries individually with `_toMarker
+			// returning undefined` - we mirror that resilience here so
+			// language extensions that emit a partially-broken
+			// diagnostic stream still get the well-formed entries
+			// rendered as squiggles.
+			const NormaliseList = (List: unknown): Record<string, unknown>[] => {
+				if (!Array.isArray(List)) return [];
+				const Result: Record<string, unknown>[] = [];
+				for (const Item of List) {
+					try {
+						Result.push(NormaliseDiagnostic(Item));
+					} catch {
+						/* skip the bad entry; the rest of the batch
+						 * is still valid */
+					}
+				}
+				return Result;
+			};
 			// LSP clients (json-language-features and others) call `.clear()`
 			// defensively on every doc-update cycle, which otherwise amplifies
 			// to hundreds of Diagnostic.Clear RPCs per second for owner
@@ -496,8 +545,19 @@ const CreateLanguagesNamespace = (
 					) => void,
 				) => {
 					const Self = null;
+					// Per-iteration try/catch so an extension callback
+					// that throws on one URI doesn't terminate the
+					// iteration over the rest. Stock VS Code's
+					// `DiagnosticCollection.forEach` runs the callback
+					// inside a try/catch with the same rationale - the
+					// caller's bug shouldn't propagate into the
+					// language-features API surface.
 					for (const [Uri, Diagnostics] of Store) {
-						Callback(Uri, Diagnostics, Self);
+						try {
+							Callback(Uri, Diagnostics, Self);
+						} catch {
+							/* extension callback bug - skip + continue */
+						}
 					}
 				},
 				get: (Uri: unknown): unknown[] => Store.get(UriKey(Uri)) ?? [],

@@ -68,6 +68,16 @@ export function ToUri(Input: unknown): URI | undefined {
 	if (Input == null) return undefined;
 	if (Input instanceof URI) return Input;
 	if (typeof Input === "string") {
+		// Empty string short-circuits BEFORE any `URI.parse` /
+		// `URI.file` call. Stock VS Code's `URI.parse("")` throws
+		// `[UriError]: Scheme contains illegal characters. (len:0)` -
+		// reported in the log as the activation failure for the Ruby
+		// LSP extension, which calls into `vscode.workspace.workspace
+		// FoldersChanged` with an empty `uri` field on some shells.
+		// Returning `undefined` lets callers fall through to their
+		// no-op branch instead of crashing the extension on
+		// initialisation.
+		if (Input.length === 0) return undefined;
 		try {
 			if (Input.startsWith("file:") || Input.includes("://")) {
 				return URI.parse(Input);

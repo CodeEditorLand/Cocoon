@@ -60,6 +60,13 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 	if (!Array.isArray(Raw)) return [];
 	return Raw.map((Item) => {
 		if (typeof Item === "string") {
+			// Empty-string short-circuit before `URI.parse` -
+			// `URI.parse("")` throws `[UriError]: Scheme contains
+			// illegal characters. (len:0)`. Returning the empty
+			// string verbatim lets the caller decide whether it's
+			// useful (most callers map+filter and will drop the
+			// `""`). See also the same guard in `StockLift.ToUri`.
+			if (Item.length === 0) return Item;
 			try {
 				return StockUri.parse(Item);
 			} catch {
@@ -67,8 +74,14 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 			}
 		}
 		if (Item && typeof Item === "object") {
-			const Hydrated = StockToUri(Item);
-			if (Hydrated) return Hydrated;
+			try {
+				const Hydrated = StockToUri(Item);
+				if (Hydrated) return Hydrated;
+			} catch {
+				/* StockToUri shouldn't throw (it has its own try/catch),
+				 * but defending here keeps the map() loop alive even
+				 * if an exotic Item shape sneaks through */
+			}
 		}
 		return Item;
 	});

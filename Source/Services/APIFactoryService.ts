@@ -52,12 +52,39 @@ const HydrateBase = (Base: unknown): unknown => {
 	if (typeof (Base as { uri?: unknown }).uri !== "undefined") {
 		const Uri = (Base as { uri?: unknown }).uri;
 		if (Uri instanceof URI) return Base;
-		const Revived =
-			typeof Uri === "string" ? URI.parse(Uri) : URI.revive(Uri as any);
+		// Empty-string short-circuit + try/catch around `URI.parse` so
+		// extensions that pass `{ uri: "" }` don't trigger
+		// `[UriError]: Scheme contains illegal characters. (len:0)` and
+		// fail their entire `RelativePattern` construction. Return the
+		// original Base on failure so the caller sees an unhydrated
+		// shape instead of a crash - the stock RelativePattern
+		// constructor accepts that path with its own fallback.
+		let Revived: unknown;
+		if (typeof Uri === "string") {
+			if (Uri.length === 0) {
+				Revived = undefined;
+			} else {
+				try {
+					Revived = URI.parse(Uri);
+				} catch {
+					Revived = undefined;
+				}
+			}
+		} else {
+			try {
+				Revived = URI.revive(Uri as any);
+			} catch {
+				Revived = undefined;
+			}
+		}
 		return { ...(Base as object), uri: Revived };
 	}
-	const Revived = URI.revive(Base as any);
-	return Revived ?? Base;
+	try {
+		const Revived = URI.revive(Base as any);
+		return Revived ?? Base;
+	} catch {
+		return Base;
+	}
 };
 const PatchedRelativePattern: any = function RelativePattern(
 	this: unknown,

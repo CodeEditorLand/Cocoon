@@ -305,9 +305,25 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				case "webview.resolveView": {
 					const Provider = WebviewViewProviders.get(String(Handle));
 					if (!Provider) {
-						throw new Error(
-							`WebviewViewProvider handle not registered: ${Handle}`,
-						);
+						// Soft-fail instead of throwing. Throwing here
+						// rejects the SkyBridge resolver promise, which
+						// surfaces in the workbench as a stuck pane with
+						// "Webview is loading" forever - the user clicks,
+						// nothing happens, no panel content. Returning
+						// null lets the workbench's resolver promise
+						// settle so the pane unblocks; the panel will
+						// show its empty placeholder until the extension
+						// re-registers (typical after a hot-reload). Log
+						// the miss so a real bug (truly missing handle
+						// vs. transient race) is still triagable.
+						try {
+							console.warn(
+								`[RequestRoutingHandler] webview.resolveView called with unregistered handle=${Handle}; returning null so the workbench resolver settles`,
+							);
+						} catch {
+							/* console may be replaced */
+						}
+						return null;
 					}
 					// Build a proxy `WebviewView` so the extension's
 					// `resolveWebviewView(view, ctx)` callback can read /
@@ -325,24 +341,70 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						Params?.[2] ?? {
 							state: undefined,
 						};
-					return (
-						(await Provider.resolveWebviewView?.(View, Ctx)) ?? null
-					);
+					try {
+						return (
+							(await Provider.resolveWebviewView?.(View, Ctx)) ??
+							null
+						);
+					} catch (ResolveError) {
+						// Extension's `resolveWebviewView` threw (Roo,
+						// Claude, gitlens, etc. each have their own
+						// async setup that can fail on cold boot). Log
+						// + return null so the workbench resolver
+						// promise still completes - the panel will show
+						// the empty placeholder, but the user can retry
+						// or reload, instead of being stuck on
+						// "Webview is loading" forever. Stock VS Code's
+						// `MainThreadWebviewViews.$resolveWebviewView`
+						// returns `void` from a try/catch with the same
+						// rationale.
+						try {
+							console.warn(
+								`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}:`,
+								(ResolveError as any)?.message ?? String(ResolveError),
+							);
+						} catch {
+							/* console may be replaced */
+						}
+						return null;
+					}
 				}
 				case "webview.resolveCustomEditor": {
 					const Provider = CustomEditorProviders.get(String(Handle));
 					if (!Provider) {
-						throw new Error(
-							`CustomEditorProvider handle not registered: ${Handle}`,
-						);
+						// Same soft-fail rationale as `webview.resolveView`
+						// above - throwing rejects the workbench-side
+						// resolver promise and leaves the editor frame
+						// stuck. Returning null lets the editor frame
+						// settle (empty content) so the user can retry.
+						try {
+							console.warn(
+								`[RequestRoutingHandler] webview.resolveCustomEditor called with unregistered handle=${Handle}; returning null`,
+							);
+						} catch {
+							/* console may be replaced */
+						}
+						return null;
 					}
 					const Document = Params?.document ?? Params?.[1];
 					const Panel = Params?.panel ?? Params?.[2];
-					return (
-						(await Provider.resolveCustomEditor?.(Document, Panel, {
-							asAbsolutePath: (p: string) => p,
-						})) ?? null
-					);
+					try {
+						return (
+							(await Provider.resolveCustomEditor?.(Document, Panel, {
+								asAbsolutePath: (p: string) => p,
+							})) ?? null
+						);
+					} catch (ResolveError) {
+						try {
+							console.warn(
+								`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}:`,
+								(ResolveError as any)?.message ?? String(ResolveError),
+							);
+						} catch {
+							/* console may be replaced */
+						}
+						return null;
+					}
 				}
 				default: {
 					// Default: panels host one-off events

@@ -9,7 +9,7 @@ var RouteManifestSummary = {
   mountain: 82,
   stockLift: 21,
   bespoke: 1,
-  generatedAt: "2026-04-29T18:44:06Z"
+  generatedAt: "2026-04-29T21:37:36Z"
 };
 
 // Source/Services/DualTrack.ts
@@ -12160,6 +12160,7 @@ function ToUri(Input) {
   if (Input == null) return void 0;
   if (Input instanceof URI) return Input;
   if (typeof Input === "string") {
+    if (Input.length === 0) return void 0;
     try {
       if (Input.startsWith("file:") || Input.includes("://")) {
         return URI.parse(Input);
@@ -14246,10 +14247,30 @@ var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
 var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
   const SpanName = `vscode.${NamespaceName}.${Property}`;
   const Program = Effect.gen(function* () {
-    yield* Effect.sync(
-      () => RecordGap(NamespaceName, Property, Heuristic.Kind)
-    );
-    return Heuristic.Produce(...Arguments);
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
   }).pipe(
     Effect.withSpan(SpanName, {
       attributes: {
@@ -14259,7 +14280,21 @@ var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heur
       }
     })
   );
-  return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
 }, "BuildHeuristicMethod");
 var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
   get(Target, Property) {
@@ -14303,6 +14338,7 @@ var HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
   if (!Array.isArray(Raw2)) return [];
   return Raw2.map((Item) => {
     if (typeof Item === "string") {
+      if (Item.length === 0) return Item;
       try {
         return URI.parse(Item);
       } catch {
@@ -14310,8 +14346,11 @@ var HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
       }
     }
     if (Item && typeof Item === "object") {
-      const Hydrated = ToUri(Item);
-      if (Hydrated) return Hydrated;
+      try {
+        const Hydrated = ToUri(Item);
+        if (Hydrated) return Hydrated;
+      } catch {
+      }
     }
     return Item;
   });

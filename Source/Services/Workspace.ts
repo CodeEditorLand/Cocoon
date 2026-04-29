@@ -224,28 +224,58 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				Effect.gen(function* () {
 					const OldWorkspace = yield* Ref.get(InternalWorkspaceRef);
 
-					// Map incoming workspace folder DTOs to VSCode.WorkspaceFolder objects
-					const Folders: VSCode.WorkspaceFolder[] = (
-						Data.folders ?? []
-					).map((F: any, Index: number) => ({
-						uri: VSCode.Uri.parse(
-							typeof F === "string" ? F : (F.uri ?? F.path ?? F),
-						),
-						name:
-							F.name ??
-							(typeof F === "string"
-								? (F.split("/").pop() ?? "")
-								: ""),
-						index: F.index ?? Index,
-					}));
+					// Map incoming workspace folder DTOs to VSCode.WorkspaceFolder objects.
+					// Defensive: per-folder try/catch + empty-string skip
+					// so a single malformed entry (extension supplied
+					// `{uri:""}` during a workspace shape transition,
+					// or Mountain forwarded a partial DTO) doesn't tank
+					// the whole workspace update. Stock VS Code's
+					// MainThreadWorkspace ignores invalid folders rather
+					// than throwing.
+					const Folders: VSCode.WorkspaceFolder[] = [];
+					for (const [Index, F] of (Data.folders ?? []).entries()) {
+						try {
+							const Source =
+								typeof F === "string"
+									? F
+									: ((F as any).uri ?? (F as any).path ?? F);
+							const SourceString =
+								typeof Source === "string" ? Source : String(Source ?? "");
+							if (!SourceString) continue;
+							Folders.push({
+								uri: VSCode.Uri.parse(SourceString),
+								name:
+									(F as any).name ??
+									(typeof F === "string"
+										? (F.split("/").pop() ?? "")
+										: ""),
+								index: (F as any).index ?? Index,
+							});
+						} catch {
+							/* skip the bad folder; the rest of the set
+							 * is still valid */
+						}
+					}
+
+					// Same defensive parse for the optional `configuration`
+					// URI - empty string would throw `[UriError]`.
+					let ConfigurationUri: VSCode.Uri | undefined;
+					if (
+						typeof Data.configuration === "string" &&
+						Data.configuration.length > 0
+					) {
+						try {
+							ConfigurationUri = VSCode.Uri.parse(Data.configuration);
+						} catch {
+							ConfigurationUri = undefined;
+						}
+					}
 
 					const NewWorkspace: InternalWorkspace = {
 						ID: Data.id,
 						Name: Data.name,
 						Folders,
-						Configuration: Data.configuration
-							? VSCode.Uri.parse(Data.configuration)
-							: undefined,
+						Configuration: ConfigurationUri,
 					};
 
 					yield* Ref.set(InternalWorkspaceRef, NewWorkspace);

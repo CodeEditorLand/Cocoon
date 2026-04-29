@@ -299,33 +299,72 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 // a bogus extension with empty path.
 const IsExtensionKey = (Key: string) => !Key.startsWith("__");
 
+// Defensive `all`/`allAcrossExtensionHosts` iteration helper. Extensions
+// like `csharp` iterate `vscode.extensions.all` and immediately call
+// `semver.parse(ext.packageJSON.version)` - if any single entry's
+// `ToExtensionObject` throws (corrupt manifest, missing fields), the
+// entire array build throws and the calling extension's activation
+// fails with a misleading error. Wrap each conversion so one bad entry
+// doesn't poison the whole iteration. Mirrors the "bad-entry skip"
+// pattern in stock VS Code's MarkerService and our Mountain
+// DiagnosticProvider above.
+const SafeExtensionList = (Context: HandlerContext): unknown[] => {
+	const Out: unknown[] = [];
+	for (const [Id, Raw] of Context.ExtensionRegistry.entries()) {
+		if (!IsExtensionKey(Id)) continue;
+		try {
+			Out.push(ToExtensionObject(Context, Id, Raw));
+		} catch {
+			/* skip the bad entry; the rest of the registry is
+			 * still iterable */
+		}
+	}
+	return Out;
+};
+
 const CreateExtensionsNamespace = (Context: HandlerContext) =>
 	WrapExtensionsNamespace({
 		getExtension: (Identifier: string) => {
 			if (!IsExtensionKey(Identifier)) return undefined;
 			const Raw = Context.ExtensionRegistry.get(Identifier);
-			return Raw
-				? ToExtensionObject(Context, Identifier, Raw)
-				: undefined;
+			if (!Raw) return undefined;
+			try {
+				return ToExtensionObject(Context, Identifier, Raw);
+			} catch {
+				// `getExtension` returning `undefined` matches stock VS
+				// Code's contract for "extension not found" - safer
+				// than throwing an error the caller doesn't expect.
+				return undefined;
+			}
 		},
 		get all() {
-			return [...Context.ExtensionRegistry.entries()]
-				.filter(([Id]) => IsExtensionKey(Id))
-				.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+			return SafeExtensionList(Context);
 		},
 		// Some extensions (html-language-features) iterate
 		// `extensions.allAcrossExtensionHosts`; return the same array as `all`
 		// so `for (...of...)` does not throw on `is not iterable`.
 		get allAcrossExtensionHosts() {
-			return [...Context.ExtensionRegistry.entries()]
-				.filter(([Id]) => IsExtensionKey(Id))
-				.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
+			return SafeExtensionList(Context);
 		},
 		onDidChange: (Listener: () => void) => {
-			Context.Emitter.on("deltaExtensions", Listener);
+			// Wrap the user's listener so a throw inside it doesn't
+			// propagate up the EventEmitter and silently disconnect
+			// every other listener in the same emit cycle. Node's
+			// EventEmitter rethrows synchronous listener errors and
+			// unhooks subsequent listeners on the same `emit()` call -
+			// catching here is the "Promise.allSettled" equivalent.
+			const SafeListener = () => {
+				try {
+					Listener();
+				} catch {
+					/* extension's onDidChange callback threw - swallow
+					 * to keep the registry's other subscribers alive */
+				}
+			};
+			Context.Emitter.on("deltaExtensions", SafeListener);
 			return {
 				dispose: () => {
-					Context.Emitter.off("deltaExtensions", Listener);
+					Context.Emitter.off("deltaExtensions", SafeListener);
 				},
 			};
 		},

@@ -12101,6 +12101,7 @@ function ToUri(Input) {
   if (Input == null) return void 0;
   if (Input instanceof URI) return Input;
   if (typeof Input === "string") {
+    if (Input.length === 0) return void 0;
     try {
       if (Input.startsWith("file:") || Input.includes("://")) {
         return URI.parse(Input);
@@ -12521,10 +12522,30 @@ var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
 var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
   const SpanName = `vscode.${NamespaceName}.${Property}`;
   const Program = Effect.gen(function* () {
-    yield* Effect.sync(
-      () => RecordGap(NamespaceName, Property, Heuristic.Kind)
-    );
-    return Heuristic.Produce(...Arguments);
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
   }).pipe(
     Effect.withSpan(SpanName, {
       attributes: {
@@ -12534,7 +12555,21 @@ var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heur
       }
     })
   );
-  return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
 }, "BuildHeuristicMethod");
 var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
   get(Target, Property) {
@@ -12590,15 +12625,32 @@ var UriKey = /* @__PURE__ */ __name((Value) => {
   return Rendered;
 }, "UriKey");
 var RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
-  const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-  const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+  if (Provider == null || typeof Provider !== "object") {
+    return { dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") };
+  }
+  let Handle;
+  try {
+    Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+  } catch {
+    return { dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") };
+  }
+  const Language2 = typeof Selector === "string" ? Selector : typeof Selector?.language === "string" ? Selector.language : "*";
   Context.SendToMountain(MethodName, {
     handle: Handle,
     languageSelector: Language2,
     extensionId: ""
   }).catch(() => {
   });
-  return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      try {
+        LanguageProviderRegistry.Unregister(Handle);
+      } catch {
+      }
+    }, "dispose")
+  };
 }, "RegisterProvider");
 var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => WrapLanguagesNamespace_default({
   registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
@@ -12887,7 +12939,17 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       }
       return Out;
     }, "NormaliseDiagnostic");
-    const NormaliseList = /* @__PURE__ */ __name((List) => (Array.isArray(List) ? List : []).map(NormaliseDiagnostic), "NormaliseList");
+    const NormaliseList = /* @__PURE__ */ __name((List) => {
+      if (!Array.isArray(List)) return [];
+      const Result = [];
+      for (const Item of List) {
+        try {
+          Result.push(NormaliseDiagnostic(Item));
+        } catch {
+        }
+      }
+      return Result;
+    }, "NormaliseList");
     let Disposed = false;
     return {
       name: Owner,
@@ -12925,7 +12987,10 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       forEach: /* @__PURE__ */ __name((Callback) => {
         const Self = null;
         for (const [Uri2, Diagnostics] of Store) {
-          Callback(Uri2, Diagnostics, Self);
+          try {
+            Callback(Uri2, Diagnostics, Self);
+          } catch {
+          }
         }
       }, "forEach"),
       get: /* @__PURE__ */ __name((Uri2) => Store.get(UriKey(Uri2)) ?? [], "get"),
