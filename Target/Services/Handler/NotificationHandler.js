@@ -22613,7 +22613,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T17:29:36Z"
+      generatedAt: "2026-04-29T18:31:16Z"
     };
   }
 });
@@ -28151,10 +28151,12 @@ var init_LanguagesNamespace = __esm({
           const Out = {
             severity: NormaliseSeverity(Obj.severity),
             message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
-            startLineNumber: Start.line,
-            startColumn: Start.character,
-            endLineNumber: End.line,
-            endColumn: End.character
+            // `+ 1` converts vscode.Position (0-based) to
+            // `IMarkerData` (1-based). See block comment above.
+            startLineNumber: Start.line + 1,
+            startColumn: Start.character + 1,
+            endLineNumber: End.line + 1,
+            endColumn: End.character + 1
           };
           if (Obj.source !== void 0 && Obj.source !== null) {
             Out.source = String(Obj.source);

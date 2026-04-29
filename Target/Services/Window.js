@@ -21167,15 +21167,25 @@ var MountainGRPCClientLive = Layer.effect(
         const result = yield* Effect4.tryPromise({
           try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
             uri: { value: uri },
+            // `+ 1` converts vscode.Range (0-based) to
+            // the workbench's `IRange` (1-based) shape
+            // Mountain forwards verbatim to the
+            // `sky://workspace/applyEdit` listener.
+            // Without this, every `workspace.applyEdit`
+            // from an extension lands one row too high
+            // and one column too far left of the
+            // extension's intent - rename refactors,
+            // quick fixes, and snippet inserts all
+            // shred the file silently.
             edits: edits.map((edit) => ({
               range: {
                 start: {
-                  line: edit.range.start.line,
-                  character: edit.range.start.character
+                  line: edit.range.start.line + 1,
+                  character: edit.range.start.character + 1
                 },
                 end: {
-                  line: edit.range.end.line,
-                  character: edit.range.end.character
+                  line: edit.range.end.line + 1,
+                  character: edit.range.end.character + 1
                 }
               },
               newText: edit.newText

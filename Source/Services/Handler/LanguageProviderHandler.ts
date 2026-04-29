@@ -17,6 +17,14 @@ import * as LanguageProviderRegistry from "../LanguageProviderRegistry.js";
 /**
  * Normalize a VS Code range { start: { line, character }, end: {...} } to
  * Mountain's RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }.
+ *
+ * `vscode.Position` is 0-based. Mountain's `RangeDTO` (and the workbench's
+ * `IRange` it ultimately surfaces as) is 1-based - same convention stock VS
+ * Code's `extHostTypeConverters.ts:128` uses (`start.line + 1`,
+ * `start.character + 1`). Without the `+ 1` every hover/completion/decoration
+ * range from an extension lands one row too high and one column too far left;
+ * the workbench either renders the visual cue against the wrong tokens or
+ * silently drops the range when sanitisation collapses 0 → 1.
  */
 const NormalizeRange = (
 	VsRange: any,
@@ -27,10 +35,10 @@ const NormalizeRange = (
 	EndColumn: number;
 } => {
 	return {
-		StartLineNumber: VsRange?.start?.line ?? 0,
-		StartColumn: VsRange?.start?.character ?? 0,
-		EndLineNumber: VsRange?.end?.line ?? 0,
-		EndColumn: VsRange?.end?.character ?? 0,
+		StartLineNumber: (VsRange?.start?.line ?? 0) + 1,
+		StartColumn: (VsRange?.start?.character ?? 0) + 1,
+		EndLineNumber: (VsRange?.end?.line ?? 0) + 1,
+		EndColumn: (VsRange?.end?.character ?? 0) + 1,
 	};
 };
 
@@ -252,12 +260,35 @@ const InvokeLanguageProvider = async (
 		| {
 				Line?: number;
 				line?: number;
+				lineNumber?: number;
 				Character?: number;
 				character?: number;
+				column?: number;
 		  }
 		| undefined;
-	const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
-	const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
+	// Inverse of `NormalizeRange`: the workbench → Mountain → Cocoon path
+	// carries 1-based positions (`IPosition.lineNumber/column`). The
+	// extension API's `vscode.Position` is 0-based. Subtract 1 with a floor
+	// at 0 so a stale 0-valued payload doesn't underflow to -1 and crash
+	// the extension provider on `Position.with`.
+	//
+	// The dual-shape lookup (PascalCase + camelCase) is intentional - the
+	// gRPC layer serialises Rust struct fields as PascalCase, while
+	// extHost-shape payloads come through camelCase. Accept both rather
+	// than guess which path a given provider call took.
+	const SubtractOne = (V: number): number => (V > 0 ? V - 1 : 0);
+	const RawLine =
+		RawPos?.Line ??
+		RawPos?.lineNumber ??
+		RawPos?.line ??
+		1;
+	const RawCol =
+		RawPos?.Character ??
+		RawPos?.column ??
+		RawPos?.character ??
+		1;
+	const PosLine = SubtractOne(RawLine);
+	const PosChar = SubtractOne(RawCol);
 
 	// Real VS Code Position class from @codeeditorland/output.
 	const { Position } =
@@ -325,10 +356,16 @@ const InvokeLanguageProvider = async (
 				const VsRange = Result.range ?? null;
 				const RangeDTO = VsRange
 					? {
-							StartLineNumber: VsRange.start?.line ?? 0,
-							StartColumn: VsRange.start?.character ?? 0,
-							EndLineNumber: VsRange.end?.line ?? 0,
-							EndColumn: VsRange.end?.character ?? 0,
+							// `+ 1` to match `NormalizeRange` above; the
+							// hover anchor range is what the workbench
+							// uses to position the popup over the
+							// underlined token. 0-based here = popup
+							// floats one row above and one column left
+							// of the actual symbol.
+							StartLineNumber: (VsRange.start?.line ?? 0) + 1,
+							StartColumn: (VsRange.start?.character ?? 0) + 1,
+							EndLineNumber: (VsRange.end?.line ?? 0) + 1,
+							EndColumn: (VsRange.end?.character ?? 0) + 1,
 						}
 					: undefined;
 				return RangeDTO !== undefined

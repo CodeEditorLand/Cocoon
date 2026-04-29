@@ -26935,15 +26935,25 @@ var init_MountainGRPCClient = __esm({
             const result = yield* Effect17.tryPromise({
               try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
                 uri: { value: uri },
+                // `+ 1` converts vscode.Range (0-based) to
+                // the workbench's `IRange` (1-based) shape
+                // Mountain forwards verbatim to the
+                // `sky://workspace/applyEdit` listener.
+                // Without this, every `workspace.applyEdit`
+                // from an extension lands one row too high
+                // and one column too far left of the
+                // extension's intent - rename refactors,
+                // quick fixes, and snippet inserts all
+                // shred the file silently.
                 edits: edits.map((edit) => ({
                   range: {
                     start: {
-                      line: edit.range.start.line,
-                      character: edit.range.start.character
+                      line: edit.range.start.line + 1,
+                      character: edit.range.start.character + 1
                     },
                     end: {
-                      line: edit.range.end.line,
-                      character: edit.range.end.character
+                      line: edit.range.end.line + 1,
+                      character: edit.range.end.character + 1
                     }
                   },
                   newText: edit.newText
@@ -30041,7 +30051,7 @@ var init_RouteManifest = __esm({
       mountain: 82,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-04-29T17:29:36Z"
+      generatedAt: "2026-04-29T18:31:16Z"
     };
   }
 });
@@ -35831,10 +35841,12 @@ var init_LanguagesNamespace = __esm({
           const Out = {
             severity: NormaliseSeverity(Obj.severity),
             message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
-            startLineNumber: Start.line,
-            startColumn: Start.character,
-            endLineNumber: End.line,
-            endColumn: End.character
+            // `+ 1` converts vscode.Position (0-based) to
+            // `IMarkerData` (1-based). See block comment above.
+            startLineNumber: Start.line + 1,
+            startColumn: Start.character + 1,
+            endLineNumber: End.line + 1,
+            endColumn: End.character + 1
           };
           if (Obj.source !== void 0 && Obj.source !== null) {
             Out.source = String(Obj.source);
@@ -38272,10 +38284,10 @@ var init_LanguageProviderHandler = __esm({
     init_LanguageProviderRegistry();
     NormalizeRange = /* @__PURE__ */ __name((VsRange) => {
       return {
-        StartLineNumber: VsRange?.start?.line ?? 0,
-        StartColumn: VsRange?.start?.character ?? 0,
-        EndLineNumber: VsRange?.end?.line ?? 0,
-        EndColumn: VsRange?.end?.character ?? 0
+        StartLineNumber: (VsRange?.start?.line ?? 0) + 1,
+        StartColumn: (VsRange?.start?.character ?? 0) + 1,
+        EndLineNumber: (VsRange?.end?.line ?? 0) + 1,
+        EndColumn: (VsRange?.end?.character ?? 0) + 1
       };
     }, "NormalizeRange");
     ResolveLanguageIdentifier = /* @__PURE__ */ __name((Extension2) => {
@@ -38439,8 +38451,11 @@ var init_LanguageProviderHandler = __esm({
       const UriObj = Args[1];
       const UriString = typeof UriObj === "string" ? UriObj : UriObj?.external ?? "file:///unknown";
       const RawPos = Args[2];
-      const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
-      const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
+      const SubtractOne = /* @__PURE__ */ __name((V) => V > 0 ? V - 1 : 0, "SubtractOne");
+      const RawLine = RawPos?.Line ?? RawPos?.lineNumber ?? RawPos?.line ?? 1;
+      const RawCol = RawPos?.Character ?? RawPos?.column ?? RawPos?.character ?? 1;
+      const PosLine = SubtractOne(RawLine);
+      const PosChar = SubtractOne(RawCol);
       const { Position: Position3 } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
       const VsPosition = new Position3(PosLine, PosChar);
       const Ext = UriString.split(".").pop() ?? "";
@@ -38486,10 +38501,16 @@ var init_LanguageProviderHandler = __esm({
             ];
             const VsRange = Result.range ?? null;
             const RangeDTO = VsRange ? {
-              StartLineNumber: VsRange.start?.line ?? 0,
-              StartColumn: VsRange.start?.character ?? 0,
-              EndLineNumber: VsRange.end?.line ?? 0,
-              EndColumn: VsRange.end?.character ?? 0
+              // `+ 1` to match `NormalizeRange` above; the
+              // hover anchor range is what the workbench
+              // uses to position the popup over the
+              // underlined token. 0-based here = popup
+              // floats one row above and one column left
+              // of the actual symbol.
+              StartLineNumber: (VsRange.start?.line ?? 0) + 1,
+              StartColumn: (VsRange.start?.character ?? 0) + 1,
+              EndLineNumber: (VsRange.end?.line ?? 0) + 1,
+              EndColumn: (VsRange.end?.character ?? 0) + 1
             } : void 0;
             return RangeDTO !== void 0 ? { Contents, Range: RangeDTO } : { Contents };
           }

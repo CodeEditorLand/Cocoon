@@ -20817,10 +20817,10 @@ __name(ListHandles, "ListHandles");
 // Source/Services/Handler/LanguageProviderHandler.ts
 var NormalizeRange = /* @__PURE__ */ __name((VsRange) => {
   return {
-    StartLineNumber: VsRange?.start?.line ?? 0,
-    StartColumn: VsRange?.start?.character ?? 0,
-    EndLineNumber: VsRange?.end?.line ?? 0,
-    EndColumn: VsRange?.end?.character ?? 0
+    StartLineNumber: (VsRange?.start?.line ?? 0) + 1,
+    StartColumn: (VsRange?.start?.character ?? 0) + 1,
+    EndLineNumber: (VsRange?.end?.line ?? 0) + 1,
+    EndColumn: (VsRange?.end?.character ?? 0) + 1
   };
 }, "NormalizeRange");
 var ResolveLanguageIdentifier = /* @__PURE__ */ __name((Extension) => {
@@ -20984,8 +20984,11 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
   const UriObj = Args[1];
   const UriString = typeof UriObj === "string" ? UriObj : UriObj?.external ?? "file:///unknown";
   const RawPos = Args[2];
-  const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
-  const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
+  const SubtractOne = /* @__PURE__ */ __name((V) => V > 0 ? V - 1 : 0, "SubtractOne");
+  const RawLine = RawPos?.Line ?? RawPos?.lineNumber ?? RawPos?.line ?? 1;
+  const RawCol = RawPos?.Character ?? RawPos?.column ?? RawPos?.character ?? 1;
+  const PosLine = SubtractOne(RawLine);
+  const PosChar = SubtractOne(RawCol);
   const { Position: Position3 } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
   const VsPosition = new Position3(PosLine, PosChar);
   const Ext = UriString.split(".").pop() ?? "";
@@ -21031,10 +21034,16 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
         ];
         const VsRange = Result.range ?? null;
         const RangeDTO = VsRange ? {
-          StartLineNumber: VsRange.start?.line ?? 0,
-          StartColumn: VsRange.start?.character ?? 0,
-          EndLineNumber: VsRange.end?.line ?? 0,
-          EndColumn: VsRange.end?.character ?? 0
+          // `+ 1` to match `NormalizeRange` above; the
+          // hover anchor range is what the workbench
+          // uses to position the popup over the
+          // underlined token. 0-based here = popup
+          // floats one row above and one column left
+          // of the actual symbol.
+          StartLineNumber: (VsRange.start?.line ?? 0) + 1,
+          StartColumn: (VsRange.start?.character ?? 0) + 1,
+          EndLineNumber: (VsRange.end?.line ?? 0) + 1,
+          EndColumn: (VsRange.end?.character ?? 0) + 1
         } : void 0;
         return RangeDTO !== void 0 ? { Contents, Range: RangeDTO } : { Contents };
       }

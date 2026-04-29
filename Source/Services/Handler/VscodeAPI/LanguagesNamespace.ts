@@ -339,7 +339,15 @@ const CreateLanguagesNamespace = (
 			// debug-string-severity diagnostic) to Mountain's
 			// `MarkerDataDTO` shape:
 			//   - `range` (nested) → flat `startLineNumber/startColumn/
-			//     endLineNumber/endColumn` (0-based)
+			//     endLineNumber/endColumn` (1-based - mirrors stock VS
+			//     Code's `extHostTypeConverters.ts:128` `start.line + 1`
+			//     conversion. `IMarkerData` in `markerService.ts:243`
+			//     clamps `startLineNumber > 0 ? startLineNumber : 1`,
+			//     so any 0-based position lands on line 1, collapsing
+			//     all line-0 diagnostics together and shifting every
+			//     other diagnostic up by one row. Visible as red
+			//     squiggles on the wrong line + the Problems panel
+			//     mis-grouping markers under the wrong file row.)
 			//   - `severity`: vscode enum (0-3) OR string label
 			//     ("Error"/"Warning"/"Information"/"Hint") OR LSP integer
 			//     (1-4) → Monaco `MarkerSeverity` bit values
@@ -405,10 +413,12 @@ const CreateLanguagesNamespace = (
 				const Out: Record<string, unknown> = {
 					severity: NormaliseSeverity(Obj.severity),
 					message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
-					startLineNumber: Start.line,
-					startColumn: Start.character,
-					endLineNumber: End.line,
-					endColumn: End.character,
+					// `+ 1` converts vscode.Position (0-based) to
+					// `IMarkerData` (1-based). See block comment above.
+					startLineNumber: Start.line + 1,
+					startColumn: Start.character + 1,
+					endLineNumber: End.line + 1,
+					endColumn: End.character + 1,
 				};
 				if (Obj.source !== undefined && Obj.source !== null) {
 					Out.source = String(Obj.source);
