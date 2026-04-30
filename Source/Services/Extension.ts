@@ -340,8 +340,20 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									ExtensionData.description
 										? ExtensionData.description
 										: undefined,
+								// LAND-FIX: empty-string URI guard. ruby-lsp's
+								// registry insert on Land/.land/extensions/...
+								// occasionally lands with `path: ""`; the
+								// resulting `URI.parse("")` throws
+								// "[UriError]: Scheme contains illegal
+								// characters. (len:0)" and kills the
+								// activation. Synthesise a `file://` URI from
+								// the extension id when the location is
+								// blank - same pattern as the Empty-URI-Guard
+								// skill at HydrateUriResults / StockLift.
 								extensionLocation:
-									VSCode.Uri.parse(ExtensionLocation),
+									ExtensionLocation && ExtensionLocation.length > 0
+										? VSCode.Uri.parse(ExtensionLocation)
+										: VSCode.Uri.parse(`file:///nonexistent/${ExtensionId}`),
 								activationEvents:
 									typeof ExtensionData === "object" &&
 									ExtensionData.activationEvents
@@ -438,12 +450,34 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						Ref.get(ExtensionExportsRef),
 					);
 
+					// LAND-FIX: SafePackageJSON guard. Same rationale as
+					// ExtensionsNamespace.ts:249 - extensions like
+					// muhammad-sammy.csharp call `semver.parse(extension
+					// .packageJSON.version)` at activation; an undefined
+					// `version` throws "Invalid version. Must be a string.
+					// Got type undefined" before activate() can run. The
+					// scanner-side Mountain guard (Extensions.rs:162)
+					// fills `version: "0.0.0"` but the Description that
+					// reaches THIS code path can still be a partial DTO
+					// from a degenerate registry insert. Mirror the
+					// permissive shape here.
+					const SafePackageJSON = (() => {
+						const Raw = Description as unknown as Record<string, unknown>;
+						const Identifier = Description.identifier;
+						const PublisherFallback = typeof Identifier === "string" ? (Identifier.split(".")[0] ?? "unknown") : "unknown";
+						return {
+							...Description,
+							name: typeof Raw.name === "string" && (Raw.name as string).length > 0 ? (Raw.name as string) : Identifier,
+							version: typeof Raw.version === "string" && (Raw.version as string).length > 0 ? (Raw.version as string) : "0.0.0",
+							publisher: typeof Raw.publisher === "string" ? (Raw.publisher as string) : PublisherFallback,
+						} as IExtensionDescription;
+					})();
 					const ExtensionObject: IExtension<T> = {
 						id: Description.identifier,
 						extensionUri: Description.extensionLocation,
 						extensionPath: Description.extensionLocation.fsPath,
 						isActive: ActivationMap.get(ExtensionId) ?? false,
-						packageJSON: Description,
+						packageJSON: SafePackageJSON,
 						exports: ExportsMap.get(ExtensionId) as T | undefined,
 						extensionKind: Description.kind?.[0],
 						activate: async () => {
@@ -482,13 +516,34 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 					const Extensions = Array.from(Registry.entries()).map(
 						([id, description]): IExtension => {
+							// LAND-FIX: SafePackageJSON guard mirrored
+							// from GetExtension above so getAllExtensions
+							// also returns shape-safe packageJSON.
+							const Raw = description as unknown as Record<string, unknown>;
+							const PublisherFallback =
+								typeof id === "string" ? (id.split(".")[0] ?? "unknown") : "unknown";
+							const SafePackageJSON = {
+								...description,
+								name:
+									typeof Raw.name === "string" && (Raw.name as string).length > 0
+										? (Raw.name as string)
+										: id,
+								version:
+									typeof Raw.version === "string" && (Raw.version as string).length > 0
+										? (Raw.version as string)
+										: "0.0.0",
+								publisher:
+									typeof Raw.publisher === "string"
+										? (Raw.publisher as string)
+										: PublisherFallback,
+							} as IExtensionDescription;
 							return {
 								id: description.identifier,
 								extensionUri: description.extensionLocation,
 								extensionPath:
 									description.extensionLocation.fsPath,
 								isActive: ActivationMap.get(id) ?? false,
-								packageJSON: description,
+								packageJSON: SafePackageJSON,
 								exports: ExportsMap.get(id),
 							};
 						},

@@ -53,7 +53,17 @@ var ExtensionService = class extends Effect2.Service()(
               version: typeof ExtensionData === "object" && ExtensionData.version ? ExtensionData.version : "0.0.0",
               publisher: typeof ExtensionData === "object" && ExtensionData.publisher ? ExtensionData.publisher : void 0,
               description: typeof ExtensionData === "object" && ExtensionData.description ? ExtensionData.description : void 0,
-              extensionLocation: VSCode.Uri.parse(ExtensionLocation),
+              // LAND-FIX: empty-string URI guard. ruby-lsp's
+              // registry insert on Land/.land/extensions/...
+              // occasionally lands with `path: ""`; the
+              // resulting `URI.parse("")` throws
+              // "[UriError]: Scheme contains illegal
+              // characters. (len:0)" and kills the
+              // activation. Synthesise a `file://` URI from
+              // the extension id when the location is
+              // blank - same pattern as the Empty-URI-Guard
+              // skill at HydrateUriResults / StockLift.
+              extensionLocation: ExtensionLocation && ExtensionLocation.length > 0 ? VSCode.Uri.parse(ExtensionLocation) : VSCode.Uri.parse(`file:///nonexistent/${ExtensionId}`),
               activationEvents: typeof ExtensionData === "object" && ExtensionData.activationEvents ? ExtensionData.activationEvents : void 0,
               main: typeof ExtensionData === "object" && ExtensionData.main ? ExtensionData.main : void 0,
               browser: typeof ExtensionData === "object" && ExtensionData.browser ? ExtensionData.browser : void 0,
@@ -95,12 +105,23 @@ var ExtensionService = class extends Effect2.Service()(
         const ExportsMap = Effect2.runSync(
           Ref.get(ExtensionExportsRef)
         );
+        const SafePackageJSON = (() => {
+          const Raw = Description;
+          const Identifier = Description.identifier;
+          const PublisherFallback = typeof Identifier === "string" ? Identifier.split(".")[0] ?? "unknown" : "unknown";
+          return {
+            ...Description,
+            name: typeof Raw.name === "string" && Raw.name.length > 0 ? Raw.name : Identifier,
+            version: typeof Raw.version === "string" && Raw.version.length > 0 ? Raw.version : "0.0.0",
+            publisher: typeof Raw.publisher === "string" ? Raw.publisher : PublisherFallback
+          };
+        })();
         const ExtensionObject = {
           id: Description.identifier,
           extensionUri: Description.extensionLocation,
           extensionPath: Description.extensionLocation.fsPath,
           isActive: ActivationMap.get(ExtensionId) ?? false,
-          packageJSON: Description,
+          packageJSON: SafePackageJSON,
           exports: ExportsMap.get(ExtensionId),
           extensionKind: Description.kind?.[0],
           activate: /* @__PURE__ */ __name(async () => {
@@ -124,12 +145,20 @@ var ExtensionService = class extends Effect2.Service()(
         );
         const Extensions = Array.from(Registry.entries()).map(
           ([id, description]) => {
+            const Raw = description;
+            const PublisherFallback = typeof id === "string" ? id.split(".")[0] ?? "unknown" : "unknown";
+            const SafePackageJSON = {
+              ...description,
+              name: typeof Raw.name === "string" && Raw.name.length > 0 ? Raw.name : id,
+              version: typeof Raw.version === "string" && Raw.version.length > 0 ? Raw.version : "0.0.0",
+              publisher: typeof Raw.publisher === "string" ? Raw.publisher : PublisherFallback
+            };
             return {
               id: description.identifier,
               extensionUri: description.extensionLocation,
               extensionPath: description.extensionLocation.fsPath,
               isActive: ActivationMap.get(id) ?? false,
-              packageJSON: description,
+              packageJSON: SafePackageJSON,
               exports: ExportsMap.get(id)
             };
           }
