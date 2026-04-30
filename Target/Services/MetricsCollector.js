@@ -1,1 +1,26 @@
-var t=class{Metrics=new Map;Record(e,r){this.Metrics.set(e,(this.Metrics.get(e)||0)+r)}Get(e){return this.Metrics.get(e)||0}GetAll(){return Object.fromEntries(this.Metrics)}Reset(){this.Metrics.clear()}};export{t as MetricsCollector};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/MetricsCollector.ts
+var MetricsCollector = class {
+  static {
+    __name(this, "MetricsCollector");
+  }
+  Metrics = /* @__PURE__ */ new Map();
+  Record(Name, Value) {
+    this.Metrics.set(Name, (this.Metrics.get(Name) || 0) + Value);
+  }
+  Get(Name) {
+    return this.Metrics.get(Name) || 0;
+  }
+  GetAll() {
+    return Object.fromEntries(this.Metrics);
+  }
+  Reset() {
+    this.Metrics.clear();
+  }
+};
+export {
+  MetricsCollector
+};
+//# sourceMappingURL=MetricsCollector.js.map
