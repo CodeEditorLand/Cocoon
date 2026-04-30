@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Utility/Result.ts"],
-  "sourcesContent": ["/**\n * @module Utility/Result\n * @description Simple Result type for IPC handler error propagation.\n */\n\nexport type Ok<T> = { readonly success: true; readonly value: T };\nexport type Err<E = Error> = { readonly success: false; readonly error: E };\nexport type Result<T, E = Error> = Ok<T> | Err<E>;\n\nexport const Result = {\n\tOk: <T>(Value: T): Ok<T> => ({ success: true, value: Value }),\n\tErr: <E>(Error: E): Err<E> => ({ success: false, error: Error }),\n\tIsOk: <T, E>(R: Result<T, E>): R is Ok<T> => R.success,\n\tIsErr: <T, E>(R: Result<T, E>): R is Err<E> => !R.success,\n};\n\nexport const Ok = Result.Ok;\nexport const Err = Result.Err;\n\nexport default Result;\n"],
-  "mappings": ";;;;AASO,IAAM,SAAS;AAAA,EACrB,IAAI,wBAAI,WAAqB,EAAE,SAAS,MAAM,OAAO,MAAM,IAAvD;AAAA,EACJ,KAAK,wBAAIA,YAAsB,EAAE,SAAS,OAAO,OAAOA,OAAM,IAAzD;AAAA,EACL,MAAM,wBAAO,MAAgC,EAAE,SAAzC;AAAA,EACN,OAAO,wBAAO,MAAiC,CAAC,EAAE,SAA3C;AACR;AAEO,IAAM,KAAK,OAAO;AAClB,IAAM,MAAM,OAAO;AAE1B,IAAO,iBAAQ;",
-  "names": ["Error"]
-}
