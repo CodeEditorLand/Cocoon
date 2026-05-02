@@ -1,12 +1,12 @@
 # Route Manifest - coverage report
 
-_Generated 2026-05-01T01:08:25Z_
+_Generated 2026-05-01T23:58:25Z_
 
 ## Totals
 
 | Tier | Count | Source |
 |---|---:|---|
-| 1 - Mountain (Rust) | 82 | `Track/Effect/CreateEffectForRequest/*.rs` |
+| 1 - Mountain (Rust) | 86 | `Track/Effect/CreateEffectForRequest/*.rs` |
 | 2 - Stock VS Code | 21 | `StockLift.ts` |
 | 3 - Cocoon bespoke | 1 | `*Fallback.ts` |
 
@@ -65,11 +65,13 @@ _Generated 2026-05-01T01:08:25Z_
 - `Languages.GetAll`
 - `NativeHost.OpenExternal`
 - `openDocument`
+- `postMessage`
 - `readFile`
 - `Search.TextSearch`
 - `secrets.delete`
 - `secrets.get`
 - `secrets.store`
+- `setHtml`
 - `showTextDocument`
 - `stat`
 - `Storage.Get`
@@ -87,6 +89,8 @@ _Generated 2026-05-01T01:08:25Z_
 - `UserInterface.ShowQuickPick`
 - `UserInterface.ShowSaveDialog`
 - `warning`
+- `webview.postMessage`
+- `webview.setHtml`
 - `Window.ShowInputBox`
 - `Window.ShowMessage`
 - `Window.ShowOpenDialog`

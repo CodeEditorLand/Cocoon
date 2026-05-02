@@ -12659,7 +12659,10 @@ var codiconsLibrary = {
   claude: register("claude", 60546),
   openInWindow: register("open-in-window", 60547),
   newSession: register("new-session", 60548),
-  terminalSecure: register("terminal-secure", 60549)
+  terminalSecure: register("terminal-secure", 60549),
+  chatImport: register("chat-import", 60550),
+  chatExport: register("chat-export", 60551),
+  shareWindow: register("share-window", 60552)
 };
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/codicons.js
@@ -13511,6 +13514,10 @@ function escapeMarkdownSyntaxTokens(text) {
   return text.replace(/[\\`*_{}[\]()#+\-!~]/g, "\\$&");
 }
 __name(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
+function escapeMarkdownLinkLabel(text) {
+  return text.replace(/[\\\]]/g, "\\$&");
+}
+__name(escapeMarkdownLinkLabel, "escapeMarkdownLinkLabel");
 function appendEscapedMarkdownCodeBlockFence(code, langId) {
   const longestFenceLength = code.match(/^`+/gm)?.reduce((a, b) => a.length > b.length ? a : b).length ?? 0;
   const desiredFenceLength = longestFenceLength >= 3 ? longestFenceLength + 1 : 3;
@@ -18209,6 +18216,12 @@ var ChatErrorLevel;
   ChatErrorLevel2[ChatErrorLevel2["Warning"] = 1] = "Warning";
   ChatErrorLevel2[ChatErrorLevel2["Error"] = 2] = "Error";
 })(ChatErrorLevel || (ChatErrorLevel = {}));
+var ChatInputNotificationSeverity;
+(function(ChatInputNotificationSeverity2) {
+  ChatInputNotificationSeverity2[ChatInputNotificationSeverity2["Info"] = 0] = "Info";
+  ChatInputNotificationSeverity2[ChatInputNotificationSeverity2["Warning"] = 1] = "Warning";
+  ChatInputNotificationSeverity2[ChatInputNotificationSeverity2["Error"] = 2] = "Error";
+})(ChatInputNotificationSeverity || (ChatInputNotificationSeverity = {}));
 var LanguageModelChatMessage = class _LanguageModelChatMessage {
   static {
     __name(this, "LanguageModelChatMessage");
