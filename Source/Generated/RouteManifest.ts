@@ -21,7 +21,7 @@
 // and break esbuild parsing (the build failure this very file caused
 // on first emission).
 //
-// Generated: 2026-05-02T06:56:56Z
+// Generated: 2026-05-02T10:09:09Z
 
 /** Mountain-side RPC method names known to have a Rust handler. */
 export const MountainMethods: ReadonlySet<string> = new Set<string>(["$disposeStatusBarMessage","$gitExec","$languageFeatures:registerProvider","$resolveCustomEditor","$scm:createSourceControl","$scm:registerInputBox","$scm:updateGroup","$scm:updateSourceControl","$setStatusBarMessage","$statusBar:dispose","$statusBar:set","$terminal:create","$terminal:dispose","$terminal:resize","$terminal:sendText","$tree:register","$updateWorkspaceFolders","applyEdit","Authentication.GetAccounts","Authentication.GetSession","Clipboard.Read","Clipboard.Write","Command.Execute","Command.GetAll","config.get","config.update","Configuration.Inspect","Configuration.Update","Debug.RegisterConfigurationProvider","Debug.Start","Debug.Stop","Diagnostic.Clear","Diagnostic.Set","Document.Save","Document.SaveAs","error","executeCommand","FileSystem.Copy","FileSystem.CreateDirectory","FileSystem.Delete","FileSystem.ReadDirectory","FileSystem.ReadFile","FileSystem.Rename","FileSystem.Stat","FileSystem.WriteFile","FileWatcher.Register","FileWatcher.Unregister","findFiles","findTextInFiles","Keybinding.GetResolved","Languages.GetAll","NativeHost.OpenExternal","openDocument","postMessage","readFile","Search.TextSearch","secrets.delete","secrets.get","secrets.store","setHtml","showTextDocument","stat","Storage.Get","Storage.Set","Task.Execute","Task.Fetch","Terminal.GetProcessId","Terminal.Resize","tree.dispose","tree.register","tree.unregister","UserInterface.ShowInputBox","UserInterface.ShowMessage","UserInterface.ShowOpenDialog","UserInterface.ShowQuickPick","UserInterface.ShowSaveDialog","warning","webview.postMessage","webview.setHtml","Window.ShowInputBox","Window.ShowMessage","Window.ShowOpenDialog","Window.ShowQuickPick","Window.ShowSaveDialog","Workspace.IsResourceTrusted","Workspace.RequestResourceTrust"]);
@@ -37,5 +37,5 @@ export const RouteManifestSummary = {
 	mountain: 86,
 	stockLift: 21,
 	bespoke: 1,
-	generatedAt: "2026-05-02T06:56:56Z",
+	generatedAt: "2026-05-02T10:09:09Z",
 } as const;
