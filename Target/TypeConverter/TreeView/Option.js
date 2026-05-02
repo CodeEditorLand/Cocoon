@@ -1,16 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-
-// Source/TypeConverter/TreeView/Option.ts
-var FromAPI = /* @__PURE__ */ __name((option) => {
-  return {
-    showCollapseAll: !!option.showCollapseAll,
-    canSelectMany: !!option.canSelectMany,
-    hasHandleDrag: !!option.dragAndDropController?.handleDrag,
-    hasHandleDrop: !!option.dragAndDropController?.handleDrop
-  };
-}, "FromAPI");
-export {
-  FromAPI
-};
-//# sourceMappingURL=Option.js.map
+var r=e=>({showCollapseAll:!!e.showCollapseAll,canSelectMany:!!e.canSelectMany,hasHandleDrag:!!e.dragAndDropController?.handleDrag,hasHandleDrop:!!e.dragAndDropController?.handleDrop});export{r as FromAPI};

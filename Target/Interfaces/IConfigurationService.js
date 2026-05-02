@@ -1,16 +1,1 @@
-// Source/Interfaces/IConfigurationService.ts
-import { Context } from "effect";
-var ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope2) => {
-  ConfigurationScope2["APPLICATION"] = "APPLICATION";
-  ConfigurationScope2["WORKSPACE"] = "WORKSPACE";
-  ConfigurationScope2["PROFILE"] = "PROFILE";
-  return ConfigurationScope2;
-})(ConfigurationScope || {});
-var IConfigurationService = Context.Tag(
-  "IConfigurationService"
-);
-export {
-  ConfigurationScope,
-  IConfigurationService
-};
-//# sourceMappingURL=IConfigurationService.js.map
+import{Context as i}from"effect";var n=(e=>(e.APPLICATION="APPLICATION",e.WORKSPACE="WORKSPACE",e.PROFILE="PROFILE",e))(n||{}),t=i.Tag("IConfigurationService");export{n as ConfigurationScope,t as IConfigurationService};

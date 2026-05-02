@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Configuration/ESBuild/index.ts"],
-  "sourcesContent": ["export * from \"./Constant/EnvironmentConstant.js\";\nexport { sep, posix } from \"node:path\";\n\nexport { default as BaseConfig } from \"./Config/BaseConfig.js\";\nexport { default as TargetConfig } from \"./Config/TargetConfig.js\";\nexport { default as CompileConfig } from \"./Config/CompileConfig.js\";\n"],
-  "mappings": "AAAA,cAAc;AACd,SAAS,KAAK,aAAa;AAE3B,SAAoB,WAAXA,gBAA6B;AACtC,SAAoB,WAAXA,gBAA+B;AACxC,SAAoB,WAAXA,gBAAgC;",
-  "names": ["default"]
-}
