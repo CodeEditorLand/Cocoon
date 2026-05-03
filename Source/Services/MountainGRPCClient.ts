@@ -725,7 +725,10 @@ const MountainGRPCClientLive = Layer.effect(
 									character: (End.character ?? 0) + 1,
 								},
 							},
-							newText: typeof edit.newText === "string" ? edit.newText : "",
+							newText:
+								typeof edit.newText === "string"
+									? edit.newText
+									: "",
 						});
 					}
 					const result = yield* Effect.tryPromise({

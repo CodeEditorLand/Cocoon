@@ -38,8 +38,24 @@
 
 import { Effect } from "effect";
 
-import { CaptureEvent } from "../../../Telemetry/PostHogBridge.js";
+// Telemetry import kept lazy so prod bundles drop the bridge.
+// `process.env.NODE_ENV !== "production"` is define-substituted to
+// `false` literal by esbuild for prod, dead-coding the whole emit
+// pathway including the dynamic import.
 import LandFixLog from "../../../Utility/LandFixLog.js";
+
+type CaptureEventFn = (
+	Name: string,
+	Properties?: Record<string, unknown>,
+) => void;
+let LazyCaptureEvent: CaptureEventFn | undefined;
+if (process.env["NODE_ENV"] !== "production") {
+	void import("../../../Telemetry/PostHogBridge.js")
+		.then((Module) => {
+			LazyCaptureEvent = Module.CaptureEvent as CaptureEventFn;
+		})
+		.catch(() => {});
+}
 
 /** Stable disposable shape used by every event/registration heuristic. */
 const NoopDisposable = { dispose: () => {} };
@@ -153,11 +169,13 @@ const RecordGap = (
 		Key,
 		`${NamespaceName}.${Property} → ${Kind}`,
 	);
-	CaptureEvent("cocoon:vscode_api_gap", {
-		namespace: NamespaceName,
-		method: Property,
-		kind: Kind,
-	});
+	if (process.env["NODE_ENV"] !== "production") {
+		LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
+			namespace: NamespaceName,
+			method: Property,
+			kind: Kind,
+		});
+	}
 };
 
 /**
@@ -232,7 +250,9 @@ const BuildHeuristicMethod =
 				case "bool-check":
 					return Heuristic.Sync ? false : Promise.resolve(false);
 				default:
-					return Heuristic.Sync ? undefined : Promise.resolve(undefined);
+					return Heuristic.Sync
+						? undefined
+						: Promise.resolve(undefined);
 			}
 		}
 	};

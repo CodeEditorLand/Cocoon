@@ -15,16 +15,13 @@ import { dirname, join } from "node:path";
 
 import type { CodegenProblem } from "@codeeditorland/wind/Target/Codegen/Type/CodegenProblem.js";
 import type {
-	InterfaceMemberRecord,
 	InterfaceMemberParameter,
+	InterfaceMemberRecord,
 } from "@codeeditorland/wind/Target/Codegen/Type/InterfaceMemberRecord.js";
 
 import type { ExtHostDecoratorRecord } from "../Type/ExtHostDecoratorRecord.js";
 
-const FormatDocComment = (
-	doc: string | null,
-	indent: string,
-): string => {
+const FormatDocComment = (doc: string | null, indent: string): string => {
 	if (!doc) return "";
 	const Lines = doc.split(/\r?\n/);
 	const Body = Lines.map((line) => `${indent} * ${line}`.trimEnd()).join(

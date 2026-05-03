@@ -8,11 +8,14 @@ import "../../Utility/Tier.js";
 // Effect services
 import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
 import { EffectServices } from "../../ServiceMapping.js";
+
 // Atom PH3: PostHog telemetry - initialize as early as possible so errors
 // during bootstrap land in PostHog even if the rest of the extension host
-// fails to come up. Side-effect import: CocoonMain is the only direct
-// entry point, so one invocation is guaranteed.
-import PostHogBridge from "../../Telemetry/PostHogBridge.js";
+// fails to come up. Loaded lazily so the static import doesn't ship to
+// production - the `if (process.env.NODE_ENV !== "production")` block
+// below dead-codes when esbuild's `define` substitutes the literal
+// `"production"`, dropping the entire `await import` from the prod chunk.
+type PostHogBridgeModule = typeof import("../../Telemetry/PostHogBridge.js");
 
 /**
  * @module CocoonMain
@@ -119,7 +122,32 @@ declare const __LandTier_Telemetry__: string;
 			: (process.env["TierTelemetry"] ?? "Synchronous"),
 };
 
-PostHogBridge.Initialize();
+// Telemetry init gated at the call site by the build-time
+// `process.env.NODE_ENV` substitute. esbuild's `define` map sets it to
+// `"production"` for prod builds; the comparison folds to `false` and
+// the entire branch (the dynamic `import`, string literals, object
+// payloads, the typeof annotation above) drops from the bundle. No
+// telemetry ships in prod - not even the bridge module itself.
+if (process.env["NODE_ENV"] !== "production") {
+	const PostHogBridge: PostHogBridgeModule =
+		await import("../../Telemetry/PostHogBridge.js");
+	PostHogBridge.default.Initialize();
+	const _CocoonEntryLoadMillis = Date.now();
+	PostHogBridge.default.CaptureEntryLoad("CocoonMain");
+
+	// `setImmediate` defers the loaded event one tick after CocoonMain's
+	// top-level imports + the gRPC server bring-up have completed; it
+	// fires only if the module successfully completed parsing, so it
+	// acts as a "module loaded" signal even on the bootstrap-effect
+	// promise chain. Pairs with entry:load for the Cocoon Lifecycle
+	// funnel.
+	setImmediate(() => {
+		PostHogBridge.default.CaptureEntryLoaded(
+			"CocoonMain",
+			Date.now() - _CocoonEntryLoadMillis,
+		);
+	});
+}
 
 // ============================================================================
 // EFFECT-BASED BOOTSTRAP (NEW APPROACH)

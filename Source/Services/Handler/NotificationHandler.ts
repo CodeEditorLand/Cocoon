@@ -195,9 +195,7 @@ if (
 				: "LandFix:UnhandledRejection";
 			if (
 				IsBenign &&
-				!process.env["Trace"]?.includes(
-					"landfix-rejection-verbose",
-				)
+				!process.env["Trace"]?.includes("landfix-rejection-verbose")
 			) {
 				return;
 			}

@@ -240,7 +240,9 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 									? F
 									: ((F as any).uri ?? (F as any).path ?? F);
 							const SourceString =
-								typeof Source === "string" ? Source : String(Source ?? "");
+								typeof Source === "string"
+									? Source
+									: String(Source ?? "");
 							if (!SourceString) continue;
 							Folders.push({
 								uri: VSCode.Uri.parse(SourceString),
@@ -265,7 +267,9 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						Data.configuration.length > 0
 					) {
 						try {
-							ConfigurationUri = VSCode.Uri.parse(Data.configuration);
+							ConfigurationUri = VSCode.Uri.parse(
+								Data.configuration,
+							);
 						} catch {
 							ConfigurationUri = undefined;
 						}

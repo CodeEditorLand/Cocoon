@@ -176,9 +176,7 @@ export const IsRustDeferralEnabled = (Method: string): boolean => {
 // "why is Mountain being skipped" question is one log line away.
 if (process.env["Trace"]) {
 	const ActiveBypasses = Object.keys(process.env)
-		.filter(
-			(K) => K === "Defer" || K.startsWith("Defer"),
-		)
+		.filter((K) => K === "Defer" || K.startsWith("Defer"))
 		.filter((K) => IsBypassValue(process.env[K]))
 		.join(",");
 	if (ActiveBypasses) {

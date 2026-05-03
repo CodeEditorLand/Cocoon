@@ -361,7 +361,8 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						try {
 							console.warn(
 								`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}:`,
-								(ResolveError as any)?.message ?? String(ResolveError),
+								(ResolveError as any)?.message ??
+									String(ResolveError),
 							);
 						} catch {
 							/* console may be replaced */
@@ -390,15 +391,20 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const Panel = Params?.panel ?? Params?.[2];
 					try {
 						return (
-							(await Provider.resolveCustomEditor?.(Document, Panel, {
-								asAbsolutePath: (p: string) => p,
-							})) ?? null
+							(await Provider.resolveCustomEditor?.(
+								Document,
+								Panel,
+								{
+									asAbsolutePath: (p: string) => p,
+								},
+							)) ?? null
 						);
 					} catch (ResolveError) {
 						try {
 							console.warn(
 								`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}:`,
-								(ResolveError as any)?.message ?? String(ResolveError),
+								(ResolveError as any)?.message ??
+									String(ResolveError),
 							);
 						} catch {
 							/* console may be replaced */
@@ -475,10 +481,36 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		},
 	};
 
-	// Find matching route pattern
+	// Find matching route pattern. Wrap dispatch in PostHog +
+	// OTLP capture so the Feature Parity dashboard's
+	// `land:cocoon:handler:complete` populates and Jaeger sees
+	// per-request spans. Telemetry block is gated by the build-time
+	// `process.env.NODE_ENV` substitute - in prod the entire dynamic
+	// import + Capture call drops from the bundle, the dispatcher
+	// becomes a clean `return await Handler(Method, Parameters)`.
 	for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
 		const Regex = new RegExp(Pattern);
 		if (Regex.test(Method)) {
+			if (process.env["NODE_ENV"] !== "production") {
+				const StartMillis = Date.now();
+				let Ok = true;
+				try {
+					return await Handler(Method, Parameters);
+				} catch (Error) {
+					Ok = false;
+					throw Error;
+				} finally {
+					const DurationMs = Date.now() - StartMillis;
+					try {
+						const { CaptureHandler } =
+							await import("../../Telemetry/PostHogBridge.js");
+						CaptureHandler(Method, DurationMs, Ok);
+					} catch {
+						// Telemetry must not raise into the dispatcher.
+					}
+				}
+			}
+			// Production path: no timing, no capture, just dispatch.
 			return Handler(Method, Parameters);
 		}
 	}

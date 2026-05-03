@@ -30,10 +30,22 @@ export const Create = (Name: string, Properties: Properties = {}): Event => ({
 	Properties,
 });
 
+// Stamp `$trace_id` on every PostHog event so the matching Jaeger span
+// can be opened with one click from PostHog. The trace ID is the same
+// value `OTLPBridge` returns from `TraceIdentifier()`; setter wired
+// from `PostHogBridge.Initialize` after the OTLP module has loaded so
+// boot-order concerns don't crash the require graph.
+let CurrentTraceIdentifier: string | undefined;
+
+export const SetTraceIdentifier = (Identifier: string): void => {
+	CurrentTraceIdentifier = Identifier;
+};
+
 export const Enrich = (Properties: Properties): Properties => ({
 	...Properties,
 	...BaseProperties,
 	$node_version: process.version,
+	...(CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}),
 });
 
-export default { Create, Enrich };
+export default { Create, Enrich, SetTraceIdentifier };

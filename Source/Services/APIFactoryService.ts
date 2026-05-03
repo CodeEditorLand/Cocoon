@@ -18,10 +18,12 @@ import * as LanguageProviderRegistry from "./LanguageProviderRegistry.js";
 // Loaded once at module init - all extensions share these class definitions.
 const VsCodeTypes =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
-const { URI } = await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
+const { URI } =
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
 const { CancellationTokenSource, CancellationToken } =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
-const { Emitter } = await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
+const { Emitter } =
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
 
 // Defensive RelativePattern wrapper.
 //

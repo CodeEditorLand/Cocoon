@@ -21,7 +21,6 @@ import { ResolveInterfaceCrossFile } from "@codeeditorland/wind/Target/Codegen/R
 import type { SourceFile } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 
 import type { ExtHostDecoratorRecord } from "../Type/ExtHostDecoratorRecord.js";
-
 import { IsExtHostFile } from "./IsExtHostFile.js";
 
 const MainThreadCounterpartName = (decoratorName: string): string | null => {

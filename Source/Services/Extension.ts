@@ -351,9 +351,12 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								// blank - same pattern as the Empty-URI-Guard
 								// skill at HydrateUriResults / StockLift.
 								extensionLocation:
-									ExtensionLocation && ExtensionLocation.length > 0
+									ExtensionLocation &&
+									ExtensionLocation.length > 0
 										? VSCode.Uri.parse(ExtensionLocation)
-										: VSCode.Uri.parse(`file:///nonexistent/${ExtensionId}`),
+										: VSCode.Uri.parse(
+												`file:///nonexistent/${ExtensionId}`,
+											),
 								activationEvents:
 									typeof ExtensionData === "object" &&
 									ExtensionData.activationEvents
@@ -462,14 +465,31 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					// from a degenerate registry insert. Mirror the
 					// permissive shape here.
 					const SafePackageJSON = (() => {
-						const Raw = Description as unknown as Record<string, unknown>;
+						const Raw = Description as unknown as Record<
+							string,
+							unknown
+						>;
 						const Identifier = Description.identifier;
-						const PublisherFallback = typeof Identifier === "string" ? (Identifier.split(".")[0] ?? "unknown") : "unknown";
+						const PublisherFallback =
+							typeof Identifier === "string"
+								? (Identifier.split(".")[0] ?? "unknown")
+								: "unknown";
 						return {
 							...Description,
-							name: typeof Raw.name === "string" && (Raw.name as string).length > 0 ? (Raw.name as string) : Identifier,
-							version: typeof Raw.version === "string" && (Raw.version as string).length > 0 ? (Raw.version as string) : "0.0.0",
-							publisher: typeof Raw.publisher === "string" ? (Raw.publisher as string) : PublisherFallback,
+							name:
+								typeof Raw.name === "string" &&
+								(Raw.name as string).length > 0
+									? (Raw.name as string)
+									: Identifier,
+							version:
+								typeof Raw.version === "string" &&
+								(Raw.version as string).length > 0
+									? (Raw.version as string)
+									: "0.0.0",
+							publisher:
+								typeof Raw.publisher === "string"
+									? (Raw.publisher as string)
+									: PublisherFallback,
 						} as IExtensionDescription;
 					})();
 					const ExtensionObject: IExtension<T> = {
@@ -519,17 +539,24 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 							// LAND-FIX: SafePackageJSON guard mirrored
 							// from GetExtension above so getAllExtensions
 							// also returns shape-safe packageJSON.
-							const Raw = description as unknown as Record<string, unknown>;
+							const Raw = description as unknown as Record<
+								string,
+								unknown
+							>;
 							const PublisherFallback =
-								typeof id === "string" ? (id.split(".")[0] ?? "unknown") : "unknown";
+								typeof id === "string"
+									? (id.split(".")[0] ?? "unknown")
+									: "unknown";
 							const SafePackageJSON = {
 								...description,
 								name:
-									typeof Raw.name === "string" && (Raw.name as string).length > 0
+									typeof Raw.name === "string" &&
+									(Raw.name as string).length > 0
 										? (Raw.name as string)
 										: id,
 								version:
-									typeof Raw.version === "string" && (Raw.version as string).length > 0
+									typeof Raw.version === "string" &&
+									(Raw.version as string).length > 0
 										? (Raw.version as string)
 										: "0.0.0",
 								publisher:

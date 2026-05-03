@@ -226,8 +226,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		} catch (Err: unknown) {
 			const Message = Err instanceof Error ? Err.message : String(Err);
 			const Code = (Err as { code?: number | string } | null)?.code;
-			const TraceFsRead =
-				process.env["Trace"]?.includes("fs-read");
+			const TraceFsRead = process.env["Trace"]?.includes("fs-read");
 			if (
 				Code === -32004 ||
 				/resource not found|ENOENT|not found|no such file or directory|entity not found|os error 2|path is outside of the registered workspace|permission denied for operation|workspace is not trusted/i.test(

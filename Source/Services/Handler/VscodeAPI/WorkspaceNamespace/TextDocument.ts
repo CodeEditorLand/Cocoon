@@ -119,7 +119,9 @@ export const BuildOpenTextDocument =
 		const Lines = Text.split("\n");
 		const ClampOffset = (Offset: number): number =>
 			Math.max(0, Math.min(Math.floor(Offset || 0), Text.length));
-		const PositionAt = (Offset: number): { line: number; character: number } => {
+		const PositionAt = (
+			Offset: number,
+		): { line: number; character: number } => {
 			const Clamped = ClampOffset(Offset);
 			// Binary search for the line whose start is <= Clamped.
 			let Lo = 0;
@@ -148,7 +150,10 @@ export const BuildOpenTextDocument =
 				typeof LineOrPosition === "number"
 					? LineOrPosition
 					: (LineOrPosition?.line ?? 0);
-			const Clamped = Math.max(0, Math.min(Math.floor(L), Lines.length - 1));
+			const Clamped = Math.max(
+				0,
+				Math.min(Math.floor(L), Lines.length - 1),
+			);
 			const Content = Lines[Clamped] ?? "";
 			const Start = { line: Clamped, character: 0 };
 			const End = { line: Clamped, character: Content.length };
@@ -210,7 +215,9 @@ export const BuildOpenTextDocument =
 				end?: { line?: number; character?: number };
 			}) => {
 				if (!Range) return Text;
-				const Start = OffsetAt(Range.start ?? { line: 0, character: 0 });
+				const Start = OffsetAt(
+					Range.start ?? { line: 0, character: 0 },
+				);
 				const End = OffsetAt(
 					Range.end ?? {
 						line: Lines.length - 1,

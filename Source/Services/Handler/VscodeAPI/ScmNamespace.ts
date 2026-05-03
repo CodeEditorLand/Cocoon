@@ -25,8 +25,7 @@ import WrapScmNamespace from "./WrapScmNamespace.js";
  * env check mirrors that for the Cocoon side.
  */
 const ScmTraceEnabled =
-	typeof process !== "undefined" &&
-	typeof process.env["Trace"] === "string";
+	typeof process !== "undefined" && typeof process.env["Trace"] === "string";
 const ScmTrace = (Message: string): void => {
 	if (!ScmTraceEnabled) return;
 	try {

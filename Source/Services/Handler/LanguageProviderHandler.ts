@@ -277,16 +277,9 @@ const InvokeLanguageProvider = async (
 	// extHost-shape payloads come through camelCase. Accept both rather
 	// than guess which path a given provider call took.
 	const SubtractOne = (V: number): number => (V > 0 ? V - 1 : 0);
-	const RawLine =
-		RawPos?.Line ??
-		RawPos?.lineNumber ??
-		RawPos?.line ??
-		1;
+	const RawLine = RawPos?.Line ?? RawPos?.lineNumber ?? RawPos?.line ?? 1;
 	const RawCol =
-		RawPos?.Character ??
-		RawPos?.column ??
-		RawPos?.character ??
-		1;
+		RawPos?.Character ?? RawPos?.column ?? RawPos?.character ?? 1;
 	const PosLine = SubtractOne(RawLine);
 	const PosChar = SubtractOne(RawCol);
 

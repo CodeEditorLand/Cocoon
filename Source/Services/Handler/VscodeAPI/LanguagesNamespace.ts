@@ -426,7 +426,9 @@ const CreateLanguagesNamespace = (
 						typeof O.character === "number" ? O.character : 0,
 				};
 			};
-			const NormaliseDiagnostic = (D: unknown): Record<string, unknown> => {
+			const NormaliseDiagnostic = (
+				D: unknown,
+			): Record<string, unknown> => {
 				const Obj = (D ?? {}) as {
 					range?: { start?: unknown; end?: unknown };
 					severity?: unknown;
@@ -441,7 +443,10 @@ const CreateLanguagesNamespace = (
 				const End = Pos((Range as { end?: unknown }).end);
 				const Out: Record<string, unknown> = {
 					severity: NormaliseSeverity(Obj.severity),
-					message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
+					message:
+						typeof Obj.message === "string"
+							? Obj.message
+							: String(Obj.message ?? ""),
 					// `+ 1` converts vscode.Position (0-based) to
 					// `IMarkerData` (1-based). See block comment above.
 					startLineNumber: Start.line + 1,
@@ -472,7 +477,9 @@ const CreateLanguagesNamespace = (
 			// language extensions that emit a partially-broken
 			// diagnostic stream still get the well-formed entries
 			// rendered as squiggles.
-			const NormaliseList = (List: unknown): Record<string, unknown>[] => {
+			const NormaliseList = (
+				List: unknown,
+			): Record<string, unknown>[] => {
 				if (!Array.isArray(List)) return [];
 				const Result: Record<string, unknown>[] = [];
 				for (const Item of List) {
@@ -520,14 +527,20 @@ const CreateLanguagesNamespace = (
 					// language extension.
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
-						[...Store.entries()].map(([U, D]) => [U, NormaliseList(D)]),
+						[...Store.entries()].map(([U, D]) => [
+							U,
+							NormaliseList(D),
+						]),
 					]).catch(() => {});
 				},
 				delete: (Uri: unknown) => {
 					Store.delete(UriKey(Uri));
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
-						[...Store.entries()].map(([U, D]) => [U, NormaliseList(D)]),
+						[...Store.entries()].map(([U, D]) => [
+							U,
+							NormaliseList(D),
+						]),
 					]).catch(() => {});
 				},
 				clear: () => {
