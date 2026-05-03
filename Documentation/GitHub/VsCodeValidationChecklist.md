@@ -7,8 +7,7 @@ source to ensure compatibility and correctness.
 
 ### Sources Compared
 
-- **Cocoon Source**:
-  `/Volumes/CORSAIR/Developer/macOS/Application/CodeEditorLand/Land/Element/Cocoon/Source/`
+- **Cocoon Source**: `Land/Element/Cocoon/Source/` (repo-relative)
 - **VS Code Source**: Microsoft's VS Code GitHub repository
 - **Validation Focus**: Extension host architecture, API compatibility,
   communication patterns

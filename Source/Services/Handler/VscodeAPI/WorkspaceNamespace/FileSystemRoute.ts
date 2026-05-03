@@ -44,8 +44,8 @@ export type FileSystemRoute = "native" | "mountain";
  *
  * - Real `vscode.Uri` instance: `.scheme`
  * - URI-like object: `.scheme` property
- * - Plain string like `"file:///Users/nikola/foo"`: parse up to the first `:`
- * - Plain filesystem path (`/Users/nikola/foo`): implicit `"file"`
+ * - Plain string like `"file:///<home>/foo"`: parse up to the first `:`
+ * - Plain filesystem path (`/<home>/foo`): implicit `"file"`
  */
 export function ExtractScheme(Uri: unknown): string {
 	if (Uri && typeof Uri === "object") {

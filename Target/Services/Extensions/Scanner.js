@@ -1,1 +1,48 @@
-var a=(n,e={})=>Array.from(n.ExtensionRegistry.values()),i=n=>Array.from(n.ExtensionRegistry.values()).filter(e=>e?.isBuiltin===!0),s=n=>Array.from(n.ExtensionRegistry.values()).filter(e=>e?.isBuiltin===!1),l=(n,e)=>n.ExtensionRegistry.get(e),d=n=>{let e=Array.from(n.ExtensionRegistry.values()),t=0,o=0;for(let r of e)r?.isBuiltin===!0?t++:o++;return{totalExtensions:e.length,builtinCount:t,userCount:o,activationEventCount:n.ActivationEventIndex.size}},y={ScanAllExtensions:a,ScanSystemExtensions:i,ScanUserExtensions:s,GetExtension:l,GetStatistics:d};export{l as GetExtension,d as GetStatistics,a as ScanAllExtensions,i as ScanSystemExtensions,s as ScanUserExtensions,y as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/Extensions/Scanner.ts
+var ScanAllExtensions = /* @__PURE__ */ __name((Context, _Options = {}) => Array.from(
+  Context.ExtensionRegistry.values()
+), "ScanAllExtensions");
+var ScanSystemExtensions = /* @__PURE__ */ __name((Context) => Array.from(Context.ExtensionRegistry.values()).filter(
+  (Extension) => Extension?.isBuiltin === true
+), "ScanSystemExtensions");
+var ScanUserExtensions = /* @__PURE__ */ __name((Context) => Array.from(Context.ExtensionRegistry.values()).filter(
+  (Extension) => Extension?.isBuiltin === false
+), "ScanUserExtensions");
+var GetExtension = /* @__PURE__ */ __name((Context, Identifier) => Context.ExtensionRegistry.get(Identifier), "GetExtension");
+var GetStatistics = /* @__PURE__ */ __name((Context) => {
+  const All = Array.from(Context.ExtensionRegistry.values());
+  let Builtin = 0;
+  let User = 0;
+  for (const Extension of All) {
+    if (Extension?.isBuiltin === true) {
+      Builtin++;
+    } else {
+      User++;
+    }
+  }
+  return {
+    totalExtensions: All.length,
+    builtinCount: Builtin,
+    userCount: User,
+    activationEventCount: Context.ActivationEventIndex.size
+  };
+}, "GetStatistics");
+var Scanner_default = {
+  ScanAllExtensions,
+  ScanSystemExtensions,
+  ScanUserExtensions,
+  GetExtension,
+  GetStatistics
+};
+export {
+  GetExtension,
+  GetStatistics,
+  ScanAllExtensions,
+  ScanSystemExtensions,
+  ScanUserExtensions,
+  Scanner_default as default
+};
+//# sourceMappingURL=Scanner.js.map

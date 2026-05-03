@@ -1,1 +1,397 @@
-var q=Object.defineProperty;var I=(e,t)=>()=>(e&&(t=e(e=0)),t);var U=(e,t)=>{for(var r in t)q(e,r,{get:t[r],enumerable:!0})};var F,v,y,L,M,l,E=I(()=>{"use strict";F="https://eu.i.posthog.com",v=(e,t)=>{let r=process.env[e];return r&&r.length>0?r:t},y=(e,t)=>{let r=process.env[e];return r===void 0?t:!["false","0","off",""].includes(r.toLowerCase())},L=(e,t)=>{let r=process.env[e],n=r?Number(r):Number.NaN;return Number.isFinite(n)&&n>0?n:t},M=y("Capture",!0),l=()=>({Key:v("Authorize",""),Host:v("Beam",F),Enabled:y("Report",!0)&&M&&process.env.NODE_ENV!=="production",BatchWindowMilliseconds:L("Buffer",3e3),BatchMaximum:L("Batch",50),DistinctIdentifierSeed:process.env.Brand??"",OTLPEndpoint:v("OTLPEndpoint","http://127.0.0.1:4318"),OTLPEnabled:y("OTLPEnabled",!0)&&M&&process.env.NODE_ENV!=="production"})});var V={};U(V,{CaptureSpan:()=>m,TraceIdentifier:()=>P,WithSpan:()=>A,default:()=>X});import*as J from"node:http";import*as G from"node:https";var w,f,H,b,P,x,m,A,X,k=I(()=>{"use strict";E();w=l(),f=w.OTLPEnabled,H=e=>{let t="";for(let r=0;r<e;r=r+1)t=t+Math.floor(Math.random()*256).toString(16).padStart(2,"0");return t},P=()=>(b||(b=H(16)),b),x=()=>{let e=process.hrtime();return BigInt(e[0])*1000000000n+BigInt(e[1])},m=(e,t,r,n=[])=>{if(!f||process.env.NODE_ENV==="production")return;let i=H(8),o=P(),s=e.includes("error")?2:1,c=n.map(([a,C])=>({key:a,value:{stringValue:C}})),B=JSON.stringify({resourceSpans:[{resource:{attributes:[{key:"service.name",value:{stringValue:"land-editor-cocoon"}},{key:"service.version",value:{stringValue:"0.0.1"}},{key:"land.tier",value:{stringValue:"cocoon"}}]},scopeSpans:[{scope:{name:"land.cocoon",version:"1.0.0"},spans:[{traceId:o,spanId:i,name:e,kind:1,startTimeUnixNano:t.toString(),endTimeUnixNano:r.toString(),attributes:c,status:{code:s}}]}]}]});try{let a=new URL("/v1/traces",w.OTLPEndpoint),p=(a.protocol==="https:"?G:J).request({method:"POST",hostname:a.hostname,port:a.port||(a.protocol==="https:"?443:80),path:a.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(B)},timeout:200},g=>{(g.statusCode===void 0||g.statusCode>=300)&&(f=!1),g.resume()});p.on("error",()=>{f=!1}),p.on("timeout",()=>{p.destroy()}),p.write(B),p.end()}catch{f=!1}},A=async(e,t,r=[])=>{let n=x();try{let i=await t(),o=x();return m(e,n,o,r),i}catch(i){let o=x();throw m(`${e}:error`,n,o,[...r,["error",String(i.message??i)]]),i}},X={CaptureSpan:m,TraceIdentifier:P,WithSpan:A}});var W={$app:"land-editor",$app_version:"0.0.1",$build_mode:"debug",$component:"cocoon",$tier:"cocoon",$lib:"cocoon-posthog-bridge"},K=(e,t={})=>({Name:e,Timestamp:new Date().toISOString(),Properties:t}),h,Q=e=>{h=e},j=e=>({...e,...W,$node_version:process.version,...h?{$trace_id:h}:{}}),d={Create:K,Enrich:j,SetTraceIdentifier:Q};import*as D from"node:https";var z=5e3,O=(e,t,r,n)=>{if(n.length===0)return;let i=JSON.stringify({api_key:t,batch:n.map(o=>({event:o.Name,timestamp:o.Timestamp,distinct_id:r,properties:d.Enrich(o.Properties)}))});try{let o=new URL("/batch/",e),s=D.request({method:"POST",hostname:o.hostname,port:o.port||443,path:o.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(i)},timeout:z},c=>{c.resume()});s.on("error",()=>{}),s.on("timeout",()=>{s.destroy()}),s.write(i),s.end()}catch{}};var R=(e,t)=>{let r=[],n,i=()=>{if(r.length===0)return;let s=r;r=[],O(e.Host,e.Key,t,s)},o=()=>{n||(n=setTimeout(()=>{n=void 0,i()},e.BatchWindowMilliseconds),n.unref?.())};return{Enqueue:(s,c)=>{if(r.push(d.Create(s,c)),r.length>=e.BatchMaximum){i();return}o()},Drain:()=>{n&&(clearTimeout(n),n=void 0),i()}}};E();var _=e=>e.length>0?e:`land-dev-${process.env.USER??process.env.USERNAME??"unknown"}`;var T=l(),Y=_(T.DistinctIdentifierSeed),S,$=!1,N=()=>{if(T.Enabled)return S||(S=R(T,Y)),S},u=(e,t={})=>{try{N()?.Enqueue(e,t)}catch{}},Z=(e,t,r={})=>{let n=N();n&&(n.Enqueue("land:cocoon:error",{...r,error_tag:e,error_message:t}),n.Drain())},ee=()=>{if($)return;$=!0;let e=N();if(!e)return;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(k(),V)).then(r=>{d.SetTraceIdentifier(r.TraceIdentifier())}).catch(()=>{});let t=()=>e.Drain();process.once("exit",t),process.once("SIGINT",t),process.once("SIGTERM",t),u("land:cocoon:session:start",{pid:process.pid,platform:process.platform,arch:process.arch,node_version:process.version})},te=(e,t,r)=>{u("land:cocoon:handler:complete",{feature:e,duration_ms:t,ok:r})},re=(e,t)=>{u("land:cocoon:stub:active",{feature:e,reason:t})},ne=e=>{u("land:cocoon:entry:load",{entry:e})},oe=(e,t)=>{u("land:cocoon:entry:loaded",{entry:e,duration_ms:t})},Ee={CaptureEvent:u,CaptureError:Z,CaptureHandler:te,CaptureStub:re,CaptureEntryLoad:ne,CaptureEntryLoaded:oe,Initialize:ee};export{ne as CaptureEntryLoad,oe as CaptureEntryLoaded,Z as CaptureError,u as CaptureEvent,te as CaptureHandler,re as CaptureStub,ee as Initialize,Ee as default};
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey, DefaultHost, DefaultBatchWindowMilliseconds, DefaultBatchMaximum, ReadString, ReadBoolean, ReadNumber, TelemetryCaptureEnabled, Configuration_default;
+var init_Configuration = __esm({
+  "Source/Telemetry/PostHog/Configuration.ts"() {
+    "use strict";
+    DefaultKey = "";
+    DefaultHost = "https://eu.i.posthog.com";
+    DefaultBatchWindowMilliseconds = 3e3;
+    DefaultBatchMaximum = 50;
+    ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      return Value && Value.length > 0 ? Value : Fallback;
+    }, "ReadString");
+    ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      if (Value === void 0) return Fallback;
+      return !["false", "0", "off", ""].includes(Value.toLowerCase());
+    }, "ReadBoolean");
+    ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      const Parsed = Value ? Number(Value) : Number.NaN;
+      return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+    }, "ReadNumber");
+    TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+    Configuration_default = /* @__PURE__ */ __name(() => ({
+      Key: ReadString("Authorize", DefaultKey),
+      Host: ReadString("Beam", DefaultHost),
+      Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+      BatchWindowMilliseconds: ReadNumber(
+        "Buffer",
+        DefaultBatchWindowMilliseconds
+      ),
+      BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+      DistinctIdentifierSeed: process.env["Brand"] ?? "",
+      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
+      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+    }), "default");
+  }
+});
+
+// Source/Telemetry/OTLPBridge.ts
+var OTLPBridge_exports = {};
+__export(OTLPBridge_exports, {
+  CaptureSpan: () => CaptureSpan,
+  TraceIdentifier: () => TraceIdentifier,
+  WithSpan: () => WithSpan,
+  default: () => OTLPBridge_default
+});
+import * as NodeHttp from "node:http";
+import * as NodeHttps from "node:https";
+var Configuration, OTLPAvailable, RandomHex, TraceIdentifierCached, TraceIdentifier, NowNano, CaptureSpan, WithSpan, OTLPBridge_default;
+var init_OTLPBridge = __esm({
+  "Source/Telemetry/OTLPBridge.ts"() {
+    "use strict";
+    init_Configuration();
+    Configuration = Configuration_default();
+    OTLPAvailable = Configuration.OTLPEnabled;
+    RandomHex = /* @__PURE__ */ __name((Bytes) => {
+      let Output = "";
+      for (let Index = 0; Index < Bytes; Index = Index + 1) {
+        Output = Output + Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+      }
+      return Output;
+    }, "RandomHex");
+    TraceIdentifier = /* @__PURE__ */ __name(() => {
+      if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
+      return TraceIdentifierCached;
+    }, "TraceIdentifier");
+    NowNano = /* @__PURE__ */ __name(() => {
+      const Hr = process.hrtime();
+      return BigInt(Hr[0]) * 1000000000n + BigInt(Hr[1]);
+    }, "NowNano");
+    CaptureSpan = /* @__PURE__ */ __name((Name, StartNano, EndNano, Attributes = []) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (!OTLPAvailable) return;
+      const SpanIdentifier = RandomHex(8);
+      const TraceIdentifierResolved = TraceIdentifier();
+      const StatusCode = Name.includes("error") ? 2 : 1;
+      const AttributesPayload = Attributes.map(([Key, Value]) => ({
+        key: Key,
+        value: { stringValue: Value }
+      }));
+      const Payload = JSON.stringify({
+        resourceSpans: [
+          {
+            resource: {
+              attributes: [
+                {
+                  key: "service.name",
+                  value: { stringValue: "land-editor-cocoon" }
+                },
+                {
+                  key: "service.version",
+                  value: { stringValue: "0.0.1" }
+                },
+                {
+                  key: "land.tier",
+                  value: { stringValue: "cocoon" }
+                }
+              ]
+            },
+            scopeSpans: [
+              {
+                scope: { name: "land.cocoon", version: "1.0.0" },
+                spans: [
+                  {
+                    traceId: TraceIdentifierResolved,
+                    spanId: SpanIdentifier,
+                    name: Name,
+                    kind: 1,
+                    startTimeUnixNano: StartNano.toString(),
+                    endTimeUnixNano: EndNano.toString(),
+                    attributes: AttributesPayload,
+                    status: { code: StatusCode }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      try {
+        const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
+        const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
+        const Request = HttpModule.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || (Address.protocol === "https:" ? 443 : 80),
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: 200
+          },
+          (Response) => {
+            if (Response.statusCode === void 0 || Response.statusCode >= 300) {
+              OTLPAvailable = false;
+            }
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+          OTLPAvailable = false;
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+        OTLPAvailable = false;
+      }
+    }, "CaptureSpan");
+    WithSpan = /* @__PURE__ */ __name(async (Name, Body, Attributes = []) => {
+      const StartNano = NowNano();
+      try {
+        const Output = await Body();
+        const EndNano = NowNano();
+        CaptureSpan(Name, StartNano, EndNano, Attributes);
+        return Output;
+      } catch (Error2) {
+        const EndNano = NowNano();
+        CaptureSpan(`${Name}:error`, StartNano, EndNano, [
+          ...Attributes,
+          ["error", String(Error2.message ?? Error2)]
+        ]);
+        throw Error2;
+      }
+    }, "WithSpan");
+    OTLPBridge_default = { CaptureSpan, TraceIdentifier, WithSpan };
+  }
+});
+
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties = {
+  $app: "land-editor",
+  $app_version: "0.0.1",
+  $build_mode: "debug",
+  $component: "cocoon",
+  $tier: "cocoon",
+  $lib: "cocoon-posthog-bridge"
+};
+var Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+  Name,
+  Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+  Properties
+}), "Create");
+var CurrentTraceIdentifier;
+var SetTraceIdentifier = /* @__PURE__ */ __name((Identifier) => {
+  CurrentTraceIdentifier = Identifier;
+}, "SetTraceIdentifier");
+var Enrich = /* @__PURE__ */ __name((Properties) => ({
+  ...Properties,
+  ...BaseProperties,
+  $node_version: process.version,
+  ...CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}
+}), "Enrich");
+var Event_default = { Create, Enrich, SetTraceIdentifier };
+
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps2 from "node:https";
+var RequestTimeoutMilliseconds = 5e3;
+var Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+  if (Batch.length === 0) return;
+  const Payload = JSON.stringify({
+    api_key: Key,
+    batch: Batch.map((Entry) => ({
+      event: Entry.Name,
+      timestamp: Entry.Timestamp,
+      distinct_id: DistinctIdentifier2,
+      properties: Event_default.Enrich(Entry.Properties)
+    }))
+  });
+  try {
+    const Address = new URL("/batch/", Host);
+    const Request = NodeHttps2.request(
+      {
+        method: "POST",
+        hostname: Address.hostname,
+        port: Address.port || 443,
+        path: Address.pathname,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(Payload)
+        },
+        timeout: RequestTimeoutMilliseconds
+      },
+      (Response) => {
+        Response.resume();
+      }
+    );
+    Request.on("error", () => {
+    });
+    Request.on("timeout", () => {
+      Request.destroy();
+    });
+    Request.write(Payload);
+    Request.end();
+  } catch {
+  }
+}, "default");
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+  let Queue = [];
+  let FlushTimer;
+  const Send = /* @__PURE__ */ __name(() => {
+    if (Queue.length === 0) return;
+    const Pending = Queue;
+    Queue = [];
+    Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+  }, "Send");
+  const ScheduleFlush = /* @__PURE__ */ __name(() => {
+    if (FlushTimer) return;
+    FlushTimer = setTimeout(() => {
+      FlushTimer = void 0;
+      Send();
+    }, Config.BatchWindowMilliseconds);
+    FlushTimer.unref?.();
+  }, "ScheduleFlush");
+  return {
+    Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+      Queue.push(Event_default.Create(Name, Properties));
+      if (Queue.length >= Config.BatchMaximum) {
+        Send();
+        return;
+      }
+      ScheduleFlush();
+    }, "Enqueue"),
+    Drain: /* @__PURE__ */ __name(() => {
+      if (FlushTimer) {
+        clearTimeout(FlushTimer);
+        FlushTimer = void 0;
+      }
+      Send();
+    }, "Drain")
+  };
+}, "default");
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default = /* @__PURE__ */ __name((Seed) => {
+  if (Seed.length > 0) return Seed;
+  const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+  return `land-dev-${Username}`;
+}, "default");
+
+// Source/Telemetry/PostHogBridge.ts
+init_Configuration();
+var Configuration2 = Configuration_default();
+var DistinctIdentifier = Identifier_default(
+  Configuration2.DistinctIdentifierSeed
+);
+var ActiveBuffer;
+var Initialized = false;
+var Buffered = /* @__PURE__ */ __name(() => {
+  if (!Configuration2.Enabled) return void 0;
+  if (!ActiveBuffer) {
+    ActiveBuffer = Buffer_default(Configuration2, DistinctIdentifier);
+  }
+  return ActiveBuffer;
+}, "Buffered");
+var CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+  if (process.env["NODE_ENV"] === "production") return;
+  try {
+    Buffered()?.Enqueue(Name, Properties);
+  } catch {
+  }
+}, "CaptureEvent");
+var CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+  if (process.env["NODE_ENV"] === "production") return;
+  const Bridge = Buffered();
+  if (!Bridge) return;
+  Bridge.Enqueue("land:cocoon:error", {
+    ...Extra,
+    error_tag: Tag,
+    error_message: Message
+  });
+  Bridge.Drain();
+}, "CaptureError");
+var Initialize = /* @__PURE__ */ __name(() => {
+  if (process.env["NODE_ENV"] === "production") return;
+  if (Initialized) return;
+  Initialized = true;
+  const Bridge = Buffered();
+  if (!Bridge) return;
+  if (process.env["NODE_ENV"] !== "production") {
+    void Promise.resolve().then(() => (init_OTLPBridge(), OTLPBridge_exports)).then((OTLP) => {
+      Event_default.SetTraceIdentifier(OTLP.TraceIdentifier());
+    }).catch(() => {
+    });
+  }
+  const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+  process.once("exit", OnExit);
+  process.once("SIGINT", OnExit);
+  process.once("SIGTERM", OnExit);
+  CaptureEvent("land:cocoon:session:start", {
+    pid: process.pid,
+    platform: process.platform,
+    arch: process.arch,
+    node_version: process.version
+  });
+}, "Initialize");
+var CaptureHandler = /* @__PURE__ */ __name((Feature, DurationMs, Ok) => {
+  CaptureEvent("land:cocoon:handler:complete", {
+    feature: Feature,
+    duration_ms: DurationMs,
+    ok: Ok
+  });
+}, "CaptureHandler");
+var CaptureStub = /* @__PURE__ */ __name((Feature, Reason) => {
+  CaptureEvent("land:cocoon:stub:active", {
+    feature: Feature,
+    reason: Reason
+  });
+}, "CaptureStub");
+var CaptureEntryLoad = /* @__PURE__ */ __name((Entry) => {
+  CaptureEvent("land:cocoon:entry:load", { entry: Entry });
+}, "CaptureEntryLoad");
+var CaptureEntryLoaded = /* @__PURE__ */ __name((Entry, DurationMs) => {
+  CaptureEvent("land:cocoon:entry:loaded", {
+    entry: Entry,
+    duration_ms: DurationMs
+  });
+}, "CaptureEntryLoaded");
+var PostHogBridge_default = {
+  CaptureEvent,
+  CaptureError,
+  CaptureHandler,
+  CaptureStub,
+  CaptureEntryLoad,
+  CaptureEntryLoaded,
+  Initialize
+};
+export {
+  CaptureEntryLoad,
+  CaptureEntryLoaded,
+  CaptureError,
+  CaptureEvent,
+  CaptureHandler,
+  CaptureStub,
+  Initialize,
+  PostHogBridge_default as default
+};
+//# sourceMappingURL=PostHogBridge.js.map
