@@ -1,42 +1,52 @@
-import * as e from "../Constant/EnvironmentConstant.js";
-
-var r = {
-	color: !0,
-	format: "esm",
-	logLevel: "debug",
-	metafile: !0,
-	minify: !e.On,
-	outdir: "Configuration",
-	platform: "node",
-	target: "esnext",
-	tsconfig: "tsconfig.json",
-	write: !0,
-	legalComments: e.On ? "inline" : "none",
-	bundle: e.Bundle,
-	assetNames: "Asset/[name]-[hash]",
-	sourcemap: e.On,
-	drop: e.On ? [] : ["debugger"],
-	ignoreAnnotations: !e.On,
-	keepNames: e.On,
-	plugins: [
-		{
-			name: "Target",
-			setup({ onStart: t, initialOptions: { outdir: n } }) {
-				!0 === (e.Clean === !0) &&
-					t(async () => {
-						try {
-							n &&
-								(await (
-									await import("node:fs/promises")
-								).rm(n, { recursive: !0 }));
-						} catch (o) {
-							console.log(o);
-						}
-					});
-			},
-		},
-	],
-	outbase: "Source/Configuration",
-	loader: { ".json": "copy", ".sh": "copy" },
+import * as Environment from "../Constant/EnvironmentConstant.js";
+var BaseConfig_default = {
+  color: true,
+  format: "esm",
+  logLevel: "debug",
+  metafile: true,
+  minify: !Environment.On,
+  outdir: "Configuration",
+  platform: "node",
+  target: "esnext",
+  tsconfig: "tsconfig.json",
+  write: true,
+  legalComments: Environment.On ? "inline" : "none",
+  bundle: Environment.Bundle,
+  assetNames: "Asset/[name]-[hash]",
+  sourcemap: Environment.On,
+  drop: Environment.On ? [] : ["debugger"],
+  ignoreAnnotations: !Environment.On,
+  keepNames: Environment.On,
+  plugins: [
+    {
+      name: "Target",
+      // @ts-ignore
+      setup({ onStart, initialOptions: { outdir } }) {
+        switch (true) {
+          case Environment.Clean === true:
+            onStart(async () => {
+              try {
+                outdir ? await (await import("node:fs/promises")).rm(outdir, {
+                  recursive: true
+                }) : {};
+              } catch (_Error) {
+                console.log(_Error);
+              }
+            });
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  ],
+  outbase: "Source/Configuration",
+  loader: {
+    ".json": "copy",
+    ".sh": "copy"
+  }
 };
-export { r as default };
+export {
+  BaseConfig_default as default
+};
+//# sourceMappingURL=BaseConfig.js.map

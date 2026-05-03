@@ -1,4 +1,886 @@
-var ve=Object.defineProperty;var u=(e,n)=>()=>(e&&(n=e(e=0)),n);var W=(e,n)=>{for(var t in n)ve(e,t,{get:n[t],enumerable:!0})};var Oe,Pe,N,_e,$e,f,y=u(()=>{"use strict";Oe={$app:"land-editor",$app_version:"0.0.1",$build_mode:"debug",$component:"cocoon",$tier:"cocoon",$lib:"cocoon-posthog-bridge"},Pe=(e,n={})=>({Name:e,Timestamp:new Date().toISOString(),Properties:n}),_e=e=>{N=e},$e=e=>({...e,...Oe,$node_version:process.version,...N?{$trace_id:N}:{}}),f={Create:Pe,Enrich:$e,SetTraceIdentifier:_e}});import*as q from"node:https";var He,U,z=u(()=>{"use strict";y();He=5e3,U=(e,n,t,r)=>{if(r.length===0)return;let o=JSON.stringify({api_key:n,batch:r.map(i=>({event:i.Name,timestamp:i.Timestamp,distinct_id:t,properties:f.Enrich(i.Properties)}))});try{let i=new URL("/batch/",e),s=q.request({method:"POST",hostname:i.hostname,port:i.port||443,path:i.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(o)},timeout:He},d=>{d.resume()});s.on("error",()=>{}),s.on("timeout",()=>{s.destroy()}),s.write(o),s.end()}catch{}}});var G,J=u(()=>{"use strict";y();z();G=(e,n)=>{let t=[],r,o=()=>{if(t.length===0)return;let s=t;t=[],U(e.Host,e.Key,n,s)},i=()=>{r||(r=setTimeout(()=>{r=void 0,o()},e.BatchWindowMilliseconds),r.unref?.())};return{Enqueue:(s,d)=>{if(t.push(f.Create(s,d)),t.length>=e.BatchMaximum){o();return}i()},Drain:()=>{r&&(clearTimeout(r),r=void 0),o()}}}});var Ie,O,P,Q,V,S,_=u(()=>{"use strict";Ie="https://eu.i.posthog.com",O=(e,n)=>{let t=process.env[e];return t&&t.length>0?t:n},P=(e,n)=>{let t=process.env[e];return t===void 0?n:!["false","0","off",""].includes(t.toLowerCase())},Q=(e,n)=>{let t=process.env[e],r=t?Number(t):Number.NaN;return Number.isFinite(r)&&r>0?r:n},V=P("Capture",!0),S=()=>({Key:O("Authorize",""),Host:O("Beam",Ie),Enabled:P("Report",!0)&&V&&process.env.NODE_ENV!=="production",BatchWindowMilliseconds:Q("Buffer",3e3),BatchMaximum:Q("Batch",50),DistinctIdentifierSeed:process.env.Brand??"",OTLPEndpoint:O("OTLPEndpoint","http://127.0.0.1:4318"),OTLPEnabled:P("OTLPEnabled",!0)&&V&&process.env.NODE_ENV!=="production"})});var Z,X=u(()=>{"use strict";Z=e=>e.length>0?e:`land-dev-${process.env.USER??process.env.USERNAME??"unknown"}`});var te={};W(te,{CaptureSpan:()=>w,TraceIdentifier:()=>I,WithSpan:()=>ne,default:()=>Me});import*as Le from"node:http";import*as Be from"node:https";var Y,E,ee,$,I,H,w,ne,Me,re=u(()=>{"use strict";_();Y=S(),E=Y.OTLPEnabled,ee=e=>{let n="";for(let t=0;t<e;t=t+1)n=n+Math.floor(Math.random()*256).toString(16).padStart(2,"0");return n},I=()=>($||($=ee(16)),$),H=()=>{let e=process.hrtime();return BigInt(e[0])*1000000000n+BigInt(e[1])},w=(e,n,t,r=[])=>{if(process.env.NODE_ENV==="production"||!E)return;let o=ee(8),i=I(),s=e.includes("error")?2:1,d=r.map(([a,A])=>({key:a,value:{stringValue:A}})),p=JSON.stringify({resourceSpans:[{resource:{attributes:[{key:"service.name",value:{stringValue:"land-editor-cocoon"}},{key:"service.version",value:{stringValue:"0.0.1"}},{key:"land.tier",value:{stringValue:"cocoon"}}]},scopeSpans:[{scope:{name:"land.cocoon",version:"1.0.0"},spans:[{traceId:i,spanId:o,name:e,kind:1,startTimeUnixNano:n.toString(),endTimeUnixNano:t.toString(),attributes:d,status:{code:s}}]}]}]});try{let a=new URL("/v1/traces",Y.OTLPEndpoint),m=(a.protocol==="https:"?Be:Le).request({method:"POST",hostname:a.hostname,port:a.port||(a.protocol==="https:"?443:80),path:a.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(p)},timeout:200},k=>{(k.statusCode===void 0||k.statusCode>=300)&&(E=!1),k.resume()});m.on("error",()=>{E=!1}),m.on("timeout",()=>{m.destroy()}),m.write(p),m.end()}catch{E=!1}},ne=async(e,n,t=[])=>{let r=H();try{let o=await n(),i=H();return w(e,r,i,t),o}catch(o){let i=H();throw w(`${e}:error`,r,i,[...t,["error",String(o.message??o)]]),o}},Me={CaptureSpan:w,TraceIdentifier:I,WithSpan:ne}});var pe={};W(pe,{CaptureEntryLoad:()=>ue,CaptureEntryLoaded:()=>ce,CaptureError:()=>ie,CaptureEvent:()=>c,CaptureHandler:()=>ae,CaptureStub:()=>de,Initialize:()=>se,default:()=>We});var B,Ae,L,oe,M,c,ie,se,ae,de,ue,ce,We,ge=u(()=>{"use strict";J();_();y();X();B=S(),Ae=Z(B.DistinctIdentifierSeed),oe=!1,M=()=>{if(B.Enabled)return L||(L=G(B,Ae)),L},c=(e,n={})=>{if(process.env.NODE_ENV!=="production")try{M()?.Enqueue(e,n)}catch{}},ie=(e,n,t={})=>{if(process.env.NODE_ENV==="production")return;let r=M();r&&(r.Enqueue("land:cocoon:error",{...t,error_tag:e,error_message:n}),r.Drain())},se=()=>{if(process.env.NODE_ENV==="production"||oe)return;oe=!0;let e=M();if(!e)return;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(re(),te)).then(t=>{f.SetTraceIdentifier(t.TraceIdentifier())}).catch(()=>{});let n=()=>e.Drain();process.once("exit",n),process.once("SIGINT",n),process.once("SIGTERM",n),c("land:cocoon:session:start",{pid:process.pid,platform:process.platform,arch:process.arch,node_version:process.version})},ae=(e,n,t)=>{c("land:cocoon:handler:complete",{feature:e,duration_ms:n,ok:t})},de=(e,n)=>{c("land:cocoon:stub:active",{feature:e,reason:n})},ue=e=>{c("land:cocoon:entry:load",{entry:e})},ce=(e,n)=>{c("land:cocoon:entry:loaded",{entry:e,duration_ms:n})},We={CaptureEvent:c,CaptureError:ie,CaptureHandler:ae,CaptureStub:de,CaptureEntryLoad:ue,CaptureEntryLoaded:ce,Initialize:se}});var be=1e4;function R(){return be++}import{Effect as v}from"effect";var T=process.env.Mend??"short",K=T!=="off",x=T==="long",C=x,F=(()=>{let e=process.env.Mend;if(!e||e.trim().length===0)return;let n=e.split(",").map(t=>t.trim()).filter(t=>t.length>0);return n.length===0?void 0:new Set(n)})(),D=e=>e<10?`0${e}`:String(e),he=e=>e<10?`00${e}`:e<100?`0${e}`:String(e),ye=()=>{let e=new Date;return x?e.toISOString():`${D(e.getHours())}:${D(e.getMinutes())}:${D(e.getSeconds())}.${he(e.getMilliseconds())}`},Se=e=>{let n=new WeakSet;try{return JSON.stringify(e,(t,r)=>{if(r instanceof Error)return{name:r.name,message:r.message};if(typeof r=="bigint")return String(r);if(typeof r=="function")return"[Function]";if(typeof r=="object"&&r!==null){if(n.has(r))return"[Circular]";n.add(r)}return r})}catch{return'"[Unserializable]"'}},Ee=e=>e==="info"?"":` ${e.toUpperCase()}`,we=(e,n,t,r)=>{let o=`${ye()} [LandFix:${n}]${Ee(e)} ${t}`;return r?`${o} ${Se(r)}
-`:`${o}
-`},g=(e,n,t,r,o)=>{if(K&&!(F&&!F.has(t)))try{e.write(we(n,t,r,o))}catch{}},ke=(e,n,t)=>{g(process.stdout,"info",e,n,t)},Re=(e,n,t)=>{g(process.stdout,"warn",e,n,t)},De=(e,n,t)=>{g(process.stderr,"error",e,n,t)},Te=(e,n,t)=>{C&&g(process.stdout,"debug",e,n,t)},h=new Set,xe=(e,n,t,r)=>{if(!C)return;let o=`${e}:${n}`;h.has(o)||(h.add(o),g(process.stdout,"debug",e,t,r))},Ce=(e,n,t,r)=>{let o=`${e}:${n}`;h.has(o)||(h.add(o),g(process.stdout,"info",e,t,r))},Ne={Info:ke,InfoOnce:Ce,Warn:Re,Error:De,Debug:Te,DebugOnce:xe,IsEnabled:()=>K,IsDebugEnabled:()=>C,Mode:()=>T==="off"?"off":x?"long":"short"},j=Ne;var fe;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(ge(),pe)).then(e=>{fe=e.CaptureEvent}).catch(()=>{});var b={dispose:()=>{}},Fe=e=>e==="requestResourceTrust"||e==="isResourceTrusted"||e==="requestWorkspaceTrust"||/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(e),Ke=e=>Fe(e)?{Kind:"trust",Sync:!1,Produce:()=>!0}:e.startsWith("onDid")||e.startsWith("onWill")?{Kind:"event",Sync:!0,Produce:()=>b}:e.startsWith("register")?{Kind:"register",Sync:!0,Produce:()=>b}:e.startsWith("is")||e.startsWith("has")||e.startsWith("should")?{Kind:"bool-check",Sync:!1,Produce:()=>!1}:e.startsWith("create")||e.startsWith("get")||e.startsWith("make")?{Kind:"factory",Sync:!0,Produce:()=>{}}:{Kind:"default",Sync:!1,Produce:()=>{}},je=(e,n,t)=>{let r=`${e}.${n}`;j.InfoOnce("VSCODE-API-GAP",r,`${e}.${n} \u2192 ${t}`),process.env.NODE_ENV!=="production"&&fe?.("land:cocoon:vscode_api_gap",{namespace:e,method:n,kind:t})},qe=(e,n,t)=>(...r)=>{let o=`vscode.${e}.${n}`,i=v.gen(function*(){yield*v.sync(()=>{try{je(e,n,t.Kind)}catch{}});try{return t.Produce(...r)}catch{switch(t.Kind){case"trust":return!0;case"event":return b;case"register":return b;case"bool-check":return!1;default:return}}}).pipe(v.withSpan(o,{attributes:{"vscode.namespace":e,"vscode.method":n,"vscode.heuristic":t.Kind}}));try{return t.Sync?v.runSync(i):v.runPromise(i)}catch{switch(t.Kind){case"trust":return t.Sync?!0:Promise.resolve(!0);case"event":case"register":return b;case"bool-check":return t.Sync?!1:Promise.resolve(!1);default:return t.Sync?void 0:Promise.resolve(void 0)}}},Ue=(e,n,t)=>new Proxy(n,{get(r,o){if(Reflect.has(r,o))return Reflect.get(r,o);if(typeof o!="string"||o==="then")return;if(o==="toJSON")return()=>{let s={_namespace:e};for(let d of Object.keys(r)){let p=r[d],a=typeof p;s[d]=a==="function"?"[Function]":a==="object"&&p!==null?"[Object]":p}return s};if(o==="toString"||o==="valueOf")return;let i=t?.[o]??Ke(o);return qe(e,o,i)},has(r,o){return Reflect.has(r,o)?!0:typeof o=="string"&&o!=="then"}}),le=Ue;var ze=e=>le("debug",e),me=ze;var l=(e,n)=>t=>(e.Emitter.on(n,t),{dispose:()=>{e.Emitter.off(n,t)}}),Ge=e=>me({registerDebugAdapterDescriptorFactory:(n,t)=>{let r=R();return e.SendToMountain("register_debug_adapter",{handle:r,debugType:n,extensionId:""}).catch(()=>{}),{dispose:()=>{e.SendToMountain("unregister_debug_adapter",{handle:r}).catch(()=>{})}}},registerDebugConfigurationProvider:(n,t)=>{let r=R();return e.SendToMountain("register_debug_configuration_provider",{handle:r,debugType:n}).catch(()=>{}),{dispose:()=>{e.SendToMountain("unregister_debug_configuration_provider",{handle:r}).catch(()=>{})}}},registerDebugAdapterTrackerFactory:()=>({dispose:()=>{}}),registerDebugVisualizationProvider:(n,t)=>({dispose:()=>{}}),registerDebugVisualizationTreeProvider:(n,t)=>({dispose:()=>{}}),startDebugging:async(n,t,r)=>{try{return!!(await e.MountainClient?.sendRequest("Debug.Start",[n,t,r]))?.success}catch{return!1}},stopDebugging:async n=>{try{let t=typeof n=="string"?n:n?.id??"";await e.MountainClient?.sendRequest("Debug.Stop",[t])}catch{}},addBreakpoints:n=>{e.SendToMountain("debug.addBreakpoints",{breakpoints:n}).catch(()=>{})},removeBreakpoints:n=>{e.SendToMountain("debug.removeBreakpoints",{breakpoints:n}).catch(()=>{})},asDebugSourceUri:n=>n,onDidStartDebugSession:l(e,"debug.didStartSession"),onDidTerminateDebugSession:l(e,"debug.didTerminateSession"),onDidChangeActiveDebugSession:l(e,"debug.didChangeActiveSession"),onDidReceiveDebugSessionCustomEvent:l(e,"debug.didReceiveCustomEvent"),onDidChangeBreakpoints:l(e,"debug.didChangeBreakpoints"),activeDebugSession:void 0,activeDebugConsole:{append:n=>{e.SendToMountain("debug.consoleAppend",{value:n}).catch(()=>{})},appendLine:n=>{e.SendToMountain("debug.consoleAppend",{value:`${n}
-`}).catch(()=>{})}},breakpoints:[],activeStackItem:void 0,onDidChangeActiveStackItem:l(e,"debug.didChangeActiveStackItem")}),hn=Ge;export{hn as default};
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey, DefaultHost, DefaultBatchWindowMilliseconds, DefaultBatchMaximum, ReadString, ReadBoolean, ReadNumber, TelemetryCaptureEnabled, Configuration_default;
+var init_Configuration = __esm({
+  "Source/Telemetry/PostHog/Configuration.ts"() {
+    "use strict";
+    DefaultKey = "";
+    DefaultHost = "https://eu.i.posthog.com";
+    DefaultBatchWindowMilliseconds = 3e3;
+    DefaultBatchMaximum = 50;
+    ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      return Value && Value.length > 0 ? Value : Fallback;
+    }, "ReadString");
+    ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      if (Value === void 0) return Fallback;
+      return !["false", "0", "off", ""].includes(Value.toLowerCase());
+    }, "ReadBoolean");
+    ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      const Parsed = Value ? Number(Value) : Number.NaN;
+      return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+    }, "ReadNumber");
+    TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+    Configuration_default = /* @__PURE__ */ __name(() => ({
+      Key: ReadString("Authorize", DefaultKey),
+      Host: ReadString("Beam", DefaultHost),
+      Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+      BatchWindowMilliseconds: ReadNumber(
+        "Buffer",
+        DefaultBatchWindowMilliseconds
+      ),
+      BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+      DistinctIdentifierSeed: process.env["Brand"] ?? "",
+      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
+      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+    }), "default");
+  }
+});
+
+// Source/Telemetry/OTLPBridge.ts
+var OTLPBridge_exports = {};
+__export(OTLPBridge_exports, {
+  CaptureSpan: () => CaptureSpan,
+  TraceIdentifier: () => TraceIdentifier,
+  WithSpan: () => WithSpan,
+  default: () => OTLPBridge_default
+});
+import * as NodeHttp from "node:http";
+import * as NodeHttps from "node:https";
+var Configuration, OTLPAvailable, RandomHex, TraceIdentifierCached, TraceIdentifier, NowNano, CaptureSpan, WithSpan, OTLPBridge_default;
+var init_OTLPBridge = __esm({
+  "Source/Telemetry/OTLPBridge.ts"() {
+    "use strict";
+    init_Configuration();
+    Configuration = Configuration_default();
+    OTLPAvailable = Configuration.OTLPEnabled;
+    RandomHex = /* @__PURE__ */ __name((Bytes) => {
+      let Output = "";
+      for (let Index = 0; Index < Bytes; Index = Index + 1) {
+        Output = Output + Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+      }
+      return Output;
+    }, "RandomHex");
+    TraceIdentifier = /* @__PURE__ */ __name(() => {
+      if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
+      return TraceIdentifierCached;
+    }, "TraceIdentifier");
+    NowNano = /* @__PURE__ */ __name(() => {
+      const Hr = process.hrtime();
+      return BigInt(Hr[0]) * 1000000000n + BigInt(Hr[1]);
+    }, "NowNano");
+    CaptureSpan = /* @__PURE__ */ __name((Name, StartNano, EndNano, Attributes = []) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (!OTLPAvailable) return;
+      const SpanIdentifier = RandomHex(8);
+      const TraceIdentifierResolved = TraceIdentifier();
+      const StatusCode = Name.includes("error") ? 2 : 1;
+      const AttributesPayload = Attributes.map(([Key, Value]) => ({
+        key: Key,
+        value: { stringValue: Value }
+      }));
+      const Payload = JSON.stringify({
+        resourceSpans: [
+          {
+            resource: {
+              attributes: [
+                {
+                  key: "service.name",
+                  value: { stringValue: "land-editor-cocoon" }
+                },
+                {
+                  key: "service.version",
+                  value: { stringValue: "0.0.1" }
+                },
+                {
+                  key: "land.tier",
+                  value: { stringValue: "cocoon" }
+                }
+              ]
+            },
+            scopeSpans: [
+              {
+                scope: { name: "land.cocoon", version: "1.0.0" },
+                spans: [
+                  {
+                    traceId: TraceIdentifierResolved,
+                    spanId: SpanIdentifier,
+                    name: Name,
+                    kind: 1,
+                    startTimeUnixNano: StartNano.toString(),
+                    endTimeUnixNano: EndNano.toString(),
+                    attributes: AttributesPayload,
+                    status: { code: StatusCode }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      try {
+        const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
+        const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
+        const Request = HttpModule.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || (Address.protocol === "https:" ? 443 : 80),
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: 200
+          },
+          (Response) => {
+            if (Response.statusCode === void 0 || Response.statusCode >= 300) {
+              OTLPAvailable = false;
+            }
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+          OTLPAvailable = false;
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+        OTLPAvailable = false;
+      }
+    }, "CaptureSpan");
+    WithSpan = /* @__PURE__ */ __name(async (Name, Body, Attributes = []) => {
+      const StartNano = NowNano();
+      try {
+        const Output = await Body();
+        const EndNano = NowNano();
+        CaptureSpan(Name, StartNano, EndNano, Attributes);
+        return Output;
+      } catch (Error2) {
+        const EndNano = NowNano();
+        CaptureSpan(`${Name}:error`, StartNano, EndNano, [
+          ...Attributes,
+          ["error", String(Error2.message ?? Error2)]
+        ]);
+        throw Error2;
+      }
+    }, "WithSpan");
+    OTLPBridge_default = { CaptureSpan, TraceIdentifier, WithSpan };
+  }
+});
+
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties, Create, CurrentTraceIdentifier, SetTraceIdentifier, Enrich, Event_default;
+var init_Event = __esm({
+  "Source/Telemetry/PostHog/Event.ts"() {
+    "use strict";
+    BaseProperties = {
+      $app: "land-editor",
+      $app_version: "0.0.1",
+      $build_mode: "debug",
+      $component: "cocoon",
+      $tier: "cocoon",
+      $lib: "cocoon-posthog-bridge"
+    };
+    Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+      Name,
+      Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      Properties
+    }), "Create");
+    SetTraceIdentifier = /* @__PURE__ */ __name((Identifier) => {
+      CurrentTraceIdentifier = Identifier;
+    }, "SetTraceIdentifier");
+    Enrich = /* @__PURE__ */ __name((Properties) => ({
+      ...Properties,
+      ...BaseProperties,
+      $node_version: process.version,
+      ...CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}
+    }), "Enrich");
+    Event_default = { Create, Enrich, SetTraceIdentifier };
+  }
+});
+
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps2 from "node:https";
+var RequestTimeoutMilliseconds, Transport_default;
+var init_Transport = __esm({
+  "Source/Telemetry/PostHog/Transport.ts"() {
+    "use strict";
+    init_Event();
+    RequestTimeoutMilliseconds = 5e3;
+    Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+      if (Batch.length === 0) return;
+      const Payload = JSON.stringify({
+        api_key: Key,
+        batch: Batch.map((Entry) => ({
+          event: Entry.Name,
+          timestamp: Entry.Timestamp,
+          distinct_id: DistinctIdentifier2,
+          properties: Event_default.Enrich(Entry.Properties)
+        }))
+      });
+      try {
+        const Address = new URL("/batch/", Host);
+        const Request = NodeHttps2.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || 443,
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: RequestTimeoutMilliseconds
+          },
+          (Response) => {
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+      }
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default;
+var init_Buffer = __esm({
+  "Source/Telemetry/PostHog/Buffer.ts"() {
+    "use strict";
+    init_Event();
+    init_Transport();
+    Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+      let Queue = [];
+      let FlushTimer;
+      const Send = /* @__PURE__ */ __name(() => {
+        if (Queue.length === 0) return;
+        const Pending = Queue;
+        Queue = [];
+        Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+      }, "Send");
+      const ScheduleFlush = /* @__PURE__ */ __name(() => {
+        if (FlushTimer) return;
+        FlushTimer = setTimeout(() => {
+          FlushTimer = void 0;
+          Send();
+        }, Config.BatchWindowMilliseconds);
+        FlushTimer.unref?.();
+      }, "ScheduleFlush");
+      return {
+        Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+          Queue.push(Event_default.Create(Name, Properties));
+          if (Queue.length >= Config.BatchMaximum) {
+            Send();
+            return;
+          }
+          ScheduleFlush();
+        }, "Enqueue"),
+        Drain: /* @__PURE__ */ __name(() => {
+          if (FlushTimer) {
+            clearTimeout(FlushTimer);
+            FlushTimer = void 0;
+          }
+          Send();
+        }, "Drain")
+      };
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default;
+var init_Identifier = __esm({
+  "Source/Telemetry/PostHog/Identifier.ts"() {
+    "use strict";
+    Identifier_default = /* @__PURE__ */ __name((Seed) => {
+      if (Seed.length > 0) return Seed;
+      const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+      return `land-dev-${Username}`;
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHogBridge.ts
+var PostHogBridge_exports = {};
+__export(PostHogBridge_exports, {
+  CaptureEntryLoad: () => CaptureEntryLoad,
+  CaptureEntryLoaded: () => CaptureEntryLoaded,
+  CaptureError: () => CaptureError,
+  CaptureEvent: () => CaptureEvent,
+  CaptureHandler: () => CaptureHandler,
+  CaptureStub: () => CaptureStub,
+  Initialize: () => Initialize,
+  default: () => PostHogBridge_default
+});
+var Configuration2, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, CaptureHandler, CaptureStub, CaptureEntryLoad, CaptureEntryLoaded, PostHogBridge_default;
+var init_PostHogBridge = __esm({
+  "Source/Telemetry/PostHogBridge.ts"() {
+    "use strict";
+    init_Buffer();
+    init_Configuration();
+    init_Event();
+    init_Identifier();
+    Configuration2 = Configuration_default();
+    DistinctIdentifier = Identifier_default(
+      Configuration2.DistinctIdentifierSeed
+    );
+    Initialized = false;
+    Buffered = /* @__PURE__ */ __name(() => {
+      if (!Configuration2.Enabled) return void 0;
+      if (!ActiveBuffer) {
+        ActiveBuffer = Buffer_default(Configuration2, DistinctIdentifier);
+      }
+      return ActiveBuffer;
+    }, "Buffered");
+    CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      try {
+        Buffered()?.Enqueue(Name, Properties);
+      } catch {
+      }
+    }, "CaptureEvent");
+    CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      Bridge.Enqueue("land:cocoon:error", {
+        ...Extra,
+        error_tag: Tag,
+        error_message: Message
+      });
+      Bridge.Drain();
+    }, "CaptureError");
+    Initialize = /* @__PURE__ */ __name(() => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (Initialized) return;
+      Initialized = true;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      if (process.env["NODE_ENV"] !== "production") {
+        void Promise.resolve().then(() => (init_OTLPBridge(), OTLPBridge_exports)).then((OTLP) => {
+          Event_default.SetTraceIdentifier(OTLP.TraceIdentifier());
+        }).catch(() => {
+        });
+      }
+      const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+      process.once("exit", OnExit);
+      process.once("SIGINT", OnExit);
+      process.once("SIGTERM", OnExit);
+      CaptureEvent("land:cocoon:session:start", {
+        pid: process.pid,
+        platform: process.platform,
+        arch: process.arch,
+        node_version: process.version
+      });
+    }, "Initialize");
+    CaptureHandler = /* @__PURE__ */ __name((Feature, DurationMs, Ok) => {
+      CaptureEvent("land:cocoon:handler:complete", {
+        feature: Feature,
+        duration_ms: DurationMs,
+        ok: Ok
+      });
+    }, "CaptureHandler");
+    CaptureStub = /* @__PURE__ */ __name((Feature, Reason) => {
+      CaptureEvent("land:cocoon:stub:active", {
+        feature: Feature,
+        reason: Reason
+      });
+    }, "CaptureStub");
+    CaptureEntryLoad = /* @__PURE__ */ __name((Entry) => {
+      CaptureEvent("land:cocoon:entry:load", { entry: Entry });
+    }, "CaptureEntryLoad");
+    CaptureEntryLoaded = /* @__PURE__ */ __name((Entry, DurationMs) => {
+      CaptureEvent("land:cocoon:entry:loaded", {
+        entry: Entry,
+        duration_ms: DurationMs
+      });
+    }, "CaptureEntryLoaded");
+    PostHogBridge_default = {
+      CaptureEvent,
+      CaptureError,
+      CaptureHandler,
+      CaptureStub,
+      CaptureEntryLoad,
+      CaptureEntryLoaded,
+      Initialize
+    };
+  }
+});
+
+// Source/Services/LanguageProviderRegistry.ts
+var Callbacks = /* @__PURE__ */ new Map();
+function Register(Handle, Provider) {
+  Callbacks.set(Handle, Provider);
+}
+__name(Register, "Register");
+function Unregister(Handle) {
+  Callbacks.delete(Handle);
+}
+__name(Unregister, "Unregister");
+function Get(Handle) {
+  const Provider = Callbacks.get(Handle);
+  if (process.env.Trace) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
+}
+__name(Get, "Get");
+var NextHandle = 1e4;
+function RegisterAutoHandle(Provider) {
+  const Handle = NextHandle++;
+  Callbacks.set(Handle, Provider);
+  return Handle;
+}
+__name(RegisterAutoHandle, "RegisterAutoHandle");
+function NextProviderHandle() {
+  return NextHandle++;
+}
+__name(NextProviderHandle, "NextProviderHandle");
+var Commands = /* @__PURE__ */ new Map();
+function RegisterCommand(CommandId, Callback) {
+  Commands.set(CommandId, Callback);
+}
+__name(RegisterCommand, "RegisterCommand");
+function HasCommand(CommandId) {
+  return Commands.has(CommandId);
+}
+__name(HasCommand, "HasCommand");
+function ExecuteCommand(CommandId, ...Args) {
+  const Handler = Commands.get(CommandId);
+  if (Handler) return Handler(...Args);
+  return void 0;
+}
+__name(ExecuteCommand, "ExecuteCommand");
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+__name(UnregisterCommand, "UnregisterCommand");
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+__name(ListCommands, "ListCommands");
+function ListHandles() {
+  return Array.from(Callbacks.keys());
+}
+__name(ListHandles, "ListHandles");
+
+// Source/Utility/LandFixLog.ts
+var Mode = process.env["Mend"] ?? "short";
+var Enabled = Mode !== "off";
+var Long = Mode === "long";
+var DebugEnabled = Long;
+var AllowList = (() => {
+  const Raw = process.env["Mend"];
+  if (!Raw || Raw.trim().length === 0) return void 0;
+  const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+  return Tags.length === 0 ? void 0 : new Set(Tags);
+})();
+var PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+var PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+var FormatTimestamp = /* @__PURE__ */ __name(() => {
+  const Now = /* @__PURE__ */ new Date();
+  if (Long) return Now.toISOString();
+  return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+    Now.getSeconds()
+  )}.${PadThree(Now.getMilliseconds())}`;
+}, "FormatTimestamp");
+var SerializeContext = /* @__PURE__ */ __name((Context) => {
+  const Seen = /* @__PURE__ */ new WeakSet();
+  try {
+    return JSON.stringify(Context, (_Key, Value) => {
+      if (Value instanceof Error) {
+        return { name: Value.name, message: Value.message };
+      }
+      if (typeof Value === "bigint") return String(Value);
+      if (typeof Value === "function") return "[Function]";
+      if (typeof Value === "object" && Value !== null) {
+        if (Seen.has(Value)) return "[Circular]";
+        Seen.add(Value);
+      }
+      return Value;
+    });
+  } catch {
+    return '"[Unserializable]"';
+  }
+}, "SerializeContext");
+var LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+var FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+  const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+  if (!Context) return `${Head}
+`;
+  return `${Head} ${SerializeContext(Context)}
+`;
+}, "FormatLine");
+var Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+  if (!Enabled) return;
+  if (AllowList && !AllowList.has(Tag)) return;
+  try {
+    Stream.write(FormatLine(Level, Tag, Message, Context));
+  } catch {
+  }
+}, "Emit");
+var Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "Info");
+var Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "warn", Tag, Message, Context);
+}, "Warn");
+var ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stderr, "error", Tag, Message, Context);
+}, "ErrorLog");
+var Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  if (!DebugEnabled) return;
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "Debug");
+var SeenOnce = /* @__PURE__ */ new Set();
+var DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  if (!DebugEnabled) return;
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "DebugOnce");
+var InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "InfoOnce");
+var LandFixLog = {
+  Info,
+  InfoOnce,
+  Warn,
+  Error: ErrorLog,
+  Debug,
+  DebugOnce,
+  IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+  IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+  Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+};
+var LandFixLog_default = LandFixLog;
+
+// Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts
+import { Effect } from "effect";
+var LazyCaptureEvent;
+if (process.env["NODE_ENV"] !== "production") {
+  void Promise.resolve().then(() => (init_PostHogBridge(), PostHogBridge_exports)).then((Module) => {
+    LazyCaptureEvent = Module.CaptureEvent;
+  }).catch(() => {
+  });
+}
+var NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+}, "dispose") };
+var IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
+var ClassifyProperty = /* @__PURE__ */ __name((Property) => {
+  if (IsTrustFamily(Property)) {
+    return {
+      Kind: "trust",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => true, "Produce")
+    };
+  }
+  if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+    return {
+      Kind: "event",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("register")) {
+    return {
+      Kind: "register",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("is") || Property.startsWith("has") || Property.startsWith("should")) {
+    return {
+      Kind: "bool-check",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => false, "Produce")
+    };
+  }
+  if (Property.startsWith("create") || Property.startsWith("get") || Property.startsWith("make")) {
+    return {
+      Kind: "factory",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+    };
+  }
+  return {
+    Kind: "default",
+    Sync: false,
+    Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+  };
+}, "ClassifyProperty");
+var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
+  const Key = `${NamespaceName}.${Property}`;
+  LandFixLog_default.InfoOnce(
+    "VSCODE-API-GAP",
+    Key,
+    `${NamespaceName}.${Property} \u2192 ${Kind}`
+  );
+  if (process.env["NODE_ENV"] !== "production") {
+    LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
+      namespace: NamespaceName,
+      method: Property,
+      kind: Kind
+    });
+  }
+}, "RecordGap");
+var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
+  const SpanName = `vscode.${NamespaceName}.${Property}`;
+  const Program = Effect.gen(function* () {
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
+  }).pipe(
+    Effect.withSpan(SpanName, {
+      attributes: {
+        "vscode.namespace": NamespaceName,
+        "vscode.method": Property,
+        "vscode.heuristic": Heuristic.Kind
+      }
+    })
+  );
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
+}, "BuildHeuristicMethod");
+var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
+  get(Target, Property) {
+    if (Reflect.has(Target, Property)) {
+      return Reflect.get(Target, Property);
+    }
+    if (typeof Property !== "string") return void 0;
+    if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = {
+          _namespace: NamespaceName
+        };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
+    const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+    return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
+  },
+  has(Target, Property) {
+    if (Reflect.has(Target, Property)) return true;
+    return typeof Property === "string" && Property !== "then";
+  }
+}), "WrapNamespaceWithHeuristics");
+var WrapNamespaceWithHeuristics_default = WrapNamespaceWithHeuristics;
+
+// Source/Services/Handler/VscodeAPI/WrapDebugNamespace.ts
+var WrapDebugNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("debug", Concrete), "WrapDebugNamespace");
+var WrapDebugNamespace_default = WrapDebugNamespace;
+
+// Source/Services/Handler/VscodeAPI/DebugNamespace.ts
+var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
+  Context.Emitter.on(EventName, Listener);
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.Emitter.off(EventName, Listener);
+    }, "dispose")
+  };
+}, "EventSubscriber");
+var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => WrapDebugNamespace_default({
+  registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
+    const Handle = NextProviderHandle();
+    Context.SendToMountain("register_debug_adapter", {
+      handle: Handle,
+      debugType: DebugType,
+      extensionId: ""
+    }).catch(() => {
+    });
+    return {
+      dispose: /* @__PURE__ */ __name(() => {
+        Context.SendToMountain("unregister_debug_adapter", {
+          handle: Handle
+        }).catch(() => {
+        });
+      }, "dispose")
+    };
+  }, "registerDebugAdapterDescriptorFactory"),
+  registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
+    const Handle = NextProviderHandle();
+    Context.SendToMountain("register_debug_configuration_provider", {
+      handle: Handle,
+      debugType: DebugType
+    }).catch(() => {
+    });
+    return {
+      dispose: /* @__PURE__ */ __name(() => {
+        Context.SendToMountain(
+          "unregister_debug_configuration_provider",
+          {
+            handle: Handle
+          }
+        ).catch(() => {
+        });
+      }, "dispose")
+    };
+  }, "registerDebugConfigurationProvider"),
+  registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerDebugAdapterTrackerFactory"),
+  // Proposed API (`vscode.proposed.debugVisualization.d.ts`). Custom
+  // debug-variable renderers (e.g. Microsoft's JS debugger providing
+  // rich object views) opt in via `enabledApiProposals`. Stub until a
+  // renderer consumer lands - real wiring routes through Mountain's
+  // DebugService.
+  registerDebugVisualizationProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerDebugVisualizationProvider"),
+  registerDebugVisualizationTreeProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerDebugVisualizationTreeProvider"),
+  startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
+    try {
+      const Response = await Context.MountainClient?.sendRequest(
+        "Debug.Start",
+        [Folder, NameOrConfig, ParentSession]
+      );
+      return Boolean(Response?.success);
+    } catch {
+      return false;
+    }
+  }, "startDebugging"),
+  stopDebugging: /* @__PURE__ */ __name(async (Session) => {
+    try {
+      const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
+      await Context.MountainClient?.sendRequest("Debug.Stop", [
+        SessionId
+      ]);
+    } catch {
+    }
+  }, "stopDebugging"),
+  addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+    Context.SendToMountain("debug.addBreakpoints", {
+      breakpoints: Breakpoints
+    }).catch(() => {
+    });
+  }, "addBreakpoints"),
+  removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+    Context.SendToMountain("debug.removeBreakpoints", {
+      breakpoints: Breakpoints
+    }).catch(() => {
+    });
+  }, "removeBreakpoints"),
+  asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
+  onDidStartDebugSession: EventSubscriber(
+    Context,
+    "debug.didStartSession"
+  ),
+  onDidTerminateDebugSession: EventSubscriber(
+    Context,
+    "debug.didTerminateSession"
+  ),
+  onDidChangeActiveDebugSession: EventSubscriber(
+    Context,
+    "debug.didChangeActiveSession"
+  ),
+  onDidReceiveDebugSessionCustomEvent: EventSubscriber(
+    Context,
+    "debug.didReceiveCustomEvent"
+  ),
+  onDidChangeBreakpoints: EventSubscriber(
+    Context,
+    "debug.didChangeBreakpoints"
+  ),
+  activeDebugSession: void 0,
+  activeDebugConsole: {
+    append: /* @__PURE__ */ __name((Value) => {
+      Context.SendToMountain("debug.consoleAppend", {
+        value: Value
+      }).catch(() => {
+      });
+    }, "append"),
+    appendLine: /* @__PURE__ */ __name((Value) => {
+      Context.SendToMountain("debug.consoleAppend", {
+        value: `${Value}
+`
+      }).catch(() => {
+      });
+    }, "appendLine")
+  },
+  breakpoints: [],
+  // Stable 1.88+ surface: current selected debug stack item. Land's
+  // debug service doesn't track per-frame selection yet, so this reads
+  // as undefined and the associated event never fires. Real subscribe
+  // path is still a proper disposable so the extension teardown works.
+  activeStackItem: void 0,
+  onDidChangeActiveStackItem: EventSubscriber(
+    Context,
+    "debug.didChangeActiveStackItem"
+  )
+}), "CreateDebugNamespace");
+var DebugNamespace_default = CreateDebugNamespace;
+export {
+  DebugNamespace_default as default
+};
+//# sourceMappingURL=DebugNamespace.js.map
