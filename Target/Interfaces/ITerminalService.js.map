@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Interfaces/ITerminalService.ts"],
-  "sourcesContent": ["/**\n * @module Interfaces/ITerminalService\n * @description\n * Interface definition for Terminal Service.\n */\n\nimport { Context } from \"effect\";\n\nexport interface ITerminalService {\n\tcreateTerminal(\n\t\tname: string,\n\t\tshellPath?: string,\n\t\tcwd?: string,\n\t): Promise<number>;\n\tsendText(terminalId: number, text: string): Promise<void>;\n\tresize(terminalId: number, cols: number, rows: number): Promise<void>;\n\tkill(terminalId: number): Promise<void>;\n}\n\nexport const ITerminalService = Context.Tag<ITerminalService>();\n"],
-  "mappings": ";AAMA,SAAS,eAAe;AAajB,IAAM,mBAAmB,QAAQ,IAAsB;",
-  "names": []
-}
