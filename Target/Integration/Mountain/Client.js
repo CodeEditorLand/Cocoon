@@ -1,6 +1,17 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
+// Source/Interfaces/I/Mountain/Client/Service.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
 // Source/Services/Dev/Log.ts
 var Raw = process.env["Trace"] ?? "";
 var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
@@ -19,17 +30,6 @@ var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
 `);
 }, "CocoonDevLog");
 var Log_default = CocoonDevLog;
-
-// Source/Interfaces/I/Mountain/Client/Service.ts
-import * as Effect from "effect/Effect";
-var IMountainClientService = Effect.Service()(
-  "Service/MountainClient",
-  {
-    effect: Effect.gen(function* () {
-      return {};
-    })
-  }
-);
 
 // Source/Services/Mountain/Client/Service.ts
 import { createRequire } from "module";

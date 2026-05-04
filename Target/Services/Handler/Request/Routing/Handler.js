@@ -1288,8 +1288,8 @@ var __filename, __dirname, require2, CircuitBreakerState, ConnectionState, Mount
 var init_Service2 = __esm({
   "Source/Services/Mountain/Client/Service.ts"() {
     "use strict";
-    init_Log();
     init_Service();
+    init_Log();
     __filename = fileURLToPath(import.meta.url);
     __dirname = dirname(__filename);
     require2 = createRequire(import.meta.url);
@@ -2738,7 +2738,7 @@ var init_RouteManifest = __esm({
       mountain: 91,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-04T19:47:22Z"
+      generatedAt: "2026-05-04T19:59:05Z"
     };
   }
 });
@@ -2958,6 +2958,16 @@ var init_Track = __esm({
       process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route3}
 `);
     }, "LogDualTrack");
+  }
+});
+
+// Source/Interfaces/IGRPC/Server/Service.ts
+import { Context as Context6 } from "effect";
+var IGRPCServerService;
+var init_Service3 = __esm({
+  "Source/Interfaces/IGRPC/Server/Service.ts"() {
+    "use strict";
+    IGRPCServerService = Context6.GenericTag("IGRPCServerService");
   }
 });
 
@@ -33327,16 +33337,6 @@ var init_Handler4 = __esm({
   }
 });
 
-// Source/Interfaces/IGRPC/Server/Service.ts
-import { Context as Context6 } from "effect";
-var IGRPCServerService;
-var init_Service3 = __esm({
-  "Source/Interfaces/IGRPC/Server/Service.ts"() {
-    "use strict";
-    IGRPCServerService = Context6.GenericTag("IGRPCServerService");
-  }
-});
-
 // Source/Services/GRPC/Server/Service.ts
 var Service_exports2 = {};
 __export(Service_exports2, {
@@ -33355,12 +33355,12 @@ var __filename2, __dirname2, require3, GRPCServerService, GRPCServerServiceLayer
 var init_Service4 = __esm({
   async "Source/Services/GRPC/Server/Service.ts"() {
     "use strict";
+    init_Service3();
     init_Handler();
     init_Handler2();
     init_Handler3();
     await init_Handler4();
     init_Handler5();
-    init_Service3();
     __filename2 = fileURLToPath2(import.meta.url);
     __dirname2 = dirname4(__filename2);
     require3 = createRequire2(import.meta.url);

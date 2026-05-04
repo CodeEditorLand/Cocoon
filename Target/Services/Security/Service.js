@@ -9,6 +9,23 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// Source/Interfaces/I/Mountain/Client/Service.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService;
+var init_Service = __esm({
+  "Source/Interfaces/I/Mountain/Client/Service.ts"() {
+    "use strict";
+    IMountainClientService = Effect.Service()(
+      "Service/MountainClient",
+      {
+        effect: Effect.gen(function* () {
+          return {};
+        })
+      }
+    );
+  }
+});
+
 // Source/Services/Dev/Log.ts
 var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, Log_default;
 var init_Log = __esm({
@@ -34,23 +51,6 @@ var init_Log = __esm({
   }
 });
 
-// Source/Interfaces/I/Mountain/Client/Service.ts
-import * as Effect from "effect/Effect";
-var IMountainClientService;
-var init_Service = __esm({
-  "Source/Interfaces/I/Mountain/Client/Service.ts"() {
-    "use strict";
-    IMountainClientService = Effect.Service()(
-      "Service/MountainClient",
-      {
-        effect: Effect.gen(function* () {
-          return {};
-        })
-      }
-    );
-  }
-});
-
 // Source/Services/Mountain/Client/Service.ts
 var Service_exports = {};
 __export(Service_exports, {
@@ -67,8 +67,8 @@ var __filename, __dirname, require2, CircuitBreakerState, ConnectionState, Mount
 var init_Service2 = __esm({
   "Source/Services/Mountain/Client/Service.ts"() {
     "use strict";
-    init_Log();
     init_Service();
+    init_Log();
     __filename = fileURLToPath(import.meta.url);
     __dirname = dirname(__filename);
     require2 = createRequire(import.meta.url);
