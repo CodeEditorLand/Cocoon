@@ -1,3 +1,903 @@
-var he=Object.defineProperty;var g=(e,n)=>()=>(e&&(n=e(e=0)),n);var K=(e,n)=>{for(var t in n)he(e,t,{get:n[t],enumerable:!0})};var Oe,Le,$,$e,De,v,x=g(()=>{"use strict";Oe={$app:"land-editor",$app_version:"0.0.1",$build_mode:"debug",$component:"cocoon",$tier:"cocoon",$lib:"cocoon-posthog-bridge"},Le=(e,n={})=>({Name:e,Timestamp:new Date().toISOString(),Properties:n}),$e=e=>{$=e},De=e=>({...e,...Oe,$node_version:process.version,...$?{$trace_id:$}:{}}),v={Create:Le,Enrich:De,SetTraceIdentifier:$e}});import*as q from"node:https";var Ie,j,z=g(()=>{"use strict";x();Ie=5e3,j=(e,n,t,r)=>{if(r.length===0)return;let s=JSON.stringify({api_key:n,batch:r.map(o=>({event:o.Name,timestamp:o.Timestamp,distinct_id:t,properties:v.Enrich(o.Properties)}))});try{let o=new URL("/batch/",e),i=q.request({method:"POST",hostname:o.hostname,port:o.port||443,path:o.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(s)},timeout:Ie},a=>{a.resume()});i.on("error",()=>{}),i.on("timeout",()=>{i.destroy()}),i.write(s),i.end()}catch{}}});var Q,J=g(()=>{"use strict";x();z();Q=(e,n)=>{let t=[],r,s=()=>{if(t.length===0)return;let i=t;t=[],j(e.Host,e.Key,n,i)},o=()=>{r||(r=setTimeout(()=>{r=void 0,s()},e.BatchWindowMilliseconds),r.unref?.())};return{Enqueue:(i,a)=>{if(t.push(v.Create(i,a)),t.length>=e.BatchMaximum){s();return}o()},Drain:()=>{r&&(clearTimeout(r),r=void 0),s()}}}});var Pe,D,I,G,V,C,P=g(()=>{"use strict";Pe="https://eu.i.posthog.com",D=(e,n)=>{let t=process.env[e];return t&&t.length>0?t:n},I=(e,n)=>{let t=process.env[e];return t===void 0?n:!["false","0","off",""].includes(t.toLowerCase())},G=(e,n)=>{let t=process.env[e],r=t?Number(t):Number.NaN;return Number.isFinite(r)&&r>0?r:n},V=I("Capture",!0),C=()=>({Key:D("Authorize",""),Host:D("Beam",Pe),Enabled:I("Report",!0)&&V&&process.env.NODE_ENV!=="production",BatchWindowMilliseconds:G("Buffer",3e3),BatchMaximum:G("Batch",50),DistinctIdentifierSeed:process.env.Brand??"",OTLPEndpoint:D("OTLPEndpoint","http://127.0.0.1:4318"),OTLPEnabled:I("OTLPEnabled",!0)&&V&&process.env.NODE_ENV!=="production"})});var Z,X=g(()=>{"use strict";Z=e=>e.length>0?e:`land-dev-${process.env.USER??process.env.USERNAME??"unknown"}`});var te={};K(te,{CaptureSpan:()=>k,TraceIdentifier:()=>B,WithSpan:()=>ne,default:()=>Be});import*as _e from"node:http";import*as He from"node:https";var Y,T,ee,_,B,H,k,ne,Be,re=g(()=>{"use strict";P();Y=C(),T=Y.OTLPEnabled,ee=e=>{let n="";for(let t=0;t<e;t=t+1)n=n+Math.floor(Math.random()*256).toString(16).padStart(2,"0");return n},B=()=>(_||(_=ee(16)),_),H=()=>{let e=process.hrtime();return BigInt(e[0])*1000000000n+BigInt(e[1])},k=(e,n,t,r=[])=>{if(process.env.NODE_ENV==="production"||!T)return;let s=ee(8),o=B(),i=e.includes("error")?2:1,a=r.map(([c,l])=>({key:c,value:{stringValue:l}})),p=JSON.stringify({resourceSpans:[{resource:{attributes:[{key:"service.name",value:{stringValue:"land-editor-cocoon"}},{key:"service.version",value:{stringValue:"0.0.1"}},{key:"land.tier",value:{stringValue:"cocoon"}}]},scopeSpans:[{scope:{name:"land.cocoon",version:"1.0.0"},spans:[{traceId:o,spanId:s,name:e,kind:1,startTimeUnixNano:n.toString(),endTimeUnixNano:t.toString(),attributes:a,status:{code:i}}]}]}]});try{let c=new URL("/v1/traces",Y.OTLPEndpoint),d=(c.protocol==="https:"?He:_e).request({method:"POST",hostname:c.hostname,port:c.port||(c.protocol==="https:"?443:80),path:c.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(p)},timeout:200},u=>{(u.statusCode===void 0||u.statusCode>=300)&&(T=!1),u.resume()});d.on("error",()=>{T=!1}),d.on("timeout",()=>{d.destroy()}),d.write(p),d.end()}catch{T=!1}},ne=async(e,n,t=[])=>{let r=H();try{let s=await n(),o=H();return k(e,r,o,t),s}catch(s){let o=H();throw k(`${e}:error`,r,o,[...t,["error",String(s.message??s)]]),s}},Be={CaptureSpan:k,TraceIdentifier:B,WithSpan:ne}});var pe={};K(pe,{CaptureEntryLoad:()=>de,CaptureEntryLoaded:()=>ue,CaptureError:()=>se,CaptureEvent:()=>h,CaptureHandler:()=>ae,CaptureStub:()=>ce,Initialize:()=>ie,default:()=>Me});var M,We,W,oe,A,h,se,ie,ae,ce,de,ue,Me,le=g(()=>{"use strict";J();P();x();X();M=C(),We=Z(M.DistinctIdentifierSeed),oe=!1,A=()=>{if(M.Enabled)return W||(W=Q(M,We)),W},h=(e,n={})=>{if(process.env.NODE_ENV!=="production")try{A()?.Enqueue(e,n)}catch{}},se=(e,n,t={})=>{if(process.env.NODE_ENV==="production")return;let r=A();r&&(r.Enqueue("land:cocoon:error",{...t,error_tag:e,error_message:n}),r.Drain())},ie=()=>{if(process.env.NODE_ENV==="production"||oe)return;oe=!0;let e=A();if(!e)return;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(re(),te)).then(t=>{v.SetTraceIdentifier(t.TraceIdentifier())}).catch(()=>{});let n=()=>e.Drain();process.once("exit",n),process.once("SIGINT",n),process.once("SIGTERM",n),h("land:cocoon:session:start",{pid:process.pid,platform:process.platform,arch:process.arch,node_version:process.version})},ae=(e,n,t)=>{h("land:cocoon:handler:complete",{feature:e,duration_ms:n,ok:t})},ce=(e,n)=>{h("land:cocoon:stub:active",{feature:e,reason:n})},de=e=>{h("land:cocoon:entry:load",{entry:e})},ue=(e,n)=>{h("land:cocoon:entry:loaded",{entry:e,duration_ms:n})},Me={CaptureEvent:h,CaptureError:se,CaptureHandler:ae,CaptureStub:ce,CaptureEntryLoad:de,CaptureEntryLoaded:ue,Initialize:ie}});var R=process.env.Mend??"short",U=R!=="off",O=R==="long",L=O,F=(()=>{let e=process.env.Mend;if(!e||e.trim().length===0)return;let n=e.split(",").map(t=>t.trim()).filter(t=>t.length>0);return n.length===0?void 0:new Set(n)})(),N=e=>e<10?`0${e}`:String(e),ye=e=>e<10?`00${e}`:e<100?`0${e}`:String(e),ve=()=>{let e=new Date;return O?e.toISOString():`${N(e.getHours())}:${N(e.getMinutes())}:${N(e.getSeconds())}.${ye(e.getMilliseconds())}`},be=e=>{let n=new WeakSet;try{return JSON.stringify(e,(t,r)=>{if(r instanceof Error)return{name:r.name,message:r.message};if(typeof r=="bigint")return String(r);if(typeof r=="function")return"[Function]";if(typeof r=="object"&&r!==null){if(n.has(r))return"[Circular]";n.add(r)}return r})}catch{return'"[Unserializable]"'}},Ee=e=>e==="info"?"":` ${e.toUpperCase()}`,we=(e,n,t,r)=>{let s=`${ve()} [LandFix:${n}]${Ee(e)} ${t}`;return r?`${s} ${be(r)}
-`:`${s}
-`},y=(e,n,t,r,s)=>{if(U&&!(F&&!F.has(t)))try{e.write(we(n,t,r,s))}catch{}},Se=(e,n,t)=>{y(process.stdout,"info",e,n,t)},xe=(e,n,t)=>{y(process.stdout,"warn",e,n,t)},Ce=(e,n,t)=>{y(process.stderr,"error",e,n,t)},Te=(e,n,t)=>{L&&y(process.stdout,"debug",e,n,t)},S=new Set,ke=(e,n,t,r)=>{if(!L)return;let s=`${e}:${n}`;S.has(s)||(S.add(s),y(process.stdout,"debug",e,t,r))},Ne=(e,n,t,r)=>{let s=`${e}:${n}`;S.has(s)||(S.add(s),y(process.stdout,"info",e,t,r))},Re={Info:Se,InfoOnce:Ne,Warn:xe,Error:Ce,Debug:Te,DebugOnce:ke,IsEnabled:()=>U,IsDebugEnabled:()=>L,Mode:()=>R==="off"?"off":O?"long":"short"},m=Re;import{Effect as E}from"effect";var fe;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(le(),pe)).then(e=>{fe=e.CaptureEvent}).catch(()=>{});var w={dispose:()=>{}},Ae=e=>e==="requestResourceTrust"||e==="isResourceTrusted"||e==="requestWorkspaceTrust"||/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(e),Ke=e=>Ae(e)?{Kind:"trust",Sync:!1,Produce:()=>!0}:e.startsWith("onDid")||e.startsWith("onWill")?{Kind:"event",Sync:!0,Produce:()=>w}:e.startsWith("register")?{Kind:"register",Sync:!0,Produce:()=>w}:e.startsWith("is")||e.startsWith("has")||e.startsWith("should")?{Kind:"bool-check",Sync:!1,Produce:()=>!1}:e.startsWith("create")||e.startsWith("get")||e.startsWith("make")?{Kind:"factory",Sync:!0,Produce:()=>{}}:{Kind:"default",Sync:!1,Produce:()=>{}},Fe=(e,n,t)=>{let r=`${e}.${n}`;m.InfoOnce("VSCODE-API-GAP",r,`${e}.${n} \u2192 ${t}`),process.env.NODE_ENV!=="production"&&fe?.("land:cocoon:vscode_api_gap",{namespace:e,method:n,kind:t})},Ue=(e,n,t)=>(...r)=>{let s=`vscode.${e}.${n}`,o=E.gen(function*(){yield*E.sync(()=>{try{Fe(e,n,t.Kind)}catch{}});try{return t.Produce(...r)}catch{switch(t.Kind){case"trust":return!0;case"event":return w;case"register":return w;case"bool-check":return!1;default:return}}}).pipe(E.withSpan(s,{attributes:{"vscode.namespace":e,"vscode.method":n,"vscode.heuristic":t.Kind}}));try{return t.Sync?E.runSync(o):E.runPromise(o)}catch{switch(t.Kind){case"trust":return t.Sync?!0:Promise.resolve(!0);case"event":case"register":return w;case"bool-check":return t.Sync?!1:Promise.resolve(!1);default:return t.Sync?void 0:Promise.resolve(void 0)}}},qe=(e,n,t)=>new Proxy(n,{get(r,s){if(Reflect.has(r,s))return Reflect.get(r,s);if(typeof s!="string"||s==="then")return;if(s==="toJSON")return()=>{let i={_namespace:e};for(let a of Object.keys(r)){let p=r[a],c=typeof p;i[a]=c==="function"?"[Function]":c==="object"&&p!==null?"[Object]":p}return i};if(s==="toString"||s==="valueOf")return;let o=t?.[s]??Ke(s);return Ue(e,s,o)},has(r,s){return Reflect.has(r,s)?!0:typeof s=="string"&&s!=="then"}}),ge=qe;var je=e=>ge("env",e),me=je;var ze=e=>{let n=e.ExtensionHostInitData?.environment??{},t=o=>{if(typeof o!="string"||o.length===0)return m.Warn("EnvNs","appRoot empty or non-string, returning ''"),"";if(!o.startsWith("file:"))return m.Info("EnvNs",`appRoot already plain path: ${o}`),o;try{let i=decodeURIComponent(new URL(o).pathname).replace(/\/$/,"");return m.Info("EnvNs",`appRoot normalised file-URL ${o} \u2192 ${i}`),i}catch(i){let a=o.replace(/^file:\/\//,"").replace(/\/$/,"");return m.Warn("EnvNs",`appRoot URL parse failed; fallback ${o} \u2192 ${a}`,{error:i instanceof globalThis.Error?i.message:String(i)}),a}},r=async(o,i)=>{try{return await e.MountainClient?.sendRequest(o,i)}catch{return}},s={appName:n.appName??"CodeEditorLand",appRoot:t(n.appRoot),appHost:n.appHost??"desktop",uiKind:1,language:n.language??"en",machineId:e.ExtensionHostInitData?.telemetry?.machineId??n.machineId??"land",sessionId:n.sessionId??`land-session-${Date.now().toString(36)}`,appCommit:n.appCommit??"",appQuality:n.appQuality??"stable",isNewAppInstall:!1,isAppPortable:!1,isTelemetryEnabled:!1,onDidChangeTelemetryEnabled:()=>({dispose:()=>{}}),onDidChangeShell:()=>({dispose:()=>{}}),uriScheme:n.uriScheme??"vscode",shell:n.shell??process.env.SHELL??"",remoteName:void 0,clipboard:{readText:async()=>{let o=await r("Clipboard.Read",[]);if(typeof o=="string")return o;try{let{spawn:i}=await import("node:child_process"),a=process.platform==="darwin"?[["pbpaste",[]]]:process.platform==="win32"?[["powershell.exe",["-NoProfile","-Command","Get-Clipboard -Raw"]]]:[["wl-paste",["-n"]],["xclip",["-selection","clipboard","-o"]],["xsel",["--clipboard","--output"]]];for(let[p,c]of a){let l=await new Promise(d=>{let u=i(p,c,{stdio:["ignore","pipe","ignore"]}),f="";u.stdout.on("data",b=>f+=b.toString("utf8")),u.once("error",()=>d(void 0)),u.once("close",b=>d(b===0?f:void 0))});if(l!==void 0)return l}}catch{}return""},writeText:async o=>{await r("Clipboard.Write",[o]);try{let{spawn:i}=await import("node:child_process"),a=process.platform==="darwin"?[["pbcopy",[]]]:process.platform==="win32"?[["clip.exe",[]]]:[["wl-copy",[]],["xclip",["-selection","clipboard"]],["xsel",["--clipboard","--input"]]];for(let[p,c]of a)if(await new Promise(d=>{let u=i(p,c,{stdio:["pipe","ignore","ignore"]});u.once("error",()=>d(!1)),u.once("close",f=>d(f===0));try{u.stdin.end(o)}catch{d(!1)}}))return}catch{}}},openExternal:async o=>{let i=typeof o=="string"?o:String(o);if(await r("NativeHost.OpenExternal",[i])===!0)return!0;try{let{spawn:p}=await import("node:child_process"),c=process.platform==="darwin"?["open",[i]]:process.platform==="win32"?["cmd.exe",["/c","start","",i]]:["xdg-open",[i]];return await new Promise(d=>{let u=p(c[0],c[1],{stdio:"ignore",detached:!0}),f=setTimeout(()=>{try{u.kill()}catch{}d(!1)},2e3);u.once("error",()=>{clearTimeout(f),d(!1)}),u.once("close",b=>{clearTimeout(f),d(b===0)}),u.unref()})}catch{return!1}},asExternalUri:async o=>o,createTelemetryLogger:(o,i)=>({isUsageEnabled:!1,isErrorsEnabled:!1,onDidChangeEnableStates:()=>({dispose:()=>{}}),logUsage:(a,p)=>{},logError:(a,p)=>{},dispose:()=>{}}),logLevel:2,onDidChangeLogLevel:()=>({dispose:()=>{}})};return me(s)},hn=ze;export{hn as default};
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey, DefaultHost, DefaultBatchWindowMilliseconds, DefaultBatchMaximum, ReadString, ReadBoolean, ReadNumber, TelemetryCaptureEnabled, Configuration_default;
+var init_Configuration = __esm({
+  "Source/Telemetry/PostHog/Configuration.ts"() {
+    "use strict";
+    DefaultKey = "";
+    DefaultHost = "https://eu.i.posthog.com";
+    DefaultBatchWindowMilliseconds = 3e3;
+    DefaultBatchMaximum = 50;
+    ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      return Value && Value.length > 0 ? Value : Fallback;
+    }, "ReadString");
+    ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      if (Value === void 0) return Fallback;
+      return !["false", "0", "off", ""].includes(Value.toLowerCase());
+    }, "ReadBoolean");
+    ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      const Parsed = Value ? Number(Value) : Number.NaN;
+      return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+    }, "ReadNumber");
+    TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+    Configuration_default = /* @__PURE__ */ __name(() => ({
+      Key: ReadString("Authorize", DefaultKey),
+      Host: ReadString("Beam", DefaultHost),
+      Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+      BatchWindowMilliseconds: ReadNumber(
+        "Buffer",
+        DefaultBatchWindowMilliseconds
+      ),
+      BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+      DistinctIdentifierSeed: process.env["Brand"] ?? "",
+      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
+      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+    }), "default");
+  }
+});
+
+// Source/Telemetry/OTLPBridge.ts
+var OTLPBridge_exports = {};
+__export(OTLPBridge_exports, {
+  CaptureSpan: () => CaptureSpan,
+  TraceIdentifier: () => TraceIdentifier,
+  WithSpan: () => WithSpan,
+  default: () => OTLPBridge_default
+});
+import * as NodeHttp from "node:http";
+import * as NodeHttps from "node:https";
+var Configuration, OTLPAvailable, RandomHex, TraceIdentifierCached, TraceIdentifier, NowNano, CaptureSpan, WithSpan, OTLPBridge_default;
+var init_OTLPBridge = __esm({
+  "Source/Telemetry/OTLPBridge.ts"() {
+    "use strict";
+    init_Configuration();
+    Configuration = Configuration_default();
+    OTLPAvailable = Configuration.OTLPEnabled;
+    RandomHex = /* @__PURE__ */ __name((Bytes) => {
+      let Output = "";
+      for (let Index = 0; Index < Bytes; Index = Index + 1) {
+        Output = Output + Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+      }
+      return Output;
+    }, "RandomHex");
+    TraceIdentifier = /* @__PURE__ */ __name(() => {
+      if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
+      return TraceIdentifierCached;
+    }, "TraceIdentifier");
+    NowNano = /* @__PURE__ */ __name(() => {
+      const Hr = process.hrtime();
+      return BigInt(Hr[0]) * 1000000000n + BigInt(Hr[1]);
+    }, "NowNano");
+    CaptureSpan = /* @__PURE__ */ __name((Name, StartNano, EndNano, Attributes = []) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (!OTLPAvailable) return;
+      const SpanIdentifier = RandomHex(8);
+      const TraceIdentifierResolved = TraceIdentifier();
+      const StatusCode = Name.includes("error") ? 2 : 1;
+      const AttributesPayload = Attributes.map(([Key, Value]) => ({
+        key: Key,
+        value: { stringValue: Value }
+      }));
+      const Payload = JSON.stringify({
+        resourceSpans: [
+          {
+            resource: {
+              attributes: [
+                {
+                  key: "service.name",
+                  value: { stringValue: "land-editor-cocoon" }
+                },
+                {
+                  key: "service.version",
+                  value: { stringValue: "0.0.1" }
+                },
+                {
+                  key: "land.tier",
+                  value: { stringValue: "cocoon" }
+                }
+              ]
+            },
+            scopeSpans: [
+              {
+                scope: { name: "land.cocoon", version: "1.0.0" },
+                spans: [
+                  {
+                    traceId: TraceIdentifierResolved,
+                    spanId: SpanIdentifier,
+                    name: Name,
+                    kind: 1,
+                    startTimeUnixNano: StartNano.toString(),
+                    endTimeUnixNano: EndNano.toString(),
+                    attributes: AttributesPayload,
+                    status: { code: StatusCode }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      try {
+        const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
+        const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
+        const Request = HttpModule.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || (Address.protocol === "https:" ? 443 : 80),
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: 200
+          },
+          (Response) => {
+            if (Response.statusCode === void 0 || Response.statusCode >= 300) {
+              OTLPAvailable = false;
+            }
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+          OTLPAvailable = false;
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+        OTLPAvailable = false;
+      }
+    }, "CaptureSpan");
+    WithSpan = /* @__PURE__ */ __name(async (Name, Body, Attributes = []) => {
+      const StartNano = NowNano();
+      try {
+        const Output = await Body();
+        const EndNano = NowNano();
+        CaptureSpan(Name, StartNano, EndNano, Attributes);
+        return Output;
+      } catch (Error2) {
+        const EndNano = NowNano();
+        CaptureSpan(`${Name}:error`, StartNano, EndNano, [
+          ...Attributes,
+          ["error", String(Error2.message ?? Error2)]
+        ]);
+        throw Error2;
+      }
+    }, "WithSpan");
+    OTLPBridge_default = { CaptureSpan, TraceIdentifier, WithSpan };
+  }
+});
+
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties, Create, CurrentTraceIdentifier, SetTraceIdentifier, Enrich, Event_default;
+var init_Event = __esm({
+  "Source/Telemetry/PostHog/Event.ts"() {
+    "use strict";
+    BaseProperties = {
+      $app: "land-editor",
+      $app_version: "0.0.1",
+      $build_mode: "debug",
+      $component: "cocoon",
+      $tier: "cocoon",
+      $lib: "cocoon-posthog-bridge"
+    };
+    Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+      Name,
+      Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      Properties
+    }), "Create");
+    SetTraceIdentifier = /* @__PURE__ */ __name((Identifier) => {
+      CurrentTraceIdentifier = Identifier;
+    }, "SetTraceIdentifier");
+    Enrich = /* @__PURE__ */ __name((Properties) => ({
+      ...Properties,
+      ...BaseProperties,
+      $node_version: process.version,
+      ...CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}
+    }), "Enrich");
+    Event_default = { Create, Enrich, SetTraceIdentifier };
+  }
+});
+
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps2 from "node:https";
+var RequestTimeoutMilliseconds, Transport_default;
+var init_Transport = __esm({
+  "Source/Telemetry/PostHog/Transport.ts"() {
+    "use strict";
+    init_Event();
+    RequestTimeoutMilliseconds = 5e3;
+    Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+      if (Batch.length === 0) return;
+      const Payload = JSON.stringify({
+        api_key: Key,
+        batch: Batch.map((Entry) => ({
+          event: Entry.Name,
+          timestamp: Entry.Timestamp,
+          distinct_id: DistinctIdentifier2,
+          properties: Event_default.Enrich(Entry.Properties)
+        }))
+      });
+      try {
+        const Address = new URL("/batch/", Host);
+        const Request = NodeHttps2.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || 443,
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: RequestTimeoutMilliseconds
+          },
+          (Response) => {
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+      }
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default;
+var init_Buffer = __esm({
+  "Source/Telemetry/PostHog/Buffer.ts"() {
+    "use strict";
+    init_Event();
+    init_Transport();
+    Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+      let Queue = [];
+      let FlushTimer;
+      const Send = /* @__PURE__ */ __name(() => {
+        if (Queue.length === 0) return;
+        const Pending = Queue;
+        Queue = [];
+        Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+      }, "Send");
+      const ScheduleFlush = /* @__PURE__ */ __name(() => {
+        if (FlushTimer) return;
+        FlushTimer = setTimeout(() => {
+          FlushTimer = void 0;
+          Send();
+        }, Config.BatchWindowMilliseconds);
+        FlushTimer.unref?.();
+      }, "ScheduleFlush");
+      return {
+        Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+          Queue.push(Event_default.Create(Name, Properties));
+          if (Queue.length >= Config.BatchMaximum) {
+            Send();
+            return;
+          }
+          ScheduleFlush();
+        }, "Enqueue"),
+        Drain: /* @__PURE__ */ __name(() => {
+          if (FlushTimer) {
+            clearTimeout(FlushTimer);
+            FlushTimer = void 0;
+          }
+          Send();
+        }, "Drain")
+      };
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default;
+var init_Identifier = __esm({
+  "Source/Telemetry/PostHog/Identifier.ts"() {
+    "use strict";
+    Identifier_default = /* @__PURE__ */ __name((Seed) => {
+      if (Seed.length > 0) return Seed;
+      const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+      return `land-dev-${Username}`;
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHogBridge.ts
+var PostHogBridge_exports = {};
+__export(PostHogBridge_exports, {
+  CaptureEntryLoad: () => CaptureEntryLoad,
+  CaptureEntryLoaded: () => CaptureEntryLoaded,
+  CaptureError: () => CaptureError,
+  CaptureEvent: () => CaptureEvent,
+  CaptureHandler: () => CaptureHandler,
+  CaptureStub: () => CaptureStub,
+  Initialize: () => Initialize,
+  default: () => PostHogBridge_default
+});
+var Configuration2, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, CaptureHandler, CaptureStub, CaptureEntryLoad, CaptureEntryLoaded, PostHogBridge_default;
+var init_PostHogBridge = __esm({
+  "Source/Telemetry/PostHogBridge.ts"() {
+    "use strict";
+    init_Buffer();
+    init_Configuration();
+    init_Event();
+    init_Identifier();
+    Configuration2 = Configuration_default();
+    DistinctIdentifier = Identifier_default(
+      Configuration2.DistinctIdentifierSeed
+    );
+    Initialized = false;
+    Buffered = /* @__PURE__ */ __name(() => {
+      if (!Configuration2.Enabled) return void 0;
+      if (!ActiveBuffer) {
+        ActiveBuffer = Buffer_default(Configuration2, DistinctIdentifier);
+      }
+      return ActiveBuffer;
+    }, "Buffered");
+    CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      try {
+        Buffered()?.Enqueue(Name, Properties);
+      } catch {
+      }
+    }, "CaptureEvent");
+    CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      Bridge.Enqueue("land:cocoon:error", {
+        ...Extra,
+        error_tag: Tag,
+        error_message: Message
+      });
+      Bridge.Drain();
+    }, "CaptureError");
+    Initialize = /* @__PURE__ */ __name(() => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (Initialized) return;
+      Initialized = true;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      if (process.env["NODE_ENV"] !== "production") {
+        void Promise.resolve().then(() => (init_OTLPBridge(), OTLPBridge_exports)).then((OTLP) => {
+          Event_default.SetTraceIdentifier(OTLP.TraceIdentifier());
+        }).catch(() => {
+        });
+      }
+      const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+      process.once("exit", OnExit);
+      process.once("SIGINT", OnExit);
+      process.once("SIGTERM", OnExit);
+      CaptureEvent("land:cocoon:session:start", {
+        pid: process.pid,
+        platform: process.platform,
+        arch: process.arch,
+        node_version: process.version
+      });
+    }, "Initialize");
+    CaptureHandler = /* @__PURE__ */ __name((Feature, DurationMs, Ok) => {
+      CaptureEvent("land:cocoon:handler:complete", {
+        feature: Feature,
+        duration_ms: DurationMs,
+        ok: Ok
+      });
+    }, "CaptureHandler");
+    CaptureStub = /* @__PURE__ */ __name((Feature, Reason) => {
+      CaptureEvent("land:cocoon:stub:active", {
+        feature: Feature,
+        reason: Reason
+      });
+    }, "CaptureStub");
+    CaptureEntryLoad = /* @__PURE__ */ __name((Entry) => {
+      CaptureEvent("land:cocoon:entry:load", { entry: Entry });
+    }, "CaptureEntryLoad");
+    CaptureEntryLoaded = /* @__PURE__ */ __name((Entry, DurationMs) => {
+      CaptureEvent("land:cocoon:entry:loaded", {
+        entry: Entry,
+        duration_ms: DurationMs
+      });
+    }, "CaptureEntryLoaded");
+    PostHogBridge_default = {
+      CaptureEvent,
+      CaptureError,
+      CaptureHandler,
+      CaptureStub,
+      CaptureEntryLoad,
+      CaptureEntryLoaded,
+      Initialize
+    };
+  }
+});
+
+// Source/Utility/LandFixLog.ts
+var Mode = process.env["Mend"] ?? "short";
+var Enabled = Mode !== "off";
+var Long = Mode === "long";
+var DebugEnabled = Long;
+var AllowList = (() => {
+  const Raw = process.env["Mend"];
+  if (!Raw || Raw.trim().length === 0) return void 0;
+  const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+  return Tags.length === 0 ? void 0 : new Set(Tags);
+})();
+var PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+var PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+var FormatTimestamp = /* @__PURE__ */ __name(() => {
+  const Now = /* @__PURE__ */ new Date();
+  if (Long) return Now.toISOString();
+  return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+    Now.getSeconds()
+  )}.${PadThree(Now.getMilliseconds())}`;
+}, "FormatTimestamp");
+var SerializeContext = /* @__PURE__ */ __name((Context) => {
+  const Seen = /* @__PURE__ */ new WeakSet();
+  try {
+    return JSON.stringify(Context, (_Key, Value) => {
+      if (Value instanceof Error) {
+        return { name: Value.name, message: Value.message };
+      }
+      if (typeof Value === "bigint") return String(Value);
+      if (typeof Value === "function") return "[Function]";
+      if (typeof Value === "object" && Value !== null) {
+        if (Seen.has(Value)) return "[Circular]";
+        Seen.add(Value);
+      }
+      return Value;
+    });
+  } catch {
+    return '"[Unserializable]"';
+  }
+}, "SerializeContext");
+var LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+var FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+  const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+  if (!Context) return `${Head}
+`;
+  return `${Head} ${SerializeContext(Context)}
+`;
+}, "FormatLine");
+var Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+  if (!Enabled) return;
+  if (AllowList && !AllowList.has(Tag)) return;
+  try {
+    Stream.write(FormatLine(Level, Tag, Message, Context));
+  } catch {
+  }
+}, "Emit");
+var Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "Info");
+var Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "warn", Tag, Message, Context);
+}, "Warn");
+var ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stderr, "error", Tag, Message, Context);
+}, "ErrorLog");
+var Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  if (!DebugEnabled) return;
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "Debug");
+var SeenOnce = /* @__PURE__ */ new Set();
+var DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  if (!DebugEnabled) return;
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "DebugOnce");
+var InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "InfoOnce");
+var LandFixLog = {
+  Info,
+  InfoOnce,
+  Warn,
+  Error: ErrorLog,
+  Debug,
+  DebugOnce,
+  IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+  IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+  Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+};
+var LandFixLog_default = LandFixLog;
+
+// Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts
+import { Effect } from "effect";
+var LazyCaptureEvent;
+if (process.env["NODE_ENV"] !== "production") {
+  void Promise.resolve().then(() => (init_PostHogBridge(), PostHogBridge_exports)).then((Module) => {
+    LazyCaptureEvent = Module.CaptureEvent;
+  }).catch(() => {
+  });
+}
+var NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+}, "dispose") };
+var IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
+var ClassifyProperty = /* @__PURE__ */ __name((Property) => {
+  if (IsTrustFamily(Property)) {
+    return {
+      Kind: "trust",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => true, "Produce")
+    };
+  }
+  if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+    return {
+      Kind: "event",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("register")) {
+    return {
+      Kind: "register",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("is") || Property.startsWith("has") || Property.startsWith("should")) {
+    return {
+      Kind: "bool-check",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => false, "Produce")
+    };
+  }
+  if (Property.startsWith("create") || Property.startsWith("get") || Property.startsWith("make")) {
+    return {
+      Kind: "factory",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+    };
+  }
+  return {
+    Kind: "default",
+    Sync: false,
+    Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+  };
+}, "ClassifyProperty");
+var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
+  const Key = `${NamespaceName}.${Property}`;
+  LandFixLog_default.InfoOnce(
+    "VSCODE-API-GAP",
+    Key,
+    `${NamespaceName}.${Property} \u2192 ${Kind}`
+  );
+  if (process.env["NODE_ENV"] !== "production") {
+    LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
+      namespace: NamespaceName,
+      method: Property,
+      kind: Kind
+    });
+  }
+}, "RecordGap");
+var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
+  const SpanName = `vscode.${NamespaceName}.${Property}`;
+  const Program = Effect.gen(function* () {
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
+  }).pipe(
+    Effect.withSpan(SpanName, {
+      attributes: {
+        "vscode.namespace": NamespaceName,
+        "vscode.method": Property,
+        "vscode.heuristic": Heuristic.Kind
+      }
+    })
+  );
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
+}, "BuildHeuristicMethod");
+var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
+  get(Target, Property) {
+    if (Reflect.has(Target, Property)) {
+      return Reflect.get(Target, Property);
+    }
+    if (typeof Property !== "string") return void 0;
+    if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = {
+          _namespace: NamespaceName
+        };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
+    const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+    return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
+  },
+  has(Target, Property) {
+    if (Reflect.has(Target, Property)) return true;
+    return typeof Property === "string" && Property !== "then";
+  }
+}), "WrapNamespaceWithHeuristics");
+var WrapNamespaceWithHeuristics_default = WrapNamespaceWithHeuristics;
+
+// Source/Services/Handler/VscodeAPI/WrapEnvNamespace.ts
+var WrapEnvNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("env", Concrete), "WrapEnvNamespace");
+var WrapEnvNamespace_default = WrapEnvNamespace;
+
+// Source/Services/Handler/VscodeAPI/EnvNamespace.ts
+var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
+  const Env = Context.ExtensionHostInitData?.environment ?? {};
+  const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
+    if (typeof Raw !== "string" || Raw.length === 0) {
+      LandFixLog_default.Warn(
+        "EnvNs",
+        "appRoot empty or non-string, returning ''"
+      );
+      return "";
+    }
+    if (!Raw.startsWith("file:")) {
+      LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw}`);
+      return Raw;
+    }
+    try {
+      const Normalised = decodeURIComponent(
+        new URL(Raw).pathname
+      ).replace(/\/$/, "");
+      LandFixLog_default.Info(
+        "EnvNs",
+        `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+      );
+      return Normalised;
+    } catch (Error2) {
+      const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+      LandFixLog_default.Warn(
+        "EnvNs",
+        `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
+        {
+          error: Error2 instanceof globalThis.Error ? Error2.message : String(Error2)
+        }
+      );
+      return Fallback;
+    }
+  }, "NormalizeAppRoot");
+  const Call = /* @__PURE__ */ __name(async (Method, Parameters) => {
+    try {
+      return await Context.MountainClient?.sendRequest(
+        Method,
+        Parameters
+      );
+    } catch {
+      return void 0;
+    }
+  }, "Call");
+  const Concrete = {
+    appName: Env["appName"] ?? "CodeEditorLand",
+    appRoot: NormalizeAppRoot(Env["appRoot"]),
+    appHost: Env["appHost"] ?? "desktop",
+    uiKind: 1,
+    // vscode.UIKind.Desktop
+    language: Env["language"] ?? "en",
+    machineId: Context.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
+    sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
+    // VS Code build identity strings. `vscode.tunnel-forwarding` and
+    // other extensions read `appCommit?.substring(0, 7)` to surface a
+    // short SHA in their telemetry / status bar. Returning the
+    // heuristic Proxy fallback (a function) crashes that call with
+    // `appCommit?.substring is not a function`. Default to empty
+    // string so optional-chained reads short-circuit cleanly; populate
+    // from build env when a real commit hash is available.
+    appCommit: Env["appCommit"] ?? "",
+    appQuality: Env["appQuality"] ?? "stable",
+    isNewAppInstall: false,
+    isAppPortable: false,
+    isTelemetryEnabled: false,
+    onDidChangeTelemetryEnabled: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "onDidChangeTelemetryEnabled"),
+    // Land's bundled shell is fixed for the session; there's no UI to
+    // switch it, so this event can never fire. Stub preserves the
+    // disposable contract extensions rely on at activation time.
+    onDidChangeShell: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "onDidChangeShell"),
+    uriScheme: Env["uriScheme"] ?? "vscode",
+    shell: Env["shell"] ?? process.env["SHELL"] ?? "",
+    remoteName: void 0,
+    clipboard: {
+      // Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
+      // routed). Fallback: native OS clipboard CLI - pbcopy/pbpaste on
+      // macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
+      // Each branch swallows errors so the extension host never crashes
+      // on an unavailable clipboard subsystem.
+      readText: /* @__PURE__ */ __name(async () => {
+        const FromMountain = await Call("Clipboard.Read", []);
+        if (typeof FromMountain === "string") return FromMountain;
+        try {
+          const { spawn } = await import("node:child_process");
+          const Candidates = process.platform === "darwin" ? [["pbpaste", []]] : process.platform === "win32" ? [
+            [
+              "powershell.exe",
+              [
+                "-NoProfile",
+                "-Command",
+                "Get-Clipboard -Raw"
+              ]
+            ]
+          ] : [
+            ["wl-paste", ["-n"]],
+            [
+              "xclip",
+              ["-selection", "clipboard", "-o"]
+            ],
+            ["xsel", ["--clipboard", "--output"]]
+          ];
+          for (const [Cmd, Args] of Candidates) {
+            const Text = await new Promise(
+              (Resolve) => {
+                const Child = spawn(Cmd, Args, {
+                  stdio: ["ignore", "pipe", "ignore"]
+                });
+                let Out = "";
+                Child.stdout.on(
+                  "data",
+                  (Chunk) => Out += Chunk.toString("utf8")
+                );
+                Child.once("error", () => Resolve(void 0));
+                Child.once(
+                  "close",
+                  (Code) => Resolve(Code === 0 ? Out : void 0)
+                );
+              }
+            );
+            if (Text !== void 0) return Text;
+          }
+        } catch {
+        }
+        return "";
+      }, "readText"),
+      writeText: /* @__PURE__ */ __name(async (Value) => {
+        await Call("Clipboard.Write", [Value]);
+        try {
+          const { spawn } = await import("node:child_process");
+          const Candidates = process.platform === "darwin" ? [["pbcopy", []]] : process.platform === "win32" ? [["clip.exe", []]] : [
+            ["wl-copy", []],
+            ["xclip", ["-selection", "clipboard"]],
+            ["xsel", ["--clipboard", "--input"]]
+          ];
+          for (const [Cmd, Args] of Candidates) {
+            const Ok = await new Promise((Resolve) => {
+              const Child = spawn(Cmd, Args, {
+                stdio: ["pipe", "ignore", "ignore"]
+              });
+              Child.once("error", () => Resolve(false));
+              Child.once("close", (Code) => Resolve(Code === 0));
+              try {
+                Child.stdin.end(Value);
+              } catch {
+                Resolve(false);
+              }
+            });
+            if (Ok) return;
+          }
+        } catch {
+        }
+      }, "writeText")
+    },
+    openExternal: /* @__PURE__ */ __name(async (Target) => {
+      const Url = typeof Target === "string" ? Target : String(Target);
+      const OkFromMountain = await Call(
+        "NativeHost.OpenExternal",
+        [Url]
+      );
+      if (OkFromMountain === true) return true;
+      try {
+        const { spawn } = await import("node:child_process");
+        const Command = process.platform === "darwin" ? ["open", [Url]] : process.platform === "win32" ? ["cmd.exe", ["/c", "start", "", Url]] : ["xdg-open", [Url]];
+        const Ok = await new Promise((Resolve) => {
+          const Child = spawn(Command[0], Command[1], {
+            stdio: "ignore",
+            detached: true
+          });
+          const Timer = setTimeout(() => {
+            try {
+              Child.kill();
+            } catch {
+            }
+            Resolve(false);
+          }, 2e3);
+          Child.once("error", () => {
+            clearTimeout(Timer);
+            Resolve(false);
+          });
+          Child.once("close", (Code) => {
+            clearTimeout(Timer);
+            Resolve(Code === 0);
+          });
+          Child.unref();
+        });
+        return Ok;
+      } catch {
+        return false;
+      }
+    }, "openExternal"),
+    asExternalUri: /* @__PURE__ */ __name(async (Target) => Target, "asExternalUri"),
+    createTelemetryLogger: /* @__PURE__ */ __name((_Sender, _Options) => ({
+      isUsageEnabled: false,
+      isErrorsEnabled: false,
+      onDidChangeEnableStates: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidChangeEnableStates"),
+      logUsage: /* @__PURE__ */ __name((_EventName, _Data) => {
+      }, "logUsage"),
+      logError: /* @__PURE__ */ __name((_EventNameOrError, _Data) => {
+      }, "logError"),
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "createTelemetryLogger"),
+    logLevel: 2,
+    onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "onDidChangeLogLevel")
+  };
+  return WrapEnvNamespace_default(Concrete);
+}, "CreateEnvNamespace");
+var EnvNamespace_default = CreateEnvNamespace;
+export {
+  EnvNamespace_default as default
+};
+//# sourceMappingURL=EnvNamespace.js.map

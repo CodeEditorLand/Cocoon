@@ -1,1 +1,815 @@
-import{Context as $,Effect as n,Layer as b}from"effect";import*as C from"effect/Effect";var v=C.Service()("Service/MountainClient",{effect:C.gen(function*(){return{}})});import{Context as p,Effect as u,Ref as f}from"effect";var M=p.Tag("Service/Logger"),P=class extends u.Service()("Service/Logger",{effect:u.gen(function*(){let s=yield*f.make(void 0),y=yield*f.make("info"),e=(d,c,l)=>{let m=new Date().toISOString(),w=`[${c.toUpperCase()}${l?`:${l}`:""}]`;return`${m} ${w} ${d}`};return{Trace:(d,...c)=>u.gen(function*(){let l=yield*f.get(y),m=yield*f.get(s);if(l==="trace"){let w=e(d,"trace",m);return yield*u.logTrace(d).pipe(u.annotateLogs({extensionId:m,data:c.length===1?c[0]:c}))}}),Debug:(d,...c)=>u.gen(function*(){let l=yield*f.get(y),m=yield*f.get(s);if(l==="trace"||l==="debug"){let w=e(d,"debug",m);return yield*u.logDebug(d).pipe(u.annotateLogs({extensionId:m,data:c.length===1?c[0]:c}))}}),Info:(d,...c)=>u.gen(function*(){let l=yield*f.get(s),m=e(d,"info",l);return yield*u.logInfo(d).pipe(u.annotateLogs({extensionId:l,data:c.length===1?c[0]:c}))}),Warn:(d,...c)=>u.gen(function*(){let l=yield*f.get(s);return yield*u.logWarning(d).pipe(u.annotateLogs({extensionId:l,data:c.length===1?c[0]:c}))}),Error:(d,...c)=>u.gen(function*(){let l=yield*f.get(s);return yield*u.logError(d).pipe(u.annotateLogs({extensionId:l,data:c.length===1?c[0]:c}))}),Fatal:(d,...c)=>u.gen(function*(){let l=yield*f.get(s);return yield*u.logFatal(d).pipe(u.annotateLogs({extensionId:l,data:c.length===1?c[0]:c}))}),SetExtensionId:d=>u.gen(function*(){yield*f.set(s,d)}),GetExtensionId:()=>u.gen(function*(){return(yield*f.get(s))??"cocoon-core"})}})}){};var h=$.GenericTag("Service/MountainGRPCClient"),S=b.effect(h,n.gen(function*(){let o=yield*v,s=yield*M.Logger;return{_serviceBrand:void 0,showTextDocument:(e,r={})=>n.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showTextDocument: ${e}`),!(yield*n.tryPromise({try:()=>o.sendRequest("showTextDocument",{uri:{value:e},viewColumn:r.viewColumn?r.viewColumn-2:void 0,preserveFocus:r.preserveFocus??!0}),catch:t=>new Error(`Failed to show text document: ${t instanceof Error?t.message:String(t)}`)}))?.success)return yield*n.fail(new Error(`Failed to show text document: ${e}`))}),showInformationMessage:e=>n.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showInformationMessage: ${e}`),!(yield*n.tryPromise({try:()=>o.sendRequest("showInformation",{message:e}),catch:i=>new Error(`Failed to show information message: ${i instanceof Error?i.message:String(i)}`)}))?.success)return yield*n.fail(new Error(`Failed to show information message: ${e}`))}),showWarningMessage:e=>n.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showWarningMessage: ${e}`),!(yield*n.tryPromise({try:()=>o.sendRequest("showWarning",{message:e}),catch:i=>new Error(`Failed to show warning message: ${i instanceof Error?i.message:String(i)}`)}))?.success)return yield*n.fail(new Error(`Failed to show warning message: ${e}`))}),showErrorMessage:e=>n.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] showErrorMessage: ${e}`),!(yield*n.tryPromise({try:()=>o.sendRequest("showError",{message:e}),catch:i=>new Error(`Failed to show error message: ${i instanceof Error?i.message:String(i)}`)}))?.success)return yield*n.fail(new Error(`Failed to show error message: ${e}`))}),createStatusBarItem:e=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] createStatusBarItem: ${e.id}`);let r=yield*n.tryPromise({try:()=>o.sendRequest("createStatusBarItem",{id:e.id,text:e.text,tooltip:e.tooltip??""}),catch:i=>new Error(`Failed to create status bar item: ${i instanceof Error?i.message:String(i)}`)});return r?.itemId?r.itemId:yield*n.fail(new Error(`Failed to create status bar item: ${e.id}`))}),setStatusBarText:(e,r)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] setStatusBarText: ${e} = ${r}`),yield*n.tryPromise({try:()=>o.sendRequest("setStatusBarText",{itemId:e,text:r}),catch:i=>new Error(`Failed to set status bar text: ${i instanceof Error?i.message:String(i)}`)})}),createWebviewPanel:e=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] createWebviewPanel: ${e.viewType}`);let r=yield*n.tryPromise({try:()=>o.sendRequest("createWebviewPanel",{viewType:e.viewType,title:e.title,iconPath:e.iconPath??"",viewColumn:e.viewColumn?e.viewColumn-2:void 0,preserveFocus:e.preserveFocus??!1,enableFindWidget:e.enableFindWidget??!0,retainContextWhenHidden:e.retainContextWhenHidden??!1,localResourceRoots:e.localResourceRoots??[]}),catch:i=>new Error(`Failed to create webview panel: ${i instanceof Error?i.message:String(i)}`)});return r?.handle===void 0?yield*n.fail(new Error(`Failed to create webview panel: ${e.viewType}`)):r.handle}),setWebviewHtml:(e,r)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] setWebviewHtml: handle=${e}`),yield*n.tryPromise({try:()=>o.sendRequest("setWebviewHtml",{handle:e,html:r}),catch:i=>new Error(`Failed to set webview HTML: ${i instanceof Error?i.message:String(i)}`)})}),postWebviewMessage:(e,r)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] postWebviewMessage: handle=${e}`);let i=typeof r=="string";yield*n.tryPromise({try:()=>o.sendNotification("onDidReceiveMessage",{handle:e,stringMessage:i?r:void 0,bytesMessage:i?void 0:r}),catch:t=>new Error(`Failed to post webview message: ${t instanceof Error?t.message:String(t)}`)})}),findFiles:(e,r)=>n.gen(function*(){return yield*s.debug(`[MountainGRPCClient] findFiles: ${e}`),(yield*n.tryPromise({try:()=>o.sendRequest("findFiles",{pattern:e,include:r??!0}),catch:t=>new Error(`Failed to find files: ${t instanceof Error?t.message:String(t)}`)}))?.uris??[]}),findTextInFiles:(e,r,i)=>n.gen(function*(){return yield*s.debug(`[MountainGRPCClient] findTextInFiles: ${e}`),(yield*n.tryPromise({try:()=>o.sendRequest("findTextInFiles",{pattern:e,include:r??[],exclude:i??[]}),catch:a=>new Error(`Failed to find text in files: ${a instanceof Error?a.message:String(a)}`)}))?.matches??[]}),openDocument:(e,r)=>n.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] openDocument: ${e}`),!(yield*n.tryPromise({try:()=>o.sendRequest("openDocument",{uri:{value:e},viewColumn:r?r-2:void 0}),catch:t=>new Error(`Failed to open document: ${t instanceof Error?t.message:String(t)}`)}))?.success)return yield*n.fail(new Error(`Failed to open document: ${e}`))}),saveAll:(e=!1)=>n.gen(function*(){if(yield*s.debug(`[MountainGRPCClient] saveAll: includeUntitled=${e}`),!(yield*n.tryPromise({try:()=>o.sendRequest("saveAll",{includeUntitled:e}),catch:i=>new Error(`Failed to save all: ${i instanceof Error?i.message:String(i)}`)}))?.success)return yield*n.fail(new Error("Failed to save all documents"))}),applyEdit:(e,r)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] applyEdit: ${e}`);let i=[];for(let a of r){let g=a?.range?.start,E=a?.range?.end;!g||!E||typeof g.line!="number"||typeof E.line!="number"||i.push({range:{start:{line:g.line+1,character:(g.character??0)+1},end:{line:E.line+1,character:(E.character??0)+1}},newText:typeof a.newText=="string"?a.newText:""})}if(!(yield*n.tryPromise({try:()=>o.sendRequest("applyEdit",{uri:{value:e},edits:i}),catch:a=>new Error(`Failed to apply edit: ${a instanceof Error?a.message:String(a)}`)}))?.success)return yield*n.fail(new Error(`Failed to apply edit to: ${e}`))}),registerCommand:(e,r,i)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] registerCommand: ${e}`),yield*n.tryPromise({try:()=>o.sendNotification("registerCommand",{commandId:e,extensionId:r,title:i}),catch:t=>new Error(`Failed to register command: ${t instanceof Error?t.message:String(t)}`)})}),executeCommand:(e,...r)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] executeCommand: ${e}`);let i=yield*n.tryPromise({try:()=>o.sendRequest("executeCommand",{commandId:e,arguments:r.map(t=>typeof t=="string"?{stringValue:t}:typeof t=="number"?{intValue:t}:typeof t=="boolean"?{boolValue:t}:t instanceof Uint8Array?{bytesValue:t}:{stringValue:String(t)})}),catch:t=>new Error(`Failed to execute command: ${t instanceof Error?t.message:String(t)}`)});return i?.error?yield*n.fail(new Error(`Command execution failed: ${i.error.Message}`)):i?.value}),unregisterCommand:e=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] unregisterCommand: ${e}`),yield*n.tryPromise({try:()=>o.sendNotification("unregisterCommand",{commandId:e}),catch:r=>new Error(`Failed to unregister command: ${r instanceof Error?r.message:String(r)}`)})}),getSecret:e=>n.gen(function*(){return yield*s.debug(`[MountainGRPCClient] getSecret: ${e}`),(yield*n.tryPromise({try:()=>o.sendRequest("getSecret",{key:e}),catch:i=>new Error(`Failed to get secret: ${i instanceof Error?i.message:String(i)}`)}))?.value}),storeSecret:(e,r)=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] storeSecret: ${e}`),yield*n.tryPromise({try:()=>o.sendNotification("storeSecret",{key:e,value:r}),catch:i=>new Error(`Failed to store secret: ${i instanceof Error?i.message:String(i)}`)})}),deleteSecret:e=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] deleteSecret: ${e}`),yield*n.tryPromise({try:()=>o.sendNotification("deleteSecret",{key:e}),catch:r=>new Error(`Failed to delete secret: ${r instanceof Error?r.message:String(r)}`)})}),readFile:e=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] readFile: ${e}`);let r=yield*n.tryPromise({try:()=>o.sendRequest("readFile",{uri:{value:e}}),catch:i=>new Error(`Failed to read file: ${i instanceof Error?i.message:String(i)}`)});return r?.content?r.content:yield*n.fail(new Error(`Failed to read file: ${e}`))}),writeFile:(e,r,i="utf8")=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] writeFile: ${e}`),yield*n.tryPromise({try:()=>o.sendNotification("writeFile",{uri:{value:e},content:r,encoding:i}),catch:t=>new Error(`Failed to write file: ${t instanceof Error?t.message:String(t)}`)})}),stat:e=>n.gen(function*(){yield*s.debug(`[MountainGRPCClient] stat: ${e}`);let r=yield*n.tryPromise({try:()=>o.sendRequest("stat",{uri:{value:e}}),catch:i=>new Error(`Failed to stat file: ${i instanceof Error?i.message:String(i)}`)});return r||(yield*n.fail(new Error(`Failed to stat file: ${e}`)))}),readdir:e=>n.gen(function*(){return yield*s.debug(`[MountainGRPCClient] readdir: ${e}`),(yield*n.tryPromise({try:()=>o.sendRequest("readdir",{uri:{value:e}}),catch:i=>new Error(`Failed to read directory: ${i instanceof Error?i.message:String(i)}`)}))?.entries??[]})}})),x=b.effect(h,n.gen(function*(){let o=yield*M.Logger,s=new Map,y=new Map,e=new Map,r=0;return{_serviceBrand:void 0,showTextDocument:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] showTextDocument: ${t}`)}),showInformationMessage:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] showInformationMessage: ${t}`)}),showWarningMessage:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] showWarningMessage: ${t}`)}),showErrorMessage:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] showErrorMessage: ${t}`)}),createStatusBarItem:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] createStatusBarItem: ${t.id}`);let a=`status-${t.id}`;return y.set(a,t.text),a}),setStatusBarText:(t,a)=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] setStatusBarText: ${t}`),y.set(t,a)}),createWebviewPanel:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] createWebviewPanel: ${t.viewType}`);let a=r++;return e.set(a,{html:t.html??""}),a}),setWebviewHtml:(t,a)=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] setWebviewHtml: ${t}`);let g=e.get(t);g&&(g.html=a)}),postWebviewMessage:(t,a)=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] postWebviewMessage: ${t}`)}),findFiles:t=>n.gen(function*(){return yield*o.debug(`[MountainGRPCClientMock] findFiles: ${t}`),[]}),findTextInFiles:t=>n.gen(function*(){return yield*o.debug(`[MountainGRPCClientMock] findTextInFiles: ${t}`),[]}),openDocument:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] openDocument: ${t}`)}),saveAll:()=>n.gen(function*(){yield*o.debug("[MountainGRPCClientMock] saveAll")}),applyEdit:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] applyEdit: ${t}`)}),registerCommand:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] registerCommand: ${t}`)}),executeCommand:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] executeCommand: ${t}`)}),unregisterCommand:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] unregisterCommand: ${t}`)}),getSecret:t=>n.gen(function*(){return yield*o.debug(`[MountainGRPCClientMock] getSecret: ${t}`),s.get(t)}),storeSecret:(t,a)=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] storeSecret: ${t}`),s.set(t,a)}),deleteSecret:t=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] deleteSecret: ${t}`),s.delete(t)}),readFile:t=>n.gen(function*(){return yield*o.debug(`[MountainGRPCClientMock] readFile: ${t}`),new Uint8Array(0)}),writeFile:(t,a)=>n.gen(function*(){yield*o.debug(`[MountainGRPCClientMock] writeFile: ${t}`)}),stat:t=>n.gen(function*(){return yield*o.debug(`[MountainGRPCClientMock] stat: ${t}`),{isFile:!0,isDirectory:!1,size:0,mtime:Date.now()}}),readdir:t=>n.gen(function*(){return yield*o.debug(`[MountainGRPCClientMock] readdir: ${t}`),[]})}})),B=S.pipe(b.provide(v)),D=x;export{B as MountainGRPCClientLayer,D as MountainGRPCClientMockLayer,h as MountainGRPCClientService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/Logger.ts
+import { Context, Effect as Effect2, Ref } from "effect";
+var Logger = Context.Tag("Service/Logger");
+var LoggerService = class extends Effect2.Service()(
+  "Service/Logger",
+  {
+    effect: Effect2.gen(function* () {
+      const ExtensionIdRef = yield* Ref.make(
+        void 0
+      );
+      const LogLevelRef = yield* Ref.make("info");
+      const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
+        const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
+        const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+        return `${Timestamp} ${Prefix} ${Message}`;
+      }, "FormatMessage");
+      const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const LogLevel = yield* Ref.get(LogLevelRef);
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        if (LogLevel === "trace") {
+          const FormattedMessage = FormatMessage(
+            Message,
+            "trace",
+            ExtensionId
+          );
+          return yield* Effect2.logTrace(Message).pipe(
+            Effect2.annotateLogs({
+              extensionId: ExtensionId,
+              data: Data.length === 1 ? Data[0] : Data
+            })
+          );
+        }
+      }), "Trace");
+      const Debug = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const LogLevel = yield* Ref.get(LogLevelRef);
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        if (LogLevel === "trace" || LogLevel === "debug") {
+          const FormattedMessage = FormatMessage(
+            Message,
+            "debug",
+            ExtensionId
+          );
+          return yield* Effect2.logDebug(Message).pipe(
+            Effect2.annotateLogs({
+              extensionId: ExtensionId,
+              data: Data.length === 1 ? Data[0] : Data
+            })
+          );
+        }
+      }), "Debug");
+      const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        const FormattedMessage = FormatMessage(
+          Message,
+          "info",
+          ExtensionId
+        );
+        return yield* Effect2.logInfo(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Info");
+      const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect2.logWarning(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Warn");
+      const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect2.logError(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Error");
+      const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect2.logFatal(Message).pipe(
+          Effect2.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Fatal");
+      const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect2.gen(function* () {
+        yield* Ref.set(ExtensionIdRef, ExtensionId);
+      }), "SetExtensionId");
+      const GetExtensionId = /* @__PURE__ */ __name(() => Effect2.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return ExtensionId ?? "cocoon-core";
+      }), "GetExtensionId");
+      const ServiceImplementation = {
+        Trace,
+        Debug,
+        Info,
+        Warn,
+        Error: Error2,
+        Fatal,
+        SetExtensionId,
+        GetExtensionId
+      };
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "LoggerService");
+  }
+};
+
+// Source/Services/MountainGRPCClient.ts
+import { Context as Context2, Effect as Effect3, Layer } from "effect";
+var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
+var MountainGRPCClientLive = Layer.effect(
+  MountainGRPCClientService,
+  Effect3.gen(function* () {
+    const mountainClient = yield* IMountainClientService;
+    const logger = yield* Logger.Logger;
+    const service = {
+      _serviceBrand: void 0,
+      // ==================== Window Operations ====================
+      showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showTextDocument: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
+            uri: { value: uri },
+            viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+            // Convert ViewColumn enum (1-based to 0-based)
+            preserveFocus: options.preserveFocus ?? true
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(`Failed to show text document: ${uri}`)
+          );
+        }
+        return;
+      }), "showTextDocument"),
+      showInformationMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showInformationMessage: ${message}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to show information message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showInformationMessage"),
+      showWarningMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showWarningMessage: ${message}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to show warning message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showWarningMessage"),
+      showErrorMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showErrorMessage: ${message}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to show error message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showErrorMessage"),
+      createStatusBarItem: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] createStatusBarItem: ${options.id}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
+            id: options.id,
+            text: options.text,
+            tooltip: options.tooltip ?? ""
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.itemId) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to create status bar item: ${options.id}`
+            )
+          );
+        }
+        return result.itemId;
+      }), "createStatusBarItem"),
+      setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
+            itemId,
+            text
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "setStatusBarText"),
+      createWebviewPanel: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
+            viewType: options.viewType,
+            title: options.title,
+            iconPath: options.iconPath ?? "",
+            viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+            preserveFocus: options.preserveFocus ?? false,
+            enableFindWidget: options.enableFindWidget ?? true,
+            retainContextWhenHidden: options.retainContextWhenHidden ?? false,
+            localResourceRoots: options.localResourceRoots ?? []
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (result?.handle === void 0) {
+          return yield* Effect3.fail(
+            new Error(
+              `Failed to create webview panel: ${options.viewType}`
+            )
+          );
+        }
+        return result.handle;
+      }), "createWebviewPanel"),
+      setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
+            handle,
+            html
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "setWebviewHtml"),
+      postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
+        );
+        const isString = typeof message === "string";
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+            "onDidReceiveMessage",
+            {
+              handle,
+              stringMessage: isString ? message : void 0,
+              bytesMessage: isString ? void 0 : message
+            }
+          ), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "postWebviewMessage"),
+      // ==================== Workspace Operations ====================
+      findFiles: /* @__PURE__ */ __name((pattern, include) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] findFiles: ${pattern}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
+            pattern,
+            include: include ?? true
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.uris ?? [];
+      }), "findFiles"),
+      findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] findTextInFiles: ${pattern}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
+            pattern,
+            include: include ?? [],
+            exclude: exclude ?? []
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.matches ?? [];
+      }), "findTextInFiles"),
+      openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] openDocument: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
+            uri: { value: uri },
+            viewColumn: viewColumn ? viewColumn - 2 : void 0
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(`Failed to open document: ${uri}`)
+          );
+        }
+        return;
+      }), "openDocument"),
+      saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
+            includeUntitled
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error("Failed to save all documents")
+          );
+        }
+        return;
+      }), "saveAll"),
+      applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] applyEdit: ${uri}`
+        );
+        const SafeEdits = [];
+        for (const edit of edits) {
+          const Start = edit?.range?.start;
+          const End = edit?.range?.end;
+          if (!Start || !End || typeof Start.line !== "number" || typeof End.line !== "number") {
+            continue;
+          }
+          SafeEdits.push({
+            range: {
+              // `+ 1` converts vscode.Range (0-based)
+              // to the workbench's `IRange` (1-based).
+              // Without this, every `workspace.applyEdit`
+              // from an extension lands one row too high
+              // and one column too far left - rename
+              // refactors, quick fixes, snippet inserts
+              // all shred the file silently.
+              start: {
+                line: Start.line + 1,
+                character: (Start.character ?? 0) + 1
+              },
+              end: {
+                line: End.line + 1,
+                character: (End.character ?? 0) + 1
+              }
+            },
+            newText: typeof edit.newText === "string" ? edit.newText : ""
+          });
+        }
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
+            uri: { value: uri },
+            edits: SafeEdits
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect3.fail(
+            new Error(`Failed to apply edit to: ${uri}`)
+          );
+        }
+        return;
+      }), "applyEdit"),
+      // ==================== Command Operations ====================
+      registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] registerCommand: ${commandId}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
+            commandId,
+            extensionId,
+            title
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "registerCommand"),
+      executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] executeCommand: ${commandId}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
+            commandId,
+            arguments: args.map((arg) => {
+              if (typeof arg === "string") {
+                return { stringValue: arg };
+              }
+              if (typeof arg === "number") {
+                return { intValue: arg };
+              }
+              if (typeof arg === "boolean") {
+                return { boolValue: arg };
+              }
+              if (arg instanceof Uint8Array) {
+                return { bytesValue: arg };
+              }
+              return { stringValue: String(arg) };
+            })
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (result?.error) {
+          return yield* Effect3.fail(
+            new Error(
+              `Command execution failed: ${result.error.Message}`
+            )
+          );
+        }
+        return result?.value;
+      }), "executeCommand"),
+      unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] unregisterCommand: ${commandId}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+            "unregisterCommand",
+            {
+              commandId
+            }
+          ), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "unregisterCommand"),
+      // ==================== Secret Storage ====================
+      getSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] getSecret: ${key}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.value;
+      }), "getSecret"),
+      storeSecret: /* @__PURE__ */ __name((key, value) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] storeSecret: ${key}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
+            key,
+            value
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "storeSecret"),
+      deleteSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] deleteSecret: ${key}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
+            key
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "deleteSecret"),
+      // ==================== File System Operations ====================
+      readFile: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] readFile: ${uri}`
+        );
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.content) {
+          return yield* Effect3.fail(
+            new Error(`Failed to read file: ${uri}`)
+          );
+        }
+        return result.content;
+      }), "readFile"),
+      writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] writeFile: ${uri}`
+        );
+        yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
+            uri: { value: uri },
+            content,
+            encoding
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "writeFile"),
+      stat: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result) {
+          return yield* Effect3.fail(
+            new Error(`Failed to stat file: ${uri}`)
+          );
+        }
+        return result;
+      }), "stat"),
+      readdir: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
+        const result = yield* Effect3.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.entries ?? [];
+      }), "readdir")
+    };
+    return service;
+  })
+);
+var MountainGRPCClientMock = Layer.effect(
+  MountainGRPCClientService,
+  Effect3.gen(function* () {
+    const logger = yield* Logger.Logger;
+    const mockSecrets = /* @__PURE__ */ new Map();
+    const mockStatusBarItems = /* @__PURE__ */ new Map();
+    const mockWebviewPanels = /* @__PURE__ */ new Map();
+    let mockWebviewHandleCounter = 0;
+    const service = {
+      _serviceBrand: void 0,
+      // Window Operations
+      showTextDocument: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showTextDocument: ${uri}`
+        );
+        return;
+      }), "showTextDocument"),
+      showInformationMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showInformationMessage: ${message}`
+        );
+        return;
+      }), "showInformationMessage"),
+      showWarningMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showWarningMessage: ${message}`
+        );
+        return;
+      }), "showWarningMessage"),
+      showErrorMessage: /* @__PURE__ */ __name((message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showErrorMessage: ${message}`
+        );
+        return;
+      }), "showErrorMessage"),
+      createStatusBarItem: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
+        );
+        const itemId = `status-${options.id}`;
+        mockStatusBarItems.set(itemId, options.text);
+        return itemId;
+      }), "createStatusBarItem"),
+      setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
+        );
+        mockStatusBarItems.set(itemId, text);
+        return;
+      }), "setStatusBarText"),
+      createWebviewPanel: /* @__PURE__ */ __name((options) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
+        );
+        const handle = mockWebviewHandleCounter++;
+        mockWebviewPanels.set(handle, { html: options.html ?? "" });
+        return handle;
+      }), "createWebviewPanel"),
+      setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
+        );
+        const panel = mockWebviewPanels.get(handle);
+        if (panel) {
+          panel.html = html;
+        }
+        return;
+      }), "setWebviewHtml"),
+      postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
+        );
+        return;
+      }), "postWebviewMessage"),
+      // Workspace Operations
+      findFiles: /* @__PURE__ */ __name((pattern) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] findFiles: ${pattern}`
+        );
+        return [];
+      }), "findFiles"),
+      findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
+        );
+        return [];
+      }), "findTextInFiles"),
+      openDocument: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] openDocument: ${uri}`
+        );
+        return;
+      }), "openDocument"),
+      saveAll: /* @__PURE__ */ __name(() => Effect3.gen(function* () {
+        yield* logger.debug("[MountainGRPCClientMock] saveAll");
+        return;
+      }), "saveAll"),
+      applyEdit: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] applyEdit: ${uri}`
+        );
+        return;
+      }), "applyEdit"),
+      // Command Operations
+      registerCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] registerCommand: ${commandId}`
+        );
+        return;
+      }), "registerCommand"),
+      executeCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] executeCommand: ${commandId}`
+        );
+        return void 0;
+      }), "executeCommand"),
+      unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
+        );
+        return;
+      }), "unregisterCommand"),
+      // Secret Storage
+      getSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] getSecret: ${key}`
+        );
+        return mockSecrets.get(key);
+      }), "getSecret"),
+      storeSecret: /* @__PURE__ */ __name((key, value) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] storeSecret: ${key}`
+        );
+        mockSecrets.set(key, value);
+        return;
+      }), "storeSecret"),
+      deleteSecret: /* @__PURE__ */ __name((key) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] deleteSecret: ${key}`
+        );
+        mockSecrets.delete(key);
+        return;
+      }), "deleteSecret"),
+      // File System Operations
+      readFile: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] readFile: ${uri}`
+        );
+        return new Uint8Array(0);
+      }), "readFile"),
+      writeFile: /* @__PURE__ */ __name((uri, content) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] writeFile: ${uri}`
+        );
+        return;
+      }), "writeFile"),
+      stat: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] stat: ${uri}`
+        );
+        return {
+          isFile: true,
+          isDirectory: false,
+          size: 0,
+          mtime: Date.now()
+        };
+      }), "stat"),
+      readdir: /* @__PURE__ */ __name((uri) => Effect3.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] readdir: ${uri}`
+        );
+        return [];
+      }), "readdir")
+    };
+    return service;
+  })
+);
+var MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
+  Layer.provide(IMountainClientService)
+);
+var MountainGRPCClientMockLayer = MountainGRPCClientMock;
+export {
+  MountainGRPCClientLayer,
+  MountainGRPCClientMockLayer,
+  MountainGRPCClientService
+};
+//# sourceMappingURL=MountainGRPCClient.js.map
