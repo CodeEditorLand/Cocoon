@@ -805,6 +805,15 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					},
 					set html(Value: string) {
 						CurrentHtml = Value;
+						try {
+							if (process.env["Trace"]) {
+								process.stdout.write(
+									`[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context.MountainClient}\n`,
+								);
+							}
+						} catch {
+							/* stdout may be unavailable mid-teardown */
+						}
 						// Named-key payload (object) - Mountain's case 1
 						// passes through verbatim so SkyBridge sees
 						// `Payload.html` regardless of any future drift in
@@ -813,7 +822,26 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						Context.MountainClient?.sendRequest("webview.setHtml", {
 							handle: Handle,
 							html: Value,
-						}).catch(() => {});
+						}).then(
+							() => {
+								try {
+									if (process.env["Trace"]) {
+										process.stdout.write(
+											`[WebviewPanel] set-html-sent handle=${Handle}\n`,
+										);
+									}
+								} catch {}
+							},
+							(Error: unknown) => {
+								try {
+									if (process.env["Trace"]) {
+										process.stdout.write(
+											`[WebviewPanel] set-html-failed handle=${Handle} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}\n`,
+										);
+									}
+								} catch {}
+							},
+						);
 					},
 					cspSource: SharedCspSource,
 					asWebviewUri: ToWebviewUri,
@@ -1114,11 +1142,47 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						},
 						set html(Value: string) {
 							CurrentHtml = String(Value ?? "");
+							// Diagnostic: prove the setter was reached. If we see
+							// `[WebviewView] set-html-enter` in the log but no
+							// `Received gRPC Notification: Method='webview.setHtml'`
+							// in Mountain, the gRPC sendNotification is silently
+							// dropping the payload (manifest gap, mountainClient
+							// disconnect, etc). If we see neither, the extension
+							// never assigned `view.webview.html` - the bug is
+							// upstream in the extension's resolveWebviewView.
+							try {
+								if (process.env["Trace"]) {
+									process.stdout.write(
+										`[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}\n`,
+									);
+								}
+							} catch {
+								/* stdout may be unavailable mid-teardown */
+							}
 							Context.SendToMountain("webview.setHtml", {
 								handle: Handle,
 								viewId: ViewId,
 								html: CurrentHtml,
-							}).catch(() => {});
+							}).then(
+								() => {
+									try {
+										if (process.env["Trace"]) {
+											process.stdout.write(
+												`[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}\n`,
+											);
+										}
+									} catch {}
+								},
+								(Error: unknown) => {
+									try {
+										if (process.env["Trace"]) {
+											process.stdout.write(
+												`[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}\n`,
+											);
+										}
+									} catch {}
+								},
+							);
 						},
 						options: {} as any,
 						cspSource: SharedCspSource,
@@ -1161,6 +1225,23 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						};
 					},
 					onDispose: (Listener: () => void) => {
+						DisposeListeners.add(Listener);
+						return {
+							dispose: () => DisposeListeners.delete(Listener),
+						};
+					},
+					// Canonical VS Code API name. Roo's `resolveWebviewView`
+					// calls `webviewView.onDidDispose(() => {})`; without
+					// this alias the call surfaces as
+					// `r.onDidDispose is not a function` and the resolver
+					// promise rejects AFTER `webview.html` was already
+					// set successfully (so HTML reaches Sky but the
+					// extension considers the view broken and refuses to
+					// post any further messages). VS Code spells the
+					// listener `onDidDispose: Event<void>`; alias to the
+					// existing `onDispose` listener-set rather than
+					// duplicate the storage.
+					onDidDispose: (Listener: () => void) => {
 						DisposeListeners.add(Listener);
 						return {
 							dispose: () => DisposeListeners.delete(Listener),

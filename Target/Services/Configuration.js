@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Interfaces/IConfigurationService.ts
+// Source/Interfaces/I/Configuration/Service.ts
 import { Context } from "effect";
 var ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
   ConfigurationScope3["APPLICATION"] = "APPLICATION";
@@ -13,7 +13,7 @@ var IConfigurationService = Context.Tag(
   "IConfigurationService"
 );
 
-// Source/Interfaces/IMountainClientService.ts
+// Source/Interfaces/I/Mountain/Client/Service.ts
 import * as Effect from "effect/Effect";
 var IMountainClientService = Effect.Service()(
   "Service/MountainClient",

@@ -13,7 +13,7 @@ var ExitPreventedProblem = class extends Error {
 };
 var ExitPreventedProblem_default = ExitPreventedProblem;
 
-// Source/Services/InitData.ts
+// Source/Services/Init/Data.ts
 import { Context, Layer } from "effect";
 var InitDataService = class extends Context.Tag("Cocoon/InitData")() {
   static {

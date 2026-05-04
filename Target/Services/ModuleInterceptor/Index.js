@@ -7,7 +7,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 
-// Source/Interfaces/IModuleInterceptor.ts
+// Source/Interfaces/I/Module/Interceptor.ts
 import { Context } from "effect";
 var SecurityLevel = /* @__PURE__ */ ((SecurityLevel2) => {
   SecurityLevel2["TRUSTED"] = "TRUSTED";
@@ -18,7 +18,7 @@ var SecurityLevel = /* @__PURE__ */ ((SecurityLevel2) => {
 })(SecurityLevel || {});
 var IModuleInterceptor = Context.Tag("IModuleInterceptor");
 
-// Source/Services/ModuleInterceptor.ts
+// Source/Services/Module/Interceptor.ts
 import * as acorn from "acorn";
 import * as walk from "acorn-walk";
 import { Effect, Layer } from "effect";
@@ -1010,10 +1010,10 @@ var ModuleInterceptorLive = Layer.effect(
   IModuleInterceptor,
   Effect.sync(() => new ModuleInterceptor())
 );
-var ModuleInterceptor_default = ModuleInterceptor;
+var Interceptor_default = ModuleInterceptor;
 export {
   ModuleInterceptorLayer,
   ModuleInterceptorLive,
-  ModuleInterceptor_default as default
+  Interceptor_default as default
 };
 //# sourceMappingURL=Index.js.map

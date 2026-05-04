@@ -18891,7 +18891,7 @@ var McpHttpServerDefinition = class {
   }
 };
 
-// Source/TypeConverter/Main/MarkdownString.ts
+// Source/TypeConverter/Main/Markdown/String.ts
 var FromAPI = /* @__PURE__ */ __name((MarkdownStringInstance) => ({
   value: MarkdownStringInstance.value,
   // FIX: Handle exactOptionalPropertyTypes

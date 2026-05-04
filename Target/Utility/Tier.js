@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Utility/LandFixLog.ts
+// Source/Utility/Land/Fix/Log.ts
 var Mode = process.env["Mend"] ?? "short";
 var Enabled = Mode !== "off";
 var Long = Mode === "long";
@@ -94,7 +94,7 @@ var LandFixLog = {
   IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
   Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
 };
-var LandFixLog_default = LandFixLog;
+var Log_default = LandFixLog;
 
 // Source/Utility/Tier.ts
 var Injected = globalThis.__LandTiers ?? {};
@@ -141,7 +141,7 @@ var Tier = {
   ModuleCache: Pick("ModuleCache", "Simple"),
   Telemetry: Pick("Telemetry", "Synchronous")
 };
-LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
+Log_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
 var Tier_default = Tier;
 export {
   Tier_default as default

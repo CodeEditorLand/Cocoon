@@ -359,8 +359,8 @@ var ValidateBatchMessage = /* @__PURE__ */ __name((Batch) => {
 }, "ValidateBatchMessage");
 var Validation_default = { ValidateMetadata, ValidateMessage, ValidateBatchMessage };
 
-// Source/IPC/Message/SerializeMessage.ts
-var SerializeMessage_default = /* @__PURE__ */ __name((Message) => {
+// Source/IPC/Message/Serialize/Message.ts
+var Message_default = /* @__PURE__ */ __name((Message) => {
   const Warnings = [];
   let OriginalSize = 0;
   let FinalSize = 0;
@@ -445,8 +445,8 @@ var SerializeMessage_default = /* @__PURE__ */ __name((Message) => {
   }
 }, "default");
 
-// Source/IPC/Message/DeserializeMessage.ts
-var DeserializeMessage_default = /* @__PURE__ */ __name((Data) => {
+// Source/IPC/Message/Deserialize/Message.ts
+var Message_default2 = /* @__PURE__ */ __name((Data) => {
   const Warnings = [];
   try {
     if (!Data || !(Data instanceof Uint8Array)) {
@@ -586,8 +586,8 @@ var DeserializeMessage_default = /* @__PURE__ */ __name((Data) => {
   }
 }, "default");
 
-// Source/IPC/Message/BatchMessages.ts
-var BatchMessages_default = /* @__PURE__ */ __name((Messages, Hint = "balanced" /* Balanced */) => {
+// Source/IPC/Message/Batch/Messages.ts
+var Messages_default = /* @__PURE__ */ __name((Messages, Hint = "balanced" /* Balanced */) => {
   const Warnings = [];
   let OriginalSize = 0;
   let FinalSize = 0;
@@ -624,7 +624,7 @@ var BatchMessages_default = /* @__PURE__ */ __name((Messages, Hint = "balanced" 
     const SerializedMessages = [];
     let TotalMessageSize = 0;
     for (const Message of Messages) {
-      const Result = SerializeMessage_default(Message);
+      const Result = Message_default(Message);
       if (!Result.Success) {
         return {
           Success: false,
@@ -696,8 +696,8 @@ var BatchMessages_default = /* @__PURE__ */ __name((Messages, Hint = "balanced" 
   }
 }, "default");
 
-// Source/IPC/Message/UnbatchMessages.ts
-var UnbatchMessages_default = /* @__PURE__ */ __name((Data) => {
+// Source/IPC/Message/Unbatch/Messages.ts
+var Messages_default2 = /* @__PURE__ */ __name((Data) => {
   const Warnings = [];
   let Messages = [];
   try {
@@ -795,7 +795,7 @@ var UnbatchMessages_default = /* @__PURE__ */ __name((Data) => {
         Header.offset,
         Header.offset + Header.length
       ).byteBuffer;
-      const Result = DeserializeMessage_default(MessageData);
+      const Result = Message_default2(MessageData);
       if (!Result.Success) {
         Warnings.push(
           `Failed to deserialize message ${Index}: ${Result.Error}`
@@ -864,12 +864,12 @@ var GetOptimalCompressionHint = /* @__PURE__ */ __name((Message) => {
 }, "GetOptimalCompressionHint");
 var Utility_default = { GenerateMessageID, CreateMessage, GetOptimalCompressionHint };
 export {
-  BatchMessages_default as BatchMessages,
+  Messages_default as BatchMessages,
   COMPRESSION_THRESHOLD,
   CompressionHint,
   CreateMessage,
   DEFAULT_BUFFER_SIZE,
-  DeserializeMessage_default as DeserializeMessage,
+  Message_default2 as DeserializeMessage,
   GenerateMessageID,
   GetOptimalCompressionHint,
   MAX_BATCH_COUNT,
@@ -878,8 +878,8 @@ export {
   MESSAGE_HEADER_MAGIC,
   MessageFlags,
   PROTOCOL_VERSION,
-  SerializeMessage_default as SerializeMessage,
-  UnbatchMessages_default as UnbatchMessages,
+  Message_default as SerializeMessage,
+  Messages_default2 as UnbatchMessages,
   VSBuffer,
   ValidateBatchMessage,
   ValidateMessage,

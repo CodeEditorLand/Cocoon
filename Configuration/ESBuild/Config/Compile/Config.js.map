@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Configuration/ESBuild/Config/Compile/Config.ts"],
+  "sourcesContent": ["import type { BuildOptions } from \"esbuild\";\n\nimport TargetConfig from \"../Target/Config.js\";\n\nconst Merge = (await import(\"deepmerge-ts\")).deepmergeCustom({\n\tmergeArrays: false,\n});\n\nexport default async (Current: BuildOptions): Promise<BuildOptions> =>\n\tMerge(await TargetConfig(Current), {\n\t\tbundle: true,\n\t\toutbase: \"Target\",\n\t\ttsconfig: \"Configuration/tsconfig/Target/Compile.json\",\n\t\tplugins: [],\n\t\tallowOverwrite: true,\n\t\texternal: [\n\t\t\t\"@playform/build\",\n\t\t\t\"vscode\",\n\t\t\t\"electron\",\n\t\t\t\"@effect/*\",\n\t\t\t\"@grpc/grpc-js\",\n\t\t\t\"@grpc/proto-loader\",\n\t\t\t\"google-protobuf\",\n\t\t\t\"protobufjs\",\n\t\t\t\"node:*\",\n\t\t],\n\t}) as unknown as BuildOptions;\n"],
+  "mappings": ";;AAEA,OAAO,kBAAkB;AAEzB,MAAM,SAAS,MAAM,OAAO,cAAc,GAAG,gBAAgB;AAAA,EAC5D,aAAa;AACd,CAAC;AAED,IAAO,iBAAQ,8BAAO,YACrB,MAAM,MAAM,aAAa,OAAO,GAAG;AAAA,EAClC,QAAQ;AAAA,EACR,SAAS;AAAA,EACT,UAAU;AAAA,EACV,SAAS,CAAC;AAAA,EACV,gBAAgB;AAAA,EAChB,UAAU;AAAA,IACT;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,EACD;AACD,CAAC,GAlBa;",
+  "names": []
+}

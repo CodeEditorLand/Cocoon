@@ -116,7 +116,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	// or, for git specifically:
 	//
 	//   TypeError: Cannot read properties of undefined (reading '0')
-	//     at URI.file (…/CocoonMain.js)
+	//     at URI.file (…/Cocoon/Main.js)
 	//     at Model.openRepository (…/git/out/model.js:532)
 	//
 	// Hydrate per read via `StockLift.ToUri` (which handles both

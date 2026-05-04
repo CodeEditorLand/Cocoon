@@ -4969,7 +4969,7 @@ function disposeAndRemove(result, disposables) {
 }
 __name(disposeAndRemove, "disposeAndRemove");
 
-// Source/Utility/EventStream.ts
+// Source/Utility/Event/Stream.ts
 import { Effect, PubSub } from "effect";
 var CreateEventStream = /* @__PURE__ */ __name(() => {
   const VSCodeEmitter = new Emitter();
@@ -8266,7 +8266,7 @@ var COI;
   COI2.addSearchParam = addSearchParam;
 })(COI || (COI = {}));
 
-// Source/TypeConverter/Webview/ConvertContentOptionToDTO.ts
+// Source/TypeConverter/Webview/Convert/Content/Option/To/DTO.ts
 var ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Options) => {
   return {
     enableCommandUris: Options.enableCommandUris,
@@ -8279,7 +8279,7 @@ var ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Op
   };
 }, "ConvertContentOptionToDTO");
 
-// Source/WebviewPanel/WebviewImplementation.ts
+// Source/WebviewPanel/Webview/Implementation.ts
 import { Effect as Effect2 } from "effect";
 var WebviewImplementation = class {
   constructor(Handle, IPCService, Extension, InitialOptions) {

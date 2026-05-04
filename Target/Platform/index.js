@@ -1483,9 +1483,9 @@ var ProcessConstants = {
   DEFAULT_RESTART_DELAY
 };
 
-// Source/Platform/TypeConverter.ts
-var TypeConverter_exports = {};
-__export(TypeConverter_exports, {
+// Source/Platform/Type/Converter.ts
+var Converter_exports = {};
+__export(Converter_exports, {
   ConvertArchitectureToString: () => ConvertArchitectureToString,
   ConvertDTOToEnvironmentInfo: () => ConvertDTOToEnvironmentInfo,
   ConvertDTOToEnvironmentVariable: () => ConvertDTOToEnvironmentVariable,
@@ -1871,7 +1871,7 @@ __export(Service_exports, {
   SetEnvironmentVariable: () => SetEnvironmentVariable2,
   SpawnProcess: () => SpawnProcess2,
   TestPlatformService: () => TestPlatformService,
-  TypeConverter: () => TypeConverter_exports
+  TypeConverter: () => Converter_exports
 });
 import { Context, Effect as Effect4, Layer } from "effect";
 var PlatformService = class {
@@ -2360,7 +2360,7 @@ export {
   StringToPlatform,
   TerminateProcess,
   TestPlatformService,
-  TypeConverter_exports as TypeConverter,
+  Converter_exports as TypeConverter,
   TypeConverter as TypeConverterModule,
   UnregisterProcess,
   ValidateArgs,

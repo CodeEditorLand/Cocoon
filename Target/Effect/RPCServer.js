@@ -15,10 +15,10 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// Source/Services/DevLog.ts
-var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, DevLog_default;
-var init_DevLog = __esm({
-  "Source/Services/DevLog.ts"() {
+// Source/Services/Dev/Log.ts
+var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog, Log_default;
+var init_Log = __esm({
+  "Source/Services/Dev/Log.ts"() {
     "use strict";
     Raw = process.env["Trace"] ?? "";
     ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
@@ -36,14 +36,14 @@ var init_DevLog = __esm({
       process.stdout.write(`[DEV:${TagUpper}] ${Message}
 `);
     }, "CocoonDevLog");
-    DevLog_default = CocoonDevLog;
+    Log_default = CocoonDevLog;
   }
 });
 
-// Source/Utility/LandFixLog.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
-var init_LandFixLog = __esm({
-  "Source/Utility/LandFixLog.ts"() {
+// Source/Utility/Land/Fix/Log.ts
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, Log_default2;
+var init_Log2 = __esm({
+  "Source/Utility/Land/Fix/Log.ts"() {
     "use strict";
     Mode = process.env["Mend"] ?? "short";
     Enabled = Mode !== "off";
@@ -137,7 +137,7 @@ var init_LandFixLog = __esm({
       IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
       Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
     };
-    LandFixLog_default = LandFixLog;
+    Log_default2 = LandFixLog;
   }
 });
 
@@ -870,11 +870,11 @@ var init_Health = __esm({
   }
 });
 
-// Source/Effect/ModuleInterceptor.ts
+// Source/Effect/Module/Interceptor.ts
 import { Context as Context4, Effect as Effect4, HashMap as HashMap3, Layer as Layer4, Ref as Ref3, SubscriptionRef as SubscriptionRef3 } from "effect";
 var SecurityLevel, ModuleNotFoundError, ModuleAccessDeniedError, SecurityPolicyNotFoundError, ModuleInterceptorTag, ModuleInterceptor, defaultSecurityPolicy, ModuleInterceptorLive, makeMockModuleInterceptor, ModuleInterceptorMock;
-var init_ModuleInterceptor = __esm({
-  "Source/Effect/ModuleInterceptor.ts"() {
+var init_Interceptor = __esm({
+  "Source/Effect/Module/Interceptor.ts"() {
     "use strict";
     init_Telemetry();
     SecurityLevel = /* @__PURE__ */ ((SecurityLevel4) => {
@@ -1255,11 +1255,11 @@ var init_ModuleInterceptor = __esm({
   }
 });
 
-// Source/Interfaces/IMountainClientService.ts
+// Source/Interfaces/I/Mountain/Client/Service.ts
 import * as Effect5 from "effect/Effect";
 var IMountainClientService;
-var init_IMountainClientService = __esm({
-  "Source/Interfaces/IMountainClientService.ts"() {
+var init_Service = __esm({
+  "Source/Interfaces/I/Mountain/Client/Service.ts"() {
     "use strict";
     IMountainClientService = Effect5.Service()(
       "Service/MountainClient",
@@ -1272,9 +1272,9 @@ var init_IMountainClientService = __esm({
   }
 });
 
-// Source/Services/MountainClientService.ts
-var MountainClientService_exports = {};
-__export(MountainClientService_exports, {
+// Source/Services/Mountain/Client/Service.ts
+var Service_exports = {};
+__export(Service_exports, {
   MountainClientService: () => MountainClientService,
   MountainClientServiceLayer: () => MountainClientServiceLayer
 });
@@ -1285,11 +1285,11 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { v4 as uuidv4 } from "uuid";
 var __filename, __dirname, require2, CircuitBreakerState, ConnectionState, MountainClientService, MountainClientServiceLayer;
-var init_MountainClientService = __esm({
-  "Source/Services/MountainClientService.ts"() {
+var init_Service2 = __esm({
+  "Source/Services/Mountain/Client/Service.ts"() {
     "use strict";
-    init_IMountainClientService();
-    init_DevLog();
+    init_Log();
+    init_Service();
     __filename = fileURLToPath(import.meta.url);
     __dirname = dirname(__filename);
     require2 = createRequire(import.meta.url);
@@ -2307,13 +2307,13 @@ message RPCDataPayload {
   }
 });
 
-// Source/Effect/MountainClient.ts
+// Source/Effect/Mountain/Client.ts
 import { Context as Context5, Effect as Effect7, Layer as Layer6, Ref as Ref4, SubscriptionRef as SubscriptionRef4 } from "effect";
 var ConnectionError, RPCError2, DisconnectionError, MountainClientTag, MountainClient, MountainClientLive, makeMockMountainClient, MountainClientMock;
-var init_MountainClient = __esm({
-  "Source/Effect/MountainClient.ts"() {
+var init_Client = __esm({
+  "Source/Effect/Mountain/Client.ts"() {
     "use strict";
-    init_MountainClientService();
+    init_Service2();
     init_Telemetry();
     ConnectionError = class extends Error {
       constructor(message, cause) {
@@ -2654,12 +2654,12 @@ var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainPr
 var init_Bootstrap = __esm({
   async "Source/Effect/Bootstrap.ts"() {
     "use strict";
-    init_DevLog();
-    init_LandFixLog();
+    init_Log();
+    init_Log2();
     init_Extension();
     init_Health();
-    init_ModuleInterceptor();
-    init_MountainClient();
+    init_Interceptor();
+    init_Client();
     await init_RPCServer();
     init_Telemetry();
     ProbeTcp = /* @__PURE__ */ __name((Host, Port, TimeoutMs) => Effect8.async((Resume) => {
@@ -2754,7 +2754,7 @@ var init_Bootstrap = __esm({
           DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true"
         };
         globalThis.__cocoonBootstrapConfig = ResolvedConfig;
-        LandFixLog_default.Info(
+        Log_default2.Info(
           "Bootstrap",
           `Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`
         );
@@ -2799,7 +2799,7 @@ var init_Bootstrap = __esm({
             MountainProbeTimeoutMs
           );
           if (Listening) {
-            LandFixLog_default.Info(
+            Log_default2.Info(
               "Bootstrap",
               `Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`
             );
@@ -2808,7 +2808,7 @@ var init_Bootstrap = __esm({
           yield* Effect8.sleep(Duration.millis(MountainProbeDelayMs));
         }
         if (!Listening) {
-          LandFixLog_default.Warn(
+          Log_default2.Warn(
             "Bootstrap",
             `Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`
           );
@@ -2824,7 +2824,7 @@ var init_Bootstrap = __esm({
           Effect8.tapError(
             (Failure) => Effect8.sync(() => {
               const Message = Failure instanceof Error ? Failure.message : String(Failure);
-              LandFixLog_default.Warn(
+              Log_default2.Warn(
                 "Bootstrap",
                 `MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`
               );
@@ -2841,7 +2841,7 @@ var init_Bootstrap = __esm({
         );
         yield* Connect;
         const version = yield* mountainClient.version;
-        LandFixLog_default.Info(
+        Log_default2.Info(
           "Bootstrap",
           `MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`
         );
@@ -3162,8 +3162,8 @@ var init_Effect = __esm({
     await init_Bootstrap();
     init_Extension();
     init_Health();
-    init_ModuleInterceptor();
-    init_MountainClient();
+    init_Interceptor();
+    init_Client();
     await init_RPCServer();
     init_Telemetry();
   }
@@ -22419,16 +22419,16 @@ var init_extHostTypes = __esm({
   }
 });
 
-// Source/Interfaces/IConfigurationService.ts
-var IConfigurationService_exports = {};
-__export(IConfigurationService_exports, {
+// Source/Interfaces/I/Configuration/Service.ts
+var Service_exports2 = {};
+__export(Service_exports2, {
   ConfigurationScope: () => ConfigurationScope,
   IConfigurationService: () => IConfigurationService
 });
 import { Context as Context7 } from "effect";
 var ConfigurationScope, IConfigurationService;
-var init_IConfigurationService = __esm({
-  "Source/Interfaces/IConfigurationService.ts"() {
+var init_Service3 = __esm({
+  "Source/Interfaces/I/Configuration/Service.ts"() {
     "use strict";
     ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
       ConfigurationScope3["APPLICATION"] = "APPLICATION";
@@ -22442,13 +22442,13 @@ var init_IConfigurationService = __esm({
   }
 });
 
-// Source/Services/FileSystemService.ts
+// Source/Services/File/System/Service.ts
 import { Context as Context8, Effect as Effect9, Layer as Layer8 } from "effect";
 var IFileSystemService, FileSystemService, FileSystemServiceLayer;
-var init_FileSystemService = __esm({
-  "Source/Services/FileSystemService.ts"() {
+var init_Service4 = __esm({
+  "Source/Services/File/System/Service.ts"() {
     "use strict";
-    init_IMountainClientService();
+    init_Service();
     IFileSystemService = Context8.Tag();
     FileSystemService = class {
       constructor(mountainClient) {
@@ -22522,19 +22522,19 @@ var init_FileSystemService = __esm({
   }
 });
 
-// Source/Interfaces/IFileSystemService.ts
-var init_IFileSystemService = __esm({
-  "Source/Interfaces/IFileSystemService.ts"() {
+// Source/Interfaces/I/File/System/Service.ts
+var init_Service5 = __esm({
+  "Source/Interfaces/I/File/System/Service.ts"() {
     "use strict";
-    init_FileSystemService();
+    init_Service4();
   }
 });
 
-// Source/Interfaces/IModuleInterceptorService.ts
+// Source/Interfaces/I/Module/Interceptor/Service.ts
 import { Context as Context9 } from "effect";
 var SecurityLevel2, IModuleInterceptorService;
-var init_IModuleInterceptorService = __esm({
-  "Source/Interfaces/IModuleInterceptorService.ts"() {
+var init_Service6 = __esm({
+  "Source/Interfaces/I/Module/Interceptor/Service.ts"() {
     "use strict";
     SecurityLevel2 = /* @__PURE__ */ ((SecurityLevel4) => {
       SecurityLevel4["TRUSTED"] = "TRUSTED";
@@ -22549,19 +22549,19 @@ var init_IModuleInterceptorService = __esm({
   }
 });
 
-// Source/Interfaces/ITerminalService.ts
+// Source/Interfaces/I/Terminal/Service.ts
 import { Context as Context10 } from "effect";
 var ITerminalService;
-var init_ITerminalService = __esm({
-  "Source/Interfaces/ITerminalService.ts"() {
+var init_Service7 = __esm({
+  "Source/Interfaces/I/Terminal/Service.ts"() {
     "use strict";
     ITerminalService = Context10.Tag();
   }
 });
 
-// Source/Services/LanguageProviderRegistry.ts
-var LanguageProviderRegistry_exports = {};
-__export(LanguageProviderRegistry_exports, {
+// Source/Services/Language/Provider/Registry.ts
+var Registry_exports = {};
+__export(Registry_exports, {
   ExecuteCommand: () => ExecuteCommand,
   Get: () => Get,
   HasCommand: () => HasCommand,
@@ -22618,8 +22618,8 @@ function ListHandles() {
   return Array.from(Callbacks.keys());
 }
 var Callbacks, NextHandle, Commands;
-var init_LanguageProviderRegistry = __esm({
-  "Source/Services/LanguageProviderRegistry.ts"() {
+var init_Registry = __esm({
+  "Source/Services/Language/Provider/Registry.ts"() {
     "use strict";
     Callbacks = /* @__PURE__ */ new Map();
     __name(Register, "Register");
@@ -22638,24 +22638,24 @@ var init_LanguageProviderRegistry = __esm({
   }
 });
 
-// Source/Services/APIFactoryService.ts
-var APIFactoryService_exports = {};
-__export(APIFactoryService_exports, {
+// Source/Services/API/Factory/Service.ts
+var Service_exports3 = {};
+__export(Service_exports3, {
   APIFactoryLayer: () => APIFactoryLayer,
   APIFactoryService: () => APIFactoryService,
   IAPIFactoryService: () => IAPIFactoryService
 });
 import { Context as Context11, Effect as Effect10, Layer as Layer9 } from "effect";
 var VsCodeTypes, URI2, CancellationTokenSource2, CancellationToken2, Emitter2, StockRelativePattern, HydrateBase, PatchedRelativePattern, IAPIFactoryService, createVSCodeAPI, APIFactoryService, APIFactoryLayer;
-var init_APIFactoryService = __esm({
-  async "Source/Services/APIFactoryService.ts"() {
+var init_Service8 = __esm({
+  async "Source/Services/API/Factory/Service.ts"() {
     "use strict";
-    init_IConfigurationService();
-    init_IFileSystemService();
-    init_IModuleInterceptorService();
-    init_IMountainClientService();
-    init_ITerminalService();
-    init_LanguageProviderRegistry();
+    init_Service3();
+    init_Service5();
+    init_Service6();
+    init_Service();
+    init_Service7();
+    init_Registry();
     VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
     ({ URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
     ({ CancellationTokenSource: CancellationTokenSource2, CancellationToken: CancellationToken2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports)));
@@ -23178,8 +23178,8 @@ var ConfigurationScope2, Configuration, ConfigurationLayer, ConfigurationLive;
 var init_Configuration = __esm({
   "Source/Services/Configuration.ts"() {
     "use strict";
-    init_IConfigurationService();
-    init_IMountainClientService();
+    init_Service3();
+    init_Service();
     ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
       ConfigurationScope3["APPLICATION"] = "APPLICATION";
       ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
@@ -23636,17 +23636,17 @@ var init_Configuration = __esm({
   }
 });
 
-// Source/Services/ErrorHandlingService.ts
-var ErrorHandlingService_exports = {};
-__export(ErrorHandlingService_exports, {
+// Source/Services/Error/Handling/Service.ts
+var Service_exports4 = {};
+__export(Service_exports4, {
   ErrorHandlingService: () => ErrorHandlingService,
   ErrorHandlingServiceLayer: () => ErrorHandlingServiceLayer,
   ErrorHandlingServiceLive: () => ErrorHandlingServiceLive
 });
 import { Effect as Effect12, Layer as Layer11 } from "effect";
 var ErrorHandlingService, ErrorHandlingServiceLayer, ErrorHandlingServiceLive;
-var init_ErrorHandlingService = __esm({
-  "Source/Services/ErrorHandlingService.ts"() {
+var init_Service9 = __esm({
+  "Source/Services/Error/Handling/Service.ts"() {
     "use strict";
     ErrorHandlingService = class {
       static {
@@ -24039,15 +24039,15 @@ var init_ErrorHandlingService = __esm({
   }
 });
 
-// Source/Interfaces/IExtensionHostService.ts
-var IExtensionHostService_exports = {};
-__export(IExtensionHostService_exports, {
+// Source/Interfaces/I/Extension/Host/Service.ts
+var Service_exports5 = {};
+__export(Service_exports5, {
   IExtensionHostService: () => IExtensionHostService
 });
 import { Context as Context12 } from "effect";
 var IExtensionHostService;
-var init_IExtensionHostService = __esm({
-  "Source/Interfaces/IExtensionHostService.ts"() {
+var init_Service10 = __esm({
+  "Source/Interfaces/I/Extension/Host/Service.ts"() {
     "use strict";
     IExtensionHostService = Context12.Tag(
       "IExtensionHostService"
@@ -24055,20 +24055,20 @@ var init_IExtensionHostService = __esm({
   }
 });
 
-// Source/Services/ExtensionHostService.ts
-var ExtensionHostService_exports = {};
-__export(ExtensionHostService_exports, {
+// Source/Services/Extension/Host/Service.ts
+var Service_exports6 = {};
+__export(Service_exports6, {
   ExtensionHostLayer: () => ExtensionHostLayer,
   ExtensionHostService: () => ExtensionHostService
 });
 import { Effect as Effect13, Layer as Layer12 } from "effect";
 var ExtensionHostService, ExtensionHostLayer;
-var init_ExtensionHostService = __esm({
-  async "Source/Services/ExtensionHostService.ts"() {
+var init_Service11 = __esm({
+  async "Source/Services/Extension/Host/Service.ts"() {
     "use strict";
-    init_IExtensionHostService();
-    init_IModuleInterceptorService();
-    await init_APIFactoryService();
+    init_Service10();
+    init_Service6();
+    await init_Service8();
     ExtensionHostService = class {
       constructor(moduleInterceptor, apiFactory) {
         this.moduleInterceptor = moduleInterceptor;
@@ -24213,15 +24213,15 @@ var init_ExtensionHostService = __esm({
   }
 });
 
-// Source/Services/ModuleInterceptorService.ts
+// Source/Services/Module/Interceptor/Service.ts
 import * as acorn from "acorn";
 import * as walk from "acorn-walk";
 import { Effect as Effect14, Layer as Layer13 } from "effect";
-var ModuleInterceptorService, ModuleInterceptorServiceLayer, ModuleInterceptorServiceLive, ModuleInterceptorService_default;
-var init_ModuleInterceptorService = __esm({
-  "Source/Services/ModuleInterceptorService.ts"() {
+var ModuleInterceptorService, ModuleInterceptorServiceLayer, ModuleInterceptorServiceLive, Service_default;
+var init_Service12 = __esm({
+  "Source/Services/Module/Interceptor/Service.ts"() {
     "use strict";
-    init_IModuleInterceptorService();
+    init_Service6();
     ModuleInterceptorService = class {
       static {
         __name(this, "ModuleInterceptorService");
@@ -24773,7 +24773,7 @@ var init_ModuleInterceptorService = __esm({
       IModuleInterceptorService,
       Effect14.sync(() => new ModuleInterceptorService())
     );
-    ModuleInterceptorService_default = ModuleInterceptorService;
+    Service_default = ModuleInterceptorService;
   }
 });
 
@@ -24900,13 +24900,13 @@ var init_Logger = __esm({
   }
 });
 
-// Source/Services/MountainGRPCClient.ts
+// Source/Services/Mountain/GRPC/Client.ts
 import { Context as Context15, Effect as Effect16, Layer as Layer14 } from "effect";
 var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
-var init_MountainGRPCClient = __esm({
-  "Source/Services/MountainGRPCClient.ts"() {
+var init_Client2 = __esm({
+  "Source/Services/Mountain/GRPC/Client.ts"() {
     "use strict";
-    init_IMountainClientService();
+    init_Service();
     init_Logger();
     MountainGRPCClientService = Context15.GenericTag("Service/MountainGRPCClient");
     MountainGRPCClientLive = Layer14.effect(
@@ -25587,11 +25587,11 @@ var init_MountainGRPCClient = __esm({
   }
 });
 
-// Source/Services/PerformanceMonitoringService.ts
+// Source/Services/Performance/Monitoring/Service.ts
 import { Effect as Effect17, Layer as Layer15 } from "effect";
 var PerformanceMonitoringService, PerformanceMonitoringServiceLayer, PerformanceMonitoringServiceLive;
-var init_PerformanceMonitoringService = __esm({
-  "Source/Services/PerformanceMonitoringService.ts"() {
+var init_Service13 = __esm({
+  "Source/Services/Performance/Monitoring/Service.ts"() {
     "use strict";
     PerformanceMonitoringService = class {
       static {
@@ -25696,7 +25696,7 @@ var init_PerformanceMonitoringService = __esm({
        */
       async sendMetricsToMountain() {
         try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
+          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
           const mountainClient = new MountainClientService2();
           const telemetryData = {
             metrics: this.metrics,
@@ -25750,7 +25750,7 @@ var init_PerformanceMonitoringService = __esm({
        */
       async getConcurrentExtensions() {
         try {
-          const { ExtensionHostService: ExtensionHostService2 } = await init_ExtensionHostService().then(() => ExtensionHostService_exports);
+          const { ExtensionHostService: ExtensionHostService2 } = await init_Service11().then(() => Service_exports6);
           const extensionHostService = new ExtensionHostService2(
             {},
             {}
@@ -25804,7 +25804,7 @@ var init_PerformanceMonitoringService = __esm({
        */
       async getErrorRate() {
         try {
-          const { ErrorHandlingService: ErrorHandlingService2 } = await Promise.resolve().then(() => (init_ErrorHandlingService(), ErrorHandlingService_exports));
+          const { ErrorHandlingService: ErrorHandlingService2 } = await Promise.resolve().then(() => (init_Service9(), Service_exports4));
           const errorService = new ErrorHandlingService2();
           const stats = errorService.getStatistics();
           const totalOperations = stats.totalCircuitBreakers;
@@ -25824,7 +25824,7 @@ var init_PerformanceMonitoringService = __esm({
        */
       async getCacheHitRate() {
         try {
-          const { APIFactoryService: APIFactoryService2 } = await init_APIFactoryService().then(() => APIFactoryService_exports);
+          const { APIFactoryService: APIFactoryService2 } = await init_Service8().then(() => Service_exports3);
           const apiFactoryService = new APIFactoryService2(
             {},
             {}
@@ -25844,7 +25844,7 @@ var init_PerformanceMonitoringService = __esm({
        */
       async getRequestThroughput() {
         try {
-          const { GRPCServerService: GRPCServerService2 } = await init_GRPCServerService().then(() => GRPCServerService_exports);
+          const { GRPCServerService: GRPCServerService2 } = await init_Service19().then(() => Service_exports9);
           const grpcServerService = new GRPCServerService2();
           const status2 = grpcServerService.getStatus();
           if (status2.uptime && status2.uptime > 0) {
@@ -26068,11 +26068,11 @@ var init_PerformanceMonitoringService = __esm({
   }
 });
 
-// Source/Services/SecurityService.ts
+// Source/Services/Security/Service.ts
 import { Effect as Effect18, Layer as Layer16 } from "effect";
 var SecurityService, SecurityServiceLayer, SecurityServiceLive;
-var init_SecurityService = __esm({
-  "Source/Services/SecurityService.ts"() {
+var init_Service14 = __esm({
+  "Source/Services/Security/Service.ts"() {
     "use strict";
     SecurityService = class {
       static {
@@ -26135,7 +26135,7 @@ var init_SecurityService = __esm({
        */
       async loadSecurityPolicies() {
         try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
+          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
           const mountainClient = new MountainClientService2();
           const policiesResponse = await mountainClient.sendRequest(
             "security.policies.get",
@@ -26252,7 +26252,7 @@ var init_SecurityService = __esm({
        */
       async sendIncidentToMountain(incident) {
         try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
+          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
           const mountainClient = new MountainClientService2();
           await mountainClient.sendNotification("security.incident", {
             incidentId: incident.id,
@@ -26632,13 +26632,13 @@ var init_SecurityService = __esm({
   }
 });
 
-// Source/Services/TerminalService.ts
+// Source/Services/Terminal/Service.ts
 import { Context as Context16, Effect as Effect19, Layer as Layer17 } from "effect";
 var ITerminalService2, TerminalService, TerminalServiceLayer;
-var init_TerminalService = __esm({
-  "Source/Services/TerminalService.ts"() {
+var init_Service15 = __esm({
+  "Source/Services/Terminal/Service.ts"() {
     "use strict";
-    init_IMountainClientService();
+    init_Service();
     ITerminalService2 = Context16.Tag("ITerminalService")();
     TerminalService = class {
       constructor(mountainClient) {
@@ -26683,29 +26683,29 @@ var init_TerminalService = __esm({
   }
 });
 
-// Source/ServiceMapping.ts
-var ServiceMapping_exports = {};
-__export(ServiceMapping_exports, {
+// Source/Service/Mapping.ts
+var Mapping_exports = {};
+__export(Mapping_exports, {
   EffectServices: () => EffectServices,
   OldStyleServices: () => OldStyleServices,
   ServiceMapping: () => ServiceMapping
 });
 import { Layer as Layer18 } from "effect";
 var OldStyleServices, EffectServices, ServiceMapping;
-var init_ServiceMapping = __esm({
-  async "Source/ServiceMapping.ts"() {
+var init_Mapping = __esm({
+  async "Source/Service/Mapping.ts"() {
     "use strict";
     await init_Effect();
-    await init_APIFactoryService();
+    await init_Service8();
     init_Configuration();
-    init_ErrorHandlingService();
-    await init_ExtensionHostService();
-    init_ModuleInterceptorService();
-    init_MountainClientService();
-    init_MountainGRPCClient();
-    init_PerformanceMonitoringService();
-    init_SecurityService();
-    init_TerminalService();
+    init_Service9();
+    await init_Service11();
+    init_Service12();
+    init_Service2();
+    init_Client2();
+    init_Service13();
+    init_Service14();
+    init_Service15();
     OldStyleServices = {
       /**
        * Validate dependencies for old-style services
@@ -27137,9 +27137,9 @@ var init_Identifier = __esm({
   }
 });
 
-// Source/Telemetry/PostHogBridge.ts
-var PostHogBridge_exports = {};
-__export(PostHogBridge_exports, {
+// Source/Telemetry/Post/Hog/Bridge.ts
+var Bridge_exports = {};
+__export(Bridge_exports, {
   CaptureEntryLoad: () => CaptureEntryLoad,
   CaptureEntryLoaded: () => CaptureEntryLoaded,
   CaptureError: () => CaptureError,
@@ -27147,11 +27147,11 @@ __export(PostHogBridge_exports, {
   CaptureHandler: () => CaptureHandler,
   CaptureStub: () => CaptureStub,
   Initialize: () => Initialize,
-  default: () => PostHogBridge_default
+  default: () => Bridge_default
 });
-var Configuration3, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, CaptureHandler, CaptureStub, CaptureEntryLoad, CaptureEntryLoaded, PostHogBridge_default;
-var init_PostHogBridge = __esm({
-  "Source/Telemetry/PostHogBridge.ts"() {
+var Configuration3, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, CaptureHandler, CaptureStub, CaptureEntryLoad, CaptureEntryLoaded, Bridge_default;
+var init_Bridge = __esm({
+  "Source/Telemetry/Post/Hog/Bridge.ts"() {
     "use strict";
     init_Buffer();
     init_Configuration2();
@@ -27232,7 +27232,7 @@ var init_PostHogBridge = __esm({
         duration_ms: DurationMs
       });
     }, "CaptureEntryLoaded");
-    PostHogBridge_default = {
+    Bridge_default = {
       CaptureEvent,
       CaptureError,
       CaptureHandler,
@@ -27244,15 +27244,15 @@ var init_PostHogBridge = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts
+// Source/Services/Handler/VscodeAPI/Wrap/Namespace/With/Heuristics.ts
 import { Effect as Effect20 } from "effect";
-var LazyCaptureEvent, NoopDisposable, IsTrustFamily, ClassifyProperty, RecordGap, BuildHeuristicMethod, WrapNamespaceWithHeuristics, WrapNamespaceWithHeuristics_default;
-var init_WrapNamespaceWithHeuristics = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapNamespaceWithHeuristics.ts"() {
+var LazyCaptureEvent, NoopDisposable, IsTrustFamily, ClassifyProperty, RecordGap, BuildHeuristicMethod, WrapNamespaceWithHeuristics, Heuristics_default;
+var init_Heuristics = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Namespace/With/Heuristics.ts"() {
     "use strict";
-    init_LandFixLog();
+    init_Log2();
     if (process.env["NODE_ENV"] !== "production") {
-      void Promise.resolve().then(() => (init_PostHogBridge(), PostHogBridge_exports)).then((Module) => {
+      void Promise.resolve().then(() => (init_Bridge(), Bridge_exports)).then((Module) => {
         LazyCaptureEvent = Module.CaptureEvent;
       }).catch(() => {
       });
@@ -27304,7 +27304,7 @@ var init_WrapNamespaceWithHeuristics = __esm({
     }, "ClassifyProperty");
     RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
       const Key = `${NamespaceName}.${Property}`;
-      LandFixLog_default.InfoOnce(
+      Log_default2.InfoOnce(
         "VSCODE-API-GAP",
         Key,
         `${NamespaceName}.${Property} \u2192 ${Kind}`
@@ -27400,24 +27400,24 @@ var init_WrapNamespaceWithHeuristics = __esm({
         return typeof Property === "string" && Property !== "then";
       }
     }), "WrapNamespaceWithHeuristics");
-    WrapNamespaceWithHeuristics_default = WrapNamespaceWithHeuristics;
+    Heuristics_default = WrapNamespaceWithHeuristics;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapWindowNamespace.ts
-var WrapWindowNamespace, WrapWindowNamespace_default;
-var init_WrapWindowNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapWindowNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Window/Namespace.ts
+var WrapWindowNamespace, Namespace_default;
+var init_Namespace = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Window/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapWindowNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("window", Concrete), "WrapWindowNamespace");
-    WrapWindowNamespace_default = WrapWindowNamespace;
+    init_Heuristics();
+    WrapWindowNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("window", Concrete), "WrapWindowNamespace");
+    Namespace_default = WrapWindowNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WindowNamespace.ts
-var WindowNamespace_exports = {};
-__export(WindowNamespace_exports, {
+// Source/Services/Handler/VscodeAPI/Window/Namespace.ts
+var Namespace_exports = {};
+__export(Namespace_exports, {
   CustomEditorProviders: () => CustomEditorProviders,
   CustomEditorProvidersByViewType: () => CustomEditorProvidersByViewType,
   TreeDataProviders: () => TreeDataProviders,
@@ -27425,14 +27425,14 @@ __export(WindowNamespace_exports, {
   WebviewPanels: () => WebviewPanels,
   WebviewViewBuilders: () => WebviewViewBuilders,
   WebviewViewProviders: () => WebviewViewProviders,
-  default: () => WindowNamespace_default
+  default: () => Namespace_default2
 });
-var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, WebviewViewBuilders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels, RegisterCustomEditor, CreateWindowNamespace, WindowNamespace_default;
-var init_WindowNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
+var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, WebviewViewBuilders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels, RegisterCustomEditor, CreateWindowNamespace, Namespace_default2;
+var init_Namespace2 = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/Namespace.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
-    init_WrapWindowNamespace();
+    init_Registry();
+    init_Namespace();
     MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback, ThisArg, Disposables) => {
       const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
       Context21.Emitter.on(EventName, Bound);
@@ -27563,6 +27563,60 @@ var init_WindowNamespace = __esm({
           return void 0;
         }
       }, "ShowMessage");
+      const ToWebviewUri = /* @__PURE__ */ __name((Input) => {
+        if (Input == null) return Input;
+        if (typeof Input === "string") {
+          if (Input.startsWith("vscode-file://")) return Input;
+          if (Input.startsWith("vscode-webview-resource://")) {
+            const Match = Input.match(
+              /^vscode-webview-resource:\/\/[^/]+(.*)$/
+            );
+            return Match ? `vscode-file://vscode-app${Match[1] ?? ""}` : Input;
+          }
+          if (Input.startsWith("vscode-resource://")) {
+            return Input.replace(
+              "vscode-resource://",
+              "vscode-file://vscode-app/"
+            );
+          }
+          if (Input.startsWith("file://")) {
+            return Input.replace("file://", "vscode-file://vscode-app");
+          }
+          return Input;
+        }
+        const Anything = Input;
+        const Scheme = String(Anything.scheme ?? "");
+        const Path = String(Anything.path ?? "");
+        if (Scheme === "file" && Path) {
+          const Rewritten = {
+            ...Anything,
+            scheme: "vscode-file",
+            authority: "vscode-app",
+            path: Path,
+            query: String(Anything.query ?? ""),
+            fragment: String(Anything.fragment ?? "")
+          };
+          const SerialisedQuery = Rewritten.query ? "?" + Rewritten.query : "";
+          const SerialisedFragment = Rewritten.fragment ? "#" + Rewritten.fragment : "";
+          const Serialised = `vscode-file://vscode-app${Path}${SerialisedQuery}${SerialisedFragment}`;
+          Rewritten.toString = () => Serialised;
+          Rewritten.toJSON = () => Serialised;
+          return Rewritten;
+        }
+        if (Scheme === "vscode-webview-resource" || Scheme === "vscode-resource") {
+          const Rewritten = {
+            ...Anything,
+            scheme: "vscode-file",
+            authority: "vscode-app"
+          };
+          const Serialised = `vscode-file://vscode-app${Path}`;
+          Rewritten.toString = () => Serialised;
+          Rewritten.toJSON = () => Serialised;
+          return Rewritten;
+        }
+        return Input;
+      }, "ToWebviewUri");
+      const SharedCspSource = "vscode-file: vscode-resource: vscode-webview-resource: blob: data: https:";
       const Concrete = {
         showInformationMessage: ShowMessage("info"),
         showErrorMessage: ShowMessage("error"),
@@ -27965,14 +28019,45 @@ var init_WindowNamespace = __esm({
               },
               set html(Value) {
                 CurrentHtml = Value;
+                try {
+                  if (process.env["Trace"]) {
+                    process.stdout.write(
+                      `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context21.MountainClient}
+`
+                    );
+                  }
+                } catch {
+                }
                 Context21.MountainClient?.sendRequest("webview.setHtml", {
                   handle: Handle,
                   html: Value
-                }).catch(() => {
-                });
+                }).then(
+                  () => {
+                    try {
+                      if (process.env["Trace"]) {
+                        process.stdout.write(
+                          `[WebviewPanel] set-html-sent handle=${Handle}
+`
+                        );
+                      }
+                    } catch {
+                    }
+                  },
+                  (Error2) => {
+                    try {
+                      if (process.env["Trace"]) {
+                        process.stdout.write(
+                          `[WebviewPanel] set-html-failed handle=${Handle} error=${String(Error2?.message ?? Error2).slice(0, 120)}
+`
+                        );
+                      }
+                    } catch {
+                    }
+                  }
+                );
               },
-              cspSource: "vscode-file: vscode-resource: vscode-webview-resource: https:",
-              asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+              cspSource: SharedCspSource,
+              asWebviewUri: ToWebviewUri,
               postMessage: /* @__PURE__ */ __name(async (Message) => {
                 try {
                   await Context21.MountainClient?.sendRequest(
@@ -28234,16 +28319,47 @@ var init_WindowNamespace = __esm({
                 },
                 set html(Value) {
                   CurrentHtml = String(Value ?? "");
+                  try {
+                    if (process.env["Trace"]) {
+                      process.stdout.write(
+                        `[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}
+`
+                      );
+                    }
+                  } catch {
+                  }
                   Context21.SendToMountain("webview.setHtml", {
                     handle: Handle,
                     viewId: ViewId,
                     html: CurrentHtml
-                  }).catch(() => {
-                  });
+                  }).then(
+                    () => {
+                      try {
+                        if (process.env["Trace"]) {
+                          process.stdout.write(
+                            `[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}
+`
+                          );
+                        }
+                      } catch {
+                      }
+                    },
+                    (Error2) => {
+                      try {
+                        if (process.env["Trace"]) {
+                          process.stdout.write(
+                            `[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String(Error2?.message ?? Error2).slice(0, 120)}
+`
+                          );
+                        }
+                      } catch {
+                      }
+                    }
+                  );
                 },
                 options: {},
-                cspSource: "https://*",
-                asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+                cspSource: SharedCspSource,
+                asWebviewUri: ToWebviewUri,
                 postMessage: /* @__PURE__ */ __name(async (Message) => {
                   await Context21.SendToMountain(
                     "webview.postMessage",
@@ -28284,6 +28400,23 @@ var init_WindowNamespace = __esm({
                   dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
                 };
               }, "onDispose"),
+              // Canonical VS Code API name. Roo's `resolveWebviewView`
+              // calls `webviewView.onDidDispose(() => {})`; without
+              // this alias the call surfaces as
+              // `r.onDidDispose is not a function` and the resolver
+              // promise rejects AFTER `webview.html` was already
+              // set successfully (so HTML reaches Sky but the
+              // extension considers the view broken and refuses to
+              // post any further messages). VS Code spells the
+              // listener `onDidDispose: Event<void>`; alias to the
+              // existing `onDispose` listener-set rather than
+              // duplicate the storage.
+              onDidDispose: /* @__PURE__ */ __name((Listener) => {
+                DisposeListeners.add(Listener);
+                return {
+                  dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+                };
+              }, "onDidDispose"),
               dispose: /* @__PURE__ */ __name(() => {
                 DisposeForward();
               }, "dispose")
@@ -28698,55 +28831,55 @@ var init_WindowNamespace = __esm({
         activeTerminal: void 0,
         state: { focused: true, active: true }
       };
-      return WrapWindowNamespace_default(Concrete);
+      return Namespace_default(Concrete);
     }, "CreateWindowNamespace");
-    WindowNamespace_default = CreateWindowNamespace;
+    Namespace_default2 = CreateWindowNamespace;
   }
 });
 
-// Source/Interfaces/IPerformanceMonitoringService.ts
-var IPerformanceMonitoringService_exports = {};
-__export(IPerformanceMonitoringService_exports, {
+// Source/Interfaces/I/Performance/Monitoring/Service.ts
+var Service_exports7 = {};
+__export(Service_exports7, {
   IPerformanceMonitoringService: () => IPerformanceMonitoringService
 });
 import { Context as Context17 } from "effect";
 var IPerformanceMonitoringService;
-var init_IPerformanceMonitoringService = __esm({
-  "Source/Interfaces/IPerformanceMonitoringService.ts"() {
+var init_Service16 = __esm({
+  "Source/Interfaces/I/Performance/Monitoring/Service.ts"() {
     "use strict";
     IPerformanceMonitoringService = Context17.Tag("IPerformanceMonitoringService");
   }
 });
 
-// Source/Interfaces/ISecurityService.ts
-var ISecurityService_exports = {};
-__export(ISecurityService_exports, {
+// Source/Interfaces/I/Security/Service.ts
+var Service_exports8 = {};
+__export(Service_exports8, {
   ISecurityService: () => ISecurityService
 });
 import { Context as Context18 } from "effect";
 var ISecurityService;
-var init_ISecurityService = __esm({
-  "Source/Interfaces/ISecurityService.ts"() {
+var init_Service17 = __esm({
+  "Source/Interfaces/I/Security/Service.ts"() {
     "use strict";
     ISecurityService = Context18.Tag("ISecurityService");
   }
 });
 
-// Source/Services/Handler/RequestRoutingHandler.ts
-var RequestRoutingHandler_exports = {};
-__export(RequestRoutingHandler_exports, {
-  default: () => RequestRoutingHandler_default
+// Source/Services/Handler/Request/Routing/Handler.ts
+var Handler_exports = {};
+__export(Handler_exports, {
+  default: () => Handler_default
 });
-var RouteRequest, RequestRoutingHandler_default;
-var init_RequestRoutingHandler = __esm({
-  "Source/Services/Handler/RequestRoutingHandler.ts"() {
+var RouteRequest, Handler_default;
+var init_Handler = __esm({
+  "Source/Services/Handler/Request/Routing/Handler.ts"() {
     "use strict";
     RouteRequest = /* @__PURE__ */ __name(async (Method, Parameters) => {
       console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
       const RoutePatterns = {
         "extension.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IExtensionHostService: IExtensionHostService2 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
+          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { IExtensionHostService: IExtensionHostService2 } = await Promise.resolve().then(() => (init_Service10(), Service_exports5));
           switch (Method2) {
             case "extension.activate": {
               const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService2);
@@ -28773,8 +28906,8 @@ var init_RequestRoutingHandler = __esm({
           }
         }, "extension.\\w+"),
         "configuration.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IConfigurationService: IConfigurationService2 } = await Promise.resolve().then(() => (init_IConfigurationService(), IConfigurationService_exports));
+          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { IConfigurationService: IConfigurationService2 } = await Promise.resolve().then(() => (init_Service3(), Service_exports2));
           switch (Method2) {
             case "configuration.get": {
               const ConfigService = await ServiceMapping2.getService(
@@ -28818,7 +28951,7 @@ var init_RequestRoutingHandler = __esm({
         // providers by the same viewId the extension declared in its
         // contributes.views manifest - the only stable key Mountain has.
         "^\\$provideTreeChildren$": /* @__PURE__ */ __name(async (_Method, Params) => {
-          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const { TreeDataProvidersByViewId: TreeDataProvidersByViewId2 } = await Promise.resolve().then(() => (init_Namespace2(), Namespace_exports));
           const ViewId = Params?.viewId ?? Params?.[0];
           const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
           const Provider = TreeDataProvidersByViewId2.get(String(ViewId));
@@ -28872,7 +29005,7 @@ var init_RequestRoutingHandler = __esm({
           return { items: Items };
         }, "^\\$provideTreeChildren$"),
         "tree\\.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          const { TreeDataProviders: TreeDataProviders2 } = await Promise.resolve().then(() => (init_Namespace2(), Namespace_exports));
           const Handle = Params?.handle ?? Params?.[0];
           const Provider = TreeDataProviders2.get(String(Handle));
           if (!Provider) {
@@ -28909,7 +29042,7 @@ var init_RequestRoutingHandler = __esm({
             WebviewViewProviders: WebviewViewProviders2,
             WebviewViewBuilders: WebviewViewBuilders2,
             CustomEditorProviders: CustomEditorProviders2
-          } = await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports));
+          } = await Promise.resolve().then(() => (init_Namespace2(), Namespace_exports));
           const Handle = Params?.handle ?? Params?.[0];
           switch (Method2) {
             case "webview.resolveView": {
@@ -28928,8 +29061,32 @@ var init_RequestRoutingHandler = __esm({
               const Ctx = Params?.context ?? Params?.[2] ?? {
                 state: void 0
               };
+              const Token = Params?.token ?? Params?.[3] ?? {
+                isCancellationRequested: false,
+                onCancellationRequested: /* @__PURE__ */ __name(() => ({
+                  dispose: /* @__PURE__ */ __name(() => {
+                  }, "dispose")
+                }), "onCancellationRequested")
+              };
               try {
-                return await Provider.resolveWebviewView?.(View, Ctx) ?? null;
+                if (process.env["Trace"]) {
+                  process.stdout.write(
+                    `[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView ENTER handle=${Handle} hasView=${!!View} hasWebview=${!!View?.webview} hasResolver=${typeof Provider?.resolveWebviewView === "function"}
+`
+                  );
+                }
+                const Result = await Provider.resolveWebviewView?.(
+                  View,
+                  Ctx,
+                  Token
+                ) ?? null;
+                if (process.env["Trace"]) {
+                  process.stdout.write(
+                    `[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView EXIT handle=${Handle} htmlLen=${String(View?.webview?.html ?? "").length}
+`
+                  );
+                }
+                return Result;
               } catch (ResolveError) {
                 try {
                   console.warn(
@@ -28954,13 +29111,18 @@ var init_RequestRoutingHandler = __esm({
               }
               const Document = Params?.document ?? Params?.[1];
               const Panel = Params?.panel ?? Params?.[2];
+              const Token = Params?.token ?? Params?.[3] ?? {
+                isCancellationRequested: false,
+                onCancellationRequested: /* @__PURE__ */ __name(() => ({
+                  dispose: /* @__PURE__ */ __name(() => {
+                  }, "dispose")
+                }), "onCancellationRequested")
+              };
               try {
                 return await Provider.resolveCustomEditor?.(
                   Document,
                   Panel,
-                  {
-                    asAbsolutePath: /* @__PURE__ */ __name((p) => p, "asAbsolutePath")
-                  }
+                  Token
                 ) ?? null;
               } catch (ResolveError) {
                 try {
@@ -28981,8 +29143,8 @@ var init_RequestRoutingHandler = __esm({
           }
         }, "webview\\.\\w+"),
         "performance.\\w+": /* @__PURE__ */ __name(async (Method2, _Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { IPerformanceMonitoringService: IPerformanceMonitoringService2 } = await Promise.resolve().then(() => (init_IPerformanceMonitoringService(), IPerformanceMonitoringService_exports));
+          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { IPerformanceMonitoringService: IPerformanceMonitoringService2 } = await Promise.resolve().then(() => (init_Service16(), Service_exports7));
           switch (Method2) {
             case "performance.metrics": {
               const PerfService = await ServiceMapping2.getService(
@@ -29007,8 +29169,8 @@ var init_RequestRoutingHandler = __esm({
           }
         }, "performance.\\w+"),
         "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_ServiceMapping().then(() => ServiceMapping_exports);
-          const { ISecurityService: ISecurityService2 } = await Promise.resolve().then(() => (init_ISecurityService(), ISecurityService_exports));
+          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { ISecurityService: ISecurityService2 } = await Promise.resolve().then(() => (init_Service17(), Service_exports8));
           switch (Method2) {
             case "security.policy": {
               const SecurityService2 = await ServiceMapping2.getService(ISecurityService2);
@@ -29043,7 +29205,7 @@ var init_RequestRoutingHandler = __esm({
             } finally {
               const DurationMs = Date.now() - StartMillis;
               try {
-                const { CaptureHandler: CaptureHandler2 } = await Promise.resolve().then(() => (init_PostHogBridge(), PostHogBridge_exports));
+                const { CaptureHandler: CaptureHandler2 } = await Promise.resolve().then(() => (init_Bridge(), Bridge_exports));
                 CaptureHandler2(Method, DurationMs, Ok);
               } catch {
               }
@@ -29054,7 +29216,7 @@ var init_RequestRoutingHandler = __esm({
       }
       return void 0;
     }, "RouteRequest");
-    RequestRoutingHandler_default = RouteRequest;
+    Handler_default = RouteRequest;
   }
 });
 
@@ -29064,20 +29226,20 @@ var init_RouteManifest = __esm({
   "Source/Generated/RouteManifest.ts"() {
     "use strict";
     MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
-    StockLiftExports = /* @__PURE__ */ new Set(["Basename", "Dirname", "Extname", "GlobIsEmpty", "GlobMatch", "GlobParsePattern", "IsEqualOrParent", "JoinPath", "RelativePath", "StockBasename", "StockDirname", "StockExtname", "StockGlobIsEmpty", "StockGlobMatch", "StockGlobParse", "StockIsEqualOrParent", "StockJoinPath", "StockRelativePath", "ToUri", "Uri", "URI"]);
+    StockLiftExports = /* @__PURE__ */ new Set();
     BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
     RouteManifestSummary = {
       mountain: 91,
-      stockLift: 21,
+      stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-04T15:16:39Z"
+      generatedAt: "2026-05-04T19:47:22Z"
     };
   }
 });
 
-// Source/Services/DualTrack.ts
-var DualTrack_exports = {};
-__export(DualTrack_exports, {
+// Source/Services/Dual/Track.ts
+var Track_exports = {};
+__export(Track_exports, {
   IsRustDeferralEnabled: () => IsRustDeferralEnabled,
   IsUnknownMethodError: () => IsUnknownMethodError,
   LogDualTrack: () => LogDualTrack,
@@ -29201,8 +29363,8 @@ function MarkUnavailable(Method) {
   throw new NotImplementedError2(Method);
 }
 var NotImplementedError2, IsBypassValue, ParseDomain, IsRustDeferralEnabled, SendToMountainOrLocal, LogDualTrack;
-var init_DualTrack = __esm({
-  "Source/Services/DualTrack.ts"() {
+var init_Track = __esm({
+  "Source/Services/Dual/Track.ts"() {
     "use strict";
     init_RouteManifest();
     NotImplementedError2 = class extends Error {
@@ -29293,20 +29455,10 @@ var init_DualTrack = __esm({
   }
 });
 
-// Source/Interfaces/IGRPCServerService.ts
-import { Context as Context19 } from "effect";
-var IGRPCServerService;
-var init_IGRPCServerService = __esm({
-  "Source/Interfaces/IGRPCServerService.ts"() {
-    "use strict";
-    IGRPCServerService = Context19.GenericTag("IGRPCServerService");
-  }
-});
-
-// Source/Services/Handler/DocumentContentHandler.ts
-var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
-var init_DocumentContentHandler = __esm({
-  "Source/Services/Handler/DocumentContentHandler.ts"() {
+// Source/Services/Handler/Document/Content/Handler.ts
+var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, Handler_default2;
+var init_Handler2 = __esm({
+  "Source/Services/Handler/Document/Content/Handler.ts"() {
     "use strict";
     InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
       const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
@@ -29548,7 +29700,7 @@ var init_DocumentContentHandler = __esm({
     GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
       return DocumentContentCache.get(Uri2) ?? null;
     }, "GetDocumentContent");
-    DocumentContentHandler_default = {
+    Handler_default2 = {
       HandleDocumentChange,
       HandleDocumentOpen,
       HandleDocumentClose,
@@ -32047,7 +32199,7 @@ var init_glob = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/StockLift.ts
+// Source/Services/Handler/VscodeAPI/Stock/Lift.ts
 function ToUri(Input) {
   if (Input == null) return void 0;
   if (Input instanceof URI) return Input;
@@ -32115,8 +32267,8 @@ function GlobParsePattern(Pattern) {
 function GlobIsEmpty(Pattern) {
   return isEmptyPattern(Pattern);
 }
-var init_StockLift = __esm({
-  "Source/Services/Handler/VscodeAPI/StockLift.ts"() {
+var init_Lift = __esm({
+  "Source/Services/Handler/VscodeAPI/Stock/Lift.ts"() {
     "use strict";
     init_glob();
     init_resources();
@@ -32134,10 +32286,10 @@ var init_StockLift = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Helpers.ts
 var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, ResolveWorkspaceFolders;
 var init_Helpers = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts"() {
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Helpers.ts"() {
     "use strict";
     EventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
       Context21.WorkspaceEventEmitter.on(EventName, Listener);
@@ -32211,12 +32363,12 @@ var init_Helpers = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Configuration.ts
 var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnDidChangeConfiguration;
 var init_Configuration3 = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Configuration.ts"() {
     "use strict";
-    init_DevLog();
+    init_Log();
     init_Helpers();
     CreateConfigurationState = /* @__PURE__ */ __name((Context21) => {
       const ConfigCache = /* @__PURE__ */ new Map();
@@ -32422,7 +32574,7 @@ var Injected, Pick, Tier, Tier_default;
 var init_Tier = __esm({
   "Source/Utility/Tier.ts"() {
     "use strict";
-    init_LandFixLog();
+    init_Log2();
     Injected = globalThis.__LandTiers ?? {};
     Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
       const FromInjected = Injected[Capability];
@@ -32467,17 +32619,17 @@ var init_Tier = __esm({
       ModuleCache: Pick("ModuleCache", "Simple"),
       Telemetry: Pick("Telemetry", "Synchronous")
     };
-    LandFixLog_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
+    Log_default2.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
     Tier_default = Tier;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Providers.ts
 var MakeProvider, BuildRegisterTextDocumentContentProvider, ClaimedFileSystemSchemes, BuildRegisterFileSystemProvider, BuildRegisterTaskProvider, BuildRegisterNotebookContentProvider, BuildRegisterNotebookSerializer, BuildRegisterRemoteAuthorityResolver, BuildRegisterResourceLabelFormatter;
 var init_Providers = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts"() {
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Providers.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
+    init_Registry();
     MakeProvider = /* @__PURE__ */ __name((Context21, RegisterMethod, UnregisterMethod, _LegacyHandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
       const Handle = NextProviderHandle();
       Context21.SendToMountain(RegisterMethod, {
@@ -32583,7 +32735,7 @@ var init_Providers = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/File/System/Route.ts
 function ExtractScheme(Uri2) {
   if (Uri2 && typeof Uri2 === "object") {
     const WithScheme = Uri2;
@@ -32635,8 +32787,8 @@ function Route(Uri2) {
   }
   return ExtractFsPath(Uri2) !== void 0 ? "native" : "mountain";
 }
-var init_FileSystemRoute = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemRoute.ts"() {
+var init_Route = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/File/System/Route.ts"() {
     "use strict";
     init_Tier();
     init_Providers();
@@ -32646,16 +32798,16 @@ var init_FileSystemRoute = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/File/System/Namespace.ts
 import { promises as FsPromises } from "node:fs";
 import { dirname as PathDirname } from "node:path";
 var UriToString, FileType2, LogRoute, ThrowFileNotFound, MetadataToStat, BuildFileSystemNamespace;
-var init_FileSystemNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
+var init_Namespace3 = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/File/System/Namespace.ts"() {
     "use strict";
-    init_StockLift();
-    init_FileSystemRoute();
+    init_Lift();
     init_Helpers();
+    init_Route();
     UriToString = /* @__PURE__ */ __name((Value) => {
       if (Value == null) return "";
       if (typeof Value === "string") {
@@ -32919,10 +33071,10 @@ var init_FileSystemNamespace = __esm({
   }
 });
 
-// Source/Utility/GlobToRegex.ts
-var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
-var init_GlobToRegex = __esm({
-  "Source/Utility/GlobToRegex.ts"() {
+// Source/Utility/Glob/To/Regex.ts
+var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, Regex_default;
+var init_Regex = __esm({
+  "Source/Utility/Glob/To/Regex.ts"() {
     "use strict";
     FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
       let Depth = 1;
@@ -33075,18 +33227,18 @@ var init_GlobToRegex = __esm({
       const Source = Variants.length === 1 ? PlainGlobToRegexSource(Variants[0]) : `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
       return new RegExp(`^${Source}$`);
     }, "GlobToRegex");
-    GlobToRegex_default = GlobToRegex;
+    Regex_default = GlobToRegex;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/File/System/Watcher.ts
 var CreateFileSystemWatcher;
-var init_FileSystemWatcher = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts"() {
+var init_Watcher = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/File/System/Watcher.ts"() {
     "use strict";
-    init_GlobToRegex();
+    init_Regex();
     init_Tier();
-    init_LanguageProviderRegistry();
+    init_Registry();
     init_Helpers();
     CreateFileSystemWatcher = /* @__PURE__ */ __name((Context21, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
       const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
@@ -33108,7 +33260,7 @@ var init_FileSystemWatcher = __esm({
       if (!PatternString) {
         return StubWatcher;
       }
-      const Matcher = GlobToRegex_default(PatternString);
+      const Matcher = Regex_default(PatternString);
       const Folders = ResolveWorkspaceFolders(Context21);
       const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
       if (!Root) {
@@ -33165,7 +33317,7 @@ var init_FileSystemWatcher = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Files.ts
 function CompileGlob(Pattern) {
   try {
     const Parsed = GlobParsePattern(Pattern);
@@ -33173,18 +33325,18 @@ function CompileGlob(Pattern) {
   } catch {
   }
   try {
-    const Regex = GlobToRegex_default(Pattern);
+    const Regex = Regex_default(Pattern);
     return (Path) => Regex.test(Path);
   } catch {
     return void 0;
   }
 }
 var FindFilesLocal;
-var init_FindFiles = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts"() {
+var init_Files = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Files.ts"() {
     "use strict";
-    init_GlobToRegex();
-    init_StockLift();
+    init_Regex();
+    init_Lift();
     init_Helpers();
     __name(CompileGlob, "CompileGlob");
     FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
@@ -33303,7 +33455,7 @@ var init_FindFiles = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Text/In/Files/Fallback.ts
 import { promises as FsPromises2 } from "node:fs";
 async function FindTextInFilesNodeFallback(Context21, Folders, Query, Options, Callback) {
   const Pattern = ExtractPattern(Query);
@@ -33372,10 +33524,10 @@ async function FindTextInFilesNodeFallback(Context21, Folders, Query, Options, C
   return { limitHit: false };
 }
 var ExtractPattern, ToFsPath;
-var init_FindTextInFilesFallback = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindTextInFilesFallback.ts"() {
+var init_Fallback = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Text/In/Files/Fallback.ts"() {
     "use strict";
-    init_FindFiles();
+    init_Files();
     ExtractPattern = /* @__PURE__ */ __name((Query) => {
       if (Query == null) return void 0;
       const Q = typeof Query === "string" ? { pattern: Query } : Query;
@@ -33406,7 +33558,7 @@ var init_FindTextInFilesFallback = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/LanguageActivation.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Language/Activation.ts
 function ResolveLanguageIdFromRegistry(Context21, FileExtension) {
   const ExtensionWithDot = `.${FileExtension}`;
   for (const Description of Context21.ExtensionRegistry.values()) {
@@ -33478,8 +33630,8 @@ function FireOnLanguageActivation(Context21, LanguageId) {
   }
 }
 var STATIC_EXTENSION_TO_LANGUAGE, FiredLanguages;
-var init_LanguageActivation = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/LanguageActivation.ts"() {
+var init_Activation = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Language/Activation.ts"() {
     "use strict";
     STATIC_EXTENSION_TO_LANGUAGE = {
       // Web / script
@@ -33563,15 +33715,15 @@ var init_LanguageActivation = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Text/Document.ts
 import { promises as FsPromises3 } from "node:fs";
 var BuildOpenTextDocument, BuildSaveAll, BuildApplyEdit, BuildUpdateWorkspaceFolders, BuildDocumentEventMembers;
-var init_TextDocument = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts"() {
+var init_Document = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Text/Document.ts"() {
     "use strict";
-    init_FileSystemRoute();
+    init_Route();
     init_Helpers();
-    init_LanguageActivation();
+    init_Activation();
     BuildOpenTextDocument = /* @__PURE__ */ __name((Context21) => async (UriOrPath) => {
       const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
       const Cached = Context21.DocumentContentCache.get(UriString);
@@ -33818,32 +33970,32 @@ var init_TextDocument = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts
-var WrapWorkspaceNamespace, WrapWorkspaceNamespace_default;
-var init_WrapWorkspaceNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/WrapWorkspaceNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Wrap/Workspace/Namespace.ts
+var WrapWorkspaceNamespace, Namespace_default3;
+var init_Namespace4 = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Wrap/Workspace/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapWorkspaceNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("workspace", Concrete), "WrapWorkspaceNamespace");
-    WrapWorkspaceNamespace_default = WrapWorkspaceNamespace;
+    init_Heuristics();
+    WrapWorkspaceNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("workspace", Concrete), "WrapWorkspaceNamespace");
+    Namespace_default3 = WrapWorkspaceNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace/Index.ts
 var HydrateUriResults, CreateWorkspaceNamespace, Index_default;
 var init_Index = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts"() {
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Index.ts"() {
     "use strict";
-    init_DualTrack();
-    init_StockLift();
+    init_Track();
+    init_Lift();
     init_Configuration3();
-    init_FileSystemNamespace();
-    init_FileSystemWatcher();
-    init_FindFiles();
-    init_FindTextInFilesFallback();
+    init_Namespace3();
+    init_Watcher();
+    init_Files();
+    init_Fallback();
     init_Providers();
-    init_TextDocument();
-    init_WrapWorkspaceNamespace();
+    init_Document();
+    init_Namespace4();
     HydrateUriResults = /* @__PURE__ */ __name((Raw2) => {
       if (!Array.isArray(Raw2)) return [];
       return Raw2.map((Item) => {
@@ -34250,31 +34402,42 @@ var init_Index = __esm({
         ), "createFileSystemWatcher"),
         fs: BuildFileSystemNamespace(Context21)
       };
-      return WrapWorkspaceNamespace_default(Concrete);
+      return Namespace_default3(Concrete);
     }, "CreateWorkspaceNamespace");
     Index_default = CreateWorkspaceNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
-var WorkspaceNamespace_exports = {};
-__export(WorkspaceNamespace_exports, {
+// Source/Services/Handler/VscodeAPI/Workspace/Namespace.ts
+var Namespace_exports2 = {};
+__export(Namespace_exports2, {
   default: () => Index_default
 });
-var init_WorkspaceNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
+var init_Namespace5 = __esm({
+  "Source/Services/Handler/VscodeAPI/Workspace/Namespace.ts"() {
     "use strict";
     init_Index();
   }
 });
 
-// Source/Services/Handler/VscodeAPI/CommandsRoute.ts
+// Source/Services/Handler/VscodeAPI/Wrap/Commands/Namespace.ts
+var WrapCommandsNamespace, Namespace_default4;
+var init_Namespace6 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Commands/Namespace.ts"() {
+    "use strict";
+    init_Heuristics();
+    WrapCommandsNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("commands", Concrete), "WrapCommandsNamespace");
+    Namespace_default4 = WrapCommandsNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Commands/Route.ts
 function Route2(CommandId, Registry) {
   return Registry.Has(CommandId) ? "local" : "mountain";
 }
 var LogRoute2;
-var init_CommandsRoute = __esm({
-  "Source/Services/Handler/VscodeAPI/CommandsRoute.ts"() {
+var init_Route2 = __esm({
+  "Source/Services/Handler/VscodeAPI/Commands/Route.ts"() {
     "use strict";
     __name(Route2, "Route");
     LogRoute2 = /* @__PURE__ */ __name((CommandId, Decision) => {
@@ -34287,29 +34450,18 @@ var init_CommandsRoute = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapCommandsNamespace.ts
-var WrapCommandsNamespace, WrapCommandsNamespace_default;
-var init_WrapCommandsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapCommandsNamespace.ts"() {
-    "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapCommandsNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("commands", Concrete), "WrapCommandsNamespace");
-    WrapCommandsNamespace_default = WrapCommandsNamespace;
-  }
+// Source/Services/Handler/VscodeAPI/Commands/Namespace.ts
+var Namespace_exports3 = {};
+__export(Namespace_exports3, {
+  default: () => Namespace_default5
 });
-
-// Source/Services/Handler/VscodeAPI/CommandsNamespace.ts
-var CommandsNamespace_exports = {};
-__export(CommandsNamespace_exports, {
-  default: () => CommandsNamespace_default
-});
-var CreateCommandsNamespace, CommandsNamespace_default;
-var init_CommandsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/CommandsNamespace.ts"() {
+var CreateCommandsNamespace, Namespace_default5;
+var init_Namespace7 = __esm({
+  "Source/Services/Handler/VscodeAPI/Commands/Namespace.ts"() {
     "use strict";
-    init_CommandsRoute();
-    init_WrapCommandsNamespace();
-    CreateCommandsNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => WrapCommandsNamespace_default({
+    init_Namespace6();
+    init_Route2();
+    CreateCommandsNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => Namespace_default4({
       registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
         Context21.SendToMountain("registerCommand", {
@@ -34408,33 +34560,33 @@ var init_CommandsNamespace = __esm({
         };
       }, "registerDiffInformationCommand")
     }), "CreateCommandsNamespace");
-    CommandsNamespace_default = CreateCommandsNamespace;
+    Namespace_default5 = CreateCommandsNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapLanguagesNamespace.ts
-var WrapLanguagesNamespace, WrapLanguagesNamespace_default;
-var init_WrapLanguagesNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapLanguagesNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Languages/Namespace.ts
+var WrapLanguagesNamespace, Namespace_default6;
+var init_Namespace8 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Languages/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapLanguagesNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("languages", Concrete), "WrapLanguagesNamespace");
-    WrapLanguagesNamespace_default = WrapLanguagesNamespace;
+    init_Heuristics();
+    WrapLanguagesNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("languages", Concrete), "WrapLanguagesNamespace");
+    Namespace_default6 = WrapLanguagesNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts
-var LanguagesNamespace_exports = {};
-__export(LanguagesNamespace_exports, {
-  default: () => LanguagesNamespace_default
+// Source/Services/Handler/VscodeAPI/Languages/Namespace.ts
+var Namespace_exports4 = {};
+__export(Namespace_exports4, {
+  default: () => Namespace_default7
 });
-var UriKey, RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
-var init_LanguagesNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts"() {
+var UriKey, RegisterProvider, CreateLanguagesNamespace, Namespace_default7;
+var init_Namespace9 = __esm({
+  "Source/Services/Handler/VscodeAPI/Languages/Namespace.ts"() {
     "use strict";
-    init_GlobToRegex();
-    init_StockLift();
-    init_WrapLanguagesNamespace();
+    init_Regex();
+    init_Lift();
+    init_Namespace8();
     UriKey = /* @__PURE__ */ __name((Value) => {
       if (Value == null) return "";
       if (typeof Value === "string") return Value;
@@ -34478,7 +34630,7 @@ var init_LanguagesNamespace = __esm({
         }, "dispose")
       };
     }, "RegisterProvider");
-    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => WrapLanguagesNamespace_default({
+    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => Namespace_default6({
       registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
         Context21,
         LanguageProviderRegistry,
@@ -34939,7 +35091,7 @@ var init_LanguagesNamespace = __esm({
           }
           if (typeof Filter.pattern === "string" && DocPath.length > 0) {
             try {
-              if (GlobToRegex_default(Filter.pattern).test(DocPath))
+              if (Regex_default(Filter.pattern).test(DocPath))
                 Score += 5;
               else return 0;
             } catch {
@@ -35042,32 +35194,32 @@ var init_LanguagesNamespace = __esm({
         return Item;
       }, "createLanguageStatusItem")
     }), "CreateLanguagesNamespace");
-    LanguagesNamespace_default = CreateLanguagesNamespace;
+    Namespace_default7 = CreateLanguagesNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapExtensionsNamespace.ts
-var WrapExtensionsNamespace, WrapExtensionsNamespace_default;
-var init_WrapExtensionsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapExtensionsNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Extensions/Namespace.ts
+var WrapExtensionsNamespace, Namespace_default8;
+var init_Namespace10 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Extensions/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapExtensionsNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("extensions", Concrete), "WrapExtensionsNamespace");
-    WrapExtensionsNamespace_default = WrapExtensionsNamespace;
+    init_Heuristics();
+    WrapExtensionsNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("extensions", Concrete), "WrapExtensionsNamespace");
+    Namespace_default8 = WrapExtensionsNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts
-var ExtensionsNamespace_exports = {};
-__export(ExtensionsNamespace_exports, {
-  default: () => ExtensionsNamespace_default
+// Source/Services/Handler/VscodeAPI/Extensions/Namespace.ts
+var Namespace_exports5 = {};
+__export(Namespace_exports5, {
+  default: () => Namespace_default9
 });
-var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, SafeExtensionList, CreateExtensionsNamespace, ExtensionsNamespace_default;
-var init_ExtensionsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
+var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, SafeExtensionList, CreateExtensionsNamespace, Namespace_default9;
+var init_Namespace11 = __esm({
+  "Source/Services/Handler/VscodeAPI/Extensions/Namespace.ts"() {
     "use strict";
-    init_LandFixLog();
-    init_WrapExtensionsNamespace();
+    init_Log2();
+    init_Namespace10();
     NoopDisposable2 = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
     MakeMultiStub = /* @__PURE__ */ __name(() => {
@@ -35178,7 +35330,7 @@ var init_ExtensionsNamespace = __esm({
           try {
             Path = decodeURIComponent(new URL(Raw2).pathname);
           } catch (Error2) {
-            LandFixLog_default.Warn(
+            Log_default2.Warn(
               "ExtNs",
               `URL parse failed for ${Raw2}: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}; using fallback strip`
             );
@@ -35187,13 +35339,13 @@ var init_ExtensionsNamespace = __esm({
         }
         Path = Path.replace(/\/$/, "");
         if (UriFactoryAvailable) {
-          LandFixLog_default.DebugOnce(
+          Log_default2.DebugOnce(
             "ExtNs",
             `string:${Path}`,
             `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=real)`
           );
         } else {
-          LandFixLog_default.InfoOnce(
+          Log_default2.InfoOnce(
             "ExtNs",
             `string-fallback:${Path}`,
             `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=FALLBACK)`
@@ -35205,13 +35357,13 @@ var init_ExtensionsNamespace = __esm({
         const Obj = Raw2;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
         if (UriFactoryAvailable) {
-          LandFixLog_default.DebugOnce(
+          Log_default2.DebugOnce(
             "ExtNs",
             `object:${Path}`,
             `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=real)`
           );
         } else {
-          LandFixLog_default.InfoOnce(
+          Log_default2.InfoOnce(
             "ExtNs",
             `object-fallback:${Path}`,
             `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=FALLBACK)`
@@ -35219,7 +35371,7 @@ var init_ExtensionsNamespace = __esm({
         }
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      LandFixLog_default.Warn(
+      Log_default2.Warn(
         "ExtNs",
         `extensionLocation missing or unsupported type: ${typeof Raw2}; using empty path`
       );
@@ -35269,7 +35421,7 @@ var init_ExtensionsNamespace = __esm({
       }
       return Out;
     }, "SafeExtensionList");
-    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context21) => WrapExtensionsNamespace_default({
+    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default8({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
         const Raw2 = Context21.ExtensionRegistry.get(Identifier);
@@ -35304,58 +35456,58 @@ var init_ExtensionsNamespace = __esm({
         };
       }, "onDidChange")
     }), "CreateExtensionsNamespace");
-    ExtensionsNamespace_default = CreateExtensionsNamespace;
+    Namespace_default9 = CreateExtensionsNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapEnvNamespace.ts
-var WrapEnvNamespace, WrapEnvNamespace_default;
-var init_WrapEnvNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapEnvNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Env/Namespace.ts
+var WrapEnvNamespace, Namespace_default10;
+var init_Namespace12 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Env/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapEnvNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("env", Concrete), "WrapEnvNamespace");
-    WrapEnvNamespace_default = WrapEnvNamespace;
+    init_Heuristics();
+    WrapEnvNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("env", Concrete), "WrapEnvNamespace");
+    Namespace_default10 = WrapEnvNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/EnvNamespace.ts
-var EnvNamespace_exports = {};
-__export(EnvNamespace_exports, {
-  default: () => EnvNamespace_default
+// Source/Services/Handler/VscodeAPI/Env/Namespace.ts
+var Namespace_exports6 = {};
+__export(Namespace_exports6, {
+  default: () => Namespace_default11
 });
-var CreateEnvNamespace, EnvNamespace_default;
-var init_EnvNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
+var CreateEnvNamespace, Namespace_default11;
+var init_Namespace13 = __esm({
+  "Source/Services/Handler/VscodeAPI/Env/Namespace.ts"() {
     "use strict";
-    init_LandFixLog();
-    init_WrapEnvNamespace();
+    init_Log2();
+    init_Namespace12();
     CreateEnvNamespace = /* @__PURE__ */ __name((Context21) => {
       const Env = Context21.ExtensionHostInitData?.environment ?? {};
       const NormalizeAppRoot = /* @__PURE__ */ __name((Raw2) => {
         if (typeof Raw2 !== "string" || Raw2.length === 0) {
-          LandFixLog_default.Warn(
+          Log_default2.Warn(
             "EnvNs",
             "appRoot empty or non-string, returning ''"
           );
           return "";
         }
         if (!Raw2.startsWith("file:")) {
-          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw2}`);
+          Log_default2.Info("EnvNs", `appRoot already plain path: ${Raw2}`);
           return Raw2;
         }
         try {
           const Normalised = decodeURIComponent(
             new URL(Raw2).pathname
           ).replace(/\/$/, "");
-          LandFixLog_default.Info(
+          Log_default2.Info(
             "EnvNs",
             `appRoot normalised file-URL ${Raw2} \u2192 ${Normalised}`
           );
           return Normalised;
         } catch (Error2) {
           const Fallback = Raw2.replace(/^file:\/\//, "").replace(/\/$/, "");
-          LandFixLog_default.Warn(
+          Log_default2.Warn(
             "EnvNs",
             `appRoot URL parse failed; fallback ${Raw2} \u2192 ${Fallback}`,
             {
@@ -35540,34 +35692,34 @@ var init_EnvNamespace = __esm({
         onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "onDidChangeLogLevel")
       };
-      return WrapEnvNamespace_default(Concrete);
+      return Namespace_default10(Concrete);
     }, "CreateEnvNamespace");
-    EnvNamespace_default = CreateEnvNamespace;
+    Namespace_default11 = CreateEnvNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapDebugNamespace.ts
-var WrapDebugNamespace, WrapDebugNamespace_default;
-var init_WrapDebugNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapDebugNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Debug/Namespace.ts
+var WrapDebugNamespace, Namespace_default12;
+var init_Namespace14 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Debug/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapDebugNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("debug", Concrete), "WrapDebugNamespace");
-    WrapDebugNamespace_default = WrapDebugNamespace;
+    init_Heuristics();
+    WrapDebugNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("debug", Concrete), "WrapDebugNamespace");
+    Namespace_default12 = WrapDebugNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/DebugNamespace.ts
-var DebugNamespace_exports = {};
-__export(DebugNamespace_exports, {
-  default: () => DebugNamespace_default
+// Source/Services/Handler/VscodeAPI/Debug/Namespace.ts
+var Namespace_exports7 = {};
+__export(Namespace_exports7, {
+  default: () => Namespace_default13
 });
-var EventSubscriber2, CreateDebugNamespace, DebugNamespace_default;
-var init_DebugNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/DebugNamespace.ts"() {
+var EventSubscriber2, CreateDebugNamespace, Namespace_default13;
+var init_Namespace15 = __esm({
+  "Source/Services/Handler/VscodeAPI/Debug/Namespace.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
-    init_WrapDebugNamespace();
+    init_Registry();
+    init_Namespace14();
     EventSubscriber2 = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
       Context21.Emitter.on(EventName, Listener);
       return {
@@ -35576,7 +35728,7 @@ var init_DebugNamespace = __esm({
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateDebugNamespace = /* @__PURE__ */ __name((Context21) => WrapDebugNamespace_default({
+    CreateDebugNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default12({
       registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_debug_adapter", {
@@ -35704,32 +35856,32 @@ var init_DebugNamespace = __esm({
         "debug.didChangeActiveStackItem"
       )
     }), "CreateDebugNamespace");
-    DebugNamespace_default = CreateDebugNamespace;
+    Namespace_default13 = CreateDebugNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapTasksNamespace.ts
-var WrapTasksNamespace, WrapTasksNamespace_default;
-var init_WrapTasksNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapTasksNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Tasks/Namespace.ts
+var WrapTasksNamespace, Namespace_default14;
+var init_Namespace16 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Tasks/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapTasksNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("tasks", Concrete), "WrapTasksNamespace");
-    WrapTasksNamespace_default = WrapTasksNamespace;
+    init_Heuristics();
+    WrapTasksNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("tasks", Concrete), "WrapTasksNamespace");
+    Namespace_default14 = WrapTasksNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/TasksNamespace.ts
-var TasksNamespace_exports = {};
-__export(TasksNamespace_exports, {
-  default: () => TasksNamespace_default
+// Source/Services/Handler/VscodeAPI/Tasks/Namespace.ts
+var Namespace_exports8 = {};
+__export(Namespace_exports8, {
+  default: () => Namespace_default15
 });
-var EventSubscriber3, CreateTasksNamespace, TasksNamespace_default;
-var init_TasksNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/TasksNamespace.ts"() {
+var EventSubscriber3, CreateTasksNamespace, Namespace_default15;
+var init_Namespace17 = __esm({
+  "Source/Services/Handler/VscodeAPI/Tasks/Namespace.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
-    init_WrapTasksNamespace();
+    init_Registry();
+    init_Namespace16();
     EventSubscriber3 = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
       Context21.Emitter.on(EventName, Listener);
       return {
@@ -35738,7 +35890,7 @@ var init_TasksNamespace = __esm({
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateTasksNamespace = /* @__PURE__ */ __name((Context21) => WrapTasksNamespace_default({
+    CreateTasksNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default14({
       registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_task_provider", {
@@ -35783,33 +35935,33 @@ var init_TasksNamespace = __esm({
       onDidEndTaskProcess: EventSubscriber3(Context21, "task.didEndProcess"),
       taskExecutions: []
     }), "CreateTasksNamespace");
-    TasksNamespace_default = CreateTasksNamespace;
+    Namespace_default15 = CreateTasksNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapScmNamespace.ts
-var WrapScmNamespace, WrapScmNamespace_default;
-var init_WrapScmNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapScmNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Scm/Namespace.ts
+var WrapScmNamespace, Namespace_default16;
+var init_Namespace18 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Scm/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapScmNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("scm", Concrete), "WrapScmNamespace");
-    WrapScmNamespace_default = WrapScmNamespace;
+    init_Heuristics();
+    WrapScmNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("scm", Concrete), "WrapScmNamespace");
+    Namespace_default16 = WrapScmNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/ScmNamespace.ts
-var ScmNamespace_exports = {};
-__export(ScmNamespace_exports, {
-  default: () => ScmNamespace_default
+// Source/Services/Handler/VscodeAPI/Scm/Namespace.ts
+var Namespace_exports9 = {};
+__export(Namespace_exports9, {
+  default: () => Namespace_default17
 });
-var ScmTraceEnabled, ScmTrace, SanitizeResourceState, CreateScmNamespace, ScmNamespace_default;
-var init_ScmNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
+var ScmTraceEnabled, ScmTrace, SanitizeResourceState, CreateScmNamespace, Namespace_default17;
+var init_Namespace19 = __esm({
+  "Source/Services/Handler/VscodeAPI/Scm/Namespace.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
-    init_WrapNamespaceWithHeuristics();
-    init_WrapScmNamespace();
+    init_Registry();
+    init_Heuristics();
+    init_Namespace18();
     ScmTraceEnabled = typeof process !== "undefined" && typeof process.env["Trace"] === "string";
     ScmTrace = /* @__PURE__ */ __name((Message) => {
       if (!ScmTraceEnabled) return;
@@ -35854,7 +36006,7 @@ var init_ScmNamespace = __esm({
         Out["contextValue"] = Source["contextValue"];
       return Out;
     }, "SanitizeResourceState");
-    CreateScmNamespace = /* @__PURE__ */ __name((Context21) => WrapScmNamespace_default({
+    CreateScmNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default16({
       createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
         const Handle = NextProviderHandle();
         const RootUriDescription = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
@@ -35892,7 +36044,7 @@ var init_ScmNamespace = __esm({
           id: Id,
           label: Label,
           rootUri: RootUri,
-          inputBox: WrapNamespaceWithHeuristics_default(
+          inputBox: Heuristics_default(
             `scm.sourceControl[${Id}].inputBox`,
             {
               value: "",
@@ -35977,39 +36129,39 @@ var init_ScmNamespace = __esm({
             Groups.clear();
           }, "dispose")
         };
-        return WrapNamespaceWithHeuristics_default(
+        return Heuristics_default(
           `scm.sourceControl[${Id}]`,
           ConcreteSourceControl
         );
       }, "createSourceControl"),
       inputBox: { value: "" }
     }), "CreateScmNamespace");
-    ScmNamespace_default = CreateScmNamespace;
+    Namespace_default17 = CreateScmNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WrapAuthenticationNamespace.ts
-var WrapAuthenticationNamespace, WrapAuthenticationNamespace_default;
-var init_WrapAuthenticationNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WrapAuthenticationNamespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Wrap/Authentication/Namespace.ts
+var WrapAuthenticationNamespace, Namespace_default18;
+var init_Namespace20 = __esm({
+  "Source/Services/Handler/VscodeAPI/Wrap/Authentication/Namespace.ts"() {
     "use strict";
-    init_WrapNamespaceWithHeuristics();
-    WrapAuthenticationNamespace = /* @__PURE__ */ __name((Concrete) => WrapNamespaceWithHeuristics_default("authentication", Concrete), "WrapAuthenticationNamespace");
-    WrapAuthenticationNamespace_default = WrapAuthenticationNamespace;
+    init_Heuristics();
+    WrapAuthenticationNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("authentication", Concrete), "WrapAuthenticationNamespace");
+    Namespace_default18 = WrapAuthenticationNamespace;
   }
 });
 
-// Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts
-var AuthenticationNamespace_exports = {};
-__export(AuthenticationNamespace_exports, {
-  default: () => AuthenticationNamespace_default
+// Source/Services/Handler/VscodeAPI/Authentication/Namespace.ts
+var Namespace_exports10 = {};
+__export(Namespace_exports10, {
+  default: () => Namespace_default19
 });
-var EventSubscriber4, CreateAuthenticationNamespace, AuthenticationNamespace_default;
-var init_AuthenticationNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts"() {
+var EventSubscriber4, CreateAuthenticationNamespace, Namespace_default19;
+var init_Namespace21 = __esm({
+  "Source/Services/Handler/VscodeAPI/Authentication/Namespace.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
-    init_WrapAuthenticationNamespace();
+    init_Registry();
+    init_Namespace20();
     EventSubscriber4 = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
       Context21.Emitter.on(EventName, Listener);
       return {
@@ -36018,7 +36170,7 @@ var init_AuthenticationNamespace = __esm({
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context21) => WrapAuthenticationNamespace_default({
+    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default18({
       registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
         const Handle = NextProviderHandle();
         Context21.SendToMountain("register_authentication_provider", {
@@ -36064,22 +36216,22 @@ var init_AuthenticationNamespace = __esm({
       }, "getAccounts"),
       onDidChangeSessions: EventSubscriber4(Context21, "auth.didChangeSessions")
     }), "CreateAuthenticationNamespace");
-    AuthenticationNamespace_default = CreateAuthenticationNamespace;
+    Namespace_default19 = CreateAuthenticationNamespace;
   }
 });
 
-// Source/Services/Handler/ExtensionHostHandler.ts
-var ExtensionHostHandler_exports = {};
-__export(ExtensionHostHandler_exports, {
-  default: () => ExtensionHostHandler_default
+// Source/Services/Handler/Extension/Host/Handler.ts
+var Handler_exports2 = {};
+__export(Handler_exports2, {
+  default: () => Handler_default3
 });
 import * as NodeFS from "node:fs";
-var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
-var init_ExtensionHostHandler = __esm({
-  "Source/Services/Handler/ExtensionHostHandler.ts"() {
+var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, Handler_default3;
+var init_Handler3 = __esm({
+  "Source/Services/Handler/Extension/Host/Handler.ts"() {
     "use strict";
-    init_DevLog();
-    init_LanguageProviderRegistry();
+    init_Log();
+    init_Registry();
     HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context21, Parameters) => {
       const Extensions = Parameters?.extensions ?? [];
       console.log(
@@ -36577,22 +36729,24 @@ ${Stack}`
           DebugConfigurationProviderTriggerKind,
           IndentAction,
           // Namespaces - each in its own file under VscodeAPI/
-          window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
+          window: (await Promise.resolve().then(() => (init_Namespace2(), Namespace_exports))).default(Context21),
+          workspace: (await Promise.resolve().then(() => (init_Namespace5(), Namespace_exports2))).default(Context21),
+          commands: (await Promise.resolve().then(() => (init_Namespace7(), Namespace_exports3))).default(Context21, Registry_exports),
+          languages: (await Promise.resolve().then(() => (init_Namespace9(), Namespace_exports4))).default(Context21, Registry_exports),
+          extensions: (await Promise.resolve().then(() => (init_Namespace11(), Namespace_exports5))).default(Context21),
+          env: (await Promise.resolve().then(() => (init_Namespace13(), Namespace_exports6))).default(
             Context21
           ),
-          workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context21),
-          commands: (await Promise.resolve().then(() => (init_CommandsNamespace(), CommandsNamespace_exports))).default(Context21, LanguageProviderRegistry_exports),
-          languages: (await Promise.resolve().then(() => (init_LanguagesNamespace(), LanguagesNamespace_exports))).default(Context21, LanguageProviderRegistry_exports),
-          extensions: (await Promise.resolve().then(() => (init_ExtensionsNamespace(), ExtensionsNamespace_exports))).default(Context21),
-          env: (await Promise.resolve().then(() => (init_EnvNamespace(), EnvNamespace_exports))).default(Context21),
-          debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(
+          debug: (await Promise.resolve().then(() => (init_Namespace15(), Namespace_exports7))).default(
             Context21
           ),
-          tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(
+          tasks: (await Promise.resolve().then(() => (init_Namespace17(), Namespace_exports8))).default(
             Context21
           ),
-          scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context21),
-          authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context21),
+          scm: (await Promise.resolve().then(() => (init_Namespace19(), Namespace_exports9))).default(
+            Context21
+          ),
+          authentication: (await Promise.resolve().then(() => (init_Namespace21(), Namespace_exports10))).default(Context21),
           // Lightweight stub namespaces - no Mountain route yet, returns
           // safe defaults so extensions that reference them don't crash.
           l10n: {
@@ -37211,7 +37365,7 @@ ${Stack}`
         }
       };
     }, "CreateExtensionContext");
-    ExtensionHostHandler_default = {
+    Handler_default3 = {
       HandleInitializeExtensionHost,
       HandleDeltaExtensions,
       HandleActivateByEvent,
@@ -37220,12 +37374,12 @@ ${Stack}`
   }
 });
 
-// Source/Services/Handler/LanguageProviderHandler.ts
-var NormalizeRange, ResolveLanguageIdentifier, BuildVsDocument, InvokeLanguageProvider, LanguageProviderHandler_default;
-var init_LanguageProviderHandler = __esm({
-  "Source/Services/Handler/LanguageProviderHandler.ts"() {
+// Source/Services/Handler/Language/Provider/Handler.ts
+var NormalizeRange, ResolveLanguageIdentifier, BuildVsDocument, InvokeLanguageProvider, Handler_default4;
+var init_Handler4 = __esm({
+  "Source/Services/Handler/Language/Provider/Handler.ts"() {
     "use strict";
-    init_LanguageProviderRegistry();
+    init_Registry();
     NormalizeRange = /* @__PURE__ */ __name((VsRange) => {
       return {
         StartLineNumber: (VsRange?.start?.line ?? 0) + 1,
@@ -37682,21 +37836,21 @@ var init_LanguageProviderHandler = __esm({
         return null;
       }
     }, "InvokeLanguageProvider");
-    LanguageProviderHandler_default = InvokeLanguageProvider;
+    Handler_default4 = InvokeLanguageProvider;
   }
 });
 
-// Source/Services/Handler/WorkspaceContainsActivator.ts
-var WorkspaceContainsActivator_exports = {};
-__export(WorkspaceContainsActivator_exports, {
+// Source/Services/Handler/Workspace/Contains/Activator.ts
+var Activator_exports = {};
+__export(Activator_exports, {
   ActivateWorkspaceContainsExtensions: () => ActivateWorkspaceContainsExtensions,
-  default: () => WorkspaceContainsActivator_default
+  default: () => Activator_default
 });
-var WORKSPACE_CONTAINS_PREFIX, UriToFsPath, FolderContainsGlobViaMountain, FolderContainsGlob, GetActivationEvents, GetWorkspaceContainsGlobs, ActivateWorkspaceContainsExtensions, WorkspaceContainsActivator_default;
-var init_WorkspaceContainsActivator = __esm({
-  "Source/Services/Handler/WorkspaceContainsActivator.ts"() {
+var WORKSPACE_CONTAINS_PREFIX, UriToFsPath, FolderContainsGlobViaMountain, FolderContainsGlob, GetActivationEvents, GetWorkspaceContainsGlobs, ActivateWorkspaceContainsExtensions, Activator_default;
+var init_Activator = __esm({
+  "Source/Services/Handler/Workspace/Contains/Activator.ts"() {
     "use strict";
-    init_GlobToRegex();
+    init_Regex();
     WORKSPACE_CONTAINS_PREFIX = "workspaceContains:";
     UriToFsPath = /* @__PURE__ */ __name((Uri2) => {
       const Raw2 = typeof Uri2 === "string" ? Uri2 : Uri2?.["fsPath"] ?? Uri2?.["path"] ?? Uri2?.["external"];
@@ -37738,7 +37892,7 @@ var init_WorkspaceContainsActivator = __esm({
       }
       let Matcher;
       try {
-        Matcher = GlobToRegex_default(Glob);
+        Matcher = Regex_default(Glob);
       } catch {
         return false;
       }
@@ -37816,7 +37970,7 @@ var init_WorkspaceContainsActivator = __esm({
         }
         return;
       }
-      const { default: ExtensionHostHandler } = await Promise.resolve().then(() => (init_ExtensionHostHandler(), ExtensionHostHandler_exports));
+      const { default: ExtensionHostHandler } = await Promise.resolve().then(() => (init_Handler3(), Handler_exports2));
       let ActivationCount = 0;
       for (const { Identifier, Globs } of Extensions) {
         let MatchingGlob;
@@ -37878,16 +38032,16 @@ var init_WorkspaceContainsActivator = __esm({
       } catch {
       }
     }, "ActivateWorkspaceContainsExtensions");
-    WorkspaceContainsActivator_default = ActivateWorkspaceContainsExtensions;
+    Activator_default = ActivateWorkspaceContainsExtensions;
   }
 });
 
-// Source/Services/Handler/NotificationHandler.ts
-var LazyURI, HydrateUri, ApplyWorkspaceDelta, SafeEmit, HandleSpecificNotification, NotificationHandler_default;
-var init_NotificationHandler = __esm({
-  async "Source/Services/Handler/NotificationHandler.ts"() {
+// Source/Services/Handler/Notification/Handler.ts
+var LazyURI, HydrateUri, ApplyWorkspaceDelta, SafeEmit, HandleSpecificNotification, Handler_default5;
+var init_Handler5 = __esm({
+  async "Source/Services/Handler/Notification/Handler.ts"() {
     "use strict";
-    init_WindowNamespace();
+    init_Namespace2();
     ({ URI: LazyURI } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
     HydrateUri = /* @__PURE__ */ __name((Raw2) => {
       if (!Raw2) return null;
@@ -38045,7 +38199,7 @@ var init_NotificationHandler = __esm({
             }
             if (LanguageIdentifiers.size > 0) {
               setImmediate(() => {
-                Promise.resolve().then(() => (init_ExtensionHostHandler(), ExtensionHostHandler_exports)).then(({ default: ExtensionHostHandler }) => {
+                Promise.resolve().then(() => (init_Handler3(), Handler_exports2)).then(({ default: ExtensionHostHandler }) => {
                   for (const Id of LanguageIdentifiers) {
                     void ExtensionHostHandler.HandleActivateByEvent(
                       CapturedContext,
@@ -38098,7 +38252,7 @@ var init_NotificationHandler = __esm({
           if (Payload?.handle) {
             Emitter3.emit(`webview.dispose:${Payload.handle}`);
             try {
-              Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports)).then(
+              Promise.resolve().then(() => (init_Namespace2(), Namespace_exports)).then(
                 ({ WebviewViewBuilders: _Builders }) => {
                 }
               );
@@ -38172,7 +38326,7 @@ var init_NotificationHandler = __esm({
           if (Context21 && Added.length > 0) {
             const CapturedContext = Context21;
             setImmediate(() => {
-              Promise.resolve().then(() => (init_WorkspaceContainsActivator(), WorkspaceContainsActivator_exports)).then(
+              Promise.resolve().then(() => (init_Activator(), Activator_exports)).then(
                 ({ default: Activate }) => Activate(CapturedContext, Added)
               ).catch((Error2) => {
                 try {
@@ -38399,13 +38553,23 @@ var init_NotificationHandler = __esm({
           }
       }
     }, "HandleSpecificNotification");
-    NotificationHandler_default = HandleSpecificNotification;
+    Handler_default5 = HandleSpecificNotification;
   }
 });
 
-// Source/Services/GRPCServerService.ts
-var GRPCServerService_exports = {};
-__export(GRPCServerService_exports, {
+// Source/Interfaces/IGRPC/Server/Service.ts
+import { Context as Context19 } from "effect";
+var IGRPCServerService;
+var init_Service18 = __esm({
+  "Source/Interfaces/IGRPC/Server/Service.ts"() {
+    "use strict";
+    IGRPCServerService = Context19.GenericTag("IGRPCServerService");
+  }
+});
+
+// Source/Services/GRPC/Server/Service.ts
+var Service_exports9 = {};
+__export(Service_exports9, {
   GRPCServerService: () => GRPCServerService,
   GRPCServerServiceLayer: () => GRPCServerServiceLayer,
   GRPCServerServiceLive: () => GRPCServerServiceLive
@@ -38418,15 +38582,15 @@ import * as grpc2 from "@grpc/grpc-js";
 import * as protoLoader2 from "@grpc/proto-loader";
 import { Effect as Effect21, Layer as Layer19 } from "effect";
 var __filename2, __dirname2, require3, GRPCServerService, GRPCServerServiceLayer, GRPCServerServiceLive;
-var init_GRPCServerService = __esm({
-  async "Source/Services/GRPCServerService.ts"() {
+var init_Service19 = __esm({
+  async "Source/Services/GRPC/Server/Service.ts"() {
     "use strict";
-    init_IGRPCServerService();
-    init_DocumentContentHandler();
-    init_ExtensionHostHandler();
-    init_LanguageProviderHandler();
-    await init_NotificationHandler();
-    init_RequestRoutingHandler();
+    init_Handler2();
+    init_Handler3();
+    init_Handler4();
+    await init_Handler5();
+    init_Handler();
+    init_Service18();
     __filename2 = fileURLToPath2(import.meta.url);
     __dirname2 = dirname4(__filename2);
     require3 = createRequire2(import.meta.url);
@@ -38513,7 +38677,7 @@ var init_GRPCServerService = __esm({
             // providers, etc.) can fire lazy activation events
             // without importing `ExtensionHostHandler` directly.
             ActivateByEvent: /* @__PURE__ */ __name(async (Event2) => {
-              await ExtensionHostHandler_default.HandleActivateByEvent(
+              await Handler_default3.HandleActivateByEvent(
                 Self.GetHandlerContext(),
                 { activationEvent: Event2 }
               );
@@ -38865,41 +39029,41 @@ var init_GRPCServerService = __esm({
        * LanguageProviderHandler for $provide* methods.
        */
       async routeRequest(method, parameters) {
-        const ServiceResult = await RequestRoutingHandler_default(method, parameters);
+        const ServiceResult = await Handler_default(method, parameters);
         if (ServiceResult !== void 0) {
           return ServiceResult;
         }
         const Context21 = this.GetHandlerContext();
         if (method === "InitializeExtensionHost") {
-          return ExtensionHostHandler_default.HandleInitializeExtensionHost(
+          return Handler_default3.HandleInitializeExtensionHost(
             Context21,
             parameters
           );
         }
         if (method === "$deltaExtensions") {
-          return ExtensionHostHandler_default.HandleDeltaExtensions(
+          return Handler_default3.HandleDeltaExtensions(
             Context21,
             parameters
           );
         }
         if (method === "$activateByEvent") {
-          return ExtensionHostHandler_default.HandleActivateByEvent(
+          return Handler_default3.HandleActivateByEvent(
             Context21,
             parameters
           );
         }
         if (method === "$startExtensionHost") {
-          return ExtensionHostHandler_default.HandleStartExtensionHost(
+          return Handler_default3.HandleStartExtensionHost(
             Context21,
             parameters
           );
         }
         if (method === "$provideTreeChildren") {
-          const RequestRoutingHandler = (await Promise.resolve().then(() => (init_RequestRoutingHandler(), RequestRoutingHandler_exports))).default;
+          const RequestRoutingHandler = (await Promise.resolve().then(() => (init_Handler(), Handler_exports))).default;
           return RequestRoutingHandler(method, parameters);
         }
         if (/^\$provide[A-Z]/.test(method)) {
-          return LanguageProviderHandler_default(
+          return Handler_default4(
             method,
             parameters,
             this.documentContentCache
@@ -38910,7 +39074,7 @@ var init_GRPCServerService = __esm({
           const CommandId = typeof Args[0] === "string" ? Args[0] : "";
           const CommandArguments = Args[1];
           if (CommandId) {
-            const LanguageProviderRegistry = await Promise.resolve().then(() => (init_LanguageProviderRegistry(), LanguageProviderRegistry_exports));
+            const LanguageProviderRegistry = await Promise.resolve().then(() => (init_Registry(), Registry_exports));
             const ExtensionArguments = Array.isArray(CommandArguments) ? CommandArguments : CommandArguments === void 0 ? [] : [CommandArguments];
             return LanguageProviderRegistry.ExecuteCommand(
               CommandId,
@@ -38943,13 +39107,13 @@ var init_GRPCServerService = __esm({
             method: notification.Method,
             parameters
           });
-          NotificationHandler_default(
+          Handler_default5(
             this,
             this.documentContentCache,
-            DocumentContentHandler_default.HandleDocumentChange,
-            DocumentContentHandler_default.HandleDocumentOpen,
-            DocumentContentHandler_default.HandleDocumentClose,
-            DocumentContentHandler_default.HandleDocumentSave,
+            Handler_default2.HandleDocumentChange,
+            Handler_default2.HandleDocumentOpen,
+            Handler_default2.HandleDocumentClose,
+            Handler_default2.HandleDocumentSave,
             notification.Method,
             parameters,
             this.workspaceEventEmitter,
@@ -38972,7 +39136,7 @@ var init_GRPCServerService = __esm({
        * Used by InvokeLanguageProvider's VsDocument.getText().
        */
       GetDocumentContent(Uri2) {
-        return DocumentContentHandler_default.GetDocumentContent(
+        return Handler_default2.GetDocumentContent(
           this.documentContentCache,
           Uri2
         );
@@ -39054,7 +39218,7 @@ var init_GRPCServerService = __esm({
         console.log(
           `[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort}...`
         );
-        const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_MountainClientService(), MountainClientService_exports));
+        const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
         const Client = new MountainClientService2();
         await Client.connect();
         this.mountainClient = Client;
@@ -39076,7 +39240,7 @@ var init_GRPCServerService = __esm({
        * change is needed; the bypass is invisible to extensions.
        */
       async SendToMountain(Method, Parameters) {
-        const { IsRustDeferralEnabled: IsRustDeferralEnabled2, LogDualTrack: LogDualTrack2 } = await Promise.resolve().then(() => (init_DualTrack(), DualTrack_exports));
+        const { IsRustDeferralEnabled: IsRustDeferralEnabled2, LogDualTrack: LogDualTrack2 } = await Promise.resolve().then(() => (init_Track(), Track_exports));
         if (!IsRustDeferralEnabled2(Method)) {
           LogDualTrack2(Method, "node-bypass");
           return;
@@ -39325,7 +39489,7 @@ import { Context as Context20, Effect as Effect22, Layer as Layer20, Ref as Ref6
 var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
 var init_RPCServer = __esm({
   async "Source/Effect/RPCServer.ts"() {
-    await init_GRPCServerService();
+    await init_Service19();
     init_Telemetry();
     ServerStartError = class extends Error {
       constructor(message, cause) {

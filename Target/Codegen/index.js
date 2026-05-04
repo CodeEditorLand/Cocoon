@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Codegen/Emit/EmitExtHostSchema.ts
+// Source/Codegen/Emit/Emit/Ext/Host/Schema.ts
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 var FormatDocComment = /* @__PURE__ */ __name((doc, indent) => {
@@ -105,9 +105,9 @@ var EmitExtHostSchema = /* @__PURE__ */ __name(async (options) => {
     };
   }
 }, "EmitExtHostSchema");
-var EmitExtHostSchema_default = EmitExtHostSchema;
+var Schema_default = EmitExtHostSchema;
 
-// Source/Codegen/Extract/IsExtHostFile.ts
+// Source/Codegen/Extract/Is/Ext/Host/File.ts
 var ExtHostPathSegments = [
   "vs/workbench/api/common/extHost",
   "vs/workbench/api/browser/extHost",
@@ -121,9 +121,9 @@ var IsExtHostFile = /* @__PURE__ */ __name((sourcePath) => {
   }
   return false;
 }, "IsExtHostFile");
-var IsExtHostFile_default = IsExtHostFile;
+var File_default = IsExtHostFile;
 
-// Source/Codegen/Extract/IterateExtHostDecorators.ts
+// Source/Codegen/Extract/Iterate/Ext/Host/Decorators.ts
 import { ExtractDecoratorMatches } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractDecoratorMatch.js";
 import { ExtractInterfaceMembers } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractInterfaceMembers.js";
 import { ResolveInterfaceCrossFile } from "@codeeditorland/wind/Target/Codegen/Resolve/ResolveInterfaceCrossFile.js";
@@ -184,9 +184,9 @@ var IterateExtHostDecorators = /* @__PURE__ */ __name(async function* (files) {
     }
   }
 }, "IterateExtHostDecorators");
-var IterateExtHostDecorators_default = IterateExtHostDecorators;
+var Decorators_default = IterateExtHostDecorators;
 
-// Source/Codegen/RunExtHostCodegen.ts
+// Source/Codegen/Run/Ext/Host/Codegen.ts
 import { existsSync } from "node:fs";
 import { WalkSourceTree } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 var DefaultLog = /* @__PURE__ */ __name((message) => {
@@ -233,7 +233,7 @@ var RunExtHostCodegen = /* @__PURE__ */ __name(async (options) => {
     DurationMilliseconds: Elapsed
   };
 }, "RunExtHostCodegen");
-var RunExtHostCodegen_default = RunExtHostCodegen;
+var Codegen_default = RunExtHostCodegen;
 export {
   EmitExtHostSchema,
   IsExtHostFile,

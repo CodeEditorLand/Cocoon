@@ -8,8 +8,8 @@
  * convenience methods for common Mountain operations.
  */
 
-import { IMountainClientService } from "../Interfaces/IMountainClientService";
-import { MountainClientService } from "../Services/MountainClientService";
+import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+import { MountainClientService } from "../../Services/Mountain/Client/Service.js";
 
 /**
  * MountainClient - High-level client for Mountain integration

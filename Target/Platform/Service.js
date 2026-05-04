@@ -1483,9 +1483,9 @@ var ProcessConstants = {
   DEFAULT_RESTART_DELAY
 };
 
-// Source/Platform/TypeConverter.ts
-var TypeConverter_exports = {};
-__export(TypeConverter_exports, {
+// Source/Platform/Type/Converter.ts
+var Converter_exports = {};
+__export(Converter_exports, {
   ConvertArchitectureToString: () => ConvertArchitectureToString,
   ConvertDTOToEnvironmentInfo: () => ConvertDTOToEnvironmentInfo,
   ConvertDTOToEnvironmentVariable: () => ConvertDTOToEnvironmentVariable,
@@ -2223,6 +2223,6 @@ export {
   SetEnvironmentVariable2 as SetEnvironmentVariable,
   SpawnProcess2 as SpawnProcess,
   TestPlatformService,
-  TypeConverter_exports as TypeConverter
+  Converter_exports as TypeConverter
 };
 //# sourceMappingURL=Service.js.map

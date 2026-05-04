@@ -13,7 +13,7 @@ var ExitPreventedProblem = class extends Error {
 };
 var ExitPreventedProblem_default = ExitPreventedProblem;
 
-// Source/Services/InitData.ts
+// Source/Services/Init/Data.ts
 import { Context, Layer } from "effect";
 var InitDataService = class extends Context.Tag("Cocoon/InitData")() {
   static {
@@ -1028,7 +1028,7 @@ var SecurityLive = Layer2.provide(
   PatcherService.Default
 );
 
-// Source/PatchProcess/TypeConverter.ts
+// Source/PatchProcess/Type/Converter.ts
 import * as Process3 from "node:process";
 import { Data as Data4, Effect as Effect6 } from "effect";
 var ConversionError = class extends Data4.TaggedError("ConversionError") {

@@ -12,8 +12,8 @@
 
 import type { CancellationToken } from "vscode";
 
-import { Logger } from "../Utility/Logger";
-import { Result } from "../Utility/Result";
+import { Logger } from "../Platform/Logger.js";
+import { Result } from "../Utility/Result.js";
 
 // Real VS Code CancellationTokenSource - replaces the hand-rolled class below.
 const { CancellationTokenSource } =

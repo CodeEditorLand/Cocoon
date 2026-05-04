@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Interfaces/IMountainClientService.ts
+// Source/Interfaces/I/Mountain/Client/Service.ts
 import * as Effect from "effect/Effect";
 var IMountainClientService = Effect.Service()(
   "Service/MountainClient",
@@ -310,7 +310,7 @@ var LoggerService = class extends Effect2.Service()(
   }
 };
 
-// Source/Services/MountainGRPCClient.ts
+// Source/Services/Mountain/GRPC/Client.ts
 import { Context as Context2, Effect as Effect3, Layer } from "effect";
 var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
 var MountainGRPCClientLive = Layer.effect(

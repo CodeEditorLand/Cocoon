@@ -1,12 +1,12 @@
 import { posix, sep } from "node:path";
 
-import { default as default2 } from "./Config/BaseConfig.js";
-import { default as default4 } from "./Config/CompileConfig.js";
+import { default as default2 } from "./Config/Base/Config.js";
+import { default as default4 } from "./Config/Compile/Config.js";
 import {
 	default as default3,
 	default as default5,
-} from "./Config/TargetConfig.js";
-import * as Environment from "./Constant/EnvironmentConstant.js";
+} from "./Config/Target/Config.js";
+import * as Environment from "./Constant/Environment/Constant.js";
 
 export {
 	default2 as BaseConfig,

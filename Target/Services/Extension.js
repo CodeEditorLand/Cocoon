@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Interfaces/IMountainClientService.ts
+// Source/Interfaces/I/Mountain/Client/Service.ts
 import * as Effect from "effect/Effect";
 var IMountainClientService = Effect.Service()(
   "Service/MountainClient",

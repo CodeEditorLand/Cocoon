@@ -19226,7 +19226,7 @@ var init_extHostTypes = __esm({
   }
 });
 
-// Source/Interfaces/IMountainClientService.ts
+// Source/Interfaces/I/Mountain/Client/Service.ts
 import * as Effect from "effect/Effect";
 var IMountainClientService = Effect.Service()(
   "Service/MountainClient",
@@ -19237,7 +19237,7 @@ var IMountainClientService = Effect.Service()(
   }
 );
 
-// Source/Utility/EventStream.ts
+// Source/Utility/Event/Stream.ts
 init_event();
 import { Effect as Effect2, PubSub } from "effect";
 var CreateEventStream = /* @__PURE__ */ __name(() => {
@@ -19376,7 +19376,7 @@ var LoggerService = class extends Effect3.Service()(
   }
 };
 
-// Source/Services/MountainGRPCClient.ts
+// Source/Services/Mountain/GRPC/Client.ts
 import { Context as Context2, Effect as Effect4, Layer } from "effect";
 var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
 var MountainGRPCClientLive = Layer.effect(
@@ -20066,7 +20066,7 @@ var SerializeFilters = /* @__PURE__ */ __name((Filters) => {
   }));
 }, "SerializeFilters");
 
-// Source/TypeConverter/Dialog/OpenDialogOption.ts
+// Source/TypeConverter/Dialog/Open/Dialog/Option.ts
 var ToDTO = /* @__PURE__ */ __name((Options) => {
   if (!Options) {
     return void 0;
@@ -20078,7 +20078,7 @@ var ToDTO = /* @__PURE__ */ __name((Options) => {
   };
 }, "ToDTO");
 
-// Source/TypeConverter/Dialog/SaveDialogOption.ts
+// Source/TypeConverter/Dialog/Save/Dialog/Option.ts
 var ToDTO2 = /* @__PURE__ */ __name((Options) => {
   if (!Options) {
     return void 0;
@@ -20090,7 +20090,7 @@ var ToDTO2 = /* @__PURE__ */ __name((Options) => {
   };
 }, "ToDTO");
 
-// Source/Services/Window/FileDialogs.ts
+// Source/Services/Window/File/Dialogs.ts
 import { Effect as Effect5 } from "effect";
 var ShowOpenDialog = /* @__PURE__ */ __name((MountainClient, Logger3, Options) => Effect5.gen(function* () {
   yield* Logger3.Debug(`[WindowService] Showing open dialog`);
@@ -20144,7 +20144,7 @@ var ShowSaveDialog = /* @__PURE__ */ __name((MountainClient, Logger3, Options) =
   })() : void 0;
 }), "ShowSaveDialog");
 
-// Source/Services/Window/OutputChannel.ts
+// Source/Services/Window/Output/Channel.ts
 import { Effect as Effect6 } from "effect";
 var CreateOutputChannel = /* @__PURE__ */ __name((MountainClient, Logger3, Name) => Effect6.gen(function* () {
   const ChannelId = `output-${crypto.randomUUID()}`;
@@ -20259,7 +20259,7 @@ var WithProgress = /* @__PURE__ */ __name((MountainClient, Logger3, Options, Tas
   return Result;
 }), "WithProgress");
 
-// Source/TypeConverter/QuickInput.ts
+// Source/TypeConverter/Quick/Input.ts
 var SerializeItems = /* @__PURE__ */ __name((Items) => {
   return Items.map((Item, Index) => {
     const Base = typeof Item === "string" ? { label: Item } : Item;
@@ -20280,7 +20280,7 @@ var SerializeButtons = /* @__PURE__ */ __name((Buttons) => {
   });
 }, "SerializeButtons");
 
-// Source/Services/Window/QuickInput.ts
+// Source/Services/Window/Quick/Input.ts
 import { Effect as Effect8 } from "effect";
 var ShowQuickPick = /* @__PURE__ */ __name((MountainClient, Logger3, Items, Options) => Effect8.gen(function* () {
   yield* Logger3.Debug(
@@ -20361,7 +20361,7 @@ var ShowInputBox = /* @__PURE__ */ __name((MountainClient, Logger3, Options) => 
   return Result;
 }), "ShowInputBox");
 
-// Source/Services/Window/StatusBar.ts
+// Source/Services/Window/Status/Bar.ts
 import { Effect as Effect9 } from "effect";
 var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger3, Id, Alignment, Priority) => Effect9.gen(function* () {
   const ItemId = Id ?? `statusbar-${crypto.randomUUID()}`;
@@ -20466,7 +20466,7 @@ var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Lo
   });
 }), "CreateStatusBarItem");
 
-// Source/TypeConverter/Main/ViewColumn.ts
+// Source/TypeConverter/Main/View/Column.ts
 var { ViewColumn: VSCodeViewColumn } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
 var ActiveEditorGroup = -1;
 var SideGroup = -2;
@@ -20487,7 +20487,7 @@ var FromAPI = /* @__PURE__ */ __name((ViewColumn2) => {
   return void 0;
 }, "FromAPI");
 
-// Source/Services/Window/TextDocument.ts
+// Source/Services/Window/Text/Document.ts
 import { Effect as Effect10 } from "effect";
 var ShowTextDocument = /* @__PURE__ */ __name((GRPCClient, Logger3, Workspace_, DocumentOrUri, ColumnOrOptions, PreserveFocus) => Effect10.gen(function* () {
   const Uri2 = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
@@ -20592,7 +20592,7 @@ init_cancellation();
 var FromAPI2 = /* @__PURE__ */ __name((TheURI) => TheURI.toJSON(), "FromAPI");
 var ToAPI = /* @__PURE__ */ __name((DTO) => URI.revive(DTO), "ToAPI");
 
-// Source/TypeConverter/Webview/ConvertShowOptionToDTO.ts
+// Source/TypeConverter/Webview/Convert/Show/Option/To/DTO.ts
 var ConvertShowOptionToDTO = /* @__PURE__ */ __name((ViewColumn2, PreserveFocus) => {
   const DTO = {
     preserveFocus: PreserveFocus
@@ -20604,7 +20604,7 @@ var ConvertShowOptionToDTO = /* @__PURE__ */ __name((ViewColumn2, PreserveFocus)
   return DTO;
 }, "ConvertShowOptionToDTO");
 
-// Source/TypeConverter/Webview/ConvertContentOptionToDTO.ts
+// Source/TypeConverter/Webview/Convert/Content/Option/To/DTO.ts
 var ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Options) => {
   return {
     enableCommandUris: Options.enableCommandUris,
@@ -20617,7 +20617,7 @@ var ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Op
   };
 }, "ConvertContentOptionToDTO");
 
-// Source/WebviewPanel/WebviewImplementation.ts
+// Source/WebviewPanel/Webview/Implementation.ts
 init_network();
 import { Effect as Effect11 } from "effect";
 var WebviewImplementation = class {
@@ -20698,7 +20698,7 @@ var WebviewImplementation = class {
   }
 };
 
-// Source/WebviewPanel/WebviewPanelImplementation.ts
+// Source/WebviewPanel/Webview/Panel/Implementation.ts
 import { Effect as Effect12 } from "effect";
 var WebviewPanelImplementation = class {
   constructor(Handle, IPC, Extension, OnDidDisposeCallback, InitialViewType, InitialTitle, InitialOptions, InitialViewColumn) {
@@ -20824,7 +20824,7 @@ var WebviewPanelImplementation = class {
   }
 };
 
-// Source/Services/Window/WebviewPanel.ts
+// Source/Services/Window/Webview/Panel.ts
 import { Effect as Effect13 } from "effect";
 var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger3, ViewType, Title, ShowOptions, Options) => Effect13.gen(function* () {
   const PanelId = `webview-${crypto.randomUUID()}`;

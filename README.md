@@ -87,20 +87,20 @@ declarative `Effect`s that are sent to `Mountain` for native execution.
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, see the following source files:
 
-- **[`Bootstrap/Implementation/CocoonMain.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/CocoonMain.ts)** -
+- **[`Bootstrap/Implementation/CocoonMain.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/Cocoon/Main.ts)** -
   Main entry point and bootstrap orchestration.
 - **[`Effect/Bootstrap.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Effect/Bootstrap.ts)** -
   `Effect-TS` bootstrap stages (Environment, Configuration, Mountain Connection,
   Module Interceptor, RPC Server, Extensions, Health Check).
-- **[`ServiceMapping.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ServiceMapping.ts)** -
+- **[`ServiceMapping.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Service/Mapping.ts)** -
   Dependency injection and service composition.
-- **[`Services/APIFactory.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/APIFactoryService.ts)** -
+- **[`Services/APIFactory.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts)** -
   Constructs the `vscode` API object for extensions.
-- **[`Services/ExtensionHostService.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/ExtensionHostService.ts)** -
+- **[`Services/ExtensionHostService.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension/Host/Service.ts)** -
   Extension activation and lifecycle management.
-- **[`Services/IPCService.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/IPCService.ts)** -
+- **[`IPC/Channel.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Channel.ts)** -
   Bi-directional `gRPC` communication.
-- **[`Services/MountainGRPCClient.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/MountainGRPCClient.ts)** -
+- **[`Services/MountainGRPCClient.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/GRPC/Client.ts)** -
   `gRPC` client for `Mountain` backend.
 - **[`PatchProcess/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/PatchProcess/)** -
   Process hardening and security.
@@ -120,7 +120,7 @@ and communicating with `Mountain`.
 | **`Bootstrap/Implementation/CocoonMain.ts`** | Primary entry point. Composes all `Effect-TS` layers, establishes the `gRPC` connection, performs the initialization handshake with `Mountain`, and starts extension host services.                                                                                             |
 | **`PatchProcess/`**                          | Very early process hardening (patching `process.exit`, handling exceptions, piping logs), ensuring a stable foundation before any other code runs.                                                                                                                              |
 | **`Effect/` Modules**                        | `Bootstrap.ts` coordinates initialization stages, `Extension.ts` manages extension lifecycle, `ModuleInterceptor.ts` patches `require` and `import`, `Telemetry.ts` provides logging and tracing.                                                                               |
-| **`Services/` Modules**                      | `Effect-TS` `Layer`s implementing each `VS Code` `IExtHost...` service interface (e.g., `CommandsProvider`, `WorkspaceProvider`, `WebviewProvider`). Key services: `APIFactory.ts`, `ExtensionHostService.ts`, `IPCService.ts`, `MountainGRPCClient.ts`.                        |
+| **`Services/` Modules**                      | `Effect-TS` `Layer`s implementing each `VS Code` `IExtHost...` service interface (e.g., `CommandsProvider`, `WorkspaceProvider`, `WebviewProvider`). Key services: `APIFactory.ts`, `ExtensionHostService.ts`, `IPC/Channel.ts`, `MountainGRPCClient.ts`.                       |
 | **`IPC/` & `Services/IPC.ts`**               | `IPC/` contains the protocol layer (`Channel.ts`, `Handler.ts`, `Message.ts`, `Protocol.ts`). `Services/IPC.ts` implements both the `gRPC` client (to call `Mountain`) and server (to receive calls from `Mountain`), managing the full bi-directional communication lifecycle. |
 | **`TypeConverter/`**                         | Pure functions to serialize `TypeScript` types into plain DTOs for `gRPC` transport. Organized by feature: `Main/` (URI, Range, TextEdit), `Dialog/`, `TreeView/`, `Webview/`, `Task/`, `WorkspaceEdit/`.                                                                       |
 | **Extension Code**                           | The `JavaScript`/`TypeScript` code of the `VS Code` extensions being hosted within the `Cocoon` environment.                                                                                                                                                                    |
@@ -129,25 +129,25 @@ and communicating with `Mountain`.
 
 1. `Mountain` launches `Cocoon` with initialization data.
 2. `Cocoon`'s
-   [`Bootstrap/Implementation/CocoonMain.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/CocoonMain.ts)
+   [`Bootstrap/Implementation/CocoonMain.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/Cocoon/Main.ts)
    bootstraps the application:
     - `PatchProcess` hardens the environment.
     - `Effect/Bootstrap.ts` orchestrates initialization stages (environment
       detection, configuration, `gRPC` connection, module interceptor, RPC
       server, extensions, health check).
     - The main `AppLayer` is built via
-      [`ServiceMapping.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ServiceMapping.ts),
+      [`ServiceMapping.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Service/Mapping.ts),
       composing all `Effect-TS` services.
 3. `ExtHostExtensionService` activates an extension. The extension receives a
    `vscode` API object constructed by
-   [`APIFactory`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/APIFactoryService.ts).
+   [`APIFactory`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts).
 4. The extension calls `vscode.window.showInformationMessage("Hello")`.
 5. The call is routed to the
    [`Window`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Window.ts)
    service.
 6. `Window` creates an `Effect` that sends a `showMessage` `gRPC` request to
    `Mountain` via
-   [`MountainGRPCClient`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/MountainGRPCClient.ts).
+   [`MountainGRPCClient`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/GRPC/Client.ts).
 7. `Mountain`'s `Vine` layer receives the request. Its `Track` dispatcher routes
    it to the native UI handler.
 8. `Mountain` displays the native OS notification and awaits user interaction.
@@ -173,7 +173,7 @@ graph LR
         EffectModules["⚡ Effect/ Modules - Bootstrap, Telemetry, Extension"]:::effectts
         PatchProcess["🔒 PatchProcess/ - Process Hardening"]:::cocoon
         APIServices["📚 Services/ - APIFactory, ExtensionHost, Window, Workspace…"]:::cocoon
-        IPCService["📡 Services/IPCService.ts + IPC/ Protocol"]:::cocoon
+        IPCService["📡 IPC/Channel.ts + IPC/ Protocol"]:::cocoon
         GRPCClient["🌿 Services/MountainGRPCClient.ts"]:::cocoon
         TypeConverter["🔄 TypeConverter/ - DTO Serialization"]:::cocoon
 

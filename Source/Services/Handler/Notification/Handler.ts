@@ -59,7 +59,7 @@ type WorkspaceDeltaPayload = {
  * Atom I3 - last-resort uncaught-exception handler.
  *
  * The project's `PatchProcess/Patcher.ts` registers one via an Effect, but
- * esbuild tree-shakes that path out of `CocoonMain.js` (bundle scan confirms
+ * esbuild tree-shakes that path out of `Cocoon/Main.js` (bundle scan confirms
  * zero `uncaughtException` strings). Without a handler, Node's default is
  * log-and-exit-1, which is exactly how we've been losing Cocoon when the
  * built-in `gulp` extension throws on workspace folder changes.

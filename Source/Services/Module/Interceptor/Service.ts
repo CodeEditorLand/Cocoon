@@ -18,7 +18,7 @@ import {
 	ModuleInterceptionResult,
 	SecurityLevel,
 	SecurityPolicy,
-} from "../Interfaces/IModuleInterceptorService";
+} from "../../../Interfaces/I/Module/Interceptor/Service.js";
 
 // Module interception configuration
 interface ModuleInterceptorConfig {

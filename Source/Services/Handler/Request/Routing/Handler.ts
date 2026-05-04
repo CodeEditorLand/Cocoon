@@ -52,9 +52,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	> = {
 		"extension.\\w+": async (Method: string, Params: any) => {
 			// Route to ExtensionHostService via ServiceMapping
-			const { ServiceMapping } = await import("../../ServiceMapping");
+			const { ServiceMapping } =
+				await import("../../../../Service/Mapping.js");
 			const { IExtensionHostService } =
-				await import("../../Interfaces/IExtensionHostService");
+				await import("../../../../Interfaces/I/Extension/Host/Service.js");
 
 			switch (Method) {
 				case "extension.activate": {
@@ -87,9 +88,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		"configuration.\\w+": async (Method: string, Params: any) => {
 			// Route to ConfigurationService via ServiceMapping
-			const { ServiceMapping } = await import("../../ServiceMapping");
+			const { ServiceMapping } =
+				await import("../../../../Service/Mapping.js");
 			const { IConfigurationService } =
-				await import("../../Interfaces/IConfigurationService");
+				await import("../../../../Interfaces/I/Configuration/Service.js");
 
 			switch (Method) {
 				case "configuration.get": {
@@ -341,11 +343,40 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						Params?.[2] ?? {
 							state: undefined,
 						};
+					// Stock VS Code passes a `CancellationToken` as the
+					// third argument to `WebviewViewProvider.resolveWebviewView(view, context, token)`.
+					// Roo, GitLens and Claude all read `token.isCancellationRequested`
+					// inside their resolvers; if `token` is `undefined` the
+					// access throws `Cannot read properties of undefined`
+					// 0-3ms after ENTER and the resolver rejects. Pass a
+					// no-op token (never cancels, never fires) so the
+					// extension's check is harmless. If the workbench
+					// supplies a real token in `Params` we honour it.
+					const Token = Params?.token ??
+						Params?.[3] ?? {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
 					try {
-						return (
-							(await Provider.resolveWebviewView?.(View, Ctx)) ??
-							null
-						);
+						if (process.env["Trace"]) {
+							process.stdout.write(
+								`[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView ENTER handle=${Handle} hasView=${!!View} hasWebview=${!!View?.webview} hasResolver=${typeof Provider?.resolveWebviewView === "function"}\n`,
+							);
+						}
+						const Result =
+							(await Provider.resolveWebviewView?.(
+								View,
+								Ctx,
+								Token,
+							)) ?? null;
+						if (process.env["Trace"]) {
+							process.stdout.write(
+								`[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView EXIT handle=${Handle} htmlLen=${String((View as any)?.webview?.html ?? "").length}\n`,
+							);
+						}
+						return Result;
 					} catch (ResolveError) {
 						// Extension's `resolveWebviewView` threw (Roo,
 						// Claude, gitlens, etc. each have their own
@@ -389,14 +420,25 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					}
 					const Document = Params?.document ?? Params?.[1];
 					const Panel = Params?.panel ?? Params?.[2];
+					// Stock VS Code: `resolveCustomEditor(document, webviewPanel, token)`.
+					// The previous third arg `{ asAbsolutePath }` is wrong -
+					// that property lives on `ExtensionContext`, not on a
+					// `CancellationToken`. Pass a no-op token so any
+					// `token.isCancellationRequested` access inside the
+					// resolver is harmless.
+					const Token = Params?.token ??
+						Params?.[3] ?? {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
 					try {
 						return (
 							(await Provider.resolveCustomEditor?.(
 								Document,
 								Panel,
-								{
-									asAbsolutePath: (p: string) => p,
-								},
+								Token,
 							)) ?? null
 						);
 					} catch (ResolveError) {
@@ -423,9 +465,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		"performance.\\w+": async (Method: string, _Params: any) => {
 			// Route to PerformanceMonitoringService via ServiceMapping
-			const { ServiceMapping } = await import("../../ServiceMapping");
+			const { ServiceMapping } =
+				await import("../../../../Service/Mapping.js");
 			const { IPerformanceMonitoringService } =
-				await import("../../Interfaces/IPerformanceMonitoringService");
+				await import("../../../../Interfaces/I/Performance/Monitoring/Service.js");
 
 			switch (Method) {
 				case "performance.metrics": {
@@ -453,9 +496,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		"security.\\w+": async (Method: string, Params: any) => {
 			// Route to SecurityService via ServiceMapping
-			const { ServiceMapping } = await import("../../ServiceMapping");
+			const { ServiceMapping } =
+				await import("../../../../Service/Mapping.js");
 			const { ISecurityService } =
-				await import("../../Interfaces/ISecurityService");
+				await import("../../../../Interfaces/I/Security/Service.js");
 
 			switch (Method) {
 				case "security.policy": {

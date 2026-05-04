@@ -251,7 +251,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				"[ModuleInterceptor] Installing Node.js Module._load hook...",
 			);
 
-			// CocoonMain.js is an ESM bundle - `require` is not in scope.
+			// Cocoon/Main.js is an ESM bundle - `require` is not in scope.
 			// Use dynamic import() to get the Module constructor.
 			const { default: NodeModule } = (yield* Effect.tryPromise({
 				try: () => import("node:module"),

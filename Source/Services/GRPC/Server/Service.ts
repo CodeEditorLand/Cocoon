@@ -35,6 +35,7 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
+import { IGRPCServerService } from "../../../Interfaces/IGRPC/Server/Service.js";
 import DocumentContentHandler from "../../Handler/Document/Content/Handler.js";
 import ExtensionHostHandler from "../../Handler/Extension/Host/Handler.js";
 // Import handler modules
@@ -51,7 +52,6 @@ import {
 	GenericRequest,
 	GenericResponse,
 } from "../Generated/Vine";
-import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
 // ESM compatibility - provide __dirname and require() for proto loading
 const __filename = fileURLToPath(import.meta.url);

@@ -166,7 +166,7 @@ export class PerformanceMonitoringService {
 	private async sendMetricsToMountain(): Promise<void> {
 		try {
 			const { MountainClientService } =
-				await import("./MountainClientService");
+				await import("../../Mountain/Client/Service.js");
 			const mountainClient = new MountainClientService();
 
 			const telemetryData = {
@@ -231,7 +231,7 @@ export class PerformanceMonitoringService {
 		try {
 			// Import ExtensionHostService dynamically
 			const { ExtensionHostService } =
-				await import("./ExtensionHostService");
+				await import("../../Extension/Host/Service.js");
 			const extensionHostService = new ExtensionHostService(
 				{} as any,
 				{} as any,
@@ -305,7 +305,7 @@ export class PerformanceMonitoringService {
 		try {
 			// Track error rates from ErrorHandlingService
 			const { ErrorHandlingService } =
-				await import("./ErrorHandlingService");
+				await import("../../Error/Handling/Service.js");
 			const errorService = new ErrorHandlingService();
 
 			const stats = errorService.getStatistics();
@@ -331,7 +331,8 @@ export class PerformanceMonitoringService {
 	private async getCacheHitRate(): Promise<number> {
 		try {
 			// Track cache performance from APIFactoryService
-			const { APIFactoryService } = await import("./APIFactoryService");
+			const { APIFactoryService } =
+				await import("../../API/Factory/Service.js");
 			const apiFactoryService = new APIFactoryService(
 				{} as any,
 				{} as any,
@@ -354,7 +355,8 @@ export class PerformanceMonitoringService {
 	private async getRequestThroughput(): Promise<number> {
 		try {
 			// Track throughput from GRPCServerService
-			const { GRPCServerService } = await import("./GRPCServerService");
+			const { GRPCServerService } =
+				await import("../../GRPC/Server/Service.js");
 			const grpcServerService = new GRPCServerService();
 
 			const status = grpcServerService.getStatus();

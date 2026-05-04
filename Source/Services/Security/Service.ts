@@ -137,7 +137,7 @@ export class SecurityService {
 		try {
 			// Import MountainClientService for policy loading
 			const { MountainClientService } =
-				await import("./MountainClientService");
+				await import("../Mountain/Client/Service.js");
 			const mountainClient = new MountainClientService();
 
 			// Load security policies from Mountain
@@ -278,7 +278,7 @@ export class SecurityService {
 	): Promise<void> {
 		try {
 			const { MountainClientService } =
-				await import("./MountainClientService");
+				await import("../Mountain/Client/Service.js");
 			const mountainClient = new MountainClientService();
 
 			await mountainClient.sendNotification("security.incident", {
