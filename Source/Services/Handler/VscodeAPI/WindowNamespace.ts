@@ -293,6 +293,100 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 		};
 
+	// Shared `asWebviewUri` implementation. Stock VS Code converts a
+	// local-file `vscode.Uri` into a webview-loadable URI under the
+	// webview's authority/scheme; the service worker inside the iframe
+	// then intercepts requests under that scheme and rebroadcasts to
+	// the workbench host. Land disables that service worker (WKWebView
+	// rejects SW registration on the `vscode-webview://` custom
+	// protocol - see Output `PatchWebviewIframeServiceWorker`), so we
+	// instead translate to `vscode-file://vscode-app/<absPath>` which
+	// Mountain's existing `VscodeFileSchemeHandler` serves directly
+	// from disk with permissive CORS. The result is a URI that
+	// extensions can drop into `<script src=…>` / `<link href=…>` /
+	// `<img src=…>` etc. and the iframe loads them via WKWebView's
+	// vscode-file:// custom-protocol handler without any SW
+	// round-trip. Without this, Roo / Claude / GitLens / every
+	// React-based webview ships HTML referencing
+	// `file:///abs/path/to/build.js` which the iframe cannot fetch
+	// (cross-origin file:// from the `vscode-webview://` shell is
+	// blocked by WKWebView), so the panel renders blank even when
+	// the surrounding workbench resolution chain is healthy.
+	const ToWebviewUri = (Input: unknown): unknown => {
+		if (Input == null) return Input;
+		if (typeof Input === "string") {
+			if (Input.startsWith("vscode-file://")) return Input;
+			if (Input.startsWith("vscode-webview-resource://")) {
+				const Match = Input.match(
+					/^vscode-webview-resource:\/\/[^/]+(.*)$/,
+				);
+				return Match
+					? `vscode-file://vscode-app${Match[1] ?? ""}`
+					: Input;
+			}
+			if (Input.startsWith("vscode-resource://")) {
+				return Input.replace(
+					"vscode-resource://",
+					"vscode-file://vscode-app/",
+				);
+			}
+			if (Input.startsWith("file://")) {
+				return Input.replace("file://", "vscode-file://vscode-app");
+			}
+			return Input;
+		}
+		const Anything = Input as Record<string, unknown> & {
+			toString?: () => string;
+		};
+		const Scheme = String(Anything.scheme ?? "");
+		const Path = String(Anything.path ?? "");
+		if (Scheme === "file" && Path) {
+			const Rewritten = {
+				...Anything,
+				scheme: "vscode-file",
+				authority: "vscode-app",
+				path: Path,
+				query: String(Anything.query ?? ""),
+				fragment: String(Anything.fragment ?? ""),
+			};
+			const SerialisedQuery = Rewritten.query
+				? "?" + Rewritten.query
+				: "";
+			const SerialisedFragment = Rewritten.fragment
+				? "#" + Rewritten.fragment
+				: "";
+			const Serialised = `vscode-file://vscode-app${Path}${SerialisedQuery}${SerialisedFragment}`;
+			(Rewritten as Record<string, unknown>).toString = () => Serialised;
+			(Rewritten as Record<string, unknown>).toJSON = () => Serialised;
+			return Rewritten;
+		}
+		if (
+			Scheme === "vscode-webview-resource" ||
+			Scheme === "vscode-resource"
+		) {
+			const Rewritten = {
+				...Anything,
+				scheme: "vscode-file",
+				authority: "vscode-app",
+			};
+			const Serialised = `vscode-file://vscode-app${Path}`;
+			(Rewritten as Record<string, unknown>).toString = () => Serialised;
+			(Rewritten as Record<string, unknown>).toJSON = () => Serialised;
+			return Rewritten;
+		}
+		return Input;
+	};
+
+	// Shared `cspSource` value. Both panel-mode and webview-view proxies
+	// expose this so extensions interpolate it into their `<meta http-equiv
+	// "Content-Security-Policy">` directives. Includes `vscode-file:` so
+	// the assets emitted by `ToWebviewUri` survive the CSP gate, plus the
+	// legacy schemes (`vscode-resource:`, `vscode-webview-resource:`) for
+	// extensions that hard-code those, plus `https:` for marketplace
+	// remote assets.
+	const SharedCspSource =
+		"vscode-file: vscode-resource: vscode-webview-resource: blob: data: https:";
+
 	const Concrete = {
 		showInformationMessage: ShowMessage("info"),
 		showErrorMessage: ShowMessage("error"),
@@ -721,9 +815,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							html: Value,
 						}).catch(() => {});
 					},
-					cspSource:
-						"vscode-file: vscode-resource: vscode-webview-resource: https:",
-					asWebviewUri: (Uri: unknown) => Uri,
+					cspSource: SharedCspSource,
+					asWebviewUri: ToWebviewUri,
 					postMessage: async (Message: unknown) => {
 						try {
 							await Context.MountainClient?.sendRequest(
@@ -1028,8 +1121,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							}).catch(() => {});
 						},
 						options: {} as any,
-						cspSource: "https://*",
-						asWebviewUri: (Uri: any) => Uri,
+						cspSource: SharedCspSource,
+						asWebviewUri: ToWebviewUri,
 						postMessage: async (Message: unknown) => {
 							await Context.SendToMountain(
 								"webview.postMessage",

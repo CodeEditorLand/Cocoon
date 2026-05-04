@@ -27951,10 +27951,13 @@ var init_WindowNamespace = __esm({
               },
               set options(Value) {
                 CurrentOptions = Value;
-                Context21.MountainClient?.sendRequest("webview.setOptions", {
-                  handle: Handle,
-                  options: Value
-                }).catch(() => {
+                Context21.MountainClient?.sendRequest(
+                  "webview.setOptions",
+                  {
+                    handle: Handle,
+                    options: Value
+                  }
+                ).catch(() => {
                 });
               },
               get html() {
@@ -29067,7 +29070,7 @@ var init_RouteManifest = __esm({
       mountain: 91,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-05-04T15:04:36Z"
+      generatedAt: "2026-05-04T15:16:39Z"
     };
   }
 });

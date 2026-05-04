@@ -1261,10 +1261,13 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           },
           set options(Value) {
             CurrentOptions = Value;
-            Context.MountainClient?.sendRequest("webview.setOptions", {
-              handle: Handle,
-              options: Value
-            }).catch(() => {
+            Context.MountainClient?.sendRequest(
+              "webview.setOptions",
+              {
+                handle: Handle,
+                options: Value
+              }
+            ).catch(() => {
             });
           },
           get html() {
