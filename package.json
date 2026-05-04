@@ -58,7 +58,7 @@
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
 		"esbuild": "0.28.0",
-		"ts-patch": "3.3.0",
+		"ts-patch": "4.0.1",
 		"ulid": "3.0.2",
 		"vitest": "4.1.5"
 	},
