@@ -2738,7 +2738,7 @@ var init_RouteManifest = __esm({
       mountain: 91,
       stockLift: 21,
       bespoke: 1,
-      generatedAt: "2026-05-04T11:13:32Z"
+      generatedAt: "2026-05-04T15:04:36Z"
     };
   }
 });
@@ -23115,15 +23115,15 @@ var init_WindowNamespace = __esm({
         Readonly: IsReadonly,
         Handle
       });
-      Context21.MountainClient?.sendRequest("webview.registerCustomEditor", [
-        Handle,
-        ViewType,
-        {
+      Context21.MountainClient?.sendRequest("webview.registerCustomEditor", {
+        handle: Handle,
+        viewType: ViewType,
+        options: {
           readonly: IsReadonly,
           supportsMultipleEditorsPerDocument: Options.supportsMultipleEditorsPerDocument ?? false,
           webviewOptions: Options.webviewOptions ?? {}
         }
-      ]).catch(() => {
+      }).catch(() => {
       });
       const SafeAwait = /* @__PURE__ */ __name(async (Channel, MethodName, Payload) => {
         const Entry = CustomEditorProvidersByViewType.get(
@@ -23186,7 +23186,7 @@ var init_WindowNamespace = __esm({
           }
           Context21.MountainClient?.sendRequest(
             "webview.unregisterCustomEditor",
-            [Handle]
+            { handle: Handle, viewType: ViewType }
           ).catch(() => {
           });
         }, "dispose")
@@ -23587,13 +23587,13 @@ var init_WindowNamespace = __esm({
           const Handle = NextProviderHandle();
           let CurrentHtml = "";
           let CurrentOptions = Options ?? {};
-          Context21.MountainClient?.sendRequest("webview.create", [
-            Handle,
-            ViewType,
-            Title,
-            ShowOptions,
-            CurrentOptions
-          ]).catch(() => {
+          Context21.MountainClient?.sendRequest("webview.create", {
+            handle: Handle,
+            viewType: ViewType,
+            title: Title,
+            showOptions: ShowOptions,
+            options: CurrentOptions
+          }).catch(() => {
           });
           const Panel = {
             viewType: ViewType,
@@ -23605,10 +23605,10 @@ var init_WindowNamespace = __esm({
               },
               set options(Value) {
                 CurrentOptions = Value;
-                Context21.MountainClient?.sendRequest(
-                  "webview.setOptions",
-                  [Handle, Value]
-                ).catch(() => {
+                Context21.MountainClient?.sendRequest("webview.setOptions", {
+                  handle: Handle,
+                  options: Value
+                }).catch(() => {
                 });
               },
               get html() {
@@ -23616,10 +23616,10 @@ var init_WindowNamespace = __esm({
               },
               set html(Value) {
                 CurrentHtml = Value;
-                Context21.MountainClient?.sendRequest("webview.setHtml", [
-                  Handle,
-                  Value
-                ]).catch(() => {
+                Context21.MountainClient?.sendRequest("webview.setHtml", {
+                  handle: Handle,
+                  html: Value
+                }).catch(() => {
                 });
               },
               cspSource: "vscode-file: vscode-resource: vscode-webview-resource: https:",
@@ -23628,7 +23628,7 @@ var init_WindowNamespace = __esm({
                 try {
                   await Context21.MountainClient?.sendRequest(
                     "webview.postMessage",
-                    [Handle, Message]
+                    { handle: Handle, message: Message }
                   );
                   return true;
                 } catch {
@@ -23650,11 +23650,11 @@ var init_WindowNamespace = __esm({
             active: true,
             visible: true,
             reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
-              Context21.MountainClient?.sendRequest("webview.reveal", [
-                Handle,
-                Column,
-                PreserveFocus
-              ]).catch(() => {
+              Context21.MountainClient?.sendRequest("webview.reveal", {
+                handle: Handle,
+                viewColumn: Column,
+                preserveFocus: PreserveFocus
+              }).catch(() => {
               });
             }, "reveal"),
             dispose: /* @__PURE__ */ __name(() => {
@@ -23662,9 +23662,9 @@ var init_WindowNamespace = __esm({
               Context21.Emitter.removeAllListeners(
                 `webview.message:${Handle}`
               );
-              Context21.MountainClient?.sendRequest("webview.dispose", [
-                Handle
-              ]).catch(() => {
+              Context21.MountainClient?.sendRequest("webview.dispose", {
+                handle: Handle
+              }).catch(() => {
               });
             }, "dispose"),
             onDidDispose: /* @__PURE__ */ __name((Listener) => {
@@ -23941,10 +23941,10 @@ var init_WindowNamespace = __esm({
             };
             return View;
           });
-          Context21.MountainClient?.sendRequest("webview.registerView", [
-            Handle,
-            ViewId
-          ]).catch(() => {
+          Context21.MountainClient?.sendRequest("webview.registerView", {
+            handle: Handle,
+            viewId: ViewId
+          }).catch(() => {
           });
           return {
             dispose: /* @__PURE__ */ __name(() => {
@@ -23952,7 +23952,7 @@ var init_WindowNamespace = __esm({
               WebviewViewBuilders.delete(String(Handle));
               Context21.MountainClient?.sendRequest(
                 "webview.unregisterView",
-                [Handle]
+                { handle: Handle, viewId: ViewId }
               ).catch(() => {
               });
             }, "dispose")

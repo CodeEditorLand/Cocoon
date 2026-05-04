@@ -771,15 +771,15 @@ var RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, 
     Readonly: IsReadonly,
     Handle
   });
-  Context.MountainClient?.sendRequest("webview.registerCustomEditor", [
-    Handle,
-    ViewType,
-    {
+  Context.MountainClient?.sendRequest("webview.registerCustomEditor", {
+    handle: Handle,
+    viewType: ViewType,
+    options: {
       readonly: IsReadonly,
       supportsMultipleEditorsPerDocument: Options.supportsMultipleEditorsPerDocument ?? false,
       webviewOptions: Options.webviewOptions ?? {}
     }
-  ]).catch(() => {
+  }).catch(() => {
   });
   const SafeAwait = /* @__PURE__ */ __name(async (Channel, MethodName, Payload) => {
     const Entry = CustomEditorProvidersByViewType.get(
@@ -842,7 +842,7 @@ var RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, 
       }
       Context.MountainClient?.sendRequest(
         "webview.unregisterCustomEditor",
-        [Handle]
+        { handle: Handle, viewType: ViewType }
       ).catch(() => {
       });
     }, "dispose")
@@ -1243,13 +1243,13 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const Handle = NextProviderHandle();
       let CurrentHtml = "";
       let CurrentOptions = Options ?? {};
-      Context.MountainClient?.sendRequest("webview.create", [
-        Handle,
-        ViewType,
-        Title,
-        ShowOptions,
-        CurrentOptions
-      ]).catch(() => {
+      Context.MountainClient?.sendRequest("webview.create", {
+        handle: Handle,
+        viewType: ViewType,
+        title: Title,
+        showOptions: ShowOptions,
+        options: CurrentOptions
+      }).catch(() => {
       });
       const Panel = {
         viewType: ViewType,
@@ -1261,10 +1261,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           },
           set options(Value) {
             CurrentOptions = Value;
-            Context.MountainClient?.sendRequest(
-              "webview.setOptions",
-              [Handle, Value]
-            ).catch(() => {
+            Context.MountainClient?.sendRequest("webview.setOptions", {
+              handle: Handle,
+              options: Value
+            }).catch(() => {
             });
           },
           get html() {
@@ -1272,10 +1272,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           },
           set html(Value) {
             CurrentHtml = Value;
-            Context.MountainClient?.sendRequest("webview.setHtml", [
-              Handle,
-              Value
-            ]).catch(() => {
+            Context.MountainClient?.sendRequest("webview.setHtml", {
+              handle: Handle,
+              html: Value
+            }).catch(() => {
             });
           },
           cspSource: "vscode-file: vscode-resource: vscode-webview-resource: https:",
@@ -1284,7 +1284,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
             try {
               await Context.MountainClient?.sendRequest(
                 "webview.postMessage",
-                [Handle, Message]
+                { handle: Handle, message: Message }
               );
               return true;
             } catch {
@@ -1306,11 +1306,11 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         active: true,
         visible: true,
         reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
-          Context.MountainClient?.sendRequest("webview.reveal", [
-            Handle,
-            Column,
-            PreserveFocus
-          ]).catch(() => {
+          Context.MountainClient?.sendRequest("webview.reveal", {
+            handle: Handle,
+            viewColumn: Column,
+            preserveFocus: PreserveFocus
+          }).catch(() => {
           });
         }, "reveal"),
         dispose: /* @__PURE__ */ __name(() => {
@@ -1318,9 +1318,9 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           Context.Emitter.removeAllListeners(
             `webview.message:${Handle}`
           );
-          Context.MountainClient?.sendRequest("webview.dispose", [
-            Handle
-          ]).catch(() => {
+          Context.MountainClient?.sendRequest("webview.dispose", {
+            handle: Handle
+          }).catch(() => {
           });
         }, "dispose"),
         onDidDispose: /* @__PURE__ */ __name((Listener) => {
@@ -1597,10 +1597,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         };
         return View;
       });
-      Context.MountainClient?.sendRequest("webview.registerView", [
-        Handle,
-        ViewId
-      ]).catch(() => {
+      Context.MountainClient?.sendRequest("webview.registerView", {
+        handle: Handle,
+        viewId: ViewId
+      }).catch(() => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
@@ -1608,7 +1608,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           WebviewViewBuilders.delete(String(Handle));
           Context.MountainClient?.sendRequest(
             "webview.unregisterView",
-            [Handle]
+            { handle: Handle, viewId: ViewId }
           ).catch(() => {
           });
         }, "dispose")

@@ -150,16 +150,21 @@ const RegisterCustomEditor = (
 		Handle,
 	});
 
-	Context.MountainClient?.sendRequest("webview.registerCustomEditor", [
-		Handle,
-		ViewType,
-		{
+	// Named-key payload so SkyBridge's `sky://webview/registerCustomEditor`
+	// listener reads `Payload.viewType` / `Payload.options` directly,
+	// matching the new Cocoon convention. Positional `args` is still
+	// preserved by Mountain's canonicalisation for any consumer reading
+	// `Args[1]` / `Args[2]`.
+	Context.MountainClient?.sendRequest("webview.registerCustomEditor", {
+		handle: Handle,
+		viewType: ViewType,
+		options: {
 			readonly: IsReadonly,
 			supportsMultipleEditorsPerDocument:
 				Options.supportsMultipleEditorsPerDocument ?? false,
 			webviewOptions: Options.webviewOptions ?? {},
 		},
-	]).catch(() => {});
+	}).catch(() => {});
 
 	const SafeAwait = async (
 		Channel: string,
@@ -236,7 +241,7 @@ const RegisterCustomEditor = (
 			}
 			Context.MountainClient?.sendRequest(
 				"webview.unregisterCustomEditor",
-				[Handle],
+				{ handle: Handle, viewType: ViewType },
 			).catch(() => {});
 		},
 	};
@@ -662,13 +667,21 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			let CurrentHtml = "";
 			let CurrentOptions = (Options ?? {}) as Record<string, unknown>;
-			Context.MountainClient?.sendRequest("webview.create", [
-				Handle,
-				ViewType,
-				Title,
-				ShowOptions,
-				CurrentOptions,
-			]).catch(() => {});
+			// Named-key payload bypasses Mountain's positional-to-named
+			// canonicalisation entirely - SkyBridge's `sky://webview/create`
+			// listener can read `Payload.viewType`, `Payload.title`,
+			// `Payload.showOptions`, `Payload.options` directly without
+			// depending on the per-method alias mapping in
+			// `Webview.rs::CreateEffect`. The `args` array is still
+			// preserved by the canonicalisation for any consumer that
+			// reads positional slots.
+			Context.MountainClient?.sendRequest("webview.create", {
+				handle: Handle,
+				viewType: ViewType,
+				title: Title,
+				showOptions: ShowOptions,
+				options: CurrentOptions,
+			}).catch(() => {});
 
 			const Panel = {
 				viewType: ViewType,
@@ -680,9 +693,17 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					},
 					set options(Value: Record<string, unknown>) {
 						CurrentOptions = Value;
+						// Named-key payload bypasses Mountain's positional
+						// canonicalisation entirely (`Webview.rs` case 1
+						// passes objects through verbatim) so SkyBridge's
+						// listener finds `Payload.options` directly without
+						// relying on the per-method alias mapping.
 						Context.MountainClient?.sendRequest(
 							"webview.setOptions",
-							[Handle, Value],
+							{
+								handle: Handle,
+								options: Value,
+							},
 						).catch(() => {});
 					},
 					get html() {
@@ -690,10 +711,15 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					},
 					set html(Value: string) {
 						CurrentHtml = Value;
-						Context.MountainClient?.sendRequest("webview.setHtml", [
-							Handle,
-							Value,
-						]).catch(() => {});
+						// Named-key payload (object) - Mountain's case 1
+						// passes through verbatim so SkyBridge sees
+						// `Payload.html` regardless of any future drift in
+						// the positional-arg canonicalisation. Belt-and-
+						// braces with the `webview.rs` html-alias mapping.
+						Context.MountainClient?.sendRequest("webview.setHtml", {
+							handle: Handle,
+							html: Value,
+						}).catch(() => {});
 					},
 					cspSource:
 						"vscode-file: vscode-resource: vscode-webview-resource: https:",
@@ -702,7 +728,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						try {
 							await Context.MountainClient?.sendRequest(
 								"webview.postMessage",
-								[Handle, Message],
+								{ handle: Handle, message: Message },
 							);
 							return true;
 						} catch {
@@ -726,20 +752,24 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				active: true,
 				visible: true,
 				reveal: (Column?: number, PreserveFocus?: boolean) => {
-					Context.MountainClient?.sendRequest("webview.reveal", [
-						Handle,
-						Column,
-						PreserveFocus,
-					]).catch(() => {});
+					// Named-key payload so SkyBridge can read
+					// `Payload.viewColumn` / `Payload.preserveFocus` without
+					// the alias mapping. Positional `args` array is still
+					// preserved by Mountain's canonicalisation.
+					Context.MountainClient?.sendRequest("webview.reveal", {
+						handle: Handle,
+						viewColumn: Column,
+						preserveFocus: PreserveFocus,
+					}).catch(() => {});
 				},
 				dispose: () => {
 					WebviewPanels.delete(String(Handle));
 					Context.Emitter.removeAllListeners(
 						`webview.message:${Handle}`,
 					);
-					Context.MountainClient?.sendRequest("webview.dispose", [
-						Handle,
-					]).catch(() => {});
+					Context.MountainClient?.sendRequest("webview.dispose", {
+						handle: Handle,
+					}).catch(() => {});
 				},
 				onDidDispose: (Listener: () => any) => {
 					const Event = `webview.dispose:${Handle}`;
@@ -1054,17 +1084,22 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				};
 				return View;
 			});
-			Context.MountainClient?.sendRequest("webview.registerView", [
-				Handle,
-				ViewId,
-			]).catch(() => {});
+			// Named-key payload so Mountain's `Webview.rs` case 1 passes
+			// through verbatim and SkyBridge's `sky://webview/registerView`
+			// listener sees `Payload.viewId` directly without depending on
+			// the per-method positional-to-named alias mapping. Belt-and-
+			// braces with the `webview.rs` registerView alias.
+			Context.MountainClient?.sendRequest("webview.registerView", {
+				handle: Handle,
+				viewId: ViewId,
+			}).catch(() => {});
 			return {
 				dispose: () => {
 					WebviewViewProviders.delete(String(Handle));
 					WebviewViewBuilders.delete(String(Handle));
 					Context.MountainClient?.sendRequest(
 						"webview.unregisterView",
-						[Handle],
+						{ handle: Handle, viewId: ViewId },
 					).catch(() => {});
 				},
 			};
