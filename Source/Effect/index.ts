@@ -60,7 +60,7 @@ export {
 	ModuleNotFoundError,
 	ModuleAccessDeniedError,
 	SecurityPolicyNotFoundError,
-} from "./ModuleInterceptor.js";
+} from "./Module/Interceptor.js";
 
 // Mountain Client
 export {
@@ -76,7 +76,7 @@ export {
 	ConnectionError,
 	RPCError,
 	DisconnectionError,
-} from "./MountainClient.js";
+} from "./Mountain/Client.js";
 
 // RPC Server
 export {

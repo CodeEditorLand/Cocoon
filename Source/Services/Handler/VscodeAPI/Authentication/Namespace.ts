@@ -7,9 +7,9 @@
  * on the `"auth.didChangeSessions"` channel Mountain emits.
  */
 
-import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapAuthenticationNamespace from "./WrapAuthenticationNamespace.js";
+import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapAuthenticationNamespace from "../Wrap/Authentication/Namespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>

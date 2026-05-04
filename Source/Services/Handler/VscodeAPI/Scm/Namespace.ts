@@ -7,10 +7,10 @@
  * `update_scm_group` RPCs.
  */
 
-import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
-import WrapScmNamespace from "./WrapScmNamespace.js";
+import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapNamespaceWithHeuristics from "../Wrap/Namespace/With/Heuristics.js";
+import WrapScmNamespace from "../Wrap/Scm/Namespace.js";
 
 /**
  * Mountain.dev.log diagnostic so SCM-side wiring failures are visible.

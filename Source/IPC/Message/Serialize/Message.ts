@@ -17,14 +17,14 @@ import {
 	MAX_MESSAGE_SIZE,
 	MESSAGE_HEADER_MAGIC,
 	PROTOCOL_VERSION,
-} from "./Constants.js";
+} from "../Constants.js";
 import {
 	CompressionHint,
 	type IMessage,
 	type ISerializationResult,
-} from "./Types.js";
-import { ValidateMessage } from "./Validation.js";
-import VSBuffer from "./VSBuffer.js";
+} from "../Types.js";
+import { ValidateMessage } from "../Validation.js";
+import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
 // SERIALIZATION

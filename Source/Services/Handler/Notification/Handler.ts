@@ -41,8 +41,8 @@
 
 import type { EventEmitter } from "events";
 
-import type { HandlerContext } from "./HandlerContext.js";
-import * as WindowNamespaceModule from "./VscodeAPI/WindowNamespace.js";
+import type { HandlerContext } from "../Handler/Context.js";
+import * as WindowNamespaceModule from "../VscodeAPI/Window/Namespace.js";
 
 type WorkspaceFolderWire = {
 	uri?: string;
@@ -404,7 +404,7 @@ const HandleSpecificNotification = (
 				}
 				if (LanguageIdentifiers.size > 0) {
 					setImmediate(() => {
-						import("./ExtensionHostHandler.js")
+						import("../Extension/Host/Handler.js")
 							.then(({ default: ExtensionHostHandler }) => {
 								for (const Id of LanguageIdentifiers) {
 									void ExtensionHostHandler.HandleActivateByEvent(
@@ -466,7 +466,7 @@ const HandleSpecificNotification = (
 				// view is later re-resolved (workbench may show the
 				// panel again).
 				try {
-					import("./VscodeAPI/WindowNamespace.js").then(
+					import("../VscodeAPI/Window/Namespace.js").then(
 						({ WebviewViewBuilders: _Builders }) => {
 							/* builders are factories - no per-instance state to dispose here */
 						},
@@ -581,7 +581,7 @@ const HandleSpecificNotification = (
 			if (Context && Added.length > 0) {
 				const CapturedContext = Context;
 				setImmediate(() => {
-					import("./WorkspaceContainsActivator.js")
+					import("../Workspace/Contains/Activator.js")
 						.then(({ default: Activate }) =>
 							Activate(CapturedContext, Added),
 						)

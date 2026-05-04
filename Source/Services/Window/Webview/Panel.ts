@@ -11,8 +11,8 @@
 import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
-import { FromAPI as ViewColumnFromAPI } from "../../TypeConverter/Main/ViewColumn.js";
-import { WebviewPanelImplementation } from "../../WebviewPanel/WebviewPanelImplementation.js";
+import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
+import { WebviewPanelImplementation } from "../../../WebviewPanel/Webview/Panel/Implementation.js";
 
 /**
  * IPC proxy shape used inside WebviewPanelImplementation.

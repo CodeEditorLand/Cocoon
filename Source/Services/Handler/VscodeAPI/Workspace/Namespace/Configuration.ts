@@ -16,8 +16,8 @@
  * to another's listener.
  */
 
-import { CocoonDevLog } from "../../../DevLog.js";
-import type { HandlerContext } from "../../HandlerContext.js";
+import { CocoonDevLog } from "../../../../Dev/Log.js";
+import type { HandlerContext } from "../../../Handler/Context.js";
 import { Call } from "./Helpers.js";
 
 export type ConfigurationChangeEvent = {

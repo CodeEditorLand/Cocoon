@@ -8,8 +8,8 @@
  * registerResourceLabelFormatter.
  */
 
-import { NextProviderHandle } from "../../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../../HandlerContext.js";
+import { NextProviderHandle } from "../../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../../Handler/Context.js";
 
 const MakeProvider =
 	(

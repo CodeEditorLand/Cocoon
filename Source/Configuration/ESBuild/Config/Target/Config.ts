@@ -1,8 +1,8 @@
 import { deepmerge } from "deepmerge-ts";
 import type { BuildOptions } from "esbuild";
 
-import * as Environment from "../Constant/EnvironmentConstant.js";
-import BaseConfig from "./BaseConfig.js";
+import * as Environment from "../../Constant/Environment/Constant.js";
+import BaseConfig from "../Base/Config.js";
 
 // Tier:*:Resolution 🟢 Primary - CocoonEsbuildDefine is exported by
 // Maintain/Debug/Build.sh as a JSON blob of `__LandTier_<Name>__` keys.

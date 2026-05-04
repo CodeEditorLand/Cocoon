@@ -21,8 +21,8 @@
  * event-loop tick so the notification handler returns immediately.
  */
 
-import GlobToRegex from "../../Utility/GlobToRegex.js";
-import type { HandlerContext } from "./HandlerContext.js";
+import GlobToRegex from "../../../../Utility/Glob/To/Regex.js";
+import type { HandlerContext } from "../../Handler/Context.js";
 
 type WorkspaceFolderWire = {
 	uri?: string;
@@ -234,7 +234,7 @@ export const ActivateWorkspaceContainsExtensions = async (
 	// Lazy-load ExtensionHostHandler to avoid a circular import with the
 	// handler suite - NotificationHandler imports this module at load time.
 	const { default: ExtensionHostHandler } =
-		await import("./ExtensionHostHandler.js");
+		await import("../../Extension/Host/Handler.js");
 
 	let ActivationCount = 0;
 	for (const { Identifier, Globs } of Extensions) {

@@ -69,8 +69,8 @@ import type {
 } from "vscode";
 
 import type { IPC } from "../IPC.js";
-import { CreateEventStream } from "../Utility/EventStream.js";
-import { WebviewImplementation } from "./WebviewImplementation.js";
+import { CreateEventStream } from "../Utility/Event/Stream.js";
+import { WebviewImplementation } from "./Webview/Implementation.js";
 
 /**
  * @interface PanelOptions

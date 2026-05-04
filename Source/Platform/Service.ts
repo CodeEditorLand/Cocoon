@@ -39,7 +39,7 @@ import { Context, Effect, Layer, Option } from "effect";
 import * as EnvironmentModule from "./Environment.js";
 import * as OSModule from "./OS.js";
 import * as ProcessModule from "./Process.js";
-import * as TypeConverterModule from "./TypeConverter.js";
+import * as TypeConverterModule from "./Type/Converter.js";
 
 /**
  * Platform Service interface

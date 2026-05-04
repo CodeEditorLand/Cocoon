@@ -5,7 +5,7 @@
 
 import type { Uri } from "vscode";
 
-import { URI } from "../../Platform/VSCode/Type.js";
+import { URI } from "../../../Platform/VSCode/Type.js";
 
 /**
  * @description Revives a single URI DTO into a `vscode.Uri` instance.

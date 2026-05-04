@@ -19,7 +19,7 @@
  * module's exported types declare. The registry Map is considered private.
  */
 
-import type { HandlerContext } from "../Handler/HandlerContext.js";
+import type { HandlerContext } from "../Handler/Handler/Context.js";
 
 /**
  * Minimal `ILocalExtension` shape that Wind's ExtensionsWorkbenchService

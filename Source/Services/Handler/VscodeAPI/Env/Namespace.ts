@@ -7,9 +7,9 @@
  * Clipboard operations proxy to Mountain via MountainClient.
  */
 
-import LandFixLog from "../../../Utility/LandFixLog.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapEnvNamespace from "./WrapEnvNamespace.js";
+import LandFixLog from "../../../../Utility/Land/Fix/Log.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapEnvNamespace from "../Wrap/Env/Namespace.js";
 
 const CreateEnvNamespace = (Context: HandlerContext) => {
 	const Env = (Context.ExtensionHostInitData?.environment ?? {}) as Record<

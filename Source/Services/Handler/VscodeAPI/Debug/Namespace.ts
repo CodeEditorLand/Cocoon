@@ -7,9 +7,9 @@
  * `Context.Emitter` on the `"debug.*"` channels emitted by Mountain.
  */
 
-import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapDebugNamespace from "./WrapDebugNamespace.js";
+import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapDebugNamespace from "../Wrap/Debug/Namespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>

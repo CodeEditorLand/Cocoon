@@ -136,7 +136,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		// contributes.views manifest - the only stable key Mountain has.
 		"^\\$provideTreeChildren$": async (_Method: string, Params: any) => {
 			const { TreeDataProvidersByViewId } =
-				await import("./VscodeAPI/WindowNamespace.js");
+				await import("../../VscodeAPI/Window/Namespace.js");
 			const ViewId = Params?.viewId ?? Params?.[0];
 			const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
 			const Provider = TreeDataProvidersByViewId.get(String(ViewId));
@@ -253,7 +253,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// Mountain asks Cocoon for tree data; route to the registered
 			// TreeDataProvider for the handle and serialise the response.
 			const { TreeDataProviders } =
-				await import("./VscodeAPI/WindowNamespace.js");
+				await import("../../VscodeAPI/Window/Namespace.js");
 			const Handle = Params?.handle ?? Params?.[0];
 			const Provider = TreeDataProviders.get(String(Handle));
 			if (!Provider) {
@@ -299,7 +299,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				WebviewViewProviders,
 				WebviewViewBuilders,
 				CustomEditorProviders,
-			} = await import("./VscodeAPI/WindowNamespace.js");
+			} = await import("../../VscodeAPI/Window/Namespace.js");
 			const Handle = Params?.handle ?? Params?.[0];
 			switch (Method) {
 				case "webview.resolveView": {
@@ -503,7 +503,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const DurationMs = Date.now() - StartMillis;
 					try {
 						const { CaptureHandler } =
-							await import("../../Telemetry/PostHogBridge.js");
+							await import("../../../../Telemetry/Post/Hog/Bridge.js");
 						CaptureHandler(Method, DurationMs, Ok);
 					} catch {
 						// Telemetry must not raise into the dispatcher.

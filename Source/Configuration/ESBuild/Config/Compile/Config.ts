@@ -1,6 +1,6 @@
 import type { BuildOptions } from "esbuild";
 
-import TargetConfig from "./TargetConfig.js";
+import TargetConfig from "../Target/Config.js";
 
 const Merge = (await import("deepmerge-ts")).deepmergeCustom({
 	mergeArrays: false,

@@ -9,7 +9,7 @@ import type * as VSCode from "vscode";
 // TreeItemCollapsibleState comes from the Platform/VSCode barrel (real VS Code source).
 import * as ExtHostTypes from "../../Platform/VSCode/Type.js";
 import type { Command } from "../Command.js";
-import { FromAPI as MarkdownStringFromAPI } from "../Main/MarkdownString.js";
+import { FromAPI as MarkdownStringFromAPI } from "../Main/Markdown/String.js";
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
 
 const { TreeItemCollapsibleState } = ExtHostTypes;

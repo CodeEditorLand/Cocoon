@@ -7,12 +7,12 @@
 
 import { Context, Effect, Layer } from "effect";
 
-import { IConfigurationService } from "../Interfaces/IConfigurationService.js";
-import { IFileSystemService } from "../Interfaces/IFileSystemService.js";
-import { IModuleInterceptorService } from "../Interfaces/IModuleInterceptorService.js";
-import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-import { ITerminalService } from "../Interfaces/ITerminalService.js";
-import * as LanguageProviderRegistry from "./LanguageProviderRegistry.js";
+import { IConfigurationService } from "../../../Interfaces/I/Configuration/Service.js";
+import { IFileSystemService } from "../../../Interfaces/I/File/System/Service.js";
+import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
+import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
+import { ITerminalService } from "../../../Interfaces/I/Terminal/Service.js";
+import * as LanguageProviderRegistry from "../../Language/Provider/Registry.js";
 
 // Real VS Code type constructors from @codeeditorland/output (compiled from VS Code source).
 // Loaded once at module init - all extensions share these class definitions.

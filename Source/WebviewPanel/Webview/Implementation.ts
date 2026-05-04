@@ -10,9 +10,9 @@ import type { IExtensionDescription } from "@codeeditorland/output/Target/Micros
 import { Effect } from "effect";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
-import type { IPC } from "../IPC.js";
-import { ConvertContentOptionToDTO } from "../TypeConverter/Webview/ConvertContentOptionToDTO.js";
-import { CreateEventStream } from "../Utility/EventStream.js";
+import type { IPC } from "../../IPC.js";
+import { ConvertContentOptionToDTO } from "../../TypeConverter/Webview/Convert/Content/Option/To/DTO.js";
+import { CreateEventStream } from "../../Utility/Event/Stream.js";
 
 /**
  * @class WebviewImplementation

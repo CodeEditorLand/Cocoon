@@ -6,7 +6,7 @@
  * folder URI → fs-path conversion, and workspace folder resolution.
  */
 
-import type { HandlerContext } from "../../HandlerContext.js";
+import type { HandlerContext } from "../../../Handler/Context.js";
 
 /**
  * Curried helper that subscribes a listener to a named event on

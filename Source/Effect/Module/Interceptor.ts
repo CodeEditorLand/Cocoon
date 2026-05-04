@@ -8,7 +8,7 @@
 
 import { Context, Effect, HashMap, Layer, Ref, SubscriptionRef } from "effect";
 
-import { TelemetryTag } from "./Telemetry.js";
+import { TelemetryTag } from "../Telemetry.js";
 
 // ============================================================================
 // TYPES

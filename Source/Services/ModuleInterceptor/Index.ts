@@ -13,7 +13,7 @@ export {
 	default,
 	ModuleInterceptorLayer,
 	ModuleInterceptorLive,
-} from "../ModuleInterceptor.js";
+} from "../Module/Interceptor.js";
 
 export type {
 	ModuleInterceptorConfig,

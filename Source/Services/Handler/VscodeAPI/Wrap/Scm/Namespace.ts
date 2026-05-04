@@ -12,7 +12,7 @@
  * those are constructed per-extension and have their own contracts.
  */
 
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapScmNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("scm", Concrete);

@@ -39,10 +39,10 @@ export {
 } from "./Validation.js";
 
 // Core operations
-export { default as SerializeMessage } from "./SerializeMessage.js";
-export { default as DeserializeMessage } from "./DeserializeMessage.js";
-export { default as BatchMessages } from "./BatchMessages.js";
-export { default as UnbatchMessages } from "./UnbatchMessages.js";
+export { default as SerializeMessage } from "./Serialize/Message.js";
+export { default as DeserializeMessage } from "./Deserialize/Message.js";
+export { default as BatchMessages } from "./Batch/Messages.js";
+export { default as UnbatchMessages } from "./Unbatch/Messages.js";
 
 // Utility functions
 export {

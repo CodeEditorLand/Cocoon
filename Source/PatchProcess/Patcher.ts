@@ -57,7 +57,7 @@ import ModuleNS from "node:module";
 import { Config, Data, Effect } from "effect";
 
 import { ExitPreventedProblem } from "../../Archive/PatchProcess/ExitPreventedProblem.js";
-import { InitDataService } from "../Services/InitData.js";
+import { InitDataService } from "../Services/Init/Data.js";
 import { SecurityPolicy } from "./Security.js";
 
 const Module = ModuleNS as any;

@@ -20,8 +20,8 @@ import { ExtractInterfaceMembers } from "@codeeditorland/wind/Target/Codegen/Ext
 import { ResolveInterfaceCrossFile } from "@codeeditorland/wind/Target/Codegen/Resolve/ResolveInterfaceCrossFile.js";
 import type { SourceFile } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 
-import type { ExtHostDecoratorRecord } from "../Type/ExtHostDecoratorRecord.js";
-import { IsExtHostFile } from "./IsExtHostFile.js";
+import type { ExtHostDecoratorRecord } from "../../../../Type/Ext/Host/Decorator/Record.js";
+import { IsExtHostFile } from "../../../Is/Ext/Host/File.js";
 
 const MainThreadCounterpartName = (decoratorName: string): string | null => {
 	if (!decoratorName.startsWith("IExtHost")) return null;

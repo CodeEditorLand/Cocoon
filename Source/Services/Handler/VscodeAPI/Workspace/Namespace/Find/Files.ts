@@ -13,14 +13,14 @@
  * path, never worse.
  */
 
-import GlobToRegex from "../../../../Utility/GlobToRegex.js";
-import type { HandlerContext } from "../../HandlerContext.js";
-import { GlobParsePattern, Uri as StockUri } from "../StockLift.js";
+import GlobToRegex from "../../../../../../Utility/Glob/To/Regex.js";
+import type { HandlerContext } from "../../../../Handler/Context.js";
+import { GlobParsePattern, Uri as StockUri } from "../../../Stock/Lift.js";
 import {
 	DefaultExcludeSegments,
 	ExtractGlobPattern,
 	FolderToFsPath,
-} from "./Helpers.js";
+} from "../Helpers.js";
 
 type GlobMatcher = (Path: string) => boolean;
 

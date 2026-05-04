@@ -6,7 +6,7 @@
 
 import type * as VSCode from "vscode";
 
-import { FromAPI as ViewColumnFromAPI } from "../Main/ViewColumn.js";
+import { FromAPI as ViewColumnFromAPI } from "../../../../../Main/View/Column.js";
 
 interface IEditorOptions {
 	preserveFocus?: boolean;

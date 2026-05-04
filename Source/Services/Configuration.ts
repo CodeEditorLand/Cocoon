@@ -18,8 +18,8 @@ import { Effect, Layer } from "effect";
 import {
 	IConfigurationService,
 	type ConfigurationChangeEvent,
-} from "../Interfaces/IConfigurationService.js";
-import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
+} from "../Interfaces/I/Configuration/Service.js";
+import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
 
 // Configuration scopes
 enum ConfigurationScope {

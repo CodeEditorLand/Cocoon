@@ -11,7 +11,7 @@
  * only intercepts unknown property access.
  */
 
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapCommandsNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("commands", Concrete);

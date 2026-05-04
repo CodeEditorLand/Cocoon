@@ -29,6 +29,7 @@ import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 import { v4 as uuidv4 } from "uuid";
 
+import { CocoonDevLog } from "../../Dev/Log.js";
 import {
 	CancelOperationRequest,
 	Empty,
@@ -39,7 +40,6 @@ import {
 	RPCError,
 } from "../Generated/Vine";
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
-import { CocoonDevLog } from "./DevLog.js";
 
 // ESM compatibility
 const __filename = fileURLToPath(import.meta.url);

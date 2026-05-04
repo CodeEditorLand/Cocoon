@@ -7,11 +7,11 @@
  *   via `FileWatcher.Register`, filtering events by pattern on the Rust side.
  */
 
-import GlobToRegex from "../../../../Utility/GlobToRegex.js";
-import Tier from "../../../../Utility/Tier.js";
-import { NextProviderHandle } from "../../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../../HandlerContext.js";
-import { ExtractGlobPattern, ResolveWorkspaceFolders } from "./Helpers.js";
+import GlobToRegex from "../../../../../../../Utility/Glob/To/Regex.js";
+import Tier from "../../../../../../../Utility/Tier.js";
+import { NextProviderHandle } from "../../../../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../../../../Handler/Context.js";
+import { ExtractGlobPattern, ResolveWorkspaceFolders } from "../../Helpers.js";
 
 export const CreateFileSystemWatcher = (
 	Context: HandlerContext,

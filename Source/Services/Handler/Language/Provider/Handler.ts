@@ -12,7 +12,7 @@
  *   params[3] = Context / Options (completion, code actions, etc.)
  */
 
-import * as LanguageProviderRegistry from "../LanguageProviderRegistry.js";
+import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
 
 /**
  * Normalize a VS Code range { start: { line, character }, end: {...} } to

@@ -8,23 +8,23 @@
  * document-change notifications.
  */
 
-import { TryMountainWithEmptyFallback } from "../../../DualTrack.js";
-import type { HandlerContext } from "../../HandlerContext.js";
+import { TryMountainWithEmptyFallback } from "../../../../Dual/Track.js";
+import type { HandlerContext } from "../../../Handler/Context.js";
 import {
 	IsEqualOrParent as StockIsEqualOrParent,
 	RelativePath as StockRelativePath,
 	ToUri as StockToUri,
 	Uri as StockUri,
-} from "../StockLift.js";
+} from "../../Stock/Lift.js";
 import {
 	BuildGetConfiguration,
 	BuildOnDidChangeConfiguration,
 	CreateConfigurationState,
 } from "./Configuration.js";
-import { BuildFileSystemNamespace } from "./FileSystemNamespace.js";
-import { CreateFileSystemWatcher } from "./FileSystemWatcher.js";
-import { FindFilesLocal } from "./FindFiles.js";
-import { FindTextInFilesNodeFallback } from "./FindTextInFilesFallback.js";
+import { BuildFileSystemNamespace } from "./File/System/Namespace.js";
+import { CreateFileSystemWatcher } from "./File/System/Watcher.js";
+import { FindFilesLocal } from "./Find/Files.js";
+import { FindTextInFilesNodeFallback } from "./Find/Text/In/Files/Fallback.js";
 import {
 	BuildRegisterFileSystemProvider,
 	BuildRegisterNotebookContentProvider,
@@ -40,8 +40,8 @@ import {
 	BuildOpenTextDocument,
 	BuildSaveAll,
 	BuildUpdateWorkspaceFolders,
-} from "./TextDocument.js";
-import WrapWorkspaceNamespace from "./WrapWorkspaceNamespace.js";
+} from "./Text/Document.js";
+import WrapWorkspaceNamespace from "./Wrap/Workspace/Namespace.js";
 
 /**
  * Hydrate URI results coming back from Mountain (string URLs) or the

@@ -35,6 +35,13 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
+import DocumentContentHandler from "../../Handler/Document/Content/Handler.js";
+import ExtensionHostHandler from "../../Handler/Extension/Host/Handler.js";
+// Import handler modules
+import type { HandlerContext } from "../../Handler/Handler/Context.js";
+import InvokeLanguageProvider from "../../Handler/Language/Provider/Handler.js";
+import HandleSpecificNotification from "../../Handler/Notification/Handler.js";
+import RouteRequest from "../../Handler/Request/Routing/Handler.js";
 // Import generated interfaces from Vine.proto
 import {
 	CancelOperationRequest,
@@ -45,13 +52,6 @@ import {
 	GenericResponse,
 } from "../Generated/Vine";
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
-import DocumentContentHandler from "./Handler/DocumentContentHandler.js";
-import ExtensionHostHandler from "./Handler/ExtensionHostHandler.js";
-// Import handler modules
-import type { HandlerContext } from "./Handler/HandlerContext.js";
-import InvokeLanguageProvider from "./Handler/LanguageProviderHandler.js";
-import HandleSpecificNotification from "./Handler/NotificationHandler.js";
-import RouteRequest from "./Handler/RequestRoutingHandler.js";
 
 // ESM compatibility - provide __dirname and require() for proto loading
 const __filename = fileURLToPath(import.meta.url);
@@ -123,7 +123,7 @@ export class GRPCServerService
 
 	/** Reverse gRPC client for sending messages back to Mountain */
 	private mountainClient:
-		| import("./MountainClientService.js").MountainClientService
+		| import("../../Mountain/Client/Service.js").MountainClientService
 		| null = null;
 
 	/** Workspace document lifecycle event emitter.
@@ -690,7 +690,7 @@ export class GRPCServerService
 		// below catches it.
 		if (method === "$provideTreeChildren") {
 			const RequestRoutingHandler = (
-				await import("./Handler/RequestRoutingHandler.js")
+				await import("../../Handler/Request/Routing/Handler.js")
 			).default;
 			return RequestRoutingHandler(method, parameters);
 		}
@@ -719,7 +719,7 @@ export class GRPCServerService
 			const CommandArguments: unknown = Args[1];
 			if (CommandId) {
 				const LanguageProviderRegistry =
-					await import("./LanguageProviderRegistry.js");
+					await import("../../Language/Provider/Registry.js");
 				const ExtensionArguments = Array.isArray(CommandArguments)
 					? CommandArguments
 					: CommandArguments === undefined
@@ -910,7 +910,7 @@ export class GRPCServerService
 		);
 
 		const { MountainClientService } =
-			await import("./MountainClientService.js");
+			await import("../../Mountain/Client/Service.js");
 		const Client = new MountainClientService();
 		await Client.connect();
 
@@ -937,7 +937,7 @@ export class GRPCServerService
 	 */
 	async SendToMountain(Method: string, Parameters: any): Promise<void> {
 		const { IsRustDeferralEnabled, LogDualTrack } =
-			await import("./DualTrack.js");
+			await import("../../Dual/Track.js");
 		if (!IsRustDeferralEnabled(Method)) {
 			LogDualTrack(Method, "node-bypass");
 			return;

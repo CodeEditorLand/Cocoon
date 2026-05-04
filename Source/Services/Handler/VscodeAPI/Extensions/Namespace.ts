@@ -7,9 +7,9 @@
  * Provides: getExtension, all, onDidChange.
  */
 
-import LandFixLog from "../../../Utility/LandFixLog.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapExtensionsNamespace from "./WrapExtensionsNamespace.js";
+import LandFixLog from "../../../../Utility/Land/Fix/Log.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapExtensionsNamespace from "../Wrap/Extensions/Namespace.js";
 
 // When an extension reads `vscode.extensions.getExtension('X').exports`,
 // the caller expects the exporter's public API. For built-ins like

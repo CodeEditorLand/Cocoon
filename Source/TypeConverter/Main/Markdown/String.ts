@@ -10,7 +10,7 @@ import type {
 import type { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 import type { Uri, MarkdownString as VSCodeMarkdownString } from "vscode";
 
-import { MarkdownString } from "../../Platform/VSCode/Type.js";
+import { MarkdownString } from "../../../Platform/VSCode/Type.js";
 
 /**
  * @description Converts a `vscode.MarkdownString` object into a plain DTO for IPC.

@@ -6,8 +6,8 @@ import { Effect } from "effect";
 import "../../Utility/Tier.js";
 
 // Effect services
-import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
-import { EffectServices } from "../../ServiceMapping.js";
+import { BootstrapTag, TelemetryTag } from "../../../Effect/index.js";
+import { EffectServices } from "../../../Service/Mapping.js";
 
 // Atom PH3: PostHog telemetry - initialize as early as possible so errors
 // during bootstrap land in PostHog even if the rest of the extension host
@@ -15,7 +15,8 @@ import { EffectServices } from "../../ServiceMapping.js";
 // production - the `if (process.env.NODE_ENV !== "production")` block
 // below dead-codes when esbuild's `define` substitutes the literal
 // `"production"`, dropping the entire `await import` from the prod chunk.
-type PostHogBridgeModule = typeof import("../../Telemetry/PostHogBridge.js");
+type PostHogBridgeModule =
+	typeof import("../../../Telemetry/Post/Hog/Bridge.js");
 
 /**
  * @module CocoonMain
@@ -130,7 +131,7 @@ declare const __LandTier_Telemetry__: string;
 // telemetry ships in prod - not even the bridge module itself.
 if (process.env["NODE_ENV"] !== "production") {
 	const PostHogBridge: PostHogBridgeModule =
-		await import("../../Telemetry/PostHogBridge.js");
+		await import("../../../Telemetry/Post/Hog/Bridge.js");
 	PostHogBridge.default.Initialize();
 	const _CocoonEntryLoadMillis = Date.now();
 	PostHogBridge.default.CaptureEntryLoad("CocoonMain");

@@ -7,8 +7,8 @@
 
 import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
 
-import { MountainClientService as RealMountainClient } from "../Services/MountainClientService.js";
-import { TelemetryTag } from "./Telemetry.js";
+import { MountainClientService as RealMountainClient } from "../../Services/Mountain/Client/Service.js";
+import { TelemetryTag } from "../Telemetry.js";
 
 // ============================================================================
 // TYPES

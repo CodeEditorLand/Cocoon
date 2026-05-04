@@ -74,13 +74,13 @@
 import { Effect } from "effect";
 import type { Uri, ViewColumn } from "vscode";
 
-import { MountainDTO } from "./Serializer.js";
+import { MountainDTO } from "../Serializer.js";
 import type {
 	PanelState as InternalPanelState,
 	PanelOptions,
 	PanelPosition,
 	PanelViewState,
-} from "./State.js";
+} from "../State.js";
 
 /**
  * @interface TypeConverter

@@ -45,8 +45,8 @@ import * as Process from "node:process";
 
 import { Data, Effect } from "effect";
 
-import { SecurityPolicy } from "./Security.js";
-import { ProcessValidationState, ValidationResult } from "./Validator.js";
+import { SecurityPolicy } from "../Security.js";
+import { ProcessValidationState, ValidationResult } from "../Validator.js";
 
 // --- Mountain DTO Types ---
 

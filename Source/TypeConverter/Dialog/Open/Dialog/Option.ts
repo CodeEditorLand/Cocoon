@@ -5,7 +5,7 @@
 
 import type { OpenDialogOptions } from "vscode";
 
-import { SerializeFilters } from "./Filter.js";
+import { SerializeFilters } from "../../Filter.js";
 
 /**
  * @description Converts `vscode.OpenDialogOptions` to a plain DTO for IPC.

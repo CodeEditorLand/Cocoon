@@ -14,7 +14,7 @@
  * choice), which workbench callers already null-check.
  */
 
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapWindowNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("window", Concrete);

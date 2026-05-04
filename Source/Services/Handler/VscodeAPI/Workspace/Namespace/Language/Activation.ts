@@ -9,7 +9,7 @@
  * extension bootstrap.
  */
 
-import type { HandlerContext } from "../../HandlerContext.js";
+import type { HandlerContext } from "../../../../Handler/Context.js";
 
 // The map is kept tight around the languages VS Code ships with +
 // the ones the user's current extensions contribute. Extensions can

@@ -8,7 +8,7 @@
 
 import type { EventEmitter } from "events";
 
-import type { MountainClientService } from "../MountainClientService.js";
+import type { MountainClientService } from "../../Mountain/Client/Service.js";
 
 /**
  * Context object passed to all handler modules.

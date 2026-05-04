@@ -12,10 +12,10 @@
  * `CaptureEvent`, `CaptureError`, `Initialize`.
  */
 
-import CreateBuffer, { type Buffer } from "./PostHog/Buffer.js";
-import ReadConfiguration from "./PostHog/Configuration.js";
-import EventModule, { type Properties } from "./PostHog/Event.js";
-import ResolveDistinctIdentifier from "./PostHog/Identifier.js";
+import CreateBuffer, { type Buffer } from "../../PostHog/Buffer.js";
+import ReadConfiguration from "../../PostHog/Configuration.js";
+import EventModule, { type Properties } from "../../PostHog/Event.js";
+import ResolveDistinctIdentifier from "../../PostHog/Identifier.js";
 
 const Configuration = ReadConfiguration();
 
@@ -98,7 +98,7 @@ export const Initialize = (): void => {
 	// carries `$trace_id` matching the Jaeger span. Lazy import avoids
 	// loading the OTLP module when telemetry is off.
 	if (process.env["NODE_ENV"] !== "production") {
-		void import("./OTLPBridge.js")
+		void import("../../OTLPBridge.js")
 			.then((OTLP) => {
 				EventModule.SetTraceIdentifier(OTLP.TraceIdentifier());
 			})

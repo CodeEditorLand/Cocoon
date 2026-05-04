@@ -7,9 +7,9 @@
 
 import { Effect, Layer } from "effect";
 
-import { IExtensionHostService } from "../Interfaces/IExtensionHostService.js";
-import { IModuleInterceptorService } from "../Interfaces/IModuleInterceptorService.js";
-import { IAPIFactoryService } from "../Services/APIFactoryService.js";
+import { IExtensionHostService } from "../../../Interfaces/I/Extension/Host/Service.js";
+import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
+import { IAPIFactoryService } from "../../API/Factory/Service.js";
 
 // Types matching VSCode patterns
 interface IExtensionDescription {

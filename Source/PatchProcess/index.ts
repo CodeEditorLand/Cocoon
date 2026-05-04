@@ -107,4 +107,4 @@ export {
 	type ValidationStateDTO,
 	type SecurityEventDTO,
 	type ValidationResultDTO,
-} from "./TypeConverter.js";
+} from "./Type/Converter.js";

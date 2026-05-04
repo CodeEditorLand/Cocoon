@@ -22,8 +22,8 @@
 
 import { promises as FsPromises } from "node:fs";
 
-import type { HandlerContext } from "../../HandlerContext.js";
-import { FindFilesLocal } from "./FindFiles.js";
+import type { HandlerContext } from "../../../../../../../Handler/Context.js";
+import { FindFilesLocal } from "../../../Files.js";
 
 interface QueryShape {
 	pattern?: string;

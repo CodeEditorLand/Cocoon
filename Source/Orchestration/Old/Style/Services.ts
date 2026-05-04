@@ -120,19 +120,19 @@ import { Layer } from "effect";
 // OLD-STYLE SERVICE INTERFACES
 // ============================================================================
 
-import { APIFactoryLayer } from "../Services/APIFactoryService.js";
+import { APIFactoryLayer } from "../../../Services/API/Factory/Service.js";
 // ============================================================================
 // OLD-STYLE SERVICE LAYERS
 // ============================================================================
 
-import { ConfigurationLayer } from "../Services/Configuration.js";
-import { ErrorHandlingServiceLive } from "../Services/ErrorHandlingService.js";
-import { ExtensionHostLayer } from "../Services/ExtensionHostService.js";
-import { ModuleInterceptorServiceLayer } from "../Services/ModuleInterceptorService.js";
-import { MountainClientServiceLayer } from "../Services/MountainClientService.js";
-import { PerformanceMonitoringServiceLive } from "../Services/PerformanceMonitoringService.js";
-import { SecurityServiceLive } from "../Services/SecurityService.js";
-import { TerminalServiceLayer } from "../Services/TerminalService.js";
+import { ConfigurationLayer } from "../../../Services/Configuration.js";
+import { ErrorHandlingServiceLive } from "../../../Services/Error/Handling/Service.js";
+import { ExtensionHostLayer } from "../../../Services/Extension/Host/Service.js";
+import { ModuleInterceptorServiceLayer } from "../../../Services/Module/Interceptor/Service.js";
+import { MountainClientServiceLayer } from "../../../Services/Mountain/Client/Service.js";
+import { PerformanceMonitoringServiceLive } from "../../../Services/Performance/Monitoring/Service.js";
+import { SecurityServiceLive } from "../../../Services/Security/Service.js";
+import { TerminalServiceLayer } from "../../../Services/Terminal/Service.js";
 
 // ============================================================================
 // OLD STYLE SERVICES

@@ -28,7 +28,7 @@
  * ## Usage Example
  *
  * ```typescript
- * import { CocoonEchoClient } from './Services/EchoAction.js';
+ * import { CocoonEchoClient } from '../../Services/EchoAction.js';
  *
  * const client = new CocoonEchoClient('http://127.0.0.1:50051', 'cocoon-host-1');
  * await client.connect();
@@ -50,9 +50,9 @@ import {
 	EchoActionResponse,
 	EchoActionServiceClient,
 	RegisterExtensionHostRequest,
-} from "../../Proto/vine.js";
-import { Logger } from "../Platform/Logger.js";
-import { MetricsCollector } from "./MetricsCollector.js";
+} from "../../../../Proto/vine.js";
+import { Logger } from "../../../Platform/Logger.js";
+import { MetricsCollector } from "../../Metrics/Collector.js";
 
 /**
  * Cocoon Echo Action Client

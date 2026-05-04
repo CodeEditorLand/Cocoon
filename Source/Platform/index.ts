@@ -29,7 +29,7 @@
 export * as OS from "./OS.js";
 export * as Environment from "./Environment.js";
 export * as Process from "./Process.js";
-export * as TypeConverter from "./TypeConverter.js";
+export * as TypeConverter from "./Type/Converter.js";
 
 // Service layer
 export * as Service from "./Service.js";
@@ -209,4 +209,4 @@ export {
 	ConvertOSInfoToDTOEffect,
 	DeserializeDTOEffect,
 	TypeConverter as TypeConverterModule,
-} from "./TypeConverter.js";
+} from "./Type/Converter.js";

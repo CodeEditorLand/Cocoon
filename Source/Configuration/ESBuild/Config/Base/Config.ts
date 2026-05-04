@@ -1,6 +1,6 @@
 import type { BuildOptions } from "esbuild";
 
-import * as Environment from "../Constant/EnvironmentConstant.js";
+import * as Environment from "../../Constant/Environment/Constant.js";
 
 export default {
 	color: true,

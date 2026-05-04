@@ -42,7 +42,7 @@ import { Effect } from "effect";
 // `process.env.NODE_ENV !== "production"` is define-substituted to
 // `false` literal by esbuild for prod, dead-coding the whole emit
 // pathway including the dynamic import.
-import LandFixLog from "../../../Utility/LandFixLog.js";
+import LandFixLog from "../../../../../../Utility/Land/Fix/Log.js";
 
 type CaptureEventFn = (
 	Name: string,
@@ -50,7 +50,7 @@ type CaptureEventFn = (
 ) => void;
 let LazyCaptureEvent: CaptureEventFn | undefined;
 if (process.env["NODE_ENV"] !== "production") {
-	void import("../../../Telemetry/PostHogBridge.js")
+	void import("../../../../../../Telemetry/Post/Hog/Bridge.js")
 		.then((Module) => {
 			LazyCaptureEvent = Module.CaptureEvent as CaptureEventFn;
 		})

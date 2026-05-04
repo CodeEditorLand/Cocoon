@@ -24,15 +24,15 @@
 import { promises as FsPromises } from "node:fs";
 import { dirname as PathDirname } from "node:path";
 
-import type { HandlerContext } from "../../HandlerContext.js";
-import { ToUri as StockToUri } from "../StockLift.js";
+import type { HandlerContext } from "../../../../../Handler/Context.js";
+import { ToUri as StockToUri } from "../../../../Stock/Lift.js";
+import { Call } from "../../Helpers.js";
 import {
 	ExtractFsPath,
 	ExtractScheme,
 	Route,
 	type FileSystemRoute,
-} from "./FileSystemRoute.js";
-import { Call } from "./Helpers.js";
+} from "./Route.js";
 
 /**
  * Serialise any URI shape - real `vscode.Uri` instance, UriComponents

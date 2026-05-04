@@ -8,13 +8,13 @@
 
 import { promises as FsPromises } from "node:fs";
 
-import type { HandlerContext } from "../../HandlerContext.js";
-import { ExtractFsPath, Route } from "./FileSystemRoute.js";
-import { Call, EventSubscriber } from "./Helpers.js";
+import type { HandlerContext } from "../../../../Handler/Context.js";
+import { ExtractFsPath, Route } from "../File/System/Route.js";
+import { Call, EventSubscriber } from "../Helpers.js";
 import {
 	DeriveLanguageIdFromUri,
 	FireOnLanguageActivation,
-} from "./LanguageActivation.js";
+} from "../Language/Activation.js";
 
 export const BuildOpenTextDocument =
 	(Context: HandlerContext) => async (UriOrPath: any) => {

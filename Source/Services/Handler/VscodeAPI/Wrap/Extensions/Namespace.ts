@@ -13,7 +13,7 @@
  * proposed APIs).
  */
 
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapExtensionsNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("extensions", Concrete);

@@ -24,22 +24,22 @@
 import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
-import { IMountainClientService } from "../../Interfaces/IMountainClientService.js";
-import { CreateEventStream } from "../../Utility/EventStream.js";
-import { MountainGRPCClientService } from "../MountainGRPCClient.js";
-import { ShowOpenDialog, ShowSaveDialog } from "./FileDialogs.js";
+import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+import { CreateEventStream } from "../../Utility/Event/Stream.js";
+import { MountainGRPCClientService } from "../Mountain/GRPC/Client.js";
+import { ShowOpenDialog, ShowSaveDialog } from "./File/Dialogs.js";
 import type { Logger, Window, Workspace } from "./Interfaces.js";
-import { CreateOutputChannel } from "./OutputChannel.js";
+import { CreateOutputChannel } from "./Output/Channel.js";
 import { WithProgress } from "./Progress.js";
-import { ShowInputBox, ShowQuickPick } from "./QuickInput.js";
-import { CreateStatusBarItem } from "./StatusBar.js";
+import { ShowInputBox, ShowQuickPick } from "./Quick/Input.js";
+import { CreateStatusBarItem } from "./Status/Bar.js";
 import {
 	ShowErrorMessage,
 	ShowInformationMessage,
 	ShowTextDocument,
 	ShowWarningMessage,
-} from "./TextDocument.js";
-import { CreateWebviewPanel } from "./WebviewPanel.js";
+} from "./Text/Document.js";
+import { CreateWebviewPanel } from "./Webview/Panel.js";
 
 export type { Logger, Window, Workspace } from "./Interfaces.js";
 export type { VSCodeWindowAPI } from "./Interfaces.js";

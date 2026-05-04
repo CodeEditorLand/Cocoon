@@ -23,9 +23,9 @@ import { existsSync } from "node:fs";
 import type { CodegenProblem } from "@codeeditorland/wind/Target/Codegen/Type/CodegenProblem.js";
 import { WalkSourceTree } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 
-import { EmitExtHostSchema } from "./Emit/EmitExtHostSchema.js";
-import { IterateExtHostDecorators } from "./Extract/IterateExtHostDecorators.js";
-import type { ExtHostDecoratorRecord } from "./Type/ExtHostDecoratorRecord.js";
+import { EmitExtHostSchema } from "../../../Emit/Emit/Ext/Host/Schema.js";
+import { IterateExtHostDecorators } from "../../../Extract/Iterate/Ext/Host/Decorators.js";
+import type { ExtHostDecoratorRecord } from "../../../Type/Ext/Host/Decorator/Record.js";
 
 export interface RunExtHostCodegenOptions {
 	readonly SourceRoot: string;

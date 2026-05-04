@@ -52,11 +52,11 @@ import type {
 	WebviewPanelOptions,
 } from "vscode";
 
-import type { IPC } from "../IPC.js";
-import { FromAPI as UriFromAPI } from "../TypeConverter/Main/URI.js";
-import { ConvertShowOptionToDTO } from "../TypeConverter/Webview/ConvertShowOptionToDTO.js";
-import { CreateEventStream } from "../Utility/EventStream.js";
-import { WebviewImplementation } from "./WebviewImplementation.js";
+import type { IPC } from "../../../IPC.js";
+import { FromAPI as UriFromAPI } from "../../../TypeConverter/Main/URI.js";
+import { ConvertShowOptionToDTO } from "../../../TypeConverter/Webview/Convert/Show/Option/To/DTO.js";
+import { CreateEventStream } from "../../../Utility/Event/Stream.js";
+import { WebviewImplementation } from "../Implementation.js";
 
 /**
  * @class WebviewPanelImplementation

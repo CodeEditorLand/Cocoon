@@ -7,7 +7,7 @@
  * rather than `TypeError: not a function`.
  */
 
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapTasksNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("tasks", Concrete);

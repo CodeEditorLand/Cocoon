@@ -11,8 +11,8 @@
 import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
-import { FromAPI as ViewColumnFromAPI } from "../../TypeConverter/Main/ViewColumn.js";
-import type { Workspace } from "./Interfaces.js";
+import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
+import type { Workspace } from "../Interfaces.js";
 
 /**
  * Show a text document in the editor.

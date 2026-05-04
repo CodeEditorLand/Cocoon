@@ -6,10 +6,10 @@
  * getLanguages, match, onDidChangeDiagnostics, getDiagnostics.
  */
 
-import GlobToRegex from "../../../Utility/GlobToRegex.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import { ToUri as StockToUri } from "./StockLift.js";
-import WrapLanguagesNamespace from "./WrapLanguagesNamespace.js";
+import GlobToRegex from "../../../../Utility/Glob/To/Regex.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import { ToUri as StockToUri } from "../Stock/Lift.js";
+import WrapLanguagesNamespace from "../Wrap/Languages/Namespace.js";
 
 /**
  * Serialise a URI-shape (real instance / POJO / string) to a stable
@@ -46,7 +46,7 @@ const UriKey = (Value: unknown): string => {
  */
 const RegisterProvider = (
 	Context: HandlerContext,
-	LanguageProviderRegistry: typeof import("../../LanguageProviderRegistry.js"),
+	LanguageProviderRegistry: typeof import("../../../Language/Provider/Registry.js"),
 	MethodName: string,
 	Selector: any,
 	Provider: any,
@@ -93,7 +93,7 @@ const RegisterProvider = (
 
 const CreateLanguagesNamespace = (
 	Context: HandlerContext,
-	LanguageProviderRegistry: typeof import("../../LanguageProviderRegistry.js"),
+	LanguageProviderRegistry: typeof import("../../../Language/Provider/Registry.js"),
 ) =>
 	WrapLanguagesNamespace({
 		registerHoverProvider: (Selector: any, Provider: any) =>

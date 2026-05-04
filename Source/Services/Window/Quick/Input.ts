@@ -13,7 +13,7 @@ import type * as VSCode from "vscode";
 import {
 	SerializeButtons,
 	SerializeItems,
-} from "../../TypeConverter/QuickInput.js";
+} from "../../../TypeConverter/Quick/Input.js";
 
 /**
  * Show a quick pick selection dialog.

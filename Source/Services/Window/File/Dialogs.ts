@@ -10,8 +10,8 @@
 import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
-import { ToDTO as OpenDialogOptionToDTO } from "../../TypeConverter/Dialog/OpenDialogOption.js";
-import { ToDTO as SaveDialogOptionToDTO } from "../../TypeConverter/Dialog/SaveDialogOption.js";
+import { ToDTO as OpenDialogOptionToDTO } from "../../../TypeConverter/Dialog/Open/Dialog/Option.js";
+import { ToDTO as SaveDialogOptionToDTO } from "../../../TypeConverter/Dialog/Save/Dialog/Option.js";
 
 /**
  * Show a file open dialog.

@@ -11,12 +11,12 @@ import type * as VSCode from "vscode";
 import {
 	TextEdit as VSCodeTextEdit,
 	WorkspaceEdit as VSCodeWorkspaceEdit,
-} from "../Platform/VSCode/Type.js";
+} from "../../Platform/VSCode/Type.js";
 import {
 	FromAPI as TextEditFromAPI,
 	ToAPI as TextEditToAPI,
-} from "./Main/TextEdit.js";
-import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "./Main/URI.js";
+} from "../Main/Text/Edit.js";
+import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
 
 // --- DTO Interfaces for IPC ---
 // These define the plain, serializable objects for IPC, decoupling from complex VS Code internal types.

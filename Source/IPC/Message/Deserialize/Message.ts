@@ -9,15 +9,15 @@ import {
 	MESSAGE_HEADER_MAGIC,
 	MessageFlags,
 	PROTOCOL_VERSION,
-} from "./Constants.js";
+} from "../Constants.js";
 import {
 	CompressionHint,
 	type IDeserializationResult,
 	type IMessage,
 	type MessageMetadata,
-} from "./Types.js";
-import { ValidateMetadata } from "./Validation.js";
-import VSBuffer from "./VSBuffer.js";
+} from "../Types.js";
+import { ValidateMetadata } from "../Validation.js";
+import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
 // DESERIALIZATION

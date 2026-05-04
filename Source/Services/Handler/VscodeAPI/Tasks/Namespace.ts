@@ -7,9 +7,9 @@
  * `Context.Emitter` on `"task.*"` channels.
  */
 
-import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapTasksNamespace from "./WrapTasksNamespace.js";
+import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapTasksNamespace from "../Wrap/Tasks/Namespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>

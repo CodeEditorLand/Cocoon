@@ -31,7 +31,7 @@
  * for the full end-to-end workflow.
  */
 
-import LandFixLog from "./LandFixLog.js";
+import LandFixLog from "./Land/Fix/Log.js";
 
 // Transport tiers ------------------------------------------------------------
 export type TierRemoteProcedureCallValue = "GRPC" | "SharedMemory";

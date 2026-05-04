@@ -7,9 +7,9 @@
  * Mountain pushes down via gRPC notifications.
  */
 
-import { NextProviderHandle } from "../../LanguageProviderRegistry.js";
-import type { HandlerContext } from "../HandlerContext.js";
-import WrapWindowNamespace from "./WrapWindowNamespace.js";
+import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapWindowNamespace from "../Wrap/Window/Namespace.js";
 
 type Listener<T> = (Event: T) => unknown;
 

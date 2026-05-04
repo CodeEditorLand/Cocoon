@@ -34,8 +34,8 @@
  * (`applyEdit`, `saveAll`) - not a routing decision here.
  */
 
-import Tier from "../../../../Utility/Tier.js";
-import { ClaimedFileSystemSchemes } from "./Providers.js";
+import Tier from "../../../../../../../Utility/Tier.js";
+import { ClaimedFileSystemSchemes } from "../../Providers.js";
 
 export type FileSystemRoute = "native" | "mountain";
 

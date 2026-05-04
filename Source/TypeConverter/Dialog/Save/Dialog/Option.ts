@@ -5,7 +5,7 @@
 
 import type { SaveDialogOptions } from "vscode";
 
-import { SerializeFilters } from "./Filter.js";
+import { SerializeFilters } from "../../Filter.js";
 
 /**
  * @description Converts `vscode.SaveDialogOptions` to a plain DTO for IPC.

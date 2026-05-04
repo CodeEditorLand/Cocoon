@@ -11,15 +11,15 @@
  * - Message Data (variable): Concatenated message data
  */
 
-import { MAX_BATCH_COUNT, MAX_BATCH_SIZE } from "./Constants.js";
-import SerializeMessage from "./SerializeMessage.js";
+import { MAX_BATCH_COUNT, MAX_BATCH_SIZE } from "../Constants.js";
+import SerializeMessage from "../Serialize/Message.js";
 import {
 	CompressionHint,
 	type IMessage,
 	type ISerializationResult,
-} from "./Types.js";
-import { ValidateMessage } from "./Validation.js";
-import VSBuffer from "./VSBuffer.js";
+} from "../Types.js";
+import { ValidateMessage } from "../Validation.js";
+import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
 // BATCH OPERATIONS

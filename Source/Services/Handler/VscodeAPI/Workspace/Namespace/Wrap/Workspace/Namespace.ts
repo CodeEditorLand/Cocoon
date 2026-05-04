@@ -14,7 +14,7 @@
  * pre-existing key.
  */
 
-import WrapNamespaceWithHeuristics from "../WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../../../../Wrap/Namespace/With/Heuristics.js";
 
 const WrapWorkspaceNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("workspace", Concrete);

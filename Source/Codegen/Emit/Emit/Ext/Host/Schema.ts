@@ -19,7 +19,7 @@ import type {
 	InterfaceMemberRecord,
 } from "@codeeditorland/wind/Target/Codegen/Type/InterfaceMemberRecord.js";
 
-import type { ExtHostDecoratorRecord } from "../Type/ExtHostDecoratorRecord.js";
+import type { ExtHostDecoratorRecord } from "../../../../Type/Ext/Host/Decorator/Record.js";
 
 const FormatDocComment = (doc: string | null, indent: string): string => {
 	if (!doc) return "";

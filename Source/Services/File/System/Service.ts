@@ -7,7 +7,7 @@
 
 import { Context, Effect, Layer } from "effect";
 
-import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
+import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
 
 // --- Interfaces ---
 

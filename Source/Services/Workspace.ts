@@ -61,7 +61,7 @@ import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
-import { MountainGRPCClientService } from "./MountainGRPCClient.js";
+import { MountainGRPCClientService } from "./Mountain/GRPC/Client.js";
 
 // Temporary placeholder types - TODO: Replace with proper interfaces
 interface Logger {

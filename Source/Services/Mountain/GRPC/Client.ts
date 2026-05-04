@@ -17,8 +17,8 @@
 
 import { Context, Effect, Layer } from "effect";
 
-import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-import { Logger } from "./Logger.js";
+import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
+import { Logger } from "../../Logger.js";
 
 /**
  * Options for showing a text document

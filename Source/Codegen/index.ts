@@ -12,19 +12,19 @@
  * @category Public
  */
 
-export { RunExtHostCodegen } from "./RunExtHostCodegen.js";
+export { RunExtHostCodegen } from "./Run/Ext/Host/Codegen.js";
 export type {
 	RunExtHostCodegenOptions,
 	RunExtHostCodegenSummary,
-} from "./RunExtHostCodegen.js";
+} from "./Run/Ext/Host/Codegen.js";
 
-export { IterateExtHostDecorators } from "./Extract/IterateExtHostDecorators.js";
-export { IsExtHostFile } from "./Extract/IsExtHostFile.js";
+export { IterateExtHostDecorators } from "./Extract/Iterate/Ext/Host/Decorators.js";
+export { IsExtHostFile } from "./Extract/Is/Ext/Host/File.js";
 
-export { EmitExtHostSchema } from "./Emit/EmitExtHostSchema.js";
+export { EmitExtHostSchema } from "./Emit/Emit/Ext/Host/Schema.js";
 export type {
 	EmitExtHostSchemaOptions,
 	EmitExtHostSchemaOutcome,
-} from "./Emit/EmitExtHostSchema.js";
+} from "./Emit/Emit/Ext/Host/Schema.js";
 
-export type { ExtHostDecoratorRecord } from "./Type/ExtHostDecoratorRecord.js";
+export type { ExtHostDecoratorRecord } from "./Type/Ext/Host/Decorator/Record.js";

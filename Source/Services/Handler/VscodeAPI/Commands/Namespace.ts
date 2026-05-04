@@ -14,13 +14,13 @@
  * registered extension commands).
  */
 
-import type { HandlerContext } from "../HandlerContext.js";
-import { LogRoute, Route } from "./CommandsRoute.js";
-import WrapCommandsNamespace from "./WrapCommandsNamespace.js";
+import type { HandlerContext } from "../../Handler/Context.js";
+import WrapCommandsNamespace from "../Wrap/Commands/Namespace.js";
+import { LogRoute, Route } from "./Route.js";
 
 const CreateCommandsNamespace = (
 	Context: HandlerContext,
-	LanguageProviderRegistry: typeof import("../../LanguageProviderRegistry.js"),
+	LanguageProviderRegistry: typeof import("../../../Language/Provider/Registry.js"),
 ) =>
 	WrapCommandsNamespace({
 		registerCommand: (

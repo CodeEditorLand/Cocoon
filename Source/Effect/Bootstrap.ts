@@ -17,12 +17,12 @@ import { createConnection } from "node:net";
 
 import { Context, Duration, Effect, Layer, Schedule } from "effect";
 
-import { CocoonDevLog } from "../Services/DevLog.js";
-import LandFixLog from "../Utility/LandFixLog.js";
+import { CocoonDevLog } from "../Services/Dev/Log.js";
+import LandFixLog from "../Utility/Land/Fix/Log.js";
 import { ExtensionTag } from "./Extension.js";
 import { HealthTag } from "./Health.js";
-import { ModuleInterceptorTag } from "./ModuleInterceptor.js";
-import { MountainClientTag } from "./MountainClient.js";
+import { ModuleInterceptorTag } from "./Module/Interceptor.js";
+import { MountainClientTag } from "./Mountain/Client.js";
 import { RPCServerTag } from "./RPCServer.js";
 import { TelemetryTag, withSpan } from "./Telemetry.js";
 

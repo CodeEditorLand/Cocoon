@@ -1,1 +1,1 @@
-export { IFileSystemService } from "../Services/FileSystemService.js";
+export { IFileSystemService } from "../../../../Services/File/System/Service.js";

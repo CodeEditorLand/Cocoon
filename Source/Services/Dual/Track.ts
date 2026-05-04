@@ -66,8 +66,8 @@
 import {
 	MountainMethods,
 	RouteManifestSummary,
-} from "../Generated/RouteManifest.js";
-import type { HandlerContext } from "../Services/Handler/HandlerContext.js";
+} from "../../Generated/RouteManifest.js";
+import type { HandlerContext } from "../Handler/Handler/Context.js";
 
 /**
  * Typed error thrown by DualTrack when a method is routed to no tier.

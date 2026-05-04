@@ -7,7 +7,7 @@
  * function`.
  */
 
-import WrapNamespaceWithHeuristics from "./WrapNamespaceWithHeuristics.js";
+import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapAuthenticationNamespace = <T extends object>(Concrete: T): T =>
 	WrapNamespaceWithHeuristics("authentication", Concrete);

@@ -39,10 +39,10 @@ import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
-import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
+import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
-import { MountainGRPCClientService } from "./MountainGRPCClient.js";
+import { MountainGRPCClientService } from "./Mountain/GRPC/Client.js";
 
 /**
  * @interface InternalCommandMetadata

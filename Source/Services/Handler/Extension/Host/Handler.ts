@@ -13,9 +13,9 @@
 
 import * as NodeFS from "node:fs";
 
-import { CocoonDevLog } from "../DevLog.js";
-import * as LanguageProviderRegistry from "../LanguageProviderRegistry.js";
-import type { HandlerContext } from "./HandlerContext.js";
+import { CocoonDevLog } from "../../../Dev/Log.js";
+import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
+import type { HandlerContext } from "../../Handler/Context.js";
 
 /**
  * Handle InitializeExtensionHost from Mountain.
@@ -766,31 +766,35 @@ const EnsureVscodeAPIRegistered = async (
 			DebugConfigurationProviderTriggerKind,
 			IndentAction,
 			// Namespaces - each in its own file under VscodeAPI/
-			window: (await import("./VscodeAPI/WindowNamespace.js")).default(
-				Context,
-			),
+			window: (
+				await import("../../VscodeAPI/Window/Namespace.js")
+			).default(Context),
 			workspace: (
-				await import("./VscodeAPI/WorkspaceNamespace.js")
+				await import("../../VscodeAPI/Workspace/Namespace.js")
 			).default(Context),
 			commands: (
-				await import("./VscodeAPI/CommandsNamespace.js")
+				await import("../../VscodeAPI/Commands/Namespace.js")
 			).default(Context, LanguageProviderRegistry),
 			languages: (
-				await import("./VscodeAPI/LanguagesNamespace.js")
+				await import("../../VscodeAPI/Languages/Namespace.js")
 			).default(Context, LanguageProviderRegistry),
 			extensions: (
-				await import("./VscodeAPI/ExtensionsNamespace.js")
+				await import("../../VscodeAPI/Extensions/Namespace.js")
 			).default(Context),
-			env: (await import("./VscodeAPI/EnvNamespace.js")).default(Context),
-			debug: (await import("./VscodeAPI/DebugNamespace.js")).default(
+			env: (await import("../../VscodeAPI/Env/Namespace.js")).default(
 				Context,
 			),
-			tasks: (await import("./VscodeAPI/TasksNamespace.js")).default(
+			debug: (await import("../../VscodeAPI/Debug/Namespace.js")).default(
 				Context,
 			),
-			scm: (await import("./VscodeAPI/ScmNamespace.js")).default(Context),
+			tasks: (await import("../../VscodeAPI/Tasks/Namespace.js")).default(
+				Context,
+			),
+			scm: (await import("../../VscodeAPI/Scm/Namespace.js")).default(
+				Context,
+			),
 			authentication: (
-				await import("./VscodeAPI/AuthenticationNamespace.js")
+				await import("../../VscodeAPI/Authentication/Namespace.js")
 			).default(Context),
 			// Lightweight stub namespaces - no Mountain route yet, returns
 			// safe defaults so extensions that reference them don't crash.

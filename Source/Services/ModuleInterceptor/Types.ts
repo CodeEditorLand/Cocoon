@@ -4,7 +4,7 @@
  * Type definitions and configuration interfaces for the ModuleInterceptor service.
  */
 
-import type { SecurityLevel } from "../../Interfaces/IModuleInterceptor.js";
+import type { SecurityLevel } from "../../Interfaces/I/Module/Interceptor.js";
 
 // Module interception configuration
 export interface ModuleInterceptorConfig {

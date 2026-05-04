@@ -7,7 +7,7 @@
 
 import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
 
-import { GRPCServerService } from "../Services/GRPCServerService.js";
+import { GRPCServerService } from "../Services/GRPC/Server/Service.js";
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
