@@ -10,6 +10,11 @@
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
 import type { HandlerContext } from "../../Handler/Context.js";
 import WrapWindowNamespace from "../Wrap/Window/Namespace.js";
+import CreateOutputChannel from "./CreateOutputChannel.js";
+import CreateStatusBarItem from "./CreateStatusBarItem.js";
+import CreateTerminal from "./CreateTerminal.js";
+import CreateWebviewPanel from "./CreateWebviewPanel.js";
+import CreateWebviewViewBuilder from "./CreateWebviewViewBuilder.js";
 
 type Listener<T> = (Event: T) => unknown;
 
@@ -436,240 +441,24 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 		},
 
-		createTerminal: (Options?: { name?: string; [k: string]: unknown }) => {
-			const Handle = NextProviderHandle();
-			const Name = Options?.name ?? `Terminal ${Handle}`;
-			Context.SendToMountain("window.createTerminal", {
-				handle: Handle,
-				name: Name,
-				options: Options ?? {},
-			}).catch(() => {});
-			// Extensions (task runners, debuggers, test harnesses) query
-			// `terminal.processId` to track the PTY shell process. Resolve it
-			// via a Mountain round-trip the first time it's awaited - cache
-			// the promise so repeated reads return the same value without a
-			// new RPC every call.
-			let ProcessIdPromise: Promise<number | undefined> | undefined;
-			const ResolveProcessId = () => {
-				if (ProcessIdPromise !== undefined) return ProcessIdPromise;
-				ProcessIdPromise = (async () => {
-					try {
-						const Response =
-							await Context.MountainClient?.sendRequest(
-								"Terminal.GetProcessId",
-								[Handle],
-							);
-						if (typeof Response === "number") return Response;
-						if (
-							Response &&
-							typeof (Response as { pid?: unknown }).pid ===
-								"number"
-						) {
-							return (Response as { pid: number }).pid;
-						}
-						return undefined;
-					} catch {
-						return undefined;
-					}
-				})();
-				return ProcessIdPromise;
-			};
-			return {
-				name: Name,
-				get processId() {
-					return ResolveProcessId();
-				},
-				sendText: async (Text: string, _AddNewLine?: boolean) => {
-					Context.SendToMountain("terminal.sendText", {
-						handle: Handle,
-						text: Text,
-					}).catch(() => {});
-				},
-				show: (PreserveFocus?: boolean) => {
-					Context.SendToMountain("terminal.show", {
-						handle: Handle,
-						preserveFocus: PreserveFocus,
-					}).catch(() => {});
-				},
-				hide: () => {
-					Context.SendToMountain("terminal.hide", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				dispose: () => {
-					Context.SendToMountain("terminal.dispose", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				// vscode.window.Terminal.resize(columns, rows) → Mountain
-				// PTY master receives SIGWINCH; shell redraws line editor.
-				resize: async (Columns: number, Rows: number) => {
-					try {
-						await Context.MountainClient?.sendRequest(
-							"Terminal.Resize",
-							[Handle, Columns, Rows],
-						);
-					} catch {
-						// Silent - best-effort UI adaptation.
-					}
-				},
-			};
-		},
+		createTerminal: (Options?: { name?: string; [k: string]: unknown }) =>
+			CreateTerminal(Context, NextProviderHandle(), Options),
 
 		createStatusBarItem: (
 			AlignmentOrId?: unknown,
 			Priority?: number,
-		): Record<string, unknown> => {
-			const Handle = NextProviderHandle();
-			const Item = {
-				id: Handle,
-				alignment:
-					typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
-				priority: Priority,
-				text: "",
-				tooltip: "",
-				command: undefined as string | undefined,
-				show: () => {
-					Context.SendToMountain("statusBar.update", {
-						handle: Handle,
-						text: Item.text,
-						tooltip: Item.tooltip,
-						command: Item.command,
-						visible: true,
-					}).catch(() => {});
-				},
-				hide: () => {
-					Context.SendToMountain("statusBar.update", {
-						handle: Handle,
-						visible: false,
-					}).catch(() => {});
-				},
-				dispose: () => {
-					Context.SendToMountain("statusBar.dispose", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-			};
-			return Item as Record<string, unknown>;
-		},
+		): Record<string, unknown> =>
+			CreateStatusBarItem(
+				Context,
+				NextProviderHandle(),
+				AlignmentOrId,
+				Priority,
+			),
 
 		createOutputChannel: (
 			Name: string,
 			Options?: string | { log?: boolean },
-		) => {
-			const Handle = NextProviderHandle();
-			const IsLog =
-				typeof Options === "object" && Options !== null
-					? Options.log === true
-					: false;
-			Context.SendToMountain("outputChannel.create", {
-				handle: Handle,
-				name: Name,
-				log: IsLog,
-			}).catch(() => {});
-			const Channel = {
-				name: Name,
-				append: (Value: string) => {
-					// Pass `name` alongside `handle` so Mountain's
-					// OutputChannelAppend handler can route `Git` /
-					// `Source Control` / `SCM` traffic to a visible
-					// dev_log tag - the F6 diagnostic depends on
-					// vscode.git's `logger.info('[Model][doInitialScan]
-					// …')` lines being readable in `Trace=short`
-					// runs.
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: Value,
-					}).catch(() => {});
-				},
-				appendLine: (Value: string) => {
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: `${Value}\n`,
-					}).catch(() => {});
-				},
-				clear: () => {
-					Context.SendToMountain("outputChannel.clear", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				show: () => {
-					Context.SendToMountain("outputChannel.show", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				hide: () => {
-					Context.SendToMountain("outputChannel.hide", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				replace: (Value: string) => {
-					Context.SendToMountain("outputChannel.clear", {
-						handle: Handle,
-					}).catch(() => {});
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: Value,
-					}).catch(() => {});
-				},
-				dispose: () => {
-					Context.SendToMountain("outputChannel.dispose", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				// LogOutputChannel additions - returned when the caller passes
-				// `{ log: true }`. Kept on the base channel for simplicity;
-				// these are inert on non-log channels.
-				logLevel: 2, // LogLevel.Info
-				onDidChangeLogLevel: (_Listener: Listener<unknown>) => ({
-					dispose: () => {},
-				}),
-				trace: (Message: string, ..._Arguments: unknown[]) => {
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: `[trace] ${Message}\n`,
-					}).catch(() => {});
-				},
-				debug: (Message: string, ..._Arguments: unknown[]) => {
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: `[debug] ${Message}\n`,
-					}).catch(() => {});
-				},
-				info: (Message: string, ..._Arguments: unknown[]) => {
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: `[info] ${Message}\n`,
-					}).catch(() => {});
-				},
-				warn: (Message: string, ..._Arguments: unknown[]) => {
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: `[warn] ${Message}\n`,
-					}).catch(() => {});
-				},
-				error: (MessageOrError: unknown, ..._Arguments: unknown[]) => {
-					const Text =
-						MessageOrError instanceof Error
-							? (MessageOrError.stack ?? MessageOrError.message)
-							: String(MessageOrError);
-					Context.SendToMountain("outputChannel.append", {
-						handle: Handle,
-						name: Name,
-						value: `[error] ${Text}\n`,
-					}).catch(() => {});
-				},
-			};
-			void IsLog;
-			return Channel;
-		},
+		) => CreateOutputChannel(Context, NextProviderHandle(), Name, Options),
 
 		createTextEditorDecorationType: (Options?: Record<string, unknown>) => {
 			const Key = `decoration:${Math.random().toString(36).slice(2)}`;
@@ -759,158 +548,16 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Options?: unknown,
 		) => {
 			const Handle = NextProviderHandle();
-			let CurrentHtml = "";
-			let CurrentOptions = (Options ?? {}) as Record<string, unknown>;
-			// Named-key payload bypasses Mountain's positional-to-named
-			// canonicalisation entirely - SkyBridge's `sky://webview/create`
-			// listener can read `Payload.viewType`, `Payload.title`,
-			// `Payload.showOptions`, `Payload.options` directly without
-			// depending on the per-method alias mapping in
-			// `Webview.rs::CreateEffect`. The `args` array is still
-			// preserved by the canonicalisation for any consumer that
-			// reads positional slots.
-			Context.MountainClient?.sendRequest("webview.create", {
-				handle: Handle,
-				viewType: ViewType,
-				title: Title,
-				showOptions: ShowOptions,
-				options: CurrentOptions,
-			}).catch(() => {});
-
-			const Panel = {
-				viewType: ViewType,
-				title: Title,
-				iconPath: undefined,
-				webview: {
-					get options() {
-						return CurrentOptions;
-					},
-					set options(Value: Record<string, unknown>) {
-						CurrentOptions = Value;
-						// Named-key payload bypasses Mountain's positional
-						// canonicalisation entirely (`Webview.rs` case 1
-						// passes objects through verbatim) so SkyBridge's
-						// listener finds `Payload.options` directly without
-						// relying on the per-method alias mapping.
-						Context.MountainClient?.sendRequest(
-							"webview.setOptions",
-							{
-								handle: Handle,
-								options: Value,
-							},
-						).catch(() => {});
-					},
-					get html() {
-						return CurrentHtml;
-					},
-					set html(Value: string) {
-						CurrentHtml = Value;
-						try {
-							if (process.env["Trace"]) {
-								process.stdout.write(
-									`[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context.MountainClient}\n`,
-								);
-							}
-						} catch {
-							/* stdout may be unavailable mid-teardown */
-						}
-						// Named-key payload (object) - Mountain's case 1
-						// passes through verbatim so SkyBridge sees
-						// `Payload.html` regardless of any future drift in
-						// the positional-arg canonicalisation. Belt-and-
-						// braces with the `webview.rs` html-alias mapping.
-						Context.MountainClient?.sendRequest("webview.setHtml", {
-							handle: Handle,
-							html: Value,
-						}).then(
-							() => {
-								try {
-									if (process.env["Trace"]) {
-										process.stdout.write(
-											`[WebviewPanel] set-html-sent handle=${Handle}\n`,
-										);
-									}
-								} catch {}
-							},
-							(Error: unknown) => {
-								try {
-									if (process.env["Trace"]) {
-										process.stdout.write(
-											`[WebviewPanel] set-html-failed handle=${Handle} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}\n`,
-										);
-									}
-								} catch {}
-							},
-						);
-					},
-					cspSource: SharedCspSource,
-					asWebviewUri: ToWebviewUri,
-					postMessage: async (Message: unknown) => {
-						try {
-							await Context.MountainClient?.sendRequest(
-								"webview.postMessage",
-								{ handle: Handle, message: Message },
-							);
-							return true;
-						} catch {
-							return false;
-						}
-					},
-					onDidReceiveMessage: (
-						Listener: (Message: unknown) => any,
-					) => {
-						const Event = `webview.message:${Handle}`;
-						Context.Emitter.on(Event, Listener);
-						return {
-							dispose: () => {
-								Context.Emitter.removeListener(Event, Listener);
-							},
-						};
-					},
-				},
-				options: CurrentOptions,
-				viewColumn: 1,
-				active: true,
-				visible: true,
-				reveal: (Column?: number, PreserveFocus?: boolean) => {
-					// Named-key payload so SkyBridge can read
-					// `Payload.viewColumn` / `Payload.preserveFocus` without
-					// the alias mapping. Positional `args` array is still
-					// preserved by Mountain's canonicalisation.
-					Context.MountainClient?.sendRequest("webview.reveal", {
-						handle: Handle,
-						viewColumn: Column,
-						preserveFocus: PreserveFocus,
-					}).catch(() => {});
-				},
-				dispose: () => {
-					WebviewPanels.delete(String(Handle));
-					Context.Emitter.removeAllListeners(
-						`webview.message:${Handle}`,
-					);
-					Context.MountainClient?.sendRequest("webview.dispose", {
-						handle: Handle,
-					}).catch(() => {});
-				},
-				onDidDispose: (Listener: () => any) => {
-					const Event = `webview.dispose:${Handle}`;
-					Context.Emitter.on(Event, Listener);
-					return {
-						dispose: () => {
-							Context.Emitter.removeListener(Event, Listener);
-						},
-					};
-				},
-				onDidChangeViewState: (Listener: (State: unknown) => any) => {
-					const Event = `webview.viewState:${Handle}`;
-					Context.Emitter.on(Event, Listener);
-					return {
-						dispose: () => {
-							Context.Emitter.removeListener(Event, Listener);
-						},
-					};
-				},
-			};
+			const Panel = CreateWebviewPanel(
+				Context,
+				Handle,
+				ViewType,
+				Title,
+				ShowOptions,
+				Options as Record<string, unknown> | undefined,
+				ToWebviewUri,
+				SharedCspSource,
+			);
 			WebviewPanels.set(String(Handle), Panel);
 			return Panel;
 		},
@@ -1060,203 +707,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// Each `resolveWebviewView` call gets a fresh proxy so
 			// per-call event subscriptions don't leak across resolves.
 			WebviewViewBuilders.set(String(Handle), () => {
-				let CurrentHtml = "";
-				const VisibilityListeners = new Set<
-					(visible: boolean) => void
-				>();
-				const DisposeListeners = new Set<() => void>();
-				const NoopDisposable = { dispose: () => {} };
-				// Per-resolve subscriptions to the Cocoon-side Emitter
-				// channels populated by `NotificationHandler.ts:
-				// webview.viewState` and `webview.dispose`. Stored so
-				// the proxy view's `dispose()` can drop them when the
-				// view goes away (extension may resolve again later
-				// with a fresh proxy; we don't want stale listeners
-				// firing into the old proxy's listener sets).
-				const ChannelVisibility = `webview.viewVisibility:${Handle}`;
-				const ChannelDispose = `webview.dispose:${Handle}`;
-				const VisibilityForward = (Visible: unknown) => {
-					for (const L of VisibilityListeners) {
-						try {
-							L(!!Visible);
-						} catch (_e) {
-							/* swallow */
-						}
-					}
-				};
-				const DisposeForward = () => {
-					for (const L of DisposeListeners) {
-						try {
-							L();
-						} catch (_e) {
-							/* swallow */
-						}
-					}
-					DisposeListeners.clear();
-					VisibilityListeners.clear();
-					Context.Emitter?.off?.(
-						ChannelVisibility,
-						VisibilityForward,
-					);
-					Context.Emitter?.off?.(ChannelDispose, DisposeForward);
-				};
-				Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
-				Context.Emitter?.on?.(ChannelDispose, DisposeForward);
-				let CurrentTitle: string | undefined;
-				let CurrentDescription: string | undefined;
-				let CurrentBadge: unknown;
-				const FireMetadataUpdate = () => {
-					Context.SendToMountain("webview.updateView", {
-						handle: Handle,
-						viewId: ViewId,
-						title: CurrentTitle ?? null,
-						description: CurrentDescription ?? null,
-						badge: CurrentBadge ?? null,
-					}).catch(() => {});
-				};
-				const View: any = {
-					get title() {
-						return CurrentTitle;
-					},
-					set title(Value: string | undefined) {
-						CurrentTitle = Value;
-						FireMetadataUpdate();
-					},
-					get description() {
-						return CurrentDescription;
-					},
-					set description(Value: string | undefined) {
-						CurrentDescription = Value;
-						FireMetadataUpdate();
-					},
-					get badge() {
-						return CurrentBadge;
-					},
-					set badge(Value: unknown) {
-						CurrentBadge = Value;
-						FireMetadataUpdate();
-					},
-					webview: {
-						get html() {
-							return CurrentHtml;
-						},
-						set html(Value: string) {
-							CurrentHtml = String(Value ?? "");
-							// Diagnostic: prove the setter was reached. If we see
-							// `[WebviewView] set-html-enter` in the log but no
-							// `Received gRPC Notification: Method='webview.setHtml'`
-							// in Mountain, the gRPC sendNotification is silently
-							// dropping the payload (manifest gap, mountainClient
-							// disconnect, etc). If we see neither, the extension
-							// never assigned `view.webview.html` - the bug is
-							// upstream in the extension's resolveWebviewView.
-							try {
-								if (process.env["Trace"]) {
-									process.stdout.write(
-										`[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}\n`,
-									);
-								}
-							} catch {
-								/* stdout may be unavailable mid-teardown */
-							}
-							Context.SendToMountain("webview.setHtml", {
-								handle: Handle,
-								viewId: ViewId,
-								html: CurrentHtml,
-							}).then(
-								() => {
-									try {
-										if (process.env["Trace"]) {
-											process.stdout.write(
-												`[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}\n`,
-											);
-										}
-									} catch {}
-								},
-								(Error: unknown) => {
-									try {
-										if (process.env["Trace"]) {
-											process.stdout.write(
-												`[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}\n`,
-											);
-										}
-									} catch {}
-								},
-							);
-						},
-						options: {} as any,
-						cspSource: SharedCspSource,
-						asWebviewUri: ToWebviewUri,
-						postMessage: async (Message: unknown) => {
-							await Context.SendToMountain(
-								"webview.postMessage",
-								{
-									handle: Handle,
-									viewId: ViewId,
-									message: Message,
-								},
-							).catch(() => {});
-							return true;
-						},
-						onDidReceiveMessage: (
-							Listener: (msg: unknown) => void,
-						) => {
-							const Channel = `webview.message:${Handle}`;
-							Context.Emitter?.on?.(Channel, Listener);
-							return {
-								dispose: () =>
-									Context.Emitter?.off?.(Channel, Listener),
-							};
-						},
-					},
-					show: (PreserveFocus?: boolean) => {
-						Context.SendToMountain("webview.reveal", {
-							handle: Handle,
-							viewId: ViewId,
-							preserveFocus: !!PreserveFocus,
-						}).catch(() => {});
-					},
-					onDidChangeVisibility: (
-						Listener: (visible: boolean) => void,
-					) => {
-						VisibilityListeners.add(Listener);
-						return {
-							dispose: () => VisibilityListeners.delete(Listener),
-						};
-					},
-					onDispose: (Listener: () => void) => {
-						DisposeListeners.add(Listener);
-						return {
-							dispose: () => DisposeListeners.delete(Listener),
-						};
-					},
-					// Canonical VS Code API name. Roo's `resolveWebviewView`
-					// calls `webviewView.onDidDispose(() => {})`; without
-					// this alias the call surfaces as
-					// `r.onDidDispose is not a function` and the resolver
-					// promise rejects AFTER `webview.html` was already
-					// set successfully (so HTML reaches Sky but the
-					// extension considers the view broken and refuses to
-					// post any further messages). VS Code spells the
-					// listener `onDidDispose: Event<void>`; alias to the
-					// existing `onDispose` listener-set rather than
-					// duplicate the storage.
-					onDidDispose: (Listener: () => void) => {
-						DisposeListeners.add(Listener);
-						return {
-							dispose: () => DisposeListeners.delete(Listener),
-						};
-					},
-					dispose: () => {
-						// Dispose forwarded to the channel-driven path
-						// so listeners + Emitter subscriptions are
-						// uniformly cleaned. `DisposeForward` handles
-						// firing all `DisposeListeners` and dropping
-						// the channel subscriptions.
-						DisposeForward();
-					},
-				};
-				return View;
+				return CreateWebviewViewBuilder(
+					Context,
+					Handle,
+					ViewId,
+					ToWebviewUri,
+					SharedCspSource,
+				);
 			});
 			// Named-key payload so Mountain's `Webview.rs` case 1 passes
 			// through verbatim and SkyBridge's `sky://webview/registerView`
@@ -1608,99 +1065,20 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			"window.didChangeTextEditorDiffInformation",
 		),
 
-		// Preemptive stubs for adjacent window event APIs stock VS Code
-		// ships. Each is wired to a Tauri event channel Mountain may
-		// populate later; until then the subscribe is a safe no-op.
-		// Added in bulk because the `vscode.git` failure above is the
-		// third whack-a-mole on the `vscode.window` namespace in this
-		// session, and extensions subscribe to these events defensively
-		// at activation time.
-		onDidChangeTextEditorSelection: MakeEventSubscriber(
-			Context,
-			"window.didChangeTextEditorSelection",
-		),
-		onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
-			Context,
-			"window.didChangeTextEditorVisibleRanges",
-		),
-		onDidChangeTextEditorOptions: MakeEventSubscriber(
-			Context,
-			"window.didChangeTextEditorOptions",
-		),
-		onDidChangeTextEditorViewColumn: MakeEventSubscriber(
-			Context,
-			"window.didChangeTextEditorViewColumn",
-		),
-		onDidChangeActiveNotebookEditor: MakeEventSubscriber(
-			Context,
-			"window.didChangeActiveNotebookEditor",
-		),
-		onDidChangeVisibleNotebookEditors: MakeEventSubscriber(
-			Context,
-			"window.didChangeVisibleNotebookEditors",
-		),
-		onDidChangeNotebookEditorSelection: MakeEventSubscriber(
-			Context,
-			"window.didChangeNotebookEditorSelection",
-		),
-		onDidChangeNotebookEditorVisibleRanges: MakeEventSubscriber(
-			Context,
-			"window.didChangeNotebookEditorVisibleRanges",
-		),
-		onDidChangeActiveColorTheme: MakeEventSubscriber(
-			Context,
-			"window.didChangeActiveColorTheme",
-		),
-		onDidChangeTerminalState: MakeEventSubscriber(
-			Context,
-			"window.didChangeTerminalState",
-		),
-		onDidOpenTerminal: MakeEventSubscriber(
-			Context,
-			"window.didOpenTerminal",
-		),
-		onDidCloseTerminal: MakeEventSubscriber(
-			Context,
-			"window.didCloseTerminal",
-		),
-		onDidChangeActiveTerminal: MakeEventSubscriber(
-			Context,
-			"window.didChangeActiveTerminal",
-		),
-		onDidWriteTerminalData: MakeEventSubscriber(
-			Context,
-			"window.didWriteTerminalData",
-		),
 		onDidExecuteTerminalCommand: MakeEventSubscriber(
 			Context,
 			"window.didExecuteTerminalCommand",
 		),
-		onDidChangeTerminalShellIntegration: MakeEventSubscriber(
-			Context,
-			"window.didChangeTerminalShellIntegration",
-		),
-		onDidStartTerminalShellExecution: MakeEventSubscriber(
-			Context,
-			"window.didStartTerminalShellExecution",
-		),
-		onDidEndTerminalShellExecution: MakeEventSubscriber(
-			Context,
-			"window.didEndTerminalShellExecution",
-		),
 
 		activeTextEditor: undefined,
-		activeColorTheme: { kind: 2 /* Dark */ },
+		// `activeColorTheme` and `tabGroups` already defined earlier in
+		// this object literal (lines ~614 and ~581) - leaving the
+		// fuller event-aware definitions intact and only mirroring the
+		// remaining state placeholders here.
 		visibleTextEditors: [] as unknown[],
 		visibleNotebookEditors: [] as unknown[],
 		activeNotebookEditor: undefined,
 		notebookEditors: [] as unknown[],
-		tabGroups: {
-			all: [] as unknown[],
-			activeTabGroup: { tabs: [] as unknown[] },
-			onDidChangeTabGroups: (() => ({ dispose: () => {} })) as unknown,
-			onDidChangeTabs: (() => ({ dispose: () => {} })) as unknown,
-			close: async () => false,
-		},
 		terminals: [] as unknown[],
 		activeTerminal: undefined,
 		state: { focused: true, active: true },
