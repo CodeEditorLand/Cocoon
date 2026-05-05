@@ -3357,6 +3357,568 @@ var init_Namespace = __esm({
   }
 });
 
+// Source/Services/Handler/VscodeAPI/Window/CreateOutputChannel.ts
+var CreateOutputChannel_default;
+var init_CreateOutputChannel = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/CreateOutputChannel.ts"() {
+    "use strict";
+    CreateOutputChannel_default = /* @__PURE__ */ __name((Context21, Handle, Name, Options) => {
+      const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
+      Context21.SendToMountain("outputChannel.create", {
+        handle: Handle,
+        name: Name,
+        log: IsLog
+      }).catch(() => {
+      });
+      const Append = /* @__PURE__ */ __name((Value) => {
+        Context21.SendToMountain("outputChannel.append", {
+          handle: Handle,
+          name: Name,
+          value: Value
+        }).catch(() => {
+        });
+      }, "Append");
+      const Channel = {
+        name: Name,
+        append: Append,
+        appendLine: /* @__PURE__ */ __name((Value) => Append(`${Value}
+`), "appendLine"),
+        clear: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("outputChannel.clear", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "clear"),
+        show: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("outputChannel.show", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "show"),
+        hide: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("outputChannel.hide", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "hide"),
+        replace: /* @__PURE__ */ __name((Value) => {
+          Context21.SendToMountain("outputChannel.clear", {
+            handle: Handle
+          }).catch(() => {
+          });
+          Append(Value);
+        }, "replace"),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("outputChannel.dispose", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose"),
+        logLevel: 2,
+        // VS Code's LogLevel.Info
+        onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "onDidChangeLogLevel"),
+        trace: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[trace] ${Message}
+`), "trace"),
+        debug: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[debug] ${Message}
+`), "debug"),
+        info: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[info] ${Message}
+`), "info"),
+        warn: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[warn] ${Message}
+`), "warn"),
+        error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
+          const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
+          Append(`[error] ${Text}
+`);
+        }, "error")
+      };
+      return Channel;
+    }, "default");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts
+var CreateStatusBarItem_default;
+var init_CreateStatusBarItem = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts"() {
+    "use strict";
+    CreateStatusBarItem_default = /* @__PURE__ */ __name((Context21, Handle, AlignmentOrId, Priority) => {
+      const Item = {
+        id: Handle,
+        alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+        priority: Priority,
+        text: "",
+        tooltip: "",
+        command: void 0,
+        show: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("statusBar.update", {
+            handle: Handle,
+            text: Item.text,
+            tooltip: Item.tooltip,
+            command: Item.command,
+            visible: true
+          }).catch(() => {
+          });
+        }, "show"),
+        hide: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("statusBar.update", {
+            handle: Handle,
+            visible: false
+          }).catch(() => {
+          });
+        }, "hide"),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("statusBar.dispose", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+      return Item;
+    }, "default");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Window/CreateTerminal.ts
+var CreateTerminal_default;
+var init_CreateTerminal = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/CreateTerminal.ts"() {
+    "use strict";
+    CreateTerminal_default = /* @__PURE__ */ __name((Context21, Handle, Options) => {
+      const Name = Options?.name ?? `Terminal ${Handle}`;
+      Context21.SendToMountain("window.createTerminal", {
+        handle: Handle,
+        name: Name,
+        options: Options ?? {}
+      }).catch(() => {
+      });
+      let ProcessIdPromise;
+      const ResolveProcessId = /* @__PURE__ */ __name(() => {
+        if (ProcessIdPromise !== void 0) return ProcessIdPromise;
+        ProcessIdPromise = (async () => {
+          try {
+            const Response = await Context21.MountainClient?.sendRequest(
+              "Terminal.GetProcessId",
+              [Handle]
+            );
+            if (typeof Response === "number") return Response;
+            if (Response && typeof Response.pid === "number") {
+              return Response.pid;
+            }
+            return void 0;
+          } catch {
+            return void 0;
+          }
+        })();
+        return ProcessIdPromise;
+      }, "ResolveProcessId");
+      return {
+        name: Name,
+        get processId() {
+          return ResolveProcessId();
+        },
+        sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+          Context21.SendToMountain("terminal.sendText", {
+            handle: Handle,
+            text: Text
+          }).catch(() => {
+          });
+        }, "sendText"),
+        show: /* @__PURE__ */ __name((PreserveFocus) => {
+          Context21.SendToMountain("terminal.show", {
+            handle: Handle,
+            preserveFocus: PreserveFocus
+          }).catch(() => {
+          });
+        }, "show"),
+        hide: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("terminal.hide", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "hide"),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context21.SendToMountain("terminal.dispose", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose"),
+        resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
+          try {
+            await Context21.MountainClient?.sendRequest("Terminal.Resize", [
+              Handle,
+              Columns,
+              Rows
+            ]);
+          } catch {
+          }
+        }, "resize")
+      };
+    }, "default");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Window/CreateWebviewPanel.ts
+var CreateWebviewPanel_default;
+var init_CreateWebviewPanel = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/CreateWebviewPanel.ts"() {
+    "use strict";
+    CreateWebviewPanel_default = /* @__PURE__ */ __name((Context21, Handle, ViewType, Title, ShowOptions, Options, ToWebviewUri, SharedCspSource) => {
+      let CurrentHtml = "";
+      let CurrentOptions = Options ?? {};
+      Context21.MountainClient?.sendRequest("webview.create", {
+        handle: Handle,
+        viewType: ViewType,
+        title: Title,
+        showOptions: ShowOptions,
+        options: CurrentOptions
+      }).catch(() => {
+      });
+      const Panel = {
+        viewType: ViewType,
+        title: Title,
+        iconPath: void 0,
+        webview: {
+          get options() {
+            return CurrentOptions;
+          },
+          set options(Value) {
+            CurrentOptions = Value;
+            Context21.MountainClient?.sendRequest("webview.setOptions", {
+              handle: Handle,
+              options: Value
+            }).catch(() => {
+            });
+          },
+          get html() {
+            return CurrentHtml;
+          },
+          set html(Value) {
+            CurrentHtml = Value;
+            try {
+              if (process.env["Trace"]) {
+                process.stdout.write(
+                  `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context21.MountainClient}
+`
+                );
+              }
+            } catch {
+            }
+            Context21.MountainClient?.sendRequest("webview.setHtml", {
+              handle: Handle,
+              html: Value
+            }).then(
+              () => {
+                try {
+                  if (process.env["Trace"]) {
+                    process.stdout.write(
+                      `[WebviewPanel] set-html-sent handle=${Handle}
+`
+                    );
+                  }
+                } catch {
+                }
+              },
+              (Error2) => {
+                try {
+                  if (process.env["Trace"]) {
+                    process.stdout.write(
+                      `[WebviewPanel] set-html-failed handle=${Handle} error=${String(Error2?.message ?? Error2).slice(0, 120)}
+`
+                    );
+                  }
+                } catch {
+                }
+              }
+            );
+          },
+          cspSource: SharedCspSource,
+          asWebviewUri: ToWebviewUri,
+          postMessage: /* @__PURE__ */ __name(async (Message) => {
+            try {
+              await Context21.MountainClient?.sendRequest(
+                "webview.postMessage",
+                { handle: Handle, message: Message }
+              );
+              return true;
+            } catch {
+              return false;
+            }
+          }, "postMessage"),
+          onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+            const Event2 = `webview.message:${Handle}`;
+            Context21.Emitter.on(Event2, Listener);
+            return {
+              dispose: /* @__PURE__ */ __name(() => {
+                Context21.Emitter.removeListener(Event2, Listener);
+              }, "dispose")
+            };
+          }, "onDidReceiveMessage")
+        },
+        options: CurrentOptions,
+        viewColumn: 1,
+        active: true,
+        visible: true,
+        reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
+          Context21.MountainClient?.sendRequest("webview.reveal", {
+            handle: Handle,
+            viewColumn: Column,
+            preserveFocus: PreserveFocus
+          }).catch(() => {
+          });
+        }, "reveal"),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context21.Emitter.removeAllListeners(`webview.message:${Handle}`);
+          Context21.MountainClient?.sendRequest("webview.dispose", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose"),
+        onDidDispose: /* @__PURE__ */ __name((Listener) => {
+          const Event2 = `webview.dispose:${Handle}`;
+          Context21.Emitter.on(Event2, Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.Emitter.removeListener(Event2, Listener);
+            }, "dispose")
+          };
+        }, "onDidDispose"),
+        onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
+          const Event2 = `webview.viewState:${Handle}`;
+          Context21.Emitter.on(Event2, Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.Emitter.removeListener(Event2, Listener);
+            }, "dispose")
+          };
+        }, "onDidChangeViewState")
+      };
+      return Panel;
+    }, "default");
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Window/CreateWebviewViewBuilder.ts
+var CreateWebviewViewBuilder_default;
+var init_CreateWebviewViewBuilder = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/CreateWebviewViewBuilder.ts"() {
+    "use strict";
+    CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context21, Handle, ViewId, ToWebviewUri, SharedCspSource) => {
+      let CurrentHtml = "";
+      let CurrentVisible = true;
+      const VisibilityListeners = /* @__PURE__ */ new Set();
+      const DisposeListeners = /* @__PURE__ */ new Set();
+      const ChannelVisibility = `webview.viewVisibility:${Handle}`;
+      const ChannelDispose = `webview.dispose:${Handle}`;
+      const VisibilityForward = /* @__PURE__ */ __name((Visible) => {
+        CurrentVisible = !!Visible;
+        for (const L of VisibilityListeners) {
+          try {
+            L(!!Visible);
+          } catch (_e) {
+          }
+        }
+      }, "VisibilityForward");
+      const DisposeForward = /* @__PURE__ */ __name(() => {
+        for (const L of DisposeListeners) {
+          try {
+            L();
+          } catch (_e) {
+          }
+        }
+        DisposeListeners.clear();
+        VisibilityListeners.clear();
+        Context21.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+        Context21.Emitter?.off?.(ChannelDispose, DisposeForward);
+      }, "DisposeForward");
+      Context21.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+      Context21.Emitter?.on?.(ChannelDispose, DisposeForward);
+      let CurrentTitle;
+      let CurrentDescription;
+      let CurrentBadge;
+      const FireMetadataUpdate = /* @__PURE__ */ __name(() => {
+        Context21.SendToMountain("webview.updateView", {
+          handle: Handle,
+          viewId: ViewId,
+          title: CurrentTitle ?? null,
+          description: CurrentDescription ?? null,
+          badge: CurrentBadge ?? null
+        }).catch(() => {
+        });
+      }, "FireMetadataUpdate");
+      const View = {
+        // `viewType` is the manifest-declared id from
+        // `contributes.views[*].id` - same string as `ViewId`. Roo
+        // and others log it when the view resolves and crash on
+        // `undefined.toString()`.
+        viewType: ViewId,
+        // Stock VS Code's `WebviewView.visible: boolean` reflects
+        // whether the pane is body-visible. Roo, Claude, GitLens
+        // all early-return from `resolveWebviewView` /
+        // `getHtmlContent` when this reads falsy - the missing
+        // getter previously made every `view.visible` read produce
+        // `undefined` and the React mount pipeline never kicked
+        // off. Backed by `CurrentVisible` which is updated by the
+        // visibility channel forwarder above.
+        get visible() {
+          return CurrentVisible;
+        },
+        // Some extensions (Continue, occasionally GitLens) cache the
+        // view in their own state and reassign `view.visible = X`
+        // when they think they detect external visibility changes.
+        // Stock VS Code's `WebviewView.visible` is read-only - in
+        // strict-mode ES modules a getter-only property would throw
+        // `TypeError: Cannot set property visible` on those writes
+        // and bring down the resolver chain. A no-op setter
+        // (matching the read-only spirit of the spec) absorbs those
+        // writes without observable behaviour change; the truth
+        // still flows through the visibility channel.
+        set visible(_Ignored) {
+        },
+        get title() {
+          return CurrentTitle;
+        },
+        set title(Value) {
+          CurrentTitle = Value;
+          FireMetadataUpdate();
+        },
+        get description() {
+          return CurrentDescription;
+        },
+        set description(Value) {
+          CurrentDescription = Value;
+          FireMetadataUpdate();
+        },
+        get badge() {
+          return CurrentBadge;
+        },
+        set badge(Value) {
+          CurrentBadge = Value;
+          FireMetadataUpdate();
+        },
+        webview: {
+          get html() {
+            return CurrentHtml;
+          },
+          set html(Value) {
+            CurrentHtml = String(Value ?? "");
+            try {
+              if (process.env["Trace"]) {
+                process.stdout.write(
+                  `[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}
+`
+                );
+              }
+            } catch {
+            }
+            Context21.SendToMountain("webview.setHtml", {
+              handle: Handle,
+              viewId: ViewId,
+              html: CurrentHtml
+            }).then(
+              () => {
+                try {
+                  if (process.env["Trace"]) {
+                    process.stdout.write(
+                      `[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}
+`
+                    );
+                  }
+                } catch {
+                }
+              },
+              (Error2) => {
+                try {
+                  if (process.env["Trace"]) {
+                    process.stdout.write(
+                      `[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String(Error2?.message ?? Error2).slice(0, 120)}
+`
+                    );
+                  }
+                } catch {
+                }
+              }
+            );
+          },
+          // Stock VS Code populates `webview.options` from the
+          // `WebviewOptions` passed to
+          // `registerWebviewViewProvider(viewId, provider, { webviewOptions })`.
+          // Roo / Claude / Continue all read
+          // `view.webview.options.localResourceRoots` when composing
+          // CSP and `<script nonce>` attributes - `undefined`
+          // crashed those reads or produced a CSP that blocked the
+          // extension's own bundle. Permissive dev-time defaults
+          // keep extensions that never set options happy.
+          options: {
+            enableScripts: true,
+            enableCommandUris: true,
+            enableForms: true,
+            localResourceRoots: [],
+            portMapping: []
+          },
+          cspSource: SharedCspSource,
+          asWebviewUri: ToWebviewUri,
+          postMessage: /* @__PURE__ */ __name(async (Message) => {
+            await Context21.SendToMountain("webview.postMessage", {
+              handle: Handle,
+              viewId: ViewId,
+              message: Message
+            }).catch(() => {
+            });
+            return true;
+          }, "postMessage"),
+          onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+            const Channel = `webview.message:${Handle}`;
+            Context21.Emitter?.on?.(Channel, Listener);
+            return {
+              dispose: /* @__PURE__ */ __name(() => Context21.Emitter?.off?.(Channel, Listener), "dispose")
+            };
+          }, "onDidReceiveMessage")
+        },
+        show: /* @__PURE__ */ __name((PreserveFocus) => {
+          Context21.SendToMountain("webview.reveal", {
+            handle: Handle,
+            viewId: ViewId,
+            preserveFocus: !!PreserveFocus
+          }).catch(() => {
+          });
+        }, "show"),
+        onDidChangeVisibility: /* @__PURE__ */ __name((Listener) => {
+          VisibilityListeners.add(Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => VisibilityListeners.delete(Listener), "dispose")
+          };
+        }, "onDidChangeVisibility"),
+        onDispose: /* @__PURE__ */ __name((Listener) => {
+          DisposeListeners.add(Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+          };
+        }, "onDispose"),
+        // Canonical VS Code API name. Roo's `resolveWebviewView` calls
+        // `webviewView.onDidDispose(() => {})`; without this alias the
+        // call surfaces as `r.onDidDispose is not a function` and the
+        // resolver promise rejects AFTER `webview.html` was already
+        // set. VS Code spells the listener `onDidDispose: Event<void>`;
+        // alias to the existing `onDispose` listener-set rather than
+        // duplicate the storage.
+        onDidDispose: /* @__PURE__ */ __name((Listener) => {
+          DisposeListeners.add(Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+          };
+        }, "onDidDispose"),
+        dispose: /* @__PURE__ */ __name(() => {
+          DisposeForward();
+        }, "dispose")
+      };
+      return View;
+    }, "default");
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/Window/Namespace.ts
 var Namespace_exports = {};
 __export(Namespace_exports, {
@@ -3375,6 +3937,11 @@ var init_Namespace2 = __esm({
     "use strict";
     init_Registry();
     init_Namespace();
+    init_CreateOutputChannel();
+    init_CreateStatusBarItem();
+    init_CreateTerminal();
+    init_CreateWebviewPanel();
+    init_CreateWebviewViewBuilder();
     MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback, ThisArg, Disposables) => {
       const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
       Context21.Emitter.on(EventName, Bound);
@@ -3604,237 +4171,14 @@ var init_Namespace2 = __esm({
             return void 0;
           }
         }, "showSaveDialog"),
-        createTerminal: /* @__PURE__ */ __name((Options) => {
-          const Handle = NextProviderHandle();
-          const Name = Options?.name ?? `Terminal ${Handle}`;
-          Context21.SendToMountain("window.createTerminal", {
-            handle: Handle,
-            name: Name,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          let ProcessIdPromise;
-          const ResolveProcessId = /* @__PURE__ */ __name(() => {
-            if (ProcessIdPromise !== void 0) return ProcessIdPromise;
-            ProcessIdPromise = (async () => {
-              try {
-                const Response = await Context21.MountainClient?.sendRequest(
-                  "Terminal.GetProcessId",
-                  [Handle]
-                );
-                if (typeof Response === "number") return Response;
-                if (Response && typeof Response.pid === "number") {
-                  return Response.pid;
-                }
-                return void 0;
-              } catch {
-                return void 0;
-              }
-            })();
-            return ProcessIdPromise;
-          }, "ResolveProcessId");
-          return {
-            name: Name,
-            get processId() {
-              return ResolveProcessId();
-            },
-            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
-              Context21.SendToMountain("terminal.sendText", {
-                handle: Handle,
-                text: Text
-              }).catch(() => {
-              });
-            }, "sendText"),
-            show: /* @__PURE__ */ __name((PreserveFocus) => {
-              Context21.SendToMountain("terminal.show", {
-                handle: Handle,
-                preserveFocus: PreserveFocus
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("terminal.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("terminal.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // vscode.window.Terminal.resize(columns, rows) → Mountain
-            // PTY master receives SIGWINCH; shell redraws line editor.
-            resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
-              try {
-                await Context21.MountainClient?.sendRequest(
-                  "Terminal.Resize",
-                  [Handle, Columns, Rows]
-                );
-              } catch {
-              }
-            }, "resize")
-          };
-        }, "createTerminal"),
-        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
-          const Handle = NextProviderHandle();
-          const Item = {
-            id: Handle,
-            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
-            priority: Priority,
-            text: "",
-            tooltip: "",
-            command: void 0,
-            show: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("statusBar.update", {
-                handle: Handle,
-                text: Item.text,
-                tooltip: Item.tooltip,
-                command: Item.command,
-                visible: true
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("statusBar.update", {
-                handle: Handle,
-                visible: false
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("statusBar.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-          return Item;
-        }, "createStatusBarItem"),
-        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
-          const Handle = NextProviderHandle();
-          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
-          Context21.SendToMountain("outputChannel.create", {
-            handle: Handle,
-            name: Name,
-            log: IsLog
-          }).catch(() => {
-          });
-          const Channel = {
-            name: Name,
-            append: /* @__PURE__ */ __name((Value) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: Value
-              }).catch(() => {
-              });
-            }, "append"),
-            appendLine: /* @__PURE__ */ __name((Value) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: `${Value}
-`
-              }).catch(() => {
-              });
-            }, "appendLine"),
-            clear: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "clear"),
-            show: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.show", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            replace: /* @__PURE__ */ __name((Value) => {
-              Context21.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: Value
-              }).catch(() => {
-              });
-            }, "replace"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("outputChannel.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // LogOutputChannel additions - returned when the caller passes
-            // `{ log: true }`. Kept on the base channel for simplicity;
-            // these are inert on non-log channels.
-            logLevel: 2,
-            // LogLevel.Info
-            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "onDidChangeLogLevel"),
-            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: `[trace] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "trace"),
-            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: `[debug] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "debug"),
-            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: `[info] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "info"),
-            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: `[warn] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "warn"),
-            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
-              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
-              Context21.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                name: Name,
-                value: `[error] ${Text}
-`
-              }).catch(() => {
-              });
-            }, "error")
-          };
-          void IsLog;
-          return Channel;
-        }, "createOutputChannel"),
+        createTerminal: /* @__PURE__ */ __name((Options) => CreateTerminal_default(Context21, NextProviderHandle(), Options), "createTerminal"),
+        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => CreateStatusBarItem_default(
+          Context21,
+          NextProviderHandle(),
+          AlignmentOrId,
+          Priority
+        ), "createStatusBarItem"),
+        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => CreateOutputChannel_default(Context21, NextProviderHandle(), Name, Options), "createOutputChannel"),
         createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
           const Key = `decoration:${Math.random().toString(36).slice(2)}`;
           Context21.SendToMountain("window.createTextEditorDecorationType", {
@@ -3927,141 +4271,16 @@ var init_Namespace2 = __esm({
         }), "createInputBox"),
         createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
           const Handle = NextProviderHandle();
-          let CurrentHtml = "";
-          let CurrentOptions = Options ?? {};
-          Context21.MountainClient?.sendRequest("webview.create", {
-            handle: Handle,
-            viewType: ViewType,
-            title: Title,
-            showOptions: ShowOptions,
-            options: CurrentOptions
-          }).catch(() => {
-          });
-          const Panel = {
-            viewType: ViewType,
-            title: Title,
-            iconPath: void 0,
-            webview: {
-              get options() {
-                return CurrentOptions;
-              },
-              set options(Value) {
-                CurrentOptions = Value;
-                Context21.MountainClient?.sendRequest(
-                  "webview.setOptions",
-                  {
-                    handle: Handle,
-                    options: Value
-                  }
-                ).catch(() => {
-                });
-              },
-              get html() {
-                return CurrentHtml;
-              },
-              set html(Value) {
-                CurrentHtml = Value;
-                try {
-                  if (process.env["Trace"]) {
-                    process.stdout.write(
-                      `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context21.MountainClient}
-`
-                    );
-                  }
-                } catch {
-                }
-                Context21.MountainClient?.sendRequest("webview.setHtml", {
-                  handle: Handle,
-                  html: Value
-                }).then(
-                  () => {
-                    try {
-                      if (process.env["Trace"]) {
-                        process.stdout.write(
-                          `[WebviewPanel] set-html-sent handle=${Handle}
-`
-                        );
-                      }
-                    } catch {
-                    }
-                  },
-                  (Error2) => {
-                    try {
-                      if (process.env["Trace"]) {
-                        process.stdout.write(
-                          `[WebviewPanel] set-html-failed handle=${Handle} error=${String(Error2?.message ?? Error2).slice(0, 120)}
-`
-                        );
-                      }
-                    } catch {
-                    }
-                  }
-                );
-              },
-              cspSource: SharedCspSource,
-              asWebviewUri: ToWebviewUri,
-              postMessage: /* @__PURE__ */ __name(async (Message) => {
-                try {
-                  await Context21.MountainClient?.sendRequest(
-                    "webview.postMessage",
-                    { handle: Handle, message: Message }
-                  );
-                  return true;
-                } catch {
-                  return false;
-                }
-              }, "postMessage"),
-              onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
-                const Event2 = `webview.message:${Handle}`;
-                Context21.Emitter.on(Event2, Listener);
-                return {
-                  dispose: /* @__PURE__ */ __name(() => {
-                    Context21.Emitter.removeListener(Event2, Listener);
-                  }, "dispose")
-                };
-              }, "onDidReceiveMessage")
-            },
-            options: CurrentOptions,
-            viewColumn: 1,
-            active: true,
-            visible: true,
-            reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
-              Context21.MountainClient?.sendRequest("webview.reveal", {
-                handle: Handle,
-                viewColumn: Column,
-                preserveFocus: PreserveFocus
-              }).catch(() => {
-              });
-            }, "reveal"),
-            dispose: /* @__PURE__ */ __name(() => {
-              WebviewPanels.delete(String(Handle));
-              Context21.Emitter.removeAllListeners(
-                `webview.message:${Handle}`
-              );
-              Context21.MountainClient?.sendRequest("webview.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            onDidDispose: /* @__PURE__ */ __name((Listener) => {
-              const Event2 = `webview.dispose:${Handle}`;
-              Context21.Emitter.on(Event2, Listener);
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  Context21.Emitter.removeListener(Event2, Listener);
-                }, "dispose")
-              };
-            }, "onDidDispose"),
-            onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
-              const Event2 = `webview.viewState:${Handle}`;
-              Context21.Emitter.on(Event2, Listener);
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  Context21.Emitter.removeListener(Event2, Listener);
-                }, "dispose")
-              };
-            }, "onDidChangeViewState")
-          };
+          const Panel = CreateWebviewPanel_default(
+            Context21,
+            Handle,
+            ViewType,
+            Title,
+            ShowOptions,
+            Options,
+            ToWebviewUri,
+            SharedCspSource
+          );
           WebviewPanels.set(String(Handle), Panel);
           return Panel;
         }, "createWebviewPanel"),
@@ -4188,182 +4407,13 @@ var init_Namespace2 = __esm({
           const Handle = NextProviderHandle();
           WebviewViewProviders.set(String(Handle), Provider);
           WebviewViewBuilders.set(String(Handle), () => {
-            let CurrentHtml = "";
-            const VisibilityListeners = /* @__PURE__ */ new Set();
-            const DisposeListeners = /* @__PURE__ */ new Set();
-            const NoopDisposable3 = { dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") };
-            const ChannelVisibility = `webview.viewVisibility:${Handle}`;
-            const ChannelDispose = `webview.dispose:${Handle}`;
-            const VisibilityForward = /* @__PURE__ */ __name((Visible) => {
-              for (const L of VisibilityListeners) {
-                try {
-                  L(!!Visible);
-                } catch (_e) {
-                }
-              }
-            }, "VisibilityForward");
-            const DisposeForward = /* @__PURE__ */ __name(() => {
-              for (const L of DisposeListeners) {
-                try {
-                  L();
-                } catch (_e) {
-                }
-              }
-              DisposeListeners.clear();
-              VisibilityListeners.clear();
-              Context21.Emitter?.off?.(
-                ChannelVisibility,
-                VisibilityForward
-              );
-              Context21.Emitter?.off?.(ChannelDispose, DisposeForward);
-            }, "DisposeForward");
-            Context21.Emitter?.on?.(ChannelVisibility, VisibilityForward);
-            Context21.Emitter?.on?.(ChannelDispose, DisposeForward);
-            let CurrentTitle;
-            let CurrentDescription;
-            let CurrentBadge;
-            const FireMetadataUpdate = /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("webview.updateView", {
-                handle: Handle,
-                viewId: ViewId,
-                title: CurrentTitle ?? null,
-                description: CurrentDescription ?? null,
-                badge: CurrentBadge ?? null
-              }).catch(() => {
-              });
-            }, "FireMetadataUpdate");
-            const View = {
-              get title() {
-                return CurrentTitle;
-              },
-              set title(Value) {
-                CurrentTitle = Value;
-                FireMetadataUpdate();
-              },
-              get description() {
-                return CurrentDescription;
-              },
-              set description(Value) {
-                CurrentDescription = Value;
-                FireMetadataUpdate();
-              },
-              get badge() {
-                return CurrentBadge;
-              },
-              set badge(Value) {
-                CurrentBadge = Value;
-                FireMetadataUpdate();
-              },
-              webview: {
-                get html() {
-                  return CurrentHtml;
-                },
-                set html(Value) {
-                  CurrentHtml = String(Value ?? "");
-                  try {
-                    if (process.env["Trace"]) {
-                      process.stdout.write(
-                        `[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}
-`
-                      );
-                    }
-                  } catch {
-                  }
-                  Context21.SendToMountain("webview.setHtml", {
-                    handle: Handle,
-                    viewId: ViewId,
-                    html: CurrentHtml
-                  }).then(
-                    () => {
-                      try {
-                        if (process.env["Trace"]) {
-                          process.stdout.write(
-                            `[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}
-`
-                          );
-                        }
-                      } catch {
-                      }
-                    },
-                    (Error2) => {
-                      try {
-                        if (process.env["Trace"]) {
-                          process.stdout.write(
-                            `[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String(Error2?.message ?? Error2).slice(0, 120)}
-`
-                          );
-                        }
-                      } catch {
-                      }
-                    }
-                  );
-                },
-                options: {},
-                cspSource: SharedCspSource,
-                asWebviewUri: ToWebviewUri,
-                postMessage: /* @__PURE__ */ __name(async (Message) => {
-                  await Context21.SendToMountain(
-                    "webview.postMessage",
-                    {
-                      handle: Handle,
-                      viewId: ViewId,
-                      message: Message
-                    }
-                  ).catch(() => {
-                  });
-                  return true;
-                }, "postMessage"),
-                onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
-                  const Channel = `webview.message:${Handle}`;
-                  Context21.Emitter?.on?.(Channel, Listener);
-                  return {
-                    dispose: /* @__PURE__ */ __name(() => Context21.Emitter?.off?.(Channel, Listener), "dispose")
-                  };
-                }, "onDidReceiveMessage")
-              },
-              show: /* @__PURE__ */ __name((PreserveFocus) => {
-                Context21.SendToMountain("webview.reveal", {
-                  handle: Handle,
-                  viewId: ViewId,
-                  preserveFocus: !!PreserveFocus
-                }).catch(() => {
-                });
-              }, "show"),
-              onDidChangeVisibility: /* @__PURE__ */ __name((Listener) => {
-                VisibilityListeners.add(Listener);
-                return {
-                  dispose: /* @__PURE__ */ __name(() => VisibilityListeners.delete(Listener), "dispose")
-                };
-              }, "onDidChangeVisibility"),
-              onDispose: /* @__PURE__ */ __name((Listener) => {
-                DisposeListeners.add(Listener);
-                return {
-                  dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
-                };
-              }, "onDispose"),
-              // Canonical VS Code API name. Roo's `resolveWebviewView`
-              // calls `webviewView.onDidDispose(() => {})`; without
-              // this alias the call surfaces as
-              // `r.onDidDispose is not a function` and the resolver
-              // promise rejects AFTER `webview.html` was already
-              // set successfully (so HTML reaches Sky but the
-              // extension considers the view broken and refuses to
-              // post any further messages). VS Code spells the
-              // listener `onDidDispose: Event<void>`; alias to the
-              // existing `onDispose` listener-set rather than
-              // duplicate the storage.
-              onDidDispose: /* @__PURE__ */ __name((Listener) => {
-                DisposeListeners.add(Listener);
-                return {
-                  dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
-                };
-              }, "onDidDispose"),
-              dispose: /* @__PURE__ */ __name(() => {
-                DisposeForward();
-              }, "dispose")
-            };
-            return View;
+            return CreateWebviewViewBuilder_default(
+              Context21,
+              Handle,
+              ViewId,
+              ToWebviewUri,
+              SharedCspSource
+            );
           });
           Context21.MountainClient?.sendRequest("webview.registerView", {
             handle: Handle,
@@ -4672,103 +4722,19 @@ var init_Namespace2 = __esm({
           Context21,
           "window.didChangeTextEditorDiffInformation"
         ),
-        // Preemptive stubs for adjacent window event APIs stock VS Code
-        // ships. Each is wired to a Tauri event channel Mountain may
-        // populate later; until then the subscribe is a safe no-op.
-        // Added in bulk because the `vscode.git` failure above is the
-        // third whack-a-mole on the `vscode.window` namespace in this
-        // session, and extensions subscribe to these events defensively
-        // at activation time.
-        onDidChangeTextEditorSelection: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorSelection"
-        ),
-        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorVisibleRanges"
-        ),
-        onDidChangeTextEditorOptions: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorOptions"
-        ),
-        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTextEditorViewColumn"
-        ),
-        onDidChangeActiveNotebookEditor: MakeEventSubscriber(
-          Context21,
-          "window.didChangeActiveNotebookEditor"
-        ),
-        onDidChangeVisibleNotebookEditors: MakeEventSubscriber(
-          Context21,
-          "window.didChangeVisibleNotebookEditors"
-        ),
-        onDidChangeNotebookEditorSelection: MakeEventSubscriber(
-          Context21,
-          "window.didChangeNotebookEditorSelection"
-        ),
-        onDidChangeNotebookEditorVisibleRanges: MakeEventSubscriber(
-          Context21,
-          "window.didChangeNotebookEditorVisibleRanges"
-        ),
-        onDidChangeActiveColorTheme: MakeEventSubscriber(
-          Context21,
-          "window.didChangeActiveColorTheme"
-        ),
-        onDidChangeTerminalState: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTerminalState"
-        ),
-        onDidOpenTerminal: MakeEventSubscriber(
-          Context21,
-          "window.didOpenTerminal"
-        ),
-        onDidCloseTerminal: MakeEventSubscriber(
-          Context21,
-          "window.didCloseTerminal"
-        ),
-        onDidChangeActiveTerminal: MakeEventSubscriber(
-          Context21,
-          "window.didChangeActiveTerminal"
-        ),
-        onDidWriteTerminalData: MakeEventSubscriber(
-          Context21,
-          "window.didWriteTerminalData"
-        ),
         onDidExecuteTerminalCommand: MakeEventSubscriber(
           Context21,
           "window.didExecuteTerminalCommand"
         ),
-        onDidChangeTerminalShellIntegration: MakeEventSubscriber(
-          Context21,
-          "window.didChangeTerminalShellIntegration"
-        ),
-        onDidStartTerminalShellExecution: MakeEventSubscriber(
-          Context21,
-          "window.didStartTerminalShellExecution"
-        ),
-        onDidEndTerminalShellExecution: MakeEventSubscriber(
-          Context21,
-          "window.didEndTerminalShellExecution"
-        ),
         activeTextEditor: void 0,
-        activeColorTheme: {
-          kind: 2
-          /* Dark */
-        },
+        // `activeColorTheme` and `tabGroups` already defined earlier in
+        // this object literal (lines ~614 and ~581) - leaving the
+        // fuller event-aware definitions intact and only mirroring the
+        // remaining state placeholders here.
         visibleTextEditors: [],
         visibleNotebookEditors: [],
         activeNotebookEditor: void 0,
         notebookEditors: [],
-        tabGroups: {
-          all: [],
-          activeTabGroup: { tabs: [] },
-          onDidChangeTabGroups: /* @__PURE__ */ __name((() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") })), "onDidChangeTabGroups"),
-          onDidChangeTabs: /* @__PURE__ */ __name((() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") })), "onDidChangeTabs"),
-          close: /* @__PURE__ */ __name(async () => false, "close")
-        },
         terminals: [],
         activeTerminal: void 0,
         state: { focused: true, active: true }
@@ -5174,7 +5140,7 @@ var init_RouteManifest = __esm({
       mountain: 91,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-04T19:59:05Z"
+      generatedAt: "2026-05-05T05:14:36Z"
     };
   }
 });
