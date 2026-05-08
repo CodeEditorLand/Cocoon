@@ -33,7 +33,7 @@
 		"@effect/platform": "0.96.1",
 		"@effect/platform-node": "0.106.0",
 		"@grpc/grpc-js": "1.14.3",
-		"@grpc/proto-loader": "0.8.0",
+		"@grpc/proto-loader": "0.8.1",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.2",
 		"@tauri-apps/plugin-fs": "2.5.1",
 		"effect": "3.21.2",
