@@ -16,38 +16,55 @@ import { TelemetryTag } from "../Telemetry.js";
 
 export enum SecurityLevel {
 	TRUSTED = "TRUSTED",
+
 	SANDBOXED = "SANDBOXED",
+
 	RESTRICTED = "RESTRICTED",
+
 	BLOCKED = "BLOCKED",
 }
 
 export interface SecurityPolicy {
 	extensionId: string;
+
 	allowedModules: ReadonlyArray<string>;
+
 	blockedModules: ReadonlyArray<string>;
+
 	securityLevel: SecurityLevel;
+
 	maxMemoryUsage?: number;
+
 	maxExecutionTime?: number;
 }
 
 export interface ModuleInterceptionRequest {
 	moduleId: string;
+
 	parentModule?: string;
+
 	extensionId: string;
+
 	requirePath: string;
 }
 
 export interface ModuleInterceptionResult {
 	success: boolean;
+
 	module?: unknown;
+
 	error?: string;
+
 	securityLevel: SecurityLevel;
 }
 
 export interface InterceptionStats {
 	totalInterceptions: number;
+
 	blockedModules: number;
+
 	averageResolutionTime: number;
+
 	securityViolations: number;
 }
 
@@ -57,8 +74,10 @@ export interface InterceptionStats {
 
 export class ModuleNotFoundError extends Error {
 	readonly _tag = "ModuleNotFoundError";
+
 	constructor(
 		readonly moduleId: string,
+
 		readonly extensionId: string,
 	) {
 		super(`Module not found: ${moduleId} for extension ${extensionId}`);
@@ -67,8 +86,10 @@ export class ModuleNotFoundError extends Error {
 
 export class ModuleAccessDeniedError extends Error {
 	readonly _tag = "ModuleAccessDeniedError";
+
 	constructor(
 		readonly moduleId: string,
+
 		readonly reason: string,
 	) {
 		super(`Module access denied: ${moduleId} - ${reason}`);
@@ -77,6 +98,7 @@ export class ModuleAccessDeniedError extends Error {
 
 export class SecurityPolicyNotFoundError extends Error {
 	readonly _tag = "SecurityPolicyNotFoundError";
+
 	constructor(readonly extensionId: string) {
 		super(`Security policy not found for extension: ${extensionId}`);
 	}
@@ -104,6 +126,7 @@ export interface ModuleInterceptorService {
 	 */
 	readonly registerVscodeAPI: (
 		extensionId: string,
+
 		api: unknown,
 	) => Effect.Effect<void, never>;
 
@@ -119,6 +142,7 @@ export interface ModuleInterceptorService {
 	 */
 	readonly resolveModule: (
 		extensionId: string,
+
 		modulePath: string,
 	) => Effect.Effect<string, ModuleNotFoundError>;
 
@@ -141,6 +165,7 @@ export interface ModuleInterceptorService {
 	 */
 	readonly validateModuleSecurity: (
 		extensionId: string,
+
 		moduleId: string,
 	) => Effect.Effect<boolean, never>;
 
@@ -166,22 +191,32 @@ export const ModuleInterceptor = ModuleInterceptorTag;
 
 const defaultSecurityPolicy = {
 	allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
+
 	blockedModules: [
 		"fs",
+
 		"child_process",
+
 		"net",
+
 		"http",
+
 		"https",
+
 		"os",
+
 		"crypto",
 	],
+
 	securityLevel: SecurityLevel.SANDBOXED,
+
 	maxMemoryUsage: 128 * 1024 * 1024, // 128MB
 	maxExecutionTime: 5000, // 5 seconds
 } satisfies Omit<SecurityPolicy, "extensionId">;
 
 export const ModuleInterceptorLive = Layer.effect(
 	ModuleInterceptor,
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
@@ -231,12 +266,14 @@ export const ModuleInterceptorLive = Layer.effect(
 		const initialize = Effect.gen(function* () {
 			telemetry.log(
 				"info",
+
 				"[ModuleInterceptor] Initializing module interceptor service...",
 			);
 			// Initialization logic would go here
 			yield* Effect.sleep("5 millis");
 			telemetry.log(
 				"info",
+
 				"[ModuleInterceptor] Module interceptor service initialized",
 			);
 		});
@@ -248,6 +285,7 @@ export const ModuleInterceptorLive = Layer.effect(
 		const install = Effect.gen(function* () {
 			telemetry.log(
 				"info",
+
 				"[ModuleInterceptor] Installing Node.js Module._load hook...",
 			);
 
@@ -265,7 +303,9 @@ export const ModuleInterceptorLive = Layer.effect(
 
 			NodeModule._load = function PatchedLoad(
 				Request: string,
+
 				Parent: any,
+
 				IsMain: boolean,
 			) {
 				// Intercept require('vscode') - return the API shim
@@ -308,6 +348,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 			telemetry.log(
 				"info",
+
 				"[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted",
 			);
 		});
@@ -327,6 +368,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				// Get security policy for extension
 				const policyOpt = HashMap.get(
 					yield* policiesRef.get,
+
 					request.extensionId,
 				);
 
@@ -334,6 +376,7 @@ export const ModuleInterceptorLive = Layer.effect(
 					// Use default policy
 					yield* telemetry.log(
 						"warn",
+
 						`[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`,
 					);
 				}
@@ -350,6 +393,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				if (policy.blockedModules.includes(request.moduleId)) {
 					yield* telemetry.log(
 						"warn",
+
 						`[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`,
 					);
 
@@ -376,6 +420,7 @@ export const ModuleInterceptorLive = Layer.effect(
 					// For non-builtin and non-allowed modules, block
 					yield* telemetry.log(
 						"warn",
+
 						`[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`,
 					);
 
@@ -398,6 +443,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				const cacheKey = `${request.extensionId}:${request.moduleId}`;
 				const cachedModule = HashMap.get(
 					yield* moduleCacheRef.get,
+
 					cacheKey,
 				);
 
@@ -417,6 +463,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					telemetry.log(
 						"debug",
+
 						`[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration}ms)`,
 					);
 
@@ -432,6 +479,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`,
 				);
 
@@ -442,6 +490,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				const currentCache = yield* moduleCacheRef.get;
 				yield* Ref.set(
 					moduleCacheRef,
+
 					HashMap.set(currentCache, cacheKey, module),
 				);
 
@@ -489,11 +538,13 @@ export const ModuleInterceptorLive = Layer.effect(
 				const currentPolicies = yield* policiesRef.get;
 				yield* Ref.set(
 					policiesRef,
+
 					HashMap.set(currentPolicies, policy.extensionId, policy),
 				);
 
 				telemetry.log(
 					"info",
+
 					`[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`,
 				);
 			});
@@ -516,6 +567,7 @@ export const ModuleInterceptorLive = Layer.effect(
 		// Atom: Validate module security
 		const validateModuleSecurity = (
 			extensionId: string,
+
 			moduleId: string,
 		) =>
 			Effect.gen(function* () {
@@ -551,6 +603,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				vscodeAPIRegistry.set(extensionId, api);
 				telemetry.log(
 					"info",
+
 					`[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`,
 				);
 			});
@@ -638,5 +691,6 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 
 export const ModuleInterceptorMock = Layer.effect(
 	ModuleInterceptor,
+
 	Effect.succeed(makeMockModuleInterceptor()),
 );

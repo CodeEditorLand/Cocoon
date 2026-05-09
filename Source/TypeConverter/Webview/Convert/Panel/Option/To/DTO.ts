@@ -20,6 +20,7 @@ export const ConvertPanelOptionToDTO = (
 	// so we cannot declare an empty object of that type and then assign to it.
 	const dto: {
 		enableFindWidget?: boolean;
+
 		retainContextWhenHidden?: boolean;
 	} = {};
 

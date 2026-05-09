@@ -15,8 +15,11 @@ const RequestTimeoutMilliseconds = 5000;
 
 export default (
 	Host: string,
+
 	Key: string,
+
 	DistinctIdentifier: string,
+
 	Batch: ReadonlyArray<QueuedEvent>,
 ): void => {
 	if (Batch.length === 0) return;
@@ -46,6 +49,7 @@ export default (
 				},
 				timeout: RequestTimeoutMilliseconds,
 			},
+
 			(Response) => {
 				Response.resume();
 			},

@@ -23,22 +23,35 @@ import { TelemetryTag } from "./Telemetry.js";
 
 export interface ExtensionManifest {
 	readonly id: string;
+
 	readonly name: string;
+
 	readonly version: string;
+
 	readonly description: string;
+
 	readonly publisher: string;
+
 	readonly entryPoint: string;
+
 	readonly enabled: boolean;
+
 	readonly activationEvents: ReadonlyArray<string>;
+
 	readonly dependencies: ReadonlyArray<string>;
+
 	readonly contributes: Readonly<Record<string, unknown>>;
 }
 
 export interface ExtensionHost {
 	readonly id: string;
+
 	readonly manifest: ExtensionManifest;
+
 	readonly state: ExtensionState;
+
 	readonly activatedAt: number | undefined;
+
 	readonly activationTime: number | undefined;
 }
 
@@ -52,14 +65,19 @@ export type ExtensionState =
 
 export interface ActivateResult {
 	readonly extensionId: string;
+
 	readonly success: boolean;
+
 	readonly activationTime: number;
+
 	readonly error: string | undefined;
 }
 
 export interface DeactivateResult {
 	readonly extensionId: string;
+
 	readonly success: boolean;
+
 	readonly error: string | undefined;
 }
 
@@ -69,6 +87,7 @@ export interface DeactivateResult {
 
 export class ExtensionNotFoundError extends Error {
 	readonly _tag = "ExtensionNotFoundError";
+
 	constructor(readonly extensionId: string) {
 		super(`Extension not found: ${extensionId}`);
 	}
@@ -76,8 +95,10 @@ export class ExtensionNotFoundError extends Error {
 
 export class ExtensionActivationError extends Error {
 	readonly _tag = "ExtensionActivationError";
+
 	constructor(
 		readonly extensionId: string,
+
 		override readonly cause: unknown,
 	) {
 		super(
@@ -88,8 +109,10 @@ export class ExtensionActivationError extends Error {
 
 export class ExtensionDeactivationError extends Error {
 	readonly _tag = "ExtensionDeactivationError";
+
 	constructor(
 		readonly extensionId: string,
+
 		override readonly cause: unknown,
 	) {
 		super(
@@ -157,6 +180,7 @@ export const Extension = ExtensionTag;
 
 export const ExtensionLive = Layer.effect(
 	Extension,
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
@@ -210,6 +234,7 @@ export const ExtensionLive = Layer.effect(
 				// Update state to activating
 				yield* Ref.set(
 					extensionsRef,
+
 					HashMap.set(extensions, id, {
 						...current,
 						state: { _tag: "Activating", startTime },
@@ -218,6 +243,7 @@ export const ExtensionLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[Extension] Activating extension: ${id}`,
 				);
 
@@ -230,6 +256,7 @@ export const ExtensionLive = Layer.effect(
 				const updatedExtensions = yield* extensionsRef.get;
 				yield* Ref.set(
 					extensionsRef,
+
 					HashMap.set(updatedExtensions, id, {
 						...current,
 						state: { _tag: "Active", activatedAt: startTime },
@@ -240,6 +267,7 @@ export const ExtensionLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[Extension] Activated extension: ${id} (${activationTime}ms)`,
 				);
 
@@ -260,6 +288,7 @@ export const ExtensionLive = Layer.effect(
 						const extensions = yield* extensionsRef.get;
 						yield* Ref.set(
 							extensionsRef,
+
 							HashMap.set(extensions, id, {
 								...HashMap.get(extensions, id).pipe(
 									Option.getOrElse(() => ({
@@ -287,6 +316,7 @@ export const ExtensionLive = Layer.effect(
 
 						telemetry.log(
 							"error",
+
 							`[Extension] Failed to activate ${id}: ${String(error)}`,
 						);
 
@@ -323,12 +353,14 @@ export const ExtensionLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[Extension] Deactivating extension: ${id}`,
 				);
 
 				// Update state to deactivating
 				yield* Ref.set(
 					extensionsRef,
+
 					HashMap.set(extensions, id, {
 						...current,
 						state: { _tag: "Deactivating" },
@@ -342,6 +374,7 @@ export const ExtensionLive = Layer.effect(
 				const updatedExtensions = yield* extensionsRef.get;
 				yield* Ref.set(
 					extensionsRef,
+
 					HashMap.set(updatedExtensions, id, {
 						...current,
 						state: { _tag: "Deactivated" },
@@ -350,6 +383,7 @@ export const ExtensionLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[Extension] Deactivated extension: ${id}`,
 				);
 
@@ -367,6 +401,7 @@ export const ExtensionLive = Layer.effect(
 
 						telemetry.log(
 							"error",
+
 							`[Extension] Failed to deactivate ${id}: ${String(error)}`,
 						);
 
@@ -435,6 +470,7 @@ export const makeMockExtension = (
 
 	return {
 		getAll: Effect.succeed(mockExtensions),
+
 		getById: (id: string) =>
 			Effect.gen(function* () {
 				const ext = mockExtensions.find((e) => e.id === id);
@@ -443,6 +479,7 @@ export const makeMockExtension = (
 				}
 				return ext;
 			}),
+
 		activate: (id: string) =>
 			Effect.succeed({
 				extensionId: id,
@@ -450,24 +487,29 @@ export const makeMockExtension = (
 				activationTime: 10,
 				error: undefined,
 			}),
+
 		deactivate: (id: string) =>
 			Effect.succeed({
 				extensionId: id,
 				success: true,
 				error: undefined,
 			}),
+
 		isActive: (id: string) =>
 			Effect.succeed(
 				mockExtensions.some(
 					(e) => e.id === id && e.state._tag === "Active",
 				),
 			),
+
 		getActiveCount: Effect.succeed(0),
+
 		stateChanges: Effect.succeed({}),
 	};
 };
 
 export const ExtensionMock = Layer.effect(
 	Extension,
+
 	Effect.succeed(makeMockExtension()),
 );

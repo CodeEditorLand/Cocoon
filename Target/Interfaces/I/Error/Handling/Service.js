@@ -1,9 +1,1 @@
-// Source/Interfaces/I/Error/Handling/Service.ts
-import { Context } from "effect";
-var IErrorHandlingService = Context.Tag(
-  "IErrorHandlingService"
-);
-export {
-  IErrorHandlingService
-};
-//# sourceMappingURL=Service.js.map
+import{Context as r}from"effect";var i=r.Tag("IErrorHandlingService");export{i as IErrorHandlingService};

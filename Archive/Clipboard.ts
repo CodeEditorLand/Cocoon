@@ -25,8 +25,10 @@ const RunIntegrationEffect = <SuccessType>(
 ): Promise<SuccessType> => {
 	const MappedEffect = Effect.mapError(
 		IntegrationEffect,
+
 		(Cause) => new ApplicationClipboardProblem({ Cause }),
 	);
+
 	// The default runtime is used here as this is an API boundary.
 	return Runtime.runPromise(Runtime.defaultRuntime, MappedEffect);
 };
@@ -39,6 +41,7 @@ const RunIntegrationEffect = <SuccessType>(
  */
 export class ClipboardService extends Effect.Service<ClipboardService>()(
 	"vscode/ClipboardService",
+
 	{
 		sync: (): Clipboard => ({
 			writeText: (text: string): Promise<void> => {

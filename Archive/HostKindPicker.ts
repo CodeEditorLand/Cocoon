@@ -35,6 +35,7 @@ export interface HostKindPicker {
  */
 export class HostKindPickerService extends Effect.Service<HostKindPickerService>()(
 	"Service/HostKindPicker",
+
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;

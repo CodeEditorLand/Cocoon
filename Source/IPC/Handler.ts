@@ -29,8 +29,11 @@ export type RequestId = string;
  */
 export enum OperationType {
 	Query = "query",
+
 	Mutation = "mutation",
+
 	Subscription = "subscription",
+
 	Notification = "notification",
 }
 
@@ -39,9 +42,13 @@ export enum OperationType {
  */
 export interface Request<TPayload = unknown> {
 	id: RequestId;
+
 	type: OperationType;
+
 	method: string;
+
 	payload: TPayload;
+
 	timestamp: number;
 }
 
@@ -50,9 +57,13 @@ export interface Request<TPayload = unknown> {
  */
 export interface Response<TData = unknown, TError = unknown> {
 	id: RequestId;
+
 	success: boolean;
+
 	data?: TData;
+
 	error?: TError;
+
 	timestamp: number;
 }
 
@@ -61,6 +72,7 @@ export interface Response<TData = unknown, TError = unknown> {
  */
 export type RequestHandler<TInput = unknown, TOutput = unknown> = (
 	request: Request<TInput>,
+
 	token: CancellationToken,
 ) => Promise<Response<TOutput>>;
 
@@ -69,8 +81,11 @@ export type RequestHandler<TInput = unknown, TOutput = unknown> = (
  */
 interface HandlerRegistration {
 	handler: RequestHandler;
+
 	method: string;
+
 	registeredAt: number;
+
 	description?: string;
 }
 
@@ -79,7 +94,9 @@ interface HandlerRegistration {
  */
 export interface HandlerOptions {
 	description?: string;
+
 	timeout?: number;
+
 	retryAttempts?: number;
 }
 
@@ -88,9 +105,13 @@ export interface HandlerOptions {
  */
 interface HandlerStats {
 	totalCalls: number;
+
 	successfulCalls: number;
+
 	failedCalls: number;
+
 	averageLatency: number;
+
 	lastCalled: number;
 }
 
@@ -99,8 +120,11 @@ interface HandlerStats {
  */
 interface HandlerConfig {
 	enableLogging: boolean;
+
 	enableMetrics: boolean;
+
 	defaultTimeout: number;
+
 	maxConcurrentRequests: number;
 }
 
@@ -109,23 +133,35 @@ interface HandlerConfig {
  */
 export class IPCHandler {
 	private readonly handlers: Map<string, HandlerRegistration>;
+
 	private readonly pendingRequests: Map<RequestId, CancellationTokenSource>;
+
 	private readonly handlerStats: Map<string, HandlerStats>;
+
 	private readonly logger: Logger;
+
 	private readonly config: HandlerConfig;
+
 	private activeRequestCount: number;
 
 	constructor(logger: Logger, config?: Partial<HandlerConfig>) {
 		this.handlers = new Map();
+
 		this.pendingRequests = new Map();
+
 		this.handlerStats = new Map();
+
 		this.logger = logger;
+
 		this.activeRequestCount = 0;
 
 		this.config = {
 			enableLogging: config?.enableLogging ?? true,
+
 			enableMetrics: config?.enableMetrics ?? true,
+
 			defaultTimeout: config?.defaultTimeout ?? 30000,
+
 			maxConcurrentRequests: config?.maxConcurrentRequests ?? 100,
 		};
 
@@ -142,7 +178,9 @@ export class IPCHandler {
 	 */
 	public async RegisterHandler<TInput, TOutput>(
 		method: string,
+
 		handler: RequestHandler<TInput, TOutput>,
+
 		options?: HandlerOptions,
 	): Promise<Result<void, Error>> {
 		try {
@@ -156,13 +194,17 @@ export class IPCHandler {
 
 			if (this.handlers.has(method)) {
 				const warning = `Handler for method '${method}' already exists. Overwriting.`;
+
 				this.logger.warn(warning);
 			}
 
 			const registration: HandlerRegistration = {
 				handler: handler as RequestHandler,
+
 				method,
+
 				registeredAt: Date.now(),
+
 				description: options?.description,
 			};
 
@@ -181,6 +223,7 @@ export class IPCHandler {
 
 			this.logger.info(
 				`Handler registered successfully for method: ${method}`,
+
 				{ description: options?.description },
 			);
 
@@ -188,10 +231,13 @@ export class IPCHandler {
 		} catch (error) {
 			const err =
 				error instanceof Error ? error : new Error(String(error));
+
 			this.logger.error(
 				`Failed to register handler for method: ${method}`,
+
 				err,
 			);
+
 			return Result.Err(err);
 		}
 	}
@@ -205,9 +251,11 @@ export class IPCHandler {
 	 */
 	public async HandleRequest<TInput, TOutput>(
 		request: Request<TInput>,
+
 		token?: CancellationToken,
 	): Promise<Response<TOutput>> {
 		const requestId = request.id;
+
 		const startTime = performance.now();
 
 		try {
@@ -227,6 +275,7 @@ export class IPCHandler {
 
 			// Create cancellation token if not provided
 			const tokenSource = new CancellationTokenSource();
+
 			this.pendingRequests.set(requestId, tokenSource);
 
 			// Check if request is already cancelled
@@ -236,6 +285,7 @@ export class IPCHandler {
 
 			// Find handler
 			const registration = this.handlers.get(request.method);
+
 			if (!registration) {
 				throw new Error(
 					`No handler registered for method: ${request.method}`,
@@ -244,6 +294,7 @@ export class IPCHandler {
 
 			this.logger.debug(
 				`Processing request for method: ${request.method}`,
+
 				{ requestId, type: request.type },
 			);
 
@@ -252,8 +303,11 @@ export class IPCHandler {
 
 			const response = await this.ExecuteWithTimeout(
 				registration.handler,
+
 				request,
+
 				tokenSource.token,
+
 				timeout,
 			);
 
@@ -271,20 +325,27 @@ export class IPCHandler {
 
 			const err =
 				error instanceof Error ? error : new Error(String(error));
+
 			this.logger.error(
 				`Request failed for method: ${request.method}`,
+
 				err,
+
 				{ requestId },
 			);
 
 			return {
 				id: requestId,
+
 				success: false,
+
 				error: err.message,
+
 				timestamp: Date.now(),
 			};
 		} finally {
 			this.activeRequestCount--;
+
 			this.pendingRequests.delete(requestId);
 		}
 	}
@@ -302,11 +363,13 @@ export class IPCHandler {
 			}
 
 			const tokenSource = this.pendingRequests.get(requestId);
+
 			if (!tokenSource) {
 				return Result.Ok(false); // Not found, assume not running
 			}
 
 			tokenSource.cancel();
+
 			this.pendingRequests.delete(requestId);
 
 			this.logger.info(`Operation cancelled successfully`, { requestId });
@@ -315,7 +378,9 @@ export class IPCHandler {
 		} catch (error) {
 			const err =
 				error instanceof Error ? error : new Error(String(error));
+
 			this.logger.error(`Failed to cancel operation`, err, { requestId });
+
 			return Result.Err(err);
 		}
 	}
@@ -333,6 +398,7 @@ export class IPCHandler {
 			}
 
 			const existed = this.handlers.delete(method);
+
 			this.handlerStats.delete(method);
 
 			this.logger.info(`Handler unregistered for method: ${method}`, {
@@ -343,10 +409,13 @@ export class IPCHandler {
 		} catch (error) {
 			const err =
 				error instanceof Error ? error : new Error(String(error));
+
 			this.logger.error(
 				`Failed to unregister handler for method: ${method}`,
+
 				err,
 			);
+
 			return Result.Err(err);
 		}
 	}
@@ -383,14 +452,18 @@ export class IPCHandler {
 			} catch (error) {
 				this.logger.warn(
 					"Failed to cancel pending request during disposal",
+
 					error,
 				);
 			}
 		}
 
 		this.handlers.clear();
+
 		this.pendingRequests.clear();
+
 		this.handlerStats.clear();
+
 		this.activeRequestCount = 0;
 	}
 
@@ -399,18 +472,23 @@ export class IPCHandler {
 	 */
 	private async ExecuteWithTimeout<TInput, TOutput>(
 		handler: RequestHandler<TInput, TOutput>,
+
 		request: Request<TInput>,
+
 		token: CancellationToken,
+
 		timeoutMs: number,
 	): Promise<Response<TOutput>> {
 		return Promise.race([
 			handler(request, token),
+
 			new Promise<Response<TOutput>>((_, reject) =>
 				setTimeout(
 					() =>
 						reject(
 							new Error(`Request timeout after ${timeoutMs}ms`),
 						),
+
 					timeoutMs,
 				),
 			),
@@ -422,20 +500,28 @@ export class IPCHandler {
 	 */
 	private UpdateStats(
 		method: string,
+
 		startTime: number,
+
 		success: boolean,
 	): void {
 		const stats = this.handlerStats.get(method);
+
 		if (!stats) return;
 
 		const latency = performance.now() - startTime;
+
 		const totalCalls = stats.totalCalls + 1;
 
 		stats.totalCalls = totalCalls;
+
 		stats.successfulCalls += success ? 1 : 0;
+
 		stats.failedCalls += success ? 0 : 1;
+
 		stats.averageLatency =
 			(stats.averageLatency * (totalCalls - 1) + latency) / totalCalls;
+
 		stats.lastCalled = Date.now();
 
 		this.handlerStats.set(method, stats);
@@ -449,6 +535,7 @@ export class IPCHandler {
  */
 export function CreateIPCHandler(
 	logger: Logger,
+
 	config?: Partial<HandlerConfig>,
 ): IPCHandler {
 	return new IPCHandler(logger, config);

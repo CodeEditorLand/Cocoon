@@ -20,6 +20,7 @@ export class ApplicationConfigurationProblem extends Data.TaggedError(
 )<{
 	/** The underlying problem from the Integration layer that caused this failure. */
 	readonly Cause: IntegrationConfigurationProblem;
+
 	/** A string describing the context of the operation (e.g., 'FailedToResolveConfiguration'). */
 	readonly Context: string;
 }> {}

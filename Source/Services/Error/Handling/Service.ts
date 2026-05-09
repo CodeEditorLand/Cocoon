@@ -12,30 +12,45 @@ import { Effect, Layer } from "effect";
 // Circuit breaker state
 export interface CircuitBreakerState {
 	serviceName: string;
+
 	state: "CLOSED" | "OPEN" | "HALF_OPEN";
+
 	failureCount: number;
+
 	lastFailureTime: number;
+
 	successThreshold: number;
+
 	failureThreshold: number;
+
 	timeout: number;
 }
 
 // Error handling configuration
 export interface ErrorHandlingConfig {
 	maxRetries: number;
+
 	retryDelay: number;
+
 	exponentialBackoff: boolean;
+
 	circuitBreakerTimeout: number;
+
 	circuitBreakerThreshold: number;
 }
 
 // Error handling result
 export interface ErrorHandlingResult<T> {
 	success: boolean;
+
 	result?: T;
+
 	error?: Error;
+
 	retries: number;
+
 	duration: number;
+
 	circuitBreakerState?: CircuitBreakerState;
 }
 
@@ -46,11 +61,14 @@ export class ErrorHandlingService {
 	public readonly _serviceBrand: undefined;
 
 	private circuitBreakers: Map<string, CircuitBreakerState> = new Map();
+
 	private config: ErrorHandlingConfig;
 
 	constructor() {
 		this._serviceBrand = undefined;
+
 		this.config = this.loadDefaultConfig();
+
 		console.log(
 			"[ErrorHandlingService] Initializing error handling service",
 		);
@@ -62,8 +80,10 @@ export class ErrorHandlingService {
 	private loadDefaultConfig(): ErrorHandlingConfig {
 		return {
 			maxRetries: 3,
+
 			retryDelay: 1000, // 1 second
 			exponentialBackoff: true,
+
 			circuitBreakerTimeout: 30000, // 30 seconds
 			circuitBreakerThreshold: 5,
 		};
@@ -74,10 +94,13 @@ export class ErrorHandlingService {
 	 */
 	async executeWithRetry<T>(
 		operation: () => Promise<T>,
+
 		operationName: string,
+
 		customConfig?: Partial<ErrorHandlingConfig>,
 	): Promise<ErrorHandlingResult<T>> {
 		const startTime = Date.now();
+
 		const config = { ...this.config, ...customConfig };
 
 		console.log(
@@ -86,10 +109,12 @@ export class ErrorHandlingService {
 
 		// Enhanced circuit breaker state check with metrics
 		const circuitState = this.getCircuitBreakerState(operationName);
+
 		if (circuitState.state === "OPEN") {
 			const error = new Error(
 				`Circuit breaker is OPEN for ${operationName} (failures: ${circuitState.failureCount})`,
 			);
+
 			console.warn(
 				`[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`,
 			);
@@ -99,32 +124,45 @@ export class ErrorHandlingService {
 
 			return {
 				success: false,
+
 				error,
+
 				retries: 0,
+
 				duration: Date.now() - startTime,
+
 				circuitBreakerState: circuitState,
+
 				metrics: {
 					circuitBreakerBlocked: true,
+
 					totalRetries: 0,
+
 					executionTime: Date.now() - startTime,
 				},
 			};
 		}
 
 		let lastError: Error | undefined;
+
 		let totalRetries = 0;
 
 		for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
 			try {
 				const operationStartTime = Date.now();
+
 				const result = await operation();
+
 				const operationDuration = Date.now() - operationStartTime;
 
 				// Record success with performance metrics
 				this.recordSuccess(operationName);
+
 				this.trackOperationSuccess(
 					operationName,
+
 					operationDuration,
+
 					attempt,
 				);
 
@@ -134,38 +172,51 @@ export class ErrorHandlingService {
 
 				return {
 					success: true,
+
 					result,
+
 					retries: attempt,
+
 					duration: Date.now() - startTime,
+
 					circuitBreakerState:
 						this.getCircuitBreakerState(operationName),
+
 					metrics: {
 						totalRetries: attempt,
+
 						executionTime: Date.now() - startTime,
+
 						operationDuration,
+
 						circuitBreakerBlocked: false,
 					},
 				};
 			} catch (error) {
 				lastError =
 					error instanceof Error ? error : new Error(String(error));
+
 				totalRetries = attempt;
 
 				console.warn(
 					`[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
+
 					error,
 				);
 
 				// Record failure with error categorization
 				this.recordFailure(operationName);
+
 				this.trackOperationFailure(operationName, error, attempt);
 
 				// Enhanced retry logic with error type analysis
 				if (attempt < config.maxRetries && this.shouldRetry(error)) {
 					const delay = this.calculateRetryDelay(attempt, config);
+
 					console.log(
 						`[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`,
 					);
+
 					await this.delay(delay);
 				} else {
 					// Stop retrying if error is non-retryable
@@ -180,14 +231,22 @@ export class ErrorHandlingService {
 
 		return {
 			success: false,
+
 			error: lastError,
+
 			retries: totalRetries,
+
 			duration: Date.now() - startTime,
+
 			circuitBreakerState: this.getCircuitBreakerState(operationName),
+
 			metrics: {
 				totalRetries,
+
 				executionTime: Date.now() - startTime,
+
 				circuitBreakerBlocked: false,
+
 				finalFailure: true,
 			},
 		};
@@ -217,6 +276,7 @@ export class ErrorHandlingService {
 			Date.now() - state.lastFailureTime > state.timeout
 		) {
 			state.state = "HALF_OPEN";
+
 			console.log(
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`,
 			);
@@ -234,7 +294,9 @@ export class ErrorHandlingService {
 		if (state.state === "HALF_OPEN") {
 			// Success in HALF_OPEN state - close the circuit
 			state.state = "CLOSED";
+
 			state.failureCount = 0;
+
 			console.log(
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`,
 			);
@@ -249,12 +311,15 @@ export class ErrorHandlingService {
 	 */
 	private recordFailure(serviceName: string): void {
 		const state = this.getCircuitBreakerState(serviceName);
+
 		state.failureCount++;
+
 		state.lastFailureTime = Date.now();
 
 		if (state.state === "HALF_OPEN") {
 			// Failure in HALF_OPEN state - reopen the circuit
 			state.state = "OPEN";
+
 			console.log(
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`,
 			);
@@ -264,6 +329,7 @@ export class ErrorHandlingService {
 		) {
 			// Too many failures - open the circuit
 			state.state = "OPEN";
+
 			console.warn(
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`,
 			);
@@ -275,6 +341,7 @@ export class ErrorHandlingService {
 	 */
 	private calculateRetryDelay(
 		attempt: number,
+
 		config: ErrorHandlingConfig,
 	): number {
 		if (!config.exponentialBackoff) {
@@ -283,6 +350,7 @@ export class ErrorHandlingService {
 
 		// Exponential backoff with jitter: base * 2^attempt ± random jitter
 		const baseDelay = config.retryDelay * Math.pow(2, attempt);
+
 		const jitter = Math.random() * baseDelay * 0.1; // 10% jitter
 		const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter);
 
@@ -299,27 +367,44 @@ export class ErrorHandlingService {
 		// Non-retryable error patterns
 		const nonRetryablePatterns = [
 			"invalidargument",
+
 			"notfound",
+
 			"alreadyexists",
+
 			"permissiondenied",
+
 			"unauthenticated",
+
 			"unauthorized",
+
 			"badrequest",
+
 			"forbidden",
+
 			"conflict",
+
 			"gone",
 		];
 
 		// Retryable error patterns
 		const retryablePatterns = [
 			"timeout",
+
 			"deadlineexceeded",
+
 			"unavailable",
+
 			"busy",
+
 			"overloaded",
+
 			"temporarilyunavailable",
+
 			"network",
+
 			"connection",
+
 			"socket",
 		];
 
@@ -349,16 +434,24 @@ export class ErrorHandlingService {
 	private isTransientError(error: Error): boolean {
 		const transientIndicators = [
 			"temporary",
+
 			"transient",
+
 			"retry",
+
 			"again",
+
 			"later",
+
 			"soon",
+
 			"momentarily",
+
 			"briefly",
 		];
 
 		const errorMessage = error.message.toLowerCase();
+
 		return transientIndicators.some((indicator) =>
 			errorMessage.includes(indicator),
 		);
@@ -369,17 +462,25 @@ export class ErrorHandlingService {
 	 */
 	private trackOperationSuccess(
 		operationName: string,
+
 		duration: number,
+
 		attempt: number,
 	): void {
 		// Advanced success tracking
 		const successMetrics = {
 			operationName,
+
 			duration,
+
 			attempt,
+
 			timestamp: Date.now(),
+
 			success: true,
+
 			retryCount: attempt,
+
 			circuitBreakerState:
 				this.getCircuitBreakerState(operationName).state,
 		};
@@ -398,7 +499,9 @@ export class ErrorHandlingService {
 	 */
 	private adaptRetryStrategy(
 		operationName: string,
+
 		duration: number,
+
 		attempt: number,
 	): void {
 		// Simple adaptive learning: if operations consistently succeed on first attempt,
@@ -409,6 +512,7 @@ export class ErrorHandlingService {
 			// Fast success on first attempt - reduce retry count
 			circuitState.successThreshold = Math.max(
 				1,
+
 				circuitState.successThreshold - 1,
 			);
 		}
@@ -419,18 +523,26 @@ export class ErrorHandlingService {
 	 */
 	private trackOperationFailure(
 		operationName: string,
+
 		error: Error,
+
 		attempt: number,
 	): void {
 		// Advanced failure tracking
 		const failureMetrics = {
 			operationName,
+
 			attempt,
+
 			timestamp: Date.now(),
+
 			success: false,
+
 			errorType: this.classifyError(error),
+
 			errorMessage: error.message.substring(0, 200), // Truncate long messages
 			retryable: this.shouldRetry(error),
+
 			circuitBreakerState:
 				this.getCircuitBreakerState(operationName).state,
 		};
@@ -482,6 +594,7 @@ export class ErrorHandlingService {
 	 */
 	private trackCircuitBreakerEvent(
 		operationName: string,
+
 		eventType: string,
 	): void {
 		// TODO: Integrate with PerformanceMonitoringService
@@ -519,6 +632,7 @@ export class ErrorHandlingService {
 	resetCircuitBreaker(serviceName: string): void {
 		if (this.circuitBreakers.has(serviceName)) {
 			this.circuitBreakers.delete(serviceName);
+
 			console.log(
 				`[ErrorHandlingService] Circuit breaker reset for ${serviceName}`,
 			);
@@ -530,6 +644,7 @@ export class ErrorHandlingService {
 	 */
 	updateConfiguration(newConfig: Partial<ErrorHandlingConfig>): void {
 		this.config = { ...this.config, ...newConfig };
+
 		console.log("[ErrorHandlingService] Configuration updated");
 	}
 
@@ -538,22 +653,30 @@ export class ErrorHandlingService {
 	 */
 	getStatistics(): {
 		totalCircuitBreakers: number;
+
 		openCircuitBreakers: number;
+
 		halfOpenCircuitBreakers: number;
+
 		closedCircuitBreakers: number;
+
 		config: ErrorHandlingConfig;
 	} {
 		const states = this.getAllCircuitBreakerStatuses();
 
 		return {
 			totalCircuitBreakers: states.length,
+
 			openCircuitBreakers: states.filter((s) => s.state === "OPEN")
 				.length,
+
 			halfOpenCircuitBreakers: states.filter(
 				(s) => s.state === "HALF_OPEN",
 			).length,
+
 			closedCircuitBreakers: states.filter((s) => s.state === "CLOSED")
 				.length,
+
 			config: this.config,
 		};
 	}
@@ -564,6 +687,7 @@ export class ErrorHandlingService {
  */
 export const ErrorHandlingServiceLayer = Layer.effect(
 	"ErrorHandlingService",
+
 	Effect.sync(() => new ErrorHandlingService()),
 );
 
@@ -572,5 +696,6 @@ export const ErrorHandlingServiceLayer = Layer.effect(
  */
 export const ErrorHandlingServiceLive = Layer.effect(
 	"ErrorHandlingService",
+
 	Effect.sync(() => new ErrorHandlingService()),
 );

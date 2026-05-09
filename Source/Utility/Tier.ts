@@ -35,21 +35,31 @@ import LandFixLog from "./Land/Fix/Log.js";
 
 // Transport tiers ------------------------------------------------------------
 export type TierRemoteProcedureCallValue = "GRPC" | "SharedMemory";
+
 export type TierHTTPProxyValue = "HandRolled" | "Hyper";
+
 export type TierLoggerValue = "Standard" | "Ring";
 
 // File-system tiers ----------------------------------------------------------
 export type TierFileSystemValue = "Layer2" | "Layer3" | "Layer4";
+
 export type TierFindFilesValue = "Layer3" | "Layer4";
+
 export type TierGlobValue = "JavaScript" | "Native";
+
 export type TierFileWatcherValue = "Stub" | "Layer4";
+
 export type TierSchemeAssetsValue = "Embedded" | "FileSystem" | "Hybrid";
 
 // VS Code API tiers ----------------------------------------------------------
 export type TierConfigurationValue = "Cache" | "Eager";
+
 export type TierDiagnosticsValue = "Full" | "Delta";
+
 export type TierClipboardValue = "Layer3" | "Layer4" | "Layer5";
+
 export type TierOpenExternalValue = "Layer3" | "Layer4";
+
 export type TierDocumentMirrorValue = "Full" | "Lazy";
 
 // Lifecycle tiers ------------------------------------------------------------
@@ -58,7 +68,9 @@ export type TierExtensionActivationValue =
 	| "Parallel4"
 	| "Parallel8"
 	| "Parallel16";
+
 export type TierExtensionScanValue = "Sequential" | "Parallel";
+
 export type TierModuleCacheValue = "Off" | "Simple" | "Shared";
 
 // Telemetry tiers ------------------------------------------------------------
@@ -70,27 +82,37 @@ const Injected =
 
 const Pick = <T extends string>(Capability: string, Fallback: T): T => {
 	const FromInjected = Injected[Capability];
+
 	if (typeof FromInjected === "string" && FromInjected.length > 0) {
 		return FromInjected as T;
 	}
+
 	const FromEnvironment = process.env[`Tier${Capability}`];
+
 	if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
 		return FromEnvironment as T;
 	}
+
 	return Fallback;
 };
 
 const Tier = {
 	RemoteProcedureCall: Pick<TierRemoteProcedureCallValue>(
 		"RemoteProcedureCall",
+
 		"GRPC",
 	),
+
 	HTTPProxy: Pick<TierHTTPProxyValue>("HTTPProxy", "HandRolled"),
+
 	Logger: Pick<TierLoggerValue>("Logger", "Standard"),
 
 	FileSystem: Pick<TierFileSystemValue>("FileSystem", "Layer2"),
+
 	FindFiles: Pick<TierFindFilesValue>("FindFiles", "Layer3"),
+
 	Glob: Pick<TierGlobValue>("Glob", "JavaScript"),
+
 	// Default Layer4 so `createFileSystemWatcher` forwards to Mountain's
 	// native `notify`-crate implementation in `Environment/FileWatcherProvider.rs`.
 	// Stub mode drops every watch registration, leaving every extension that
@@ -99,19 +121,27 @@ const Tier = {
 	// `TierFileWatcher=Stub` at launch to restore the old drop behaviour
 	// for debugging.
 	FileWatcher: Pick<TierFileWatcherValue>("FileWatcher", "Layer4"),
+
 	SchemeAssets: Pick<TierSchemeAssetsValue>("SchemeAssets", "Embedded"),
 
 	Configuration: Pick<TierConfigurationValue>("Configuration", "Cache"),
+
 	Diagnostics: Pick<TierDiagnosticsValue>("Diagnostics", "Full"),
+
 	Clipboard: Pick<TierClipboardValue>("Clipboard", "Layer3"),
+
 	OpenExternal: Pick<TierOpenExternalValue>("OpenExternal", "Layer3"),
+
 	DocumentMirror: Pick<TierDocumentMirrorValue>("DocumentMirror", "Full"),
 
 	ExtensionActivation: Pick<TierExtensionActivationValue>(
 		"ExtensionActivation",
+
 		"Parallel8",
 	),
+
 	ExtensionScan: Pick<TierExtensionScanValue>("ExtensionScan", "Sequential"),
+
 	ModuleCache: Pick<TierModuleCacheValue>("ModuleCache", "Simple"),
 
 	Telemetry: Pick<TierTelemetryValue>("Telemetry", "Synchronous"),

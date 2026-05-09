@@ -41,7 +41,9 @@ import { Effect, Option } from "effect";
  */
 export interface ProcessExitStatus {
 	code: number | null;
+
 	signal: NodeJS.Signals | null;
+
 	timedOut: boolean;
 }
 
@@ -50,13 +52,21 @@ export interface ProcessExitStatus {
  */
 export interface ProcessSpawnOptions {
 	cwd?: string;
+
 	env?: Record<string, string>;
+
 	detached?: boolean;
+
 	shell?: boolean | string;
+
 	windowsHide?: boolean;
+
 	timeout?: number;
+
 	maxBuffer?: number;
+
 	uid?: number;
+
 	gid?: number;
 }
 
@@ -65,9 +75,13 @@ export interface ProcessSpawnOptions {
  */
 export interface ProcessMonitorOptions {
 	heartbeatInterval?: number;
+
 	killTimeout?: number;
+
 	autoRestart?: boolean;
+
 	maxRestarts?: number;
+
 	restartDelay?: number;
 }
 
@@ -76,14 +90,23 @@ export interface ProcessMonitorOptions {
  */
 export interface ProcessInfo {
 	pid: number;
+
 	command: string;
+
 	args: string[];
+
 	cwd: string;
+
 	env: Record<string, string>;
+
 	startTime: number;
+
 	status: "running" | "stopped" | "error";
+
 	exitCode: number | null;
+
 	signal: NodeJS.Signals | null;
+
 	parentPid?: number;
 }
 
@@ -92,37 +115,69 @@ export interface ProcessInfo {
  */
 export enum ProcessSignal {
 	SIGHUP = "SIGHUP",
+
 	SIGINT = "SIGINT",
+
 	SIGQUIT = "SIGQUIT",
+
 	SIGILL = "SIGILL",
+
 	SIGTRAP = "SIGTRAP",
+
 	SIGABRT = "SIGABRT",
+
 	SIGBUS = "SIGBUS",
+
 	SIGFPE = "SIGFPE",
+
 	SIGKILL = "SIGKILL",
+
 	SIGUSR1 = "SIGUSR1",
+
 	SIGSEGV = "SIGSEGV",
+
 	SIGUSR2 = "SIGUSR2",
+
 	SIGPIPE = "SIGPIPE",
+
 	SIGALRM = "SIGALRM",
+
 	SIGTERM = "SIGTERM",
+
 	SIGCHLD = "SIGCHLD",
+
 	SIGCONT = "SIGCONT",
+
 	SIGSTOP = "SIGSTOP",
+
 	SIGTSTP = "SIGTSTP",
+
 	SIGTTIN = "SIGTTIN",
+
 	SIGTTOU = "SIGTTOU",
+
 	SIGURG = "SIGURG",
+
 	SIGXCPU = "SIGXCPU",
+
 	SIGXFSZ = "SIGXFSZ",
+
 	SIGVTALRM = "SIGVTALRM",
+
 	SIGPROF = "SIGPROF",
+
 	SIGWINCH = "SIGWINCH",
+
 	SIGIO = "SIGIO",
+
 	SIGPOLL = "SIGPOLL",
+
 	SIGPWR = "SIGPWR",
+
 	SIGSYS = "SIGSYS",
+
 	SIGSTKFLT = "SIGSTKFLT",
+
 	SIGUNUSED = "SIGUNUSED",
 }
 
@@ -130,10 +185,14 @@ export enum ProcessSignal {
  * Default process configuration
  */
 export const DEFAULT_TIMEOUT = 30000;
+
 export const DEFAULT_MAX_BUFFER = 1024 * 1024; // 1MB
 export const DEFAULT_HEARTBEAT_INTERVAL = 5000;
+
 export const DEFAULT_KILL_TIMEOUT = 5000;
+
 export const DEFAULT_MAX_RESTARTS = 3;
+
 export const DEFAULT_RESTART_DELAY = 1000;
 
 /**
@@ -159,6 +218,7 @@ function GetChildProcessModule(): any {
 	if (!IsChildProcessAvailable()) {
 		return null;
 	}
+
 	try {
 		return require("child_process");
 	} catch {
@@ -175,6 +235,7 @@ export function ValidateCommand(command: string): boolean {
 	}
 
 	const trimmed = command.trim();
+
 	if (trimmed === "") {
 		return false;
 	}
@@ -212,9 +273,12 @@ export function ValidateArgs(args: string[]): boolean {
 
 	const dangerousPatterns = [
 		/;\s*\w/,
+
 		/`\s*[^`]*`/,
 		/\$\s*\(\s*[^)]*\)/,
+
 		/>\s*\//,
+
 		/>\s*\w/,
 	];
 
@@ -238,33 +302,44 @@ export function ValidateArgs(args: string[]): boolean {
  */
 export async function SpawnProcess(
 	command: string,
+
 	args: string[] = [],
+
 	options: ProcessSpawnOptions = {},
 ): Promise<ProcessInfo | null> {
 	// Security validation
 	if (!ValidateCommand(command)) {
 		console.error("[Process] Invalid command:", command);
+
 		return null;
 	}
 
 	if (!ValidateArgs(args)) {
 		console.error("[Process] Invalid arguments:", args);
+
 		return null;
 	}
 
 	const childProcess = GetChildProcessModule();
+
 	if (!childProcess) {
 		console.error("[Process] child_process module not available");
+
 		return null;
 	}
 
 	try {
 		const spawnOptions: any = {
 			cwd: options.cwd,
+
 			env: options.env || GetMergedEnvironment(options.env),
+
 			detached: options.detached || false,
+
 			shell: options.shell || false,
+
 			windowsHide: options.windowsHide !== false,
+
 			stdio: ["pipe", "pipe", "pipe"],
 		};
 
@@ -272,14 +347,23 @@ export async function SpawnProcess(
 
 		const processInfo: ProcessInfo = {
 			pid: childProc.pid,
+
 			command,
+
 			args,
+
 			cwd: options.cwd || process.cwd(),
+
 			env: options.env || {},
+
 			startTime: Date.now(),
+
 			status: "running",
+
 			exitCode: null,
+
 			signal: null,
+
 			parentPid: process.pid,
 		};
 
@@ -289,6 +373,7 @@ export async function SpawnProcess(
 		// Handle exit
 		childProc.on(
 			"exit",
+
 			(code: number | null, signal: NodeJS.Signals | null) => {
 				processInfo.status = "stopped";
 				processInfo.exitCode = code;
@@ -308,9 +393,11 @@ export async function SpawnProcess(
 		console.log(
 			`[Process] Spawned process: pid=${childProc.pid}, command=${command}`,
 		);
+
 		return processInfo;
 	} catch (error) {
 		console.error("[Process] Failed to spawn process:", error);
+
 		return null;
 	}
 }
@@ -320,7 +407,9 @@ export async function SpawnProcess(
  */
 export async function ExecuteCommand(
 	command: string,
+
 	args: string[] = [],
+
 	options: ProcessSpawnOptions = {},
 ): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
 	if (!ValidateCommand(command)) {
@@ -332,6 +421,7 @@ export async function ExecuteCommand(
 	}
 
 	const childProcess = GetChildProcessModule();
+
 	if (!childProcess) {
 		throw new Error("child_process module not available");
 	}
@@ -348,8 +438,11 @@ export async function ExecuteCommand(
 
 		childProcess.execFile(
 			command,
+
 			args,
+
 			execOptions,
+
 			(error: any, stdout: string, stderr: string) => {
 				if (error) {
 					resolve({
@@ -374,12 +467,16 @@ export async function ExecuteCommand(
  */
 export async function ForkProcess(
 	modulePath: string,
+
 	args: string[] = [],
+
 	options: ProcessSpawnOptions = {},
 ): Promise<ProcessInfo | null> {
 	const childProcess = GetChildProcessModule();
+
 	if (!childProcess) {
 		console.error("[Process] child_process module not available");
+
 		return null;
 	}
 
@@ -390,14 +487,18 @@ export async function ForkProcess(
 		modulePath.trim() === ""
 	) {
 		console.error("[Process] Invalid module path");
+
 		return null;
 	}
 
 	try {
 		const forkOptions: any = {
 			cwd: options.cwd,
+
 			env: options.env || GetMergedEnvironment(options.env),
+
 			silent: false,
+
 			windowsHide: options.windowsHide !== false,
 		};
 
@@ -405,14 +506,23 @@ export async function ForkProcess(
 
 		const processInfo: ProcessInfo = {
 			pid: childProc.pid,
+
 			command: "node",
+
 			args: [modulePath, ...args],
+
 			cwd: options.cwd || process.cwd(),
+
 			env: options.env || {},
+
 			startTime: Date.now(),
+
 			status: "running",
+
 			exitCode: null,
+
 			signal: null,
+
 			parentPid: process.pid,
 		};
 
@@ -420,6 +530,7 @@ export async function ForkProcess(
 
 		childProc.on(
 			"exit",
+
 			(code: number | null, signal: NodeJS.Signals | null) => {
 				processInfo.status = "stopped";
 				processInfo.exitCode = code;
@@ -430,9 +541,11 @@ export async function ForkProcess(
 		console.log(
 			`[Process] Forked process: pid=${childProc.pid}, module=${modulePath}`,
 		);
+
 		return processInfo;
 	} catch (error) {
 		console.error("[Process] Failed to fork process:", error);
+
 		return null;
 	}
 }
@@ -442,16 +555,20 @@ export async function ForkProcess(
  */
 export function SendSignal(
 	pid: number,
+
 	signal: NodeJS.Signals | string,
 ): boolean {
 	try {
 		process.kill(pid, signal);
+
 		return true;
 	} catch (error) {
 		console.error(
 			`[Process] Failed to send signal ${signal} to pid ${pid}:`,
+
 			error,
 		);
+
 		return false;
 	}
 }
@@ -461,16 +578,20 @@ export function SendSignal(
  */
 export function TerminateProcess(
 	pid: number,
+
 	timeout: number = DEFAULT_KILL_TIMEOUT,
 ): boolean {
 	const processInfo = ProcessRegistry.get(pid);
+
 	if (!processInfo) {
 		console.warn(`[Process] Process ${pid} not found in registry`);
+
 		return false;
 	}
 
 	if (processInfo.status !== "running") {
 		console.warn(`[Process] Process ${pid} is not running`);
+
 		return false;
 	}
 
@@ -482,6 +603,7 @@ export function TerminateProcess(
 
 		// Wait for graceful shutdown
 		const startTime = Date.now();
+
 		const checkInterval = setInterval(() => {
 			const updatedInfo = ProcessRegistry.get(pid);
 			if (!updatedInfo || updatedInfo.status !== "running") {
@@ -499,6 +621,7 @@ export function TerminateProcess(
 		return true;
 	} catch (error) {
 		console.error(`[Process] Failed to terminate process ${pid}:`, error);
+
 		return false;
 	}
 }
@@ -508,8 +631,10 @@ export function TerminateProcess(
  */
 export function KillProcess(pid: number): boolean {
 	const processInfo = ProcessRegistry.get(pid);
+
 	if (!processInfo) {
 		console.warn(`[Process] Process ${pid} not found in registry`);
+
 		return false;
 	}
 
@@ -518,6 +643,7 @@ export function KillProcess(pid: number): boolean {
 	}
 
 	console.log(`[Process] Killed process ${pid}`);
+
 	return true;
 }
 
@@ -526,6 +652,7 @@ export function KillProcess(pid: number): boolean {
  */
 export function GetProcess(pid: number): Option.Option<ProcessInfo> {
 	const processInfo = ProcessRegistry.get(pid);
+
 	return processInfo ? Option.some(processInfo) : Option.none();
 }
 
@@ -566,10 +693,13 @@ export function UnregisterProcess(pid: number): boolean {
  */
 export function CleanupAllProcesses(): void {
 	const processes = GetRunningProcesses();
+
 	for (const procInfo of processes) {
 		console.log(`[Process] Cleaning up process ${procInfo.pid}`);
+
 		KillProcess(procInfo.pid);
 	}
+
 	ProcessRegistry.clear();
 }
 
@@ -606,15 +736,18 @@ function GetMergedEnvironment(
  */
 export async function MonitorProcess(
 	pid: number,
+
 	options: ProcessMonitorOptions = {},
 ): Promise<boolean> {
 	const processInfo = ProcessRegistry.get(pid);
+
 	if (!processInfo) {
 		return false;
 	}
 
 	const heartbeatInterval =
 		options.heartbeatInterval || DEFAULT_HEARTBEAT_INTERVAL;
+
 	const killTimeout = options.killTimeout || DEFAULT_KILL_TIMEOUT;
 
 	return new Promise((resolve) => {
@@ -651,6 +784,7 @@ export function IsProcessRunning(pid: number): boolean {
 	try {
 		// Send signal 0 to check if process exists
 		process.kill(pid, 0);
+
 		return true;
 	} catch {
 		return false;
@@ -676,7 +810,9 @@ export function GetParentPid(): number {
  */
 export function SpawnProcessEffect(
 	command: string,
+
 	args: string[],
+
 	options: ProcessSpawnOptions,
 ): Effect.Effect<ProcessInfo | null, Error> {
 	return Effect.tryPromise({
@@ -690,7 +826,9 @@ export function SpawnProcessEffect(
  */
 export function ExecuteCommandEffect(
 	command: string,
+
 	args: string[],
+
 	options: ProcessSpawnOptions = {},
 ): Effect.Effect<
 	{ stdout: string; stderr: string; exitCode: number | null },
@@ -707,6 +845,7 @@ export function ExecuteCommandEffect(
  */
 export function SendSignalEffect(
 	pid: number,
+
 	signal: NodeJS.Signals,
 ): Effect.Effect<void, Error> {
 	return Effect.try(() => {
@@ -732,22 +871,39 @@ export function GetProcessEffect(
  */
 export const Process = {
 	ValidateCommand,
+
 	ValidateArgs,
+
 	SpawnProcess,
+
 	ExecuteCommand,
+
 	ForkProcess,
+
 	SendSignal,
+
 	TerminateProcess,
+
 	KillProcess,
+
 	GetProcess,
+
 	GetAllProcesses,
+
 	GetRunningProcesses,
+
 	GetStoppedProcesses,
+
 	UnregisterProcess,
+
 	CleanupAllProcesses,
+
 	MonitorProcess,
+
 	IsProcessRunning,
+
 	GetCurrentPid,
+
 	GetParentPid,
 };
 
@@ -756,9 +912,14 @@ export const Process = {
  */
 export const ProcessConstants = {
 	DEFAULT_TIMEOUT,
+
 	DEFAULT_MAX_BUFFER,
+
 	DEFAULT_HEARTBEAT_INTERVAL,
+
 	DEFAULT_KILL_TIMEOUT,
+
 	DEFAULT_MAX_RESTARTS,
+
 	DEFAULT_RESTART_DELAY,
 };

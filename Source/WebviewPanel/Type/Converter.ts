@@ -88,28 +88,40 @@ import type {
  */
 export interface TypeConverter {
 	readonly ConvertUriToString: (Uri: Uri) => string;
+
 	readonly ConvertStringToUri: (String: string) => Uri;
+
 	readonly ConvertViewColumnToNumber: (ViewColumn: ViewColumn) => number;
+
 	readonly ConvertNumberToViewColumn: (Number: number) => ViewColumn;
+
 	readonly ConvertPanelOptionsToDTO: (
 		Options: PanelOptions,
 	) => MountainDTO["Options"];
+
 	readonly ConvertDTOToPanelOptions: (
 		DTO: MountainDTO["Options"],
 	) => PanelOptions;
+
 	readonly ConvertPositionToDTO: (Position: PanelPosition) => {
 		readonly ViewColumn: number;
+
 		readonly PreservedFocus: boolean;
 	};
+
 	readonly ConvertDTOToPosition: (DTO: {
 		readonly ViewColumn: number;
 		readonly PreservedFocus: boolean;
 	}) => PanelPosition;
+
 	readonly ConvertViewStateToDTO: (ViewState: PanelViewState) => {
 		readonly Active: boolean;
+
 		readonly Visible: boolean;
+
 		readonly ViewColumn: number;
 	};
+
 	readonly ConvertDTOToViewState: (DTO: {
 		readonly Active: boolean;
 		readonly Visible: boolean;
@@ -123,6 +135,7 @@ export interface TypeConverter {
  */
 export class TypeConverterService extends Effect.Service<TypeConverterService>()(
 	"TypeConverter/WebviewPanel",
+
 	{
 		effect: Effect.gen(function* () {
 			/**

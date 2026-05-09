@@ -22,7 +22,9 @@ const MakeEventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(
 		Callback: Listener<unknown>,
+
 		ThisArg?: unknown,
+
 		Disposables?: { push: (D: { dispose: () => void }) => unknown },
 	) => {
 		// Honour VS Code's `(listener, thisArg?, disposables?)` event
@@ -34,15 +36,19 @@ const MakeEventSubscriber =
 			ThisArg === undefined
 				? Callback
 				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg);
+
 		Context.Emitter.on(EventName, Bound as Listener<unknown>);
+
 		const Subscription = {
 			dispose: () => {
 				Context.Emitter.off(EventName, Bound as Listener<unknown>);
 			},
 		};
+
 		if (Disposables && typeof Disposables.push === "function") {
 			Disposables.push(Subscription);
 		}
+
 		return Subscription;
 	};
 
@@ -90,6 +96,7 @@ export const WebviewViewProviders = new Map<string, any>();
  * step.
  */
 export const WebviewViewBuilders = new Map<string, () => any>();
+
 /**
  * Custom editor provider registry. Indexed by both the numeric handle
  * (for `webview.{register,unregister}CustomEditor` round-trips) and by
@@ -106,10 +113,12 @@ export const WebviewViewBuilders = new Map<string, () => any>();
  * method on the provider.
  */
 export const CustomEditorProviders = new Map<string, any>();
+
 export const CustomEditorProvidersByViewType = new Map<
 	string,
 	{ Provider: any; Readonly: boolean; Handle: number }
 >();
+
 export const WebviewPanels = new Map<string, any>();
 
 /**
@@ -139,16 +148,22 @@ export const WebviewPanels = new Map<string, any>();
  */
 const RegisterCustomEditor = (
 	Context: HandlerContext,
+
 	ViewType: string,
+
 	Provider: any,
+
 	Options: {
 		supportsMultipleEditorsPerDocument?: boolean;
 		webviewOptions?: unknown;
 	},
+
 	IsReadonly: boolean,
 ) => {
 	const Handle = NextProviderHandle();
+
 	CustomEditorProviders.set(String(Handle), Provider);
+
 	CustomEditorProvidersByViewType.set(ViewType, {
 		Provider,
 		Readonly: IsReadonly,
@@ -173,26 +188,37 @@ const RegisterCustomEditor = (
 
 	const SafeAwait = async (
 		Channel: string,
+
 		MethodName: string,
+
 		Payload: any,
 	): Promise<unknown> => {
 		const Entry = CustomEditorProvidersByViewType.get(
 			Payload?.viewType ?? ViewType,
 		);
+
 		if (!Entry || Entry.Handle !== Handle) return undefined;
+
 		if (Entry.Readonly && MethodName !== "resolveCustomEditor")
 			return undefined;
+
 		const Method = (Entry.Provider as Record<string, unknown>)?.[
 			MethodName
 		];
+
 		if (typeof Method !== "function") return undefined;
+
 		try {
 			const Result = await (Method as (...A: unknown[]) => unknown).call(
 				Entry.Provider,
+
 				Payload?.document,
+
 				Payload?.context ?? Payload?.destination,
+
 				Payload?.token,
 			);
+
 			return Result;
 		} catch (Error) {
 			try {
@@ -227,6 +253,7 @@ const RegisterCustomEditor = (
 	Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
 	Subscribe(
 		"customEditor.didChangeCustomDocument",
+
 		"didChangeCustomDocument",
 	);
 
@@ -235,6 +262,7 @@ const RegisterCustomEditor = (
 			for (const { Channel, Listener } of Listeners) {
 				Context.Emitter.off(
 					Channel,
+
 					Listener as (..._A: unknown[]) => void,
 				);
 			}
@@ -246,6 +274,7 @@ const RegisterCustomEditor = (
 			}
 			Context.MountainClient?.sendRequest(
 				"webview.unregisterCustomEditor",
+
 				{ handle: Handle, viewType: ViewType },
 			).catch(() => {});
 		},
@@ -283,6 +312,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			try {
 				const Selection = await Context.MountainClient?.sendRequest(
 					"Window.ShowMessage",
+
 					[
 						{
 							message: Message,
@@ -332,6 +362,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			if (Input.startsWith("vscode-resource://")) {
 				return Input.replace(
 					"vscode-resource://",
+
 					"vscode-file://vscode-app/",
 				);
 			}
@@ -348,10 +379,15 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		if (Scheme === "file" && Path) {
 			const Rewritten = {
 				...Anything,
+
 				scheme: "vscode-file",
+
 				authority: "vscode-app",
+
 				path: Path,
+
 				query: String(Anything.query ?? ""),
+
 				fragment: String(Anything.fragment ?? ""),
 			};
 			const SerialisedQuery = Rewritten.query
@@ -371,7 +407,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		) {
 			const Rewritten = {
 				...Anything,
+
 				scheme: "vscode-file",
+
 				authority: "vscode-app",
 			};
 			const Serialised = `vscode-file://vscode-app${Path}`;
@@ -401,6 +439,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			try {
 				return await Context.MountainClient?.sendRequest(
 					"Window.ShowQuickPick",
+
 					[Items, Options ?? {}],
 				);
 			} catch {
@@ -411,6 +450,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			try {
 				return await Context.MountainClient?.sendRequest(
 					"Window.ShowInputBox",
+
 					[Options ?? {}],
 				);
 			} catch {
@@ -421,6 +461,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			try {
 				const Selected = await Context.MountainClient?.sendRequest(
 					"Window.ShowOpenDialog",
+
 					[Options ?? {}],
 				);
 				return Array.isArray(Selected) ? (Selected as unknown[]) : [];
@@ -434,6 +475,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			try {
 				return await Context.MountainClient?.sendRequest(
 					"Window.ShowSaveDialog",
+
 					[Options ?? {}],
 				);
 			} catch {
@@ -446,17 +488,22 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		createStatusBarItem: (
 			AlignmentOrId?: unknown,
+
 			Priority?: number,
 		): Record<string, unknown> =>
 			CreateStatusBarItem(
 				Context,
+
 				NextProviderHandle(),
+
 				AlignmentOrId,
+
 				Priority,
 			),
 
 		createOutputChannel: (
 			Name: string,
+
 			Options?: string | { log?: boolean },
 		) => CreateOutputChannel(Context, NextProviderHandle(), Name, Options),
 
@@ -468,9 +515,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}).catch(() => {});
 			return {
 				key: Key,
+
 				dispose: () => {
 					Context.SendToMountain(
 						"window.disposeTextEditorDecorationType",
+
 						{
 							key: Key,
 						},
@@ -481,11 +530,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		registerTerminalQuickFixProvider: (
 			_Id: string,
+
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
 
 		registerTerminalCompletionProvider: (
 			_Id: string,
+
 			_Provider: unknown,
 			..._TriggerCharacters: string[]
 		) => ({ dispose: () => {} }),
@@ -543,19 +594,29 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		createWebviewPanel: (
 			ViewType: string,
+
 			Title: string,
+
 			ShowOptions: unknown,
+
 			Options?: unknown,
 		) => {
 			const Handle = NextProviderHandle();
 			const Panel = CreateWebviewPanel(
 				Context,
+
 				Handle,
+
 				ViewType,
+
 				Title,
+
 				ShowOptions,
+
 				Options as Record<string, unknown> | undefined,
+
 				ToWebviewUri,
+
 				SharedCspSource,
 			);
 			WebviewPanels.set(String(Handle), Panel);
@@ -564,7 +625,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		showTextDocument: async (
 			_Document: unknown,
+
 			_Column?: unknown,
+
 			_PreserveFocus?: boolean,
 		) => {
 			Context.SendToMountain("window.showTextDocument", {
@@ -582,16 +645,21 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			all: [] as unknown[],
 			activeTabGroup: {
 				tabs: [] as unknown[],
+
 				isActive: true,
+
 				viewColumn: 1,
+
 				activeTab: undefined,
 			},
 			onDidChangeTabs: MakeEventSubscriber(
 				Context,
+
 				"window.didChangeTabs",
 			),
 			onDidChangeTabGroups: MakeEventSubscriber(
 				Context,
+
 				"window.didChangeTabGroups",
 			),
 			close: async (_Tab: unknown, _PreserveFocus?: boolean) => {
@@ -602,6 +670,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				try {
 					await Context.MountainClient?.sendRequest(
 						"Command.Execute",
+
 						["workbench.action.closeActiveEditor", []],
 					);
 					return true;
@@ -615,16 +684,19 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			kind: 2, // ColorThemeKind.Dark
 			onDidChange: MakeEventSubscriber(
 				Context,
+
 				"window.didChangeActiveColorTheme",
 			),
 		},
 		onDidChangeActiveColorTheme: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeActiveColorTheme",
 		),
 
 		createTreeView: (
 			Id: string,
+
 			Options: { treeDataProvider?: any } & Record<string, unknown>,
 		) => {
 			const Provider = Options?.treeDataProvider;
@@ -647,28 +719,42 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				};
 				Context.MountainClient?.sendRequest("tree.register", [
 					Handle,
+
 					Id,
+
 					SerializableOptions,
 				]).catch(() => {});
 			}
 			return {
 				reveal: async () => {},
+
 				dispose: () => {
 					TreeDataProvidersByViewId.delete(Id);
 					Context.MountainClient?.sendRequest("tree.dispose", [
 						Id,
 					]).catch(() => {});
 				},
+
 				selection: [],
+
 				visible: true,
+
 				title: undefined as string | undefined,
+
 				description: undefined as string | undefined,
+
 				message: undefined as string | undefined,
+
 				badge: undefined,
+
 				onDidChangeSelection: () => ({ dispose: () => {} }),
+
 				onDidChangeVisibility: () => ({ dispose: () => {} }),
+
 				onDidCollapseElement: () => ({ dispose: () => {} }),
+
 				onDidExpandElement: () => ({ dispose: () => {} }),
+
 				onDidChangeCheckboxState: () => ({ dispose: () => {} }),
 			};
 		},
@@ -679,7 +765,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			TreeDataProvidersByViewId.set(ViewId, Provider);
 			Context.MountainClient?.sendRequest("tree.register", [
 				Handle,
+
 				ViewId,
+
 				{},
 			]).catch(() => {});
 			return {
@@ -709,12 +797,17 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			WebviewViewBuilders.set(String(Handle), () => {
 				return CreateWebviewViewBuilder(
 					Context,
+
 					Handle,
+
 					ViewId,
+
 					ToWebviewUri,
+
 					SharedCspSource,
 				);
 			});
+
 			// Named-key payload so Mountain's `Webview.rs` case 1 passes
 			// through verbatim and SkyBridge's `sky://webview/registerView`
 			// listener sees `Payload.viewId` directly without depending on
@@ -724,20 +817,27 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				handle: Handle,
 				viewId: ViewId,
 			}).catch(() => {});
+
 			return {
 				dispose: () => {
 					WebviewViewProviders.delete(String(Handle));
+
 					WebviewViewBuilders.delete(String(Handle));
+
 					Context.MountainClient?.sendRequest(
 						"webview.unregisterView",
+
 						{ handle: Handle, viewId: ViewId },
 					).catch(() => {});
 				},
 			};
 		},
+
 		registerCustomEditorProvider: (
 			ViewType: string,
+
 			Provider: any,
+
 			Options?: {
 				supportsMultipleEditorsPerDocument?: boolean;
 				webviewOptions?: unknown;
@@ -745,9 +845,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		) =>
 			RegisterCustomEditor(
 				Context,
+
 				ViewType,
+
 				Provider,
+
 				Options ?? {},
+
 				false,
 			),
 
@@ -761,7 +865,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// resolveCustomTextEditor / resolveCustomEditor path correctly.
 		registerCustomReadonlyEditorProvider: (
 			ViewType: string,
+
 			Provider: any,
+
 			Options?: {
 				supportsMultipleEditorsPerDocument?: boolean;
 				webviewOptions?: unknown;
@@ -769,110 +875,146 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		) =>
 			RegisterCustomEditor(
 				Context,
+
 				ViewType,
+
 				Provider,
+
 				Options ?? {},
+
 				true,
 			),
+
 		registerFileDecorationProvider: (Provider: any) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_file_decoration_provider", {
 				handle: Handle,
 				extensionId: "",
 			}).catch(() => {});
+
 			// Stash locally so `FileDecorationProvider$provideFileDecoration`
 			// from Mountain can look up by handle.
 			Context.ExtensionRegistry.set(
 				`__fileDecorationProvider:${Handle}`,
+
 				Provider,
 			);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(
 						`__fileDecorationProvider:${Handle}`,
 					);
+
 					Context.SendToMountain(
 						"unregister_file_decoration_provider",
+
 						{ handle: Handle },
 					).catch(() => {});
 				},
 			};
 		},
+
 		registerUriHandler: (Handler: any) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_uri_handler", {
 				handle: Handle,
 				extensionId: "",
 			}).catch(() => {});
+
 			Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+
 					Context.SendToMountain("unregister_uri_handler", {
 						handle: Handle,
 					}).catch(() => {});
 				},
 			};
 		},
+
 		registerTerminalLinkProvider: (Provider: any) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_terminal_link_provider", {
 				handle: Handle,
 				extensionId: "",
 			}).catch(() => {});
+
 			Context.ExtensionRegistry.set(
 				`__terminalLinkProvider:${Handle}`,
+
 				Provider,
 			);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(
 						`__terminalLinkProvider:${Handle}`,
 					);
+
 					Context.SendToMountain(
 						"unregister_terminal_link_provider",
+
 						{ handle: Handle },
 					).catch(() => {});
 				},
 			};
 		},
+
 		registerTerminalProfileProvider: (Id: string, Provider: any) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_terminal_profile_provider", {
 				handle: Handle,
 				profileId: Id,
 				extensionId: "",
 			}).catch(() => {});
+
 			Context.ExtensionRegistry.set(
 				`__terminalProfileProvider:${Handle}`,
+
 				Provider,
 			);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(
 						`__terminalProfileProvider:${Handle}`,
 					);
+
 					Context.SendToMountain(
 						"unregister_terminal_profile_provider",
+
 						{ handle: Handle },
 					).catch(() => {});
 				},
 			};
 		},
+
 		registerProfileContentHandler: (_Id: string, _Handler: unknown) => ({
 			dispose: () => {},
 		}),
+
 		registerExternalUriOpener: (
 			Id: string,
+
 			_Opener: unknown,
+
 			_Metadata?: unknown,
 		) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_external_uri_opener", {
 				handle: Handle,
 				openerId: Id,
 				extensionId: "",
 			}).catch(() => {});
+
 			return {
 				dispose: () => {
 					Context.SendToMountain("unregister_external_uri_opener", {
@@ -890,16 +1032,20 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// Task's return value is forwarded verbatim.
 		withProgress: async (Options: any, Task: any) => {
 			const Handle = NextProviderHandle();
+
 			const Title =
 				(Options && typeof Options === "object" && Options.title) ||
 				"Progress";
+
 			const Location =
 				(Options && typeof Options === "object" && Options.location) ??
 				15; // ProgressLocation.Window
 			let Increment = 0;
+
 			const Progress = {
 				report: (Value?: { message?: string; increment?: number }) => {
 					if (Value?.increment) Increment += Value.increment;
+
 					Context.SendToMountain("progress.report", {
 						handle: Handle,
 						title: Title,
@@ -909,15 +1055,19 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					}).catch(() => {});
 				},
 			};
+
 			const CancellationToken = {
 				isCancellationRequested: false,
+
 				onCancellationRequested: () => ({ dispose: () => {} }),
 			};
+
 			Context.SendToMountain("progress.start", {
 				handle: Handle,
 				title: Title,
 				location: Location,
 			}).catch(() => {});
+
 			try {
 				return await Task(Progress, CancellationToken);
 			} finally {
@@ -929,6 +1079,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		setStatusBarMessage: (
 			Text: string,
+
 			HideAfter?: number | PromiseLike<unknown>,
 		) => {
 			Context.SendToMountain("statusBar.message", {
@@ -936,6 +1087,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				hideAfter:
 					typeof HideAfter === "number" ? HideAfter : undefined,
 			}).catch(() => {});
+
 			return { dispose: () => {} };
 		},
 
@@ -958,6 +1110,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						  }
 						| undefined
 				)?.folders ?? [];
+
 			return Folders[0];
 		},
 
@@ -981,71 +1134,103 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// channel to Mountain's git surface.
 		registerQuickDiffProvider: (
 			_Selector: unknown,
+
 			_Provider: unknown,
+
 			_Id: string,
+
 			_Label: string,
+
 			_RootUri?: unknown,
 		) => ({ dispose: () => {} }),
 
 		// Events sourced from Mountain gRPC notifications → Context.Emitter
 		onDidChangeActiveTextEditor: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeActiveTextEditor",
 		),
+
 		onDidChangeVisibleTextEditors: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeVisibleTextEditors",
 		),
+
 		onDidChangeTextEditorSelection: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTextEditorSelection",
 		),
+
 		onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTextEditorVisibleRanges",
 		),
+
 		onDidChangeTextEditorOptions: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTextEditorOptions",
 		),
+
 		onDidChangeTextEditorViewColumn: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTextEditorViewColumn",
 		),
+
 		onDidOpenTerminal: MakeEventSubscriber(
 			Context,
+
 			"window.didOpenTerminal",
 		),
+
 		onDidCloseTerminal: MakeEventSubscriber(
 			Context,
+
 			"window.didCloseTerminal",
 		),
+
 		onDidChangeActiveTerminal: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeActiveTerminal",
 		),
+
 		onDidChangeTerminalState: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTerminalState",
 		),
+
 		onDidWriteTerminalData: MakeEventSubscriber(Context, "terminalData"),
+
 		// Shell-integration events added for openai.chatgpt activation;
 		// Land doesn't track shell integration yet so these fire never.
 		// Must be a subscribable function, not a plain object.
 		onDidChangeTerminalShellIntegration: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTerminalShellIntegration",
 		),
+
 		onDidStartTerminalShellExecution: MakeEventSubscriber(
 			Context,
+
 			"window.didStartTerminalShellExecution",
 		),
+
 		onDidEndTerminalShellExecution: MakeEventSubscriber(
 			Context,
+
 			"window.didEndTerminalShellExecution",
 		),
+
 		onDidChangeWindowState: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeWindowState",
 		),
 
@@ -1062,27 +1247,37 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// `window.didChangeTextEditorDiffInformation` emit.
 		onDidChangeTextEditorDiffInformation: MakeEventSubscriber(
 			Context,
+
 			"window.didChangeTextEditorDiffInformation",
 		),
 
 		onDidExecuteTerminalCommand: MakeEventSubscriber(
 			Context,
+
 			"window.didExecuteTerminalCommand",
 		),
 
 		activeTextEditor: undefined,
+
 		// `activeColorTheme` and `tabGroups` already defined earlier in
 		// this object literal (lines ~614 and ~581) - leaving the
 		// fuller event-aware definitions intact and only mirroring the
 		// remaining state placeholders here.
 		visibleTextEditors: [] as unknown[],
+
 		visibleNotebookEditors: [] as unknown[],
+
 		activeNotebookEditor: undefined,
+
 		notebookEditors: [] as unknown[],
+
 		terminals: [] as unknown[],
+
 		activeTerminal: undefined,
+
 		state: { focused: true, active: true },
 	};
+
 	return WrapWindowNamespace(Concrete);
 };
 

@@ -16,6 +16,7 @@ export const ToURI = (DTO: any): Uri | undefined => {
 	if (!DTO) {
 		return undefined;
 	}
+
 	return URI.revive(DTO);
 };
 
@@ -28,5 +29,6 @@ export const ToURIArray = (DTOs: any[] | undefined): Uri[] | undefined => {
 	if (!DTOs || !Array.isArray(DTOs)) {
 		return undefined;
 	}
+
 	return DTOs.map(ToURI).filter((URIValue): URIValue is Uri => !!URIValue);
 };

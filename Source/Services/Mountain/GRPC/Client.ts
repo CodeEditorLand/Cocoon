@@ -25,11 +25,16 @@ import { Logger } from "../../Logger.js";
  */
 export interface ShowTextDocumentOptions {
 	uri: string;
+
 	viewColumn?: number;
+
 	preserveFocus?: boolean;
+
 	preview?: boolean;
+
 	selection?: {
 		line: number;
+
 		character: number;
 	};
 }
@@ -39,7 +44,9 @@ export interface ShowTextDocumentOptions {
  */
 export interface StatusBarItemOptions {
 	id: string;
+
 	text: string;
+
 	tooltip?: string;
 }
 
@@ -48,13 +55,21 @@ export interface StatusBarItemOptions {
  */
 export interface WebviewPanelOptions {
 	viewType: string;
+
 	title: string;
+
 	iconPath?: string;
+
 	viewColumn?: number;
+
 	preserveFocus?: boolean;
+
 	enableFindWidget?: boolean;
+
 	retainContextWhenHidden?: boolean;
+
 	localResourceRoots?: string[];
+
 	html?: string;
 }
 
@@ -64,8 +79,10 @@ export interface WebviewPanelOptions {
 export interface TextEdit {
 	range: {
 		start: { line: number; character: number };
+
 		end: { line: number; character: number };
 	};
+
 	newText: string;
 }
 
@@ -86,6 +103,7 @@ export interface MountainGRPCClientService {
 	 */
 	showTextDocument(
 		uri: string,
+
 		options?: Partial<ShowTextDocumentOptions>,
 	): Effect.Effect<void, Error>;
 
@@ -152,6 +170,7 @@ export interface MountainGRPCClientService {
 	 */
 	postWebviewMessage(
 		handle: number,
+
 		message: string | Uint8Array,
 	): Effect.Effect<void, Error>;
 
@@ -165,6 +184,7 @@ export interface MountainGRPCClientService {
 	 */
 	findFiles(
 		pattern: string,
+
 		include?: string[],
 	): Effect.Effect<string[], Error>;
 
@@ -177,7 +197,9 @@ export interface MountainGRPCClientService {
 	 */
 	findTextInFiles(
 		pattern: string,
+
 		include?: string[],
+
 		exclude?: string[],
 	): Effect.Effect<any[], Error>;
 
@@ -215,7 +237,9 @@ export interface MountainGRPCClientService {
 	 */
 	registerCommand(
 		commandId: string,
+
 		extensionId: string,
+
 		title: string,
 	): Effect.Effect<void, Error>;
 
@@ -279,7 +303,9 @@ export interface MountainGRPCClientService {
 	 */
 	writeFile(
 		uri: string,
+
 		content: Uint8Array,
+
 		encoding?: string,
 	): Effect.Effect<void, Error>;
 
@@ -310,6 +336,7 @@ export const MountainGRPCClientService =
  */
 const MountainGRPCClientLive = Layer.effect(
 	MountainGRPCClientService,
+
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
 		const logger = yield* Logger.Logger;
@@ -557,6 +584,7 @@ const MountainGRPCClientLive = Layer.effect(
 						try: () =>
 							mountainClient.sendNotification(
 								"onDidReceiveMessage",
+
 								{
 									handle,
 									stringMessage: isString
@@ -831,6 +859,7 @@ const MountainGRPCClientLive = Layer.effect(
 						try: () =>
 							mountainClient.sendNotification(
 								"unregisterCommand",
+
 								{
 									commandId,
 								},
@@ -1008,6 +1037,7 @@ const MountainGRPCClientLive = Layer.effect(
  */
 const MountainGRPCClientMock = Layer.effect(
 	MountainGRPCClientService,
+
 	Effect.gen(function* () {
 		const logger = yield* Logger.Logger;
 
@@ -1242,4 +1272,5 @@ const MountainGRPCClientMock = Layer.effect(
 export const MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
 	Layer.provide(IMountainClientService as any),
 );
+
 export const MountainGRPCClientMockLayer = MountainGRPCClientMock;

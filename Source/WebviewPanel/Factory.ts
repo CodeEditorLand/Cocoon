@@ -63,9 +63,13 @@ import { Panel as PanelModule, type Panel } from "./Panel.js";
  */
 export interface PanelRegistryEntry {
 	readonly Handle: string;
+
 	readonly Panel: Panel;
+
 	readonly ExtensionId: string;
+
 	readonly ViewType: string;
+
 	readonly CreatedAt: Date;
 }
 
@@ -75,16 +79,24 @@ export interface PanelRegistryEntry {
  */
 export interface CreatePanelOptions {
 	readonly ViewType: string;
+
 	readonly Title: string;
+
 	readonly ShowOptions: {
 		readonly ViewColumn?: number;
+
 		readonly PreserveFocus?: boolean;
 	};
+
 	readonly Options?: {
 		readonly EnableScripts?: boolean;
+
 		readonly RetainContextWhenHidden?: boolean;
+
 		readonly EnableFindWidget?: boolean;
+
 		readonly LocalResourceRoots?: readonly unknown[];
+
 		readonly PortMapping?: readonly unknown[];
 	};
 }
@@ -96,11 +108,16 @@ export interface CreatePanelOptions {
 export interface Factory {
 	readonly CreatePanel: (
 		Extension: IExtensionDescription,
+
 		Options: CreatePanelOptions,
 	) => Effect.Effect<Panel, Error>;
+
 	readonly GetPanel: (Handle: string) => Effect.Effect<Panel, Error>;
+
 	readonly GetAllPanels: () => Effect.Effect<readonly Panel[], never>;
+
 	readonly DisposePanel: (Handle: string) => Effect.Effect<void, never>;
+
 	readonly DisposeAllPanels: () => Effect.Effect<void, never>;
 }
 
@@ -110,6 +127,7 @@ export interface Factory {
  */
 export class FactoryService extends Effect.Service<FactoryService>()(
 	"Factory/WebviewPanel",
+
 	{
 		effect: Effect.gen(function* () {
 			const ActivePanelsRef = yield* Ref.make(
@@ -121,6 +139,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 			 */
 			const CreatePanel = (
 				Extension: IExtensionDescription,
+
 				Options: CreatePanelOptions,
 			): Effect.Effect<Panel, Error> =>
 				Effect.gen(function* () {
@@ -224,6 +243,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 						Array.from(Registry.values()).map((Entry) =>
 							Effect.sync(() => Entry.Panel.dispose()),
 						),
+
 						{ concurrency: "unbounded" },
 					);
 				});

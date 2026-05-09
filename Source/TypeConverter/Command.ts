@@ -16,8 +16,11 @@ import type * as VSCode from "vscode";
 export class APICommandArgument<V, D> {
 	constructor(
 		public readonly Name: string,
+
 		public readonly Description: string,
+
 		public readonly Validate: (Value: V) => boolean,
+
 		public readonly Convert: (Value: V) => D,
 	) {}
 }
@@ -29,6 +32,7 @@ export class APICommandArgument<V, D> {
 export class APICommandResult<V, R> {
 	constructor(
 		public readonly Name: string,
+
 		public readonly Convert: (Value: V) => R,
 	) {}
 }
@@ -40,9 +44,13 @@ export class APICommandResult<V, R> {
 export class APICommand {
 	constructor(
 		public readonly Id: string,
+
 		public readonly InternalId: string,
+
 		public readonly Description: string,
+
 		public readonly Arguments: readonly APICommandArgument<any, any>[],
+
 		public readonly Result: APICommandResult<any, any>,
 	) {}
 }
@@ -53,8 +61,11 @@ export class APICommand {
  */
 export interface InternalCommand {
 	id: string;
+
 	title: string;
+
 	tooltip?: string;
+
 	arguments?: any[];
 }
 
@@ -64,37 +75,48 @@ export interface InternalCommand {
  */
 export class Command {
 	private readonly DelegatingCommandId: string;
+
 	private readonly DelegatedCommands = new Map<string, VSCode.Command>();
 
 	constructor(
 		private readonly RegisterCommand: (
 			global: boolean,
+
 			id: string,
+
 			handler: (...args: any[]) => any,
+
 			thisArg?: any,
 		) => IDisposable,
+
 		private readonly ExecuteCommand: <T>(
 			command: string,
 			...rest: any[]
 		) => Promise<T | undefined>,
+
 		private readonly LookupAPICommand: (
 			Id: string,
 		) => APICommand | undefined,
 	) {
 		this.DelegatingCommandId = `_cocoon.delegate.${generateUuid()}`;
+
 		this.RegisterCommand(
 			false, // Not a global command
 			this.DelegatingCommandId,
+
 			this.ExecuteDelegatedCommand.bind(this),
+
 			this,
 		);
 	}
 
 	private ExecuteDelegatedCommand(Id: string, ...ArgumentArray: any[]): any {
 		const Command = this.DelegatedCommands.get(Id);
+
 		if (!Command) {
 			throw new Error(`Unknown delegated command: ${Id}`);
 		}
+
 		return this.ExecuteCommand(
 			Command.command,
 			...[...(Command.arguments ?? []), ...ArgumentArray],
@@ -103,23 +125,29 @@ export class Command {
 
 	public ToInternal(
 		Command: VSCode.Command,
+
 		DisposableArray: IDisposable[],
 	): InternalCommand | undefined {
 		if (!Command) return undefined;
 
 		const APICommandValue = this.LookupAPICommand(Command.command);
+
 		if (APICommandValue) {
 			const ConvertedArgumentArray =
 				Command.arguments?.map((Argument, i) =>
 					APICommandValue.Arguments[i]!.Convert(Argument),
 				) ?? [];
+
 			const result: InternalCommand = {
 				id: APICommandValue.InternalId,
+
 				title: Command.title,
 			};
+
 			if (ConvertedArgumentArray.length > 0) {
 				result.arguments = ConvertedArgumentArray;
 			}
+
 			return result;
 		}
 
@@ -128,28 +156,37 @@ export class Command {
 			Command.arguments.some((Argument) => typeof Argument === "function")
 		) {
 			const Id = generateUuid();
+
 			this.DelegatedCommands.set(Id, Command);
+
 			DisposableArray.push({
 				dispose: () => this.DelegatedCommands.delete(Id),
 			});
+
 			return {
 				id: this.DelegatingCommandId,
+
 				title: Command.title,
+
 				arguments: [Id, ...(Command.arguments ?? [])],
 			};
 		}
 
 		const result: InternalCommand = {
 			id: Command.command,
+
 			title: Command.title,
 		};
+
 		if (Command.tooltip) {
 			result.tooltip = Command.tooltip;
 		}
+
 		// FIX: Conditionally add arguments to satisfy exactOptionalPropertyTypes.
 		if (Command.arguments) {
 			result.arguments = Command.arguments;
 		}
+
 		return result;
 	}
 
@@ -160,15 +197,19 @@ export class Command {
 
 		const result: VSCode.Command = {
 			command: CommandDTO.id,
+
 			title: CommandDTO.title,
 		};
+
 		if (CommandDTO.tooltip) {
 			result.tooltip = CommandDTO.tooltip;
 		}
+
 		// FIX: Conditionally add arguments to satisfy exactOptionalPropertyTypes.
 		if (CommandDTO.arguments) {
 			result.arguments = CommandDTO.arguments;
 		}
+
 		return result;
 	}
 }

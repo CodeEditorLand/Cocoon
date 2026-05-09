@@ -24,14 +24,18 @@ import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.
 // Configuration scopes
 enum ConfigurationScope {
 	APPLICATION = "APPLICATION",
+
 	WORKSPACE = "WORKSPACE",
+
 	PROFILE = "PROFILE",
 }
 
 // Configuration value interface
 interface IConfigurationValue<T> {
 	key: string;
+
 	value?: T;
+
 	defaultValue?: T;
 }
 
@@ -42,13 +46,18 @@ export class Configuration implements IConfigurationService {
 	readonly _serviceBrand: undefined;
 
 	private configuration: Map<ConfigurationScope, any>;
+
 	private mountainClient: IMountainClientService;
+
 	private listeners: Map<string, ((changes: any[]) => void)[]>;
 
 	constructor(mountainClient: IMountainClientService) {
 		this._serviceBrand = undefined;
+
 		this.mountainClient = mountainClient;
+
 		this.configuration = new Map();
+
 		this.listeners = new Map();
 
 		console.log(
@@ -69,6 +78,7 @@ export class Configuration implements IConfigurationService {
 			// Maps to 'config.reload' in Spine
 			const configData = await this.mountainClient.sendRequest(
 				"config.reload",
+
 				{},
 			);
 
@@ -77,31 +87,39 @@ export class Configuration implements IConfigurationService {
 			if (configData?.application) {
 				this.configuration.set(
 					ConfigurationScope.APPLICATION,
+
 					configData.application,
 				);
 			}
+
 			if (configData?.workspace) {
 				this.configuration.set(
 					ConfigurationScope.WORKSPACE,
+
 					configData.workspace,
 				);
 			}
+
 			if (configData?.profile) {
 				this.configuration.set(
 					ConfigurationScope.PROFILE,
+
 					configData.profile,
 				);
 			}
 
 			console.log(
 				"[ConfigurationService] Configuration loaded from Spine",
+
 				configData,
 			);
 		} catch (error) {
 			console.error(
 				"[ConfigurationService] Failed to load initial configuration from Spine:",
+
 				error,
 			);
+
 			// Initialize with default configuration on failure
 			this.configuration.set(ConfigurationScope.APPLICATION, {
 				_version: 1,
@@ -115,10 +133,12 @@ export class Configuration implements IConfigurationService {
 					lineNumbers: "on",
 				},
 			});
+
 			this.configuration.set(ConfigurationScope.WORKSPACE, {
 				_version: 1,
 				_timestamp: Date.now(),
 			});
+
 			this.configuration.set(ConfigurationScope.PROFILE, {
 				_version: 1,
 				_timestamp: Date.now(),
@@ -131,15 +151,19 @@ export class Configuration implements IConfigurationService {
 	 */
 	getValue<T>(
 		key: string,
+
 		scope: ConfigurationScope = ConfigurationScope.APPLICATION,
+
 		defaultValue?: T,
 	): T | undefined {
 		const scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			return defaultValue;
 		}
 
 		const value = this.getNestedValue(scopeConfig, key);
+
 		return value !== undefined ? value : defaultValue;
 	}
 
@@ -148,7 +172,9 @@ export class Configuration implements IConfigurationService {
 	 */
 	async setValue<T>(
 		key: string,
+
 		value: T,
+
 		scope: ConfigurationScope,
 	): Promise<void> {
 		// Validate configuration key and value
@@ -163,8 +189,10 @@ export class Configuration implements IConfigurationService {
 		}
 
 		let scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			scopeConfig = {};
+
 			this.configuration.set(scope, scopeConfig);
 		}
 
@@ -175,13 +203,16 @@ export class Configuration implements IConfigurationService {
 
 			// Update timestamp
 			scopeConfig._timestamp = Date.now();
+
 			scopeConfig._version = (scopeConfig._version || 0) + 1;
 
 			// Save to Mountain using Spine
 			try {
 				// Determine integer scope for Spine protocol
 				let spineScope = 0;
+
 				if (scope === ConfigurationScope.WORKSPACE) spineScope = 1;
+
 				if (scope === ConfigurationScope.PROFILE) spineScope = 2;
 
 				await this.mountainClient.sendRequest("config.update", {
@@ -189,6 +220,7 @@ export class Configuration implements IConfigurationService {
 					value,
 					scope: spineScope,
 				});
+
 				console.log(
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
 				);
@@ -198,14 +230,18 @@ export class Configuration implements IConfigurationService {
 			} catch (error) {
 				console.error(
 					`[ConfigurationService] Failed to update configuration: ${key}`,
+
 					error,
 				);
 
 				// Implement conflict resolution
 				await this.handleConfigurationConflict(
 					error,
+
 					key,
+
 					value,
+
 					scope,
 				);
 			}
@@ -223,6 +259,7 @@ export class Configuration implements IConfigurationService {
 
 		// Key must not contain invalid characters
 		const invalidChars = /[^a-zA-Z0-9._-]/;
+
 		if (invalidChars.test(key)) {
 			return false;
 		}
@@ -260,6 +297,7 @@ export class Configuration implements IConfigurationService {
 			if (key.includes("zoomLevel")) {
 				return value >= -8 && value <= 9; // Standard zoom level range
 			}
+
 			if (key.includes("fontSize")) {
 				return value >= 6 && value <= 100; // Reasonable font size range
 			}
@@ -287,16 +325,19 @@ export class Configuration implements IConfigurationService {
 	 */
 	validateScopeConfiguration(scope: ConfigurationScope): boolean {
 		const scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			return true; // Empty scope is valid
 		}
 
 		// Validate all keys and values in the scope
 		const keys: string[] = [];
+
 		this.collectKeys(scopeConfig, "", keys);
 
 		for (const key of keys) {
 			const value = this.getNestedValue(scopeConfig, key);
+
 			if (
 				!this.validateConfigurationKey(key) ||
 				!this.validateConfigurationValue(key, value)
@@ -313,11 +354,15 @@ export class Configuration implements IConfigurationService {
 	 */
 	async updateValue<T>(
 		key: string,
+
 		updateFn: (currentValue: T | undefined) => T,
+
 		scope: ConfigurationScope,
 	): Promise<void> {
 		const currentValue = this.getValue<T>(key, scope);
+
 		const newValue = updateFn(currentValue);
+
 		await this.setValue(key, newValue, scope);
 	}
 
@@ -326,11 +371,13 @@ export class Configuration implements IConfigurationService {
 	 */
 	hasKey(key: string, scope: ConfigurationScope): boolean {
 		const scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			return false;
 		}
 
 		const value = this.getNestedValue(scopeConfig, key);
+
 		return value !== undefined;
 	}
 
@@ -339,12 +386,15 @@ export class Configuration implements IConfigurationService {
 	 */
 	getConfigurationKeys(scope: ConfigurationScope): string[] {
 		const scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			return [];
 		}
 
 		const keys: string[] = [];
+
 		this.collectKeys(scopeConfig, "", keys);
+
 		return keys;
 	}
 
@@ -355,11 +405,13 @@ export class Configuration implements IConfigurationService {
 		scope: ConfigurationScope,
 	): Promise<Record<string, any>> {
 		const scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			return {};
 		}
 
 		const result: Record<string, any> = {};
+
 		this.collectKeys(scopeConfig, "", Object.keys(result));
 
 		for (const key of Object.keys(result)) {
@@ -374,16 +426,20 @@ export class Configuration implements IConfigurationService {
 	 */
 	inspect<T>(
 		key: string,
+
 		scope: ConfigurationScope = ConfigurationScope.APPLICATION,
 	): IConfigurationValue<T> {
 		const scopeConfig = this.configuration.get(scope);
+
 		if (!scopeConfig) {
 			return { key } as IConfigurationValue<T>;
 		}
 
 		const value = this.getNestedValue(scopeConfig, key);
+
 		return {
 			key,
+
 			value,
 		} as IConfigurationValue<T>;
 	}
@@ -404,8 +460,10 @@ export class Configuration implements IConfigurationService {
 		// Store listener for configuration changes
 		// For now, we'll store it under a generic key
 		let globalListeners = this.listeners.get("*");
+
 		if (!globalListeners) {
 			globalListeners = [];
+
 			this.listeners.set("*", globalListeners);
 		}
 
@@ -437,8 +495,10 @@ export class Configuration implements IConfigurationService {
 		} catch (error) {
 			console.error(
 				"[ConfigurationService] Failed to reload configuration:",
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -448,8 +508,11 @@ export class Configuration implements IConfigurationService {
 	 */
 	private async handleConfigurationConflict(
 		_error: any,
+
 		key: string,
+
 		value: any,
+
 		scope: ConfigurationScope,
 	): Promise<void> {
 		console.warn(
@@ -457,10 +520,12 @@ export class Configuration implements IConfigurationService {
 		);
 
 		const maxRetries = 3;
+
 		const baseDelay = 100; // ms
 
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			const delay = baseDelay * Math.pow(2, attempt - 1);
+
 			console.log(
 				`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`,
 			);
@@ -473,8 +538,10 @@ export class Configuration implements IConfigurationService {
 
 				// Retry setting the value
 				let scopeConfig = this.configuration.get(scope);
+
 				if (!scopeConfig) {
 					scopeConfig = {};
+
 					this.configuration.set(scope, scopeConfig);
 				}
 
@@ -482,11 +549,14 @@ export class Configuration implements IConfigurationService {
 
 				// Update timestamp
 				scopeConfig._timestamp = Date.now();
+
 				scopeConfig._version = (scopeConfig._version || 0) + 1;
 
 				// Retry saving via Spine
 				let spineScope = 0;
+
 				if (scope === ConfigurationScope.WORKSPACE) spineScope = 1;
+
 				if (scope === ConfigurationScope.PROFILE) spineScope = 2;
 
 				await this.mountainClient.sendRequest("config.update", {
@@ -498,10 +568,12 @@ export class Configuration implements IConfigurationService {
 				console.log(
 					"[ConfigurationService] Configuration saved successfully after retry",
 				);
+
 				return;
 			} catch (retryError) {
 				console.error(
 					`[ConfigurationService] Retry attempt ${attempt} failed:`,
+
 					retryError,
 				);
 
@@ -509,6 +581,7 @@ export class Configuration implements IConfigurationService {
 					console.error(
 						"[ConfigurationService] All retry attempts failed, configuration may be out of sync",
 					);
+
 					throw new Error(
 						`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`,
 					);
@@ -524,6 +597,7 @@ export class Configuration implements IConfigurationService {
 		console.log("[ConfigurationService] Cleaning up configuration service");
 
 		this.listeners.clear();
+
 		this.configuration.clear();
 
 		console.log("[ConfigurationService] Configuration service cleaned up");
@@ -534,6 +608,7 @@ export class Configuration implements IConfigurationService {
 	 */
 	private getNestedValue(obj: any, key: string): any {
 		const keys = key.split(".");
+
 		let current = obj;
 
 		for (const k of keys) {
@@ -552,18 +627,23 @@ export class Configuration implements IConfigurationService {
 	 */
 	private setNestedValue(obj: any, key: string, value: any): void {
 		const keys = key.split(".");
+
 		let current = obj;
 
 		for (let i = 0; i < keys.length - 1; i++) {
 			const k = keys[i];
+
 			if (!k) continue;
+
 			if (!(k in current) || typeof current[k] !== "object") {
 				current[k] = {};
 			}
+
 			current = current[k] as Record<string, any>;
 		}
 
 		const lastKey = keys[keys.length - 1];
+
 		if (lastKey) {
 			current[lastKey] = value;
 		}
@@ -591,10 +671,12 @@ export class Configuration implements IConfigurationService {
 	 */
 	private notifyConfigurationChange(
 		keys: string[],
+
 		scope: ConfigurationScope,
 	): void {
 		for (const key of keys) {
 			const eventKey = `${scope}.${key}`;
+
 			const listeners = this.listeners.get(eventKey);
 
 			// Also notify global listeners
@@ -612,6 +694,7 @@ export class Configuration implements IConfigurationService {
 					} catch (error) {
 						console.error(
 							`[ConfigurationService] Error in listener for ${eventKey}:`,
+
 							error,
 						);
 					}
@@ -626,6 +709,7 @@ export class Configuration implements IConfigurationService {
  */
 export const ConfigurationLayer = Layer.effect(
 	IConfigurationService,
+
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
 		const configService = new Configuration(mountainClient);

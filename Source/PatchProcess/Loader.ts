@@ -66,14 +66,17 @@ export interface Loader {
 	 * Load and apply all security patches
 	 */
 	readonly LoadSecurityPatches: Effect.Effect<void>;
+
 	/**
 	 * Initialize process monitoring
 	 */
 	readonly InitializeMonitoring: Effect.Effect<void>;
+
 	/**
 	 * Get current security policy
 	 */
 	readonly GetSecurityPolicy: Effect.Effect<SecurityPolicy>;
+
 	/**
 	 * Run security audit
 	 */
@@ -86,6 +89,7 @@ export interface Loader {
  */
 export class LoaderService extends Effect.Service<LoaderService>()(
 	"PatchProcess/LoaderService",
+
 	{
 		effect: Effect.gen(function* () {
 			yield* Config.string("SecurityPolicy").pipe(
@@ -178,6 +182,7 @@ const StartPeriodicValidation = Effect.gen(function* () {
 				Effect.catchAll((Error) => {
 					return Effect.logError(
 						"Periodic security validation failed",
+
 						{
 							Error,
 						},
@@ -187,6 +192,7 @@ const StartPeriodicValidation = Effect.gen(function* () {
 
 			yield* Effect.logTrace(
 				"Periodic security validation completed",
+
 				ValidationResult,
 			);
 		}
@@ -201,6 +207,7 @@ const StartPeriodicValidation = Effect.gen(function* () {
  */
 export const ValidateFileSystemAccessWrapper = (
 	File: string,
+
 	Operation: "read" | "write" | "delete",
 ): Effect.Effect<boolean> =>
 	Effect.gen(function* () {
@@ -224,6 +231,7 @@ export const ValidateFileSystemAccessWrapper = (
  */
 export const ValidateNetworkAccessWrapper = (
 	Endpoint: string,
+
 	Operation: "connect" | "listen",
 ): Effect.Effect<boolean> =>
 	Effect.gen(function* () {
@@ -247,6 +255,7 @@ export const ValidateNetworkAccessWrapper = (
  */
 export const ValidateChildProcessSpawnWrapper = (
 	Command: string,
+
 	Arguments: readonly string[],
 ): Effect.Effect<boolean> =>
 	Effect.gen(function* () {
@@ -368,5 +377,6 @@ export const LoaderServiceLive = Layer.effect(Loader, LoaderService.Default);
  */
 export const SecurityLive = Layer.provide(
 	LoaderServiceLive,
+
 	PatcherService.Default,
 );

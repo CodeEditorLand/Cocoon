@@ -31,6 +31,7 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
+
 	ExtensionHost: ExtensionHost,
 ): VSCodeExtension<T> => {
 	const Activate = Effect.gen(function* () {
@@ -51,31 +52,41 @@ const CreateAPIObject = <T>(
 			: Description.extensionKind
 				? [Description.extensionKind]
 				: ["workspace"];
+
 		if (Kinds.includes("workspace")) return ExtensionKind.Workspace;
+
 		return ExtensionKind.UI;
 	};
 
 	const ExtensionAPIObject: VSCodeExtension<T> = {
 		id: Description.identifier.value,
+
 		extensionUri: Description.extensionLocation,
+
 		extensionPath: Description.extensionLocation.fsPath,
+
 		get isActive(): boolean {
 			return Effect.runSync(
 				ExtensionHost.IsActivated(Description.identifier),
 			);
 		},
+
 		get packageJSON() {
 			return Description;
 		},
+
 		extensionKind: GetExtensionKind(),
+
 		get exports() {
 			return Effect.runSync(
 				Effect.catchAll(
 					ExtensionHost.GetExtensionExports(Description.identifier),
+
 					() => Effect.succeed(undefined),
 				),
 			);
 		},
+
 		activate: (): Promise<T> => Effect.runPromise(Activate),
 	};
 
@@ -88,13 +99,16 @@ const CreateAPIObject = <T>(
  */
 export interface Extension {
 	readonly onDidChange: Event<void>;
+
 	readonly GetExtension: <T>(
 		ExtensionId: string,
 	) => Effect.Effect<Option.Option<VSCodeExtension<T>>, never>;
+
 	readonly GetAll: () => Effect.Effect<
 		readonly VSCodeExtension<any>[],
 		never
 	>;
+
 	readonly Activate: <T>(
 		ExtensionId: string,
 	) => Effect.Effect<VSCodeExtension<T>, Error>;
@@ -106,6 +120,7 @@ export interface Extension {
  */
 export class ExtensionService extends Effect.Service<ExtensionService>()(
 	"Service/Extension",
+
 	{
 		effect: Effect.gen(function* () {
 			const ExtensionHost = yield* ExtensionHostService;
@@ -123,6 +138,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 			const ExtensionRegistry = new ExtensionDescriptionRegistry(
 				ActivationEventsReader,
+
 				InitData.extensions.allExtensions as IExtensionDescription[],
 			);
 
@@ -131,6 +147,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					ExtensionRegistry.getExtensionDescription(ExtensionId),
 				).pipe(
 					Effect.map(Option.fromNullable),
+
 					Effect.map(
 						Option.map((Description) =>
 							CreateAPIObject<T>(Description, ExtensionHost),
@@ -151,11 +168,13 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 										(Description) =>
 											CreateAPIObject<any>(
 												Description,
+
 												ExtensionHost,
 											),
 									);
 									yield* Ref.set(
 										AllExtensionsCache,
+
 										Option.some(NewCache),
 									);
 									return NewCache;

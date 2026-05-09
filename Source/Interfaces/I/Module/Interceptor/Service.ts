@@ -10,31 +10,45 @@ import { Context } from "effect";
 // Module interception types
 export interface ModuleInterceptionRequest {
 	moduleId: string;
+
 	parentModule?: string;
+
 	extensionId: string;
+
 	requirePath: string;
 }
 
 export interface ModuleInterceptionResult {
 	success: boolean;
+
 	module?: any;
+
 	error?: string;
+
 	securityLevel: SecurityLevel;
 }
 
 export enum SecurityLevel {
 	TRUSTED = "TRUSTED",
+
 	SANDBOXED = "SANDBOXED",
+
 	RESTRICTED = "RESTRICTED",
+
 	BLOCKED = "BLOCKED",
 }
 
 export interface SecurityPolicy {
 	extensionId: string;
+
 	allowedModules: string[];
+
 	blockedModules: string[];
+
 	securityLevel: SecurityLevel;
+
 	maxMemoryUsage?: number;
+
 	maxExecutionTime?: number;
 }
 
@@ -78,6 +92,7 @@ export interface IModuleInterceptorService {
 	 */
 	validateModuleSecurity(
 		extensionId: string,
+
 		moduleId: string,
 	): Promise<boolean>;
 
@@ -86,8 +101,11 @@ export interface IModuleInterceptorService {
 	 */
 	getStatistics(): Promise<{
 		totalInterceptions: number;
+
 		blockedModules: number;
+
 		averageResolutionTime: number;
+
 		securityViolations: number;
 	}>;
 

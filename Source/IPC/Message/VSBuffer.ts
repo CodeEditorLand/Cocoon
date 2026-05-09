@@ -27,7 +27,9 @@ export default class VSBuffer {
 
 	private constructor(Buffer: Uint8Array, Length?: number) {
 		this.buffer = Buffer;
+
 		this.length = Length ?? Buffer.length;
+
 		this.capacity = Buffer.length;
 	}
 
@@ -42,11 +44,13 @@ export default class VSBuffer {
 		if (Capacity < 0) {
 			throw new Error(`Cannot allocate negative capacity: ${Capacity}`);
 		}
+
 		if (Capacity > MAX_MESSAGE_SIZE) {
 			throw new Error(
 				`Cannot allocate buffer larger than ${MAX_MESSAGE_SIZE} bytes: ${Capacity}`,
 			);
 		}
+
 		return new VSBuffer(new Uint8Array(Capacity), 0);
 	}
 
@@ -61,6 +65,7 @@ export default class VSBuffer {
 		if (!Buffer) {
 			throw new Error("Cannot wrap null or undefined buffer");
 		}
+
 		return new VSBuffer(Buffer);
 	}
 
@@ -73,12 +78,15 @@ export default class VSBuffer {
 	 */
 	public static FromString(
 		String: string,
+
 		_Encoding: BufferEncoding = "utf-8",
 	): VSBuffer {
 		if (String === null || String === undefined) {
 			return new VSBuffer(new Uint8Array(0));
 		}
+
 		const Buffer = new TextEncoder().encode(String);
+
 		return new VSBuffer(Buffer);
 	}
 
@@ -92,6 +100,7 @@ export default class VSBuffer {
 		if (!Buffer) {
 			throw new Error("Cannot convert null or undefined buffer");
 		}
+
 		return new VSBuffer(new Uint8Array(Buffer));
 	}
 
@@ -108,8 +117,10 @@ export default class VSBuffer {
 
 		const TotalLength = Buffers.reduce(
 			(Sum, Buffer) => Sum + Buffer.length,
+
 			0,
 		);
+
 		if (TotalLength > MAX_MESSAGE_SIZE) {
 			throw new Error(
 				`Concatenated buffer size ${TotalLength} exceeds maximum ${MAX_MESSAGE_SIZE}`,
@@ -117,10 +128,12 @@ export default class VSBuffer {
 		}
 
 		const Result = new Uint8Array(TotalLength);
+
 		let Offset = 0;
 
 		for (const Buffer of Buffers) {
 			Result.set(Buffer.buffer, Offset);
+
 			Offset += Buffer.length;
 		}
 
@@ -144,7 +157,9 @@ export default class VSBuffer {
 	public toBuffer(): Buffer {
 		return Buffer.from(
 			this.buffer.buffer,
+
 			this.buffer.byteOffset,
+
 			this.length,
 		);
 	}
@@ -174,6 +189,7 @@ export default class VSBuffer {
 				`Index ${Index} out of bounds for buffer of length ${this.length}`,
 			);
 		}
+
 		return this.buffer[Index];
 	}
 
@@ -190,11 +206,13 @@ export default class VSBuffer {
 				`Index ${Index} out of bounds for buffer of length ${this.length}`,
 			);
 		}
+
 		if (Value < 0 || Value > 255 || !Number.isInteger(Value)) {
 			throw new Error(
 				`Invalid byte value: ${Value} (must be 0-255 integer)`,
 			);
 		}
+
 		this.buffer[Index] = Value;
 	}
 
@@ -211,14 +229,17 @@ export default class VSBuffer {
 				`Offset ${Offset} out of bounds for buffer of length ${this.length}`,
 			);
 		}
+
 		if (!Values) {
 			throw new Error("Values buffer cannot be null or undefined");
 		}
+
 		if (Offset + Values.length > this.length) {
 			throw new Error(
 				`Cannot set ${Values.length} bytes at offset ${Offset} in buffer of length ${this.length}`,
 			);
 		}
+
 		this.buffer.set(Values, Offset);
 	}
 
@@ -235,6 +256,7 @@ export default class VSBuffer {
 				`Cannot read UInt32LE at offset ${Offset} in buffer of length ${this.length}`,
 			);
 		}
+
 		return (
 			(this.buffer[Offset]! |
 				(this.buffer[Offset + 1]! << 8) |
@@ -257,12 +279,17 @@ export default class VSBuffer {
 				`Cannot write UInt32LE at offset ${Offset} in buffer of length ${this.length}`,
 			);
 		}
+
 		if (Value < 0 || Value > 0xffffffff || !Number.isInteger(Value)) {
 			throw new Error(`Invalid UInt32 value: ${Value}`);
 		}
+
 		this.buffer[Offset] = Value & 0xff;
+
 		this.buffer[Offset + 1] = (Value >> 8) & 0xff;
+
 		this.buffer[Offset + 2] = (Value >> 16) & 0xff;
+
 		this.buffer[Offset + 3] = (Value >> 24) & 0xff;
 	}
 
@@ -280,12 +307,15 @@ export default class VSBuffer {
 				`Invalid start index ${Start} for buffer of length ${this.length}`,
 			);
 		}
+
 		const ActualEnd = End ?? this.length;
+
 		if (ActualEnd < Start || ActualEnd > this.length) {
 			throw new Error(
 				`Invalid end index ${ActualEnd} for buffer of length ${this.length}`,
 			);
 		}
+
 		return new VSBuffer(this.buffer.slice(Start, ActualEnd));
 	}
 }

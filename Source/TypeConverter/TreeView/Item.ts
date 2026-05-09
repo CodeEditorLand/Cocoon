@@ -25,30 +25,45 @@ const { TreeItemCollapsibleState } = ExtHostTypes;
  */
 export const FromAPI = (
 	_extension: IExtensionDescription,
+
 	item: VSCode.TreeItem,
+
 	handle: string,
+
 	parentHandle: string | undefined,
+
 	commandConverter: Command,
 ): any => {
 	const {
 		label: Label,
+
 		id: Id,
+
 		iconPath: IconPath,
+
 		resourceUri: ResourceUri,
+
 		tooltip: Tooltip,
+
 		collapsibleState: CollapsibleStateValue,
+
 		contextValue: ContextValue,
+
 		description: Description,
+
 		command: Command,
+
 		accessibilityInformation: AccessibilityInformation,
 	} = item;
 
 	let ThemeIcon: { id: string; color?: string } | undefined;
+
 	let Icon: { light: VSCode.Uri; dark: VSCode.Uri } | VSCode.Uri | undefined;
 
 	if (IconPath instanceof ExtHostTypes.ThemeIcon) {
 		ThemeIcon = {
 			id: IconPath.id,
+
 			color: (IconPath.color as any)?.id,
 		};
 	} else {
@@ -60,30 +75,43 @@ export const FromAPI = (
 
 	return {
 		handle: handle,
+
 		parentHandle: parentHandle,
+
 		label: typeof Label === "string" ? { label: Label } : Label,
+
 		id: Id,
+
 		description: Description,
+
 		resourceUri: ResourceUri ? UriFromAPI(ResourceUri) : undefined,
+
 		tooltip:
 			typeof Tooltip === "string"
 				? Tooltip
 				: Tooltip instanceof ExtHostTypes.MarkdownString
 					? MarkdownStringFromAPI(Tooltip)
 					: undefined,
+
 		command: Command ? commandConverter.ToInternal(Command, []) : undefined,
+
 		collapsibleState:
 			CollapsibleStateValue ?? TreeItemCollapsibleState.None,
+
 		contextValue: ContextValue,
+
 		themeIcon: ThemeIcon,
+
 		icon: Icon
 			? "light" in Icon && "dark" in Icon
 				? {
 						light: UriFromAPI(Icon.light),
+
 						dark: UriFromAPI(Icon.dark),
 					}
 				: UriFromAPI(Icon as VSCode.Uri)
 			: undefined,
+
 		accessibilityInformation: AccessibilityInformation,
 	};
 };
@@ -95,12 +123,17 @@ export const FromAPI = (
  */
 export const ToAPI = (dto: any): VSCode.TreeItem => {
 	const Label = dto.label.label;
+
 	const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState);
+
 	Item.id = dto.id;
+
 	(Item as any).description = dto.description;
+
 	// FIX: Conditionally assign resourceUri only if it exists in the DTO.
 	if (dto.resourceUri) {
 		Item.resourceUri = UriToAPI(dto.resourceUri);
 	}
+
 	return Item;
 };

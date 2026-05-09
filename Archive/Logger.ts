@@ -33,22 +33,27 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void, never, never>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void, never, never>;
+
 	readonly Info: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void, never, never>;
+
 	readonly Warn: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void, never, never>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void, never, never>;
+
 	readonly Fatal: (
 		Message: string,
 		...Data: unknown[]
@@ -64,6 +69,7 @@ export interface Logger {
  */
 export class LoggerService extends Effect.Service<LoggerService>()(
 	"Service/Logger",
+
 	{
 		sync: () => ({
 			Trace: (Message: string, ...Data: unknown[]) =>

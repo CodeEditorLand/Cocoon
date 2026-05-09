@@ -38,8 +38,11 @@ import { Effect, Option } from "effect";
  */
 export enum PlatformNumber {
 	Web = 0,
+
 	Mac = 1,
+
 	Linux = 2,
+
 	Windows = 3,
 }
 
@@ -53,7 +56,9 @@ export type PlatformName = "Web" | "Windows" | "Mac" | "Linux";
  */
 export enum OperatingSystem {
 	Windows = 1,
+
 	Macintosh = 2,
+
 	Linux = 3,
 }
 
@@ -62,9 +67,13 @@ export enum OperatingSystem {
  */
 export enum OSArchitecture {
 	X64 = "x64",
+
 	ARM64 = "arm64",
+
 	ARM = "arm",
+
 	IA32 = "ia32",
+
 	Unknown = "unknown",
 }
 
@@ -72,12 +81,14 @@ export enum OSArchitecture {
  * Path separator by platform
  */
 export const PATH_SEPARATOR_WINDOWS = "\\";
+
 export const PATH_SEPARATOR_UNIX = "/";
 
 /**
  * Line ending by platform
  */
 export const LINE_ENDING_WINDOWS = "\r\n";
+
 export const LINE_ENDING_UNIX = "\n";
 
 /**
@@ -102,14 +113,21 @@ export interface IProcessEnvironment {
  */
 export interface INodeProcess {
 	platform: string;
+
 	arch: string;
+
 	env: IProcessEnvironment;
+
 	versions?: {
 		node?: string;
+
 		electron?: string;
+
 		chrome?: string;
 	};
+
 	type?: string;
+
 	cwd: () => string;
 }
 
@@ -118,16 +136,27 @@ export interface INodeProcess {
  */
 export interface OSInfo {
 	platform: PlatformName;
+
 	operatingSystem: OperatingSystem;
+
 	architecture: OSArchitecture;
+
 	pathSeparator: string;
+
 	lineEnding: string;
+
 	locale: string;
+
 	language: string;
+
 	isLittleEndian: boolean;
+
 	isWeb: boolean;
+
 	isElectron: boolean;
+
 	isCI: boolean;
+
 	userAgent?: string;
 }
 
@@ -135,18 +164,31 @@ export interface OSInfo {
  * OS detection state
  */
 let _isWindows = false;
+
 let _isMacintosh = false;
+
 let _isLinux = false;
+
 let _isWeb = false;
+
 let _isElectron = false;
+
 let _isCI = false;
+
 let _isLittleEndian = false;
+
 let _isLittleEndianComputed = false;
+
 let _platformNumber = PlatformNumber.Web;
+
 let _operatingSystem = OperatingSystem.Linux;
+
 let _architecture = OSArchitecture.Unknown;
+
 let _locale = DEFAULT_LOCALE;
+
 let _language = DEFAULT_LANGUAGE;
+
 let _userAgent: string | undefined = undefined;
 
 /**
@@ -158,9 +200,13 @@ function InitializeDetection(): void {
 	// Native environment detection
 	if (typeof nodeProcess === "object") {
 		_isWindows = nodeProcess.platform === "win32";
+
 		_isMacintosh = nodeProcess.platform === "darwin";
+
 		_isLinux = nodeProcess.platform === "linux";
+
 		_isElectron = typeof nodeProcess?.versions?.electron === "string";
+
 		_isCI = CheckCIEnvironment(nodeProcess.env);
 
 		// Determine platform number
@@ -185,12 +231,17 @@ function InitializeDetection(): void {
 		// Detect locale and language
 		DetectLocaleAndLanguage(nodeProcess.env);
 	}
+
 	// Web environment detection
 	else if (typeof navigator === "object") {
 		_userAgent = navigator.userAgent;
+
 		_isWindows = _userAgent.indexOf("Windows") >= 0;
+
 		_isMacintosh = _userAgent.indexOf("Macintosh") >= 0;
+
 		_isLinux = _userAgent.indexOf("Linux") >= 0;
+
 		_isWeb = true;
 
 		// Determine platform number
@@ -211,7 +262,9 @@ function InitializeDetection(): void {
 
 		_language =
 			navigator.language.toLowerCase().split("-")[0] || DEFAULT_LANGUAGE;
+
 		_locale = navigator.language || DEFAULT_LOCALE;
+
 		_architecture = DetectWebArchitecture();
 	} else {
 		console.error("[OS] Unable to resolve platform");
@@ -265,14 +318,18 @@ function DetectArchitecture(arch: string): OSArchitecture {
 		case "x86_64":
 		case "amd64":
 			return OSArchitecture.X64;
+
 		case "arm64":
 		case "aarch64":
 			return OSArchitecture.ARM64;
+
 		case "arm":
 			return OSArchitecture.ARM;
+
 		case "ia32":
 		case "x86":
 			return OSArchitecture.IA32;
+
 		default:
 			return OSArchitecture.Unknown;
 	}
@@ -284,6 +341,7 @@ function DetectArchitecture(arch: string): OSArchitecture {
 function DetectWebArchitecture(): OSArchitecture {
 	if (typeof navigator === "object" && "userAgentData" in navigator) {
 		const userAgentData = (navigator as any).userAgentData;
+
 		if (
 			userAgentData &&
 			typeof userAgentData.getHighEntropyValues === "function"
@@ -297,6 +355,7 @@ function DetectWebArchitecture(): OSArchitecture {
 			}
 		}
 	}
+
 	return OSArchitecture.Unknown;
 }
 
@@ -306,14 +365,18 @@ function DetectWebArchitecture(): OSArchitecture {
 function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
 	// Check for VSCode NLS configuration
 	const rawNlsConfig = env["VSCODE_NLS_CONFIG"];
+
 	if (rawNlsConfig) {
 		try {
 			const nlsConfig = JSON.parse(rawNlsConfig);
+
 			_locale = nlsConfig.userLocale || DEFAULT_LOCALE;
+
 			_language =
 				nlsConfig.resolvedLanguage ||
 				nlsConfig.language ||
 				DEFAULT_LANGUAGE;
+
 			return;
 		} catch (e) {
 			// Fall through to other methods
@@ -323,14 +386,18 @@ function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
 	// Check locale environment variables (Unix/Linux/macOS)
 	const locale =
 		env["LC_ALL"] || env["LC_MESSAGES"] || env["LANG"] || env["LANGUAGE"];
+
 	if (locale) {
 		_locale = locale.split(".")[0]!.replace("_", "-") || DEFAULT_LOCALE;
+
 		_language = _locale.split("-")[0] || DEFAULT_LANGUAGE;
+
 		return;
 	}
 
 	// Default values
 	_locale = DEFAULT_LOCALE;
+
 	_language = DEFAULT_LANGUAGE;
 }
 
@@ -343,10 +410,15 @@ function DetectLittleEndian(): boolean {
 	}
 
 	_isLittleEndianComputed = true;
+
 	const test = new Uint8Array(2);
+
 	test[0] = 1;
+
 	test[1] = 2;
+
 	const view = new Uint16Array(test.buffer);
+
 	_isLittleEndian = view[0] === (2 << 8) + 1;
 
 	return _isLittleEndian;
@@ -356,6 +428,7 @@ function DetectLittleEndian(): boolean {
  * Initialize detection on module load
  */
 InitializeDetection();
+
 _isLittleEndian = DetectLittleEndian();
 
 /**
@@ -372,10 +445,13 @@ export function GetPlatformName(): PlatformName {
 	switch (_platformNumber) {
 		case PlatformNumber.Web:
 			return "Web";
+
 		case PlatformNumber.Mac:
 			return "Mac";
+
 		case PlatformNumber.Linux:
 			return "Linux";
+
 		case PlatformNumber.Windows:
 			return "Windows";
 	}
@@ -512,6 +588,7 @@ export function JoinPath(...segments: (string | null | undefined)[]): string {
 
 	// Remove duplicate separators
 	result = result.replace(/\/+/g, separator === "/" ? "/" : "\\");
+
 	result = result.replace(/\\+/g, "\\");
 
 	return result;
@@ -551,16 +628,27 @@ export function IsLittleEndian(): boolean {
 export function GetOSInfo(): OSInfo {
 	return {
 		platform: GetPlatformName(),
+
 		operatingSystem: GetOperatingSystem(),
+
 		architecture: GetArchitecture(),
+
 		pathSeparator: GetPathSeparator(),
+
 		lineEnding: GetLineEnding(),
+
 		locale: GetLocale(),
+
 		language: GetLanguage(),
+
 		isLittleEndian: IsLittleEndian(),
+
 		isWeb: IsWeb(),
+
 		isElectron: IsElectron(),
+
 		isCI: IsCI(),
+
 		userAgent: GetUserAgent(),
 	} as OSInfo;
 }
@@ -572,12 +660,16 @@ export function PlatformToString(platform: PlatformNumber): PlatformName {
 	switch (platform) {
 		case PlatformNumber.Web:
 			return "Web";
+
 		case PlatformNumber.Mac:
 			return "Mac";
+
 		case PlatformNumber.Linux:
 			return "Linux";
+
 		case PlatformNumber.Windows:
 			return "Windows";
+
 		default:
 			return "Web";
 	}
@@ -590,15 +682,20 @@ export function StringToPlatform(
 	platform: string,
 ): Option.Option<PlatformNumber> {
 	const normalized = String(platform);
+
 	switch (normalized) {
 		case "Web":
 			return Option.some(PlatformNumber.Web);
+
 		case "Mac":
 			return Option.some(PlatformNumber.Mac);
+
 		case "Linux":
 			return Option.some(PlatformNumber.Linux);
+
 		case "Windows":
 			return Option.some(PlatformNumber.Windows);
+
 		default:
 			return Option.none();
 	}
@@ -622,6 +719,7 @@ export function IsEnglishVariant(): boolean {
 			_language[0] === "e" && _language[1] === "n" && _language[2] === "-"
 		);
 	}
+
 	return false;
 }
 
@@ -648,6 +746,7 @@ export function NormalizePathEffect(
 	if (!path) {
 		return Effect.fail(new Error("Path cannot be null or undefined"));
 	}
+
 	return Effect.succeed(NormalizePath(path));
 }
 
@@ -673,17 +772,25 @@ export function IsAbsolutePath(path: string): boolean {
  */
 export const Platform = {
 	Web: PlatformNumber.Web,
+
 	Mac: PlatformNumber.Mac,
+
 	Linux: PlatformNumber.Linux,
+
 	Windows: PlatformNumber.Windows,
 };
 
 export const PlatformConstants = {
 	DEFAULT_LANGUAGE,
+
 	DEFAULT_LOCALE,
+
 	PATH_SEPARATOR_WINDOWS,
+
 	PATH_SEPARATOR_UNIX,
+
 	LINE_ENDING_WINDOWS,
+
 	LINE_ENDING_UNIX,
 } as const;
 
@@ -692,27 +799,50 @@ export const PlatformConstants = {
  */
 export const OS = {
 	IsWindows,
+
 	IsMacintosh,
+
 	IsLinux,
+
 	IsWeb,
+
 	IsElectron,
+
 	IsCI,
+
 	GetPlatformNumber,
+
 	GetPlatformName,
+
 	GetOperatingSystem,
+
 	GetArchitecture,
+
 	GetPathSeparator,
+
 	GetLineEnding,
+
 	GetLocale,
+
 	GetLanguage,
+
 	GetUserAgent,
+
 	IsLittleEndian,
+
 	GetOSInfo,
+
 	NormalizePath,
+
 	NormalizePathToUnix,
+
 	NormalizePathToWindows,
+
 	JoinPath,
+
 	IsAbsolutePath,
+
 	IsDefaultLanguage,
+
 	IsEnglishVariant,
 } as const;

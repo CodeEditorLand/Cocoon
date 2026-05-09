@@ -15,14 +15,19 @@ import { DialogError } from "./Errors.js";
 export interface DialogService {
 	readonly ShowInformationMessage: (
 		message: string,
+
 		items?: readonly string[],
 	) => Effect.Effect<string | undefined, DialogError>;
+
 	readonly ShowWarningMessage: (
 		message: string,
+
 		items?: readonly string[],
 	) => Effect.Effect<string | undefined, DialogError>;
+
 	readonly ShowErrorMessage: (
 		message: string,
+
 		items?: readonly string[],
 	) => Effect.Effect<string | undefined, DialogError>;
 }
@@ -40,6 +45,7 @@ export const DialogService = Context.Tag<DialogService>(
 export const DialogLive = Effect.gen(function* () {
 	const ShowInformationMessage = (
 		message: string,
+
 		items: readonly string[] = [],
 	): Effect.Effect<string | undefined, DialogError> =>
 		Effect.gen(function* () {
@@ -55,6 +61,7 @@ export const DialogLive = Effect.gen(function* () {
 
 	const ShowWarningMessage = (
 		message: string,
+
 		items: readonly string[] = [],
 	): Effect.Effect<string | undefined, DialogError> =>
 		Effect.gen(function* () {
@@ -64,6 +71,7 @@ export const DialogLive = Effect.gen(function* () {
 
 	const ShowErrorMessage = (
 		message: string,
+
 		items: readonly string[] = [],
 	): Effect.Effect<string | undefined, DialogError> =>
 		Effect.gen(function* () {

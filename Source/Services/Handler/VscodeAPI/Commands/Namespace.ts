@@ -20,11 +20,13 @@ import { LogRoute, Route } from "./Route.js";
 
 const CreateCommandsNamespace = (
 	Context: HandlerContext,
+
 	LanguageProviderRegistry: typeof import("../../../Language/Provider/Registry.js"),
 ) =>
 	WrapCommandsNamespace({
 		registerCommand: (
 			Command: string,
+
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
 			LanguageProviderRegistry.RegisterCommand(Command, Callback);
@@ -43,6 +45,7 @@ const CreateCommandsNamespace = (
 
 		registerTextEditorCommand: (
 			Command: string,
+
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
 			LanguageProviderRegistry.RegisterCommand(Command, Callback);
@@ -93,6 +96,7 @@ const CreateCommandsNamespace = (
 				// Routed by Mountain via Track::SideCarRequest → Command.Execute effect.
 				return await Context.MountainClient?.sendRequest(
 					"Command.Execute",
+
 					[Command, ...Arguments],
 				);
 			} catch {
@@ -104,6 +108,7 @@ const CreateCommandsNamespace = (
 			try {
 				const Response = await Context.MountainClient?.sendRequest(
 					"Command.GetAll",
+
 					[FilterInternal ?? false],
 				);
 				if (Array.isArray(Response)) return Response as string[];
@@ -134,6 +139,7 @@ const CreateCommandsNamespace = (
 		// returns a real disposable so subscriptions dispose cleanly.
 		registerDiffInformationCommand: (
 			Command: string,
+
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
 			LanguageProviderRegistry.RegisterCommand(Command, Callback);

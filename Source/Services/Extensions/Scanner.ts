@@ -29,28 +29,43 @@ import type { HandlerContext } from "../Handler/Handler/Context.js";
  */
 export type ScannedExtension = {
 	readonly type: number;
+
 	readonly isBuiltin: boolean;
+
 	readonly isUserBuiltin: boolean;
+
 	readonly identifier: { id: string; uuid?: string };
+
 	readonly manifest: Record<string, unknown>;
+
 	readonly location: { scheme: string; path: string };
+
 	readonly targetPlatform: string;
+
 	readonly publisherDisplayName?: string;
+
 	readonly validations?: ReadonlyArray<[number, string]>;
+
 	readonly preRelease?: boolean;
+
 	readonly installedTimestamp?: number;
 };
 
 export type ScanOptions = {
 	readonly includeUninstalled?: boolean;
+
 	readonly includeInvalid?: boolean;
+
 	readonly profileLocation?: string;
 };
 
 export type ScannerStatistics = {
 	readonly totalExtensions: number;
+
 	readonly builtinCount: number;
+
 	readonly userCount: number;
+
 	readonly activationEventCount: number;
 };
 
@@ -62,6 +77,7 @@ export type ScannerStatistics = {
  */
 export const ScanAllExtensions = (
 	Context: HandlerContext,
+
 	_Options: ScanOptions = {},
 ): ReadonlyArray<ScannedExtension> =>
 	Array.from(
@@ -96,6 +112,7 @@ export const ScanUserExtensions = (
  */
 export const GetExtension = (
 	Context: HandlerContext,
+
 	Identifier: string,
 ): ScannedExtension | undefined =>
 	Context.ExtensionRegistry.get(Identifier) as ScannedExtension | undefined;
@@ -107,8 +124,11 @@ export const GetExtension = (
  */
 export const GetStatistics = (Context: HandlerContext): ScannerStatistics => {
 	const All = Array.from(Context.ExtensionRegistry.values());
+
 	let Builtin = 0;
+
 	let User = 0;
+
 	for (const Extension of All as any[]) {
 		if (Extension?.isBuiltin === true) {
 			Builtin++;
@@ -116,18 +136,26 @@ export const GetStatistics = (Context: HandlerContext): ScannerStatistics => {
 			User++;
 		}
 	}
+
 	return {
 		totalExtensions: All.length,
+
 		builtinCount: Builtin,
+
 		userCount: User,
+
 		activationEventCount: Context.ActivationEventIndex.size,
 	};
 };
 
 export default {
 	ScanAllExtensions,
+
 	ScanSystemExtensions,
+
 	ScanUserExtensions,
+
 	GetExtension,
+
 	GetStatistics,
 };

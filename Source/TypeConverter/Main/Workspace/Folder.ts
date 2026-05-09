@@ -11,7 +11,9 @@ import { ToAPI as UriToAPI } from "../URI.js";
 export const FromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {
 	return {
 		uri: UriToAPI(DTO.uri),
+
 		name: DTO.name,
+
 		index: DTO.index,
 	};
 };

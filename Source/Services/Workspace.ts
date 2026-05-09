@@ -69,12 +69,16 @@ interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -83,9 +87,12 @@ interface Logger {
 
 interface ConfigurationService {
 	readonly getValue: <T>(key: string, scope?: number, defaultValue?: T) => T;
+
 	readonly updateValue: <T>(
 		key: string,
+
 		value: T,
+
 		scope?: number,
 	) => Promise<void>;
 }
@@ -100,44 +107,65 @@ interface ConfigurationService {
  */
 export interface Workspace {
 	readonly name: string | undefined;
+
 	readonly workspaceFile: VSCode.Uri | undefined;
+
 	readonly workspaceFolders: readonly VSCode.WorkspaceFolder[] | undefined;
+
 	readonly isTrusted: boolean;
+
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
+
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];
+
 	readonly GetWorkspaceFolder: (
 		uri: VSCode.Uri,
 	) => VSCode.WorkspaceFolder | undefined;
+
 	readonly FindFiles: (
 		include: VSCode.GlobPattern,
+
 		exclude?: VSCode.GlobPattern | null,
+
 		maxResults?: number,
 	) => Effect.Effect<VSCode.Uri[], Error>;
+
 	readonly FindTextInFiles: (
 		query: VSCode.TextSearchQuery,
+
 		options?: VSCode.FindTextInFilesOptions,
 	) => Effect.Effect<VSCode.Uri[] | null, Error>;
+
 	readonly OpenTextDocument: (
 		uriOrOptions?: VSCode.Uri | { language?: string; content?: string },
 	) => Effect.Effect<VSCode.TextDocument, Error>;
+
 	readonly SaveAll: (
 		includeUntitled?: boolean,
 	) => Effect.Effect<boolean, Error>;
+
 	readonly ApplyEdit: (
 		edit: VSCode.WorkspaceEdit,
 	) => Effect.Effect<boolean, Error>;
+
 	readonly GetConfiguration: (
 		section?: string,
+
 		scope?: VSCode.ConfigurationScope | null,
 	) => VSCode.WorkspaceConfiguration;
+
 	readonly OnDidChangeWorkspaceFolders: VSCode.Event<VSCode.WorkspaceFoldersChangeEvent>;
+
 	readonly OnDidChangeActiveTextEditor: VSCode.Event<
 		VSCode.TextEditor | undefined
 	>;
+
 	readonly OnDidChangeVisibleTextEditors: VSCode.Event<
 		readonly VSCode.TextEditor[]
 	>;
+
 	readonly OnDidChangeTextDocument: VSCode.Event<VSCode.TextDocumentChangeEvent>;
+
 	readonly OnDidChangeConfiguration: VSCode.Event<VSCode.ConfigurationChangeEvent>;
 }
 
@@ -149,8 +177,11 @@ export interface Workspace {
  */
 interface InternalWorkspace {
 	readonly ID: string;
+
 	readonly Name: string;
+
 	readonly Folders: readonly VSCode.WorkspaceFolder[];
+
 	readonly Configuration: VSCode.Uri | undefined;
 }
 
@@ -173,6 +204,7 @@ interface InternalWorkspace {
  */
 export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 	"Service/Workspace",
+
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
@@ -325,6 +357,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const AcceptEditorState = (
 				ActiveEditorId: string | undefined,
+
 				VisibleEditorIds: string[],
 			) =>
 				Effect.gen(function* () {
@@ -392,7 +425,9 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const FindFiles = (
 				include: VSCode.GlobPattern,
+
 				exclude?: VSCode.GlobPattern | null,
+
 				maxResults?: number,
 			): Effect.Effect<VSCode.Uri[], Error> =>
 				Effect.gen(function* () {
@@ -414,6 +449,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					const files = yield* mountainClient.findFiles(
 						pattern,
+
 						excludePatterns,
 					);
 
@@ -437,6 +473,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const FindTextInFiles = (
 				query: VSCode.TextSearchQuery,
+
 				options?: VSCode.FindTextInFilesOptions,
 			): Effect.Effect<VSCode.Uri[] | null, Error> =>
 				Effect.gen(function* () {
@@ -470,7 +507,9 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					const matches = yield* mountainClient.findTextInFiles(
 						pattern,
+
 						includePatterns,
+
 						excludePatterns,
 					);
 
@@ -583,6 +622,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							if (!Range) return DocumentContent;
 							return DocumentLines.slice(
 								Range.start.line,
+
 								Range.end.line + 1,
 							).join("\n");
 						},
@@ -607,6 +647,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						offsetAt: (Pos: any) =>
 							DocumentLines.slice(0, Pos.line).reduce(
 								(Sum: number, L: string) => Sum + L.length + 1,
+
 								0,
 							) + Pos.character,
 						positionAt: (Offset: number) => {
@@ -688,6 +729,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 						yield* mountainClient.applyEdit(
 							uri.toString(),
+
 							textEdits,
 						);
 					}
@@ -702,6 +744,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const GetConfiguration = (
 				section?: string,
+
 				_scope?: VSCode.ConfigurationScope | null,
 			): VSCode.WorkspaceConfiguration => {
 				return {
@@ -713,7 +756,9 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							: (key ?? "");
 						return Configuration.getValue(
 							FullKey,
+
 							1,
+
 							defaultValue,
 						) as T;
 					},
@@ -725,7 +770,9 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					},
 					update: <T>(
 						key: string,
+
 						value: T,
+
 						_configurationTarget?: VSCode.ConfigurationTarget,
 					) => {
 						const FullKey = section ? `${section}.${key}` : key;
@@ -741,17 +788,23 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							key: FullKey,
 							defaultValue: Configuration.getValue(
 								FullKey,
+
 								0,
+
 								undefined,
 							),
 							globalValue: Configuration.getValue(
 								FullKey,
+
 								1,
+
 								undefined,
 							),
 							workspaceValue: Configuration.getValue(
 								FullKey,
+
 								2,
+
 								undefined,
 							),
 							workspaceFolderValue: undefined,
@@ -880,36 +933,56 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
  */
 export interface VSCodeWorkspaceAPI {
 	readonly name: string;
+
 	readonly workspaceFile: VSCode.Uri | undefined;
+
 	readonly workspaceFolders: readonly VSCode.WorkspaceFolder[] | undefined;
+
 	readonly rootPath: string | undefined;
+
 	readonly isTrusted: boolean;
+
 	readonly onDidChangeWorkspaceFolders: VSCode.Event<VSCode.WorkspaceFoldersChangeEvent>;
+
 	readonly onDidChangeActiveTextEditor: VSCode.Event<
 		VSCode.TextEditor | undefined
 	>;
+
 	readonly onDidChangeVisibleTextEditors: VSCode.Event<
 		readonly VSCode.TextEditor[]
 	>;
+
 	readonly onDidChangeTextDocument: VSCode.Event<VSCode.TextDocumentChangeEvent>;
+
 	readonly onDidChangeConfiguration: VSCode.Event<VSCode.ConfigurationChangeEvent>;
+
 	getWorkspaceFolder(uri: VSCode.Uri): VSCode.WorkspaceFolder | undefined;
+
 	findFiles(
 		include: VSCode.GlobPattern,
+
 		exclude?: VSCode.GlobPattern | null,
+
 		maxResults?: number,
 	): Thenable<VSCode.Uri[]>;
+
 	findTextInFiles(
 		query: VSCode.TextSearchQuery,
+
 		options?: VSCode.FindTextInFilesOptions,
 	): Thenable<VSCode.Uri[]>;
+
 	openTextDocument(
 		uriOrOptions?: VSCode.Uri | { language?: string; content?: string },
 	): Thenable<VSCode.TextDocument>;
+
 	saveAll(includeUntitled?: boolean): Thenable<boolean>;
+
 	applyEdit(edit: VSCode.WorkspaceEdit): Thenable<boolean>;
+
 	getConfiguration(
 		section?: string,
+
 		scope?: VSCode.ConfigurationScope | null,
 	): VSCode.WorkspaceConfiguration;
 }

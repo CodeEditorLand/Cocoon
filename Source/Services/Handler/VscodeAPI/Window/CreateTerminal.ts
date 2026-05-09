@@ -16,30 +16,43 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 export default (
 	Context: HandlerContext,
+
 	Handle: string | number,
+
 	Options?: { name?: string; [k: string]: unknown },
 ): {
 	name: string;
+
 	readonly processId: Promise<number | undefined>;
+
 	sendText: (Text: string, _AddNewLine?: boolean) => Promise<void>;
+
 	show: (PreserveFocus?: boolean) => void;
+
 	hide: () => void;
+
 	dispose: () => void;
+
 	resize: (Columns: number, Rows: number) => Promise<void>;
 } => {
 	const Name = Options?.name ?? `Terminal ${Handle}`;
+
 	Context.SendToMountain("window.createTerminal", {
 		handle: Handle,
 		name: Name,
 		options: Options ?? {},
 	}).catch(() => {});
+
 	let ProcessIdPromise: Promise<number | undefined> | undefined;
+
 	const ResolveProcessId = (): Promise<number | undefined> => {
 		if (ProcessIdPromise !== undefined) return ProcessIdPromise;
+
 		ProcessIdPromise = (async () => {
 			try {
 				const Response = await Context.MountainClient?.sendRequest(
 					"Terminal.GetProcessId",
+
 					[Handle],
 				);
 				if (typeof Response === "number") return Response;
@@ -54,40 +67,50 @@ export default (
 				return undefined;
 			}
 		})();
+
 		return ProcessIdPromise;
 	};
+
 	return {
 		name: Name,
+
 		get processId() {
 			return ResolveProcessId();
 		},
+
 		sendText: async (Text: string, _AddNewLine?: boolean) => {
 			Context.SendToMountain("terminal.sendText", {
 				handle: Handle,
 				text: Text,
 			}).catch(() => {});
 		},
+
 		show: (PreserveFocus?: boolean) => {
 			Context.SendToMountain("terminal.show", {
 				handle: Handle,
 				preserveFocus: PreserveFocus,
 			}).catch(() => {});
 		},
+
 		hide: () => {
 			Context.SendToMountain("terminal.hide", {
 				handle: Handle,
 			}).catch(() => {});
 		},
+
 		dispose: () => {
 			Context.SendToMountain("terminal.dispose", {
 				handle: Handle,
 			}).catch(() => {});
 		},
+
 		resize: async (Columns: number, Rows: number) => {
 			try {
 				await Context.MountainClient?.sendRequest("Terminal.Resize", [
 					Handle,
+
 					Columns,
+
 					Rows,
 				]);
 			} catch {

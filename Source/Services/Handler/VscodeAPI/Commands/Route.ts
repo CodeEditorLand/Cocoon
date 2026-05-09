@@ -72,6 +72,7 @@ export interface CommandsLocalRegistry {
  */
 export function Route(
 	CommandId: string,
+
 	Registry: CommandsLocalRegistry,
 ): CommandsRoute {
 	return Registry.Has(CommandId) ? "local" : "mountain";
@@ -83,6 +84,7 @@ export const LogRoute = (CommandId: string, Decision: CommandsRoute): void => {
 	// trace stays available when diagnosing routing decisions but doesn't
 	// clutter the default log.
 	if (!process.env["Trace"]?.includes("cmd-route")) return;
+
 	process.stdout.write(
 		`[DEV:CMD-ROUTE] cmd=${CommandId} route=${Decision}\n`,
 	);

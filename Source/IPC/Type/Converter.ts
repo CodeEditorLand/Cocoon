@@ -104,7 +104,9 @@ const { URI } =
  */
 export interface WindowStateDTO {
 	readonly IsFocused: boolean;
+
 	readonly IsFullScreen: boolean;
+
 	readonly ZoomLevel: number;
 }
 
@@ -115,12 +117,19 @@ export interface WindowStateDTO {
  */
 export interface DocumentStateDTO {
 	readonly URI: string;
+
 	readonly LanguageIdentifier: string;
+
 	readonly Version: number;
+
 	readonly Lines: readonly string[];
+
 	readonly EOL: string;
+
 	readonly IsDirty: boolean;
+
 	readonly Encoding: string;
+
 	readonly VersionIdentifier: number;
 }
 
@@ -131,16 +140,25 @@ export interface DocumentStateDTO {
  */
 export interface WebviewStateDTO {
 	readonly Handle: string;
+
 	readonly ViewType: string;
+
 	readonly Title: string;
+
 	readonly ContentOptions: {
 		readonly EnableScripts: boolean;
+
 		readonly LocalResourceRoots: readonly string[];
 	};
+
 	readonly PanelOptions: Record<string, unknown>;
+
 	readonly SideCarIdentifier: string;
+
 	readonly ExtensionIdentifier: string;
+
 	readonly IsActive: boolean;
+
 	readonly IsVisible: boolean;
 }
 
@@ -152,14 +170,21 @@ export interface WebviewStateDTO {
  */
 export interface TerminalStateDTO {
 	readonly Identifier: number;
+
 	readonly Name: string;
+
 	readonly OSProcessIdentifier: number | undefined;
+
 	readonly ShellPath: string;
+
 	readonly ShellArguments: readonly string[];
+
 	readonly CurrentWorkingDirectory: string | undefined;
+
 	readonly EnvironmentVariables:
 		| ReadonlyMap<string, string | null>
 		| undefined;
+
 	readonly IsPTY: boolean;
 }
 
@@ -169,8 +194,11 @@ export interface TerminalStateDTO {
  */
 export interface OutputChannelStateDTO {
 	readonly Name: string;
+
 	readonly URI: string;
+
 	readonly IsVisible: boolean;
+
 	readonly PreserveFocus: boolean;
 }
 
@@ -180,9 +208,13 @@ export interface OutputChannelStateDTO {
  */
 export interface TreeViewStateDTO {
 	readonly ViewId: string;
+
 	readonly Title: string;
+
 	readonly Description: string | undefined;
+
 	readonly Selection: readonly string[];
+
 	readonly ExpandState: Record<string, boolean>;
 }
 
@@ -192,7 +224,9 @@ export interface TreeViewStateDTO {
  */
 export interface WorkspaceFolderStateDTO {
 	readonly URI: string;
+
 	readonly Name: string;
+
 	readonly Identifier: number;
 }
 
@@ -206,7 +240,9 @@ export interface WorkspaceFolderStateDTO {
  */
 export interface WindowState {
 	readonly isFocused: boolean;
+
 	readonly isFullScreen: boolean;
+
 	readonly zoomLevel: number;
 }
 
@@ -216,12 +252,19 @@ export interface WindowState {
  */
 export interface DocumentState {
 	readonly uri: Uri;
+
 	readonly languageIdentifier: string;
+
 	readonly version: number;
+
 	readonly lines: readonly string[];
+
 	readonly eol: "\n" | "\r\n";
+
 	readonly isDirty: boolean;
+
 	readonly encoding: string;
+
 	readonly versionIdentifier: number;
 }
 
@@ -231,16 +274,25 @@ export interface DocumentState {
  */
 export interface WebviewState {
 	readonly handle: string;
+
 	readonly viewType: string;
+
 	readonly title: string;
+
 	readonly contentOptions: {
 		readonly enableScripts: boolean;
+
 		readonly localResourceRoots: readonly string[];
 	};
+
 	readonly panelOptions: Record<string, unknown>;
+
 	readonly sideCarIdentifier: string;
+
 	readonly extensionIdentifier: string;
+
 	readonly isActive: boolean;
+
 	readonly isVisible: boolean;
 }
 
@@ -250,14 +302,21 @@ export interface WebviewState {
  */
 export interface TerminalState {
 	readonly identifier: number;
+
 	readonly name: string;
+
 	readonly osProcessIdentifier: number | undefined;
+
 	readonly shellPath: string;
+
 	readonly shellArguments: readonly string[];
+
 	readonly currentWorkingDirectory: string | undefined;
+
 	readonly environmentVariables:
 		| ReadonlyMap<string, string | null>
 		| undefined;
+
 	readonly isPTY: boolean;
 }
 
@@ -266,21 +325,31 @@ export interface TerminalState {
 // ============================================================================
 
 const MIN_ZOOM_LEVEL = -20.0;
+
 const MAX_ZOOM_LEVEL = 20.0;
 
 const MAX_DOCUMENT_LINES = 1_000_000;
+
 const MAX_LINE_LENGTH = 100_000;
+
 const MAX_LANGUAGE_ID_LENGTH = 128;
 
 const MAX_TERMINAL_NAME_LENGTH = 128;
+
 const MAX_SHELL_PATH_LENGTH = 1024;
+
 const MAX_SHELL_ARGUMENTS = 100;
+
 const MAX_ARGUMENT_LENGTH = 4096;
 
 const MAX_WEBVIEW_TITLE_LENGTH = 256;
+
 const MAX_VIEW_TYPE_LENGTH = 128;
+
 const MAX_HANDLE_LENGTH = 128;
+
 const MAX_SIDECAR_IDENTIFIER_LENGTH = 128;
+
 const MAX_EXTENSION_IDENTIFIER_LENGTH = 128;
 
 // ============================================================================

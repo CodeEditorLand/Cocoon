@@ -24,6 +24,7 @@ import { LoggerService, type Logger } from "./Logger.js";
  */
 const EnsureDirectory = (
 	DirectoryUri: Uri | undefined,
+
 	ScopeName: string,
 ): Effect.Effect<boolean, never, FileSystem | Logger> =>
 	Effect.if(DirectoryUri !== undefined, {
@@ -38,6 +39,7 @@ const EnsureDirectory = (
 					Effect.catchAll((Error) =>
 						Logger.Error(
 							`Failed to ensure ${ScopeName} storage directory exists at ${TheUri.toString()}`,
+
 							Error,
 						),
 					),
@@ -47,6 +49,7 @@ const EnsureDirectory = (
 				);
 				return true;
 			}),
+
 		onFalse: () =>
 			Effect.flatMap(LoggerService, (Logger) =>
 				Logger.Trace(
@@ -63,6 +66,7 @@ export interface StoragePath {
 	readonly GetWorkspaceStorageUri: (
 		Extension: IExtensionDescription,
 	) => Uri | undefined;
+
 	readonly GetGlobalStorageUri: (Extension: IExtensionDescription) => Uri;
 }
 
@@ -72,6 +76,7 @@ export interface StoragePath {
  */
 export class StoragePathService extends Effect.Service<StoragePathService>()(
 	"Service/StoragePath",
+
 	{
 		effect: Effect.gen(function* () {
 			const InitData = yield* InitDataService;
@@ -87,6 +92,7 @@ export class StoragePathService extends Effect.Service<StoragePathService>()(
 
 			const GetPathForExtension = (
 				BaseUri: Uri | undefined,
+
 				Extension: IExtensionDescription,
 			): Uri | undefined => {
 				if (!BaseUri || !Extension?.identifier?.value) return undefined;
@@ -104,13 +110,16 @@ export class StoragePathService extends Effect.Service<StoragePathService>()(
 				): Uri => {
 					const UriResult = GetPathForExtension(
 						GlobalStorageUri,
+
 						Extension,
 					);
 					if (!UriResult) {
 						// This is a critical failure. Fallback to a local path to prevent crashes.
 						const EmergencyPath = Path.join(
 							process.cwd(),
+
 							".cocoon-data/global",
+
 							Extension.identifier.value.toLowerCase(),
 						);
 						Effect.runSync(

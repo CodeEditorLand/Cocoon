@@ -27,30 +27,43 @@ import { FindFilesLocal } from "../../../Files.js";
 
 interface QueryShape {
 	pattern?: string;
+
 	isRegExp?: boolean;
+
 	isCaseSensitive?: boolean;
+
 	isWordMatch?: boolean;
 }
 
 interface OptionsShape {
 	include?: unknown;
+
 	exclude?: unknown;
+
 	maxResults?: number;
+
 	useIgnoreFiles?: boolean;
+
 	followSymlinks?: boolean;
+
 	encoding?: string;
 }
 
 interface TextSearchMatch {
 	uri: unknown;
+
 	ranges: Array<{
 		start: { line: number; character: number };
+
 		end: { line: number; character: number };
 	}>;
+
 	preview: {
 		text: string;
+
 		matches: Array<{
 			start: { line: number; character: number };
+
 			end: { line: number; character: number };
 		}>;
 	};
@@ -58,8 +71,10 @@ interface TextSearchMatch {
 
 const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	if (Query == null) return undefined;
+
 	const Q =
 		typeof Query === "string" ? { pattern: Query } : (Query as QueryShape);
+
 	if (!Q.pattern) return undefined;
 
 	// `m` flag for multiline so `^`/`$` match per-line; `g` flag so the
@@ -67,11 +82,13 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	const Flags = `gm${Q.isCaseSensitive ? "" : "i"}`;
 
 	let Source = Q.pattern;
+
 	if (!Q.isRegExp) {
 		// Plain-text search: escape regex metacharacters so the user's
 		// `(foo)` doesn't get interpreted as a capture group.
 		Source = Source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	}
+
 	if (Q.isWordMatch) {
 		Source = `\\b${Source}\\b`;
 	}
@@ -85,34 +102,48 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 
 const ToFsPath = (Uri: unknown): string | undefined => {
 	if (Uri == null) return undefined;
+
 	if (typeof Uri === "string") {
 		return Uri.startsWith("file://") ? Uri.slice("file://".length) : Uri;
 	}
+
 	const U = Uri as { fsPath?: string; path?: string };
+
 	return U.fsPath ?? U.path;
 };
 
 export async function FindTextInFilesNodeFallback(
 	Context: HandlerContext,
+
 	Folders: Array<{ uri: unknown; name: string; index: number }>,
+
 	Query: unknown,
+
 	Options: unknown,
+
 	Callback?: (Result: unknown) => void,
 ): Promise<{ limitHit: boolean }> {
 	const Pattern = ExtractPattern(Query);
+
 	if (!Pattern) return { limitHit: false };
 
 	const Opts = (Options ?? {}) as OptionsShape;
+
 	const Max = typeof Opts.maxResults === "number" ? Opts.maxResults : 10_000;
+
 	const Encoding = (Opts.encoding as BufferEncoding) ?? "utf8";
 
 	// Reuse the proven glob engine so include/exclude semantics match
 	// what `findFiles` gives the same extensions - consistency matters.
 	const Candidates = (await FindFilesLocal(
 		Context,
+
 		Folders,
+
 		Opts.include ?? "**/*",
+
 		Opts.exclude,
+
 		// Don't let the file-enumeration phase cap us below the match cap.
 		Math.max(Max * 4, 10_000),
 	)) as unknown[];
@@ -123,9 +154,11 @@ export async function FindTextInFilesNodeFallback(
 		if (Emitted >= Max) return { limitHit: true };
 
 		const Path = ToFsPath(Candidate);
+
 		if (!Path) continue;
 
 		let Content: string;
+
 		try {
 			Content = await FsPromises.readFile(Path, Encoding);
 		} catch {
@@ -139,11 +172,16 @@ export async function FindTextInFilesNodeFallback(
 		if (Content.length > 0 && Content.indexOf("\0") !== -1) continue;
 
 		const Lines = Content.split("\n");
+
 		for (let LineNumber = 0; LineNumber < Lines.length; LineNumber++) {
 			const Line = Lines[LineNumber];
+
 			Pattern.lastIndex = 0;
+
 			const Ranges: TextSearchMatch["ranges"] = [];
+
 			let M: RegExpExecArray | null;
+
 			while ((M = Pattern.exec(Line)) !== null) {
 				Ranges.push({
 					start: { line: LineNumber, character: M.index },
@@ -152,15 +190,20 @@ export async function FindTextInFilesNodeFallback(
 						character: M.index + M[0].length,
 					},
 				});
+
 				if (M[0].length === 0) Pattern.lastIndex++;
 			}
+
 			if (Ranges.length === 0) continue;
 
 			const Match: TextSearchMatch = {
 				uri: Candidate,
+
 				ranges: Ranges,
+
 				preview: {
 					text: Line,
+
 					matches: Ranges.map((R) => ({
 						start: { line: 0, character: R.start.character },
 						end: { line: 0, character: R.end.character },
@@ -178,6 +221,7 @@ export async function FindTextInFilesNodeFallback(
 			}
 
 			Emitted += Ranges.length;
+
 			if (Emitted >= Max) return { limitHit: true };
 		}
 	}

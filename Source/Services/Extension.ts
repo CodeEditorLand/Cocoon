@@ -51,12 +51,16 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -69,6 +73,7 @@ export interface Logger {
  */
 export interface Configuration {
 	readonly GetValue: <T>(key: string, defaultValue?: T) => T;
+
 	readonly UpdateValue: <T>(key: string, value: T) => Promise<void>;
 }
 
@@ -78,55 +83,86 @@ export interface Configuration {
  */
 export interface IExtensionDescription {
 	readonly identifier: string;
+
 	readonly displayName?: string;
+
 	readonly version: string;
+
 	readonly publisher?: string;
+
 	readonly description?: string;
+
 	readonly extensionLocation: VSCode.Uri;
+
 	readonly activationEvents?: string[];
+
 	readonly main?: string;
+
 	readonly browser?: string;
+
 	readonly engines?: { vscode: string };
+
 	readonly extensionDependencies?: string[];
+
 	readonly extensionKind?: VSCode.ExtensionKind[];
+
 	readonly contributes?: {
 		commands?: Array<{
 			command: string;
+
 			title: string;
+
 			category?: string;
 		}>;
+
 		configuration?: {
 			properties: Record<
 				string,
 				{
 					type: string;
+
 					default?: any;
+
 					description?: string;
 				}
 			>;
 		};
+
 		keybindings?: Array<{
 			command: string;
+
 			key: string;
 		}>;
+
 		languages?: Array<{
 			id: string;
+
 			aliases?: string[];
+
 			extensions?: string[];
+
 			configuration?: string;
 		}>;
+
 		grammars?: Array<{
 			language: string;
+
 			scopeName: string;
+
 			path: string;
 		}>;
+
 		themes?: Array<{
 			label: string;
+
 			uiTheme: string;
+
 			path: string;
 		}>;
 	};
+
 	readonly enabled?: boolean;
+
 	readonly kind?: VSCode.ExtensionKind[];
 }
 
@@ -136,12 +172,16 @@ export interface IExtensionDescription {
 export interface DependencyResolutionResult {
 	/** Success flag */
 	readonly Success: boolean;
+
 	/** Ordered activation sequence */
 	readonly ActivationSequence: readonly string[];
+
 	/** Missing dependencies */
 	readonly MissingDependencies: readonly string[];
+
 	/** Circular dependency chains detected */
 	readonly CircularDependencies: readonly string[][];
+
 	/** Validation error if any */
 	readonly Error?: string;
 }
@@ -152,12 +192,19 @@ export interface DependencyResolutionResult {
  */
 export interface IExtension<T = unknown> {
 	readonly id: string;
+
 	readonly extensionUri: VSCode.Uri;
+
 	readonly extensionPath: string;
+
 	readonly isActive: boolean;
+
 	readonly packageJSON: IExtensionDescription;
+
 	readonly exports?: T;
+
 	readonly extensionKind?: VSCode.ExtensionKind;
+
 	activate(): Thenable<T>;
 }
 
@@ -172,24 +219,32 @@ export interface ExtensionService {
 	readonly GetExtension: <T>(
 		ExtensionId: string,
 	) => Effect.Effect<IExtension<T> | undefined, never>;
+
 	readonly GetAllExtensions: () => Effect.Effect<
 		readonly IExtension[],
 		never
 	>;
+
 	readonly GetExtensionPath: (
 		ExtensionId: string,
 	) => Effect.Effect<string | undefined, never>;
+
 	readonly OnDidChange: VSCode.Event<void>;
+
 	readonly ResolveDependencies: (
 		ExtensionId: string,
 	) => Effect.Effect<DependencyResolutionResult, never>;
+
 	readonly MarkActivated: (
 		ExtensionId: string,
+
 		Exports: unknown,
 	) => Effect.Effect<void, Error>;
+
 	readonly MarkDeactivated: (
 		ExtensionId: string,
 	) => Effect.Effect<void, Error>;
+
 	readonly GetActivationMetrics: (
 		ExtensionId: string,
 	) => Effect.Effect<ActivationMetrics | undefined, never>;
@@ -201,14 +256,19 @@ export interface ExtensionService {
 export interface ActivationMetrics {
 	/** Timestamp when activation started */
 	readonly StartTime: number;
+
 	/** Timestamp when activation completed */
 	readonly EndTime: number;
+
 	/** Total activation duration in milliseconds */
 	readonly Duration: number;
+
 	/** Activation reason */
 	readonly Reason: string;
+
 	/** Whether activation completed successfully */
 	readonly Success: boolean;
+
 	/** Error message if activation failed */
 	readonly Error?: string;
 }
@@ -237,6 +297,7 @@ export interface ActivationMetrics {
  */
 export class ExtensionService extends Effect.Service<ExtensionService>()(
 	"Service/Extension",
+
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
@@ -295,6 +356,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					// Process configured extensions
 					for (const [
 						ExtensionId,
+
 						ExtensionDataRaw,
 					] of Object.entries(ExtensionsConfig)) {
 						try {
@@ -386,6 +448,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						} catch (error) {
 							Logger.Error(
 								`[ExtensionService] Failed to parse extension config for ${ExtensionId}`,
+
 								error as Error,
 							);
 						}
@@ -610,6 +673,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 */
 			const MarkActivated = (
 				ExtensionId: string,
+
 				Exports: unknown,
 			): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {

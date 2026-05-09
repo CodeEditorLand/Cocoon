@@ -28,6 +28,7 @@ export interface ESMInterceptor {
  */
 export class ESMInterceptorService extends Effect.Service<ESMInterceptorService>()(
 	"Service/ESMInterceptor",
+
 	{
 		effect: Effect.gen(function* () {
 			// This service is complex and depends on Node.js-specific APIs (`node:module.register`).

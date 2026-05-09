@@ -13,38 +13,60 @@ import { Effect, Layer } from "effect";
 // Security policy interface
 export interface SecurityPolicy {
 	extensionId: string;
+
 	allowedModules: string[];
+
 	blockedModules: string[];
+
 	maxMemoryUsage: number;
+
 	maxExecutionTime: number;
+
 	allowedAPIs: string[];
+
 	blockedAPIs: string[];
+
 	networkAccess: boolean;
+
 	fileSystemAccess: boolean;
+
 	requireAuthentication: boolean;
 }
 
 // Security event interface
 export interface SecurityEvent {
 	id: string;
+
 	type: "access" | "violation" | "authentication" | "authorization";
+
 	severity: "low" | "medium" | "high" | "critical";
+
 	extensionId: string;
+
 	action: string;
+
 	resource: string;
+
 	outcome: "allowed" | "denied" | "blocked";
+
 	timestamp: number;
+
 	details: any;
 }
 
 // Audit log interface
 export interface AuditLog {
 	events: SecurityEvent[];
+
 	summary: {
 		totalEvents: number;
+
 		violations: number;
+
 		authenticationFailures: number;
+
 		authorizationFailures: number;
+
 		lastUpdated: number;
 	};
 }
@@ -52,11 +74,17 @@ export interface AuditLog {
 // Incident response interface
 export interface IncidentResponse {
 	id: string;
+
 	severity: "low" | "medium" | "high" | "critical";
+
 	description: string;
+
 	actions: string[];
+
 	status: "open" | "investigating" | "resolved" | "closed";
+
 	timestamp: number;
+
 	resolutionTime?: number;
 }
 
@@ -65,7 +93,9 @@ export interface IncidentResponse {
  */
 export class SecurityService {
 	private policies: Map<string, SecurityPolicy> = new Map();
+
 	private auditLog: SecurityEvent[] = [];
+
 	private incidents: IncidentResponse[] = [];
 
 	constructor() {
@@ -96,6 +126,7 @@ export class SecurityService {
 			console.log("[SecurityService] Security service started");
 		} catch (error) {
 			console.error("[SecurityService] Failed to initialize:", error);
+
 			throw error;
 		}
 	}
@@ -107,26 +138,40 @@ export class SecurityService {
 		// Default policy for untrusted extensions
 		const defaultPolicy: SecurityPolicy = {
 			extensionId: "default",
+
 			allowedModules: ["path", "url", "util", "events"],
+
 			blockedModules: [
 				"fs",
+
 				"child_process",
+
 				"net",
+
 				"http",
+
 				"https",
+
 				"os",
+
 				"crypto",
 			],
+
 			maxMemoryUsage: 100, // MB
 			maxExecutionTime: 30000, // 30 seconds
 			allowedAPIs: ["commands", "window", "workspace"],
+
 			blockedAPIs: ["debug", "terminal", "scm"],
+
 			networkAccess: false,
+
 			fileSystemAccess: false,
+
 			requireAuthentication: true,
 		};
 
 		this.policies.set("default", defaultPolicy);
+
 		console.log("[SecurityService] Default security policy loaded");
 	}
 
@@ -138,11 +183,13 @@ export class SecurityService {
 			// Import MountainClientService for policy loading
 			const { MountainClientService } =
 				await import("../Mountain/Client/Service.js");
+
 			const mountainClient = new MountainClientService();
 
 			// Load security policies from Mountain
 			const policiesResponse = await mountainClient.sendRequest(
 				"security.policies.get",
+
 				{
 					includeDefaults: true,
 					timestamp: Date.now(),
@@ -177,8 +224,10 @@ export class SecurityService {
 		} catch (error) {
 			console.error(
 				"[SecurityService] Failed to load security policies from Mountain:",
+
 				error,
 			);
+
 			console.log(
 				"[SecurityService] Continuing with default security policies",
 			);
@@ -204,8 +253,10 @@ export class SecurityService {
 		} catch (error) {
 			console.error(
 				"[SecurityService] Failed to initialize audit logging:",
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -217,6 +268,7 @@ export class SecurityService {
 		const maxLogSize = 10000; // Keep last 10,000 events
 		if (this.auditLog.length > maxLogSize) {
 			this.auditLog = this.auditLog.slice(-maxLogSize);
+
 			console.log(
 				`[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`,
 			);
@@ -241,8 +293,10 @@ export class SecurityService {
 		} catch (error) {
 			console.error(
 				"[SecurityService] Failed to initialize incident response:",
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -279,6 +333,7 @@ export class SecurityService {
 		try {
 			const { MountainClientService } =
 				await import("../Mountain/Client/Service.js");
+
 			const mountainClient = new MountainClientService();
 
 			await mountainClient.sendNotification("security.incident", {
@@ -295,15 +350,18 @@ export class SecurityService {
 		} catch (error) {
 			console.warn(
 				`[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
+
 				error,
 			);
 		}
 	}
+
 	/**
 	 * Check module access permission
 	 */
 	async checkModuleAccess(
 		extensionId: string,
+
 		moduleId: string,
 	): Promise<boolean> {
 		const policy = this.getExtensionPolicy(extensionId);
@@ -363,6 +421,7 @@ export class SecurityService {
 	 */
 	async checkAPIAccess(
 		extensionId: string,
+
 		apiName: string,
 	): Promise<boolean> {
 		const policy = this.getExtensionPolicy(extensionId);
@@ -537,21 +596,32 @@ export class SecurityService {
 		if (recentEvents.length >= 10) {
 			const threatEvent: SecurityEvent = {
 				id: `threat-detection-${Date.now()}`,
+
 				type: "violation",
+
 				severity: "critical",
+
 				extensionId: event.extensionId,
+
 				action: "threat_detection",
+
 				resource: "security_system",
+
 				outcome: "detected",
+
 				timestamp: Date.now(),
+
 				details: {
 					pattern: "rapid_fire_violations",
+
 					eventCount: recentEvents.length,
+
 					timeWindow: "1 minute",
 				},
 			};
 
 			this.auditLog.push(threatEvent);
+
 			await this.escalateIncident(threatEvent);
 
 			console.warn(
@@ -566,14 +636,21 @@ export class SecurityService {
 	private async escalateIncident(event: SecurityEvent): Promise<void> {
 		const incident: IncidentResponse = {
 			id: `incident-${Date.now()}`,
+
 			severity: event.severity,
+
 			description: `Security ${event.type}: ${event.action} by extension ${event.extensionId}`,
+
 			actions: [
 				"Investigate security event",
+
 				"Notify security team",
+
 				"Review extension permissions",
 			],
+
 			status: "open",
+
 			timestamp: Date.now(),
 		};
 
@@ -595,6 +672,7 @@ export class SecurityService {
 	 */
 	async setSecurityPolicy(
 		extensionId: string,
+
 		policy: SecurityPolicy,
 	): Promise<void> {
 		this.policies.set(extensionId, policy);
@@ -633,10 +711,12 @@ export class SecurityService {
 			(event) =>
 				event.outcome === "denied" || event.outcome === "blocked",
 		);
+
 		const authenticationFailures = this.auditLog.filter(
 			(event) =>
 				event.type === "authentication" && event.outcome === "denied",
 		);
+
 		const authorizationFailures = this.auditLog.filter(
 			(event) =>
 				event.type === "authorization" && event.outcome === "denied",
@@ -644,11 +724,16 @@ export class SecurityService {
 
 		return {
 			events: [...this.auditLog],
+
 			summary: {
 				totalEvents: this.auditLog.length,
+
 				violations: violations.length,
+
 				authenticationFailures: authenticationFailures.length,
+
 				authorizationFailures: authorizationFailures.length,
+
 				lastUpdated: Date.now(),
 			},
 		};
@@ -670,12 +755,14 @@ export class SecurityService {
 	 */
 	async resolveIncident(
 		incidentId: string,
+
 		resolution: string,
 	): Promise<void> {
 		const incident = this.incidents.find((inc) => inc.id === incidentId);
 
 		if (incident) {
 			incident.status = "resolved";
+
 			incident.resolutionTime = Date.now() - incident.timestamp;
 
 			await this.logSecurityEvent({
@@ -699,8 +786,11 @@ export class SecurityService {
 	 */
 	generateSecurityReport(): {
 		policies: number;
+
 		auditLog: AuditLog;
+
 		activeIncidents: IncidentResponse[];
+
 		recommendations: string[];
 	} {
 		const recommendations: string[] = [];
@@ -724,8 +814,11 @@ export class SecurityService {
 
 		return {
 			policies: this.policies.size,
+
 			auditLog,
+
 			activeIncidents: this.getActiveIncidents(),
+
 			recommendations,
 		};
 	}
@@ -763,6 +856,7 @@ export class SecurityService {
  */
 export const SecurityServiceLayer = Layer.effect(
 	"SecurityService",
+
 	Effect.sync(() => new SecurityService()),
 );
 
@@ -771,5 +865,6 @@ export const SecurityServiceLayer = Layer.effect(
  */
 export const SecurityServiceLive = Layer.effect(
 	"SecurityService",
+
 	Effect.sync(() => new SecurityService()),
 );

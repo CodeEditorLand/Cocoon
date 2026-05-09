@@ -23,22 +23,30 @@ import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
 
 interface IWorkspaceTextEditDTO {
 	_type: "text";
+
 	resource: UriComponents;
+
 	edit: IIdentifiedSingleEditOperation;
+
 	metadata?: VSCode.WorkspaceEditEntryMetadata;
+
 	versionId?: number;
 }
 
 interface IWorkspaceFileEditDTO {
 	_type: "file";
+
 	oldResource?: UriComponents;
+
 	newResource?: UriComponents;
+
 	options?: any; // Simplified to `any` to match the dynamic nature of file options
 	metadata?: VSCode.WorkspaceEditEntryMetadata;
 }
 
 type IWorkspaceEditDTO = {
 	edits: Array<IWorkspaceTextEditDTO | IWorkspaceFileEditDTO>;
+
 	metadata?: VSCode.WorkspaceEditMetadata;
 };
 
@@ -50,12 +58,14 @@ export interface IVersionInformationProvider {
 
 export const FromAPI = (
 	Edit: VSCode.WorkspaceEdit,
+
 	VersionProvider?: IVersionInformationProvider,
 ): IWorkspaceEditDTO => {
 	const Result: IWorkspaceEditDTO = { edits: [] };
 
 	for (const [URI, URIEditArray] of Edit.entries()) {
 		const Resource = UriFromAPI(URI);
+
 		const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
 
 		for (const SingleEdit of URIEditArray) {
@@ -63,12 +73,16 @@ export const FromAPI = (
 				// FIX: Conditionally add versionId for exactOptionalPropertyTypes
 				const textEditDto: IWorkspaceTextEditDTO = {
 					_type: "text",
+
 					resource: Resource,
+
 					edit: TextEditFromAPI(SingleEdit),
 				};
+
 				if (VersionId !== undefined) {
 					textEditDto.versionId = VersionId;
 				}
+
 				Result.edits.push(textEditDto);
 			} else {
 				// This branch handles potential future file operations added to `entries`,
@@ -76,6 +90,7 @@ export const FromAPI = (
 			}
 		}
 	}
+
 	// Note: The public `WorkspaceEdit.entries()` only returns text edits.
 	// File operations (create, rename, delete) are not exposed via `entries()`.
 	// A full implementation would need to access internal properties or a different API.
@@ -90,13 +105,17 @@ export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
 	for (const Edit of DTO.edits) {
 		if (Edit._type === "text") {
 			const URI = UriToAPI(Edit.resource);
+
 			const TextEditArray = [TextEditToAPI(Edit.edit)];
+
 			Result.set(URI, TextEditArray);
 		} else if (Edit._type === "file") {
 			if (Edit.oldResource && Edit.newResource) {
 				Result.renameFile(
 					UriToAPI(Edit.oldResource),
+
 					UriToAPI(Edit.newResource),
+
 					Edit.options,
 				);
 			} else if (Edit.newResource) {
@@ -106,5 +125,6 @@ export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
 			}
 		}
 	}
+
 	return Result;
 };

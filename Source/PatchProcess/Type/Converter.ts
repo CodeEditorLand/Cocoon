@@ -56,17 +56,29 @@ import { ProcessValidationState, ValidationResult } from "../Validator.js";
  */
 export interface SecurityPolicyDTO {
 	readonly AllowExit: boolean;
+
 	readonly MaxMemoryMB: number;
+
 	readonly MaxCpuPercent: number;
+
 	readonly AllowNetwork: boolean;
+
 	readonly AllowedEndpoints: string[];
+
 	readonly AllowChildProcesses: boolean;
+
 	readonly AllowedChildCommands: string[];
+
 	readonly AllowedPaths: string[];
+
 	readonly DeniedPaths: string[];
+
 	readonly MaxFileDescriptors: number;
+
 	readonly MaxTimers: number;
+
 	readonly Version: string;
+
 	readonly Timestamp: number;
 }
 
@@ -75,19 +87,33 @@ export interface SecurityPolicyDTO {
  */
 export interface ProcessStateDTO {
 	readonly Pid: number;
+
 	readonly Ppid: number;
+
 	readonly StartTime: number;
+
 	readonly Uptime: number;
+
 	readonly MemoryUsedMB: number;
+
 	readonly MemoryLimitMB: number;
+
 	readonly CpuUsageUser: number;
+
 	readonly CpuUsageSystem: number;
+
 	readonly Platform: string;
+
 	readonly Arch: string;
+
 	readonly NodeVersion: string;
+
 	readonly WorkingDirectory: string;
+
 	readonly ExecArgv: string[];
+
 	readonly ValidationState: ValidationStateDTO;
+
 	readonly Timestamp: number;
 }
 
@@ -96,13 +122,21 @@ export interface ProcessStateDTO {
  */
 export interface ValidationStateDTO {
 	readonly TotalValidations: number;
+
 	readonly FailedValidations: number;
+
 	readonly LastValidationTime: number;
+
 	readonly AverageValidationTime: number;
+
 	readonly FileAccessCount: number;
+
 	readonly NetworkAccessCount: number;
+
 	readonly ChildProcessCount: number;
+
 	readonly ViolationCount: number;
+
 	readonly SecurityPolicyHash: string;
 }
 
@@ -111,11 +145,17 @@ export interface ValidationStateDTO {
  */
 export interface SecurityEventDTO {
 	readonly EventId: string;
+
 	readonly EventType: string;
+
 	readonly Severity: "info" | "warning" | "error" | "critical";
+
 	readonly ProcessId: number;
+
 	readonly Message: string;
+
 	readonly Data: Record<string, unknown>;
+
 	readonly Timestamp: number;
 }
 
@@ -124,11 +164,17 @@ export interface SecurityEventDTO {
  */
 export interface ValidationResultDTO {
 	readonly ProcessId: number;
+
 	readonly ValidationType: string;
+
 	readonly Success: boolean;
+
 	readonly Reason?: string;
+
 	readonly Severity: "info" | "warning" | "error" | "critical";
+
 	readonly DurationMs: number;
+
 	readonly Timestamp: number;
 }
 
@@ -139,13 +185,18 @@ export interface ValidationResultDTO {
  */
 export class ConversionError extends Data.TaggedError("ConversionError")<{
 	readonly SourceType: string;
+
 	readonly TargetType: string;
+
 	readonly Reason: string;
+
 	readonly Data?: unknown;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: any) {
 		super(Properties);
+
 		this.message = `Conversion failed from ${Properties.SourceType} to ${Properties.TargetType}: ${Properties.Reason}`;
 	}
 }
@@ -157,21 +208,34 @@ export class ConversionError extends Data.TaggedError("ConversionError")<{
  */
 export const SecurityPolicyToDTO = (
 	Policy: SecurityPolicy,
+
 	Version: string = "1.0.0",
 ): SecurityPolicyDTO => {
 	return {
 		AllowExit: Policy.AllowExit,
+
 		MaxMemoryMB: Policy.MaxMemoryMB,
+
 		MaxCpuPercent: Policy.MaxCpuPercent,
+
 		AllowNetwork: Policy.AllowNetwork,
+
 		AllowedEndpoints: Array.from(Policy.AllowedEndpoints),
+
 		AllowChildProcesses: Policy.AllowChildProcesses,
+
 		AllowedChildCommands: Array.from(Policy.AllowedChildCommands),
+
 		AllowedPaths: Array.from(Policy.AllowedPaths),
+
 		DeniedPaths: Array.from(Policy.DeniedPaths),
+
 		MaxFileDescriptors: Policy.MaxFileDescriptors,
+
 		MaxTimers: Policy.MaxTimers,
+
 		Version,
+
 		Timestamp: Date.now(),
 	};
 };
@@ -239,24 +303,40 @@ export const ProcessStateToDTO = (
 	ValidationState: ProcessValidationState,
 ): ProcessStateDTO => {
 	const MemoryUsage = Process.memoryUsage();
+
 	const CpuUsage = Process.cpuUsage();
+
 	const Uptime = Process.uptime();
 
 	return {
 		Pid: Process.pid,
+
 		Ppid: Process.ppid,
+
 		StartTime: ValidationState.StartTime,
+
 		Uptime,
+
 		MemoryUsedMB: MemoryUsage.heapUsed / (1024 * 1024),
+
 		MemoryLimitMB: ValidationState.SecurityPolicy.MaxMemoryMB,
+
 		CpuUsageUser: CpuUsage.user,
+
 		CpuUsageSystem: CpuUsage.system,
+
 		Platform: Process.platform,
+
 		Arch: Process.arch,
+
 		NodeVersion: Process.version,
+
 		WorkingDirectory: Process.cwd(),
+
 		ExecArgv: Process.execArgv,
+
 		ValidationState: ValidationStateToDTO(ValidationState),
+
 		Timestamp: Date.now(),
 	};
 };
@@ -315,19 +395,27 @@ export const ValidationStateToDTO = (
 	const FileAccessTotal = (
 		Array.from(State.FileAccessCount.values()) as number[]
 	).reduce((a, b) => a + b, 0);
+
 	const NetworkAccessTotal = (
 		Array.from(State.NetworkAccessCount.values()) as number[]
 	).reduce((a, b) => a + b, 0);
 
 	return {
 		TotalValidations: FileAccessTotal + NetworkAccessTotal,
+
 		FailedValidations: State.ViolationCount,
+
 		LastValidationTime: Date.now(),
+
 		AverageValidationTime: 0, // FUTURE: Track running average of validation times
 		FileAccessCount: FileAccessTotal,
+
 		NetworkAccessCount: NetworkAccessTotal,
+
 		ChildProcessCount: State.ChildProcessCount,
+
 		ViolationCount: State.ViolationCount,
+
 		SecurityPolicyHash: GetSecurityPolicyHash(State.SecurityPolicy),
 	};
 };
@@ -337,6 +425,7 @@ export const ValidationStateToDTO = (
  */
 const GetSecurityPolicyHash = (Policy: SecurityPolicy): string => {
 	const PolicyString = JSON.stringify(Policy);
+
 	return Buffer.from(PolicyString).toString("base64").slice(0, 16);
 };
 
@@ -347,17 +436,26 @@ const GetSecurityPolicyHash = (Policy: SecurityPolicy): string => {
  */
 export const ValidationResultToDTO = (
 	ProcessId: number,
+
 	ValidationType: string,
+
 	Result: ValidationResult,
+
 	DurationMs: number,
 ): ValidationResultDTO => {
 	return {
 		ProcessId,
+
 		ValidationType,
+
 		Success: Result.Valid,
+
 		Reason: Result.Reason,
+
 		Severity: Result.Severity,
+
 		DurationMs,
+
 		Timestamp: Result.Timestamp,
 	};
 };
@@ -370,8 +468,11 @@ export const DTOToValidationResult = (
 ): ValidationResult => {
 	return {
 		Valid: DTO.Success,
+
 		Reason: DTO.Reason,
+
 		Severity: DTO.Severity,
+
 		Timestamp: DTO.Timestamp,
 	};
 };
@@ -383,17 +484,26 @@ export const DTOToValidationResult = (
  */
 export const CreateSecurityEventDTO = (
 	EventType: string,
+
 	Severity: "info" | "warning" | "error" | "critical",
+
 	Message: string,
+
 	Data: Record<string, unknown> = {},
 ): SecurityEventDTO => {
 	return {
 		EventId: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+
 		EventType,
+
 		Severity,
+
 		ProcessId: Process.pid,
+
 		Message,
+
 		Data,
+
 		Timestamp: Date.now(),
 	};
 };
@@ -431,6 +541,7 @@ export const SerializeDTO = (
  */
 export const DeserializeDTO = <T>(
 	JsonString: string,
+
 	ExpectedType: string,
 ): Effect.Effect<T, ConversionError> => {
 	return Effect.try({
@@ -481,10 +592,13 @@ export const ConvertObjectKeysToPascalCase = <T>(Obj: T): T => {
 	}
 
 	const Result: Record<string, unknown> = {};
+
 	for (const [Key, Value] of Object.entries(Obj as Record<string, unknown>)) {
 		const PascalKey = CamelCaseToPascalCase(Key);
+
 		Result[PascalKey] = ConvertObjectKeysToPascalCase(Value);
 	}
+
 	return Result as T;
 };
 
@@ -501,10 +615,13 @@ export const ConvertObjectKeysToCamelCase = <T>(Obj: T): T => {
 	}
 
 	const Result: Record<string, unknown> = {};
+
 	for (const [Key, Value] of Object.entries(Obj as Record<string, unknown>)) {
 		const CamelKey = PascalCaseToCamelCase(Key);
+
 		Result[CamelKey] = ConvertObjectKeysToCamelCase(Value);
 	}
+
 	return Result as T;
 };
 
@@ -515,6 +632,7 @@ export const ConvertObjectKeysToCamelCase = <T>(Obj: T): T => {
  */
 export const BatchSecurityPoliciesToDTO = (
 	Policies: SecurityPolicy[],
+
 	Version: string = "1.0.0",
 ): SecurityPolicyDTO[] => {
 	return Policies.map((Policy) => SecurityPolicyToDTO(Policy, Version));
@@ -528,6 +646,7 @@ export const BatchDTOsToSecurityPolicies = (
 ): Effect.Effect<SecurityPolicy[], ConversionError> => {
 	return Effect.all(
 		DTOs.map((DTO) => DTOToSecurityPolicy(DTO)),
+
 		{ concurrency: "unbounded" },
 	);
 };

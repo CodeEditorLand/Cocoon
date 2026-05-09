@@ -10,30 +10,45 @@ import { Context } from "effect";
 // Circuit breaker state
 export interface CircuitBreakerState {
 	serviceName: string;
+
 	state: "CLOSED" | "OPEN" | "HALF_OPEN";
+
 	failureCount: number;
+
 	lastFailureTime: number;
+
 	successThreshold: number;
+
 	failureThreshold: number;
+
 	timeout: number;
 }
 
 // Error handling configuration
 export interface ErrorHandlingConfig {
 	maxRetries: number;
+
 	retryDelay: number;
+
 	exponentialBackoff: boolean;
+
 	circuitBreakerTimeout: number;
+
 	circuitBreakerThreshold: number;
 }
 
 // Error handling result
 export interface ErrorHandlingResult<T> {
 	success: boolean;
+
 	result?: T;
+
 	error?: Error;
+
 	retries: number;
+
 	duration: number;
+
 	circuitBreakerState?: CircuitBreakerState;
 }
 
@@ -45,7 +60,9 @@ export interface IErrorHandlingService {
 	 */
 	executeWithRetry<T>(
 		operation: () => Promise<T>,
+
 		operationName: string,
+
 		customConfig?: Partial<ErrorHandlingConfig>,
 	): Promise<ErrorHandlingResult<T>>;
 
@@ -76,9 +93,13 @@ export interface IErrorHandlingService {
 	 */
 	getStatistics(): {
 		totalCircuitBreakers: number;
+
 		openCircuitBreakers: number;
+
 		halfOpenCircuitBreakers: number;
+
 		closedCircuitBreakers: number;
+
 		config: ErrorHandlingConfig;
 	};
 }

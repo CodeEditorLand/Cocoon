@@ -48,12 +48,16 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -66,6 +70,7 @@ export interface Logger {
  */
 export interface Configuration {
 	readonly GetValue: <T>(key: string, defaultValue?: T) => T;
+
 	readonly UpdateValue: <T>(key: string, value: T) => Promise<void>;
 }
 
@@ -79,19 +84,28 @@ export interface Configuration {
  */
 export class Memento {
 	private readonly Storage: Ref.Ref<Map<string, unknown>>;
+
 	private readonly ExtensionId: string;
+
 	private readonly Logger: Logger;
+
 	public readonly _MountainClient: IMountainClientService | undefined;
 
 	constructor(
 		Storage: Ref.Ref<Map<string, unknown>>,
+
 		ExtensionId: string,
+
 		Logger: Logger,
+
 		MountainClient?: IMountainClientService,
 	) {
 		this.Storage = Storage;
+
 		this.ExtensionId = ExtensionId;
+
 		this.Logger = Logger;
+
 		this._MountainClient = MountainClient;
 
 		// MOUNTAIN-INTEGRATION: Load persisted state from Mountain on construction (MEDIUM)
@@ -126,7 +140,9 @@ export class Memento {
 	 */
 	get<T>(key: string, defaultValue?: T): T | undefined {
 		const Map = Effect.runSync(Ref.get(this.Storage));
+
 		const Value = Map.get(key);
+
 		return Value !== undefined ? (Value as T) : defaultValue;
 	}
 
@@ -136,6 +152,7 @@ export class Memento {
 	 */
 	keys(): readonly string[] {
 		const Map = Effect.runSync(Ref.get(this.Storage));
+
 		return Array.from(Map.keys());
 	}
 
@@ -205,16 +222,22 @@ export class Memento {
  */
 export class ExtensionSecretStorage {
 	private readonly ExtensionId: string;
+
 	private readonly Logger: Logger;
+
 	private readonly MountainClient?: IMountainClientService | null;
 
 	constructor(
 		ExtensionId: string,
+
 		Logger: Logger,
+
 		MountainClient?: IMountainClientService | null,
 	) {
 		this.ExtensionId = ExtensionId;
+
 		this.Logger = Logger;
+
 		this.MountainClient = MountainClient ?? undefined;
 	}
 
@@ -229,14 +252,18 @@ export class ExtensionSecretStorage {
 			try {
 				const result = await this.MountainClient.sendRequest(
 					"getSecret",
+
 					{ key },
 				);
+
 				return result as string | undefined;
 			} catch (error) {
 				this.Logger.Error(
 					`[ExtensionContext] Failed to get secret: ${this.ExtensionId}.${key}`,
+
 					error as Error,
 				);
+
 				return undefined;
 			}
 		}
@@ -244,6 +271,7 @@ export class ExtensionSecretStorage {
 		this.Logger.Debug(
 			`[ExtensionContext] Secret get: ${this.ExtensionId}.${key}`,
 		);
+
 		return undefined;
 	}
 
@@ -260,15 +288,19 @@ export class ExtensionSecretStorage {
 					key,
 					value,
 				});
+
 				this.Logger.Debug(
 					`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
 				);
+
 				return;
 			} catch (error) {
 				this.Logger.Error(
 					`[ExtensionContext] Failed to store secret: ${this.ExtensionId}.${key}`,
+
 					error as Error,
 				);
+
 				throw error;
 			}
 		}
@@ -289,15 +321,19 @@ export class ExtensionSecretStorage {
 				await this.MountainClient.sendNotification("deleteSecret", {
 					key,
 				});
+
 				this.Logger.Debug(
 					`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
 				);
+
 				return;
 			} catch (error) {
 				this.Logger.Error(
 					`[ExtensionContext] Failed to delete secret: ${this.ExtensionId}.${key}`,
+
 					error as Error,
 				);
+
 				throw error;
 			}
 		}
@@ -319,6 +355,7 @@ export class ExtensionSecretStorage {
 					// Cleanup
 				},
 			} as VSCode.Disposable;
+
 			return Disposable;
 		};
 	}
@@ -329,12 +366,19 @@ export class ExtensionSecretStorage {
  */
 export interface IExtensionDescription {
 	readonly identifier: string;
+
 	readonly displayName?: string;
+
 	readonly version: string;
+
 	readonly publisher?: string;
+
 	readonly extensionLocation: VSCode.Uri;
+
 	readonly activationEvents?: string[];
+
 	readonly main?: string;
+
 	readonly browser?: string;
 }
 
@@ -348,6 +392,7 @@ export interface IExtensionDescription {
 export interface ExtensionContextService {
 	readonly CreateExtensionContext: (
 		ExtensionId: string,
+
 		ExtensionDescription: IExtensionDescription,
 	) => Effect.Effect<VSCode.ExtensionContext, Error>;
 }
@@ -369,6 +414,7 @@ export interface ExtensionContextService {
  */
 export class ExtensionContextService extends Effect.Service<ExtensionContextService>()(
 	"Service/ExtensionContext",
+
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
@@ -392,6 +438,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 			 */
 			const CreateExtensionContext = (
 				ExtensionId: string,
+
 				ExtensionDescription: IExtensionDescription,
 			): Effect.Effect<VSCode.ExtensionContext, Error> =>
 				Effect.gen(function* () {
@@ -436,21 +483,29 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 					const WorkspaceState = new Memento(
 						WorkspaceStateRef,
+
 						ExtensionId,
+
 						Logger,
+
 						MountainClient,
 					);
 					const GlobalState = new Memento(
 						GlobalStateRef,
+
 						ExtensionId,
+
 						Logger,
+
 						MountainClient,
 					);
 
 					// Create secret storage
 					const SecretStorage = new ExtensionSecretStorage(
 						ExtensionId,
+
 						Logger,
+
 						MountainClient,
 					);
 
@@ -471,6 +526,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					const AsAbsolutePath = (relativePath: string): string => {
 						const Uri = VSCode.Uri.joinPath(
 							ExtensionDescription.extensionLocation,
+
 							relativePath,
 						);
 						return Uri.fsPath;
@@ -486,6 +542,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 							update: (key, value) =>
 								WorkspaceState.update(key, value),
 						} as any,
+
 						globalState: {
 							get: (key, defaultValue) =>
 								GlobalState.get(key, defaultValue),
@@ -493,6 +550,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 							update: (key, value) =>
 								GlobalState.update(key, value),
 						} as any,
+
 						secrets: {
 							get: (key) => SecretStorage.get(key),
 							store: (key, value) =>
@@ -500,11 +558,17 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 							delete: (key) => SecretStorage.delete(key),
 							onDidChange: SecretStorage.onDidChange,
 						},
+
 						storagePath: StoragePath,
+
 						globalStoragePath: GlobalStoragePath,
+
 						asAbsolutePath: AsAbsolutePath,
+
 						extensionUri: ExtensionDescription.extensionLocation,
+
 						extensionPath: ExtensionPath,
+
 						// TODO: Add extensionMode property when needed
 						// extensionMode: VSCode.ExtensionMode,
 					};
@@ -549,6 +613,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 						// Clear from registry
 						yield* Ref.update(
 							GlobalSubscriptionsRef,
+
 							(GlobalMap) => {
 								const NewMap = new Map(GlobalMap);
 								NewMap.delete(ExtensionId);

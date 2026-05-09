@@ -20,7 +20,9 @@ export interface Cancellation {
 	readonly ObtainToken: (
 		TokenId: number,
 	) => Effect.Effect<CancellationToken, InvalidTokenIdProblem, Scope.Scope>;
+
 	readonly CancelToken: (TokenId: number) => Effect.Effect<void, never>;
+
 	readonly DisposeAll: () => Effect.Effect<void, never>;
 }
 
@@ -32,6 +34,7 @@ export interface Cancellation {
  */
 export class CancellationService extends Effect.Service<CancellationService>()(
 	"Service/Cancellation",
+
 	{
 		scoped: Effect.gen(function* () {
 			const SourceMap = yield* Ref.make(
@@ -58,6 +61,7 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 						const NewSource = new CancellationTokenSource();
 						yield* Ref.update(
 							SourceMap,
+
 							HashMap.set(TokenId, NewSource),
 						);
 						yield* Effect.logTrace(
@@ -65,11 +69,13 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 						);
 						return NewSource;
 					}),
+
 					(Source) =>
 						Ref.get(SourceMap).pipe(
 							Effect.flatMap((TheMap) => {
 								const CurrentSource = HashMap.get(
 									TheMap,
+
 									TokenId,
 								);
 								if (
@@ -78,6 +84,7 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 								) {
 									return Ref.update(
 										SourceMap,
+
 										HashMap.remove(TokenId),
 									).pipe(
 										Effect.tap(() => {
@@ -90,6 +97,7 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 								}
 								return Effect.void;
 							}),
+
 							Effect.orDie,
 						),
 				).pipe(Effect.map((Source) => Source.token));
@@ -128,7 +136,9 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 					Effect.flatMap((TheMap) =>
 						Effect.forEach(
 							HashMap.values(TheMap),
+
 							(Source) => Effect.sync(() => Source.dispose()),
+
 							{ discard: true, concurrency: "unbounded" },
 						),
 					),
@@ -144,7 +154,9 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 
 			return {
 				ObtainToken,
+
 				CancelToken,
+
 				DisposeAll,
 			};
 		}),

@@ -22,30 +22,43 @@ import {
 
 export interface TelemetryMetric {
 	readonly name: string;
+
 	readonly value: number;
+
 	readonly timestamp: number;
+
 	readonly labels: Readonly<Record<string, string>> | undefined;
 }
 
 export interface TelemetrySpan {
 	readonly name: string;
+
 	readonly startTime: number;
+
 	readonly endTime?: number;
+
 	readonly duration?: number;
+
 	readonly success: boolean;
+
 	readonly error?: string;
+
 	readonly labels?: Readonly<Record<string, string>>;
 }
 
 export interface TelemetryEvent {
 	readonly type: "metric" | "span" | "log";
+
 	readonly timestamp: number;
+
 	readonly data: TelemetryMetric | TelemetrySpan | TelemetryLog;
 }
 
 export interface TelemetryLog {
 	readonly level: "debug" | "info" | "warn" | "error";
+
 	readonly message: string;
+
 	readonly context?: Record<string, unknown>;
 }
 
@@ -55,8 +68,10 @@ export interface TelemetryLog {
 
 export class TelemetryCollectionError extends Error {
 	readonly _tag = "TelemetryCollectionError";
+
 	constructor(
 		readonly operation: string,
+
 		override readonly cause: unknown,
 	) {
 		super(
@@ -73,20 +88,25 @@ export interface TelemetryService {
 	/** Record a metric value */
 	readonly recordMetric: (
 		name: string,
+
 		value: number,
+
 		labels?: Record<string, string>,
 	) => Effect.Effect<void, never>;
 
 	/** Start a timed span */
 	readonly startSpan: (
 		name: string,
+
 		labels?: Record<string, string>,
 	) => Effect.Effect<SpanHandle, never>;
 
 	/** Log an event */
 	readonly log: (
 		level: TelemetryLog["level"],
+
 		message: string,
+
 		context?: Record<string, unknown>,
 	) => Effect.Effect<void, never>;
 
@@ -112,6 +132,7 @@ export interface TelemetryService {
 export interface SpanHandle {
 	readonly end: (
 		success: boolean,
+
 		error?: string,
 	) => Effect.Effect<void, never>;
 }
@@ -129,6 +150,7 @@ export const Telemetry = TelemetryTag;
 
 export const TelemetryLive = Layer.effect(
 	Telemetry,
+
 	Effect.gen(function* () {
 		// Storage for metrics and spans
 		const metricsRef = yield* SubscriptionRef.make<
@@ -146,7 +168,9 @@ export const TelemetryLive = Layer.effect(
 		// Atom: Record a metric
 		const recordMetric = (
 			name: string,
+
 			value: number,
+
 			labels?: Record<string, string>,
 		) =>
 			Effect.gen(function* () {
@@ -160,6 +184,7 @@ export const TelemetryLive = Layer.effect(
 				const events = yield* eventsRef.get;
 				yield* Ref.set(eventsRef, [
 					...events,
+
 					{
 						type: "metric",
 						timestamp: metric.timestamp,
@@ -174,6 +199,7 @@ export const TelemetryLive = Layer.effect(
 
 				yield* Ref.set(
 					metricsRef,
+
 					HashMap.set(currentMetrics, name, [...nameMetrics, metric]),
 				);
 			});
@@ -192,6 +218,7 @@ export const TelemetryLive = Layer.effect(
 				const events = yield* eventsRef.get;
 				yield* Ref.set(eventsRef, [
 					...events,
+
 					{ type: "span", timestamp: startTime, data: span },
 				]);
 
@@ -210,6 +237,7 @@ export const TelemetryLive = Layer.effect(
 							const events = yield* eventsRef.get;
 							yield* Ref.set(eventsRef, [
 								...events,
+
 								{
 									type: "span",
 									timestamp: endTime,
@@ -220,13 +248,16 @@ export const TelemetryLive = Layer.effect(
 							const currentSpans = yield* spansRef.get;
 							const nameSpans = HashMap.get(
 								currentSpans,
+
 								name,
 							).pipe(Option.getOrElse(() => []));
 
 							yield* Ref.set(
 								spansRef,
+
 								HashMap.set(currentSpans, name, [
 									...nameSpans,
+
 									completedSpan,
 								]),
 							);
@@ -237,7 +268,9 @@ export const TelemetryLive = Layer.effect(
 		// Atom: Log an event
 		const log = (
 			level: TelemetryLog["level"],
+
 			message: string,
+
 			context?: Record<string, unknown>,
 		) =>
 			Effect.gen(function* () {
@@ -251,6 +284,7 @@ export const TelemetryLive = Layer.effect(
 				const events = yield* eventsRef.get;
 				yield* Ref.set(eventsRef, [
 					...events,
+
 					{ type: "log", timestamp, data: logEntry },
 				]);
 
@@ -303,6 +337,7 @@ export const TelemetryLive = Layer.effect(
 					(sum: number, span: TelemetrySpan) => {
 						return sum + (span.duration ?? 0);
 					},
+
 					0,
 				);
 
@@ -382,6 +417,7 @@ export const makeMockTelemetry = (): TelemetryService => ({
 
 export const TelemetryMock = Layer.effect(
 	Telemetry,
+
 	Effect.succeed(makeMockTelemetry()),
 );
 
@@ -392,7 +428,9 @@ export const TelemetryMock = Layer.effect(
 /** Helper to wrap an effect with telemetry span */
 export const withSpan = <A, E, R>(
 	name: string,
+
 	effect: Effect.Effect<A, E, R>,
+
 	labels?: Record<string, string>,
 ) =>
 	Effect.gen(function* () {

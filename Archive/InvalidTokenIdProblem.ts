@@ -17,8 +17,10 @@ export class InvalidTokenIdProblem extends Data.TaggedError(
 	readonly TokenId: number;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: { readonly TokenId: number }) {
 		super(Properties);
+
 		this.message = `Invalid TokenId ('${this.TokenId}') provided. Must be a positive number.`;
 	}
 }

@@ -31,8 +31,11 @@ export const ShowQuickPick = <T extends string>(
 	MountainClient: {
 		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
 	},
+
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+
 	Items: readonly T[] | VSCode.QuickPickItem[],
+
 	Options?: VSCode.QuickPickOptions,
 ): Effect.Effect<T | VSCode.QuickPickItem | undefined, Error> =>
 	Effect.gen(function* () {
@@ -66,6 +69,7 @@ export const ShowQuickPick = <T extends string>(
 			try: async () => {
 				const Response = await MountainClient.sendRequest(
 					"UserInterface.ShowQuickPick",
+
 					[RequestPayload.items, RequestPayload.options],
 				);
 
@@ -114,9 +118,11 @@ export const ShowInputBox = (
 	MountainClient: {
 		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
 	},
+
 	Logger: {
 		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
+
 	Options?: VSCode.InputBoxOptions,
 ): Effect.Effect<string | undefined, Error> =>
 	Effect.gen(function* () {
@@ -145,6 +151,7 @@ export const ShowInputBox = (
 			try: async () => {
 				const Response = await MountainClient.sendRequest(
 					"UserInterface.ShowInputBox",
+
 					[RequestPayload],
 				);
 

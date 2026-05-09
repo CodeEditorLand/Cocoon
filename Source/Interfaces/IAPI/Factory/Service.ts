@@ -10,23 +10,33 @@ import { Context } from "effect";
 // API construction types
 export interface APIConstructionRequest {
 	extensionId: string;
+
 	extensionDescription: any;
+
 	securityContext: any;
+
 	apiVersion: string;
 }
 
 export interface APIConstructionResult {
 	success: boolean;
+
 	vscodeAPI?: any;
+
 	error?: string;
+
 	constructionTime: number;
+
 	apiSurface: string[];
 }
 
 export interface APIValidationResult {
 	valid: boolean;
+
 	missingAPIs: string[];
+
 	deprecatedAPIs: string[];
+
 	performanceWarnings: string[];
 }
 
@@ -50,6 +60,7 @@ export interface IAPIFactoryService {
 	 */
 	createExtensionContext(
 		extensionId: string,
+
 		extensionDescription: any,
 	): Promise<any>;
 
@@ -58,6 +69,7 @@ export interface IAPIFactoryService {
 	 */
 	registerService(
 		serviceName: string,
+
 		serviceImplementation: any,
 	): Promise<void>;
 
@@ -66,6 +78,7 @@ export interface IAPIFactoryService {
 	 */
 	validateAPICompatibility(
 		extensionId: string,
+
 		apiVersion: string,
 	): Promise<APIValidationResult>;
 
@@ -74,8 +87,11 @@ export interface IAPIFactoryService {
 	 */
 	getUsageStatistics(): Promise<{
 		totalAPIConstructions: number;
+
 		averageConstructionTime: number;
+
 		mostUsedAPIs: string[];
+
 		performanceMetrics: any;
 	}>;
 

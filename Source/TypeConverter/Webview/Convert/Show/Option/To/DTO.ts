@@ -10,8 +10,11 @@ import { FromAPI as ViewColumnFromAPI } from "../../../../../Main/View/Column.js
 
 interface IEditorOptions {
 	preserveFocus?: boolean;
+
 	selection?: any;
+
 	pinned?: boolean;
+
 	sticky?: boolean;
 }
 
@@ -24,16 +27,19 @@ interface IEditorOptions {
  */
 export const ConvertShowOptionToDTO = (
 	ViewColumn: VSCode.ViewColumn | undefined,
+
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions => {
 	const DTO: {
 		viewColumn?: number;
+
 		preserveFocus: boolean;
 	} & IEditorOptions = {
 		preserveFocus: PreserveFocus,
 	};
 
 	const ViewColumnValue = ViewColumnFromAPI(ViewColumn);
+
 	if (ViewColumnValue !== undefined) {
 		DTO.viewColumn = ViewColumnValue;
 	}

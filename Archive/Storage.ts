@@ -18,25 +18,32 @@ class MementoProxyImplementation implements Memento {
 	private readonly OnDidChangeEmitter = new Emitter<{
 		readonly keys: readonly string[];
 	}>();
+
 	public readonly onDidChange = this.OnDidChangeEmitter.event;
 
 	constructor(
 		private readonly StateRef: Ref.Ref<Record<string, any>>,
+
 		private readonly MarkAsDirty: () => void,
 	) {}
 
 	public get<T>(key: string): T | undefined;
+
 	public get<T>(key: string, defaultValue: T): T;
+
 	public get<T>(key: string, defaultValue?: T): T | undefined {
 		// FIX: Must run the Effect to get the state synchronously.
 		const State = Effect.runSync(Ref.get(this.StateRef));
+
 		const Value = State[key];
+
 		return Value !== undefined ? Value : defaultValue;
 	}
 
 	public keys(): readonly string[] {
 		// FIX: Must run the Effect to get the state synchronously.
 		const State = Effect.runSync(Ref.get(this.StateRef));
+
 		return Object.keys(State);
 	}
 
@@ -58,6 +65,7 @@ class MementoProxyImplementation implements Memento {
 			Effect.tap(() => Effect.sync(this.MarkAsDirty)),
 			Effect.asVoid,
 		);
+
 		return Effect.runPromise(UpdateEffect);
 	}
 
@@ -80,6 +88,7 @@ export interface Storage {
  */
 export class StorageService extends Effect.Service<StorageService>()(
 	"Service/Storage",
+
 	{
 		scoped: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -90,6 +99,7 @@ export class StorageService extends Effect.Service<StorageService>()(
 					IPC.SendRequest<Record<string, any>>("$storage:getAll", [
 						true,
 					]),
+
 					IPC.SendRequest<Record<string, any>>("$storage:getAll", [
 						false,
 					]),
@@ -106,6 +116,7 @@ export class StorageService extends Effect.Service<StorageService>()(
 				const [IsGlobalDirtyValue, IsWorkspaceDirtyValue] =
 					yield* Effect.all([
 						Ref.get(IsGlobalDirty),
+
 						Ref.get(IsWorkspaceDirty),
 					]);
 				const PersistenceEffects: Effect.Effect<void, any>[] = [];
@@ -114,6 +125,7 @@ export class StorageService extends Effect.Service<StorageService>()(
 					PersistenceEffects.push(
 						IPC.SendNotification("$storage:setAll", [
 							true,
+
 							CurrentState,
 						]),
 					);
@@ -124,6 +136,7 @@ export class StorageService extends Effect.Service<StorageService>()(
 					PersistenceEffects.push(
 						IPC.SendNotification("$storage:setAll", [
 							false,
+
 							CurrentState,
 						]),
 					);
@@ -152,6 +165,7 @@ export class StorageService extends Effect.Service<StorageService>()(
 
 			const CreateMemento = (
 				ExtensionId: string,
+
 				IsGlobal: boolean,
 			): Memento => {
 				const RootStateRef = IsGlobal
@@ -181,6 +195,7 @@ export class StorageService extends Effect.Service<StorageService>()(
 				};
 				return new MementoProxyImplementation(
 					ExtensionStateRef,
+
 					MarkAsDirtyCallback,
 				);
 			};

@@ -16,39 +16,67 @@ import { LogLevel, UIKind } from "vscode";
  */
 const DummyInitData: IExtensionHostInitData = {
 	version: "1.85.0",
+
 	quality: "stable",
+
 	commit: "dev",
+
 	parentPid: 0,
+
 	environment: {
 		isExtensionDevelopmentDebug: false,
+
 		appName: "Cocoon",
+
 		appHost: "desktop",
+
 		appLanguage: "en",
+
 		isExtensionTelemetryLoggingOnly: false,
+
 		appUriScheme: "cocoon-code",
+
 		globalStorageHome: {} as any,
+
 		workspaceStorageHome: {} as any,
 	},
+
 	workspace: null,
+
 	extensions: {
 		versionId: 0,
+
 		allExtensions: [],
+
 		activationEvents: {},
+
 		myExtensions: [],
 	},
+
 	telemetryInfo: {
 		sessionId: "",
+
 		machineId: "",
+
 		sqmId: "",
+
 		devDeviceId: "",
+
 		firstSessionDate: new Date().toISOString(),
 	},
+
 	logLevel: LogLevel.Info,
+
 	loggers: [],
+
 	logsLocation: {} as any,
+
 	autoStart: false,
+
 	remote: { isRemote: false, authority: undefined, connectionData: null },
+
 	consoleForward: { includeStack: false, logNative: false },
+
 	uiKind: UIKind.Desktop,
 };
 
@@ -61,6 +89,7 @@ const DummyInitData: IExtensionHostInitData = {
  */
 export class InitDataService extends Effect.Service<IExtensionHostInitData>()(
 	"Service/InitData",
+
 	{
 		sync: () => DummyInitData,
 	},

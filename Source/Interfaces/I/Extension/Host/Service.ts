@@ -10,26 +10,37 @@ import { Context } from "effect";
 // Types matching VSCode patterns
 export interface IExtensionDescription {
 	identifier: string;
+
 	name: string;
+
 	version: string;
+
 	publisher: string;
+
 	extensionLocation: string;
+
 	activationEvents: string[];
+
 	main?: string;
 }
 
 export interface ExtensionActivationReason {
 	startup: boolean;
+
 	activationEvent: string;
+
 	extensionId: string;
 }
 
 export interface ActivatedExtension {
 	activationTimes: {
 		codeLoadingTime: number;
+
 		activateCallTime: number;
+
 		activateResolvedTime: number;
 	};
+
 	exports?: any;
 }
 
@@ -46,6 +57,7 @@ export interface IExtensionHostService {
 	 */
 	activateExtension(
 		extensionId: string,
+
 		reason: ExtensionActivationReason,
 	): Promise<ActivatedExtension>;
 
@@ -74,8 +86,11 @@ export interface IExtensionHostService {
 	 */
 	getStatus(): {
 		started: boolean;
+
 		terminating: boolean;
+
 		activatedExtensions: number;
+
 		ready: boolean;
 	};
 }

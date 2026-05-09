@@ -31,7 +31,9 @@ import { TelemetryService } from "./Telemetry.js";
  */
 export interface ExtensionActivationReason {
 	readonly startup: boolean;
+
 	readonly extensionId: ExtensionIdentifier;
+
 	readonly activationEvent: string;
 }
 
@@ -42,13 +44,19 @@ export interface ExtensionActivationReason {
  */
 export interface ActivatedExtension {
 	readonly Id: ExtensionIdentifier;
+
 	readonly Module: {
 		readonly activate?: Function;
+
 		readonly deactivate?: Function;
 	};
+
 	readonly Exports: any;
+
 	readonly Subscriptions: readonly import("vscode").Disposable[];
+
 	readonly ActivationFailed: boolean;
+
 	readonly ActivationError: Error | null;
 }
 
@@ -59,18 +67,24 @@ export interface ActivatedExtension {
 export interface ExtensionHost {
 	readonly ActivateById: (
 		Id: ExtensionIdentifier,
+
 		Reason: ExtensionActivationReason,
 	) => Effect.Effect<void, never>;
+
 	readonly GetExtensionDescription: (
 		Id: string | ExtensionIdentifier,
 	) => Effect.Effect<IExtensionDescription | undefined, never>;
+
 	readonly GetExtensionExports: (
 		Id: ExtensionIdentifier,
 	) => Effect.Effect<any, Error>;
+
 	readonly IsActivated: (
 		Id: ExtensionIdentifier,
 	) => Effect.Effect<boolean, never>;
+
 	readonly DeactivateAll: () => Effect.Effect<void, never>;
+
 	readonly OnDidActivateExtension: (
 		callback: (extension: IExtensionDescription) => void,
 	) => Effect.Effect<void, never>;
@@ -82,6 +96,7 @@ export interface ExtensionHost {
  */
 export class ExtensionHostService extends Effect.Service<ExtensionHostService>()(
 	"Service/ExtensionHost",
+
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
@@ -98,6 +113,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 			};
 			const ExtensionRegistry = new ExtensionDescriptionRegistry(
 				ActivationEventsReader,
+
 				InitData.extensions.allExtensions as IExtensionDescription[],
 			);
 
@@ -112,6 +128,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 							catch: (CaughtError) =>
 								Logger.Warn(
 									`Error during subscription disposal for ${Extension.Id.value}`,
+
 									CaughtError,
 								),
 						});
@@ -138,6 +155,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 
 			const DoActivate = (
 				Description: IExtensionDescription,
+
 				Reason: ExtensionActivationReason,
 			) =>
 				Effect.gen(function* () {
@@ -216,7 +234,9 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 					);
 					yield* IPC.SendNotification("$onDidActivateExtension", [
 						Description.identifier,
+
 						[],
+
 						[],
 					]);
 				});
@@ -232,6 +252,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 				// FIX: Added explicit types for Id and Reason.
 				ActivateById: (
 					Id: ExtensionIdentifier,
+
 					Reason: ExtensionActivationReason,
 				) =>
 					Effect.gen(function* () {
@@ -267,12 +288,15 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 								};
 								yield* Ref.update(
 									ActivatedExtensionsRef,
+
 									(Map) => Map.set(Id.value, Activated),
 								);
 								yield* IPC.SendNotification(
 									"$onExtensionActivationError",
+
 									[
 										Id,
+
 										{
 											name: ErrorToReport.name,
 											message: ErrorToReport.message,
@@ -283,6 +307,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 									Effect.catchAllCause((cause) =>
 										Logger.Warn(
 											"Failed to send activation error notification",
+
 											cause,
 										),
 									),
@@ -290,6 +315,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 								yield* Effect.sync(() =>
 									Telemetry.onExtensionError(
 										Id as any,
+
 										ErrorToReport,
 									),
 								);
@@ -328,6 +354,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 								discard: true,
 							}),
 						),
+
 						Effect.andThen(
 							Ref.set(ActivatedExtensionsRef, new Map()),
 						),

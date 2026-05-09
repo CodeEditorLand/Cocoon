@@ -24,9 +24,11 @@ export const CreateOutputChannel = (
 	MountainClient: {
 		sendNotification: (method: string, params: unknown) => Promise<void>;
 	},
+
 	Logger: {
 		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
+
 	Name: string,
 ): Effect.Effect<VSCode.OutputChannel, Error> =>
 	Effect.gen(function* () {
@@ -67,6 +69,7 @@ export const CreateOutputChannel = (
 			},
 			show(
 				_ColumnOrPreserveFocus?: boolean | VSCode.ViewColumn,
+
 				_PreserveFocus?: boolean,
 			): void {
 				MountainClient.sendNotification("output.show", {

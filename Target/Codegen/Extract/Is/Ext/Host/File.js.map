@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../../../Source/Codegen/Extract/Is/Ext/Host/File.ts"],
-  "sourcesContent": ["/**\n * @module Codegen/Extract/IsExtHostFile\n * @description\n * Predicate distinguishing extension-host source files from the\n * rest of VS Code's `src/` tree. Cocoon's codegen narrows\n * Wind's full-tree walker output to just the files that own the\n * `IExtHost*` decorator family.\n *\n * The convention is enforced by VS Code itself: every extension-\n * host service file lives under `src/vs/workbench/api/{common,\n * browser,worker,electron-browser}/extHost*.ts`. This predicate\n * scopes the scan to that subtree.\n * @category Extract\n */\n\nconst ExtHostPathSegments: ReadonlyArray<string> = [\n\t\"vs/workbench/api/common/extHost\",\n\t\"vs/workbench/api/browser/extHost\",\n\t\"vs/workbench/api/worker/extHost\",\n\t\"vs/workbench/api/electron-browser/extHost\",\n];\n\nexport const IsExtHostFile = (sourcePath: string): boolean => {\n\tconst Normalised = sourcePath.replace(/\\\\/g, \"/\");\n\tfor (const Segment of ExtHostPathSegments) {\n\t\tif (Normalised.includes(Segment)) return true;\n\t}\n\treturn false;\n};\n\nexport default IsExtHostFile;\n"],
-  "mappings": ";;;;AAeA,IAAM,sBAA6C;AAAA,EAClD;AAAA,EACA;AAAA,EACA;AAAA,EACA;AACD;AAEO,IAAM,gBAAgB,wBAAC,eAAgC;AAC7D,QAAM,aAAa,WAAW,QAAQ,OAAO,GAAG;AAChD,aAAW,WAAW,qBAAqB;AAC1C,QAAI,WAAW,SAAS,OAAO,EAAG,QAAO;AAAA,EAC1C;AACA,SAAO;AACR,GAN6B;AAQ7B,IAAO,eAAQ;",
-  "names": []
-}

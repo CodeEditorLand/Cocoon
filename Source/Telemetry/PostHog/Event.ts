@@ -11,16 +11,23 @@ export type Properties = Record<string, unknown>;
 
 export type Event = {
 	readonly Name: string;
+
 	readonly Timestamp: string;
+
 	readonly Properties: Properties;
 };
 
 const BaseProperties: Properties = {
 	$app: "land-editor",
+
 	$app_version: "0.0.1",
+
 	$build_mode: "debug",
+
 	$component: "cocoon",
+
 	$tier: "cocoon",
+
 	$lib: "cocoon-posthog-bridge",
 };
 

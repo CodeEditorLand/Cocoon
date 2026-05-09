@@ -65,30 +65,40 @@ const toConfigurationOverrides = (
 	if (!scope) {
 		return {};
 	}
+
 	if (URI.isUri(scope)) {
 		return { resource: scope };
 	}
+
 	if (typeof scope === "object") {
 		const resource = "uri" in scope && scope.uri ? scope.uri : undefined;
+
 		const languageId = "languageId" in scope ? scope.languageId : undefined;
 
 		const result: IConfigurationOverrides = {};
+
 		if (resource) {
 			result.resource = resource;
 		}
+
 		if (languageId) {
 			result.overrideIdentifier = languageId;
 		}
+
 		return result;
 	}
+
 	return {};
 };
 
 class InternalWorkspace {
 	constructor(
 		public readonly ID: string,
+
 		public readonly Name: string,
+
 		public readonly Folders: readonly WorkspaceFolder[],
+
 		public readonly Configuration: Uri | undefined,
 	) {}
 }
@@ -99,37 +109,61 @@ class InternalWorkspace {
  */
 export interface Workspace {
 	readonly name: string | undefined;
+
 	readonly workspaceFile: Uri | undefined;
+
 	readonly workspaceFolders: readonly WorkspaceFolder[] | undefined;
+
 	readonly isTrusted: boolean;
+
 	readonly fs: VSCodeFileSystem;
+
 	readonly activeTextEditor: TextEditor | undefined;
+
 	readonly visibleTextEditors: readonly TextEditor[];
+
 	readonly onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
+
 	readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;
+
 	readonly onDidChangeVisibleTextEditors: Event<readonly TextEditor[]>;
+
 	readonly getWorkspaceFolder: (uri: Uri) => WorkspaceFolder | undefined;
+
 	readonly findFiles: (
 		include: GlobPattern,
+
 		exclude?: GlobPattern | null,
+
 		maxResults?: number,
+
 		token?: CancellationToken,
 	) => Effect.Effect<Uri[], Error>;
+
 	readonly openTextDocument: (
 		uriOrOptions?: Uri | { language?: string; content?: string },
 	) => Effect.Effect<TextDocument, Error>;
+
 	readonly getConfiguration: (
 		section?: string,
+
 		scope?: ConfigurationScope | null,
 	) => Effect.Effect<WorkspaceConfiguration, Error>;
+
 	readonly applyEdit: (edit: WorkspaceEdit) => Effect.Effect<boolean, Error>;
+
 	readonly registerTextDocumentContentProvider: (
 		scheme: string,
+
 		provider: TextDocumentContentProvider,
 	) => Disposable;
+
 	readonly onDidChangeTextEditorSelection: Event<TextEditorSelectionChangeEvent>;
+
 	readonly onDidChangeTextEditorVisibleRanges: Event<TextEditorVisibleRangesChangeEvent>;
+
 	readonly onDidChangeTextEditorOptions: Event<TextEditorOptionsChangeEvent>;
+
 	readonly onDidChangeTextEditorViewColumn: Event<TextEditorViewColumnChangeEvent>;
 }
 
@@ -139,6 +173,7 @@ export interface Workspace {
  */
 export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 	"Service/Workspace",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -176,10 +211,13 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					const OldWorkspace = yield* Ref.get(InternalWorkspaceRef);
 					const NewWorkspace = new InternalWorkspace(
 						Data.id,
+
 						Data.name,
+
 						Data.folders.map((FolderDTO: any) =>
 							WorkspaceFolderFromDTO(FolderDTO),
 						),
+
 						Data.configuration
 							? UriToAPI(Data.configuration)
 							: undefined,
@@ -214,6 +252,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 			const AcceptEditorState = (
 				ActiveEditorId: string | undefined,
+
 				VisibleEditorIds: string[],
 			) =>
 				Effect.gen(function* () {
@@ -235,6 +274,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			);
 			IPC.RegisterInvokeHandler(
 				"$acceptEditorState",
+
 				([ActiveId, VisibleIds]) =>
 					Effect.runPromise(AcceptEditorState(ActiveId, VisibleIds)),
 			);
@@ -273,13 +313,18 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				findFiles: (Include, Exclude, MaxResults, Token) =>
 					IPC.SendRequest<(Uri | null | undefined)[]>("findFiles", [
 						Include,
+
 						Exclude,
+
 						MaxResults,
+
 						Token ? 1 : 0,
 					]).pipe(
 						Effect.map((Uris) => Uris.filter((u): u is Uri => !!u)),
+
 						Effect.mapError((Cause) => new Error(String(Cause))),
 					),
+
 				openTextDocument: (
 					OptionsOrUri?:
 						| Uri
@@ -301,6 +346,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 								: OptionsOrUri;
 						const ResultDTO = yield* IPC.SendRequest<{ uri: any }>(
 							"$openTextDocument",
+
 							[DTO],
 						).pipe(
 							Effect.mapError(
@@ -342,6 +388,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				},
 				getConfiguration: (
 					section?: string,
+
 					scope?: ConfigurationScope | null,
 				): Effect.Effect<WorkspaceConfiguration, Error> =>
 					Effect.succeed({
@@ -359,6 +406,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							return (
 								ApplicationConfiguration.getValue(
 									fullKey,
+
 									toConfigurationOverrides(scope),
 								) !== undefined
 							);
@@ -368,17 +416,21 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							const inspection =
 								ApplicationConfiguration.inspect<T>(
 									fullKey,
+
 									toConfigurationOverrides(scope),
 								);
 							return { key: fullKey, ...inspection } as any;
 						},
 						update: (
 							key: string,
+
 							value: any,
+
 							configurationTarget?:
 								| boolean
 								| ConfigurationTarget
 								| null,
+
 							overrideInLanguage?: boolean,
 						): Promise<void> => {
 							const fullKey = section ? `${section}.${key}` : key;
@@ -395,8 +447,11 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							}
 							return ApplicationConfiguration.updateValue(
 								fullKey,
+
 								value,
+
 								scopeAsOverrides,
+
 								configurationTarget as any,
 							);
 						},
@@ -407,11 +462,16 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					]).pipe(
 						Effect.mapError((Cause) => new Error(String(Cause))),
 					),
+
 				registerTextDocumentContentProvider:
 					Document.RegisterTextDocumentContentProvider,
+
 				onDidChangeTextEditorSelection: new Emitter<any>().event,
+
 				onDidChangeTextEditorVisibleRanges: new Emitter<any>().event,
+
 				onDidChangeTextEditorOptions: new Emitter<any>().event,
+
 				onDidChangeTextEditorViewColumn: new Emitter<any>().event,
 			};
 			return service;

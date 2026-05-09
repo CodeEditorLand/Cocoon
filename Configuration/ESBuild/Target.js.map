@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Configuration/ESBuild/Target.ts"],
-  "sourcesContent": ["import * as Environment from \"./Constant/Environment/Constant.js\";\n\nexport { Environment };\n\nexport { default as BaseConfig } from \"./Config/Base/Config.js\";\nexport { default as TargetConfig } from \"./Config/Target/Config.js\";\nexport { default as CompileConfig } from \"./Config/Compile/Config.js\";\nexport { sep, posix } from \"node:path\";\n\nexport { default } from \"./Config/Target/Config.js\";\n"],
-  "mappings": "AAAA,YAAY,iBAAiB;AAI7B,SAAoB,WAAXA,gBAA6B;AACtC,SAAoB,WAAXA,gBAA+B;AACxC,SAAoB,WAAXA,gBAAgC;AACzC,SAAS,KAAK,aAAa;AAE3B,SAAS,WAAAA,gBAAe;",
-  "names": ["default"]
-}

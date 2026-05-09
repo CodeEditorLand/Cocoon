@@ -51,9 +51,13 @@ import { MountainGRPCClientService } from "./Mountain/GRPC/Client.js";
  */
 export interface InternalCommandMetadata {
 	readonly Id: string;
+
 	readonly Callback: (...Args: any[]) => any;
+
 	readonly ThisArg?: unknown;
+
 	readonly Extension?: string;
+
 	readonly RegisteredAt: number;
 }
 
@@ -74,12 +78,16 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -105,22 +113,30 @@ export interface Window {
 export interface Command {
 	readonly RegisterCommand: (
 		Id: string,
+
 		Callback: (...Args: any[]) => any,
+
 		ThisArg?: unknown,
 	) => Effect.Effect<IDisposable>;
+
 	readonly RegisterTextEditorCommand: (
 		Id: string,
+
 		Callback: (
 			TextEditor: VSCode.TextEditor,
+
 			Edit: VSCode.TextEditorEdit,
 			...Args: any[]
 		) => void,
+
 		ThisArg?: unknown,
 	) => Effect.Effect<IDisposable>;
+
 	readonly ExecuteCommand: <T>(
 		Id: string,
 		...Arguments: any[]
 	) => Effect.Effect<T | undefined, Error>;
+
 	readonly GetCommands: (
 		FilterInternal?: boolean,
 	) => Effect.Effect<string[], Error>;
@@ -143,6 +159,7 @@ export interface Command {
  */
 export class CommandService extends Effect.Service<CommandService>()(
 	"Service/Command",
+
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
@@ -159,8 +176,11 @@ export class CommandService extends Effect.Service<CommandService>()(
 			void new CommandConverter(
 				(
 					_Global: boolean,
+
 					Id: string,
+
 					Callback: (...Args: any[]) => any,
+
 					ThisArg?: unknown,
 				) => {
 					const Disposable: IDisposable = { dispose: () => {} };
@@ -178,12 +198,14 @@ export class CommandService extends Effect.Service<CommandService>()(
 					);
 					return Disposable;
 				},
+
 				<T>(
 					_Id: string,
 					..._Arguments: any[]
 				): Promise<T | undefined> => {
 					return Promise.resolve(undefined);
 				},
+
 				(_Id: string) => undefined,
 			);
 
@@ -199,6 +221,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			 */
 			const ExecuteLocalCommand = (
 				Command: InternalCommandMetadata,
+
 				Arguments: any[],
 			): Effect.Effect<unknown, Error> =>
 				Effect.gen(function* () {
@@ -268,6 +291,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 						const Command = Registry.get(Id)!;
 						const Result = yield* ExecuteLocalCommand(
 							Command,
+
 							Arguments,
 						);
 						return Result as T;
@@ -291,8 +315,11 @@ export class CommandService extends Effect.Service<CommandService>()(
 						// Track performance metrics
 						this.trackCommandExecution(
 							Id,
+
 							"remote",
+
 							Date.now() - startTime,
+
 							true,
 						);
 
@@ -301,13 +328,17 @@ export class CommandService extends Effect.Service<CommandService>()(
 						// Track execution failure
 						this.trackCommandExecution(
 							Id,
+
 							"remote",
+
 							Date.now() - startTime,
+
 							false,
 						);
 
 						yield* Logger.Error(
 							`[CommandService] Failed to execute remote command '${Id}'`,
+
 							error as Error,
 						);
 						throw error;
@@ -325,7 +356,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 			 */
 			const RegisterCommand = (
 				Id: string,
+
 				Callback: (...Args: any[]) => any,
+
 				ThisArg?: unknown,
 			): Effect.Effect<IDisposable> =>
 				Effect.gen(function* () {
@@ -378,7 +411,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 					try {
 						yield* mountainClient.registerCommand(
 							Id,
+
 							extensionId,
+
 							`Command: ${Id}`,
 						);
 
@@ -388,6 +423,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					} catch (error) {
 						yield* Logger.Warn(
 							`[CommandService] Failed to register command '${Id}' with Mountain:`,
+
 							error,
 						);
 						// Continue with local registration even if Mountain registration fails
@@ -401,6 +437,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 									// Unregister from local registry
 									yield* Ref.update(
 										CommandRegistry,
+
 										(Registry) => {
 											Registry.delete(Id);
 											return Registry;
@@ -434,11 +471,14 @@ export class CommandService extends Effect.Service<CommandService>()(
 			 */
 			const RegisterTextEditorCommand = (
 				Id: string,
+
 				Callback: (
 					TextEditor: VSCode.TextEditor,
+
 					Edit: VSCode.TextEditorEdit,
 					...Args: any[]
 				) => void,
+
 				ThisArg?: unknown,
 			): Effect.Effect<IDisposable> =>
 				Effect.gen(function* () {
@@ -458,6 +498,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 							(EditBuilder: VSCode.TextEditorEdit) => {
 								Callback.apply(ThisArg, [
 									ActiveEditor,
+
 									EditBuilder,
 									...Args,
 								]);
@@ -511,6 +552,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					} catch (error) {
 						yield* Logger.Warn(
 							`[CommandService] Error getting remote commands, using local only`,
+
 							error as Error,
 						);
 						if (FilterInternal) {

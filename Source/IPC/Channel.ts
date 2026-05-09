@@ -64,10 +64,13 @@
 export enum MessagePriority {
 	/** Low priority - background tasks, telemetry */
 	Low = 0,
+
 	/** Normal priority - standard operations */
 	Normal = 1,
+
 	/** High priority - user-facing operations */
 	High = 2,
+
 	/** Critical priority - system-critical operations */
 	Critical = 3,
 }
@@ -78,8 +81,10 @@ export enum MessagePriority {
 export enum ChannelDirection {
 	/** Send-only channel (command/event dispatch) */
 	SendOnly = "send-only",
+
 	/** Receive-only channel (event subscription) */
 	ReceiveOnly = "receive-only",
+
 	/** Bidirectional channel (RPC/dialog) */
 	Bidirectional = "bidirectional",
 }
@@ -90,12 +95,16 @@ export enum ChannelDirection {
 export enum SystemComponent {
 	/** Mountain - Rust backend with Tauri */
 	Mountain = "mountain",
+
 	/** Wind - TypeScript VSCode-compatible frontend */
 	Wind = "wind",
+
 	/** Sky - Monitoring and orchestration layer */
 	Sky = "sky",
+
 	/** Grove - Plugin and extension system */
 	Grove = "grove",
+
 	/** Air - Core services and utilities */
 	Air = "air",
 }
@@ -106,12 +115,16 @@ export enum SystemComponent {
 export enum DeliveryStatus {
 	/** Message queued but not yet sent */
 	Queued = "queued",
+
 	/** Message sent and awaiting acknowledgment */
 	Pending = "pending",
+
 	/** Message successfully delivered */
 	Delivered = "delivered",
+
 	/** Message delivery failed */
 	Failed = "failed",
+
 	/** Message timed out */
 	Timeout = "timeout",
 }
@@ -122,20 +135,28 @@ export enum DeliveryStatus {
 export interface BaseMessage {
 	/** Unique message identifier */
 	id: string;
+
 	/** Source component */
 	from: SystemComponent;
+
 	/** Destination component (empty for broadcast) */
 	to: SystemComponent | SystemComponent[];
+
 	/** Channel name for routing */
 	channel: string;
+
 	/** Message timestamp */
 	timestamp: number;
+
 	/** Message correlation ID for request-response tracking */
 	correlationId?: string;
+
 	/** Message priority */
 	priority: MessagePriority;
+
 	/** Expiration timestamp (0 for no expiration) */
 	expiresAt?: number;
+
 	/** Custom headers for message metadata */
 	headers?: Record<string, string>;
 }
@@ -145,8 +166,10 @@ export interface BaseMessage {
  */
 export interface RequestMessage extends BaseMessage {
 	type: "request";
+
 	/** Request payload (any serializable data) */
 	payload: unknown;
+
 	/** Expected timeout in milliseconds */
 	timeout?: number;
 }
@@ -156,14 +179,19 @@ export interface RequestMessage extends BaseMessage {
  */
 export interface ResponseMessage extends BaseMessage {
 	type: "response";
+
 	/** Whether the request was successful */
 	success: boolean;
+
 	/** Response data (if successful) */
 	data?: unknown;
+
 	/** Error details (if failed) */
 	error?: {
 		code: string;
+
 		message: string;
+
 		details?: Record<string, unknown>;
 	};
 }
@@ -173,6 +201,7 @@ export interface ResponseMessage extends BaseMessage {
  */
 export interface EventMessage extends BaseMessage {
 	type: "event";
+
 	/** Event payload */
 	payload: unknown;
 }
@@ -187,6 +216,7 @@ export type IPCMessage = RequestMessage | ResponseMessage | EventMessage;
  */
 export type MessageHandler<T = unknown> = (
 	message: IPCMessage,
+
 	context: MessageContext,
 ) => Promise<T> | T;
 
@@ -196,10 +226,13 @@ export type MessageHandler<T = unknown> = (
 export interface MessageContext {
 	/** Channel that received the message */
 	channel: string;
+
 	/** Component handling the message */
 	component: SystemComponent;
+
 	/** Message delivery tracking ID */
 	deliveryId: string;
+
 	/** Original timestamp for latency calculation */
 	originalTimestamp: number;
 }
@@ -210,18 +243,25 @@ export interface MessageContext {
 export interface ChannelOptions {
 	/** Channel name (required) */
 	name: string;
+
 	/** Channel direction */
 	direction: ChannelDirection;
+
 	/** Maximum message size in bytes (default: 1MB) */
 	maxMessageSize?: number;
+
 	/** Maximum pending messages (default: 1000) */
 	maxPending?: number;
+
 	/** Message timeout in milliseconds (default: 30000) */
 	timeout?: number;
+
 	/** Whether to require authentication (default: false) */
 	requireAuth?: boolean;
+
 	/** Rate limit messages per second (0 for no limit) */
 	rateLimit?: number;
+
 	/** Custom validation function */
 	validator?: (message: IPCMessage) => boolean;
 }
@@ -232,18 +272,25 @@ export interface ChannelOptions {
 export interface ChannelState {
 	/** Channel name */
 	name: string;
+
 	/** Whether the channel is active */
 	active: boolean;
+
 	/** Current message count in queue */
 	queueSize: number;
+
 	/** Total messages sent */
 	sentCount: number;
+
 	/** Total messages received */
 	receivedCount: number;
+
 	/** Total errors encountered */
 	errorCount: number;
+
 	/** Last activity timestamp */
 	lastActivity: number;
+
 	/** Average latency in milliseconds */
 	averageLatency: number;
 }
@@ -254,10 +301,13 @@ export interface ChannelState {
 export interface ChannelStatistics extends ChannelState {
 	/** Messages by priority */
 	messagesByPriority: Record<MessagePriority, number>;
+
 	/** Messages by delivery status */
 	messagesByStatus: Record<DeliveryStatus, number>;
+
 	/** Peak concurrent messages */
 	peakConcurrentMessages: number;
+
 	/** Uptime in milliseconds */
 	uptime: number;
 }
@@ -268,10 +318,13 @@ export interface ChannelStatistics extends ChannelState {
 export interface DeliveryResult {
 	/** Status of the delivery attempt */
 	status: DeliveryStatus;
+
 	/** Time taken in milliseconds */
 	latency: number;
+
 	/** Error message if failed */
 	error?: string;
+
 	/** Message ID for tracking */
 	messageId: string;
 }
@@ -328,11 +381,15 @@ export class ChannelRegistry {
 	/** Registry statistics */
 	private stats: {
 		totalChannels: number;
+
 		totalMessages: number;
+
 		totalErrors: number;
 	} = {
 		totalChannels: 0,
+
 		totalMessages: 0,
+
 		totalErrors: 0,
 	};
 
@@ -367,36 +424,60 @@ export class ChannelRegistry {
 		// Create and register the channel
 		const channel: RegisteredChannel = {
 			id: this.GenerateChannelId(options.name),
+
 			name: options.name,
+
 			direction: options.direction,
+
 			maxMessageSize: options.maxMessageSize || DEFAULT_MAX_MESSAGE_SIZE,
+
 			maxPending: options.maxPending || DEFAULT_MAX_PENDING,
+
 			timeout: options.timeout || DEFAULT_TIMEOUT,
+
 			requireAuth: options.requireAuth || false,
+
 			rateLimit: options.rateLimit || DEFAULT_RATE_LIMIT,
+
 			validator: options.validator || this.DefaultMessageValidator,
+
 			handlers: new Map(),
+
 			queue: [],
+
 			active: true,
+
 			createdAt: Date.now(),
+
 			metrics: {
 				sentCount: 0,
+
 				receivedCount: 0,
+
 				errorCount: 0,
+
 				queueSize: 0,
+
 				lastActivity: Date.now(),
+
 				totalLatency: 0,
+
 				messagesProcessed: 0,
+
 				messagesByPriority: {
 					[MessagePriority.Low]: 0,
+
 					[MessagePriority.Normal]: 0,
+
 					[MessagePriority.High]: 0,
+
 					[MessagePriority.Critical]: 0,
 				},
 			},
 		};
 
 		this.channels.set(options.name, channel);
+
 		this.stats.totalChannels++;
 	}
 
@@ -407,6 +488,7 @@ export class ChannelRegistry {
 	 */
 	UnregisterChannel(name: string): boolean {
 		const channel = this.channels.get(name);
+
 		if (!channel) {
 			return false;
 		}
@@ -418,12 +500,14 @@ export class ChannelRegistry {
 		for (const [correlationId, pending] of this.pendingRequests) {
 			if (pending.channel === name) {
 				clearTimeout(pending.timeoutHandle);
+
 				this.pendingRequests.delete(correlationId);
 			}
 		}
 
 		// Remove channel
 		this.channels.delete(name);
+
 		this.stats.totalChannels--;
 
 		return true;
@@ -461,9 +545,11 @@ export class ChannelRegistry {
 	 */
 	GetAllChannelStates(): ChannelState[] {
 		const states: ChannelState[] = [];
+
 		for (const channel of this.channels.values()) {
 			states.push(this.ExtractChannelState(channel));
 		}
+
 		return states;
 	}
 
@@ -482,8 +568,11 @@ export class ChannelRegistry {
 		for (const name of this.channels.keys()) {
 			this.UnregisterChannel(name);
 		}
+
 		this.stats.totalChannels = 0;
+
 		this.stats.totalMessages = 0;
+
 		this.stats.totalErrors = 0;
 	}
 
@@ -494,7 +583,9 @@ export class ChannelRegistry {
 	 */
 	private GenerateChannelId(name: string): string {
 		const timestamp = Date.now();
+
 		const random = Math.random().toString(36).substring(2, 9);
+
 		return `${CHANNEL_ID_PREFIX}-${name}-${timestamp}-${random}`;
 	}
 
@@ -507,15 +598,18 @@ export class ChannelRegistry {
 		if (!message.id || typeof message.id !== "string") {
 			return false;
 		}
+
 		if (!message.channel || typeof message.channel !== "string") {
 			return false;
 		}
+
 		if (
 			!message.from ||
 			!Object.values(SystemComponent).includes(message.from)
 		) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -533,12 +627,19 @@ export class ChannelRegistry {
 
 		return {
 			name: channel.name,
+
 			active: channel.active,
+
 			queueSize: channel.queue.length,
+
 			sentCount: channel.metrics.sentCount,
+
 			receivedCount: channel.metrics.receivedCount,
+
 			errorCount: channel.metrics.errorCount,
+
 			lastActivity: channel.metrics.lastActivity,
+
 			averageLatency: Math.round(avgLatency * 100) / 100,
 		};
 	}
@@ -575,10 +676,13 @@ export class ChannelManager {
 	 */
 	constructor(
 		component: SystemComponent,
+
 		options: { maxHistoryLength?: number } = {},
 	) {
 		this.component = component;
+
 		this.registry = new ChannelRegistry();
+
 		this.maxHistoryLength = options.maxHistoryLength || 1000;
 	}
 
@@ -590,7 +694,9 @@ export class ChannelManager {
 	 */
 	CreateChannel(options: ChannelOptions): string {
 		this.registry.RegisterChannel(options);
+
 		const channel = this.registry.GetChannel(options.name);
+
 		return channel!.id;
 	}
 
@@ -601,28 +707,38 @@ export class ChannelManager {
 	 */
 	async RouteMessage(message: IPCMessage): Promise<DeliveryResult> {
 		const startTime = Date.now();
+
 		const deliveryId = this.GenerateDeliveryId();
 
 		try {
 			// Validate message structure
 			if (!this.ValidateMessageStructure(message)) {
 				this.AddToHistory(message);
+
 				return {
 					status: DeliveryStatus.Failed,
+
 					latency: Date.now() - startTime,
+
 					error: "Invalid message structure",
+
 					messageId: message.id,
 				};
 			}
 
 			// Get target channel
 			const channel = this.registry.GetChannel(message.channel);
+
 			if (!channel) {
 				this.AddToHistory(message);
+
 				return {
 					status: DeliveryStatus.Failed,
+
 					latency: Date.now() - startTime,
+
 					error: `Channel '${message.channel}' not found`,
+
 					messageId: message.id,
 				};
 			}
@@ -630,10 +746,14 @@ export class ChannelManager {
 			// Check if channel is active
 			if (!channel.active) {
 				this.AddToHistory(message);
+
 				return {
 					status: DeliveryStatus.Failed,
+
 					latency: Date.now() - startTime,
+
 					error: `Channel '${message.channel}' is inactive`,
+
 					messageId: message.id,
 				};
 			}
@@ -641,11 +761,16 @@ export class ChannelManager {
 			// Validate message using channel validator
 			if (!channel.validator(message)) {
 				this.AddToHistory(message);
+
 				channel.metrics.errorCount++;
+
 				return {
 					status: DeliveryStatus.Failed,
+
 					latency: Date.now() - startTime,
+
 					error: "Message validation failed",
+
 					messageId: message.id,
 				};
 			}
@@ -653,10 +778,14 @@ export class ChannelManager {
 			// Check rate limit
 			if (channel.rateLimit > 0 && !this.CheckRateLimit(channel)) {
 				this.AddToHistory(message);
+
 				return {
 					status: DeliveryStatus.Failed,
+
 					latency: Date.now() - startTime,
+
 					error: "Rate limit exceeded",
+
 					messageId: message.id,
 				};
 			}
@@ -664,10 +793,14 @@ export class ChannelManager {
 			// Check queue size
 			if (channel.queue.length >= channel.maxPending) {
 				this.AddToHistory(message);
+
 				return {
 					status: DeliveryStatus.Failed,
+
 					latency: Date.now() - startTime,
+
 					error: "Channel queue full",
+
 					messageId: message.id,
 				};
 			}
@@ -675,15 +808,21 @@ export class ChannelManager {
 			// Process the message
 			const context: MessageContext = {
 				channel: message.channel,
+
 				component: this.component,
+
 				deliveryId,
+
 				originalTimestamp: message.timestamp,
 			};
 
 			// Update metrics
 			channel.metrics.receivedCount++;
+
 			channel.metrics.queueSize = channel.queue.length;
+
 			channel.metrics.lastActivity = Date.now();
+
 			channel.metrics.messagesByPriority[message.priority]++;
 
 			// Execute message processing
@@ -691,6 +830,7 @@ export class ChannelManager {
 
 			// Update delivery status
 			const latency = Date.now() - startTime;
+
 			this.TrackDelivery(deliveryId, message.id, context.channel, {
 				status: result
 					? DeliveryStatus.Delivered
@@ -705,18 +845,24 @@ export class ChannelManager {
 				status: result
 					? DeliveryStatus.Delivered
 					: DeliveryStatus.Failed,
+
 				latency,
+
 				messageId: message.id,
 			};
 		} catch (error) {
 			const latency = Date.now() - startTime;
+
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error";
 
 			return {
 				status: DeliveryStatus.Failed,
+
 				latency,
+
 				error: errorMessage,
+
 				messageId: message.id,
 			};
 		}
@@ -730,15 +876,19 @@ export class ChannelManager {
 	 */
 	RegisterHandler(
 		channelName: string,
+
 		messageType: "request" | "response" | "event",
+
 		handler: MessageHandler,
 	): void {
 		const channel = this.registry.GetChannel(channelName);
+
 		if (!channel) {
 			throw new Error(`Channel '${channelName}' not found`);
 		}
 
 		const key = `${channelName}:${messageType}`;
+
 		channel.handlers.set(key, handler);
 	}
 
@@ -749,14 +899,17 @@ export class ChannelManager {
 	 */
 	UnregisterHandler(
 		channelName: string,
+
 		messageType: "request" | "response" | "event",
 	): void {
 		const channel = this.registry.GetChannel(channelName);
+
 		if (!channel) {
 			return;
 		}
 
 		const key = `${channelName}:${messageType}`;
+
 		channel.handlers.delete(key);
 	}
 
@@ -766,14 +919,20 @@ export class ChannelManager {
 	 */
 	GetStatistics(): {
 		channels: number;
+
 		messages: number;
+
 		errors: number;
+
 		pendingDeliveries: number;
 	} {
 		return {
 			channels: this.registry.GetAllChannelNames().length,
+
 			messages: this.registry.GetStatistics().totalMessages,
+
 			errors: this.registry.GetStatistics().totalErrors,
+
 			pendingDeliveries: this.deliveries.size,
 		};
 	}
@@ -799,7 +958,9 @@ export class ChannelManager {
 	 */
 	Shutdown(): void {
 		this.registry.ClearAll();
+
 		this.deliveries.clear();
+
 		this.messageHistory = [];
 	}
 
@@ -816,24 +977,30 @@ export class ChannelManager {
 		if (!message) {
 			return false;
 		}
+
 		if (!message.id || typeof message.id !== "string") {
 			return false;
 		}
+
 		if (!message.channel || typeof message.channel !== "string") {
 			return false;
 		}
+
 		if (
 			!message.from ||
 			!Object.values(SystemComponent).includes(message.from)
 		) {
 			return false;
 		}
+
 		if (!message.timestamp || typeof message.timestamp !== "number") {
 			return false;
 		}
+
 		if (message.priority === undefined || message.priority === null) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -857,16 +1024,21 @@ export class ChannelManager {
 	 */
 	private async ProcessMessage(
 		message: IPCMessage,
+
 		channel: RegisteredChannel,
+
 		context: MessageContext,
 	): Promise<boolean> {
 		try {
 			const key = `${channel.name}:${message.type}`;
+
 			const handler = channel.handlers.get(key);
 
 			if (handler) {
 				await handler(message, context);
+
 				channel.metrics.messagesProcessed++;
+
 				return true;
 			} else {
 				// No handler registered - default to success
@@ -874,7 +1046,9 @@ export class ChannelManager {
 			}
 		} catch (error) {
 			channel.metrics.errorCount++;
+
 			console.error(`Error processing message:`, error);
+
 			return false;
 		}
 	}
@@ -888,8 +1062,11 @@ export class ChannelManager {
 	 */
 	private TrackDelivery(
 		deliveryId: string,
+
 		messageId: string,
+
 		channel: string,
+
 		result: DeliveryTracking,
 	): void {
 		this.deliveries.set(deliveryId, {
@@ -900,6 +1077,7 @@ export class ChannelManager {
 
 		// Clean up old deliveries (older than 1 hour)
 		const now = Date.now();
+
 		for (const [id, delivery] of this.deliveries) {
 			if (now - delivery.timestamp > 3600000) {
 				this.deliveries.delete(id);
@@ -913,6 +1091,7 @@ export class ChannelManager {
 	 */
 	private AddToHistory(message: IPCMessage): void {
 		this.messageHistory.push(message);
+
 		if (this.messageHistory.length > this.maxHistoryLength) {
 			this.messageHistory.shift();
 		}
@@ -924,7 +1103,9 @@ export class ChannelManager {
 	 */
 	private GenerateDeliveryId(): string {
 		const timestamp = Date.now();
+
 		const random = Math.random().toString(36).substring(2, 9);
+
 		return `${DELIVERY_ID_PREFIX}-${timestamp}-${random}`;
 	}
 }
@@ -939,7 +1120,9 @@ export class ChannelManager {
  */
 export function GenerateMessageId(): string {
 	const timestamp = Date.now();
+
 	const random = Math.random().toString(36).substring(2, 15);
+
 	return `${MESSAGE_ID_PREFIX}-${timestamp}-${random}`;
 }
 
@@ -949,7 +1132,9 @@ export function GenerateMessageId(): string {
  */
 export function GenerateCorrelationId(): string {
 	const timestamp = Date.now();
+
 	const random = Math.random().toString(36).substring(2, 15);
+
 	return `${CORRELATION_ID_PREFIX}-${timestamp}-${random}`;
 }
 
@@ -972,15 +1157,25 @@ export function CreateRequestMessage(
 ): RequestMessage {
 	return {
 		id: params.id || GenerateMessageId(),
+
 		type: "request",
+
 		channel: params.channel,
+
 		from: params.from,
+
 		to: params.to,
+
 		payload: params.payload,
+
 		priority: params.priority || MessagePriority.Normal,
+
 		timestamp: params.timestamp || Date.now(),
+
 		correlationId: params.correlationId || GenerateCorrelationId(),
+
 		timeout: params.timeout,
+
 		headers: params.headers,
 	};
 }
@@ -1009,16 +1204,27 @@ export function CreateResponseMessage(
 ): ResponseMessage {
 	return {
 		id: params.id || GenerateMessageId(),
+
 		type: "response",
+
 		channel: params.channel,
+
 		from: params.from,
+
 		to: params.to,
+
 		correlationId: params.correlationId,
+
 		success: params.success,
+
 		data: params.data,
+
 		error: params.error,
+
 		priority: params.priority || MessagePriority.Normal,
+
 		timestamp: params.timestamp || Date.now(),
+
 		headers: params.headers,
 	};
 }
@@ -1040,13 +1246,20 @@ export function CreateEventMessage(
 ): EventMessage {
 	return {
 		id: params.id || GenerateMessageId(),
+
 		type: "event",
+
 		channel: params.channel,
+
 		from: params.from,
+
 		to: params.to || [], // Empty array for broadcast
 		payload: params.payload,
+
 		priority: params.priority || MessagePriority.Normal,
+
 		timestamp: params.timestamp || Date.now(),
+
 		headers: params.headers,
 	};
 }
@@ -1061,39 +1274,59 @@ export function CreateEventMessage(
 interface RegisteredChannel {
 	/** Unique channel identifier */
 	id: string;
+
 	/** Channel name */
 	name: string;
+
 	/** Communication direction */
 	direction: ChannelDirection;
+
 	/** Maximum message size */
 	maxMessageSize: number;
+
 	/** Maximum pending messages */
 	maxPending: number;
+
 	/** Default timeout */
 	timeout: number;
+
 	/** Whether authentication is required */
 	requireAuth: boolean;
+
 	/** Rate limit (messages per second) */
 	rateLimit: number;
+
 	/** Message validator function */
 	validator: (message: IPCMessage) => boolean;
+
 	/** Message handlers map */
 	handlers: Map<string, MessageHandler>;
+
 	/** Message queue */
 	queue: IPCMessage[];
+
 	/** Whether channel is active */
 	active: boolean;
+
 	/** Creation timestamp */
 	createdAt: number;
+
 	/** Channel metrics */
 	metrics: {
 		sentCount: number;
+
 		receivedCount: number;
+
 		errorCount: number;
+
 		queueSize: number;
+
 		lastActivity: number;
+
 		totalLatency: number;
+
 		messagesProcessed: number;
+
 		messagesByPriority: Record<MessagePriority, number>;
 	};
 }
@@ -1104,14 +1337,19 @@ interface RegisteredChannel {
 interface PendingRequest {
 	/** Message ID */
 	messageId: string;
+
 	/** Channel name */
 	channel: string;
+
 	/** Timeout timestamp */
 	expiresAt: number;
+
 	/** Timeout handle */
 	timeoutHandle: NodeJS.Timeout;
+
 	/** Resolve function */
 	resolve: (value: ResponseMessage) => void;
+
 	/** Reject function */
 	reject: (error: Error) => void;
 }
@@ -1122,12 +1360,16 @@ interface PendingRequest {
 interface DeliveryTracking {
 	/** Original message ID */
 	messageId: string;
+
 	/** Channel name */
 	channel: string;
+
 	/** Delivery status */
 	status: DeliveryStatus;
+
 	/** Processing latency in milliseconds */
 	latency: number;
+
 	/** Timestamp of delivery attempt */
 	timestamp: number;
 }

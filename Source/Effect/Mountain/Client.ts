@@ -19,7 +19,9 @@ export type ConnectionState =
 	| { readonly _tag: "Connecting"; readonly attempt: number }
 	| {
 			readonly _tag: "Connected";
+
 			readonly serverVersion: string;
+
 			readonly connectedAt: number;
 	  }
 	| { readonly _tag: "Disconnecting" }
@@ -27,25 +29,37 @@ export type ConnectionState =
 
 export interface ClientConfig {
 	readonly host: string;
+
 	readonly port: number;
+
 	readonly timeout?: number;
+
 	readonly maxRetries?: number;
+
 	readonly retryDelay?: number;
+
 	readonly enableCompression?: boolean;
+
 	readonly enableMetrics?: boolean;
 }
 
 export interface ClientMetrics {
 	readonly totalRequests: number;
+
 	readonly successfulRequests: number;
+
 	readonly failedRequests: number;
+
 	readonly averageLatency: number;
+
 	readonly lastRequestTime: number;
 }
 
 export interface RPCResponse<T = unknown> {
 	readonly success: boolean;
+
 	readonly data: T;
+
 	readonly error?: string;
 }
 
@@ -55,8 +69,10 @@ export interface RPCResponse<T = unknown> {
 
 export class ConnectionError extends Error {
 	readonly _tag = "ConnectionError";
+
 	constructor(
 		override readonly message: string,
+
 		readonly cause?: unknown,
 	) {
 		super(message);
@@ -65,10 +81,14 @@ export class ConnectionError extends Error {
 
 export class RPCError extends Error {
 	readonly _tag = "RPCError";
+
 	readonly method: string;
+
 	constructor(
 		readonly method: string,
+
 		override readonly message: string,
+
 		readonly cause?: unknown,
 	) {
 		super(message);
@@ -77,8 +97,10 @@ export class RPCError extends Error {
 
 export class DisconnectionError extends Error {
 	readonly _tag = "DisconnectionError";
+
 	constructor(
 		override readonly message: string,
+
 		readonly cause?: unknown,
 	) {
 		super(message);
@@ -139,6 +161,7 @@ export const MountainClient = MountainClientTag;
 
 export const MountainClientLive = Layer.effect(
 	MountainClient,
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
@@ -182,6 +205,7 @@ export const MountainClientLive = Layer.effect(
 				if (currentState._tag === "Connected") {
 					telemetry.log(
 						"warn",
+
 						"[MountainClient] Already connected to Mountain",
 					);
 					return;
@@ -200,6 +224,7 @@ export const MountainClientLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`,
 				);
 
@@ -224,12 +249,14 @@ export const MountainClientLive = Layer.effect(
 
 					telemetry.log(
 						"error",
+
 						`[MountainClient] Failed to connect to Mountain: ${String(error)}`,
 					);
 
 					return yield* Effect.fail(
 						new ConnectionError(
 							"Failed to connect to Mountain backend",
+
 							error,
 						),
 					);
@@ -244,6 +271,7 @@ export const MountainClientLive = Layer.effect(
 
 				telemetry.log(
 					"info",
+
 					`[MountainClient] Connected to Mountain (v${serverVersion})`,
 				);
 			});
@@ -256,6 +284,7 @@ export const MountainClientLive = Layer.effect(
 			if (currentState._tag !== "Connected") {
 				telemetry.log(
 					"warn",
+
 					"[MountainClient] Not connected to Mountain",
 				);
 				return;
@@ -268,6 +297,7 @@ export const MountainClientLive = Layer.effect(
 
 			telemetry.log(
 				"info",
+
 				"[MountainClient] Disconnecting from Mountain...",
 			);
 
@@ -294,6 +324,7 @@ export const MountainClientLive = Layer.effect(
 
 			telemetry.log(
 				"info",
+
 				"[MountainClient] Disconnected from Mountain",
 			);
 		}).pipe(
@@ -306,6 +337,7 @@ export const MountainClientLive = Layer.effect(
 
 					telemetry.log(
 						"error",
+
 						`[MountainClient] Failed to disconnect: ${String(error)}`,
 					);
 
@@ -335,7 +367,9 @@ export const MountainClientLive = Layer.effect(
 
 					telemetry.log(
 						"debug",
+
 						`[MountainClient] RPC call: ${method}`,
+
 						params,
 					);
 
@@ -348,6 +382,7 @@ export const MountainClientLive = Layer.effect(
 							return yield* Effect.fail(
 								new RPCError(
 									method,
+
 									"Not connected to Mountain",
 								),
 							);
@@ -367,6 +402,7 @@ export const MountainClientLive = Layer.effect(
 
 						telemetry.log(
 							"debug",
+
 							`[MountainClient] RPC success: ${method} (${processingTime}ms)`,
 						);
 
@@ -376,13 +412,16 @@ export const MountainClientLive = Layer.effect(
 
 						telemetry.log(
 							"error",
+
 							`[MountainClient] RPC failed: ${method} (${String(error)})`,
 						);
 
 						return yield* Effect.fail(
 							new RPCError(
 								method,
+
 								`RPC call failed: ${String(error)}`,
+
 								error,
 							),
 						);
@@ -426,9 +465,11 @@ export const MountainClientLive = Layer.effect(
 									? Err.message
 									: String(Err),
 						})),
+
 					new Promise<{ Kind: "timeout" }>((Resolve) =>
 						setTimeout(
 							() => Resolve({ Kind: "timeout" as const }),
+
 							HealthCheckTimeoutMs,
 						),
 					),
@@ -441,6 +482,7 @@ export const MountainClientLive = Layer.effect(
 				});
 				telemetry.log(
 					"warn",
+
 					`[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`,
 				);
 				return false;
@@ -459,6 +501,7 @@ export const MountainClientLive = Layer.effect(
 					});
 					telemetry.log(
 						"warn",
+
 						`[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`,
 					);
 					return false;
@@ -490,15 +533,21 @@ export const MountainClientLive = Layer.effect(
 export const makeMockMountainClient = (): MountainClientService => {
 	const mockState: ConnectionState = {
 		_tag: "Connected",
+
 		serverVersion: "1.0.0",
+
 		connectedAt: Date.now(),
 	};
 
 	return {
 		connectionState: Effect.succeed(mockState),
+
 		connectionChanges: Effect.succeed([mockState]),
+
 		connect: () => Effect.succeed(undefined),
+
 		disconnect: () => Effect.succeed(undefined),
+
 		rpc:
 			<T>(method: string) =>
 			(params?: Record<string, unknown>) =>
@@ -506,8 +555,11 @@ export const makeMockMountainClient = (): MountainClientService => {
 					success: true,
 					data: { method, params, mock: true },
 				} as T),
+
 		version: Effect.succeed("1.0.0"),
+
 		healthCheck: Effect.succeed(true),
+
 		getMetrics: Effect.succeed({
 			totalRequests: 0,
 			successfulRequests: 0,
@@ -520,5 +572,6 @@ export const makeMockMountainClient = (): MountainClientService => {
 
 export const MountainClientMock = Layer.effect(
 	MountainClient,
+
 	Effect.succeed(makeMockMountainClient()),
 );

@@ -43,7 +43,9 @@ import {
 
 // ESM compatibility
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
+
 const require = createRequire(import.meta.url);
 
 /**
@@ -60,9 +62,13 @@ enum CircuitBreakerState {
  */
 enum ConnectionState {
 	Disconnected = "DISCONNECTED",
+
 	Connecting = "CONNECTING",
+
 	Connected = "CONNECTED",
+
 	Degraded = "DEGRADED",
+
 	Failed = "FAILED",
 }
 
@@ -71,6 +77,7 @@ enum ConnectionState {
  */
 interface CancellationToken {
 	readonly isCancellationRequested: boolean;
+
 	onCancellationRequested?: () => void;
 }
 
@@ -83,52 +90,75 @@ export class MountainClientService implements IMountainClientService {
 
 	// Core gRPC client and connection state
 	private client: MountainServiceClient | null = null;
+
 	private channel: grpc.Client | null = null;
+
 	private mountainHost: string = "localhost";
+
 	private mountainPort: number = 50051; // Default Mountain gRPC port
 	private connectionState: ConnectionState = ConnectionState.Disconnected;
+
 	private connectionStartTime: number = 0;
+
 	private errorCount: number = 0;
+
 	private requestCounter: number = 0;
+
 	private activeRequests: Map<bigint, { method: string; startTime: number }> =
 		new Map();
 
 	// Circuit breaker configuration with enhanced tracking
 	private circuitBreakerState: CircuitBreakerState =
 		CircuitBreakerState.Closed;
+
 	private circuitBreakerFailureCount: number = 0;
+
 	private circuitBreakerSuccessCount: number = 0;
+
 	private readonly circuitBreakerThreshold: number = 5; // Consecutive failures before opening
 	private readonly circuitBreakerSuccessThreshold: number = 3; // Consecutive successes to close
 	private readonly circuitBreakerTimeout: number = 60000; // 60 seconds recovery timeout
 	private circuitBreakerOpenTime: number = 0;
+
 	private circuitBreakerHalfOpenAttempts: number = 0;
 
 	// Retry configuration with exponential backoff and jitter
 	private readonly maxRetries: number = 3;
+
 	private readonly baseRetryDelay: number = 1000; // Base delay in milliseconds
 	private readonly maxRetryDelay: number = 10000; // Maximum delay in milliseconds
 	private readonly retryJitterFactor: number = 0.2; // 20% jitter
 
 	// Health monitoring with comprehensive tracking
 	private healthCheckInterval: NodeJS.Timeout | null = null;
+
 	private readonly healthCheckPeriod: number = 30000; // 30 seconds
 	private lastHealthCheck: number = 0;
+
 	private consecutiveSuccessfulHealthChecks: number = 0;
+
 	private healthCheckFailures: number = 0;
+
 	private lastHealthCheckError: Error | null = null;
 
 	// Performance metrics
 	private totalRequests: number = 0;
+
 	private totalFailures: number = 0;
+
 	private totalSuccesses: number = 0;
+
 	private averageResponseTime: number = 0;
+
 	private maxResponseTime: number = 0;
+
 	private minResponseTime: number = Infinity;
 
 	// Connection metadata
 	private clientVersion: string = "1.0.0";
+
 	private clientId: string = uuidv4();
+
 	private sessionId: string = uuidv4();
 
 	constructor() {
@@ -155,15 +185,21 @@ export class MountainClientService implements IMountainClientService {
 	private parseEnvironment(): void {
 		const mountainHost =
 			process.env.MOUNTAIN_CONNECTION_HOST || "localhost";
+
 		const mountainPort = process.env.MOUNTAIN_GRPC_PORT || "50051";
+
 		const connectionTimeout =
 			process.env.MOUNTAIN_CONNECTION_TIMEOUT || "30000";
+
 		const maxRetries = process.env.MOUNTAIN_MAX_RETRIES || "3";
+
 		const enableTLS = process.env.MOUNTAIN_ENABLE_TLS || "false";
+
 		const healthCheckPeriod =
 			process.env.MOUNTAIN_HEALTH_CHECK_PERIOD || "30000";
 
 		this.mountainHost = mountainHost;
+
 		this.mountainPort = parseInt(mountainPort, 10);
 
 		// Update retry configuration if provided
@@ -193,6 +229,7 @@ export class MountainClientService implements IMountainClientService {
 			console.warn(
 				`[MountainClientService] Invalid max retries: ${this.maxRetries}, using default: 3`,
 			);
+
 			this.maxRetries = 3;
 		}
 
@@ -200,6 +237,7 @@ export class MountainClientService implements IMountainClientService {
 			console.warn(
 				`[MountainClientService] Invalid health check period: ${this.healthCheckPeriod}ms, using default: 30000ms`,
 			);
+
 			this.healthCheckPeriod = 30000;
 		}
 	}
@@ -237,6 +275,7 @@ export class MountainClientService implements IMountainClientService {
 			this.disconnect().catch((error) => {
 				console.error(
 					"[MountainClientService] Graceful shutdown failed:",
+
 					error,
 				);
 			});
@@ -249,6 +288,7 @@ export class MountainClientService implements IMountainClientService {
 			this.disconnect().catch((error) => {
 				console.error(
 					"[MountainClientService] Graceful shutdown failed:",
+
 					error,
 				);
 			});
@@ -281,6 +321,7 @@ export class MountainClientService implements IMountainClientService {
 			console.warn(
 				`[MountainClientService] Already ${this.connectionState.toLowerCase()} to Mountain`,
 			);
+
 			return;
 		}
 
@@ -293,6 +334,7 @@ export class MountainClientService implements IMountainClientService {
 		try {
 			// Load protocol definition with proper error handling
 			const packageDefinition = await this.loadProtocolDefinition();
+
 			const protoDescriptor = grpc.loadPackageDefinition(
 				packageDefinition,
 			) as any;
@@ -322,7 +364,9 @@ export class MountainClientService implements IMountainClientService {
 				protoDescriptor.MountainService
 			)(
 				target,
+
 				grpc.credentials.createInsecure(),
+
 				channelOptions,
 			) as unknown as MountainServiceClient;
 
@@ -330,9 +374,13 @@ export class MountainClientService implements IMountainClientService {
 			await this.waitForConnection();
 
 			this.connectionState = ConnectionState.Connected;
+
 			this.connectionStartTime = Date.now();
+
 			this.errorCount = 0;
+
 			this.consecutiveSuccessfulHealthChecks = 0;
+
 			this.healthCheckFailures = 0;
 
 			// Start comprehensive health monitoring
@@ -346,11 +394,14 @@ export class MountainClientService implements IMountainClientService {
 			this.UpdateCircuitBreaker(true);
 		} catch (error) {
 			this.connectionState = ConnectionState.Failed;
+
 			this.errorCount++;
+
 			this.circuitBreakerFailureCount++;
 
 			console.error(
 				`[MountainClientService] Failed to connect to Mountain:`,
+
 				error,
 			);
 
@@ -373,6 +424,7 @@ export class MountainClientService implements IMountainClientService {
 
 		try {
 			const fs = require("fs");
+
 			const path = require("path");
 
 			// Search multiple paths for Mountain's Proto directory.
@@ -385,18 +437,25 @@ export class MountainClientService implements IMountainClientService {
 			const SearchPaths = [
 				path.resolve(
 					__dirname,
+
 					"../../../../Mountain/Proto/Vine.proto",
 				),
+
 				path.resolve(
 					process.cwd(),
+
 					"Element/Mountain/Proto/Vine.proto",
 				),
+
 				path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
 			];
+
 			let vineProtoPath: string | null = null;
+
 			for (const P of SearchPaths) {
 				if (fs.existsSync(P)) {
 					vineProtoPath = P;
+
 					break;
 				}
 			}
@@ -421,6 +480,7 @@ export class MountainClientService implements IMountainClientService {
 			} else {
 				console.warn(
 					"[MountainClientService] Vine.proto not found at:",
+
 					vineProtoPath,
 				);
 
@@ -430,53 +490,74 @@ export class MountainClientService implements IMountainClientService {
 package Vine;
 
 service MountainService {
+
     rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
+
     rpc SendCocoonNotification(GenericNotification) returns (Empty);
+
     rpc CancelOperation(CancelOperationRequest) returns (Empty);
 }
 
 service CocoonService {
+
     rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+
     rpc SendMountainNotification(GenericNotification) returns (Empty);
+
     rpc CancelOperation(CancelOperationRequest) returns (Empty);
 }
 
 message GenericRequest {
+
     uint64 RequestIdentifier = 1;
+
     string Method = 2;
+
     bytes Parameter = 3;
 }
 
 message GenericResponse {
+
     uint64 RequestIdentifier = 1;
+
     bytes Result = 2;
+
     optional RPCError error = 3;
 }
 
 message GenericNotification {
+
     string Method = 1;
+
     bytes Parameter = 2;
 }
 
 message RPCError {
+
     int32 Code = 1;
+
     string Message = 2;
+
     bytes Data = 3;
 }
 
 message CancelOperationRequest {
+
     uint64 RequestIdentifierToCancel = 1;
 }
 
 message Empty {}
 
 message RPCDataPayload {
+
     bytes Data = 1;
 }`;
 
 				// Create temporary file with proper permissions
 				const tempDir = require("os").tmpdir();
+
 				const tempProtoPath = path.join(tempDir, "vine_fallback.proto");
+
 				fs.writeFileSync(tempProtoPath, fallbackProtoContent);
 
 				console.log(
@@ -497,8 +578,10 @@ message RPCDataPayload {
 		} catch (error) {
 			console.error(
 				"[MountainClientService] Failed to load protocol definition:",
+
 				error,
 			);
+
 			throw new Error(
 				`Failed to load Vine.proto: ${error instanceof Error ? error.message : "Unknown error"}`,
 			);
@@ -564,7 +647,9 @@ message RPCDataPayload {
 	 */
 	async sendRequest(
 		method: string,
+
 		parameters: any,
+
 		cancellationToken?: CancellationToken,
 	): Promise<any> {
 		// Check circuit breaker state before proceeding
@@ -579,6 +664,7 @@ message RPCDataPayload {
 		}
 
 		const requestIdentifier = this.generateRequestId();
+
 		const startTime = Date.now();
 
 		// Track active request for cancellation support
@@ -610,7 +696,9 @@ message RPCDataPayload {
 			// Create request matching Vine.proto structure with proper serialization
 			const request: GenericRequest = {
 				RequestIdentifier: BigInt(requestIdentifier),
+
 				Method: method,
+
 				Parameter: this.SerializeParameters(parameters),
 			};
 
@@ -628,9 +716,11 @@ message RPCDataPayload {
 			) {
 				try {
 					const Timestamp = process.hrtime.bigint().toString();
+
 					const Correlation =
 						(parameters?.[0] as { viewId?: string } | undefined)
 							?.viewId ?? `req-${requestIdentifier}`;
+
 					process.stdout.write(
 						`[LandFix:Tree] wire-send method=${method} correlation=${Correlation} t=${Timestamp}\n`,
 					);
@@ -640,6 +730,7 @@ message RPCDataPayload {
 			// Execute with comprehensive retry logic and cancellation support
 			const response = await this.SendRequestWithRetry(
 				request,
+
 				cancellationToken,
 			);
 
@@ -648,6 +739,7 @@ message RPCDataPayload {
 			// Check for error in response with proper RPC error handling
 			if (response.error) {
 				const rpcError = response.error;
+
 				// Benign 404s on FileSystem.* reads (missing first-run cache
 				// files, optional config probes, etc.) MUST NOT count against
 				// the circuit breaker. Otherwise a handful of expected
@@ -656,11 +748,14 @@ message RPCDataPayload {
 				// rejections in extensions that then treat "circuit open" as
 				// a fatal I/O error.
 				const RpcMessage = String(rpcError.Message ?? "");
+
 				const RpcCode = Number(rpcError.Code ?? 0);
+
 				const IsFileSystemMethod =
 					method === "FileSystem.ReadFile" ||
 					method === "FileSystem.Stat" ||
 					method === "FileSystem.ReadDirectory";
+
 				// FileWatcher.Register on a path that doesn't exist yet
 				// (extension probing for an optional config dir) is a normal
 				// case in stock VS Code; the watch silently no-ops until the
@@ -671,6 +766,7 @@ message RPCDataPayload {
 					/no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
 						RpcMessage,
 					);
+
 				// Mountain stamps -32004 for benign 404s; the regex is a
 				// belt-and-suspenders fallback for older Mountain builds.
 				const IsBenignNotFound =
@@ -680,10 +776,13 @@ message RPCDataPayload {
 								RpcMessage,
 							))) ||
 					IsFileWatcherBenign;
+
 				if (!IsBenignNotFound) {
 					this.circuitBreakerFailureCount++;
+
 					this.UpdateCircuitBreaker(
 						false,
+
 						new Error(
 							`RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`,
 						),
@@ -694,10 +793,13 @@ message RPCDataPayload {
 				const error = new Error(
 					`Mountain request failed: ${rpcError.Message}`,
 				);
+
 				(error as any).code = rpcError.Code;
+
 				(error as any).data = rpcError.Data
 					? this.DeserializeResponse(rpcError.Data)
 					: undefined;
+
 				throw error;
 			}
 
@@ -727,6 +829,7 @@ message RPCDataPayload {
 			return responseData;
 		} catch (error) {
 			const duration = Date.now() - startTime;
+
 			this.errorCount++;
 
 			// Benign 404s on `FileSystem.*` reads are very common - every
@@ -744,18 +847,22 @@ message RPCDataPayload {
 			// yaml, terminal-suggest, schemas-associations).
 			const ErrorMessage =
 				error instanceof Error ? error.message : String(error);
+
 			const ErrorCode = Number(
 				(error as { code?: number | string } | null)?.code ?? 0,
 			);
+
 			const IsCatchBenignFsMethod =
 				method === "FileSystem.ReadFile" ||
 				method === "FileSystem.Stat" ||
 				method === "FileSystem.ReadDirectory";
+
 			const IsCatchBenignFileWatcher =
 				method === "FileWatcher.Register" &&
 				/no path was found|no such file or directory|entity not found|path not found|os error 2|enoent/i.test(
 					ErrorMessage,
 				);
+
 			const IsBenignNotFound =
 				(IsCatchBenignFsMethod &&
 					(ErrorCode === -32004 ||
@@ -763,6 +870,7 @@ message RPCDataPayload {
 							ErrorMessage,
 						))) ||
 				IsCatchBenignFileWatcher;
+
 			// `Command.Execute` rejections for extension-registered commands
 			// that were never registered are equally benign - the
 			// `CommandsNamespace.executeCommand` catch converts them to
@@ -784,6 +892,7 @@ message RPCDataPayload {
 			const TraceMountainClient = process.env["Trace"]?.includes(
 				"mountain-client-verbose",
 			);
+
 			if (IsBenignNotFound) {
 				if (TraceMountainClient) {
 					process.stdout.write(
@@ -798,9 +907,12 @@ message RPCDataPayload {
 				}
 			} else {
 				this.circuitBreakerFailureCount++;
+
 				this.UpdateCircuitBreaker(false, error);
+
 				console.error(
 					`[MountainClientService] Request ${method} failed after ${duration}ms:`,
+
 					error,
 				);
 			}
@@ -810,6 +922,7 @@ message RPCDataPayload {
 				console.log(
 					`[MountainClientService] Request ${requestIdentifier} was cancelled`,
 				);
+
 				throw new Error(`Request ${requestIdentifier} was cancelled`);
 			}
 
@@ -818,19 +931,25 @@ message RPCDataPayload {
 				console.log(
 					"[MountainClientService] Connection error detected, attempting auto-reconnect",
 				);
+
 				try {
 					await this.reconnect();
+
 					console.log(
 						"[MountainClientService] Auto-reconnect successful, retrying request",
 					);
+
 					return this.sendRequest(
 						method,
+
 						parameters,
+
 						cancellationToken,
 					);
 				} catch (reconnectError) {
 					console.error(
 						"[MountainClientService] Auto-reconnect failed:",
+
 						reconnectError,
 					);
 				}
@@ -848,7 +967,9 @@ message RPCDataPayload {
 	 */
 	private trackRequestMetrics(
 		method: string,
+
 		duration: number,
+
 		success: boolean,
 	): void {
 		this.totalRequests++;
@@ -863,7 +984,9 @@ message RPCDataPayload {
 		this.averageResponseTime =
 			(this.averageResponseTime * (this.totalRequests - 1) + duration) /
 			this.totalRequests;
+
 		this.maxResponseTime = Math.max(this.maxResponseTime, duration);
+
 		this.minResponseTime = Math.min(this.minResponseTime, duration);
 
 		// Metrics line fires once per completed request - 14k+ hits in
@@ -904,8 +1027,11 @@ message RPCDataPayload {
 		const connectionErrorPatterns = [
 			// gRPC error codes
 			error.code === "UNAVAILABLE",
+
 			error.code === "DEADLINE_EXCEEDED",
+
 			error.code === "CANCELLED",
+
 			error.code === "UNKNOWN",
 
 			// Numeric gRPC error codes
@@ -916,20 +1042,32 @@ message RPCDataPayload {
 
 			// Error message patterns
 			error.message?.includes("connect"),
+
 			error.message?.includes("connection"),
+
 			error.message?.includes("socket"),
+
 			error.message?.includes("network"),
+
 			error.message?.includes("ECONN"),
+
 			error.message?.includes("ENOTFOUND"),
+
 			error.message?.includes("ETIMEDOUT"),
+
 			error.message?.includes("refused"),
+
 			error.message?.includes("timeout"),
+
 			error.message?.includes("channel"),
 
 			// Node.js error codes
 			error.code === "ECONNREFUSED",
+
 			error.code === "ECONNRESET",
+
 			error.code === "ETIMEDOUT",
+
 			error.code === "ENOTFOUND",
 		];
 
@@ -955,6 +1093,7 @@ message RPCDataPayload {
 					(resolve, reject) => {
 						this.client!.ProcessCocoonRequest(
 							request,
+
 							(error: any, response: any) => {
 								if (error) reject(error);
 								else resolve(response);
@@ -962,6 +1101,7 @@ message RPCDataPayload {
 						);
 					},
 				);
+
 				return response;
 			} catch (error) {
 				lastError = error as Error;
@@ -973,10 +1113,13 @@ message RPCDataPayload {
 
 				if (attempt < this.maxRetries - 1) {
 					const delay = this.CalculateRetryDelay(attempt);
+
 					console.warn(
 						`[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
+
 						error,
 					);
+
 					await new Promise((resolve) => setTimeout(resolve, delay));
 				}
 			}
@@ -990,6 +1133,7 @@ message RPCDataPayload {
 	 */
 	private CalculateRetryDelay(attempt: number): number {
 		const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt);
+
 		const jitter = Math.random() * 0.1 * exponentialDelay; // Add 10% jitter
 		return Math.min(exponentialDelay + jitter, this.maxRetryDelay);
 	}
@@ -1000,8 +1144,11 @@ message RPCDataPayload {
 	private isTransientError(error: any): boolean {
 		const transientCodes = [
 			"UNAVAILABLE",
+
 			"DEADLINE_EXCEEDED",
+
 			"INTERNAL",
+
 			"RESOURCE_EXHAUSTED",
 		];
 
@@ -1025,12 +1172,15 @@ message RPCDataPayload {
 			}
 
 			const serialized = JSON.stringify(parameters);
+
 			return Buffer.from(serialized, "utf8");
 		} catch (error) {
 			console.error(
 				"[MountainClientService] Failed to serialize parameters:",
+
 				error,
 			);
+
 			throw new Error(
 				`Parameter serialization failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			);
@@ -1047,12 +1197,15 @@ message RPCDataPayload {
 			}
 
 			const serialized = buffer.toString("utf8");
+
 			return JSON.parse(serialized);
 		} catch (error) {
 			console.error(
 				"[MountainClientService] Failed to deserialize response:",
+
 				error,
 			);
+
 			// Return empty object on deserialization error to avoid breaking the caller
 			return {};
 		}
@@ -1070,10 +1223,13 @@ message RPCDataPayload {
 				console.log(
 					"[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)",
 				);
+
 				CocoonDevLog(
 					"breaker",
+
 					`[Breaker] transition from=HalfOpen to=Closed reason=service-recovered`,
 				);
+
 				this.circuitBreakerState = CircuitBreakerState.Closed;
 			}
 		} else {
@@ -1084,13 +1240,18 @@ message RPCDataPayload {
 				this.circuitBreakerFailureCount >= this.circuitBreakerThreshold
 			) {
 				const PriorState = this.circuitBreakerState;
+
 				this.circuitBreakerState = CircuitBreakerState.Open;
+
 				this.circuitBreakerOpenTime = Date.now();
+
 				console.log(
 					`[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`,
 				);
+
 				CocoonDevLog(
 					"breaker",
+
 					`[Breaker] transition from=${PriorState} to=Open failures=${this.circuitBreakerFailureCount} threshold=${this.circuitBreakerThreshold}`,
 				);
 			}
@@ -1108,11 +1269,14 @@ message RPCDataPayload {
 			) {
 				// Transition to half-openstate to attempt recovery
 				this.circuitBreakerState = CircuitBreakerState.HalfOpen;
+
 				console.log(
 					"[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery",
 				);
+
 				CocoonDevLog(
 					"breaker",
+
 					`[Breaker] transition from=Open to=HalfOpen reason=timeout-elapsed`,
 				);
 			} else {
@@ -1148,7 +1312,9 @@ message RPCDataPayload {
 	private stopHealthMonitoring(): void {
 		if (this.healthCheckInterval) {
 			clearInterval(this.healthCheckInterval);
+
 			this.healthCheckInterval = null;
+
 			console.log("[MountainClientService] Health monitoring stopped");
 		}
 	}
@@ -1190,6 +1356,7 @@ message RPCDataPayload {
 
 			console.error(
 				"[MountainClientService] Health check failed:",
+
 				error,
 			);
 
@@ -1201,6 +1368,7 @@ message RPCDataPayload {
 				this.reconnect().catch((err) => {
 					console.error(
 						"[MountainClientService] Auto-reconnect failed:",
+
 						err,
 					);
 				});
@@ -1253,6 +1421,7 @@ message RPCDataPayload {
 			this.errorCount++;
 			console.error(
 				`[MountainClientService] Notification ${method} failed:`,
+
 				error,
 			);
 
@@ -1278,6 +1447,7 @@ message RPCDataPayload {
 			await new Promise<void>((resolve, reject) => {
 				this.client!.SendCocoonNotification(
 					notification,
+
 					(error: any) => {
 						if (error) reject(error);
 						else resolve();
@@ -1294,6 +1464,7 @@ message RPCDataPayload {
 	 */
 	async cancelOperation(
 		requestIdentifier: number,
+
 		reason: string,
 	): Promise<void> {
 		if (
@@ -1311,6 +1482,7 @@ message RPCDataPayload {
 			const cancelRequest: CancelOperationRequest = {
 				RequestIdentifierToCancel: BigInt(requestIdentifier), // Use BigInt for uint64 compatibility
 			};
+
 			await this.makeCancelRequest(cancelRequest);
 
 			console.log(
@@ -1318,8 +1490,10 @@ message RPCDataPayload {
 			);
 		} catch (error) {
 			this.errorCount++;
+
 			console.error(
 				`[MountainClientService] Cancel operation ${requestIdentifier} failed:`,
+
 				error,
 			);
 
@@ -1371,6 +1545,7 @@ message RPCDataPayload {
 			console.warn(
 				"[MountainClientService] Not connected to Mountain (already disconnected)",
 			);
+
 			return;
 		}
 
@@ -1380,6 +1555,7 @@ message RPCDataPayload {
 		this.stopHealthMonitoring();
 
 		this.client = null;
+
 		this.connectionState = ConnectionState.Disconnected;
 
 		console.log("[MountainClientService] Disconnected from Mountain");
@@ -1392,6 +1568,7 @@ message RPCDataPayload {
 		console.log("[MountainClientService] Reconnecting to Mountain");
 
 		await this.disconnect();
+
 		await this.connect();
 
 		console.log("[MountainClientService] Reconnected to Mountain");
@@ -1402,24 +1579,37 @@ message RPCDataPayload {
 	 */
 	getStatus(): {
 		connected: boolean;
+
 		mountainHost: string;
+
 		mountainPort: number;
+
 		errorCount: number;
+
 		uptime?: number;
+
 		circuitBreakerState: string;
+
 		circuitBreakerFailureCount: number;
+
 		lastHealthCheck?: Date;
 	} {
 		const IsConnected = this.connectionState === ConnectionState.Connected;
+
 		return {
 			connected: IsConnected,
+
 			mountainHost: this.mountainHost,
+
 			mountainPort: this.mountainPort,
+
 			errorCount: this.errorCount,
 			...(IsConnected
 				? { uptime: Date.now() - this.connectionStartTime }
 				: {}),
+
 			circuitBreakerState: this.circuitBreakerState,
+
 			circuitBreakerFailureCount: this.circuitBreakerFailureCount,
 			...(this.lastHealthCheck
 				? { lastHealthCheck: new Date(this.lastHealthCheck) }

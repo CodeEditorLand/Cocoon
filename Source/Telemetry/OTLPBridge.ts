@@ -58,8 +58,11 @@ export type SpanAttributes = ReadonlyArray<readonly [string, string]>;
 
 export const CaptureSpan = (
 	Name: string,
+
 	StartNano: bigint,
+
 	EndNano: bigint,
+
 	Attributes: SpanAttributes = [],
 ): void => {
 	// Build-time gate: esbuild folds `process.env.NODE_ENV` to the
@@ -67,6 +70,7 @@ export const CaptureSpan = (
 	// `"production" !== "production"` → `false` → early-return. Every
 	// JSON.stringify / span payload below is then dead-coded in prod.
 	if (process.env["NODE_ENV"] === "production") return;
+
 	if (!OTLPAvailable) return;
 
 	const SpanIdentifier = RandomHex(8);
@@ -138,6 +142,7 @@ export const CaptureSpan = (
 				},
 				timeout: 200,
 			},
+
 			(Response) => {
 				if (
 					Response.statusCode === undefined ||
@@ -174,7 +179,9 @@ export const CaptureSpan = (
  */
 export const WithSpan = async <Result>(
 	Name: string,
+
 	Body: () => Promise<Result>,
+
 	Attributes: SpanAttributes = [],
 ): Promise<Result> => {
 	const StartNano = NowNano();
@@ -192,6 +199,7 @@ export const WithSpan = async <Result>(
 
 		CaptureSpan(`${Name}:error`, StartNano, EndNano, [
 			...Attributes,
+
 			["error", String((Error as Error).message ?? Error)],
 		]);
 

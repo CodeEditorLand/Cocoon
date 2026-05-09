@@ -13,6 +13,7 @@ import { SecurityService } from "../Services/SecurityService.js";
 class PerformanceBenchmark {
 	constructor() {
 		this.results = [];
+
 		this.startTime = Date.now();
 	}
 
@@ -20,9 +21,13 @@ class PerformanceBenchmark {
 		console.log("🚀 Starting Cocoon Performance Benchmark Suite\n");
 
 		await this.benchmarkAPIFactoryService();
+
 		await this.benchmarkModuleInterceptorService();
+
 		await this.benchmarkErrorHandlingService();
+
 		await this.benchmarkSecurityService();
+
 		await this.benchmarkIntegrationScenarios();
 
 		this.printResults();
@@ -35,6 +40,7 @@ class PerformanceBenchmark {
 
 		// Benchmark API construction
 		const constructionStart = Date.now();
+
 		const constructionRequests = [];
 
 		for (let i = 0; i < 100; i++) {
@@ -51,6 +57,7 @@ class PerformanceBenchmark {
 		}
 
 		await Promise.all(constructionRequests);
+
 		const constructionTime = Date.now() - constructionStart;
 
 		this.results.push({
@@ -63,6 +70,7 @@ class PerformanceBenchmark {
 
 		// Benchmark cache performance
 		const cacheStart = Date.now();
+
 		for (let i = 0; i < 50; i++) {
 			await apiFactory.createVSCodeAPI({
 				extensionId: "cached-extension",
@@ -73,6 +81,7 @@ class PerformanceBenchmark {
 				securityContext: {},
 			});
 		}
+
 		const cacheTime = Date.now() - cacheStart;
 
 		this.results.push({
@@ -91,9 +100,11 @@ class PerformanceBenchmark {
 
 		// Benchmark module resolution
 		const resolutionStart = Date.now();
+
 		const resolutionTests = [];
 
 		const testModules = ["path", "util", "events", "stream", "buffer"];
+
 		for (const moduleName of testModules) {
 			resolutionTests.push(() =>
 				interceptor.resolveModule(moduleName, "/test/path"),
@@ -107,6 +118,7 @@ class PerformanceBenchmark {
 				// Expected for non-existent modules
 			}
 		}
+
 		const resolutionTime = Date.now() - resolutionStart;
 
 		this.results.push({
@@ -119,6 +131,7 @@ class PerformanceBenchmark {
 
 		// Benchmark security analysis
 		const securityStart = Date.now();
+
 		const securityTests = [];
 
 		for (let i = 0; i < 20; i++) {
@@ -134,6 +147,7 @@ class PerformanceBenchmark {
 				// Expected for non-existent modules
 			}
 		}
+
 		const securityTime = Date.now() - securityStart;
 
 		this.results.push({
@@ -152,18 +166,21 @@ class PerformanceBenchmark {
 
 		// Benchmark successful operations
 		const successStart = Date.now();
+
 		const successOperations = [];
 
 		for (let i = 0; i < 50; i++) {
 			successOperations.push(
 				errorHandler.executeWithRetry(
 					() => Promise.resolve(`result-${i}`),
+
 					`success-operation-${i}`,
 				),
 			);
 		}
 
 		await Promise.all(successOperations);
+
 		const successTime = Date.now() - successStart;
 
 		this.results.push({
@@ -176,19 +193,23 @@ class PerformanceBenchmark {
 
 		// Benchmark failing operations with retries
 		const failureStart = Date.now();
+
 		const failureOperations = [];
 
 		for (let i = 0; i < 10; i++) {
 			failureOperations.push(
 				errorHandler.executeWithRetry(
 					() => Promise.reject(new Error("Simulated failure")),
+
 					`failure-operation-${i}`,
+
 					{ maxRetries: 2 },
 				),
 			);
 		}
 
 		const failureResults = await Promise.allSettled(failureOperations);
+
 		const failureTime = Date.now() - failureStart;
 
 		this.results.push({
@@ -207,6 +228,7 @@ class PerformanceBenchmark {
 
 		// Benchmark access checks
 		const accessStart = Date.now();
+
 		const accessChecks = [];
 
 		for (let i = 0; i < 100; i++) {
@@ -216,6 +238,7 @@ class PerformanceBenchmark {
 		}
 
 		await Promise.all(accessChecks);
+
 		const accessTime = Date.now() - accessStart;
 
 		this.results.push({
@@ -228,6 +251,7 @@ class PerformanceBenchmark {
 
 		// Benchmark policy management
 		const policyStart = Date.now();
+
 		const policyOperations = [];
 
 		for (let i = 0; i < 50; i++) {
@@ -248,6 +272,7 @@ class PerformanceBenchmark {
 		}
 
 		await Promise.all(policyOperations);
+
 		const policyTime = Date.now() - policyStart;
 
 		this.results.push({
@@ -266,7 +291,9 @@ class PerformanceBenchmark {
 		const integrationStart = Date.now();
 
 		const securityService = new SecurityService();
+
 		const moduleInterceptor = new ModuleInterceptorService();
+
 		const errorHandler = new ErrorHandlingService();
 
 		// Simulate extension loading workflow
@@ -276,14 +303,18 @@ class PerformanceBenchmark {
 			extensionWorkflows.push(
 				this.simulateExtensionActivation(
 					i,
+
 					securityService,
+
 					moduleInterceptor,
+
 					errorHandler,
 				),
 			);
 		}
 
 		await Promise.all(extensionWorkflows);
+
 		const integrationTime = Date.now() - integrationStart;
 
 		this.results.push({
@@ -297,25 +328,31 @@ class PerformanceBenchmark {
 
 	async simulateExtensionActivation(
 		extensionId,
+
 		securityService,
+
 		moduleInterceptor,
+
 		errorHandler,
 	) {
 		// Simulate security check
 		await securityService.checkModuleAccess(
 			`extension-${extensionId}`,
+
 			"path",
 		);
 
 		// Simulate module resolution
 		moduleInterceptor.resolveModule(
 			"path",
+
 			`/extensions/extension-${extensionId}`,
 		);
 
 		// Simulate operation with error handling
 		await errorHandler.executeWithRetry(
 			() => Promise.resolve("activation-success"),
+
 			`extension-activation-${extensionId}`,
 		);
 	}
@@ -324,9 +361,11 @@ class PerformanceBenchmark {
 		const totalTime = Date.now() - this.startTime;
 
 		console.log("\n📈 Performance Benchmark Results:");
+
 		console.log("=".repeat(80));
 
 		let passed = 0;
+
 		let failed = 0;
 
 		this.results.forEach((result) => {
@@ -341,7 +380,9 @@ class PerformanceBenchmark {
 		});
 
 		console.log("=".repeat(80));
+
 		console.log(`🏁 Total Benchmark Time: ${totalTime}ms`);
+
 		console.log(`📊 Results: ${passed} PASSED, ${failed} FAILED`);
 
 		if (failed === 0) {
@@ -357,6 +398,7 @@ class PerformanceBenchmark {
 // Run benchmarks if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const benchmark = new PerformanceBenchmark();
+
 	benchmark.runAllBenchmarks().catch(console.error);
 }
 

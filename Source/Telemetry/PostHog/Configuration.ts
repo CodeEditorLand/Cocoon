@@ -8,12 +8,19 @@
 
 export type Configuration = {
 	readonly Key: string;
+
 	readonly Host: string;
+
 	readonly Enabled: boolean;
+
 	readonly BatchWindowMilliseconds: number;
+
 	readonly BatchMaximum: number;
+
 	readonly DistinctIdentifierSeed: string;
+
 	readonly OTLPEndpoint: string;
+
 	readonly OTLPEnabled: boolean;
 };
 
@@ -63,6 +70,7 @@ export default (): Configuration => ({
 		process.env["NODE_ENV"] !== "production",
 	BatchWindowMilliseconds: ReadNumber(
 		"Buffer",
+
 		DefaultBatchWindowMilliseconds,
 	),
 	BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),

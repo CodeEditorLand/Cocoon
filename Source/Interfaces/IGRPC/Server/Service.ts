@@ -27,8 +27,11 @@ export interface IGRPCServerService {
 	 */
 	getStatus(): {
 		running: boolean;
+
 		port: number;
+
 		uptime?: number;
+
 		errorCount: number;
 	};
 }

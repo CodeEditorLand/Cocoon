@@ -14,17 +14,23 @@ import { IAPIFactoryService } from "../../API/Factory/Service.js";
 // Types matching VSCode patterns
 interface IExtensionDescription {
 	identifier: string;
+
 	extensionLocation: string;
+
 	main?: string;
+
 	activationEvents: string[];
 }
 
 interface ActivatedExtension {
 	activationTimes: {
 		codeLoadingTime: number;
+
 		activateCallTime: number;
+
 		activateResolvedTime: number;
 	};
+
 	exports?: any;
 }
 
@@ -39,6 +45,7 @@ export class ExtensionHostService implements IExtensionHostService {
 
 	constructor(
 		private moduleInterceptor: IModuleInterceptorService,
+
 		private apiFactory: IAPIFactoryService,
 	) {}
 
@@ -47,6 +54,7 @@ export class ExtensionHostService implements IExtensionHostService {
 	 */
 	async activateExtension(
 		extensionId: string,
+
 		activationEvent: string,
 	): Promise<void> {
 		if (this.activatedExtensions.has(extensionId)) {
@@ -70,23 +78,32 @@ export class ExtensionHostService implements IExtensionHostService {
 			// 3. Mock extension description (In real app, fetch from Registry)
 			const extension: IExtensionDescription = {
 				identifier: extensionId,
+
 				extensionLocation: `/extensions/${extensionId}`,
+
 				main: "extension.js",
+
 				activationEvents: [activationEvent],
 			};
 
 			// 4. Load the extension module
 			const moduleLoadStart = Date.now();
+
 			const extensionModule = await this._loadExtensionModule(extension);
+
 			const codeLoadingTime = Date.now() - moduleLoadStart;
 
 			// 5. Activate
 			const activateCallStart = Date.now();
+
 			const exports = await this._callActivate(
 				extensionModule,
+
 				extension,
 			);
+
 			const activateCallTime = Date.now() - activateCallStart;
+
 			const activateResolvedTime = Date.now() - startTime;
 
 			this.activatedExtensions.set(extensionId, {
@@ -104,8 +121,10 @@ export class ExtensionHostService implements IExtensionHostService {
 		} catch (error) {
 			console.error(
 				`[ExtensionHost] Failed to activate ${extensionId}:`,
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -122,6 +141,7 @@ export class ExtensionHostService implements IExtensionHostService {
 		}
 
 		const modulePath = `${extension.extensionLocation}/${extension.main}`;
+
 		console.log(`[ExtensionHost] Loading module: ${modulePath}`);
 
 		// Advanced module loading with security interception
@@ -129,6 +149,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			// Resolve module path using interceptor
 			const resolvedPath = this.moduleInterceptor.resolveModule(
 				modulePath,
+
 				extension.extensionLocation,
 			);
 
@@ -136,6 +157,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			// Note: interceptRequire would be synchronous in Node, but we simulate it here
 			const extensionModule = this.moduleInterceptor.interceptRequire(
 				resolvedPath,
+
 				extension.extensionLocation,
 			);
 
@@ -143,6 +165,7 @@ export class ExtensionHostService implements IExtensionHostService {
 		} catch (error) {
 			console.error(
 				`[ExtensionHost] Failed to load module ${modulePath}:`,
+
 				error,
 			);
 
@@ -151,10 +174,12 @@ export class ExtensionHostService implements IExtensionHostService {
 			console.warn(
 				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
 			);
+
 			return {
 				activate: (_context: any) => {
 					console.log(`[${extension.identifier}] activate() called`);
 				},
+
 				deactivate: () => {},
 			};
 		}
@@ -165,6 +190,7 @@ export class ExtensionHostService implements IExtensionHostService {
 	 */
 	private async _callActivate(
 		extensionModule: any,
+
 		extension: IExtensionDescription,
 	): Promise<any> {
 		if (typeof extensionModule.activate !== "function") {
@@ -176,9 +202,13 @@ export class ExtensionHostService implements IExtensionHostService {
 		// We use a simplified context here, delegating complex parts to the API Factory if needed
 		const context = {
 			subscriptions: [],
+
 			extensionPath: extension.extensionLocation,
+
 			globalState: { get: () => {}, update: () => {} },
+
 			workspaceState: { get: () => {}, update: () => {} },
+
 			secrets: { get: () => {}, store: () => {}, delete: () => {} },
 		};
 
@@ -193,7 +223,9 @@ export class ExtensionHostService implements IExtensionHostService {
 		if (!this.activatedExtensions.has(extensionId)) {
 			return;
 		}
+
 		console.log(`[ExtensionHost] Deactivating extension: ${extensionId}`);
+
 		this.activatedExtensions.delete(extensionId);
 	}
 }
@@ -203,6 +235,7 @@ export class ExtensionHostService implements IExtensionHostService {
  */
 export const ExtensionHostLayer = Layer.effect(
 	IExtensionHostService,
+
 	Effect.gen(function* () {
 		const moduleInterceptor = yield* IModuleInterceptorService;
 		const apiFactory = yield* IAPIFactoryService;

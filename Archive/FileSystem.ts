@@ -31,6 +31,7 @@ export interface FileSystem extends VSCodeFileSystem {
  */
 export class FileSystemService extends Effect.Service<FileSystemService>()(
 	"Service/FileSystem",
+
 	{
 		effect: Effect.gen(function* () {
 			const FileSystemInformation = yield* FileSystemInformationService;

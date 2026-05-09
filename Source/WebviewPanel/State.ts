@@ -63,6 +63,7 @@ import type { Uri } from "vscode";
  */
 export interface PanelPosition {
 	readonly ViewColumn: number;
+
 	readonly PreservedFocus: boolean;
 }
 
@@ -72,7 +73,9 @@ export interface PanelPosition {
  */
 export interface PanelViewState {
 	readonly Active: boolean;
+
 	readonly Visible: boolean;
+
 	readonly ViewColumn: number;
 }
 
@@ -82,9 +85,13 @@ export interface PanelViewState {
  */
 export interface PanelOptions {
 	readonly EnableScripts?: boolean;
+
 	readonly RetainContextWhenHidden?: boolean;
+
 	readonly EnableFindWidget?: boolean;
+
 	readonly LocalResourceRoots?: readonly string[];
+
 	readonly PortMapping?: readonly unknown[];
 }
 
@@ -94,21 +101,34 @@ export interface PanelOptions {
  */
 export interface PanelState {
 	readonly Version: number;
+
 	readonly Handle: string;
+
 	readonly ExtensionId: string;
+
 	readonly ViewType: string;
+
 	readonly Title: string;
+
 	readonly Position: PanelPosition;
+
 	readonly ViewState: PanelViewState;
+
 	readonly Options: PanelOptions;
+
 	readonly IconPath?: string;
+
 	readonly Content?: {
 		readonly Html?: string;
+
 		readonly Uris?: readonly string[];
 	};
+
 	readonly Metadata?: {
 		readonly CreatedAt: number;
+
 		readonly LastRestoredAt?: number;
+
 		readonly User?: string;
 	};
 }
@@ -121,13 +141,17 @@ export interface StateManager {
 	readonly SavePanelState: (
 		PanelState: PanelState,
 	) => Effect.Effect<void, Error>;
+
 	readonly RestorePanelState: (
 		Handle: string,
 	) => Effect.Effect<PanelState | null, Error>;
+
 	readonly DeletePanelState: (Handle: string) => Effect.Effect<void, Error>;
+
 	readonly GetAllPanelStates: (
 		ExtensionId: string,
 	) => Effect.Effect<readonly PanelState[], Error>;
+
 	readonly ClearAllPanelStates: () => Effect.Effect<void, Error>;
 }
 
@@ -143,11 +167,13 @@ const STATE_VERSION = 1;
  */
 export class StateService extends Effect.Service<StateService>()(
 	"State/WebviewPanel",
+
 	{
 		effect: Effect.gen(function* () {
 			// In-memory cache of panel states (simplified implementation)
 			const StateCacheRef = yield* Effect.tryMap(
 				Effect.sync(() => new Map<string, PanelState>()),
+
 				(error) => new Error(`Failed to create state cache: ${error}`),
 			);
 
@@ -301,9 +327,11 @@ export class StateService extends Effect.Service<StateService>()(
 								}
 							).current.set(
 								PanelStateData.Handle,
+
 								PanelStateData,
 							);
 						}),
+
 						(error) =>
 							new Error(`Failed to save panel state: ${error}`),
 					);
@@ -349,6 +377,7 @@ export class StateService extends Effect.Service<StateService>()(
 								}
 							).current.delete(Handle);
 						}),
+
 						(error) =>
 							new Error(`Failed to delete panel state: ${error}`),
 					);
@@ -388,6 +417,7 @@ export class StateService extends Effect.Service<StateService>()(
 								}
 							).current.clear();
 						}),
+
 						(error) =>
 							new Error(`Failed to clear panel states: ${error}`),
 					);

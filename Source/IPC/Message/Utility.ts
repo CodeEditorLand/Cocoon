@@ -32,9 +32,13 @@ export const GenerateMessageID = (): string =>
  */
 export const CreateMessage = (
 	Data: Uint8Array | string,
+
 	MessageType: string,
+
 	Source: string,
+
 	Destination: string,
+
 	Hint: CompressionHint = CompressionHint.None,
 ): IMessage => {
 	const DataBytes =
@@ -42,14 +46,21 @@ export const CreateMessage = (
 
 	return {
 		Data: DataBytes,
+
 		Metadata: {
 			MessageID: GenerateMessageID(),
+
 			Source,
+
 			Destination,
+
 			Timestamp: Date.now(),
+
 			MessageType,
 		},
+
 		CompressionHint: Hint,
+
 		Flags: MessageFlags.None,
 	};
 };

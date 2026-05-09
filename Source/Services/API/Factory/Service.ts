@@ -18,10 +18,13 @@ import * as LanguageProviderRegistry from "../../Language/Provider/Registry.js";
 // Loaded once at module init - all extensions share these class definitions.
 const VsCodeTypes =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
+
 const { URI } =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
+
 const { CancellationTokenSource, CancellationToken } =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
+
 const { Emitter } =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
 
@@ -47,13 +50,19 @@ const { Emitter } =
 // result is an instance of the stock class, so any `instanceof` check
 // downstream still matches.
 const StockRelativePattern: any = VsCodeTypes.RelativePattern;
+
 const HydrateBase = (Base: unknown): unknown => {
 	if (Base == null) return Base;
+
 	if (typeof Base === "string") return Base;
+
 	if (Base instanceof URI) return Base;
+
 	if (typeof (Base as { uri?: unknown }).uri !== "undefined") {
 		const Uri = (Base as { uri?: unknown }).uri;
+
 		if (Uri instanceof URI) return Base;
+
 		// Empty-string short-circuit + try/catch around `URI.parse` so
 		// extensions that pass `{ uri: "" }` don't trigger
 		// `[UriError]: Scheme contains illegal characters. (len:0)` and
@@ -62,6 +71,7 @@ const HydrateBase = (Base: unknown): unknown => {
 		// shape instead of a crash - the stock RelativePattern
 		// constructor accepts that path with its own fallback.
 		let Revived: unknown;
+
 		if (typeof Uri === "string") {
 			if (Uri.length === 0) {
 				Revived = undefined;
@@ -79,30 +89,41 @@ const HydrateBase = (Base: unknown): unknown => {
 				Revived = undefined;
 			}
 		}
+
 		return { ...(Base as object), uri: Revived };
 	}
+
 	try {
 		const Revived = URI.revive(Base as any);
+
 		return Revived ?? Base;
 	} catch {
 		return Base;
 	}
 };
+
 const PatchedRelativePattern: any = function RelativePattern(
 	this: unknown,
+
 	Base: unknown,
+
 	Pattern: string,
 ) {
 	const Safe = HydrateBase(Base);
+
 	// Forward to the stock constructor. `Reflect.construct` preserves
 	// prototype chain so `instanceof vscode.RelativePattern` still works.
 	return Reflect.construct(
 		StockRelativePattern,
+
 		[Safe, Pattern],
+
 		PatchedRelativePattern,
 	);
 };
+
 PatchedRelativePattern.prototype = StockRelativePattern.prototype;
+
 Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 
 // --- API Service Interface ---
@@ -110,21 +131,32 @@ Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 export interface IAPIFactoryService {
 	createAPI(): any;
 }
+
 export const IAPIFactoryService = Context.Tag<IAPIFactoryService>();
 
 // --- API Implementation ---
 
 interface VSCodeAPI {
 	version: string;
+
 	env: any;
+
 	commands: any;
+
 	window: any;
+
 	workspace: any;
+
 	extensions: any;
+
 	languages: any;
+
 	debug: any;
+
 	scm: any;
+
 	authentication: any;
+
 	[key: string]: any;
 }
 
@@ -133,8 +165,11 @@ interface VSCodeAPI {
  */
 const createVSCodeAPI = (
 	mountainClient: IMountainClientService,
+
 	configService: IConfigurationService,
+
 	fsService: IFileSystemService,
+
 	terminalService: ITerminalService,
 ): VSCodeAPI => {
 	return {
@@ -142,60 +177,115 @@ const createVSCodeAPI = (
 
 		// --- Type Constructors (real VS Code classes from @codeeditorland/output) ---
 		Position: VsCodeTypes.Position,
+
 		Range: VsCodeTypes.Range,
+
 		Location: VsCodeTypes.Location,
+
 		Selection: VsCodeTypes.Selection,
+
 		MarkdownString: VsCodeTypes.MarkdownString,
+
 		Hover: VsCodeTypes.Hover,
+
 		CompletionItem: VsCodeTypes.CompletionItem,
+
 		CompletionItemKind: VsCodeTypes.CompletionItemKind,
+
 		CompletionItemTag: VsCodeTypes.CompletionItemTag,
+
 		CompletionList: VsCodeTypes.CompletionList,
+
 		CompletionTriggerKind: VsCodeTypes.CompletionTriggerKind,
+
 		Diagnostic: VsCodeTypes.Diagnostic,
+
 		DiagnosticSeverity: VsCodeTypes.DiagnosticSeverity,
+
 		DiagnosticTag: VsCodeTypes.DiagnosticTag,
+
 		DiagnosticRelatedInformation: VsCodeTypes.DiagnosticRelatedInformation,
+
 		TextEdit: VsCodeTypes.TextEdit,
+
 		WorkspaceEdit: VsCodeTypes.WorkspaceEdit,
+
 		SnippetString: VsCodeTypes.SnippetString,
+
 		SnippetTextEdit: VsCodeTypes.SnippetTextEdit,
+
 		SymbolKind: VsCodeTypes.SymbolKind,
+
 		SymbolInformation: VsCodeTypes.SymbolInformation,
+
 		DocumentSymbol: VsCodeTypes.DocumentSymbol,
+
 		CodeActionKind: VsCodeTypes.CodeActionKind,
+
 		CodeAction: VsCodeTypes.CodeAction,
+
 		CodeActionTriggerKind: VsCodeTypes.CodeActionTriggerKind,
+
 		SignatureHelp: VsCodeTypes.SignatureHelp,
+
 		SignatureHelpTriggerKind: VsCodeTypes.SignatureHelpTriggerKind,
+
 		SignatureInformation: VsCodeTypes.SignatureInformation,
+
 		ParameterInformation: VsCodeTypes.ParameterInformation,
+
 		InlayHint: VsCodeTypes.InlayHint,
+
 		InlayHintKind: VsCodeTypes.InlayHintKind,
+
 		InlayHintLabelPart: VsCodeTypes.InlayHintLabelPart,
+
 		FoldingRange: VsCodeTypes.FoldingRange,
+
 		FoldingRangeKind: VsCodeTypes.FoldingRangeKind,
+
 		DocumentHighlight: VsCodeTypes.DocumentHighlight,
+
 		DocumentHighlightKind: VsCodeTypes.DocumentHighlightKind,
+
 		DocumentLink: VsCodeTypes.DocumentLink,
+
 		SelectionRange: VsCodeTypes.SelectionRange,
+
 		SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
+
 		SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
+
 		SemanticTokens: VsCodeTypes.SemanticTokens,
+
 		RelativePattern: PatchedRelativePattern,
+
 		Disposable: VsCodeTypes.Disposable,
+
 		StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
+
 		ThemeColor: VsCodeTypes.ThemeColor,
+
 		ThemeIcon: VsCodeTypes.ThemeIcon,
+
 		TreeItem: VsCodeTypes.TreeItem,
+
 		TreeItemCollapsibleState: VsCodeTypes.TreeItemCollapsibleState,
+
 		ViewColumn: VsCodeTypes.ViewColumn,
+
 		EndOfLine: VsCodeTypes.EndOfLine,
+
 		FileSystemError: VsCodeTypes.FileSystemError,
+
 		FileChangeType: VsCodeTypes.FileChangeType,
+
 		ConfigurationTarget: VsCodeTypes.ConfigurationTarget,
+
 		DecorationRangeBehavior: VsCodeTypes.DecorationRangeBehavior,
+
 		TextDocumentSaveReason: VsCodeTypes.TextDocumentSaveReason,
+
 		// These enums are declared in vs/editor/common/config/editorOptions.ts
 		// and vs/workbench/services/extensions/common/extensionHostProtocol.ts
 		// respectively, but extHostTypes.js doesn't re-export them. Extensions
@@ -204,17 +294,27 @@ const createVSCodeAPI = (
 		// what extensions expect. Keep in sync with the upstream enums.
 		TextEditorCursorStyle: {
 			Line: 1,
+
 			Block: 2,
+
 			Underline: 3,
+
 			LineThin: 4,
+
 			BlockOutline: 5,
+
 			UnderlineThin: 6,
 		},
+
 		UIKind: { Desktop: 1, Web: 2 },
+
 		// URI is exposed as 'Uri' to match the vscode API surface
 		Uri: URI,
+
 		CancellationTokenSource,
+
 		CancellationToken,
+
 		// Emitter is the vscode.EventEmitter equivalent
 		EventEmitter: Emitter,
 
@@ -229,16 +329,20 @@ const createVSCodeAPI = (
 					message: message,
 					level: "info",
 				});
+
 				return undefined;
 			},
+
 			showErrorMessage: async (message: string, ..._items: string[]) => {
 				await mountainClient.sendRequest("window.showMessage", {
 					title: "Error",
 					message: message,
 					level: "error",
 				});
+
 				return undefined;
 			},
+
 			showWarningMessage: async (
 				message: string,
 				..._items: string[]
@@ -248,36 +352,49 @@ const createVSCodeAPI = (
 					message: message,
 					level: "warn",
 				});
+
 				return undefined;
 			},
+
 			createTerminal: (options: any) => {
 				const name =
 					typeof options === "string" ? options : options.name;
+
 				const shellPath =
 					typeof options === "object" ? options.shellPath : undefined;
+
 				const cwd =
 					typeof options === "object" ? options.cwd : undefined;
 
 				const terminalIdPromise = terminalService.createTerminal(
 					name,
+
 					shellPath,
+
 					cwd,
 				);
 
 				return {
 					name,
+
 					sendText: async (text: string) => {
 						const id = await terminalIdPromise;
+
 						await terminalService.sendText(id, text);
 					},
+
 					show: () => {},
+
 					hide: () => {},
+
 					dispose: async () => {
 						const id = await terminalIdPromise;
+
 						await terminalService.kill(id);
 					},
 				};
 			},
+
 			createStatusBarItem: (_alignment?: any, _priority?: number) => ({
 				show: () => {},
 				hide: () => {},
@@ -286,6 +403,7 @@ const createVSCodeAPI = (
 				tooltip: "",
 				command: undefined,
 			}),
+
 			createOutputChannel: (_name: string) => ({
 				append: (_value: string) => {},
 				appendLine: (_value: string) => {},
@@ -294,9 +412,11 @@ const createVSCodeAPI = (
 				hide: () => {},
 				dispose: () => {},
 			}),
+
 			withProgress: async (_options: any, task: any) => {
 				return task({ report: (_value: any) => {} });
 			},
+
 			// Terminal shell-integration events. Land doesn't track shell
 			// integration, so extensions (openai.chatgpt) that subscribe get
 			// a never-firing event that still registers/disposes cleanly.
@@ -306,9 +426,11 @@ const createVSCodeAPI = (
 			onDidChangeTerminalShellIntegration: (_Listener: any) => ({
 				dispose: () => {},
 			}),
+
 			onDidStartTerminalShellExecution: (_Listener: any) => ({
 				dispose: () => {},
 			}),
+
 			onDidEndTerminalShellExecution: (_Listener: any) => ({
 				dispose: () => {},
 			}),
@@ -317,45 +439,64 @@ const createVSCodeAPI = (
 		// --- Workspace Namespace ---
 		workspace: {
 			workspaceFolders: [],
+
 			getConfiguration: (section?: string) => {
 				return {
 					get: (key: string, defaultValue?: any) => {
 						const fullKey = section ? `${section}.${key}` : key;
+
 						return configService.getValue(fullKey, 0, defaultValue);
 					},
+
 					update: async (key: string, value: any, target: any) => {
 						const fullKey = section ? `${section}.${key}` : key;
+
 						await configService.setValue(fullKey, value, target);
 					},
+
 					has: (key: string) =>
 						configService.hasKey(
 							section ? `${section}.${key}` : key,
+
 							0,
 						),
+
 					inspect: (key: string) =>
 						configService.inspect(
 							section ? `${section}.${key}` : key,
+
 							0,
 						),
 				};
 			},
+
 			// Filesystem API (Real Implementation)
 			fs: {
 				stat: (uri: any) => fsService.stat(uri),
+
 				readFile: (uri: any) => fsService.readFile(uri),
+
 				writeFile: (uri: any, content: Uint8Array) =>
 					fsService.writeFile(uri, content),
+
 				readDirectory: (uri: any) => fsService.readDirectory(uri),
+
 				createDirectory: (uri: any) => fsService.createDirectory(uri),
+
 				delete: (uri: any, options: { recursive: boolean }) =>
 					fsService.delete(uri, options),
+
 				rename: (
 					source: any,
+
 					target: any,
+
 					options: { overwrite: boolean },
 				) => fsService.rename(source, target, options),
 			},
+
 			findFiles: async (_include: string) => [],
+
 			openTextDocument: async (uri: any) => ({
 				getText: () => "",
 				uri,
@@ -378,6 +519,7 @@ const createVSCodeAPI = (
 			return {
 				registerCommand: (
 					command: string,
+
 					callback: (...args: any[]) => any,
 				) => {
 					LocalHandlers.set(command, callback);
@@ -411,6 +553,7 @@ const createVSCodeAPI = (
 					try {
 						const Result = await mountainClient.sendRequest(
 							"executeCommand",
+
 							{
 								commandId: command,
 								arguments: args.map((Arg) => {
@@ -466,27 +609,40 @@ const createVSCodeAPI = (
 		// --- Env Namespace ---
 		env: {
 			appName: "CodeEditorLand",
+
 			appRoot: "/app",
+
 			language: "en-US",
+
 			clipboard: {
 				readText: async () => "",
+
 				writeText: async (_value: string) => {},
 			},
+
 			openExternal: async (target: any) => {
 				const Url =
 					typeof target === "string"
 						? target
 						: (target?.toString?.() ?? "");
+
 				await mountainClient.sendNotification("openExternal", {
 					url: Url,
 				});
+
 				return true;
 			},
+
 			uriScheme: "codeeditorland",
+
 			appHost: "desktop",
+
 			remoteName: "",
+
 			isNewAppInstall: false,
+
 			isTelemetryEnabled: false,
+
 			onDidChangeTelemetryEnabled: {
 				event: () => ({ dispose: () => {} }),
 			},
@@ -495,6 +651,7 @@ const createVSCodeAPI = (
 		// --- Extensions Namespace ---
 		extensions: {
 			getExtension: (_id: string) => undefined,
+
 			all: [],
 		},
 
@@ -507,7 +664,9 @@ const createVSCodeAPI = (
 
 			const RegisterProvider = (
 				type: string,
+
 				selector: any,
+
 				provider: any,
 			) => {
 				const Handle = NextHandle++;
@@ -540,6 +699,7 @@ const createVSCodeAPI = (
 						set: (uri: any, diagnostics: any) =>
 							Items.set(
 								uri?.toString?.() ?? String(uri),
+
 								diagnostics,
 							),
 						delete: (uri: any) =>
@@ -558,6 +718,7 @@ const createVSCodeAPI = (
 					RegisterProvider("hover_provider", sel, p),
 				registerCompletionItemProvider: (
 					sel: any,
+
 					p: any,
 					..._: string[]
 				) => RegisterProvider("completion_item_provider", sel, p),
@@ -571,7 +732,9 @@ const createVSCodeAPI = (
 					RegisterProvider("document_highlight_provider", sel, p),
 				registerDocumentSymbolProvider: (
 					sel: any,
+
 					p: any,
+
 					_meta?: any,
 				) => RegisterProvider("document_symbol_provider", sel, p),
 				registerWorkspaceSymbolProvider: (p: any) =>
@@ -582,21 +745,27 @@ const createVSCodeAPI = (
 					RegisterProvider("document_formatting_provider", sel, p),
 				registerDocumentRangeFormattingEditProvider: (
 					sel: any,
+
 					p: any,
 				) =>
 					RegisterProvider(
 						"document_range_formatting_provider",
+
 						sel,
+
 						p,
 					),
 				registerOnTypeFormattingEditProvider: (
 					sel: any,
+
 					p: any,
+
 					_first: string,
 					..._more: string[]
 				) => RegisterProvider("on_type_formatting_provider", sel, p),
 				registerSignatureHelpProvider: (
 					sel: any,
+
 					p: any,
 					..._: any[]
 				) => RegisterProvider("signature_help_provider", sel, p),
@@ -608,12 +777,16 @@ const createVSCodeAPI = (
 					RegisterProvider("selection_range_provider", sel, p),
 				registerDocumentSemanticTokensProvider: (
 					sel: any,
+
 					p: any,
+
 					_legend: any,
 				) => RegisterProvider("semantic_tokens_provider", sel, p),
 				registerDocumentRangeSemanticTokensProvider: (
 					sel: any,
+
 					p: any,
+
 					_legend: any,
 				) => RegisterProvider("semantic_tokens_provider", sel, p),
 				registerInlayHintsProvider: (sel: any, p: any) =>
@@ -649,10 +822,13 @@ const createVSCodeAPI = (
 				},
 			};
 		})(),
+
 		debug: {
 			startDebugging: async () => false,
+
 			activeDebugSession: undefined,
 		},
+
 		scm: {
 			createSourceControl: (_id: string, _label: string) => ({
 				createResourceGroup: (_id: string, _label: string) => ({
@@ -661,6 +837,7 @@ const createVSCodeAPI = (
 				dispose: () => {},
 			}),
 		},
+
 		authentication: {
 			getSession: async () => undefined,
 		},
@@ -672,19 +849,27 @@ const createVSCodeAPI = (
  */
 export class APIFactoryService implements IAPIFactoryService {
 	readonly _serviceBrand: undefined;
+
 	private api: any;
 
 	constructor(
 		private mountainClient: IMountainClientService,
+
 		private configService: IConfigurationService,
+
 		private fsService: IFileSystemService,
+
 		private terminalService: ITerminalService,
+
 		private moduleInterceptor: IModuleInterceptorService,
 	) {
 		this.api = createVSCodeAPI(
 			mountainClient,
+
 			configService,
+
 			fsService,
+
 			terminalService,
 		);
 	}
@@ -702,6 +887,7 @@ export class APIFactoryService implements IAPIFactoryService {
  */
 export const APIFactoryLayer = Layer.effect(
 	IAPIFactoryService,
+
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
 		const configService = yield* IConfigurationService;
@@ -711,9 +897,13 @@ export const APIFactoryLayer = Layer.effect(
 
 		return new APIFactoryService(
 			mountainClient,
+
 			configService,
+
 			fsService,
+
 			terminalService,
+
 			moduleInterceptor,
 		);
 	}),

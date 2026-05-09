@@ -28,14 +28,20 @@ import {
 export interface QuickInput {
 	readonly ShowQuickPick: <T extends QuickPickItem>(
 		items: readonly T[] | Promise<readonly T[]>,
+
 		options?: QuickPickOptions,
+
 		token?: CancellationToken,
 	) => Effect.Effect<T | T[] | undefined, Error>;
+
 	readonly ShowInputBox: (
 		options?: InputBoxOptions,
+
 		token?: CancellationToken,
 	) => Effect.Effect<string | undefined, Error>;
+
 	readonly CreateQuickPick: <T extends QuickPickItem>() => QuickPick<T>;
+
 	readonly CreateInputBox: () => InputBox;
 }
 
@@ -45,13 +51,16 @@ export interface QuickInput {
  */
 export class QuickInputService extends Effect.Service<QuickInputService>()(
 	"Service/QuickInput",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
 
 			const ShowQuickPick = <T extends QuickPickItem>(
 				Items: readonly T[] | Promise<readonly T[]>,
+
 				Option: QuickPickOptions = {},
+
 				Token?: CancellationToken,
 			): Effect.Effect<T | T[] | undefined, Error> =>
 				Effect.gen(function* () {
@@ -73,6 +82,7 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 						Effect.catchIf(isCancellationError, () =>
 							Effect.succeed(undefined),
 						),
+
 						Effect.mapError((cause) => new Error(String(cause))),
 					);
 					if (Option?.canPickMany) {
@@ -95,6 +105,7 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 
 			const ShowInputBox = (
 				Option?: InputBoxOptions,
+
 				Token?: CancellationToken,
 			): Effect.Effect<string | undefined, Error> =>
 				Effect.gen(function* () {
@@ -107,11 +118,13 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 					};
 					return yield* IPC.SendRequest<string | undefined>(
 						"$showInputBox",
+
 						[IPCOptions],
 					).pipe(
 						Effect.catchIf(isCancellationError, () =>
 							Effect.succeed(undefined),
 						),
+
 						Effect.mapError((cause) => new Error(String(cause))),
 					);
 				});

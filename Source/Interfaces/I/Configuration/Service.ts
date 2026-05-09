@@ -10,12 +10,15 @@ import { Context } from "effect";
 // Configuration scopes matching VSCode patterns
 export enum ConfigurationScope {
 	APPLICATION = "APPLICATION",
+
 	WORKSPACE = "WORKSPACE",
+
 	PROFILE = "PROFILE",
 }
 
 export interface ConfigurationChangeEvent {
 	affectedKeys: string[];
+
 	scope: ConfigurationScope;
 }
 
@@ -32,7 +35,9 @@ export interface IConfigurationService {
 	 */
 	getValue<T>(
 		key: string,
+
 		scope: ConfigurationScope,
+
 		defaultValue?: T,
 	): T | undefined;
 
@@ -41,7 +46,9 @@ export interface IConfigurationService {
 	 */
 	setValue<T>(
 		key: string,
+
 		value: T,
+
 		scope: ConfigurationScope,
 	): Promise<void>;
 
@@ -50,7 +57,9 @@ export interface IConfigurationService {
 	 */
 	updateValue<T>(
 		key: string,
+
 		updateFn: (currentValue: T | undefined) => T,
+
 		scope: ConfigurationScope,
 	): Promise<void>;
 

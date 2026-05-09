@@ -20,49 +20,68 @@ import { CreateEventStream } from "../../Utility/Event/Stream.js";
  */
 export class WebviewImplementation implements Webview {
 	private IsDisposed = false;
+
 	private _html = "";
+
 	private _options: WebviewOptions;
 
 	private readonly OnDidReceiveMessageEmitter = CreateEventStream<any>();
+
 	public readonly onDidReceiveMessage: Event<any>;
 
 	constructor(
 		public readonly Handle: string,
+
 		private readonly IPCService: IPC,
+
 		private readonly Extension: IExtensionDescription,
+
 		InitialOptions: WebviewOptions,
 	) {
 		this._options = InitialOptions;
+
 		this.onDidReceiveMessage = this.OnDidReceiveMessageEmitter.event;
 	}
 
 	public get html(): string {
 		return this._html;
 	}
+
 	public set html(Value: string) {
 		if (this.IsDisposed || this._html === Value) return;
+
 		this._html = Value;
+
 		const UpdateEffect = this.IPCService.SendNotification(
 			"$setWebviewHtml",
+
 			[this.Handle, Value],
 		);
+
 		Effect.runFork(UpdateEffect);
 	}
 
 	public get options(): WebviewOptions {
 		return this._options;
 	}
+
 	public set options(NewOptions: WebviewOptions) {
 		if (this.IsDisposed) return;
+
 		this._options = NewOptions;
+
 		const OptionsDTO = ConvertContentOptionToDTO(
 			this.Extension,
+
 			NewOptions,
 		);
+
 		const UpdateEffect = this.IPCService.SendNotification(
 			"$setWebviewOptions",
+
 			[this.Handle, OptionsDTO],
 		);
+
 		Effect.runFork(UpdateEffect);
 	}
 
@@ -78,15 +97,19 @@ export class WebviewImplementation implements Webview {
 
 	public postMessage(Message: any): Promise<boolean> {
 		if (this.IsDisposed) return Promise.resolve(false);
+
 		const PostEffect = this.IPCService.SendRequest<boolean>(
 			"$postMessageToWebview",
+
 			[this.Handle, Message],
 		).pipe(Effect.catchAll(() => Effect.succeed(false)));
+
 		return Effect.runPromise(PostEffect);
 	}
 
 	public asWebviewUri(LocalResource: Uri): Uri {
 		const Authority = this.Extension.identifier.value.toLowerCase();
+
 		return LocalResource.with({
 			scheme: Schemas.vscodeFileResource,
 			authority: Authority,
@@ -102,6 +125,7 @@ export class WebviewImplementation implements Webview {
 	public dispose(): void {
 		if (!this.IsDisposed) {
 			this.IsDisposed = true;
+
 			this.OnDidReceiveMessageEmitter.Shutdown();
 		}
 	}

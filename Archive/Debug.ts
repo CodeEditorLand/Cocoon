@@ -33,10 +33,12 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 export interface ProviderEntry {
 	readonly Type: string;
+
 	readonly Provider:
 		| DebugConfigurationProvider
 		| DebugAdapterDescriptorFactory
 		| DebugAdapterTrackerFactory;
+
 	readonly Extension: IExtensionDescription;
 }
 
@@ -46,10 +48,15 @@ export interface ProviderEntry {
  */
 export interface DebuggerState {
 	readonly ActiveDebugSession: DebugSession | undefined;
+
 	readonly ActiveDebugConsole: DebugConsole;
+
 	readonly Breakpoints: readonly Breakpoint[];
+
 	readonly DebugConfigurationProviders: Map<number, ProviderEntry>;
+
 	readonly DebugAdapterDescriptorFactories: Map<number, ProviderEntry>;
+
 	readonly DebugAdapterTrackerFactories: Map<number, ProviderEntry>;
 }
 
@@ -59,40 +66,63 @@ export interface DebuggerState {
  */
 export interface DebugInterface {
 	readonly activeDebugSession: DebugSession | undefined;
+
 	readonly activeDebugConsole: DebugConsole;
+
 	readonly breakpoints: readonly Breakpoint[];
+
 	readonly onDidChangeActiveDebugSession: Event<DebugSession | undefined>;
+
 	readonly onDidStartDebugSession: Event<DebugSession>;
+
 	readonly onDidReceiveDebugSessionCustomEvent: Event<DebugSessionCustomEvent>;
+
 	readonly onDidTerminateDebugSession: Event<DebugSession>;
+
 	readonly onDidChangeBreakpoints: Event<any>;
+
 	readonly registerDebugConfigurationProvider: (
 		type: string,
+
 		provider: DebugConfigurationProvider,
+
 		trigger: number,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, DebugProviderRegistrationProblem>;
+
 	readonly registerDebugAdapterDescriptorFactory: (
 		type: string,
+
 		factory: DebugAdapterDescriptorFactory,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, DebugProviderRegistrationProblem>;
+
 	readonly registerDebugAdapterTrackerFactory: (
 		type: string,
+
 		factory: DebugAdapterTrackerFactory,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, DebugProviderRegistrationProblem>;
+
 	readonly startDebugging: (
 		folder: WorkspaceFolder | undefined,
+
 		nameOrConfig: string | DebugConfiguration,
+
 		options?: DebugSessionOptions,
 	) => Effect.Effect<boolean, StartDebuggingProblem>;
+
 	readonly stopDebugging: (
 		session?: DebugSession,
 	) => Effect.Effect<void, Error>;
+
 	readonly addBreakpoints: (
 		breakpoints: readonly Breakpoint[],
 	) => Effect.Effect<void, never>;
+
 	readonly removeBreakpoints: (
 		breakpoints: readonly Breakpoint[],
 	) => Effect.Effect<void, never>;
@@ -104,6 +134,7 @@ export interface DebugInterface {
  */
 export class DebugService extends Effect.Service<DebugService>()(
 	"Service/Debug",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -141,6 +172,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 			 */
 			const RegisterProvider = <T extends ProviderEntry["Provider"]>(
 				RegistryReference: Ref.Ref<Map<number, ProviderEntry>>,
+
 				Data: Omit<ProviderEntry, "Provider"> & { Provider: T },
 			) =>
 				Effect.gen(function* () {
@@ -150,6 +182,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 					);
 					yield* IPC.SendNotification(
 						"$registerDebugConfigurationProvider",
+
 						[Handle, Data.Type],
 					).pipe(
 						Effect.mapError(
@@ -162,11 +195,13 @@ export class DebugService extends Effect.Service<DebugService>()(
 					);
 					const CleanupEffect = Ref.update(
 						RegistryReference,
+
 						(TheMap) => (TheMap.delete(Handle), TheMap),
 					).pipe(
 						Effect.andThen(
 							IPC.SendNotification(
 								"$unregisterDebugConfigurationProvider",
+
 								[Handle],
 							),
 						),
@@ -180,24 +215,34 @@ export class DebugService extends Effect.Service<DebugService>()(
 				get activeDebugSession() {
 					return Effect.runSync(GetState()).ActiveDebugSession;
 				},
+
 				get activeDebugConsole() {
 					return Effect.runSync(GetState()).ActiveDebugConsole;
 				},
+
 				get breakpoints() {
 					return Effect.runSync(GetState()).Breakpoints;
 				},
+
 				onDidChangeActiveDebugSession:
 					OnDidChangeActiveDebugSessionEvent,
+
 				onDidStartDebugSession: OnDidStartDebugSessionEvent,
+
 				onDidReceiveDebugSessionCustomEvent:
 					OnDidReceiveDebugSessionCustomEvent,
+
 				onDidTerminateDebugSession: OnDidTerminateDebugSessionEvent,
+
 				onDidChangeBreakpoints: OnDidChangeBreakpointsEvent,
 
 				registerDebugConfigurationProvider: (
 					DebugType: string,
+
 					Provider: DebugConfigurationProvider,
+
 					_Trigger: number,
+
 					Extension: IExtensionDescription,
 				) =>
 					RegisterProvider(
@@ -205,9 +250,12 @@ export class DebugService extends Effect.Service<DebugService>()(
 							.DebugConfigurationProviders as any, // Cast is acceptable here due to internal logic
 						{ Type: DebugType, Provider, Extension },
 					),
+
 				registerDebugAdapterDescriptorFactory: (
 					DebugType: string,
+
 					Factory: DebugAdapterDescriptorFactory,
+
 					Extension: IExtensionDescription,
 				) =>
 					RegisterProvider(
@@ -215,9 +263,12 @@ export class DebugService extends Effect.Service<DebugService>()(
 							.DebugAdapterDescriptorFactories as any, // Cast is acceptable here
 						{ Type: DebugType, Provider: Factory, Extension },
 					),
+
 				registerDebugAdapterTrackerFactory: (
 					DebugType: string,
+
 					Factory: DebugAdapterTrackerFactory,
+
 					Extension: IExtensionDescription,
 				) =>
 					RegisterProvider(
@@ -228,12 +279,15 @@ export class DebugService extends Effect.Service<DebugService>()(
 
 				startDebugging: (
 					Folder: WorkspaceFolder | undefined,
+
 					NameOrConfiguration: string | DebugConfiguration,
+
 					Options?: DebugSessionOptions,
 				) =>
 					Effect.gen(function* () {
 						yield* Effect.logInfo(
 							`Request to start debugging in folder: ${Folder?.name ?? "None"}`,
+
 							NameOrConfiguration,
 						);
 						const ConfigurationDTO =
@@ -247,9 +301,12 @@ export class DebugService extends Effect.Service<DebugService>()(
 						};
 						const IsSuccess = yield* IPC.SendRequest<boolean>(
 							"$startDebugging",
+
 							[
 								Folder?.uri.toJSON(),
+
 								ConfigurationDTO,
+
 								OptionsDTO,
 							],
 						);
@@ -295,13 +352,16 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Effect.sync(() =>
 						console.warn(
 							"STUB: Debug.AddBreakpoints not implemented.",
+
 							Breakpoints,
 						),
 					),
+
 				removeBreakpoints: (Breakpoints: readonly Breakpoint[]) =>
 					Effect.sync(() =>
 						console.warn(
 							"STUB: Debug.RemoveBreakpoints not implemented.",
+
 							Breakpoints,
 						),
 					),

@@ -39,40 +39,65 @@ const MakeMultiStub = (): any => {
 	const StubTarget: any = function MultiStub() {
 		return StubProxy;
 	};
+
 	StubTarget.dispose = () => {};
+
 	StubTarget[Symbol.iterator] = function* () {
 		// Empty iterator - `for (...of stub)` completes with 0 elements.
 	};
+
 	// Delegate array-ish methods to an empty array so `.map`, `.filter`,
 	// `.forEach`, `.find`, etc. behave without throwing.
 	const ArrayShim: readonly unknown[] = [];
+
 	const ArrayMethods: ReadonlyArray<keyof Array<unknown>> = [
 		"forEach",
+
 		"map",
+
 		"filter",
+
 		"find",
+
 		"findIndex",
+
 		"some",
+
 		"every",
+
 		"reduce",
+
 		"reduceRight",
+
 		"includes",
+
 		"indexOf",
+
 		"lastIndexOf",
+
 		"slice",
+
 		"concat",
+
 		"join",
+
 		"entries",
+
 		"keys",
+
 		"values",
+
 		"flat",
+
 		"flatMap",
 	];
+
 	for (const Name of ArrayMethods) {
 		(StubTarget as Record<string, unknown>)[Name as string] = (
 			ArrayShim as Record<string, unknown>
 		)[Name as string];
 	}
+
 	const StubProxy: any = new Proxy(StubTarget, {
 		get(Target, Property) {
 			if (Property in Target) {
@@ -91,6 +116,7 @@ const MakeMultiStub = (): any => {
 			return true;
 		},
 	});
+
 	return StubProxy;
 };
 
@@ -101,6 +127,7 @@ const MakePermissiveExports = (): any => {
 	const Base: Record<string, unknown> = {
 		enabled: true,
 	};
+
 	return new Proxy(Base, {
 		get(Target, Property) {
 			if (Property in Target) {
@@ -147,23 +174,34 @@ const NormalizeLocation = (
 	Raw: unknown,
 ): { ExtensionPath: string; ExtensionUri: any } => {
 	const VsCodeUri = (globalThis as any).__cocoonVscodeAPI?.Uri;
+
 	const UriFactoryAvailable =
 		VsCodeUri && typeof VsCodeUri.file === "function";
+
 	const MakeUri = (Path: string): any => {
 		if (UriFactoryAvailable) {
 			return VsCodeUri.file(Path);
 		}
+
 		return {
 			scheme: "file",
+
 			authority: "",
+
 			path: Path,
+
 			query: "",
+
 			fragment: "",
+
 			fsPath: Path,
+
 			with(this: any, Change: any) {
 				return { ...this, ...Change };
 			},
+
 			toString: () => `file://${Path}`,
+
 			toJSON() {
 				return { scheme: "file", path: Path };
 			},
@@ -172,70 +210,91 @@ const NormalizeLocation = (
 
 	if (typeof Raw === "string" && Raw.length > 0) {
 		let Path = Raw;
+
 		if (Raw.startsWith("file:")) {
 			try {
 				Path = decodeURIComponent(new URL(Raw).pathname);
 			} catch (Error: unknown) {
 				LandFixLog.Warn(
 					"ExtNs",
+
 					`URL parse failed for ${Raw}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}; using fallback strip`,
 				);
+
 				Path = Raw.replace(/^file:\/\//, "");
 			}
 		}
+
 		Path = Path.replace(/\/$/, "");
+
 		if (UriFactoryAvailable) {
 			LandFixLog.DebugOnce(
 				"ExtNs",
+
 				`string:${Path}`,
+
 				`string extensionLocation ${Raw} → path=${Path} (factory=real)`,
 			);
 		} else {
 			LandFixLog.InfoOnce(
 				"ExtNs",
+
 				`string-fallback:${Path}`,
+
 				`string extensionLocation ${Raw} → path=${Path} (factory=FALLBACK)`,
 			);
 		}
+
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
 	}
 
 	if (Raw && typeof Raw === "object") {
 		const Obj = Raw as Record<string, unknown>;
+
 		const Path =
 			(typeof Obj["fsPath"] === "string" && (Obj["fsPath"] as string)) ||
 			(typeof Obj["path"] === "string" && (Obj["path"] as string)) ||
 			(typeof Obj["external"] === "string"
 				? NormalizeLocation(Obj["external"]).ExtensionPath
 				: "");
+
 		if (UriFactoryAvailable) {
 			LandFixLog.DebugOnce(
 				"ExtNs",
+
 				`object:${Path}`,
+
 				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=real)`,
 			);
 		} else {
 			LandFixLog.InfoOnce(
 				"ExtNs",
+
 				`object-fallback:${Path}`,
+
 				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=FALLBACK)`,
 			);
 		}
+
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
 	}
 
 	LandFixLog.Warn(
 		"ExtNs",
+
 		`extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`,
 	);
+
 	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 };
 
 const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 	const Exports = MakePermissiveExports();
+
 	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
 		Raw?.extensionLocation,
 	);
+
 	// Defensive packageJSON: extensions like `muhammad-sammy.csharp`
 	// invoke `semver.parse(extension.packageJSON.version)` on their own
 	// or peer extensions' manifests. Mountain's scanner sometimes omits
@@ -250,17 +309,20 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 		Raw && typeof Raw === "object"
 			? {
 					...Raw,
+
 					name:
 						typeof (Raw as { name?: unknown }).name === "string" &&
 						(Raw as { name: string }).name.length > 0
 							? (Raw as { name: string }).name
 							: Id,
+
 					version:
 						typeof (Raw as { version?: unknown }).version ===
 							"string" &&
 						(Raw as { version: string }).version.length > 0
 							? (Raw as { version: string }).version
 							: "0.0.0",
+
 					publisher:
 						typeof (Raw as { publisher?: unknown }).publisher ===
 						"string"
@@ -269,20 +331,30 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 				}
 			: {
 					name: Id,
+
 					version: "0.0.0",
+
 					publisher: Id.split(".")[0] ?? "unknown",
 				};
+
 	return {
 		id: Id,
+
 		extensionUri: ExtensionUri,
+
 		extensionPath: ExtensionPath,
+
 		// Reporting `isActive: true` mirrors VS Code's behaviour for
 		// built-ins that have completed activation; without it, callers
 		// like the `github` extension treat the extension as missing.
 		isActive: true,
+
 		packageJSON: SafePackageJSON,
+
 		extensionKind: 1,
+
 		exports: Exports,
+
 		// Critical: `activate()` must resolve to the SAME exports object
 		// so consumers like `vscode.github` can chain
 		// `gitExtension.activate().then(api => api.onDidChangeEnablement(...))`.
@@ -310,8 +382,10 @@ const IsExtensionKey = (Key: string) => !Key.startsWith("__");
 // DiagnosticProvider above.
 const SafeExtensionList = (Context: HandlerContext): unknown[] => {
 	const Out: unknown[] = [];
+
 	for (const [Id, Raw] of Context.ExtensionRegistry.entries()) {
 		if (!IsExtensionKey(Id)) continue;
+
 		try {
 			Out.push(ToExtensionObject(Context, Id, Raw));
 		} catch {
@@ -319,6 +393,7 @@ const SafeExtensionList = (Context: HandlerContext): unknown[] => {
 			 * still iterable */
 		}
 	}
+
 	return Out;
 };
 

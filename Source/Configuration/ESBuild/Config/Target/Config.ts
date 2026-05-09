@@ -1,7 +1,9 @@
 import { deepmerge } from "deepmerge-ts";
+
 import type { BuildOptions } from "esbuild";
 
 import * as Environment from "../../Constant/Environment/Constant.js";
+
 import BaseConfig from "../Base/Config.js";
 
 // Tier:*:Resolution 🟢 Primary - CocoonEsbuildDefine is exported by
@@ -21,6 +23,7 @@ const TierDefines = (() => {
 export default async function TargetConfig(
 	Current: BuildOptions,
 ): Promise<BuildOptions> {
+
 	const Merged = deepmerge(BaseConfig, {
 		outdir: "Target",
 		bundle: Environment.Bundle,

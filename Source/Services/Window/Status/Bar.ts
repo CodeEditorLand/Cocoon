@@ -28,6 +28,7 @@ export const CreateStatusBarItem = (
 	MountainClient: {
 		sendNotification: (method: string, params: unknown) => Promise<void>;
 	},
+
 	GRPCClient: {
 		createStatusBarItem: (params: {
 			id: string;
@@ -35,9 +36,13 @@ export const CreateStatusBarItem = (
 			tooltip: string | undefined;
 		}) => Effect.Effect<unknown, Error>;
 	},
+
 	Logger: { Info: (Message: string) => Effect.Effect<void> },
+
 	Id?: string,
+
 	Alignment?: VSCode.StatusBarAlignment,
+
 	Priority?: number,
 ): Effect.Effect<VSCode.StatusBarItem, Error> =>
 	Effect.gen(function* () {

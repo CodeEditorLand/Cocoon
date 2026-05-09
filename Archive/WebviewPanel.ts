@@ -28,16 +28,23 @@ import { WebviewPanelImplementation } from "./WebviewPanel/WebviewPanelImplement
 export interface WebviewPanel {
 	readonly CreateWebviewPanel: (
 		Extension: IExtensionDescription,
+
 		ViewType: string,
+
 		Title: string,
+
 		ShowOptions:
 			| ViewColumn
 			| { viewColumn: ViewColumn; preserveFocus?: boolean },
+
 		Options?: WebviewPanelOptions & WebviewOptions,
 	) => Effect.Effect<VSCodeWebviewPanel, Error>;
+
 	readonly RegisterWebviewPanelSerializer: (
 		Extension: IExtensionDescription,
+
 		ViewType: string,
+
 		Serializer: WebviewPanelSerializer,
 	) => Effect.Effect<Disposable, never>;
 }
@@ -48,6 +55,7 @@ export interface WebviewPanel {
  */
 export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
 	"Service/WebviewPanel",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -79,11 +87,13 @@ export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
 			);
 			IPC.RegisterInvokeHandler(
 				"$onDidReceiveMessage",
+
 				([Handle, Message]) =>
 					Effect.runPromise(OnDidReceiveMessage(Handle, Message)),
 			);
 			IPC.RegisterInvokeHandler(
 				"$onDidChangeWebviewPanelViewState",
+
 				([Handle, NewState]) =>
 					Effect.runPromise(OnDidChangeViewState(Handle, NewState)),
 			);
@@ -94,11 +104,15 @@ export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
 			return {
 				CreateWebviewPanel: (
 					Extension: IExtensionDescription,
+
 					ViewType: string,
+
 					Title: string,
+
 					ShowOptions:
 						| ViewColumn
 						| { viewColumn: ViewColumn; preserveFocus?: boolean },
+
 					Options: WebviewPanelOptions & WebviewOptions = {},
 				) =>
 					Effect.gen(function* () {
@@ -113,21 +127,28 @@ export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
 								: false;
 						const ShowOptionsDTO = ConvertShowOptionToDTO(
 							ViewColumnValue,
+
 							PreserveFocus,
 						);
 						const PanelOptionsDTO =
 							ConvertPanelOptionToDTO(Options);
 						const ContentOptionsDTO = ConvertContentOptionToDTO(
 							Extension,
+
 							Options,
 						);
 
 						yield* IPC.SendRequest<string>("$createWebviewPanel", [
 							Handle,
+
 							ViewType,
+
 							Title,
+
 							ShowOptionsDTO,
+
 							PanelOptionsDTO,
+
 							ContentOptionsDTO,
 						]);
 
@@ -135,17 +156,25 @@ export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
 							Effect.runFork(
 								Ref.update(
 									ActivePanelsRef,
+
 									(Map) => (Map.delete(Handle), Map),
 								),
 							);
 						const Panel = new WebviewPanelImplementation(
 							Handle,
+
 							IPC,
+
 							Extension,
+
 							OnDispose,
+
 							ViewType,
+
 							Title,
+
 							Options,
+
 							ViewColumnValue,
 						);
 						yield* Ref.update(ActivePanelsRef, (Map) =>
@@ -155,17 +184,21 @@ export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
 					}),
 				RegisterWebviewPanelSerializer: (
 					_Extension: IExtensionDescription,
+
 					ViewType: string,
+
 					_Serializer: WebviewPanelSerializer,
 				) =>
 					Effect.sync(() => {
 						IPC.SendNotification(
 							"$registerWebviewPanelSerializer",
+
 							[ViewType, {}],
 						);
 						return new Disposable(() => {
 							IPC.SendNotification(
 								"$unregisterWebviewPanelSerializer",
+
 								[ViewType],
 							);
 						});

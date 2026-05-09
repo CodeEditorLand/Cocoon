@@ -34,10 +34,13 @@ import VSBuffer from "../VSBuffer.js";
  */
 export default (
 	Messages: IMessage[],
+
 	Hint: CompressionHint = CompressionHint.Balanced,
 ): ISerializationResult => {
 	const Warnings: string[] = [];
+
 	let OriginalSize = 0;
+
 	let FinalSize = 0;
 
 	try {
@@ -45,9 +48,13 @@ export default (
 		if (!Array.isArray(Messages) || Messages.length === 0) {
 			return {
 				Success: false,
+
 				Data: null,
+
 				Error: "Messages array is empty or invalid",
+
 				OriginalSize: 0,
+
 				FinalSize: 0,
 			};
 		}
@@ -55,9 +62,13 @@ export default (
 		if (Messages.length > MAX_BATCH_COUNT) {
 			return {
 				Success: false,
+
 				Data: null,
+
 				Error: `Message count ${Messages.length} exceeds maximum ${MAX_BATCH_COUNT}`,
+
 				OriginalSize: 0,
+
 				FinalSize: 0,
 			};
 		}
@@ -67,9 +78,13 @@ export default (
 			if (!ValidateMessage(Messages[Index])) {
 				return {
 					Success: false,
+
 					Data: null,
+
 					Error: `Invalid message at index ${Index}`,
+
 					OriginalSize: 0,
+
 					FinalSize: 0,
 				};
 			}
@@ -77,20 +92,28 @@ export default (
 
 		// Serialize individual messages
 		const SerializedMessages: Uint8Array[] = [];
+
 		let TotalMessageSize = 0;
 
 		for (const Message of Messages) {
 			const Result = SerializeMessage(Message);
+
 			if (!Result.Success) {
 				return {
 					Success: false,
+
 					Data: null,
+
 					Error: `Failed to serialize message: ${Result.Error}`,
+
 					OriginalSize: 0,
+
 					FinalSize: 0,
 				};
 			}
+
 			SerializedMessages.push(Result.Data!);
+
 			TotalMessageSize += Result.Data!.length;
 		}
 
@@ -98,9 +121,13 @@ export default (
 		if (TotalMessageSize > MAX_BATCH_SIZE) {
 			return {
 				Success: false,
+
 				Data: null,
+
 				Error: `Total batch size ${TotalMessageSize} exceeds maximum ${MAX_BATCH_SIZE}`,
+
 				OriginalSize: TotalMessageSize,
+
 				FinalSize: 0,
 			};
 		}
@@ -108,13 +135,18 @@ export default (
 		// Create batch metadata
 		const BatchMetadata = {
 			BatchID: `batch-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+
 			MessageCount: Messages.length,
+
 			TotalSize: TotalMessageSize,
+
 			Timestamp: Date.now(),
+
 			CompressionHint: Hint,
 		};
 
 		const BatchMetadataJSON = JSON.stringify(BatchMetadata);
+
 		const BatchMetadataBuffer = VSBuffer.FromString(BatchMetadataJSON);
 
 		// Calculate total buffer size
@@ -127,53 +159,68 @@ export default (
 
 		// Allocate buffer
 		const Buffer = VSBuffer.Allocate(OriginalSize);
+
 		let Offset = 0;
 
 		// Write message count
 		Buffer.writeUInt32LE(Offset, Messages.length);
+
 		Offset += 4;
 
 		// Write metadata length
 		Buffer.writeUInt32LE(Offset, BatchMetadataBuffer.length);
+
 		Offset += 4;
 
 		// Write metadata
 		Buffer.setBytes(Offset, BatchMetadataBuffer.byteBuffer);
+
 		Offset += BatchMetadataBuffer.length;
 
 		// Write message headers (lengths)
 		for (const SerializedMessage of SerializedMessages) {
 			Buffer.writeUInt32LE(Offset, SerializedMessage.length);
+
 			Offset += 4;
 		}
 
 		// Write message data
 		for (const MessageData of SerializedMessages) {
 			Buffer.setBytes(Offset, MessageData);
+
 			Offset += MessageData.length;
 		}
 
 		FinalSize = Offset;
 
 		const ResultData = Buffer.slice(0, FinalSize).byteBuffer;
+
 		Warnings.push(`Successfully batched ${Messages.length} messages`);
 
 		return {
 			Success: true,
+
 			Data: ResultData,
+
 			Error: undefined,
+
 			OriginalSize,
+
 			FinalSize,
 		};
 	} catch (Error) {
 		return {
 			Success: false,
+
 			Data: null,
+
 			Error:
 				Error instanceof globalThis.Error
 					? Error.message
 					: String(Error),
+
 			OriginalSize,
+
 			FinalSize,
 		};
 	}

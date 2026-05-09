@@ -18,6 +18,7 @@ class EmptyKeyError extends Error {
 		super("Secret key cannot be empty.");
 	}
 }
+
 class InvalidValueError extends Error {
 	constructor() {
 		super("Secret value must be a string.");
@@ -27,11 +28,14 @@ class InvalidValueError extends Error {
 class SecretStorageImplementation implements SecretStorage {
 	private readonly OnDidChangeEventStream =
 		CreateEventStream<SecretStorageChangeEvent>();
+
 	public readonly onDidChange: Event<SecretStorageChangeEvent>;
 
 	constructor(
 		private readonly ExtensionId: string,
+
 		private readonly IPC: IPCService,
+
 		private readonly Logger: LoggerService,
 	) {
 		this.onDidChange = this.OnDidChangeEventStream.event;
@@ -39,15 +43,18 @@ class SecretStorageImplementation implements SecretStorage {
 
 	private Get(Key: string): Effect.Effect<string | undefined, EmptyKeyError> {
 		if (!Key) return Effect.fail(new EmptyKeyError());
+
 		return Effect.gen(this, function* () {
 			return yield* this.IPC.SendRequest<string | undefined>(
 				"$getPassword",
+
 				[this.ExtensionId, Key],
 			);
 		}).pipe(
 			Effect.catchAll((Error) =>
 				this.Logger.Error(
 					`SecretStorage.get failed for key '${Key}' in ext '${this.ExtensionId}'.`,
+
 					Error,
 				).pipe(Effect.flatMap(() => Effect.succeed(undefined))),
 			),
@@ -56,15 +63,20 @@ class SecretStorageImplementation implements SecretStorage {
 
 	private Store(
 		Key: string,
+
 		Value: string,
 	): Effect.Effect<void, EmptyKeyError | InvalidValueError> {
 		if (!Key) return Effect.fail(new EmptyKeyError());
+
 		if (typeof Value !== "string")
 			return Effect.fail(new InvalidValueError());
+
 		return Effect.gen(this, function* () {
 			yield* this.IPC.SendNotification("$setPassword", [
 				this.ExtensionId,
+
 				Key,
+
 				Value,
 			]);
 			yield* this.OnDidChangeEventStream.Fire({ key: Key });
@@ -72,6 +84,7 @@ class SecretStorageImplementation implements SecretStorage {
 			Effect.catchAll((Error) =>
 				this.Logger.Error(
 					`SecretStorage.store failed for key '${Key}' in ext '${this.ExtensionId}'.`,
+
 					Error,
 				).pipe(Effect.flatMap(() => Effect.void)),
 			),
@@ -80,9 +93,11 @@ class SecretStorageImplementation implements SecretStorage {
 
 	private Delete(Key: string): Effect.Effect<void, EmptyKeyError> {
 		if (!Key) return Effect.fail(new EmptyKeyError());
+
 		return Effect.gen(this, function* () {
 			yield* this.IPC.SendNotification("$deletePassword", [
 				this.ExtensionId,
+
 				Key,
 			]);
 			yield* this.OnDidChangeEventStream.Fire({ key: Key });
@@ -90,6 +105,7 @@ class SecretStorageImplementation implements SecretStorage {
 			Effect.catchAll((Error) =>
 				this.Logger.Error(
 					`SecretStorage.delete failed for key '${Key}' in ext '${this.ExtensionId}'.`,
+
 					Error,
 				).pipe(Effect.flatMap(() => Effect.void)),
 			),
@@ -98,8 +114,10 @@ class SecretStorageImplementation implements SecretStorage {
 
 	get = (Key: string): Promise<string | undefined> =>
 		Effect.runPromise(this.Get(Key));
+
 	store = (Key: string, Value: string): Promise<void> =>
 		Effect.runPromise(this.Store(Key, Value));
+
 	delete = (Key: string): Promise<void> =>
 		Effect.runPromise(this.Delete(Key));
 }
@@ -118,6 +136,7 @@ export interface SecretStorageFactory {
  */
 export class SecretStorageService extends Effect.Service<SecretStorageService>()(
 	"Service/SecretStorage",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -131,7 +150,9 @@ export class SecretStorageService extends Effect.Service<SecretStorageService>()
 					);
 					return new SecretStorageImplementation(
 						ExtensionId,
+
 						IPC,
+
 						Logger,
 					);
 				},

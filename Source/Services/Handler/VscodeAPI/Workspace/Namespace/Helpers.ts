@@ -16,10 +16,12 @@ export const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 		Context.WorkspaceEventEmitter.on(EventName, Listener);
+
 		return {
 			dispose: () => {
 				Context.WorkspaceEventEmitter.removeListener(
 					EventName,
+
 					Listener,
 				);
 			},
@@ -32,12 +34,15 @@ export const EventSubscriber =
  */
 export const Call = async <T>(
 	Context: HandlerContext,
+
 	Method: string,
+
 	Parameters: unknown,
 ): Promise<T | undefined> => {
 	try {
 		return (await Context.MountainClient?.sendRequest(
 			Method,
+
 			Parameters,
 		)) as T | undefined;
 	} catch {
@@ -51,18 +56,31 @@ export const Call = async <T>(
 // walk the workspace ourselves; these prefixes keep the walk bounded.
 export const DefaultExcludeSegments = new Set([
 	".git",
+
 	"node_modules",
+
 	".astro",
+
 	".next",
+
 	".nuxt",
+
 	".cache",
+
 	".turbo",
+
 	".pnpm",
+
 	"Target",
+
 	"target",
+
 	"dist",
+
 	"out",
+
 	"build",
+
 	".DS_Store",
 ]);
 
@@ -73,11 +91,15 @@ export const DefaultExcludeSegments = new Set([
  */
 export const ExtractGlobPattern = (Raw: unknown): string | undefined => {
 	if (typeof Raw === "string" && Raw.length > 0) return Raw;
+
 	if (Raw && typeof Raw === "object") {
 		const Obj = Raw as Record<string, unknown>;
+
 		if (typeof Obj["pattern"] === "string") return Obj["pattern"] as string;
+
 		if (typeof Obj["glob"] === "string") return Obj["glob"] as string;
 	}
+
 	return undefined;
 };
 
@@ -92,7 +114,9 @@ export const FolderToFsPath = (FolderUri: unknown): string | undefined => {
 			: ((FolderUri as Record<string, unknown>)?.["fsPath"] ??
 				(FolderUri as Record<string, unknown>)?.["path"] ??
 				(FolderUri as Record<string, unknown>)?.["external"]);
+
 	if (typeof Raw !== "string" || Raw.length === 0) return undefined;
+
 	if (Raw.startsWith("file:")) {
 		try {
 			return decodeURIComponent(new URL(Raw).pathname);
@@ -100,13 +124,17 @@ export const FolderToFsPath = (FolderUri: unknown): string | undefined => {
 			return Raw.replace(/^file:\/\//, "");
 		}
 	}
+
 	return Raw;
 };
 
 export type WorkspaceFolderRecord = {
 	uri: unknown;
+
 	name: string;
+
 	index: number;
+
 	FsPath?: string;
 };
 
@@ -118,6 +146,7 @@ export const ResolveWorkspaceFolders = (
 		{}) as {
 		folders?: Array<{ uri: unknown; name: string; index: number }>;
 	};
+
 	return (InitWorkspace.folders ?? []).map(
 		(Folder): WorkspaceFolderRecord => {
 			const FsPath = FolderToFsPath(Folder?.uri);

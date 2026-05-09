@@ -17,6 +17,7 @@ export class ExitPreventedProblem extends Data.TaggedError(
 )<{
 	/** A descriptive message explaining that the exit was blocked. */
 	readonly message: string;
+
 	/** The exit code that the extension attempted to use. */
 	readonly AttemptedCode?: number;
 }> {}

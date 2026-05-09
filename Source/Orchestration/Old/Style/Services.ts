@@ -153,13 +153,21 @@ export default class OldStyleServices {
 	validateDependencies() {
 		return Layer.mergeAll(
 			MountainClientServiceLayer,
+
 			ConfigurationLayer,
+
 			ModuleInterceptorServiceLayer,
+
 			ExtensionHostLayer,
+
 			APIFactoryLayer,
+
 			TerminalServiceLayer,
+
 			SecurityServiceLive,
+
 			PerformanceMonitoringServiceLive,
+
 			ErrorHandlingServiceLive,
 		);
 	}

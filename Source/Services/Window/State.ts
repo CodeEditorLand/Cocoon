@@ -14,9 +14,11 @@ import type { Logger, WindowStateConfig } from "./Types.js";
  */
 export interface WindowStateService {
 	readonly getState: Effect.Effect<WindowStateConfig, never>;
+
 	readonly setState: (
 		state: WindowStateConfig,
 	) => Effect.Effect<WindowStateConfig, never>;
+
 	readonly onStateChange: Effect.Effect<void, never>;
 }
 
@@ -55,6 +57,7 @@ export const WindowStateLive = Effect.gen(function* () {
 							`[WindowState] State changed: focused=${newState.focused}, active=${newState.active}`,
 						),
 					),
+
 					Effect.orElse(() => Effect.void),
 				);
 			}
@@ -77,5 +80,6 @@ export const WindowStateLive = Effect.gen(function* () {
  */
 export const WindowStateLayer = Layer.effect(
 	WindowStateService,
+
 	WindowStateLive,
 );

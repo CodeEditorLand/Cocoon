@@ -38,19 +38,27 @@ import { IPCConfigurationService } from "./IPCConfiguration.js";
 export interface IPC {
 	readonly SendRequest: <ResponseType = unknown>(
 		Method: string,
+
 		Parameters: readonly unknown[],
 	) => Effect.Effect<ResponseType, IPCProblem>;
+
 	readonly SendNotification: (
 		Method: string,
+
 		Parameters: readonly unknown[],
 	) => Effect.Effect<void, IPCProblem>;
+
 	readonly SendCancel: (TokenId: number) => Effect.Effect<void, never>;
+
 	readonly CreateProtocolAdapter: () => IMessagePassingProtocol & {
 		ProcessIncomingData: (Data: Uint8Array) => Effect.Effect<void, never>;
 	};
+
 	readonly CreateProxy: <T extends object>(Channel: string) => T;
+
 	readonly RegisterInvokeHandler: (
 		Channel: string,
+
 		Handler: (...args: any[]) => Promise<any>,
 	) => Disposable;
 }
@@ -69,6 +77,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 			Effect.gen(function* () {
 				const ProtoPath = Path.join(
 					process.cwd(),
+
 					"proto/vine.ipc.proto",
 				);
 				const Definition = yield* Effect.tryPromise({
@@ -92,11 +101,13 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 				)["MountainService"] as gRPC.ServiceClientConstructor;
 				const Client = new ClientConstructor(
 					Config.MountainAddress,
+
 					gRPC.credentials.createInsecure(),
 				) as unknown as MountainService & gRPC.Client;
 				yield* Effect.async<void, gRPCConnectionError>((Resume) => {
 					Client.waitForReady(
 						Date.now() + 10_000,
+
 						(Error?: Error) => {
 							if (Error)
 								Resume(
@@ -116,6 +127,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 				);
 				return Client;
 			}),
+
 			(Client) =>
 				Effect.sync(() => Client.close()).pipe(
 					Effect.tap(() =>
@@ -159,11 +171,13 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 		const ServiceImplementation: IPC = {
 			SendRequest: <ResponseType = unknown>(
 				Method: string,
+
 				Parameters: readonly unknown[],
 			) =>
 				Effect.gen(function* () {
 					const RequestId = yield* Ref.getAndUpdate(
 						RequestIdCounter,
+
 						(n) => n + 1,
 					);
 					const EncodedParameter = yield* EncodeValue(Parameters);
@@ -250,6 +264,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 								return Effect.runPromise(
 									ServiceImplementation.SendRequest(
 										Method,
+
 										Arguments,
 									),
 								);
@@ -271,6 +286,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 						Effect.runFork(
 							Ref.update(
 								InvokeHandlersRef,
+
 								(Map) => (Map.delete(Channel), Map),
 							),
 						);

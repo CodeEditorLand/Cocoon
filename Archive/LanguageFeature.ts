@@ -24,29 +24,45 @@ import {
 export interface LanguageFeature {
 	readonly RegisterHoverProvider: (
 		selector: DocumentSelector,
+
 		provider: HoverProvider,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
+
 	readonly RegisterCompletionItemProvider: (
 		selector: DocumentSelector,
+
 		provider: CompletionItemProvider,
+
 		triggerCharacters: string[],
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
+
 	readonly RegisterDefinitionProvider: (
 		selector: DocumentSelector,
+
 		provider: DefinitionProvider,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
+
 	readonly RegisterReferenceProvider: (
 		selector: DocumentSelector,
+
 		provider: ReferenceProvider,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
+
 	readonly RegisterCodeActionsProvider: (
 		selector: DocumentSelector,
+
 		provider: CodeActionProvider,
+
 		metadata: CodeActionProviderMetadata | undefined,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
 }
@@ -57,6 +73,7 @@ export interface LanguageFeature {
  */
 export class LanguageFeatureService extends Effect.Service<LanguageFeatureService>()(
 	"Service/LanguageFeature",
+
 	{
 		// This provides a stubbed implementation to satisfy the type contract.
 		// A full implementation would be synthesized from OldCocoon's Definition.ts.

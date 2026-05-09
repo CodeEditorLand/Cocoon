@@ -39,7 +39,9 @@ import VSBuffer from "../VSBuffer.js";
  */
 export default (Message: IMessage): ISerializationResult => {
 	const Warnings: string[] = [];
+
 	let OriginalSize = 0;
+
 	let FinalSize = 0;
 
 	try {
@@ -47,9 +49,13 @@ export default (Message: IMessage): ISerializationResult => {
 		if (!ValidateMessage(Message)) {
 			return {
 				Success: false,
+
 				Data: null,
+
 				Error: "Invalid message structure",
+
 				OriginalSize: 0,
+
 				FinalSize: 0,
 			};
 		}
@@ -58,15 +64,20 @@ export default (Message: IMessage): ISerializationResult => {
 		if (Message.Data.length > MAX_MESSAGE_SIZE) {
 			return {
 				Success: false,
+
 				Data: null,
+
 				Error: `Message data size ${Message.Data.length} exceeds maximum ${MAX_MESSAGE_SIZE}`,
+
 				OriginalSize: Message.Data.length,
+
 				FinalSize: 0,
 			};
 		}
 
 		// Serialize metadata to JSON
 		const MetadataJSON = JSON.stringify(Message.Metadata);
+
 		const MetadataBuffer = VSBuffer.FromString(MetadataJSON);
 
 		// Calculate total required size
@@ -79,6 +90,7 @@ export default (Message: IMessage): ISerializationResult => {
 
 		// Check if compression should be applied
 		let DataBuffer = Message.Data;
+
 		let Flags = Message.Flags;
 
 		if (
@@ -91,36 +103,49 @@ export default (Message: IMessage): ISerializationResult => {
 
 		// Allocate buffer for serialization
 		const Buffer = VSBuffer.Allocate(OriginalSize);
+
 		let Offset = 0;
 
 		// Write header (Magic + Version + Flags + Reserved)
 		Buffer.setBytes(Offset, MESSAGE_HEADER_MAGIC);
+
 		Offset += 3;
+
 		Buffer.setByte(Offset, PROTOCOL_VERSION);
+
 		Offset += 1;
+
 		Buffer.setByte(Offset, Flags);
+
 		Offset += 1;
+
 		Buffer.setByte(Offset, 0); // Reserved
 		Offset += 1;
+
 		Buffer.setByte(Offset, 0); // Reserved
 		Offset += 1;
+
 		Buffer.setByte(Offset, 0); // Reserved
 		Offset += 1;
 
 		// Write metadata length
 		Buffer.writeUInt32LE(Offset, MetadataBuffer.length);
+
 		Offset += 4;
 
 		// Write metadata
 		Buffer.setBytes(Offset, MetadataBuffer.byteBuffer);
+
 		Offset += MetadataBuffer.length;
 
 		// Write data length
 		Buffer.writeUInt32LE(Offset, DataBuffer.length);
+
 		Offset += 4;
 
 		// Write data
 		Buffer.setBytes(Offset, DataBuffer);
+
 		Offset += DataBuffer.length;
 
 		FinalSize = Offset;
@@ -129,29 +154,41 @@ export default (Message: IMessage): ISerializationResult => {
 		if (FinalSize > MAX_MESSAGE_SIZE) {
 			return {
 				Success: false,
+
 				Data: null,
+
 				Error: `Serialized message size ${FinalSize} exceeds maximum ${MAX_MESSAGE_SIZE}`,
+
 				OriginalSize,
+
 				FinalSize,
 			};
 		}
 
 		return {
 			Success: true,
+
 			Data: Buffer.slice(0, FinalSize).byteBuffer,
+
 			Error: undefined,
+
 			OriginalSize,
+
 			FinalSize,
 		};
 	} catch (Error) {
 		return {
 			Success: false,
+
 			Data: null,
+
 			Error:
 				Error instanceof globalThis.Error
 					? Error.message
 					: String(Error),
+
 			OriginalSize,
+
 			FinalSize,
 		};
 	}

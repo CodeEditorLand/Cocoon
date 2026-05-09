@@ -15,14 +15,17 @@ export class ProtoSerializationProblem extends Data.TaggedError(
 	"ProtoSerializationProblem",
 )<{
 	readonly Cause: unknown;
+
 	readonly Direction: "Encoding" | "Decoding";
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: {
 		readonly Cause: unknown;
 		readonly Direction: "Encoding" | "Decoding";
 	}) {
 		super(Properties);
+
 		this.message = `Protobuf ${this.Direction} failed: ${this.Cause}`;
 	}
 }

@@ -34,45 +34,72 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 	private readonly ElementToHandleMap = new Map<T, string>();
+
 	public readonly handleToElementMap = new Map<string, T>();
+
 	private readonly OnDidExpandElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
+
 	readonly onDidExpandElement: Event<TreeViewExpansionEvent<T>>;
+
 	private readonly OnDidCollapseElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
+
 	readonly onDidCollapseElement: Event<TreeViewExpansionEvent<T>>;
+
 	private readonly OnDidChangeSelectionEmitter = CreateEventStream<any>();
+
 	readonly onDidChangeSelection: Event<any>;
+
 	private readonly OnDidChangeVisibilityEmitter =
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
+
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
+
 	private readonly OnDidChangeCheckboxStateEmitter =
 		CreateEventStream<TreeCheckboxChangeEvent<T>>();
+
 	readonly onDidChangeCheckboxState: Event<TreeCheckboxChangeEvent<T>>;
+
 	// FIX: onDidChangeActiveItem is a complex event; stubbing for now.
 	private readonly OnDidChangeActiveItemEmitter = CreateEventStream<T>();
+
 	readonly onDidChangeActiveItem: Event<T>;
 
 	activeItem: T | undefined;
+
 	selection: readonly T[] = [];
+
 	visible = true;
+
 	message?: string;
+
 	title?: string;
+
 	description?: string;
+
 	badge?: { value: number; tooltip: string };
 
 	constructor(
 		private readonly ViewId: string,
+
 		private readonly DataProvider: TreeDataProvider<T>,
+
 		private readonly IPC: IPC,
+
 		private readonly Extension: IExtensionDescription,
 	) {
 		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
+
 		this.onDidCollapseElement = this.OnDidCollapseElementEmitter.event;
+
 		this.onDidChangeSelection = this.OnDidChangeSelectionEmitter.event;
+
 		this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
+
 		this.onDidChangeCheckboxState =
 			this.OnDidChangeCheckboxStateEmitter.event;
+
 		this.onDidChangeActiveItem = this.OnDidChangeActiveItemEmitter.event;
 
 		if (this.DataProvider.onDidChangeTreeData) {
@@ -81,6 +108,7 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 				Effect.runFork(
 					this.IPC.SendNotification(`$refreshTreeView`, [
 						this.ViewId,
+
 						HandlesToRefresh,
 					]),
 				);
@@ -105,6 +133,7 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 
 	private ResolveAndCacheItem(
 		Element: T,
+
 		ParentHandle: string | undefined,
 	): Effect.Effect<any, Error> {
 		return Effect.tryPromise({
@@ -120,9 +149,13 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 				})();
 				return TreeViewItemToDTO(
 					this.Extension,
+
 					TreeItem,
+
 					Handle,
+
 					ParentHandle,
+
 					CommandConverter as any,
 				);
 			}),
@@ -133,9 +166,13 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		if (this.ElementToHandleMap.has(Element)) {
 			return this.ElementToHandleMap.get(Element)!;
 		}
+
 		const Handle = generateUuid();
+
 		this.ElementToHandleMap.set(Element, Handle);
+
 		this.handleToElementMap.set(Handle, Element);
+
 		return Handle;
 	}
 
@@ -143,16 +180,19 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		Elements: void | T | readonly T[] | null | undefined,
 	): (string | null)[] | undefined {
 		if (Elements === null || Elements === undefined) return undefined;
+
 		if (Array.isArray(Elements)) {
 			return Elements.map(
 				(Element) => this.ElementToHandleMap.get(Element) || null,
 			);
 		}
+
 		return [this.ElementToHandleMap.get(Elements as T) || null];
 	}
 
 	reveal(
 		Element: T,
+
 		Options?: {
 			select?: boolean;
 			focus?: boolean;
@@ -162,7 +202,9 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		return Effect.runPromise(
 			this.IPC.SendNotification("$revealTreeViewItem", [
 				this.ViewId,
+
 				this.GetHandleForElement(Element),
+
 				Options,
 			]),
 		);
@@ -170,12 +212,19 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 
 	dispose() {
 		this.OnDidExpandElementEmitter.Shutdown();
+
 		this.OnDidCollapseElementEmitter.Shutdown();
+
 		this.OnDidChangeSelectionEmitter.Shutdown();
+
 		this.OnDidChangeVisibilityEmitter.Shutdown();
+
 		this.OnDidChangeCheckboxStateEmitter.Shutdown();
+
 		this.OnDidChangeActiveItemEmitter.Shutdown();
+
 		this.ElementToHandleMap.clear();
+
 		this.handleToElementMap.clear();
 	}
 }
@@ -187,7 +236,9 @@ export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 export interface TreeView {
 	readonly CreateTreeView: <T>(
 		ViewId: string,
+
 		Options: TreeViewOptions<T>,
+
 		Extension: IExtensionDescription,
 	) => Effect.Effect<VSCodeTreeView<T>, Error>;
 }
@@ -198,6 +249,7 @@ export interface TreeView {
  */
 export class TreeViewService extends Effect.Service<TreeViewService>()(
 	"Service/TreeView",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -223,6 +275,7 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 						View.dispose();
 						yield* Ref.update(
 							ActiveViewsRef,
+
 							(Map) => (Map.delete(ViewId), Map),
 						);
 					}
@@ -230,6 +283,7 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 
 			IPC.RegisterInvokeHandler(
 				"$getChildren",
+
 				([ViewId, ParentHandle]) =>
 					Effect.runPromise(GetChildren(ViewId, ParentHandle)),
 			);
@@ -240,7 +294,9 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 			return {
 				CreateTreeView: <T>(
 					ViewId: string,
+
 					Options: TreeViewOptions<T>,
+
 					Extension: IExtensionDescription,
 				) =>
 					Effect.gen(function* () {
@@ -261,12 +317,16 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 						const OptionDTO = TreeViewOptionToDTO(Options);
 						yield* IPC.SendNotification(
 							"$registerTreeDataProvider",
+
 							[ViewId, OptionDTO],
 						);
 						const ExtHostView = new TreeViewImplementation<T>(
 							ViewId,
+
 							Options.treeDataProvider,
+
 							IPC,
+
 							Extension,
 						);
 						yield* Ref.update(ActiveViewsRef, (Map) =>

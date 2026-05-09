@@ -13,6 +13,7 @@ import type * as VSCode from "vscode";
  */
 export interface WindowStateConfig {
 	focused: boolean;
+
 	active: boolean;
 }
 
@@ -21,14 +22,23 @@ export interface WindowStateConfig {
  */
 export interface StatusBarState {
 	id: string;
+
 	name: string | undefined;
+
 	text: string;
+
 	tooltip: string | VSCode.MarkdownString | undefined;
+
 	command: string | VSCode.Command | undefined;
+
 	alignment: VSCode.StatusBarAlignment;
+
 	priority: number | undefined;
+
 	backgroundColor: string | VSCode.ThemeColor | undefined;
+
 	color: string | VSCode.ThemeColor | undefined;
+
 	isVisible: boolean;
 }
 
@@ -37,9 +47,13 @@ export interface StatusBarState {
  */
 export interface OutputChannelState {
 	name: string;
+
 	output: string[];
+
 	isVisible: boolean;
+
 	isVisibleToUser: boolean;
+
 	appendLineCount: number;
 }
 
@@ -48,12 +62,19 @@ export interface OutputChannelState {
  */
 export interface WebviewPanelState {
 	viewType: string;
+
 	title: string;
+
 	column: VSCode.ViewColumn;
+
 	preserveFocus: boolean;
+
 	options: VSCode.WebviewPanelOptions & VSCode.WebviewOptions;
+
 	isVisible: boolean;
+
 	isActive: boolean;
+
 	webviewOptions: VSCode.WebviewOptions;
 }
 
@@ -62,11 +83,17 @@ export interface WebviewPanelState {
  */
 export interface ProgressState {
 	location: VSCode.ProgressLocation;
+
 	title?: string;
+
 	cancellable: boolean;
+
 	totalWork?: number;
+
 	currentWork: number;
+
 	increment: number;
+
 	reportedMessages: string[];
 }
 
@@ -75,9 +102,13 @@ export interface ProgressState {
  */
 export interface TextDocumentOptions {
 	uri: string;
+
 	viewColumn?: number;
+
 	preserveFocus?: boolean;
+
 	preview?: boolean;
+
 	selection?: VSCode.Range;
 }
 
@@ -86,9 +117,13 @@ export interface TextDocumentOptions {
  */
 export interface DialogOptionsPayload {
 	message: string;
+
 	buttons?: string[];
+
 	items?: string[];
+
 	icon?: "info" | "warning" | "error" | "question" | "none";
+
 	modal?: boolean;
 }
 
@@ -97,11 +132,17 @@ export interface DialogOptionsPayload {
  */
 export interface QuickPickOptionsPayload {
 	items: readonly (string | VSCode.QuickPickItem)[];
+
 	placeholder?: string;
+
 	title?: string;
+
 	matchOnDescription?: boolean;
+
 	matchOnDetail?: boolean;
+
 	ignoreFocusOut?: boolean;
+
 	canPickMany?: boolean;
 }
 
@@ -110,12 +151,19 @@ export interface QuickPickOptionsPayload {
  */
 export interface InputBoxOptionsPayload {
 	value?: string;
+
 	valueSelection?: [number, number];
+
 	prompt?: string;
+
 	placeHolder?: string;
+
 	password?: boolean;
+
 	ignoreFocusOut?: boolean;
+
 	validateInput?: (value: string) => string | undefined | null;
+
 	title?: string;
 }
 
@@ -124,13 +172,21 @@ export interface InputBoxOptionsPayload {
  */
 export interface FileDialogOptionsPayload {
 	title?: string;
+
 	defaultUri?: string;
+
 	buttonLabel?: string;
+
 	filters?: { name: string; extensions: string[] }[];
+
 	canSelectFiles?: boolean;
+
 	canSelectFolders?: boolean;
+
 	canSelectMany?: boolean;
+
 	openLabel?: string;
+
 	saveLabel?: string;
 }
 
@@ -139,11 +195,15 @@ export interface FileDialogOptionsPayload {
  */
 export interface WebviewPanelOptionsPayload {
 	viewType: string;
+
 	title: string;
+
 	showOptions:
 		| VSCode.ViewColumn
 		| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean };
+
 	webviewOptions?: VSCode.WebviewOptions;
+
 	panelOptions?: VSCode.WebviewPanelOptions;
 }
 
@@ -152,7 +212,9 @@ export interface WebviewPanelOptionsPayload {
  */
 export interface ProgressOptionsPayload {
 	location: VSCode.ProgressLocation;
+
 	title?: string;
+
 	cancellable?: boolean;
 }
 
@@ -164,12 +226,16 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -181,6 +247,7 @@ export interface Logger {
  */
 export interface Workspace {
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
+
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];
 }
 
@@ -189,30 +256,42 @@ export interface Workspace {
  */
 export interface Window {
 	readonly state: VSCode.WindowState;
+
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
+
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];
+
 	readonly onDidChangeWindowState: VSCode.Event<VSCode.WindowState>;
+
 	readonly ShowTextDocument: (
 		DocumentOrUri: VSCode.Uri | VSCode.TextDocument,
+
 		ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
+
 		PreserveFocus?: boolean,
 	) => Effect.Effect<VSCode.TextEditor, Error>;
+
 	readonly ShowInformationMessage: (
 		Message: string,
 		...Items: string[]
 	) => Effect.Effect<string | undefined, Error>;
+
 	readonly ShowWarningMessage: (
 		Message: string,
 		...Items: string[]
 	) => Effect.Effect<string | undefined, Error>;
+
 	readonly ShowErrorMessage: (
 		Message: string,
 		...Items: string[]
 	) => Effect.Effect<string | undefined, Error>;
+
 	readonly ShowQuickPick: <T extends string>(
 		Items: readonly T[] | VSCode.QuickPickItem[],
+
 		Options?: VSCode.QuickPickOptions,
 	) => Effect.Effect<T | VSCode.QuickPickItem | undefined, Error>;
+
 	readonly ShowInputBox: (
 		Options?: VSCode.InputBoxOptions,
 	) => Effect.Effect<string | undefined, Error>;

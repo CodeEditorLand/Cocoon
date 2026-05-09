@@ -9,7 +9,9 @@ const { ViewColumn: VSCodeViewColumn } =
 
 // VS Code internal constants for editor groups
 const ActiveEditorGroup = -1;
+
 const SideGroup = -2;
+
 type EditorGroup = number;
 
 /**
@@ -23,16 +25,20 @@ export const FromAPI = (
 	if (typeof ViewColumn !== "number") {
 		return undefined;
 	}
+
 	switch (ViewColumn) {
 		case VSCodeViewColumn.Active:
 			return ActiveEditorGroup;
+
 		case VSCodeViewColumn.Beside:
 			return SideGroup;
+
 		default:
 			// ViewColumn.One, Two, etc. are 1-based, but EditorGroup is 0-based.
 			if (ViewColumn >= VSCodeViewColumn.One) {
 				return ViewColumn - 1;
 			}
 	}
+
 	return undefined;
 };

@@ -22,6 +22,7 @@ const CreateSanitizedEnvironment = (): {
 	[key: string]: string | undefined;
 } => {
 	const SanitizedEnvironment: { [key: string]: string | undefined } = {};
+
 	for (const key in ActualNodeProcess.env) {
 		if (Object.prototype.hasOwnProperty.call(ActualNodeProcess.env, key)) {
 			if (
@@ -33,6 +34,7 @@ const CreateSanitizedEnvironment = (): {
 			}
 		}
 	}
+
 	return Object.freeze(SanitizedEnvironment);
 };
 
@@ -47,21 +49,27 @@ export const ProcessShim = {
 	get platform(): NodeJS.Platform {
 		return ActualNodeProcess.platform;
 	},
+
 	get arch(): string {
 		return ActualNodeProcess.arch;
 	},
+
 	get versions(): NodeJS.ProcessVersions {
 		return { ...ActualNodeProcess.versions };
 	},
+
 	get pid(): number {
 		return ActualNodeProcess.pid;
 	},
+
 	get ppid(): number {
 		return ActualNodeProcess.ppid;
 	},
+
 	get execPath(): string {
 		return ActualNodeProcess.execPath;
 	},
+
 	get title(): string {
 		return "Cocoon Extension Host";
 	},
@@ -70,23 +78,30 @@ export const ProcessShim = {
 	get env(): { [key: string]: string | undefined } {
 		return CreateSanitizedEnvironment();
 	},
+
 	get argv(): string[] {
 		return [...ActualNodeProcess.argv];
 	},
+
 	get execArgv(): string[] {
 		return [...ActualNodeProcess.execArgv];
 	},
 
 	// --- Safe Methods (delegated directly) ---
 	cwd: () => ActualNodeProcess.cwd(),
+
 	memoryUsage: () => ActualNodeProcess.memoryUsage(),
+
 	hrtime: (time?: [number, number]) => ActualNodeProcess.hrtime(time),
+
 	uptime: () => ActualNodeProcess.uptime(),
+
 	nextTick: (callback: (...args: any[]) => void, ...args: any[]) =>
 		ActualNodeProcess.nextTick(callback, ...args),
 
 	// --- Dangerous Methods (to be patched later) ---
 	exit: (code?: number): never => ActualNodeProcess.exit(code),
+
 	kill: (pid: number, signal?: string | number) =>
 		ActualNodeProcess.kill(pid, signal),
 
@@ -94,9 +109,11 @@ export const ProcessShim = {
 	chdir: (_directory: string) => {
 		throw new Error("`process.chdir()` is not allowed in extensions.");
 	},
+
 	setuid: (_id: number | string) => {
 		throw new Error("`process.setuid()` is not allowed in extensions.");
 	},
+
 	setgid: (_id: number | string) => {
 		throw new Error("`process.setgid()` is not allowed in extensions.");
 	},

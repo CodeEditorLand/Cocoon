@@ -29,26 +29,47 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 export interface Environment {
 	readonly appName: string;
+
 	readonly appRoot?: string | undefined;
+
 	readonly appHost: string;
+
 	readonly uriScheme: string;
+
 	readonly language: string;
+
 	readonly machineId: string;
+
 	readonly sessionId: string;
+
 	readonly isTrusted: boolean;
+
 	readonly isRemote: boolean;
+
 	readonly remoteName?: string | undefined;
+
 	readonly shell: string;
+
 	readonly uiKind: UIKind;
+
 	readonly isNewAppInstall: boolean;
+
 	readonly isBuilt: boolean;
+
 	readonly logLevel: LogLevel;
+
 	readonly onDidChangeLogLevel: Event<LogLevel>;
+
 	readonly isTelemetryEnabled: boolean;
+
 	readonly onDidChangeTelemetryEnabled: Event<boolean>;
+
 	readonly onDidChangeShell: Event<string>;
+
 	readonly clipboard: Clipboard;
+
 	readonly openExternal: (Target: Uri) => Promise<boolean>;
+
 	readonly asExternalUri: (Target: Uri) => Promise<Uri>;
 }
 
@@ -58,6 +79,7 @@ export interface Environment {
  */
 export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 	"Service/Environment",
+
 	{
 		effect: Effect.gen(function* () {
 			const InitData = yield* InitDataService;
@@ -80,6 +102,7 @@ export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 			const OpenExternal = (Target: Uri) =>
 				IPC.SendRequest<boolean>("$openUri", [
 					Target.toJSON(),
+
 					{ allowExternalSchemes: true },
 				]).pipe(Effect.map((Result) => !!Result));
 

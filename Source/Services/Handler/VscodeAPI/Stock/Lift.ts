@@ -66,7 +66,9 @@ import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/comm
  */
 export function ToUri(Input: unknown): URI | undefined {
 	if (Input == null) return undefined;
+
 	if (Input instanceof URI) return Input;
+
 	if (typeof Input === "string") {
 		// Empty string short-circuits BEFORE any `URI.parse` /
 		// `URI.file` call. Stock VS Code's `URI.parse("")` throws
@@ -78,22 +80,30 @@ export function ToUri(Input: unknown): URI | undefined {
 		// no-op branch instead of crashing the extension on
 		// initialisation.
 		if (Input.length === 0) return undefined;
+
 		try {
 			if (Input.startsWith("file:") || Input.includes("://")) {
 				return URI.parse(Input);
 			}
+
 			return URI.file(Input);
 		} catch {
 			return undefined;
 		}
 	}
+
 	const WithScheme = Input as {
 		scheme?: unknown;
+
 		authority?: unknown;
+
 		path?: unknown;
+
 		query?: unknown;
+
 		fragment?: unknown;
 	};
+
 	if (typeof WithScheme.scheme === "string") {
 		try {
 			return URI.from({
@@ -117,6 +127,7 @@ export function ToUri(Input: unknown): URI | undefined {
 			return undefined;
 		}
 	}
+
 	return undefined;
 }
 
@@ -128,8 +139,11 @@ export function ToUri(Input: unknown): URI | undefined {
  */
 export function RelativePath(From: unknown, To: unknown): string | undefined {
 	const FromUri = ToUri(From);
+
 	const ToUriValue = ToUri(To);
+
 	if (!FromUri || !ToUriValue) return undefined;
+
 	return StockRelativePath(FromUri, ToUriValue);
 }
 
@@ -142,11 +156,15 @@ export function RelativePath(From: unknown, To: unknown): string | undefined {
  */
 export function IsEqualOrParent(
 	Resource: unknown,
+
 	Candidate: unknown,
 ): boolean {
 	const R = ToUri(Resource);
+
 	const C = ToUri(Candidate);
+
 	if (!R || !C) return false;
+
 	return StockIsEqualOrParent(R, C);
 }
 
@@ -157,16 +175,19 @@ export function IsEqualOrParent(
  */
 export function Basename(Resource: unknown): string {
 	const U = ToUri(Resource);
+
 	return U ? StockBasename(U) : "";
 }
 
 export function Dirname(Resource: unknown): URI | undefined {
 	const U = ToUri(Resource);
+
 	return U ? StockDirname(U) : undefined;
 }
 
 export function Extname(Resource: unknown): string {
 	const U = ToUri(Resource);
+
 	return U ? StockExtname(U) : "";
 }
 
@@ -175,6 +196,7 @@ export function JoinPath(
 	...Parts: string[]
 ): URI | undefined {
 	const U = ToUri(Resource);
+
 	return U ? StockJoinPath(U, ...Parts) : undefined;
 }
 
@@ -204,6 +226,7 @@ export { URI as Uri };
  */
 export function GlobMatch(
 	Pattern: string | { base: string; pattern: string },
+
 	Path: string,
 ): boolean {
 	return StockGlobMatch(Pattern as any, Path);

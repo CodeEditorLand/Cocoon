@@ -16,9 +16,12 @@ export const ToDTO = (Options?: OpenDialogOptions) => {
 	if (!Options) {
 		return undefined;
 	}
+
 	return {
 		...Options,
+
 		defaultUri: Options.defaultUri?.toJSON(),
+
 		filters: SerializeFilters(Options.filters),
 	};
 };

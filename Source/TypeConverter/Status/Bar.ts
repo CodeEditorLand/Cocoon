@@ -12,14 +12,22 @@ import { FromAPI as MarkdownStringFromAPI } from "../Main/Markdown/String.js";
 // Placeholder DTO, matching VS Code's internal structure.
 interface IStatusbarEntry {
 	id: string;
+
 	name: string | undefined;
+
 	text: string;
+
 	tooltip: string | any | undefined;
+
 	command: any | undefined;
+
 	priority: number | undefined;
+
 	alignment: number; // 0 for Left, 1 for Right
 	backgroundColor: string | undefined;
+
 	color: string | undefined;
+
 	accessibilityInformation: any | undefined;
 }
 
@@ -33,35 +41,47 @@ interface IStatusbarEntry {
  */
 export const FromAPI = (
 	From: VSCodeStatusBarItem,
+
 	EntryId: string,
+
 	_ExtensionId: string,
+
 	CommandConverter: CommandConverter,
 ): IStatusbarEntry => {
 	return {
 		id: EntryId,
+
 		name: From.name,
+
 		text: From.text,
+
 		tooltip:
 			typeof From.tooltip === "string"
 				? From.tooltip
 				: From.tooltip instanceof MarkdownString
 					? MarkdownStringFromAPI(From.tooltip)
 					: undefined,
+
 		command: From.command
 			? CommandConverter.ToInternal(From.command as Command, [])
 			: undefined,
+
 		priority: From.priority,
+
 		alignment: From.alignment === 1 /* Left */ ? 0 : 1,
+
 		backgroundColor:
 			From.backgroundColor instanceof ThemeColor
 				? From.backgroundColor.id
 				: undefined,
+
 		color:
 			typeof From.color === "string"
 				? From.color
 				: From.color instanceof ThemeColor
 					? From.color.id
 					: undefined,
+
 		accessibilityInformation: From.accessibilityInformation,
 	};
 };

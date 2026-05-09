@@ -31,17 +31,29 @@ export const CreateCryptoShim = () => {
 	return {
 		// --- Direct Delegations (Safe Functions) ---
 		createHash: NodeCrypto.createHash,
+
 		createHmac: NodeCrypto.createHmac,
+
 		randomBytes: NodeCrypto.randomBytes,
+
 		getRandomValues: NodeCrypto.getRandomValues,
+
 		randomUUID: NodeCrypto.randomUUID,
+
 		randomFill: NodeCrypto.randomFill,
+
 		randomFillSync: NodeCrypto.randomFillSync,
+
 		pbkdf2: NodeCrypto.pbkdf2,
+
 		pbkdf2Sync: NodeCrypto.pbkdf2Sync,
+
 		timingSafeEqual: NodeCrypto.timingSafeEqual,
+
 		getHashes: NodeCrypto.getHashes,
+
 		getCiphers: NodeCrypto.getCiphers,
+
 		constants: NodeCrypto.constants,
 
 		// --- Blocked / Stubbed Functions (Sensitive or Complex) ---
@@ -49,11 +61,17 @@ export const CreateCryptoShim = () => {
 			typeof NodeCrypto.generatePrime === "function"
 				? CreateStub("generatePrime")
 				: undefined,
+
 		generateKeyPair: CreateStub("generateKeyPair"),
+
 		generateKeyPairSync: CreateStub("generateKeyPairSync"),
+
 		createCipheriv: CreateStub("createCipheriv"),
+
 		createDecipheriv: CreateStub("createDecipheriv"),
+
 		createSign: CreateStub("createSign"),
+
 		createVerify: CreateStub("createVerify"),
 	};
 };

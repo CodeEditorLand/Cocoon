@@ -69,28 +69,46 @@ import type {
  */
 export interface MountainDTO {
 	readonly Version: number;
+
 	readonly Handle: string;
+
 	readonly ExtensionId: string;
+
 	readonly ViewType: string;
+
 	readonly Title: string;
+
 	readonly ViewColumn: number;
+
 	readonly PreservedFocus: boolean;
+
 	readonly IsActive: boolean;
+
 	readonly IsVisible: boolean;
+
 	readonly Options: {
 		readonly EnableScripts?: boolean;
+
 		readonly RetainContextWhenHidden?: boolean;
+
 		readonly EnableFindWidget?: boolean;
+
 		readonly LocalResourceRoots?: readonly string[];
+
 		readonly PortMapping?: readonly unknown[];
 	};
+
 	readonly IconPath?: string;
+
 	readonly Content?: {
 		readonly Html?: string;
+
 		readonly Uris?: readonly string[];
 	};
+
 	readonly Metadata?: {
 		readonly CreatedAt: number;
+
 		readonly LastRestoredAt?: number;
 	};
 }
@@ -103,9 +121,11 @@ export interface Serializer {
 	readonly SerializeToDTO: (
 		State: PanelState,
 	) => Effect.Effect<MountainDTO, Error>;
+
 	readonly DeserializeFromDTO: (
 		DTO: unknown,
 	) => Effect.Effect<PanelState, Error>;
+
 	readonly ValidateDTO: (DTO: unknown) => Effect.Effect<MountainDTO, Error>;
 }
 
@@ -121,6 +141,7 @@ const DTO_VERSION = 1;
  */
 export class SerializerService extends Effect.Service<SerializerService>()(
 	"Serializer/WebviewPanel",
+
 	{
 		effect: Effect.gen(function* () {
 			/**

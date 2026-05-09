@@ -18,8 +18,10 @@ export class ModuleBlockedProblem extends Data.TaggedError(
 	readonly ModuleName: string;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: { readonly ModuleName: string }) {
 		super(Properties);
+
 		this.message = `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
 	}
 }

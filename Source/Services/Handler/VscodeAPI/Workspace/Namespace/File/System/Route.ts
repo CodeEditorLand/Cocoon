@@ -50,6 +50,7 @@ export type FileSystemRoute = "native" | "mountain";
 export function ExtractScheme(Uri: unknown): string {
 	if (Uri && typeof Uri === "object") {
 		const WithScheme = Uri as { scheme?: unknown };
+
 		if (
 			typeof WithScheme.scheme === "string" &&
 			WithScheme.scheme.length > 0
@@ -57,18 +58,23 @@ export function ExtractScheme(Uri: unknown): string {
 			return WithScheme.scheme;
 		}
 	}
+
 	if (typeof Uri === "string") {
 		const Colon = Uri.indexOf(":");
+
 		if (Colon > 0 && Colon < 32) {
 			const Scheme = Uri.slice(0, Colon);
+
 			// Accept only ASCII identifier-like schemes; anything else is
 			// a bare path with a colon (Windows drive letters).
 			if (/^[a-zA-Z][a-zA-Z0-9+\-.]*$/.test(Scheme)) {
 				return Scheme.toLowerCase();
 			}
 		}
+
 		return "file";
 	}
+
 	return "file";
 }
 
@@ -83,13 +89,16 @@ export function ExtractScheme(Uri: unknown): string {
 export function ExtractFsPath(Uri: unknown): string | undefined {
 	if (Uri && typeof Uri === "object") {
 		const WithPath = Uri as { fsPath?: unknown; path?: unknown };
+
 		if (typeof WithPath.fsPath === "string" && WithPath.fsPath.length > 0) {
 			return WithPath.fsPath;
 		}
+
 		if (typeof WithPath.path === "string" && WithPath.path.length > 0) {
 			return WithPath.path;
 		}
 	}
+
 	if (typeof Uri === "string") {
 		if (Uri.startsWith("file://")) {
 			// Strip `file://` and decode any percent-encoded chars.
@@ -99,8 +108,10 @@ export function ExtractFsPath(Uri: unknown): string | undefined {
 				return Uri.slice("file://".length);
 			}
 		}
+
 		if (Uri.startsWith("/")) return Uri;
 	}
+
 	return undefined;
 }
 

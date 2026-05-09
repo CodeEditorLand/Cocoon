@@ -15,15 +15,20 @@ import type * as VSCode from "vscode";
  */
 export const ConvertContentOptionToDTO = (
 	ExtensionDescription: IExtensionDescription,
+
 	Options: VSCode.WebviewOptions,
 ) => {
 	return {
 		enableCommandUris: Options.enableCommandUris,
+
 		enableScripts: Options.enableScripts,
+
 		enableForms: Options.enableForms,
+
 		localResourceRoots: Options.localResourceRoots ?? [
 			ExtensionDescription.extensionLocation,
 		],
+
 		portMapping: Options.portMapping,
 	};
 };

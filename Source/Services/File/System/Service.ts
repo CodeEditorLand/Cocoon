@@ -13,14 +13,22 @@ import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Se
 
 export interface IFileSystemService {
 	stat(uri: any): Promise<any>;
+
 	readFile(uri: any): Promise<Uint8Array>;
+
 	writeFile(uri: any, content: Uint8Array): Promise<void>;
+
 	readDirectory(uri: any): Promise<[string, any][]>;
+
 	createDirectory(uri: any): Promise<void>;
+
 	delete(uri: any, options: { recursive: boolean }): Promise<void>;
+
 	rename(
 		source: any,
+
 		target: any,
+
 		options: { overwrite: boolean },
 	): Promise<void>;
 }
@@ -35,14 +43,20 @@ export class FileSystemService implements IFileSystemService {
 	async stat(uri: any): Promise<any> {
 		const Path =
 			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+
 		const Response = await this.mountainClient.sendRequest("fs.stat", Path);
+
 		if (!Response) throw new Error(`File not found: ${Path}`);
+
 		// Mountain returns: { type, is_file, is_directory, size, mtime }
 		// VS Code FileType: 0=Unknown, 1=File, 2=Directory, 64=SymbolicLink
 		return {
 			type: Response.type ?? 1,
+
 			ctime: 0,
+
 			mtime: Response.mtime ?? 0,
+
 			size: Response.size ?? 0,
 		};
 	}
@@ -55,6 +69,7 @@ export class FileSystemService implements IFileSystemService {
 		// Call Spine (v0.1 Filesystem Batch)
 		const response = await this.mountainClient.sendRequest(
 			"fs.readFile",
+
 			uri.fsPath,
 		);
 
@@ -78,11 +93,14 @@ export class FileSystemService implements IFileSystemService {
 		if (uri.scheme !== "file") {
 			throw new Error(`Unsupported scheme: ${uri.scheme}`);
 		}
+
 		const Path =
 			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+
 		// Mountain now returns [{name, type}] where type 1=File 2=Directory
 		const Entries: Array<{ name: string; type: number }> =
 			await this.mountainClient.sendRequest("fs.listDir", Path);
+
 		return (Entries ?? []).map((E) =>
 			typeof E === "string" ? [E, 1] : [E.name, E.type],
 		);
@@ -98,7 +116,9 @@ export class FileSystemService implements IFileSystemService {
 
 	async rename(
 		source: any,
+
 		target: any,
+
 		_options: { overwrite: boolean },
 	): Promise<void> {
 		// Note: 'overwrite' flag support depends on backend logic, ignoring for now
@@ -114,6 +134,7 @@ export class FileSystemService implements IFileSystemService {
  */
 export const FileSystemServiceLayer = Layer.effect(
 	IFileSystemService,
+
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
 		return new FileSystemService(mountainClient);

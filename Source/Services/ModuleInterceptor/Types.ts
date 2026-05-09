@@ -9,18 +9,26 @@ import type { SecurityLevel } from "../../Interfaces/I/Module/Interceptor.js";
 // Module interception configuration
 export interface ModuleInterceptorConfig {
 	allowNodeBuiltins: boolean;
+
 	allowFileSystemAccess: boolean;
+
 	allowNetworkAccess: boolean;
+
 	allowedModules: string[];
+
 	blockedModules: string[];
+
 	securityPolicy: SecurityLevel;
 }
 
 // Module cache entry with security metadata
 export interface ModuleCacheEntry {
 	module: any;
+
 	securityLevel: SecurityLevel;
+
 	validationTime: number;
+
 	path: string;
 }
 
@@ -30,9 +38,13 @@ export type ASTNode = any;
 // Module loading telemetry
 export interface ModuleTelemetry {
 	totalModulesLoaded: number;
+
 	blockedModules: number;
+
 	sandboxedModules: number;
+
 	averageAnalysisTime: number;
+
 	securityViolations: number;
 }
 

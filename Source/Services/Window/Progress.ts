@@ -26,12 +26,16 @@ export const WithProgress = <T>(
 	MountainClient: {
 		sendNotification: (method: string, params: unknown) => Promise<void>;
 	},
+
 	Logger: {
 		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
+
 	Options: VSCode.ProgressOptions,
+
 	Task: (
 		Progress: VSCode.Progress<{ message?: string; increment?: number }>,
+
 		Token: VSCode.CancellationToken,
 	) => Promise<T>,
 ): Effect.Effect<T, Error> =>

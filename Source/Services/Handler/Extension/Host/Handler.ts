@@ -25,6 +25,7 @@ import type { HandlerContext } from "../../Handler/Context.js";
  */
 const HandleInitializeExtensionHost = async (
 	Context: HandlerContext,
+
 	Parameters: any,
 ): Promise<string> => {
 	const Extensions: any[] = Parameters?.extensions ?? [];
@@ -38,6 +39,7 @@ const HandleInitializeExtensionHost = async (
 
 	// Build extension registry and activation event index
 	Context.ExtensionRegistry.clear();
+
 	Context.ActivationEventIndex.clear();
 
 	for (const Extension of Extensions) {
@@ -53,7 +55,9 @@ const HandleInitializeExtensionHost = async (
 
 		for (const Event of ActivationEvents) {
 			const Existing = Context.ActivationEventIndex.get(Event) ?? [];
+
 			Existing.push(Identifier);
+
 			Context.ActivationEventIndex.set(Event, Existing);
 		}
 	}
@@ -77,6 +81,7 @@ const HandleInitializeExtensionHost = async (
 	Context.ConnectToMountain().catch((Error) => {
 		console.warn(
 			"[ExtensionHostHandler] Background Mountain reconnect failed:",
+
 			Error instanceof globalThis.Error ? Error.message : String(Error),
 		);
 	});
@@ -96,10 +101,13 @@ const HandleInitializeExtensionHost = async (
  */
 const HandleDeltaExtensions = async (
 	Context: HandlerContext,
+
 	Parameters: any,
 ): Promise<any> => {
 	const DeltaStart = performance.now();
+
 	const Added: any[] = Parameters?.toAdd ?? [];
+
 	const Removed: any[] = Parameters?.toRemove ?? [];
 
 	const IdentifierOf = (Extension: any): string =>
@@ -123,7 +131,9 @@ const HandleDeltaExtensions = async (
 
 			if (!Existing.includes(Identifier)) {
 				Existing.push(Identifier);
+
 				Context.ActivationEventIndex.set(Event, Existing);
+
 				AddedActivationEvents++;
 			}
 		}
@@ -151,7 +161,9 @@ const HandleDeltaExtensions = async (
 
 	return {
 		success: true,
+
 		registrySize: Context.ExtensionRegistry.size,
+
 		durationMs: DurationMs,
 	};
 };
@@ -162,6 +174,7 @@ const HandleDeltaExtensions = async (
  */
 const HandleActivateByEvent = async (
 	Context: HandlerContext,
+
 	Parameters: any,
 ): Promise<any> => {
 	// Ensure the vscode API shim is available before any extension loads
@@ -175,23 +188,29 @@ const HandleActivateByEvent = async (
 	// For "*" we activate all extensions that have any activation event.
 	// For a specific event we activate matching ones AND "*" ones.
 	let MatchingExtensions: string[];
+
 	if (ActivationEvent === "*") {
 		// Collect all extensions across every event bucket (deduplicated)
 		const All = new Set<string>();
+
 		for (const Ids of Context.ActivationEventIndex.values()) {
 			for (const Id of Ids) All.add(Id);
 		}
+
 		MatchingExtensions = [...All];
 	} else {
 		const Specific =
 			Context.ActivationEventIndex.get(ActivationEvent) ?? [];
+
 		const Star = Context.ActivationEventIndex.get("*") ?? [];
+
 		MatchingExtensions = [...new Set([...Specific, ...Star])];
 	}
 
 	console.log(
 		`[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} → ${MatchingExtensions.length} extensions`,
 	);
+
 	if (MatchingExtensions.length > 0) {
 		console.log(
 			`[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`,
@@ -207,6 +226,7 @@ const HandleActivateByEvent = async (
 	const ToActivate = MatchingExtensions.filter(
 		(Id) => !Context.ActivatedExtensions.has(Id),
 	);
+
 	console.log(
 		`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`,
 	);
@@ -230,6 +250,7 @@ const HandleActivateByEvent = async (
 				console.log(
 					`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
 				);
+
 				// For `Class extends value undefined` errors, surface the top
 				// of the stack so we can locate which module (and which base
 				// class) actually failed to resolve. Cascade-7's critical-
@@ -244,6 +265,7 @@ const HandleActivateByEvent = async (
 						.split("\n")
 						.slice(0, 6)
 						.join("\n");
+
 					console.log(
 						`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
 					);
@@ -260,6 +282,7 @@ const HandleActivateByEvent = async (
 
 	return {
 		success: true,
+
 		activated: ToActivate.length,
 	};
 };
@@ -270,6 +293,7 @@ const HandleActivateByEvent = async (
  */
 const HandleStartExtensionHost = async (
 	Context: HandlerContext,
+
 	_Parameters: any,
 ): Promise<any> => {
 	console.log(
@@ -283,7 +307,9 @@ const HandleStartExtensionHost = async (
 
 	return {
 		success: true,
+
 		ready: Context.ExtensionHostReady,
+
 		extensionCount: Context.ExtensionRegistry.size,
 	};
 };
@@ -300,13 +326,16 @@ const HandleStartExtensionHost = async (
  */
 const InstallVscodeModuleHooks = async (): Promise<void> => {
 	if ((globalThis as any).__cocoonModuleHooksInstalled) return;
+
 	(globalThis as any).__cocoonModuleHooksInstalled = true;
 
 	// Cocoon runs as an ESM bundle (bundle: true in ESBuild). Bare `require`
 	// is not defined here - we must go through createRequire. This is what
 	// failed Effect-TS Stage 4 in past runs.
 	const ModuleModule = await import("module");
+
 	const CreateRequire = ModuleModule.createRequire;
+
 	const LocalRequire = CreateRequire(import.meta.url);
 
 	try {
@@ -314,32 +343,44 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 		const NodeModule = LocalRequire("module") as typeof import("module") & {
 			_load: (
 				Request: string,
+
 				Parent: unknown,
+
 				IsMain: boolean,
 			) => unknown;
 		};
+
 		const OriginalLoad = NodeModule._load;
+
 		NodeModule._load = function PatchedLoad(
 			Request: string,
+
 			Parent: unknown,
+
 			IsMain: boolean,
 		): unknown {
 			if (Request === "vscode") {
 				const API = (globalThis as any).__cocoonVscodeAPI;
+
 				if (API) return API;
+
 				console.warn(
 					"[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace",
 				);
+
 				return {};
 			}
+
 			return OriginalLoad.call(this, Request, Parent, IsMain);
 		};
+
 		console.log(
 			"[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted",
 		);
 	} catch (Err: unknown) {
 		console.warn(
 			"[ExtensionHostHandler] Failed to patch Module._load:",
+
 			Err instanceof Error ? Err.message : String(Err),
 		);
 	}
@@ -352,10 +393,13 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 		const NodeModule = LocalRequire("module") as {
 			register?: (
 				specifier: string | URL,
+
 				parentURL: string | URL,
+
 				options?: { data?: unknown },
 			) => void;
 		};
+
 		if (typeof NodeModule.register === "function") {
 			// The bridge module source exports every named member the VS Code
 			// API surface has. Extensions doing `import { commands } from 'vscode'`
@@ -366,194 +410,360 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			const VscodeExportNames = [
 				// Namespaces
 				"window",
+
 				"workspace",
+
 				"commands",
+
 				"languages",
+
 				"extensions",
+
 				"env",
+
 				"debug",
+
 				"tasks",
+
 				"scm",
+
 				"authentication",
+
 				"l10n",
+
 				"notebooks",
+
 				"tests",
+
 				"comments",
+
 				"chat",
+
 				"lm",
+
 				"interactive",
+
 				// Type constructors
 				"Position",
+
 				"Range",
+
 				"Location",
+
 				"LocationLink",
+
 				"Selection",
+
 				"MarkdownString",
+
 				"Hover",
+
 				"CompletionItem",
+
 				"CompletionItemKind",
+
 				"CompletionItemTag",
+
 				"CompletionList",
+
 				"CompletionTriggerKind",
+
 				"Diagnostic",
+
 				"DiagnosticSeverity",
+
 				"DiagnosticTag",
+
 				"DiagnosticRelatedInformation",
+
 				"TextEdit",
+
 				"WorkspaceEdit",
+
 				"SnippetString",
+
 				"SnippetTextEdit",
+
 				"SymbolKind",
+
 				"SymbolTag",
+
 				"SymbolInformation",
+
 				"DocumentSymbol",
+
 				"CodeActionKind",
+
 				"CodeAction",
+
 				"CodeActionTriggerKind",
+
 				"CodeLens",
+
 				"SignatureHelp",
+
 				"SignatureHelpTriggerKind",
+
 				"SignatureInformation",
+
 				"ParameterInformation",
+
 				"InlayHint",
+
 				"InlayHintKind",
+
 				"InlayHintLabelPart",
+
 				"FoldingRange",
+
 				"FoldingRangeKind",
+
 				"DocumentHighlight",
+
 				"DocumentHighlightKind",
+
 				"SelectionRange",
+
 				"SemanticTokensLegend",
+
 				"SemanticTokensBuilder",
+
 				"SemanticTokens",
+
 				"SemanticTokensEdit",
+
 				"SemanticTokensEdits",
+
 				"RelativePattern",
+
 				"Disposable",
+
 				"StatusBarAlignment",
+
 				"ThemeColor",
+
 				"ThemeIcon",
+
 				"TreeItem",
+
 				"TreeItemCollapsibleState",
+
 				"TreeItemCheckboxState",
+
 				"ViewColumn",
+
 				"EndOfLine",
+
 				"ConfigurationTarget",
+
 				"Uri",
+
 				"CancellationTokenSource",
+
 				"CancellationError",
+
 				"EventEmitter",
+
 				"FileType",
+
 				"FilePermission",
+
 				"FileSystemError",
+
 				"DataTransfer",
+
 				"DataTransferItem",
+
 				"TextDocumentChangeReason",
+
 				"TextDocumentSaveReason",
+
 				"TextEditorCursorStyle",
+
 				"TextEditorLineNumbersStyle",
+
 				"TextEditorRevealType",
+
 				"TextEditorSelectionChangeKind",
+
 				"DecorationRangeBehavior",
+
 				"OverviewRulerLane",
+
 				"ColorPresentation",
+
 				"ColorInformation",
+
 				"Color",
+
 				"QuickPickItemKind",
+
 				"InputBoxValidationSeverity",
+
 				"ProgressLocation",
+
 				"NotebookCellData",
+
 				"NotebookCellKind",
+
 				"NotebookCellOutput",
+
 				"NotebookCellOutputItem",
+
 				"NotebookData",
+
 				"NotebookEdit",
+
 				"NotebookRange",
+
 				"TestRunProfileKind",
+
 				"TestMessage",
+
 				"TestRunRequest",
+
 				"TestTag",
+
 				"DebugAdapterExecutable",
+
 				"DebugAdapterInlineImplementation",
+
 				"DebugAdapterNamedPipeServer",
+
 				"DebugAdapterServer",
+
 				"DebugConfigurationProviderTriggerKind",
+
 				"IndentAction",
+
 				"Breakpoint",
+
 				"FunctionBreakpoint",
+
 				"SourceBreakpoint",
+
 				"TerminalLink",
+
 				"TerminalLocation",
+
 				"TerminalProfile",
+
 				"TaskGroup",
+
 				"TaskScope",
+
 				"TaskRevealKind",
+
 				"TaskPanelKind",
+
 				"ShellExecution",
+
 				"ProcessExecution",
+
 				"CustomExecution",
+
 				"Task",
+
 				"CommentMode",
+
 				"CommentThreadCollapsibleState",
+
 				"CommentThreadState",
+
 				"ExtensionKind",
+
 				"ExtensionMode",
+
 				"UIKind",
+
 				"LogLevel",
+
 				"LanguageStatusSeverity",
+
 				"TextSearchContext",
+
 				"TextSearchMatch",
+
 				"DocumentLink",
+
 				"LinkedEditingRanges",
+
 				"EvaluatableExpression",
+
 				"InlineValueText",
+
 				"InlineValueVariableLookup",
+
 				"InlineValueEvaluatableExpression",
+
 				"TypeHierarchyItem",
+
 				"CallHierarchyItem",
+
 				"CallHierarchyIncomingCall",
+
 				"CallHierarchyOutgoingCall",
+
 				// Fields
 				"version",
 			];
+
 			const NamedExports = VscodeExportNames.map(
 				(Name) => `export const ${Name} = API.${Name};`,
 			).join("\n");
+
 			// The virtual bridge module. Reads once at evaluation time, which
 			// happens after EnsureVscodeAPIRegistered sets `__cocoonVscodeAPI`,
 			// because $activateByEvent triggers EnsureVscodeAPIRegistered
 			// before any extension ESM source is loaded.
 			const BridgeSource = [
 				"const API = globalThis.__cocoonVscodeAPI || {};",
+
 				NamedExports,
+
 				"export default API;",
+
 				"export const __esModule = true;",
 			].join("\n");
+
 			const LoaderSource = `
 				const BRIDGE_URL = 'vscode-shim:///vscode';
+
 				const BRIDGE_SOURCE = ${JSON.stringify(BridgeSource)};
+
 				export async function resolve(Specifier, Context, NextResolve) {
+
 					if (Specifier === 'vscode') {
+
 						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
 					}
+
 					return NextResolve(Specifier, Context);
 				}
+
 				export async function load(Url, Context, NextLoad) {
+
 					if (Url === BRIDGE_URL) {
+
 						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
 					}
+
 					return NextLoad(Url, Context);
 				}
+
 			`;
 			const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
+
 			try {
 				NodeModule.register(LoaderURL, import.meta.url);
+
 				console.log(
 					"[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted",
 				);
 			} catch (RegisterErr: unknown) {
 				console.warn(
 					"[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail):",
+
 					RegisterErr instanceof Error
 						? RegisterErr.message
 						: String(RegisterErr),
@@ -563,6 +773,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 	} catch (Err: unknown) {
 		console.warn(
 			"[ExtensionHostHandler] ESM loader setup skipped:",
+
 			Err instanceof Error ? Err.message : String(Err),
 		);
 	}

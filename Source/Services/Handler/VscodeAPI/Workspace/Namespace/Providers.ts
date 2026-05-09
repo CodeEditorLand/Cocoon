@@ -14,23 +14,33 @@ import type { HandlerContext } from "../../../Handler/Context.js";
 const MakeProvider =
 	(
 		Context: HandlerContext,
+
 		RegisterMethod: string,
+
 		UnregisterMethod: string,
+
 		_LegacyHandlePrefix: string,
+
 		ExtraPayload: (Key: string) => Record<string, unknown>,
+
 		OnRegister?: (Handle: number, Key: string, Provider: any) => void,
+
 		OnDispose?: (Handle: number, Key: string) => void,
 	) =>
 	(Key: string, _Provider: any, _Options?: any) => {
 		const Handle = NextProviderHandle();
+
 		Context.SendToMountain(RegisterMethod, {
 			handle: Handle,
 			...ExtraPayload(Key),
 		}).catch(() => {});
+
 		OnRegister?.(Handle, Key, _Provider);
+
 		return {
 			dispose: () => {
 				OnDispose?.(Handle, Key);
+
 				Context.SendToMountain(UnregisterMethod, {
 					handle: Handle,
 				}).catch(() => {});
@@ -43,16 +53,23 @@ export const BuildRegisterTextDocumentContentProvider = (
 ) =>
 	MakeProvider(
 		Context,
+
 		"register_text_document_content_provider",
+
 		"unregister_text_document_content_provider",
+
 		"textDocumentContent",
+
 		(Scheme) => ({ scheme: Scheme, extensionId: "" }),
+
 		(_Handle, Scheme, Provider) => {
 			Context.ExtensionRegistry.set(
 				`__textDocumentContentProvider:${Scheme}`,
+
 				Provider,
 			);
 		},
+
 		(_Handle, Scheme) => {
 			Context.ExtensionRegistry.delete(
 				`__textDocumentContentProvider:${Scheme}`,
@@ -80,11 +97,15 @@ export const BuildRegisterFileSystemProvider =
 	(Context: HandlerContext) =>
 	(
 		Scheme: string,
+
 		_Provider: any,
+
 		Options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
 	) => {
 		const Handle = NextProviderHandle();
+
 		ClaimedFileSystemSchemes.add(Scheme);
+
 		Context.SendToMountain("register_file_system_provider", {
 			handle: Handle,
 			scheme: Scheme,
@@ -92,9 +113,11 @@ export const BuildRegisterFileSystemProvider =
 			isReadonly: Options?.isReadonly ?? false,
 			extensionId: "",
 		}).catch(() => {});
+
 		return {
 			dispose: () => {
 				ClaimedFileSystemSchemes.delete(Scheme);
+
 				Context.SendToMountain("unregister_file_system_provider", {
 					handle: Handle,
 				}).catch(() => {});
@@ -105,27 +128,39 @@ export const BuildRegisterFileSystemProvider =
 export const BuildRegisterTaskProvider = (Context: HandlerContext) =>
 	MakeProvider(
 		Context,
+
 		"register_task_provider",
+
 		"unregister_task_provider",
+
 		"taskProvider",
+
 		(TaskType) => ({ taskType: TaskType, extensionId: "" }),
 	);
 
 export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>
 	MakeProvider(
 		Context,
+
 		"register_notebook_content_provider",
+
 		"unregister_notebook_content_provider",
+
 		"notebookContent",
+
 		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
 	);
 
 export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 	MakeProvider(
 		Context,
+
 		"register_notebook_serializer",
+
 		"unregister_notebook_serializer",
+
 		"notebookSerializer",
+
 		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
 	);
 
@@ -136,6 +171,7 @@ export const BuildRegisterRemoteAuthorityResolver =
 			authorityPrefix: AuthorityPrefix,
 			extensionId: "",
 		}).catch(() => {});
+
 		return {
 			dispose: () => {
 				Context.SendToMountain("unregister_remote_authority_resolver", {
@@ -150,5 +186,6 @@ export const BuildRegisterResourceLabelFormatter =
 		Context.SendToMountain("register_resource_label_formatter", {
 			formatter: Formatter,
 		}).catch(() => {});
+
 		return { dispose: () => {} };
 	};

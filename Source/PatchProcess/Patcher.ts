@@ -73,14 +73,17 @@ export interface Patcher {
 	 * Original native process.exit function
 	 */
 	readonly NativeExit: (code?: number) => never;
+
 	/**
 	 * Original native process.crash function (if available)
 	 */
 	readonly NativeCrash: (() => void) | undefined;
+
 	/**
 	 * Check if process exit is allowed by security policy
 	 */
 	readonly AllowExit: () => boolean;
+
 	/**
 	 * Get current security policy
 	 */
@@ -92,14 +95,17 @@ export interface Patcher {
  */
 class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
 	readonly Context: string;
+
 	readonly Cause?: unknown;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: {
 		readonly Context: string;
 		readonly Cause?: unknown;
 	}) {
 		super(Properties);
+
 		this.message = `Failed to patch Node.js module loader: ${this.Context}`;
 	}
 }
@@ -110,12 +116,14 @@ class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
  */
 export class PatcherService extends Effect.Service<PatcherService>()(
 	"PatchProcess/PatcherService",
+
 	{
 		effect: Effect.gen(function* () {
 			const AllowExit = yield* Config.boolean("AllowExit").pipe(
 				Effect.catchAll((Error) =>
 					Effect.logWarning(
 						"Failed to load Patcher config, using defaults.",
+
 						{ Error },
 					).pipe(Effect.as(false)),
 				),
@@ -125,6 +133,7 @@ export class PatcherService extends Effect.Service<PatcherService>()(
 				Effect.catchTag("MissingConfig", () =>
 					Effect.succeed("default"),
 				),
+
 				Config.map((Value) => ParseSecurityPolicy(Value)),
 			);
 
@@ -176,6 +185,7 @@ const PatchProcessCrash = Effect.gen(function* () {
 			Effect.runSync(
 				Effect.logWarning(
 					`Call to 'process.crash()' intercepted and PREVENTED by host policy`,
+
 					`Stack: ${PreventionStack ?? "(unavailable)"}`,
 				),
 			);
@@ -226,7 +236,9 @@ const BlockNativesModule = Effect.try({
 			const OriginalLoad = (Module as any)._load;
 			(Module as any)._load = function (
 				Request: string,
+
 				Parent: any,
+
 				IsMain: boolean,
 			): any {
 				if (Request === "natives") {
@@ -397,6 +409,7 @@ export const RunPatchProcess = Effect.gen(function* () {
 	Effect.catchAll((Error) =>
 		Effect.logFatal(
 			"Critical error during process patching. Environment may be unstable",
+
 			Error,
 		),
 	),
@@ -408,27 +421,39 @@ export const RunPatchProcess = Effect.gen(function* () {
  */
 function ParseSecurityPolicy(PolicyString: string): SecurityPolicy {
 	const Parts = PolicyString.split(",");
+
 	const Policy: SecurityPolicy = {
 		AllowExit: false,
+
 		MaxMemoryMB: 0,
+
 		AllowNetwork: false,
+
 		AllowChildProcesses: false,
 	};
 
 	for (const Part of Parts) {
 		const [Key, Value] = Part.split("=");
+
 		switch (Key.trim()) {
 			case "AllowExit":
 				Policy.AllowExit = Value === "true";
+
 				break;
+
 			case "MaxMemoryMB":
 				Policy.MaxMemoryMB = Number.parseInt(Value, 10) || 0;
+
 				break;
+
 			case "AllowNetwork":
 				Policy.AllowNetwork = Value === "true";
+
 				break;
+
 			case "AllowChildProcesses":
 				Policy.AllowChildProcesses = Value === "true";
+
 				break;
 		}
 	}

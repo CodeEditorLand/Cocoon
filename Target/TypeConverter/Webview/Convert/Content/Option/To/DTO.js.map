@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../../../../Source/TypeConverter/Webview/Convert/Content/Option/To/DTO.ts"],
-  "sourcesContent": ["/**\n * @module ConvertContentOptionToDTO\n * @description Converts a `vscode.WebviewOptions` object into a serializable DTO.\n */\n\nimport type { IExtensionDescription } from \"@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js\";\nimport type * as VSCode from \"vscode\";\n\n/**\n * @description Converts the `vscode.WebviewOptions` object into a plain DTO suitable\n * for sending over the RPC channel to `Mountain`.\n * @param ExtensionDescription The description of the extension that owns the webview.\n * @param Options The `vscode.WebviewOptions` provided by the extension.\n * @returns A serializable DTO representing the webview's content options.\n */\nexport const ConvertContentOptionToDTO = (\n\tExtensionDescription: IExtensionDescription,\n\tOptions: VSCode.WebviewOptions,\n) => {\n\treturn {\n\t\tenableCommandUris: Options.enableCommandUris,\n\t\tenableScripts: Options.enableScripts,\n\t\tenableForms: Options.enableForms,\n\t\tlocalResourceRoots: Options.localResourceRoots ?? [\n\t\t\tExtensionDescription.extensionLocation,\n\t\t],\n\t\tportMapping: Options.portMapping,\n\t};\n};\n"],
-  "mappings": ";;;;AAeO,IAAM,4BAA4B,wBACxC,sBACA,YACI;AACJ,SAAO;AAAA,IACN,mBAAmB,QAAQ;AAAA,IAC3B,eAAe,QAAQ;AAAA,IACvB,aAAa,QAAQ;AAAA,IACrB,oBAAoB,QAAQ,sBAAsB;AAAA,MACjD,qBAAqB;AAAA,IACtB;AAAA,IACA,aAAa,QAAQ;AAAA,EACtB;AACD,GAbyC;",
-  "names": []
-}

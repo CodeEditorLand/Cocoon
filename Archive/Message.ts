@@ -13,18 +13,24 @@ import { IPCService, type IPC } from "./IPC.js";
 // Internal Types
 interface ExtensionSource {
 	readonly id: string | ExtensionIdentifier;
+
 	readonly displayName: string;
 }
+
 interface ParsedArguments {
 	readonly Option: MessageOptions;
+
 	readonly Items: (string | MessageItem)[];
 }
 
 // Internal Helpers
 const ParseArgument = (Arguments: any[]): ParsedArguments => {
 	let Option: MessageOptions = {};
+
 	let Items: (string | MessageItem)[] = [];
+
 	let CurrentIndex = 0;
+
 	if (
 		Arguments.length > CurrentIndex &&
 		typeof Arguments[CurrentIndex] === "object" &&
@@ -34,6 +40,7 @@ const ParseArgument = (Arguments: any[]): ParsedArguments => {
 	) {
 		Option = Arguments[CurrentIndex++];
 	}
+
 	// FIX: Removed unused 'Source' parsing logic.
 	Items = Arguments.slice(CurrentIndex).filter(
 		(item): item is string | MessageItem =>
@@ -42,15 +49,20 @@ const ParseArgument = (Arguments: any[]): ParsedArguments => {
 				item !== null &&
 				typeof item.title === "string"),
 	);
+
 	return { Option, Items };
 };
 
 const CreateShowMessageEffect = <T extends MessageItem>(
 	IPC: IPC,
+
 	Severity: number, // Corresponds to vs/base/common/severity
 	Message: string,
+
 	Option: MessageOptions,
+
 	Items: (string | T)[],
+
 	Source: ExtensionSource | undefined,
 ): Effect.Effect<T | undefined, Error> => {
 	return Effect.gen(function* () {
@@ -79,6 +91,7 @@ const CreateShowMessageEffect = <T extends MessageItem>(
 		};
 		const ResultHandle = yield* IPC.SendRequest<number | undefined>(
 			"$showMessage",
+
 			[DTO.severity, DTO.message, DTO.options, DTO.items, DTO.source],
 		).pipe(Effect.mapError((cause) => new Error(String(cause))));
 		if (ResultHandle === undefined || ResultHandle === null)
@@ -100,10 +113,12 @@ export interface Message {
 		message: string,
 		...args: Array<string | T | MessageOptions>
 	) => Effect.Effect<T | undefined, Error>;
+
 	readonly ShowWarningMessage: <T extends MessageItem>(
 		message: string,
 		...args: Array<string | T | MessageOptions>
 	) => Effect.Effect<T | undefined, Error>;
+
 	readonly ShowErrorMessage: <T extends MessageItem>(
 		message: string,
 		...args: Array<string | T | MessageOptions>
@@ -116,6 +131,7 @@ export interface Message {
  */
 export class MessageService extends Effect.Service<MessageService>()(
 	"Service/Message",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -127,10 +143,15 @@ export class MessageService extends Effect.Service<MessageService>()(
 					const { Option, Items } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
+
 						1,
+
 						message,
+
 						Option,
+
 						Items,
+
 						undefined, // Source is not used
 					) as any;
 				},
@@ -141,10 +162,15 @@ export class MessageService extends Effect.Service<MessageService>()(
 					const { Option, Items } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
+
 						2,
+
 						message,
+
 						Option,
+
 						Items,
+
 						undefined, // Source is not used
 					) as any;
 				},
@@ -155,10 +181,15 @@ export class MessageService extends Effect.Service<MessageService>()(
 					const { Option, Items } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
+
 						3,
+
 						message,
+
 						Option,
+
 						Items,
+
 						undefined, // Source is not used
 					) as any;
 				},

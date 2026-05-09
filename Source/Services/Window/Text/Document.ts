@@ -31,6 +31,7 @@ export const ShowTextDocument = (
 	GRPCClient: {
 		showTextDocument: (
 			Uri: string,
+
 			Options: {
 				viewColumn: number | undefined;
 				preserveFocus: boolean;
@@ -39,13 +40,18 @@ export const ShowTextDocument = (
 			},
 		) => Effect.Effect<void, Error>;
 	},
+
 	Logger: {
 		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
+
 	Workspace_: Workspace,
+
 	DocumentOrUri: VSCode.Uri | VSCode.TextDocument,
+
 	ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
+
 	PreserveFocus?: boolean,
 ): Effect.Effect<VSCode.TextEditor, Error> =>
 	Effect.gen(function* () {
@@ -123,7 +129,9 @@ export const ShowInformationMessage = (
 	GRPCClient: {
 		sendRequest: (method: string, params: unknown) => Promise<unknown>;
 	},
+
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+
 	Message: string,
 	...Items: string[]
 ): Effect.Effect<string | undefined, Error> =>
@@ -166,7 +174,9 @@ export const ShowWarningMessage = (
 	GRPCClient: {
 		sendRequest: (method: string, params: unknown) => Promise<unknown>;
 	},
+
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+
 	Message: string,
 	...Items: string[]
 ): Effect.Effect<string | undefined, Error> =>
@@ -209,7 +219,9 @@ export const ShowErrorMessage = (
 	GRPCClient: {
 		sendRequest: (method: string, params: unknown) => Promise<unknown>;
 	},
+
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+
 	Message: string,
 	...Items: string[]
 ): Effect.Effect<string | undefined, Error> =>

@@ -58,6 +58,7 @@ import WrapWorkspaceNamespace from "./Wrap/Workspace/Namespace.js";
  */
 const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 	if (!Array.isArray(Raw)) return [];
+
 	return Raw.map((Item) => {
 		if (typeof Item === "string") {
 			// Empty-string short-circuit before `URI.parse` -
@@ -67,15 +68,18 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 			// useful (most callers map+filter and will drop the
 			// `""`). See also the same guard in `StockLift.ToUri`.
 			if (Item.length === 0) return Item;
+
 			try {
 				return StockUri.parse(Item);
 			} catch {
 				return Item;
 			}
 		}
+
 		if (Item && typeof Item === "object") {
 			try {
 				const Hydrated = StockToUri(Item);
+
 				if (Hydrated) return Hydrated;
 			} catch {
 				/* StockToUri shouldn't throw (it has its own try/catch),
@@ -83,6 +87,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 				 * if an exotic Item shape sneaks through */
 			}
 		}
+
 		return Item;
 	});
 };
@@ -92,6 +97,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		Context.ExtensionHostInitData?.workspaceData ??
 		{}) as {
 		folders?: Array<{ uri: unknown; name: string; index: number }>;
+
 		name?: string;
 	};
 
@@ -126,21 +132,29 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	// covers the initial-boot read that fires before any delta arrives.
 	const HydrateFolder = (
 		Raw: { uri: unknown; name?: string; index?: number },
+
 		FallbackIndex: number,
 	): { uri: unknown; name: string; index: number } | null => {
 		const Hydrated = StockToUri(Raw?.uri);
+
 		if (!Hydrated) return null;
+
 		const Name =
 			typeof Raw?.name === "string" && Raw.name.length > 0
 				? Raw.name
 				: (Hydrated.fsPath.split(/[\\/]/).pop() ?? "");
+
 		const Index =
 			typeof Raw?.index === "number" ? Raw.index : FallbackIndex;
+
 		return { uri: Hydrated, name: Name, index: Index };
 	};
+
 	const ReadFolders = (): Array<{
 		uri: unknown;
+
 		name: string;
+
 		index: number;
 	}> => {
 		const Live = (Context.ExtensionHostInitData?.workspace ??
@@ -148,12 +162,17 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			{}) as {
 			folders?: Array<{ uri: unknown; name?: string; index?: number }>;
 		};
+
 		const Raw = Live.folders ?? [];
+
 		const Out: Array<{ uri: unknown; name: string; index: number }> = [];
+
 		for (let I = 0; I < Raw.length; I++) {
 			const Hydrated = HydrateFolder(Raw[I] as any, I);
+
 			if (Hydrated) Out.push(Hydrated);
 		}
+
 		return Out;
 	};
 
@@ -161,10 +180,12 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		const Live = (Context.ExtensionHostInitData?.workspace ??
 			Context.ExtensionHostInitData?.workspaceData ??
 			{}) as { name?: string };
+
 		return Live.name ?? InitWorkspace.name;
 	};
 
 	const ConfigState = CreateConfigurationState(Context);
+
 	// Expose the shared Configuration cache + priming helpers on the
 	// globalThis so `ExtensionHostHandler.ActivateExtension` can seed
 	// `contributes.configuration.properties` defaults before the
@@ -179,12 +200,17 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		get workspaceFolders() {
 			return ReadFolders();
 		},
+
 		get name() {
 			return ReadName();
 		},
+
 		workspaceFile: undefined,
+
 		rootPath: undefined,
+
 		textDocuments: [] as unknown[],
+
 		notebookDocuments: [] as unknown[],
 
 		getConfiguration: BuildGetConfiguration(Context, ConfigState),
@@ -201,19 +227,25 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// from the workbench, so it's resilient to that drift.
 		findFiles: async (
 			Include: unknown,
+
 			Exclude?: unknown,
+
 			MaxResults?: number,
 		): Promise<unknown[]> => {
 			const Raw = await TryMountainWithEmptyFallback<unknown[]>(
 				Context,
+
 				"findFiles",
+
 				[
 					Include,
+
 					{
 						exclude: Exclude,
 						maxResults: MaxResults,
 					},
 				],
+
 				async (Args) => {
 					const [I, _O] = Args;
 					const Opts = _O as
@@ -221,14 +253,20 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						| undefined;
 					return FindFilesLocal(
 						Context,
+
 						ReadFolders(),
+
 						I,
+
 						Opts?.exclude,
+
 						Opts?.maxResults,
 					);
 				},
+
 				(R) => !Array.isArray(R) || R.length === 0,
 			);
+
 			return HydrateUriResults(Raw);
 		},
 
@@ -240,21 +278,27 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// natively via comma-separated brace patterns.
 		findFiles2: async (
 			FilePatterns: readonly unknown[],
+
 			Options?: { exclude?: unknown; maxResults?: number },
 		): Promise<unknown[]> => {
 			const Include = Array.isArray(FilePatterns)
 				? FilePatterns[0]
 				: FilePatterns;
+
 			const Raw = await TryMountainWithEmptyFallback<unknown[]>(
 				Context,
+
 				"findFiles",
+
 				[
 					Include,
+
 					{
 						exclude: Options?.exclude,
 						maxResults: Options?.maxResults,
 					},
 				],
+
 				async (Args) => {
 					const [I, _O] = Args;
 					const Opts = _O as
@@ -262,14 +306,20 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						| undefined;
 					return FindFilesLocal(
 						Context,
+
 						ReadFolders(),
+
 						I,
+
 						Opts?.exclude,
+
 						Opts?.maxResults,
 					);
 				},
+
 				(R) => !Array.isArray(R) || R.length === 0,
 			);
+
 			return HydrateUriResults(Raw);
 		},
 
@@ -286,24 +336,35 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// always shows real results.
 		findTextInFiles: async (
 			Query: unknown,
+
 			Options?: unknown,
+
 			Callback?: (Result: unknown) => void,
+
 			_Token?: unknown,
 		) =>
 			TryMountainWithEmptyFallback<unknown>(
 				Context,
+
 				"findTextInFiles",
+
 				[Query, Options],
+
 				async (Args) => {
 					const [Q, O] = Args;
 					return FindTextInFilesNodeFallback(
 						Context,
+
 						ReadFolders(),
+
 						Q,
+
 						O,
+
 						Callback,
 					);
 				},
+
 				(R) => {
 					// Mountain text-search shape: `{ matches: TextSearchMatch[], complete: boolean }`
 					// or a bare array depending on the path. Treat both
@@ -315,26 +376,38 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					return !Array.isArray(Matches) || Matches.length === 0;
 				},
 			),
+
 		findTextInFiles2: async (
 			Query: unknown,
+
 			Options?: unknown,
+
 			Callback?: (Result: unknown) => void,
+
 			_Token?: unknown,
 		) =>
 			TryMountainWithEmptyFallback<unknown>(
 				Context,
+
 				"findTextInFiles",
+
 				[Query, Options],
+
 				async (Args) => {
 					const [Q, O] = Args;
 					return FindTextInFilesNodeFallback(
 						Context,
+
 						ReadFolders(),
+
 						Q,
+
 						O,
+
 						Callback,
 					);
 				},
+
 				(R) => {
 					if (R == null) return true;
 					if (Array.isArray(R)) return R.length === 0;
@@ -350,22 +423,34 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// callers that immediately read `.uri` / `.cellCount` don't crash.
 		openNotebookDocument: async (
 			_UriOrContent: unknown,
+
 			_Content?: unknown,
 		) => ({
 			uri: undefined,
+
 			version: 1,
+
 			notebookType: "jupyter-notebook",
+
 			isUntitled: false,
+
 			isDirty: false,
+
 			isClosed: false,
+
 			metadata: {},
+
 			cellCount: 0,
+
 			cellAt: () => null,
+
 			getCells: () => [],
+
 			save: async () => false,
 		}),
 
 		saveAll: BuildSaveAll(Context),
+
 		// `save(uri)` / `saveAs(uri)` - VS Code 1.86+ per-URI save API.
 		// Stock `extHostWorkspace.save` forwards to
 		// `MainThreadWorkspace.$save` / `$saveAs`. Mountain has no
@@ -378,23 +463,29 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 				await Context.MountainClient?.sendRequest("Workspace.Save", {
 					uri: Uri,
 				});
+
 				return Uri;
 			} catch {
 				return undefined;
 			}
 		},
+
 		saveAs: async (Uri: unknown): Promise<unknown | undefined> => {
 			try {
 				const Result = await Context.MountainClient?.sendRequest(
 					"Workspace.SaveAs",
+
 					{ uri: Uri },
 				);
+
 				return (Result as { uri?: unknown })?.uri ?? Uri;
 			} catch {
 				return undefined;
 			}
 		},
+
 		applyEdit: BuildApplyEdit(Context),
+
 		// `asRelativePath` - lifts stock VS Code's `resources.relativePath`
 		// from `@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js`
 		// rather than hand-rolling prefix matching. Stock handles Windows
@@ -404,6 +495,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// stock VS Code's own behaviour at the workspace boundary).
 		asRelativePath: (
 			PathOrUri: unknown,
+
 			IncludeWorkspaceFolder?: boolean,
 		) => {
 			const Raw =
@@ -416,15 +508,19 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						String(PathOrUri));
 
 			const Folders = ReadFolders();
+
 			for (const Folder of Folders) {
 				const Relative = StockRelativePath(Folder.uri, PathOrUri);
+
 				if (Relative !== undefined) {
 					if (IncludeWorkspaceFolder && Folders.length > 1) {
 						return `${Folder.name}/${Relative}`;
 					}
+
 					return Relative;
 				}
 			}
+
 			return Raw;
 		},
 
@@ -440,11 +536,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			Uri: unknown,
 		): { uri: unknown; name: string; index: number } | undefined => {
 			if (Uri == null) return undefined;
+
 			for (const Folder of ReadFolders()) {
 				if (StockIsEqualOrParent(Uri, Folder.uri)) {
 					return Folder;
 				}
 			}
+
 			return undefined;
 		},
 
@@ -460,6 +558,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// so direct delegation is safe.
 		encode: (Value: string, _Encoding?: string): Uint8Array =>
 			new TextEncoder().encode(Value),
+
 		decode: (Buffer: Uint8Array, Encoding?: string): string =>
 			new TextDecoder(Encoding ?? "utf-8").decode(Buffer),
 
@@ -468,6 +567,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// back - the listener wiring from BATCH-14 does the rest.
 		updateWorkspaceFolders: BuildUpdateWorkspaceFolders(
 			Context,
+
 			ReadFolders,
 		),
 
@@ -485,12 +585,15 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			// whenever Mountain dispatches `$deltaWorkspaceFolders`.
 			Context.WorkspaceEventEmitter.on(
 				"didChangeWorkspaceFolders",
+
 				Listener,
 			);
+
 			return {
 				dispose: () => {
 					Context.WorkspaceEventEmitter.removeListener(
 						"didChangeWorkspaceFolders",
+
 						Listener,
 					);
 				},
@@ -500,27 +603,39 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// Provider registrations - each backed by a Mountain round-trip.
 		registerTextDocumentContentProvider:
 			BuildRegisterTextDocumentContentProvider(Context),
+
 		registerFileSystemProvider: BuildRegisterFileSystemProvider(Context),
+
 		registerTaskProvider: BuildRegisterTaskProvider(Context),
+
 		registerNotebookContentProvider:
 			BuildRegisterNotebookContentProvider(Context),
+
 		registerNotebookSerializer: BuildRegisterNotebookSerializer(Context),
+
 		registerRemoteAuthorityResolver:
 			BuildRegisterRemoteAuthorityResolver(Context),
+
 		registerResourceLabelFormatter:
 			BuildRegisterResourceLabelFormatter(Context),
 
 		// Stub-only registrations (no Mountain route yet).
 		registerDocumentPasteEditProvider: (
 			_Selector: unknown,
+
 			_Provider: unknown,
+
 			_Metadata?: unknown,
 		) => ({ dispose: () => {} }),
+
 		registerDocumentDropEditProvider: (
 			_Selector: unknown,
+
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
+
 		registerEditSessionIdentityProvider: () => ({ dispose: () => {} }),
+
 		// `vscode.git`'s activate() subscribes to both of these during boot
 		// via `extensions/git/out/main.js`. Missing either crashes the git
 		// extension with `TypeError: …onWillCreateEditSessionIdentity is
@@ -529,10 +644,15 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// never runs. Stub-as-subscription is safe: Land has no edit-
 		// session-identity provider yet so the events can never fire.
 		onWillCreateEditSessionIdentity: () => ({ dispose: () => {} }),
+
 		onDidCreateEditSessionIdentity: () => ({ dispose: () => {} }),
+
 		registerShareProvider: () => ({ dispose: () => {} }),
+
 		registerCanonicalUriProvider: () => ({ dispose: () => {} }),
+
 		onDidGrantWorkspaceTrust: () => ({ dispose: () => {} }),
+
 		// `vscode.git`'s activate() subscribes to this at
 		// `extensions/git/out/main.js:init`. Land has no workspace-trust
 		// enforcement yet (every workspace is treated as trusted), so the
@@ -545,27 +665,39 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		// never runs. Added for parity with
 		// `vs/workbench/api/common/extHostWorkspace.ts::onDidChangeWorkspaceTrustedFolders`.
 		onDidChangeWorkspaceTrustedFolders: () => ({ dispose: () => {} }),
+
 		// Same family; kept stubbed for symmetry so any other extension
 		// that subscribes to the non-folder-scoped variant doesn't fail
 		// at activation time.
 		onDidChangeWorkspaceTrust: () => ({ dispose: () => {} }),
+
 		workspaceTrustedFolders: [] as unknown[],
+
 		isTrusted: true,
+
 		trusted: true,
+
 		requestWorkspaceTrust: async () => true,
+
 		registerTunnelProvider: (
 			_Provider: unknown,
+
 			_Information?: unknown,
 		) => ({ dispose: () => {} }),
+
 		openTunnel: async (_TunnelOptions: unknown) => ({
 			remoteAddress: { port: 0, host: "localhost" },
 			localAddress: "",
 			dispose: () => {},
 		}),
+
 		tunnels: Promise.resolve([] as unknown[]),
+
 		onDidChangeTunnels: () => ({ dispose: () => {} }),
+
 		registerPortAttributesProvider: (
 			_Selector: unknown,
+
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
 
@@ -581,40 +713,54 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		registerTimelineProvider: (_Scheme: unknown, _Provider: unknown) => ({
 			dispose: () => {},
 		}),
+
 		registerFileSearchProvider: (_Scheme: string, _Provider: unknown) => ({
 			dispose: () => {},
 		}),
+
 		registerFileSearchProvider2: (_Scheme: string, _Provider: unknown) => ({
 			dispose: () => {},
 		}),
+
 		registerTextSearchProvider: (_Scheme: string, _Provider: unknown) => ({
 			dispose: () => {},
 		}),
+
 		registerTextSearchProvider2: (_Scheme: string, _Provider: unknown) => ({
 			dispose: () => {},
 		}),
+
 		registerAITextSearchProvider: (
 			_Scheme: string,
+
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
 
 		// createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
 		createFileSystemWatcher: (
 			Pattern: unknown,
+
 			IgnoreCreateEvents?: boolean,
+
 			IgnoreChangeEvents?: boolean,
+
 			IgnoreDeleteEvents?: boolean,
 		) =>
 			CreateFileSystemWatcher(
 				Context,
+
 				Pattern,
+
 				IgnoreCreateEvents,
+
 				IgnoreChangeEvents,
+
 				IgnoreDeleteEvents,
 			),
 
 		fs: BuildFileSystemNamespace(Context),
 	};
+
 	return WrapWorkspaceNamespace(Concrete);
 };
 

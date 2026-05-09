@@ -16,6 +16,7 @@ import { MountainClientService } from "../../Services/Mountain/Client/Service.js
  */
 export class MountainClient {
 	private clientService: IMountainClientService;
+
 	private isInitialized: boolean = false;
 
 	constructor() {
@@ -28,6 +29,7 @@ export class MountainClient {
 	async initialize(): Promise<void> {
 		if (this.isInitialized) {
 			console.warn("[MountainClient] Already initialized");
+
 			return;
 		}
 
@@ -35,10 +37,13 @@ export class MountainClient {
 
 		try {
 			await this.clientService.connect();
+
 			this.isInitialized = true;
+
 			console.log("[MountainClient] Successfully initialized");
 		} catch (error) {
 			console.error("[MountainClient] Failed to initialize:", error);
+
 			throw error;
 		}
 	}
@@ -58,14 +63,18 @@ export class MountainClient {
 		try {
 			const response = await this.clientService.sendRequest(
 				method,
+
 				data || {},
 			);
+
 			console.log(
 				`[MountainClient] Request ${method} completed successfully`,
 			);
+
 			return response;
 		} catch (error) {
 			console.error(`[MountainClient] Request ${method} failed:`, error);
+
 			throw error;
 		}
 	}
@@ -88,12 +97,14 @@ export class MountainClient {
 			typeof process !== "undefined" &&
 			typeof process.env["Trace"] === "string" &&
 			process.env["Trace"].includes("grpc-verbose");
+
 		if (TraceGrpcVerbose) {
 			console.log(`[MountainClient] Sending notification: ${method}`);
 		}
 
 		try {
 			await this.clientService.sendNotification(method, data || {});
+
 			if (TraceGrpcVerbose) {
 				console.log(
 					`[MountainClient] Notification ${method} sent successfully`,
@@ -102,8 +113,10 @@ export class MountainClient {
 		} catch (error) {
 			console.error(
 				`[MountainClient] Notification ${method} failed:`,
+
 				error,
 			);
+
 			// Don't throw for notifications (fire-and-forget)
 		}
 	}
@@ -120,6 +133,7 @@ export class MountainClient {
 	 */
 	isConnected(): boolean {
 		const status = this.getStatus();
+
 		return status.connected;
 	}
 
@@ -129,6 +143,7 @@ export class MountainClient {
 	async disconnect(): Promise<void> {
 		if (!this.isInitialized) {
 			console.warn("[MountainClient] Not initialized");
+
 			return;
 		}
 
@@ -136,10 +151,13 @@ export class MountainClient {
 
 		try {
 			await this.clientService.disconnect();
+
 			this.isInitialized = false;
+
 			console.log("[MountainClient] Disconnected successfully");
 		} catch (error) {
 			console.error("[MountainClient] Disconnect failed:", error);
+
 			throw error;
 		}
 	}
@@ -152,10 +170,13 @@ export class MountainClient {
 
 		try {
 			await this.disconnect();
+
 			await this.initialize();
+
 			console.log("[MountainClient] Reconnected successfully");
 		} catch (error) {
 			console.error("[MountainClient] Reconnect failed:", error);
+
 			throw error;
 		}
 	}
@@ -170,9 +191,11 @@ export class MountainClient {
 
 		try {
 			const status = this.getStatus();
+
 			return status.connected && status.errorCount === 0;
 		} catch (error) {
 			console.error("[MountainClient] Health check failed:", error);
+
 			return false;
 		}
 	}
@@ -182,6 +205,7 @@ export class MountainClient {
 	 */
 	getErrorCount(): number {
 		const status = this.getStatus();
+
 		return status.errorCount;
 	}
 

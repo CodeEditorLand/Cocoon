@@ -57,42 +57,52 @@ export interface SecurityPolicy {
 	 * Whether this process is allowed to exit gracefully
 	 */
 	readonly AllowExit: boolean;
+
 	/**
 	 * Maximum memory limit in megabytes (0 = unlimited)
 	 */
 	readonly MaxMemoryMB: number;
+
 	/**
 	 * Maximum CPU usage percentage (0-100, 0 = unlimited)
 	 */
 	readonly MaxCpuPercent: number;
+
 	/**
 	 * Whether network access is allowed
 	 */
 	readonly AllowNetwork: boolean;
+
 	/**
 	 * Whitelisted network endpoints (regex patterns)
 	 */
 	readonly AllowedEndpoints: readonly string[];
+
 	/**
 	 * Whether child process spawning is allowed
 	 */
 	readonly AllowChildProcesses: boolean;
+
 	/**
 	 * Allowlisted child process commands
 	 */
 	readonly AllowedChildCommands: readonly string[];
+
 	/**
 	 * Allowed file system paths
 	 */
 	readonly AllowedPaths: readonly string[];
+
 	/**
 	 * Denied file system paths (overrides allowed)
 	 */
 	readonly DeniedPaths: readonly string[];
+
 	/**
 	 * Maximum number of file descriptors (0 = OS default)
 	 */
 	readonly MaxFileDescriptors: number;
+
 	/**
 	 * Maximum number of concurrent timers (0 = unlimited)
 	 */
@@ -105,15 +115,25 @@ export interface SecurityPolicy {
  */
 export const DefaultSecurityPolicy: SecurityPolicy = {
 	AllowExit: false,
+
 	MaxMemoryMB: 512,
+
 	MaxCpuPercent: 50,
+
 	AllowNetwork: false,
+
 	AllowedEndpoints: [],
+
 	AllowChildProcesses: false,
+
 	AllowedChildCommands: [],
+
 	AllowedPaths: [],
+
 	DeniedPaths: ["/etc", "/proc", "/sys", "/root"],
+
 	MaxFileDescriptors: 1024,
+
 	MaxTimers: 1000,
 };
 
@@ -123,15 +143,25 @@ export const DefaultSecurityPolicy: SecurityPolicy = {
  */
 export const TrustedSecurityPolicy: SecurityPolicy = {
 	AllowExit: false,
+
 	MaxMemoryMB: 1024,
+
 	MaxCpuPercent: 80,
+
 	AllowNetwork: true,
+
 	AllowedEndpoints: ["^https?://(localhost|127\\.0\\.0\\.1):\\d+"],
+
 	AllowChildProcesses: true,
+
 	AllowedChildCommands: ["node", "npm"],
+
 	AllowedPaths: [],
+
 	DeniedPaths: ["/etc/shadow", "/etc/passwd"],
+
 	MaxFileDescriptors: 4096,
+
 	MaxTimers: 10000,
 };
 
@@ -144,7 +174,9 @@ export class MemoryLimitExceededError extends Data.TaggedError(
 	"MemoryLimitExceededError",
 )<{
 	readonly LimitMB: number;
+
 	readonly AttemptedMB: number;
+
 	readonly ProcessId: number;
 }> {}
 
@@ -155,7 +187,9 @@ export class FileAccessDeniedError extends Data.TaggedError(
 	"FileAccessDeniedError",
 )<{
 	readonly Path: string;
+
 	readonly Operation: "read" | "write" | "delete";
+
 	readonly Reason: string;
 }> {}
 
@@ -166,7 +200,9 @@ export class NetworkAccessDeniedError extends Data.TaggedError(
 	"NetworkAccessDeniedError",
 )<{
 	readonly Endpoint: string;
+
 	readonly AttemptedOperation: "connect" | "listen";
+
 	readonly Reason: string;
 }> {}
 
@@ -177,7 +213,9 @@ export class ChildProcessDeniedError extends Data.TaggedError(
 	"ChildProcessDeniedError",
 )<{
 	readonly Command: string;
+
 	readonly Arguments: readonly string[];
+
 	readonly Reason: string;
 }> {}
 
@@ -188,7 +226,9 @@ export class CpuLimitExceededError extends Data.TaggedError(
 	"CpuLimitExceededError",
 )<{
 	readonly LimitPercent: number;
+
 	readonly CurrentUsage: number;
+
 	readonly ProcessId: number;
 }> {}
 
@@ -200,16 +240,20 @@ export class CpuLimitExceededError extends Data.TaggedError(
  */
 export const ValidatePathAccess = (
 	PathString: string,
+
 	_Operation: "read" | "write" | "delete",
+
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
 	// Normalize the path
 	const NormalizedPath = Path.normalize(PathString);
+
 	const ResolvedPath = Path.resolve(NormalizedPath);
 
 	// Check denied paths first (blacklist overrides whitelist)
 	for (const DeniedPath of Policy.DeniedPaths) {
 		const ResolvedDeniedPath = Path.resolve(DeniedPath);
+
 		if (
 			ResolvedPath === ResolvedDeniedPath ||
 			ResolvedPath.startsWith(ResolvedDeniedPath + Path.sep)
@@ -226,6 +270,7 @@ export const ValidatePathAccess = (
 	// Check allowed paths
 	for (const AllowedPath of Policy.AllowedPaths) {
 		const ResolvedAllowedPath = Path.resolve(AllowedPath);
+
 		if (
 			ResolvedPath === ResolvedAllowedPath ||
 			ResolvedPath.startsWith(ResolvedAllowedPath + Path.sep)
@@ -243,6 +288,7 @@ export const ValidatePathAccess = (
  */
 export const ValidateNetworkAccess = (
 	Endpoint: string,
+
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
 	if (!Policy.AllowNetwork) {
@@ -264,6 +310,7 @@ export const ValidateNetworkAccess = (
 	// Check against allowed patterns
 	for (const Pattern of Policy.AllowedEndpoints) {
 		const Regex = new RegExp(Pattern);
+
 		if (Regex.test(Endpoint)) {
 			return true;
 		}
@@ -278,7 +325,9 @@ export const ValidateNetworkAccess = (
  */
 export const ValidateChildProcess = (
 	Command: string,
+
 	_Arguments: readonly string[],
+
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
 	if (!Policy.AllowChildProcesses) {
@@ -308,13 +357,17 @@ export const ValidateChildProcess = (
  */
 export const ValidateEnvironmentVariable = (
 	Name: string,
+
 	Value: string,
 ): string => {
 	// Block certain environment variables
 	const BlockedVariables = [
 		"NODE_OPTIONS",
+
 		"NODE_DEBUG",
+
 		"NODE_ENV",
+
 		"NODE_EXTRA_CA_CERTS",
 	];
 
@@ -325,10 +378,15 @@ export const ValidateEnvironmentVariable = (
 	// Sanitize values
 	const UnsafePatterns = [
 		/--inspect/i,
+
 		/--debug/i,
+
 		/--eval/i,
+
 		/--print/i,
+
 		/-e\s+/i,
+
 		/-p\s+/i,
 	];
 
@@ -428,6 +486,7 @@ export const GetPolicyHash = (
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): string => {
 	const PolicyString = JSON.stringify(Policy, Object.keys(Policy).sort());
+
 	return Buffer.from(PolicyString).toString("base64").slice(0, 16);
 };
 
@@ -439,26 +498,36 @@ export const MergeSecurityPolicies = (
 ): SecurityPolicy => {
 	return {
 		AllowExit: Overrides.AllowExit ?? DefaultSecurityPolicy.AllowExit,
+
 		MaxMemoryMB: Overrides.MaxMemoryMB ?? DefaultSecurityPolicy.MaxMemoryMB,
+
 		MaxCpuPercent:
 			Overrides.MaxCpuPercent ?? DefaultSecurityPolicy.MaxCpuPercent,
+
 		AllowNetwork:
 			Overrides.AllowNetwork ?? DefaultSecurityPolicy.AllowNetwork,
+
 		AllowedEndpoints:
 			Overrides.AllowedEndpoints ??
 			DefaultSecurityPolicy.AllowedEndpoints,
+
 		AllowChildProcesses:
 			Overrides.AllowChildProcesses ??
 			DefaultSecurityPolicy.AllowChildProcesses,
+
 		AllowedChildCommands:
 			Overrides.AllowedChildCommands ??
 			DefaultSecurityPolicy.AllowedChildCommands,
+
 		AllowedPaths:
 			Overrides.AllowedPaths ?? DefaultSecurityPolicy.AllowedPaths,
+
 		DeniedPaths: Overrides.DeniedPaths ?? DefaultSecurityPolicy.DeniedPaths,
+
 		MaxFileDescriptors:
 			Overrides.MaxFileDescriptors ??
 			DefaultSecurityPolicy.MaxFileDescriptors,
+
 		MaxTimers: Overrides.MaxTimers ?? DefaultSecurityPolicy.MaxTimers,
 	};
 };

@@ -55,10 +55,15 @@ export interface MountainPlatformInfoDTO {
 	locale: string; // 'en-US'
 	language: string; // 'en'
 	is_little_endian: boolean;
+
 	is_web: boolean;
+
 	is_electron: boolean;
+
 	is_ci: boolean;
+
 	user_agent?: string;
+
 	timestamp: number; // Unix timestamp
 }
 
@@ -67,7 +72,9 @@ export interface MountainPlatformInfoDTO {
  */
 export interface MountainEnvironmentVariableDTO {
 	name: string;
+
 	value: string;
+
 	is_sensitive: boolean; // True for passwords, tokens
 	is_readonly: boolean; // True for system variables
 	source: string; // 'user' | 'system' | 'process' | 'config'
@@ -78,16 +85,27 @@ export interface MountainEnvironmentVariableDTO {
  */
 export interface MountainEnvironmentInfoDTO {
 	language: string;
+
 	locale: string;
+
 	home_directory: string;
+
 	temp_directory: string;
+
 	user_data_directory: string;
+
 	platform_home: string;
+
 	variable_count: number;
+
 	is_development: boolean;
+
 	is_production: boolean;
+
 	is_ci: boolean;
+
 	is_vscode: boolean;
+
 	timestamp: number;
 }
 
@@ -96,17 +114,26 @@ export interface MountainEnvironmentInfoDTO {
  */
 export interface MountainProcessInfoDTO {
 	pid: number;
+
 	command: string;
+
 	args: string[];
+
 	cwd: string;
+
 	parent_pid?: number;
+
 	start_time: number; // Unix timestamp
 	end_time?: number; // Unix timestamp if stopped
 	status: "running" | "stopped" | "error";
+
 	exit_code: number | null;
+
 	signal: string | null;
+
 	uptime: number; // milliseconds
 	is_detached: boolean;
+
 	timestamp: number;
 }
 
@@ -115,13 +142,21 @@ export interface MountainProcessInfoDTO {
  */
 export interface MountainProcessSpawnOptionsDTO {
 	cwd?: string;
+
 	env_variables: { [key: string]: string };
+
 	detached: boolean;
+
 	shell: boolean;
+
 	windows_hide: boolean;
+
 	timeout?: number;
+
 	max_buffer: number;
+
 	uid?: number;
+
 	gid?: number;
 }
 
@@ -130,8 +165,11 @@ export interface MountainProcessSpawnOptionsDTO {
  */
 export interface MountainProcessSignalDTO {
 	pid: number;
+
 	signal: string;
+
 	timeout: number;
+
 	force: boolean;
 }
 
@@ -148,8 +186,10 @@ export function ConvertPlatformNumberToDTO(platformNumber: number): number {
 		console.warn(
 			`[TypeConverter] Invalid platform number: ${platformNumber}, using default`,
 		);
+
 		return 0; // Web as default
 	}
+
 	return platformNumber;
 }
 
@@ -165,9 +205,11 @@ export function ConvertDTOToPlatformNumber(dtoNumber: number): number {
  */
 export function ConvertArchitectureToString(architecture: string): string {
 	const validArchitectures = ["x64", "arm64", "arm", "ia32", "unknown"];
+
 	if (validArchitectures.includes(architecture)) {
 		return architecture;
 	}
+
 	return "unknown";
 }
 
@@ -179,8 +221,10 @@ export function ConvertOperatingSystemToNumber(os: number): number {
 		console.warn(
 			`[TypeConverter] Invalid operating system: ${os}, using default`,
 		);
+
 		return 3; // Linux as default
 	}
+
 	return os;
 }
 
@@ -201,22 +245,35 @@ export function ConvertOSInfoToDTO(osInfo: any): MountainPlatformInfoDTO {
 		platform_number: ConvertPlatformNumberToDTO(
 			osInfo.platformNumber || osInfo.platform,
 		),
+
 		platform_name: String(osInfo.platform || osInfo.platformName),
+
 		operating_system: ConvertOperatingSystemToNumber(
 			osInfo.operatingSystem || osInfo.OS,
 		),
+
 		architecture: ConvertArchitectureToString(
 			osInfo.architecture || "unknown",
 		),
+
 		path_separator: String(osInfo.pathSeparator || "/"),
+
 		line_ending: String(osInfo.lineEnding || "\n"),
+
 		locale: String(osInfo.locale || "en-US"),
+
 		language: String(osInfo.language || "en"),
+
 		is_little_endian: Boolean(osInfo.isLittleEndian),
+
 		is_web: Boolean(osInfo.isWeb),
+
 		is_electron: Boolean(osInfo.isElectron),
+
 		is_ci: Boolean(osInfo.isCI),
+
 		user_agent: osInfo.userAgent ? String(osInfo.userAgent) : undefined,
+
 		timestamp,
 	};
 }
@@ -227,17 +284,29 @@ export function ConvertOSInfoToDTO(osInfo: any): MountainPlatformInfoDTO {
 export function ConvertDTOToOSInfo(dto: MountainPlatformInfoDTO): any {
 	return {
 		platformNumber: ConvertPlatformNumberToDTO(dto.platform_number),
+
 		platform: dto.platform_name,
+
 		operatingSystem: ConvertNumberToOperatingSystem(dto.operating_system),
+
 		architecture: ConvertArchitectureToString(dto.architecture),
+
 		pathSeparator: dto.path_separator,
+
 		lineEnding: dto.line_ending,
+
 		locale: dto.locale,
+
 		language: dto.language,
+
 		isLittleEndian: dto.is_little_endian,
+
 		isWeb: dto.is_web,
+
 		isElectron: dto.is_electron,
+
 		isCI: dto.is_ci,
+
 		userAgent: dto.user_agent,
 	};
 }
@@ -248,17 +317,26 @@ export function ConvertDTOToOSInfo(dto: MountainPlatformInfoDTO): any {
 function IsSensitiveVariable(name: string): boolean {
 	const sensitivePrefixes = [
 		"PASSWORD",
+
 		"TOKEN",
+
 		"SECRET",
+
 		"KEY",
+
 		"AUTH",
+
 		"CREDENTIAL",
+
 		"PRIVATE",
+
 		"API_KEY",
+
 		"ACCESS_KEY",
 	];
 
 	const upperName = name.toUpperCase();
+
 	return sensitivePrefixes.some((prefix) => upperName.startsWith(prefix));
 }
 
@@ -268,15 +346,25 @@ function IsSensitiveVariable(name: string): boolean {
 function IsReadonlyVariable(name: string): boolean {
 	const readonlyVariables = [
 		"PATH",
+
 		"HOME",
+
 		"USERPROFILE",
+
 		"TEMP",
+
 		"TMP",
+
 		"TMPDIR",
+
 		"APPDATA",
+
 		"LOCALAPPDATA",
+
 		"PROGRAMFILES",
+
 		"SYSTEMROOT",
+
 		"WINDIR",
 	];
 
@@ -290,12 +378,15 @@ function DetectVariableSource(name: string): string {
 	if (name.startsWith("VSCODE_")) {
 		return "system";
 	}
+
 	if (name.startsWith("NODE_ENV")) {
 		return "process";
 	}
+
 	if (["PATH", "HOME", "USERPROFILE"].includes(name.toUpperCase())) {
 		return "system";
 	}
+
 	return "user";
 }
 
@@ -304,13 +395,18 @@ function DetectVariableSource(name: string): string {
  */
 export function ConvertEnvironmentVariableToDTO(
 	name: string,
+
 	value: string,
 ): MountainEnvironmentVariableDTO {
 	return {
 		name: String(name),
+
 		value: String(value),
+
 		is_sensitive: IsSensitiveVariable(name),
+
 		is_readonly: IsReadonlyVariable(name),
+
 		source: DetectVariableSource(name),
 	} as MountainEnvironmentVariableDTO;
 }
@@ -323,6 +419,7 @@ export function ConvertDTOToEnvironmentVariable(
 ): { name: string; value: string } {
 	return {
 		name: dto.name,
+
 		value: dto.value,
 	};
 }
@@ -335,18 +432,29 @@ export function ConvertEnvironmentInfoToDTO(
 ): MountainEnvironmentInfoDTO {
 	return {
 		language: String(envInfo.language ?? "en"),
+
 		locale: String(envInfo.locale ?? "en-US"),
+
 		home_directory: String(envInfo.homeDirectory ?? ""),
+
 		temp_directory: String(envInfo.tempDirectory ?? ""),
+
 		user_data_directory: String(envInfo.userDataDirectory ?? ""),
+
 		platform_home: String(envInfo.platformHome ?? ""),
+
 		variable_count: Number(
 			envInfo.variables ? Object.keys(envInfo.variables).length : 0,
 		),
+
 		is_development: Boolean(envInfo.isDevelopment),
+
 		is_production: Boolean(envInfo.isProduction),
+
 		is_ci: Boolean(envInfo.isCI),
+
 		is_vscode: Boolean(envInfo.isVSCode),
+
 		timestamp: Date.now(),
 	} as MountainEnvironmentInfoDTO;
 }
@@ -359,14 +467,23 @@ export function ConvertDTOToEnvironmentInfo(
 ): any {
 	return {
 		language: dto.language,
+
 		locale: dto.locale,
+
 		homeDirectory: dto.home_directory,
+
 		tempDirectory: dto.temp_directory,
+
 		userDataDirectory: dto.user_data_directory,
+
 		platformHome: dto.platform_home,
+
 		isDevelopment: dto.is_development,
+
 		isProduction: dto.is_production,
+
 		isCI: dto.is_ci,
+
 		isVSCode: dto.is_vscode,
 	};
 }
@@ -376,27 +493,40 @@ export function ConvertDTOToEnvironmentInfo(
  */
 export function ConvertProcessInfoToDTO(procInfo: any): MountainProcessInfoDTO {
 	const now = Date.now();
+
 	const startTime = procInfo.startTime ?? now;
 
 	return {
 		pid: Number(procInfo.pid),
+
 		command: String(procInfo.command ?? ""),
+
 		args: Array.isArray(procInfo.args) ? procInfo.args.map(String) : [],
+
 		cwd: String(procInfo.cwd ?? ""),
+
 		parent_pid: procInfo.parentPid ? Number(procInfo.parentPid) : undefined,
+
 		start_time: Number(startTime),
+
 		end_time:
 			procInfo.status === "stopped"
 				? (procInfo.endTime ?? now)
 				: undefined,
+
 		status: ["running", "stopped", "error"].includes(procInfo.status)
 			? procInfo.status
 			: "error",
+
 		exit_code:
 			procInfo.exitCode !== null ? Number(procInfo.exitCode) : null,
+
 		signal: procInfo.signal ? String(procInfo.signal) : null,
+
 		uptime: Number(now - startTime),
+
 		is_detached: Boolean(procInfo.detached),
+
 		timestamp: now,
 	} as MountainProcessInfoDTO;
 }
@@ -407,15 +537,25 @@ export function ConvertProcessInfoToDTO(procInfo: any): MountainProcessInfoDTO {
 export function ConvertDTOToProcessInfo(dto: MountainProcessInfoDTO): any {
 	return {
 		pid: dto.pid,
+
 		command: dto.command,
+
 		args: dto.args,
+
 		cwd: dto.cwd,
+
 		parentPid: dto.parent_pid,
+
 		startTime: dto.start_time,
+
 		endTime: dto.end_time,
+
 		status: dto.status,
+
 		exitCode: dto.exit_code,
+
 		signal: dto.signal,
+
 		detached: dto.is_detached,
 	};
 }
@@ -428,13 +568,20 @@ export function ConvertProcessSpawnOptionsToDTO(
 ): MountainProcessSpawnOptionsDTO {
 	return {
 		cwd: options.cwd ? String(options.cwd) : undefined,
+
 		env_variables: options.env ? { ...options.env } : {},
+
 		detached: Boolean(options.detached),
+
 		shell: Boolean(options.shell),
+
 		windows_hide: options.windowsHide !== false,
+
 		timeout: options.timeout ? Number(options.timeout) : undefined,
+
 		max_buffer: Number(options.maxBuffer ?? 1048576), // 1MB default
 		uid: options.uid ? Number(options.uid) : undefined,
+
 		gid: options.gid ? Number(options.gid) : undefined,
 	} as MountainProcessSpawnOptionsDTO;
 }
@@ -447,13 +594,21 @@ export function ConvertDTOToProcessSpawnOptions(
 ): any {
 	return {
 		cwd: dto.cwd,
+
 		env: dto.env_variables,
+
 		detached: dto.detached,
+
 		shell: dto.shell,
+
 		windowsHide: dto.windows_hide,
+
 		timeout: dto.timeout,
+
 		maxBuffer: dto.max_buffer,
+
 		uid: dto.uid,
+
 		gid: dto.gid,
 	};
 }
@@ -463,14 +618,20 @@ export function ConvertDTOToProcessSpawnOptions(
  */
 export function ConvertProcessSignalToDTO(
 	pid: number,
+
 	signal: string,
+
 	timeout: number = 5000,
+
 	force: boolean = false,
 ): MountainProcessSignalDTO {
 	return {
 		pid: Number(pid),
+
 		signal: String(signal),
+
 		timeout: Number(timeout),
+
 		force: Boolean(force),
 	} as MountainProcessSignalDTO;
 }
@@ -481,8 +642,11 @@ export function ConvertProcessSignalToDTO(
 export function ConvertDTOToProcessSignal(dto: MountainProcessSignalDTO): any {
 	return {
 		pid: dto.pid,
+
 		signal: dto.signal,
+
 		timeout: dto.timeout,
+
 		force: dto.force,
 	};
 }
@@ -495,6 +659,7 @@ export function SerializeDTO(dto: any): string {
 		return JSON.stringify(dto);
 	} catch (error) {
 		console.error("[TypeConverter] Failed to serialize DTO:", error);
+
 		throw new Error(`DTO serialization failed: ${error}`);
 	}
 }
@@ -504,6 +669,7 @@ export function SerializeDTO(dto: any): string {
  */
 export function DeserializeDTO<T>(
 	json: string,
+
 	validator?: (obj: any) => boolean,
 ): T | null {
 	try {
@@ -512,12 +678,14 @@ export function DeserializeDTO<T>(
 		// Validate if validator provided
 		if (validator && !validator(parsed)) {
 			console.warn("[TypeConverter] DTO validation failed");
+
 			return null;
 		}
 
 		return parsed as T;
 	} catch (error) {
 		console.error("[TypeConverter] Failed to deserialize DTO:", error);
+
 		return null;
 	}
 }
@@ -582,6 +750,7 @@ export function ValidateProcessInfoDTO(dto: MountainProcessInfoDTO): boolean {
 export function ConvertOSInfoToDTOEffect(osInfo: any) {
 	return {
 		dto: ConvertOSInfoToDTO(osInfo),
+
 		json: SerializeDTO(ConvertOSInfoToDTO(osInfo)),
 	};
 }
@@ -591,9 +760,11 @@ export function ConvertOSInfoToDTOEffect(osInfo: any) {
  */
 export function DeserializeDTOEffect<T>(
 	json: string,
+
 	validator?: (obj: any) => boolean,
 ): Option.Option<T> {
 	const parsed = DeserializeDTO<T>(json, validator);
+
 	return parsed ? Option.some(parsed) : Option.none();
 }
 
@@ -603,33 +774,50 @@ export function DeserializeDTOEffect<T>(
 export const TypeConverter = {
 	// Platform converters
 	ConvertPlatformNumberToDTO,
+
 	ConvertDTOToPlatformNumber,
+
 	ConvertArchitectureToString,
+
 	ConvertOperatingSystemToNumber,
+
 	ConvertNumberToOperatingSystem,
+
 	ConvertOSInfoToDTO,
+
 	ConvertDTOToOSInfo,
 
 	// Environment converters
 	ConvertEnvironmentVariableToDTO,
+
 	ConvertDTOToEnvironmentVariable,
+
 	ConvertEnvironmentInfoToDTO,
+
 	ConvertDTOToEnvironmentInfo,
 
 	// Process converters
 	ConvertProcessInfoToDTO,
+
 	ConvertDTOToProcessInfo,
+
 	ConvertProcessSpawnOptionsToDTO,
+
 	ConvertDTOToProcessSpawnOptions,
+
 	ConvertProcessSignalToDTO,
+
 	ConvertDTOToProcessSignal,
 
 	// Serialization
 	SerializeDTO,
+
 	DeserializeDTO,
 
 	// Validation
 	ValidatePlatformInfoDTO,
+
 	ValidateEnvironmentVariableDTO,
+
 	ValidateProcessInfoDTO,
 };

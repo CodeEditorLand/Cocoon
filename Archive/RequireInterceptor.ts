@@ -39,17 +39,23 @@ export interface NodeModuleFactory {
 export class VsCodeNodeModuleFactory implements NodeModuleFactory {
 	constructor(
 		private readonly APIFactory: APIFactory,
+
 		private readonly ExtensionPath: ExtensionPath,
+
 		private readonly Logger: Logger,
 	) {}
 
 	public Load(_Request: "vscode", ParentUri: Uri): any {
 		const Extension = this.ExtensionPath.FindSubstr(ParentUri);
+
 		if (Extension) {
 			return this.APIFactory.CreateAPI(Extension);
 		}
+
 		const ErrorMessage = `FATAL: require('vscode') was called from an unknown location: ${ParentUri.fsPath}. Could not determine extension owner.`;
+
 		this.Logger.Error(ErrorMessage);
+
 		throw new Error(
 			"[Cocoon] `require('vscode')` may only be called from an extension.",
 		);
@@ -74,6 +80,7 @@ export interface RequireInterceptor {
  */
 export class RequireInterceptorService extends Effect.Service<RequireInterceptorService>()(
 	"Service/RequireInterceptor",
+
 	{
 		effect: Effect.gen(function* () {
 			const APIFactory = yield* APIFactoryService;
@@ -84,9 +91,12 @@ export class RequireInterceptorService extends Effect.Service<RequireInterceptor
 			const Factories = new Map<string, NodeModuleFactory>([
 				[
 					"vscode",
+
 					new VsCodeNodeModuleFactory(
 						APIFactory,
+
 						ExtensionPath,
+
 						Logger,
 					),
 				],
@@ -102,6 +112,7 @@ export class RequireInterceptorService extends Effect.Service<RequireInterceptor
 					yield* Effect.sync(() => {
 						(Module.prototype as any).require = function (
 							this: NodeModule,
+
 							Request: string,
 						): any {
 							const Factory = Factories.get(Request);
@@ -117,6 +128,7 @@ export class RequireInterceptorService extends Effect.Service<RequireInterceptor
 									: URI.parse("unknown:/unknown");
 								const ShimResult = NodeModuleShim.Load(
 									Request,
+
 									ParentUri as Uri,
 								);
 								if (Exit.isSuccess(ShimResult)) {

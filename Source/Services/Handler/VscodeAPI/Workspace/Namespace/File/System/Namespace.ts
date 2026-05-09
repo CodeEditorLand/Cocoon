@@ -58,73 +58,102 @@ import {
  */
 const UriToString = (Value: unknown): string => {
 	if (Value == null) return "";
+
 	if (typeof Value === "string") {
 		if (Value.startsWith("/")) return `file://${Value}`;
+
 		return Value;
 	}
+
 	if (typeof Value === "object") {
 		const WithToString = Value as { toString?: () => string };
+
 		if (
 			typeof WithToString.toString === "function" &&
 			WithToString.toString !== Object.prototype.toString
 		) {
 			const Rendered = WithToString.toString();
+
 			if (Rendered && Rendered !== "[object Object]") return Rendered;
 		}
+
 		const Hydrated = StockToUri(Value);
+
 		if (Hydrated) return Hydrated.toString();
+
 		const WithParts = Value as {
 			scheme?: unknown;
+
 			authority?: unknown;
+
 			path?: unknown;
+
 			query?: unknown;
+
 			fragment?: unknown;
+
 			fsPath?: unknown;
 		};
+
 		if (typeof WithParts.scheme === "string") {
 			const Scheme = WithParts.scheme;
+
 			const Authority =
 				typeof WithParts.authority === "string"
 					? WithParts.authority
 					: "";
+
 			const PathPart =
 				typeof WithParts.path === "string" ? WithParts.path : "";
+
 			const Query =
 				typeof WithParts.query === "string" &&
 				WithParts.query.length > 0
 					? `?${WithParts.query}`
 					: "";
+
 			const Fragment =
 				typeof WithParts.fragment === "string" &&
 				WithParts.fragment.length > 0
 					? `#${WithParts.fragment}`
 					: "";
+
 			return `${Scheme}://${Authority}${PathPart}${Query}${Fragment}`;
 		}
+
 		if (typeof WithParts.fsPath === "string") {
 			return `file://${WithParts.fsPath}`;
 		}
 	}
+
 	return String(Value);
 };
 
 type StatShape = {
 	readonly type: number;
+
 	readonly size: number;
+
 	readonly ctime: number;
+
 	readonly mtime: number;
 };
 
 const FileType = {
 	Unknown: 0,
+
 	File: 1,
+
 	Directory: 2,
+
 	SymbolicLink: 64,
 } as const;
 
 const LogRoute = (
 	Operation: string,
+
 	Uri: unknown,
+
 	Decision: FileSystemRoute,
 ): void => {
 	// Per-call route decision - 14k+ lines per session under a normal
@@ -163,8 +192,11 @@ const MetadataToStat = (Metadata: {
 		: Metadata.isDirectory()
 			? FileType.Directory
 			: FileType.File,
+
 	size: Metadata.size,
+
 	mtime: Math.floor(Metadata.mtimeMs),
+
 	ctime: Math.floor(Metadata.ctimeMs),
 });
 
@@ -216,6 +248,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		try {
 			const Raw = await Context.MountainClient?.sendRequest(
 				"FileSystem.ReadFile",
+
 				[UriString],
 			);
 			if (Raw == null) return Buffer.alloc(0);
@@ -275,6 +308,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		const Text = new TextDecoder().decode(Content);
 		await Call<void>(Context, "FileSystem.WriteFile", [
 			UriToString(Uri),
+
 			Text,
 		]);
 	},
@@ -303,7 +337,9 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		}
 		return ((await Call<Array<[string, number]>>(
 			Context,
+
 			"FileSystem.ReadDirectory",
+
 			[UriToString(Uri)],
 		)) ?? []) as Array<[string, number]>;
 	},
@@ -323,6 +359,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 
 	delete: async (
 		Uri: any,
+
 		Options?: { recursive?: boolean; useTrash?: boolean },
 	): Promise<void> => {
 		const Decision = Route(Uri);
@@ -342,13 +379,16 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		}
 		await Call<void>(Context, "FileSystem.Delete", [
 			UriToString(Uri),
+
 			Options?.recursive ?? false,
 		]);
 	},
 
 	rename: async (
 		Source: any,
+
 		Target: any,
+
 		_Options?: { overwrite?: boolean },
 	): Promise<void> => {
 		// Rename routes tier-wise on the SOURCE uri; cross-scheme rename
@@ -374,13 +414,16 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		}
 		await Call<void>(Context, "FileSystem.Rename", [
 			UriToString(Source),
+
 			UriToString(Target),
 		]);
 	},
 
 	copy: async (
 		Source: any,
+
 		Target: any,
+
 		_Options?: { overwrite?: boolean },
 	): Promise<void> => {
 		const SourceRoute = Route(Source);
@@ -410,6 +453,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		}
 		await Call<void>(Context, "FileSystem.Copy", [
 			UriToString(Source),
+
 			UriToString(Target),
 		]);
 	},

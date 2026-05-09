@@ -23,6 +23,7 @@ import { InitDataService } from "./InitData.js";
  */
 export interface ExtensionPathEntry {
 	readonly Path: string;
+
 	readonly Identifier: ExtensionIdentifier;
 }
 
@@ -42,6 +43,7 @@ export interface ExtensionPath {
  */
 export class ExtensionPathService extends Effect.Service<ExtensionPathService>()(
 	"Service/ExtensionPath",
+
 	{
 		effect: Effect.gen(function* () {
 			const InitData = yield* InitDataService;

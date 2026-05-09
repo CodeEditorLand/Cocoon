@@ -47,15 +47,20 @@ export interface IMountainClientService {
 	 */
 	getStatus(): {
 		connected: boolean;
+
 		mountainHost: string;
+
 		mountainPort: number;
+
 		errorCount: number;
+
 		uptime?: number;
 	};
 }
 
 export const IMountainClientService = Effect.Service<IMountainClientService>()(
 	"Service/MountainClient",
+
 	{
 		effect: Effect.gen(function* () {
 			// Implementation will be provided in MountainClientService.ts

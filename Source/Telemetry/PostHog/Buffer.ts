@@ -13,6 +13,7 @@ import Transport from "./Transport.js";
 
 export type Buffer = {
 	readonly Enqueue: (Name: string, Properties: Properties) => void;
+
 	readonly Drain: () => void;
 };
 
@@ -55,6 +56,7 @@ export default (Config: Configuration, DistinctIdentifier: string): Buffer => {
 
 			ScheduleFlush();
 		},
+
 		Drain: (): void => {
 			if (FlushTimer) {
 				clearTimeout(FlushTimer);

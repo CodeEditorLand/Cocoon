@@ -62,16 +62,20 @@ import { WorkspaceService } from "./Workspace.js";
 const VSCodeOutputDirectory =
 	process.env["VSCODE_OUT_DIR"] ??
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
+
 (module as any).paths.unshift(VSCodeOutputDirectory);
 
 // --- Utility Layers ---
 const TracingLive = NodeSdk.layer(() => ({
 	resource: { serviceName: "cocoon" },
 }));
+
 const DevToolsLive = Layer.provide(
 	DevTools.layerWebSocket(),
+
 	NodeSocket.layerWebSocketConstructor,
 );
+
 const UtilityLayers = Layer.mergeAll(TracingLive, DevToolsLive);
 
 // --- Effect Definitions ---
@@ -84,6 +88,7 @@ const PreHandshakeEffect = Effect.gen(function* () {
 
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
+
 		(Data: IExtensionHostInitData) =>
 			Effect.runPromise(
 				Deferred.succeed(InitializationBarrier, Data).pipe(
@@ -121,6 +126,7 @@ const PostHandshakeEffect = Effect.gen(function* () {
 	const Host = yield* ExtensionHostService;
 	yield* Host.ActivateById(
 		"*" as any,
+
 		{ startup: true, activationEvent: "*" } as any,
 	);
 	yield* Effect.logInfo("Startup extensions activated.");
@@ -131,11 +137,13 @@ const PostHandshakeEffect = Effect.gen(function* () {
 			"Cocoon is shutting down. Deactivating all extensions...",
 		).pipe(
 			Effect.andThen(Host.DeactivateAll()),
+
 			Effect.andThen(
 				Effect.logInfo(
 					"All extensions deactivated. Graceful shutdown complete.",
 				),
 			),
+
 			Effect.catchAllCause((Cause) =>
 				Effect.logError("Error during extension deactivation.", Cause),
 			),
@@ -150,8 +158,11 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 	// L0: Primitives and services with no dependencies.
 	const L0_World = Layer.mergeAll(
 		IPCConfigurationService.Default,
+
 		CancellationService.Default,
+
 		LoggerService.Default,
+
 		Layer.succeed(InitDataService, InitializationData),
 	);
 
@@ -159,81 +170,115 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 	// We break the circular dependency by building TelemetryService in a later step.
 	const L1_Services = Layer.mergeAll(
 		IPCService.Default,
+
 		ApplicationConfigurationService.Default,
+
 		LanguageFeatureService.Default,
 	);
+
 	const L1_World = Layer.provide(L1_Services, L0_World);
 
 	// L2: Services that depend on the now-built L1 services.
 	const L2_Services = Layer.mergeAll(
 		TelemetryService.Default, // Depends on IPCService and LoggerService from L1
 		ExtensionPathService.Default,
+
 		HostKindPickerService.Default,
+
 		NodeModuleShimService.Default,
 	);
+
 	const L2_World = Layer.provide(
 		L2_Services,
+
 		Layer.merge(L0_World, L1_World),
 	);
 
 	// L3 and onwards, following the original working structure...
 	const L3_Services = Layer.mergeAll(
 		APIDeprecationService.Default,
+
 		ClipboardService.Default,
+
 		DialogService.Default,
+
 		DocumentService.Default,
+
 		MessageService.Default,
+
 		QuickInputService.Default,
+
 		ProposedAPIService.Default,
+
 		SecretStorageService.Default,
+
 		FileSystemInformationService.Default,
 	);
+
 	const L3_World = Layer.provide(L3_Services, L2_World);
 
 	const L4_Services = Layer.mergeAll(
 		TaskService.Default,
+
 		AuthenticationService.Default,
 	);
+
 	const L4_World = Layer.provide(L4_Services, L3_World);
 
 	const L5_Services = Layer.mergeAll(
 		FileSystemService.Default,
+
 		StorageService.Default,
 	);
+
 	const L5_World = Layer.provide(L5_Services, L4_World);
 
 	const L6_Services = Layer.mergeAll(
 		StoragePathService.Default,
+
 		WindowService.Default,
 	);
+
 	const L6_World = Layer.provide(L6_Services, L5_World);
 
 	const L7_Services = Layer.mergeAll(
 		CommandService.Default,
+
 		WorkspaceService.Default,
 	);
+
 	const L7_World = Layer.provide(L7_Services, L6_World);
 
 	const L8_Services = Layer.mergeAll(
 		DebugService.Default,
+
 		StatusBarService.Default,
+
 		TreeViewService.Default,
+
 		WebviewPanelService.Default,
+
 		EnvironmentService.Default,
+
 		ExtensionHostService.Default,
 	);
+
 	const L8_World = Layer.provide(L8_Services, L7_World);
 
 	const L9_Services = Layer.mergeAll(ExtensionService.Default);
+
 	const L9_World = Layer.provide(L9_Services, L8_World);
 
 	const L10_Services = Layer.mergeAll(APIFactoryService.Default);
+
 	const L10_World = Layer.provide(L10_Services, L9_World);
 
 	const TopLevelServices = Layer.mergeAll(
 		RequireInterceptorService.Default,
+
 		ESMInterceptorService.Default,
 	);
+
 	return Layer.provide(TopLevelServices, L10_World);
 };
 
@@ -242,14 +287,18 @@ const AppEffectWithRequirements = Effect.gen(function* () {
 	// 1. Run pre-handshake with its minimal layer.
 	const PreHandshakeLayer = Layer.provide(
 		IPCService.Default,
+
 		Layer.mergeAll(
 			IPCConfigurationService.Default,
+
 			CancellationService.Default,
+
 			LoggerService.Default,
 		),
 	);
 	const InitializationData = yield* Effect.provide(
 		PreHandshakeEffect,
+
 		PreHandshakeLayer,
 	);
 
@@ -272,6 +321,7 @@ const FinalLayer = Layer.mergeAll(UtilityLayers, LoggerService.Default);
 // This resolves all requirements, resulting in an executable effect.
 const ExecutableMainEffect = Effect.provide(
 	AppEffectWithRequirements,
+
 	FinalLayer,
 ).pipe(Effect.scoped);
 

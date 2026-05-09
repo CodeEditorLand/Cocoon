@@ -26,6 +26,7 @@ import { ResolveWorkspacePath } from "./Integration/Tauri/Path/Workspace.js";
 
 const ResolveConfigurationFile = (
 	ConfigDirectoryEffect: Effect.Effect<Uri, IntegrationPathProblem>,
+
 	FileName: string,
 ): Effect.Effect<
 	object,
@@ -38,6 +39,7 @@ const ResolveConfigurationFile = (
 			}),
 		).pipe(
 			Effect.flatMap(ParseJSON),
+
 			Effect.catchAll(() => Effect.succeed({})),
 		),
 	).pipe(
@@ -53,16 +55,20 @@ const ResolveConfiguration = Effect.all(
 	{
 		User: ResolveConfigurationFile(
 			ResolveFinalDefaultPath(),
+
 			"settings.json",
 		),
 		Workspace: ResolveConfigurationFile(
 			ResolveWorkspacePath(),
+
 			"settings.json",
 		),
 	},
+
 	{ concurrency: "unbounded" },
 ).pipe(
 	Effect.map(({ User, Workspace }) => deepmerge(User, Workspace)),
+
 	Effect.mapError(
 		(Cause) =>
 			new ApplicationConfigurationProblem({
@@ -74,6 +80,7 @@ const ResolveConfiguration = Effect.all(
 
 const GetValueFromObject = (
 	ConfigurationObject: object,
+
 	Key: string,
 ): unknown => {
 	if (
@@ -82,8 +89,10 @@ const GetValueFromObject = (
 	) {
 		return undefined;
 	}
+
 	return Key.split(".").reduce(
 		(Current, Part) => (Current as any)?.[Part],
+
 		ConfigurationObject,
 	);
 };
@@ -96,6 +105,7 @@ const GetValueFromObject = (
  */
 export class ApplicationConfigurationService extends Effect.Service<IConfigurationService>()(
 	"vscode/ApplicationConfigurationService",
+
 	{
 		effect: Effect.gen(function* () {
 			const ConfigurationData = yield* ResolveConfiguration;
@@ -105,6 +115,7 @@ export class ApplicationConfigurationService extends Effect.Service<IConfigurati
 
 				getValue<T>(
 					section?: string | IConfigurationOverrides,
+
 					_overrides?: IConfigurationOverrides,
 				): T {
 					const Key =
@@ -117,6 +128,7 @@ export class ApplicationConfigurationService extends Effect.Service<IConfigurati
 				updateValue: () => Promise.resolve(),
 				inspect: <T>(
 					key: string,
+
 					_overrides?: any,
 				): IConfigurationValue<T> => {
 					const value = Service.getValue(key, _overrides) as

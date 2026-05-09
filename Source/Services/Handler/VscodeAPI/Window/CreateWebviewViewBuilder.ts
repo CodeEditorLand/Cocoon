@@ -17,12 +17,17 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 export default (
 	Context: HandlerContext,
+
 	Handle: string | number,
+
 	ViewId: string,
+
 	ToWebviewUri: (Input: unknown) => unknown,
+
 	SharedCspSource: string,
 ): any => {
 	let CurrentHtml = "";
+
 	// `resolveWebviewView` is invoked by the workbench at the
 	// moment the pane is being resolved-into-view; stock VS Code
 	// guarantees `view.visible === true` at this point. Roo's
@@ -34,8 +39,11 @@ export default (
 	// will downgrade to `false` if the workbench actually hides
 	// the pane.
 	let CurrentVisible = true;
+
 	const VisibilityListeners = new Set<(visible: boolean) => void>();
+
 	const DisposeListeners = new Set<() => void>();
+
 	// Per-resolve subscriptions to the Cocoon-side Emitter
 	// channels populated by `NotificationHandler.ts:
 	// webview.viewState` and `webview.dispose`. Stored so
@@ -44,9 +52,12 @@ export default (
 	// with a fresh proxy; we don't want stale listeners
 	// firing into the old proxy's listener sets).
 	const ChannelVisibility = `webview.viewVisibility:${Handle}`;
+
 	const ChannelDispose = `webview.dispose:${Handle}`;
+
 	const VisibilityForward = (Visible: unknown) => {
 		CurrentVisible = !!Visible;
+
 		for (const L of VisibilityListeners) {
 			try {
 				L(!!Visible);
@@ -55,6 +66,7 @@ export default (
 			}
 		}
 	};
+
 	const DisposeForward = () => {
 		for (const L of DisposeListeners) {
 			try {
@@ -63,16 +75,26 @@ export default (
 				/* swallow */
 			}
 		}
+
 		DisposeListeners.clear();
+
 		VisibilityListeners.clear();
+
 		Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+
 		Context.Emitter?.off?.(ChannelDispose, DisposeForward);
 	};
+
 	Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+
 	Context.Emitter?.on?.(ChannelDispose, DisposeForward);
+
 	let CurrentTitle: string | undefined;
+
 	let CurrentDescription: string | undefined;
+
 	let CurrentBadge: unknown;
+
 	const FireMetadataUpdate = () => {
 		Context.SendToMountain("webview.updateView", {
 			handle: Handle,
@@ -82,12 +104,14 @@ export default (
 			badge: CurrentBadge ?? null,
 		}).catch(() => {});
 	};
+
 	const View: any = {
 		// `viewType` is the manifest-declared id from
 		// `contributes.views[*].id` - same string as `ViewId`. Roo
 		// and others log it when the view resolves and crash on
 		// `undefined.toString()`.
 		viewType: ViewId,
+
 		// Stock VS Code's `WebviewView.visible: boolean` reflects
 		// whether the pane is body-visible. Roo, Claude, GitLens
 		// all early-return from `resolveWebviewView` /
@@ -99,6 +123,7 @@ export default (
 		get visible() {
 			return CurrentVisible;
 		},
+
 		// Some extensions (Continue, occasionally GitLens) cache the
 		// view in their own state and reassign `view.visible = X`
 		// when they think they detect external visibility changes.
@@ -112,33 +137,45 @@ export default (
 		set visible(_Ignored: unknown) {
 			/* no-op - workbench drives visibility via the channel */
 		},
+
 		get title() {
 			return CurrentTitle;
 		},
+
 		set title(Value: string | undefined) {
 			CurrentTitle = Value;
+
 			FireMetadataUpdate();
 		},
+
 		get description() {
 			return CurrentDescription;
 		},
+
 		set description(Value: string | undefined) {
 			CurrentDescription = Value;
+
 			FireMetadataUpdate();
 		},
+
 		get badge() {
 			return CurrentBadge;
 		},
+
 		set badge(Value: unknown) {
 			CurrentBadge = Value;
+
 			FireMetadataUpdate();
 		},
+
 		webview: {
 			get html() {
 				return CurrentHtml;
 			},
+
 			set html(Value: string) {
 				CurrentHtml = String(Value ?? "");
+
 				// Diagnostic: prove the setter was reached. If we see
 				// `[WebviewView] set-html-enter` in the log but no
 				// `Received gRPC Notification: Method='webview.setHtml'`
@@ -155,6 +192,7 @@ export default (
 				} catch {
 					/* stdout may be unavailable mid-teardown */
 				}
+
 				Context.SendToMountain("webview.setHtml", {
 					handle: Handle,
 					viewId: ViewId,
@@ -180,6 +218,7 @@ export default (
 					},
 				);
 			},
+
 			// Stock VS Code populates `webview.options` from the
 			// `WebviewOptions` passed to
 			// `registerWebviewViewProvider(viewId, provider, { webviewOptions })`.
@@ -191,29 +230,41 @@ export default (
 			// keep extensions that never set options happy.
 			options: {
 				enableScripts: true,
+
 				enableCommandUris: true,
+
 				enableForms: true,
+
 				localResourceRoots: [],
+
 				portMapping: [],
 			} as any,
+
 			cspSource: SharedCspSource,
+
 			asWebviewUri: ToWebviewUri,
+
 			postMessage: async (Message: unknown) => {
 				await Context.SendToMountain("webview.postMessage", {
 					handle: Handle,
 					viewId: ViewId,
 					message: Message,
 				}).catch(() => {});
+
 				return true;
 			},
+
 			onDidReceiveMessage: (Listener: (msg: unknown) => void) => {
 				const Channel = `webview.message:${Handle}`;
+
 				Context.Emitter?.on?.(Channel, Listener);
+
 				return {
 					dispose: () => Context.Emitter?.off?.(Channel, Listener),
 				};
 			},
 		},
+
 		show: (PreserveFocus?: boolean) => {
 			Context.SendToMountain("webview.reveal", {
 				handle: Handle,
@@ -221,18 +272,23 @@ export default (
 				preserveFocus: !!PreserveFocus,
 			}).catch(() => {});
 		},
+
 		onDidChangeVisibility: (Listener: (visible: boolean) => void) => {
 			VisibilityListeners.add(Listener);
+
 			return {
 				dispose: () => VisibilityListeners.delete(Listener),
 			};
 		},
+
 		onDispose: (Listener: () => void) => {
 			DisposeListeners.add(Listener);
+
 			return {
 				dispose: () => DisposeListeners.delete(Listener),
 			};
 		},
+
 		// Canonical VS Code API name. Roo's `resolveWebviewView` calls
 		// `webviewView.onDidDispose(() => {})`; without this alias the
 		// call surfaces as `r.onDidDispose is not a function` and the
@@ -242,10 +298,12 @@ export default (
 		// duplicate the storage.
 		onDidDispose: (Listener: () => void) => {
 			DisposeListeners.add(Listener);
+
 			return {
 				dispose: () => DisposeListeners.delete(Listener),
 			};
 		},
+
 		dispose: () => {
 			// Dispose forwarded to the channel-driven path so listeners +
 			// Emitter subscriptions are uniformly cleaned. `DisposeForward`
@@ -254,5 +312,6 @@ export default (
 			DisposeForward();
 		},
 	};
+
 	return View;
 };

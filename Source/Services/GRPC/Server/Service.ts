@@ -55,7 +55,9 @@ import {
 
 // ESM compatibility - provide __dirname and require() for proto loading
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
+
 const require = createRequire(import.meta.url);
 
 /**
@@ -63,7 +65,9 @@ const require = createRequire(import.meta.url);
  */
 interface RequestTrackingEntry {
 	method: string;
+
 	startTime: number;
+
 	cancelHandler?: () => void;
 }
 
@@ -77,15 +81,19 @@ export class GRPCServerService
 	readonly _serviceBrand: undefined;
 
 	private server: grpc.Server | null = null;
+
 	private port: number = 50052; // Default Cocoon gRPC port
 	private isRunning: boolean = false;
+
 	private serviceImplementation: CocoonServiceImplementation;
+
 	private streamingHandlers: Set<
 		grpc.ServerDuplexStream<GenericRequest, GenericResponse>
 	> = new Set();
 
 	// Authentication configuration
 	public authToken: string | null = null;
+
 	private authEnabled: boolean = false;
 
 	// Keepalive configuration
@@ -98,7 +106,9 @@ export class GRPCServerService
 
 	// Health monitoring
 	private readonly startTime: number = 0;
+
 	private errorCount: number = 0;
+
 	private requestCount: number = 0;
 
 	/** Stored initialization data from Mountain's InitializeExtensionHost */
@@ -133,14 +143,18 @@ export class GRPCServerService
 
 	constructor() {
 		super();
+
 		this._serviceBrand = undefined;
+
 		console.log("[GRPCServerService] Initializing gRPC server");
 
 		// Extensions register many listeners (one per language client, webview,
 		// tree view, etc.). The default Node cap of 10 produces noisy
 		// `MaxListenersExceededWarning` spam during boot. 0 = unlimited.
 		this.setMaxListeners(0);
+
 		this.workspaceEventEmitter.setMaxListeners(0);
+
 		process.stdout.write(
 			"[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter\n",
 		);
@@ -184,10 +198,12 @@ export class GRPCServerService
 				ActivateByEvent: async (Event: string) => {
 					await ExtensionHostHandler.HandleActivateByEvent(
 						Self.GetHandlerContext(),
+
 						{ activationEvent: Event },
 					);
 				},
 			} as HandlerContext,
+
 			{
 				ExtensionHostInitData: {
 					get() {
@@ -232,15 +248,19 @@ export class GRPCServerService
 	 */
 	private parseEnvironment(): void {
 		const cocoonPort = process.env["COCOON_GRPC_PORT"];
+
 		if (cocoonPort) {
 			this.port = parseInt(cocoonPort, 10);
 		}
 
 		// Parse authentication settings
 		const authToken = process.env["MOUNTAIN_AUTH_TOKEN"];
+
 		if (authToken) {
 			this.authToken = authToken;
+
 			this.authEnabled = true;
+
 			console.log("[GRPCServerService] Authentication enabled");
 		}
 
@@ -274,6 +294,7 @@ export class GRPCServerService
 		return {
 			ProcessMountainRequest: (
 				Call: grpc.ServerUnaryCall<GenericRequest, GenericResponse>,
+
 				Callback: grpc.sendUnaryData<GenericResponse>,
 			) => {
 				if (!this.ValidateAuthentication()) {
@@ -281,8 +302,10 @@ export class GRPCServerService
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
 					});
+
 					return;
 				}
+
 				this.handleMountainRequest(Call.request)
 					.then((Response) => Callback(null, Response))
 					.catch((Error) =>
@@ -295,8 +318,10 @@ export class GRPCServerService
 						}),
 					);
 			},
+
 			SendMountainNotification: (
 				Call: grpc.ServerUnaryCall<GenericNotification, Empty>,
+
 				Callback: grpc.sendUnaryData<Empty>,
 			) => {
 				if (!this.ValidateAuthentication()) {
@@ -304,13 +329,18 @@ export class GRPCServerService
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
 					});
+
 					return;
 				}
+
 				this.handleMountainNotification(Call.request);
+
 				Callback(null, {});
 			},
+
 			CancelOperation: (
 				Call: grpc.ServerUnaryCall<CancelOperationRequest, Empty>,
+
 				Callback: grpc.sendUnaryData<Empty>,
 			) => {
 				if (!this.ValidateAuthentication()) {
@@ -318,9 +348,12 @@ export class GRPCServerService
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
 					});
+
 					return;
 				}
+
 				this.handleCancelOperation(Call.request);
+
 				Callback(null, {});
 			},
 		};
@@ -379,17 +412,21 @@ export class GRPCServerService
 	 */
 	private async handleStreamingRequest(
 		request: GenericRequest,
+
 		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
 	): Promise<void> {
 		try {
 			const parameters = this.parseParameters(request.Parameter);
+
 			const responseData = await this.routeRequest(
 				request.Method,
+
 				parameters,
 			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
+
 				Result: Buffer.from(JSON.stringify(responseData)),
 			};
 
@@ -397,18 +434,23 @@ export class GRPCServerService
 		} catch (error) {
 			console.error(
 				`[GRPCServerService] Streaming request failed for ${request.Method}:`,
+
 				error,
 			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
+
 				Result: Buffer.from(JSON.stringify({})),
+
 				error: {
 					Code: 500,
+
 					Message:
 						error instanceof Error
 							? error.message
 							: "Unknown error",
+
 					Data: Buffer.from(JSON.stringify({})),
 				},
 			};
@@ -452,6 +494,7 @@ export class GRPCServerService
 	public BroadcastEvent(_method: string, data: any): void {
 		const notification: GenericResponse = {
 			RequestIdentifier: BigInt(0),
+
 			Result: Buffer.from(JSON.stringify(data)),
 		};
 
@@ -473,6 +516,7 @@ export class GRPCServerService
 		request: GenericRequest,
 	): Promise<GenericResponse> {
 		const startTime = Date.now();
+
 		this.requestCount++;
 
 		console.log(
@@ -497,15 +541,18 @@ export class GRPCServerService
 			// Route to appropriate service
 			const responseData = await this.routeRequest(
 				request.Method,
+
 				parameters,
 			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
+
 				Result: this.SerializeResponseData(responseData),
 			};
 
 			const processingTime = Date.now() - startTime;
+
 			console.log(
 				`[GRPCServerService] Request ${request.Method} processed in ${processingTime}ms`,
 			);
@@ -534,6 +581,7 @@ export class GRPCServerService
 				request.Method.startsWith("$provide") ||
 				request.Method.startsWith("$resolve") ||
 				request.Method.startsWith("$get");
+
 			if (IsExtensionProvidedHandler) {
 				console.log(
 					`[GRPCServerService] Extension handler ${request.Method} rejected (extension-side): ${
@@ -543,6 +591,7 @@ export class GRPCServerService
 			} else {
 				console.error(
 					`[GRPCServerService] Error processing request ${request.Method}:`,
+
 					error,
 				);
 			}
@@ -555,10 +604,12 @@ export class GRPCServerService
 				Result: Buffer.from(JSON.stringify({})),
 				error: {
 					Code: 500,
+
 					Message:
 						error instanceof Error
 							? error.message
 							: "Unknown error",
+
 					Data: Buffer.from(JSON.stringify({})),
 				},
 			};
@@ -610,6 +661,7 @@ export class GRPCServerService
 		} catch (error) {
 			console.error(
 				"[GRPCServerService] Failed to serialize response:",
+
 				error,
 			);
 			return Buffer.from("{}", "utf8");
@@ -632,6 +684,7 @@ export class GRPCServerService
 		} catch (error) {
 			console.error(
 				"[GRPCServerService] Failed to parse parameters:",
+
 				error,
 			);
 			throw new Error(
@@ -659,24 +712,28 @@ export class GRPCServerService
 		if (method === "InitializeExtensionHost") {
 			return ExtensionHostHandler.HandleInitializeExtensionHost(
 				Context,
+
 				parameters,
 			);
 		}
 		if (method === "$deltaExtensions") {
 			return ExtensionHostHandler.HandleDeltaExtensions(
 				Context,
+
 				parameters,
 			);
 		}
 		if (method === "$activateByEvent") {
 			return ExtensionHostHandler.HandleActivateByEvent(
 				Context,
+
 				parameters,
 			);
 		}
 		if (method === "$startExtensionHost") {
 			return ExtensionHostHandler.HandleStartExtensionHost(
 				Context,
+
 				parameters,
 			);
 		}
@@ -701,7 +758,9 @@ export class GRPCServerService
 		if (/^\$provide[A-Z]/.test(method)) {
 			return InvokeLanguageProvider(
 				method,
+
 				parameters,
+
 				this.documentContentCache,
 			);
 		}
@@ -782,25 +841,36 @@ export class GRPCServerService
 			// Handle specific notification types via NotificationHandler
 			HandleSpecificNotification(
 				this,
+
 				this.documentContentCache,
+
 				DocumentContentHandler.HandleDocumentChange,
+
 				DocumentContentHandler.HandleDocumentOpen,
+
 				DocumentContentHandler.HandleDocumentClose,
+
 				DocumentContentHandler.HandleDocumentSave,
+
 				notification.Method,
+
 				parameters,
+
 				this.workspaceEventEmitter,
+
 				this.GetHandlerContext(),
 			);
 
 			console.log(
 				`[GRPCServerService] Notification ${notification.Method} handled`,
+
 				parameters,
 			);
 		} catch (error) {
 			this.errorCount++;
 			console.error(
 				`[GRPCServerService] Error handling notification ${notification.Method}:`,
+
 				error,
 			);
 		}
@@ -813,6 +883,7 @@ export class GRPCServerService
 	public GetDocumentContent(Uri: string): string | null {
 		return DocumentContentHandler.GetDocumentContent(
 			this.documentContentCache,
+
 			Uri,
 		);
 	}
@@ -845,6 +916,7 @@ export class GRPCServerService
 						this.errorCount++;
 						console.error(
 							`[GRPCServerService] Cancel handler failed for request ${requestId}:`,
+
 							error,
 						);
 					}
@@ -865,6 +937,7 @@ export class GRPCServerService
 			this.errorCount++;
 			console.error(
 				`[GRPCServerService] Error canceling operation ${requestId}:`,
+
 				error,
 			);
 		}
@@ -902,6 +975,7 @@ export class GRPCServerService
 
 		const MountainPort = parseInt(
 			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+
 			10,
 		);
 
@@ -988,6 +1062,7 @@ export class GRPCServerService
 				protoDescriptor.CocoonService;
 			this.server.addService(
 				CocoonSvc.service,
+
 				this.serviceImplementation,
 			);
 
@@ -1001,6 +1076,7 @@ export class GRPCServerService
 		} catch (error) {
 			console.error(
 				"[GRPCServerService] Failed to start gRPC server:",
+
 				error,
 			);
 			throw error;
@@ -1025,14 +1101,17 @@ export class GRPCServerService
 			const protoSearchPaths = [
 				path.resolve(
 					__dirname,
+
 					"../../../../Mountain/Proto/Vine.proto",
 				),
 				path.resolve(
 					__dirname,
+
 					"../../../../../Mountain/Proto/Vine.proto",
 				),
 				path.resolve(
 					__dirname,
+
 					"../../../../../../Mountain/Proto/Vine.proto",
 				),
 				path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
@@ -1066,6 +1145,7 @@ export class GRPCServerService
 				);
 				console.log(
 					"[GRPCServerService] Search paths attempted:",
+
 					protoSearchPaths,
 				);
 
@@ -1127,6 +1207,7 @@ export class GRPCServerService
 		} catch (error) {
 			console.error(
 				"[GRPCServerService] Failed to load protocol definition:",
+
 				error,
 			);
 			throw new Error(
@@ -1143,7 +1224,9 @@ export class GRPCServerService
 
 			this.server.bindAsync(
 				`0.0.0.0:${this.port}`,
+
 				grpc.ServerCredentials.createInsecure(),
+
 				(error, port) => {
 					if (error) {
 						reject(error);
@@ -1218,6 +1301,7 @@ export class GRPCServerService
  */
 export const GRPCServerServiceLayer = Layer.effect(
 	IGRPCServerService,
+
 	Effect.sync(() => new GRPCServerService()),
 );
 
@@ -1226,5 +1310,6 @@ export const GRPCServerServiceLayer = Layer.effect(
  */
 export const GRPCServerServiceLive = Layer.effect(
 	IGRPCServerService,
+
 	Effect.sync(() => new GRPCServerService()),
 );

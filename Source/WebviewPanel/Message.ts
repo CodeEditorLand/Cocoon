@@ -64,8 +64,11 @@ import type { Webview as VSCodeWebview } from "vscode";
  */
 export interface Message {
 	readonly Type: string;
+
 	readonly Payload: unknown;
+
 	readonly Timestamp: number;
+
 	readonly Id: string;
 }
 
@@ -75,9 +78,12 @@ export interface Message {
  */
 export interface RequestMessage extends Message {
 	readonly Type: "Request";
+
 	readonly RequestId: string;
+
 	readonly Payload: {
 		readonly Method: string;
+
 		readonly Parameters: readonly unknown[];
 	};
 }
@@ -88,10 +94,14 @@ export interface RequestMessage extends Message {
  */
 export interface ResponseMessage extends Message {
 	readonly Type: "Response";
+
 	readonly RequestId: string;
+
 	readonly Payload: {
 		readonly Success: boolean;
+
 		readonly Data?: unknown;
+
 		readonly Error?: string;
 	};
 }
@@ -102,8 +112,10 @@ export interface ResponseMessage extends Message {
  */
 export interface EventMessage extends Message {
 	readonly Type: "Event";
+
 	readonly Payload: {
 		readonly EventName: string;
+
 		readonly Data: unknown;
 	};
 }
@@ -128,10 +140,13 @@ export type MessageHandler = (
  */
 export interface MessageRouter {
 	readonly Handle: (Message: WebviewMessage) => Effect.Effect<void, Error>;
+
 	readonly RegisterHandler: (
 		Type: string,
+
 		Handler: MessageHandler,
 	) => Effect.Effect<void, never>;
+
 	readonly UnregisterHandler: (Type: string) => Effect.Effect<void, never>;
 }
 
@@ -141,10 +156,12 @@ export interface MessageRouter {
  */
 export class MessageService extends Effect.Service<MessageService>()(
 	"Message/WebviewPanel",
+
 	{
 		effect: Effect.gen(function* () {
 			const HandlersRef = yield* Effect.tryMap(
 				Effect.sync(() => new Map<string, MessageHandler>()),
+
 				(error) => new Error(`Failed to create handlers map: ${error}`),
 			);
 
@@ -242,6 +259,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 			 */
 			const CreateMessage = (
 				Type: "Request" | "Response" | "Event",
+
 				Payload: unknown,
 			): WebviewMessage => ({
 				Type,
@@ -255,6 +273,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 			 */
 			const SendMessage = (
 				Webview: VSCodeWebview,
+
 				Message: WebviewMessage,
 			): Effect.Effect<boolean, never> =>
 				Effect.tryPromise({
@@ -267,6 +286,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 			 */
 			const RegisterHandler = (
 				Type: string,
+
 				Handler: MessageHandler,
 			): Effect.Effect<void, never> =>
 				Effect.sync(() => {

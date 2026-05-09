@@ -18,8 +18,10 @@ export class StartDebuggingProblem extends Data.TaggedError(
 	readonly Cause: unknown;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: { readonly Cause: unknown }) {
 		super(Properties);
+
 		this.message = `Failed to start debugging session.`;
 	}
 }

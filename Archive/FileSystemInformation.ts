@@ -25,10 +25,13 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 export interface FileSystemInformation {
 	readonly ExtURI: IExtUri;
+
 	readonly onDidChangeFile: Event<readonly FileChangeEvent[]>;
+
 	readonly GetCapabilities: (
 		Scheme: string,
 	) => Effect.Effect<FileSystemProviderCapabilities | undefined, never>;
+
 	readonly IsWritableFileSystem: (Scheme: string) => boolean | undefined;
 }
 
@@ -38,6 +41,7 @@ export interface FileSystemInformation {
  */
 export class FileSystemInformationService extends Effect.Service<FileSystemInformationService>()(
 	"Service/FileSystemInformation",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -52,6 +56,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 			const GetCapabilities = (Scheme: string) =>
 				Ref.get(CapabilitiesMapRef).pipe(
 					Effect.map(HashMap.get(Scheme)),
+
 					Effect.map((MaybeCapabilities) => {
 						if (MaybeCapabilities._tag === "Some")
 							return MaybeCapabilities.value;
@@ -85,12 +90,14 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 
 			const AcceptProviderCapabilities = (
 				Scheme: string,
+
 				Capabilities: FileSystemProviderCapabilities | null,
 			) =>
 				Effect.gen(function* () {
 					if (Capabilities === null) {
 						yield* Ref.update(
 							CapabilitiesMapRef,
+
 							HashMap.remove(Scheme),
 						);
 						yield* Logger.Trace(
@@ -99,6 +106,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 					} else {
 						yield* Ref.update(
 							CapabilitiesMapRef,
+
 							HashMap.set(Scheme, Capabilities),
 						);
 						yield* Logger.Trace(
@@ -110,6 +118,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 			// Register RPC handlers
 			IPC.RegisterInvokeHandler(
 				"$acceptProviderInfos",
+
 				([Scheme, Capabilities]) =>
 					Effect.runPromise(
 						AcceptProviderCapabilities(Scheme, Capabilities),

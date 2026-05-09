@@ -15,14 +15,17 @@ export class DebugProviderRegistrationProblem extends Data.TaggedError(
 	"DebugProviderRegistrationProblem",
 )<{
 	readonly DebugType: string;
+
 	readonly Cause?: unknown;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: {
 		readonly DebugType: string;
 		readonly Cause?: unknown;
 	}) {
 		super(Properties);
+
 		this.message = `Failed to register debug provider for type '${this.DebugType}'.`;
 	}
 }

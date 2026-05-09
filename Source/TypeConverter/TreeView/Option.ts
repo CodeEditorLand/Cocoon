@@ -13,8 +13,11 @@ import type { TreeViewOptions } from "vscode";
 export const FromAPI = (option: TreeViewOptions<any>): any => {
 	return {
 		showCollapseAll: !!option.showCollapseAll,
+
 		canSelectMany: !!option.canSelectMany,
+
 		hasHandleDrag: !!option.dragAndDropController?.handleDrag,
+
 		hasHandleDrop: !!option.dragAndDropController?.handleDrop,
 	};
 };

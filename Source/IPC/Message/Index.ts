@@ -8,6 +8,7 @@
 
 // Types
 export { CompressionHint } from "./Types.js";
+
 export type {
 	IBatchMessage,
 	IDeserializationResult,
@@ -18,6 +19,7 @@ export type {
 
 // Constants
 export { MessageFlags } from "./Constants.js";
+
 export {
 	COMPRESSION_THRESHOLD,
 	DEFAULT_BUFFER_SIZE,
@@ -40,8 +42,11 @@ export {
 
 // Core operations
 export { default as SerializeMessage } from "./Serialize/Message.js";
+
 export { default as DeserializeMessage } from "./Deserialize/Message.js";
+
 export { default as BatchMessages } from "./Batch/Messages.js";
+
 export { default as UnbatchMessages } from "./Unbatch/Messages.js";
 
 // Utility functions

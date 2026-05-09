@@ -9,6 +9,7 @@
  */
 
 export { default } from "./Window/Index.js";
+
 export {
 	WindowService,
 	Logger,

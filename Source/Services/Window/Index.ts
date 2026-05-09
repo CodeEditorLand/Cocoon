@@ -42,6 +42,7 @@ import {
 import { CreateWebviewPanel } from "./Webview/Panel.js";
 
 export type { Logger, Window, Workspace } from "./Interfaces.js";
+
 export type { VSCodeWindowAPI } from "./Interfaces.js";
 
 /**
@@ -53,6 +54,7 @@ export type { VSCodeWindowAPI } from "./Interfaces.js";
  */
 export class WindowService extends Effect.Service<WindowService>()(
 	"Service/Window",
+
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
@@ -111,24 +113,33 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				ShowTextDocument: (
 					DocumentOrUri: VSCode.Uri | VSCode.TextDocument,
+
 					ColumnOrOptions?:
 						| VSCode.ViewColumn
 						| VSCode.TextDocumentShowOptions,
+
 					PreserveFocus?: boolean,
 				) =>
 					ShowTextDocument(
 						MountainGRPC as any,
+
 						Logger_,
+
 						Workspace_,
+
 						DocumentOrUri,
+
 						ColumnOrOptions,
+
 						PreserveFocus,
 					),
 
 				ShowInformationMessage: (Message: string, ...Items: string[]) =>
 					ShowInformationMessage(
 						MountainGRPC as any,
+
 						Logger_,
+
 						Message,
 						...Items,
 					),
@@ -136,7 +147,9 @@ export class WindowService extends Effect.Service<WindowService>()(
 				ShowWarningMessage: (Message: string, ...Items: string[]) =>
 					ShowWarningMessage(
 						MountainGRPC as any,
+
 						Logger_,
+
 						Message,
 						...Items,
 					),
@@ -144,19 +157,25 @@ export class WindowService extends Effect.Service<WindowService>()(
 				ShowErrorMessage: (Message: string, ...Items: string[]) =>
 					ShowErrorMessage(
 						MountainGRPC as any,
+
 						Logger_,
+
 						Message,
 						...Items,
 					),
 
 				ShowQuickPick: <T extends string>(
 					Items: readonly T[] | VSCode.QuickPickItem[],
+
 					Options?: VSCode.QuickPickOptions,
 				) =>
 					ShowQuickPick(
 						MountainClient as any,
+
 						Logger_,
+
 						Items,
+
 						Options,
 					),
 
@@ -171,11 +190,13 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				WithProgress: <T>(
 					Options: VSCode.ProgressOptions,
+
 					Task: (
 						Progress: VSCode.Progress<{
 							message?: string;
 							increment?: number;
 						}>,
+
 						Token: VSCode.CancellationToken,
 					) => Promise<T>,
 				) =>
@@ -183,15 +204,22 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				CreateStatusBarItem: (
 					Id?: string,
+
 					Alignment?: VSCode.StatusBarAlignment,
+
 					Priority?: number,
 				) =>
 					CreateStatusBarItem(
 						MountainClient as any,
+
 						MountainGRPC as any,
+
 						Logger_,
+
 						Id,
+
 						Alignment,
+
 						Priority,
 					),
 
@@ -200,23 +228,32 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				CreateWebviewPanel: (
 					ViewType: string,
+
 					Title: string,
+
 					ShowOptions:
 						| VSCode.ViewColumn
 						| {
 								viewColumn: VSCode.ViewColumn;
 								preserveFocus?: boolean;
 						  },
+
 					Options?: VSCode.WebviewPanelOptions &
 						VSCode.WebviewOptions,
 				) =>
 					CreateWebviewPanel(
 						MountainClient as any,
+
 						MountainGRPC as any,
+
 						Logger_,
+
 						ViewType,
+
 						Title,
+
 						ShowOptions,
+
 						Options,
 					),
 			};

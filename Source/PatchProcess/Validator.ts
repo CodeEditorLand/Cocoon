@@ -60,8 +60,11 @@ import {
  */
 export interface ValidationResult {
 	readonly Valid: boolean;
+
 	readonly Reason?: string;
+
 	readonly Severity: "info" | "warning" | "error" | "critical";
+
 	readonly Timestamp: number;
 }
 
@@ -70,11 +73,17 @@ export interface ValidationResult {
  */
 interface ProcessValidationState {
 	readonly ProcessId: number;
+
 	readonly StartTime: number;
+
 	readonly FileAccessCount: Map<string, number>;
+
 	readonly NetworkAccessCount: Map<string, number>;
+
 	readonly ChildProcessCount: number;
+
 	readonly ViolationCount: number;
+
 	readonly SecurityPolicy: SecurityPolicy;
 }
 
@@ -85,13 +94,18 @@ interface ProcessValidationState {
  */
 export class ValidationError extends Data.TaggedError("ValidationError")<{
 	readonly ProcessId: number;
+
 	readonly ValidationType: string;
+
 	readonly Reason: string;
+
 	readonly Severity: "warning" | "error" | "critical";
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: any) {
 		super(Properties);
+
 		this.message = `Validation failed for process ${Properties.ProcessId}: ${Properties.Reason}`;
 	}
 }
@@ -103,8 +117,11 @@ export class BehaviorViolationError extends Data.TaggedError(
 	"BehaviorViolationError",
 )<{
 	readonly ProcessId: number;
+
 	readonly ViolationType: string;
+
 	readonly Description: string;
+
 	readonly DetectedAt: number;
 }> {}
 
@@ -112,17 +129,24 @@ export class BehaviorViolationError extends Data.TaggedError(
 
 interface ValidationMetrics {
 	readonly TotalValidations: number;
+
 	readonly FailedValidations: number;
+
 	readonly LastValidationTime: number;
+
 	readonly AverageValidationTime: number;
 }
 
 class ValidationMetricsStore {
 	private static _instance: ValidationMetricsStore;
+
 	private _metrics: ValidationMetrics = {
 		TotalValidations: 0,
+
 		FailedValidations: 0,
+
 		LastValidationTime: 0,
+
 		AverageValidationTime: 0,
 	};
 
@@ -130,14 +154,17 @@ class ValidationMetricsStore {
 		if (!ValidationMetricsStore._instance) {
 			ValidationMetricsStore._instance = new ValidationMetricsStore();
 		}
+
 		return ValidationMetricsStore._instance;
 	}
 
 	public RecordValidation(StartTime: number, Success: boolean): void {
 		const EndTime = Date.now();
+
 		const Duration = EndTime - StartTime;
 
 		this._metrics.TotalValidations++;
+
 		this._metrics.LastValidationTime = EndTime;
 
 		if (!Success) {
@@ -159,8 +186,11 @@ class ValidationMetricsStore {
 	public Reset(): void {
 		this._metrics = {
 			TotalValidations: 0,
+
 			FailedValidations: 0,
+
 			LastValidationTime: 0,
+
 			AverageValidationTime: 0,
 		};
 	}
@@ -204,6 +234,7 @@ export const InitializeProcessValidation = Effect.gen(function* () {
  */
 export const ValidateFileSystemAccess = (
 	File: string,
+
 	Operation: "read" | "write" | "delete",
 ): Effect.Effect<ValidationResult, ValidationError> =>
 	Effect.gen(function* () {
@@ -225,7 +256,9 @@ export const ValidateFileSystemAccess = (
 		// Check against security policy
 		const PathValid = ValidatePathAccess(
 			File,
+
 			Operation,
+
 			State.SecurityPolicy,
 		);
 
@@ -268,6 +301,7 @@ export const ValidateFileSystemAccess = (
  */
 export const ValidateNetworkAccess = (
 	Endpoint: string,
+
 	Operation: "connect" | "listen",
 ): Effect.Effect<ValidationResult, ValidationError> =>
 	Effect.gen(function* () {
@@ -288,6 +322,7 @@ export const ValidateNetworkAccess = (
 
 		const NetworkValid = ValidateNetworkAccess(
 			Endpoint,
+
 			State.SecurityPolicy,
 		);
 
@@ -330,6 +365,7 @@ export const ValidateNetworkAccess = (
  */
 export const ValidateChildProcessSpawn = (
 	Command: string,
+
 	Arguments: readonly string[],
 ): Effect.Effect<ValidationResult, ValidationError> =>
 	Effect.gen(function* () {
@@ -350,7 +386,9 @@ export const ValidateChildProcessSpawn = (
 
 		const SpawnValid = ValidateChildProcess(
 			Command,
+
 			Arguments,
+
 			State.SecurityPolicy,
 		);
 
@@ -462,10 +500,12 @@ export const DetectSuspiciousBehavior = Effect.gen(function* () {
 	const UptimeMinutes = (Date.now() - State.StartTime) / 60000;
 	const AccessRate = Array.from(State.FileAccessCount.values()).reduce(
 		(a, b) => a + b,
+
 		0,
 	);
 	const NetworkRate = Array.from(State.NetworkAccessCount.values()).reduce(
 		(a, b) => a + b,
+
 		0,
 	);
 
@@ -564,6 +604,7 @@ export const RunSecurityValidation = Effect.gen(function* () {
 
 	yield* Effect.logInfo(
 		"Comprehensive security validation completed",
+
 		Result,
 	);
 

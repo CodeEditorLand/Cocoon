@@ -19,13 +19,21 @@ import type { InterfaceMemberRecord } from "@codeeditorland/wind/Target/Codegen/
 
 export interface ExtHostDecoratorRecord {
 	readonly DecoratorName: string;
+
 	readonly DecoratorTag: string;
+
 	readonly InterfaceName: string;
+
 	readonly SourcePath: string;
+
 	readonly SourceLine: number;
+
 	readonly Members: ReadonlyArray<InterfaceMemberRecord>;
+
 	readonly DecoratorDocComment: string | null;
+
 	readonly InterfaceDocComment: string | null;
+
 	/** ExtHost decorators frequently come paired with a "MainThread"
 	 * counterpart in `mainThreadFoo.ts`. The codegen records that
 	 * paired identifier when the convention holds so consumers can

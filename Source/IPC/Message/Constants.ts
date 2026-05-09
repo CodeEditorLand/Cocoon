@@ -33,10 +33,15 @@ export const COMPRESSION_THRESHOLD = 1024;
 /** Message flags enumeration */
 export enum MessageFlags {
 	None = 0,
+
 	Compressed = 1 << 0,
+
 	Batched = 1 << 1,
+
 	Binary = 1 << 2,
+
 	Encrypted = 1 << 3,
+
 	Priority = 1 << 4,
 }
 

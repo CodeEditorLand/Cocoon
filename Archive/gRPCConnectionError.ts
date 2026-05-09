@@ -16,6 +16,7 @@ export class gRPCConnectionError extends Data.TaggedError(
 	"gRPCConnectionError",
 )<{
 	readonly Cause: unknown;
+
 	readonly Context:
 		| "ProtoLoadFailed"
 		| "ClientInstantiationFailed"

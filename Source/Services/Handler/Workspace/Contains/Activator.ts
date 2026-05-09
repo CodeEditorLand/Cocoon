@@ -26,7 +26,9 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 type WorkspaceFolderWire = {
 	uri?: string;
+
 	name?: string;
+
 	index?: number;
 };
 
@@ -43,7 +45,9 @@ const UriToFsPath = (Uri: unknown): string | undefined => {
 			: ((Uri as Record<string, unknown>)?.["fsPath"] ??
 				(Uri as Record<string, unknown>)?.["path"] ??
 				(Uri as Record<string, unknown>)?.["external"]);
+
 	if (typeof Raw !== "string" || Raw.length === 0) return undefined;
+
 	if (Raw.startsWith("file:")) {
 		try {
 			return decodeURIComponent(new URL(Raw).pathname);
@@ -51,6 +55,7 @@ const UriToFsPath = (Uri: unknown): string | undefined => {
 			return Raw.replace(/^file:\/\//, "");
 		}
 	}
+
 	return Raw;
 };
 
@@ -66,16 +71,22 @@ const UriToFsPath = (Uri: unknown): string | undefined => {
  */
 const FolderContainsGlobViaMountain = async (
 	Context: HandlerContext,
+
 	Glob: string,
 ): Promise<boolean | undefined> => {
 	const Client = Context.MountainClient;
+
 	if (!Client || typeof Client.sendRequest !== "function") return undefined;
+
 	try {
 		const Result = await Client.sendRequest("findFiles", [
 			Glob,
+
 			{ maxResults: 1 },
 		]);
+
 		if (Array.isArray(Result)) return Result.length > 0;
+
 		// Effect route also returns the bare URL list array; `null` /
 		// `undefined` is conservatively "not enough info to decide" so
 		// caller retries via local walker.
@@ -93,18 +104,22 @@ const FolderContainsGlobViaMountain = async (
  */
 const FolderContainsGlob = async (
 	FsPath: string,
+
 	Glob: string,
 ): Promise<boolean> => {
 	const { stat, readdir } = await import("node:fs/promises");
+
 	const { join, relative, sep } = await import("node:path");
 
 	// Fast-path: literal file probe. Most of VS Code's shipped
 	// workspaceContains triggers are plain names (`package.json`,
 	// `Cargo.toml`, `pyproject.toml`, `requirements.txt`, …).
 	const IsLiteral = !/[*?[\]]/.test(Glob);
+
 	if (IsLiteral) {
 		try {
 			await stat(join(FsPath, Glob));
+
 			return true;
 		} catch {
 			return false;
@@ -113,63 +128,93 @@ const FolderContainsGlob = async (
 
 	// Glob path. Compile once, walk bounded.
 	let Matcher: RegExp;
+
 	try {
 		Matcher = GlobToRegex(Glob);
 	} catch {
 		return false;
 	}
+
 	const ExcludeSegments = new Set([
 		".git",
+
 		"node_modules",
+
 		".astro",
+
 		".next",
+
 		".cache",
+
 		".turbo",
+
 		"Target",
+
 		"target",
+
 		"dist",
+
 		"out",
+
 		"build",
 	]);
+
 	const MaxDepth = 8; // workspaceContains rarely needs to reach deep
 	const DeadlineAt = Date.now() + 1_500;
 
 	const Walk = async (Current: string, Depth: number): Promise<boolean> => {
 		if (Depth > MaxDepth) return false;
+
 		if (Date.now() > DeadlineAt) return false;
+
 		let Entries: Array<{
 			name: string;
+
 			isDirectory(): boolean;
+
 			isSymbolicLink(): boolean;
 		}>;
+
 		try {
 			Entries = (await readdir(Current, {
 				withFileTypes: true,
 			})) as unknown as Array<{
 				name: string;
+
 				isDirectory(): boolean;
+
 				isSymbolicLink(): boolean;
 			}>;
 		} catch {
 			return false;
 		}
+
 		const SubDirs: string[] = [];
+
 		for (const Entry of Entries) {
 			const Name = Entry.name;
+
 			if (ExcludeSegments.has(Name)) continue;
+
 			if (
 				typeof Entry.isSymbolicLink === "function" &&
 				Entry.isSymbolicLink()
 			)
 				continue;
+
 			const Full = join(Current, Name);
+
 			const Rel = relative(FsPath, Full).split(sep).join("/");
+
 			if (Matcher.test(Rel)) return true;
+
 			if (Entry.isDirectory()) SubDirs.push(Full);
 		}
+
 		for (const Sub of SubDirs) {
 			if (await Walk(Sub, Depth + 1)) return true;
 		}
+
 		return false;
 	};
 
@@ -179,6 +224,7 @@ const FolderContainsGlob = async (
 const GetActivationEvents = (Extension: unknown): string[] => {
 	const Events = (Extension as { activationEvents?: unknown })
 		?.activationEvents;
+
 	return Array.isArray(Events)
 		? (Events.filter((E) => typeof E === "string") as string[])
 		: [];
@@ -201,6 +247,7 @@ const GetWorkspaceContainsGlobs = (Extension: unknown): string[] =>
  */
 export const ActivateWorkspaceContainsExtensions = async (
 	Context: HandlerContext,
+
 	AddedFolders: WorkspaceFolderWire[],
 ): Promise<void> => {
 	if (AddedFolders.length === 0) return;
@@ -212,22 +259,29 @@ export const ActivateWorkspaceContainsExtensions = async (
 		(Record): Record is { FsPath: string; Uri: string } =>
 			typeof Record.FsPath === "string" && Record.FsPath.length > 0,
 	);
+
 	if (FolderPaths.length === 0) return;
 
 	// Snapshot the registry so a concurrent $deltaExtensions doesn't race.
 	const Extensions: Array<{ Identifier: string; Globs: string[] }> = [];
+
 	for (const [Identifier, Extension] of Context.ExtensionRegistry.entries()) {
 		const Globs = GetWorkspaceContainsGlobs(Extension);
+
 		if (Globs.length === 0) continue;
+
 		if (Context.ActivatedExtensions.has(Identifier)) continue;
+
 		Extensions.push({ Identifier, Globs });
 	}
+
 	if (Extensions.length === 0) {
 		try {
 			process.stdout.write(
 				"[LandFix:Activator] No pending workspaceContains extensions; skipping scan.\n",
 			);
 		} catch {}
+
 		return;
 	}
 
@@ -237,9 +291,12 @@ export const ActivateWorkspaceContainsExtensions = async (
 		await import("../../Extension/Host/Handler.js");
 
 	let ActivationCount = 0;
+
 	for (const { Identifier, Globs } of Extensions) {
 		let MatchingGlob: string | undefined;
+
 		let MatchingFolder: string | undefined;
+
 		for (const Folder of FolderPaths) {
 			for (const Glob of Globs) {
 				// Strategy:
@@ -258,7 +315,9 @@ export const ActivateWorkspaceContainsExtensions = async (
 				//   - Mountain miss → fall back to the local walker so
 				//     the activator never blocks on an IPC failure.
 				const IsLiteral = !/[*?[\]]/.test(Glob);
+
 				let Hit = false;
+
 				if (IsLiteral) {
 					// eslint-disable-next-line no-await-in-loop
 					Hit = await FolderContainsGlob(Folder.FsPath, Glob);
@@ -266,8 +325,10 @@ export const ActivateWorkspaceContainsExtensions = async (
 					// eslint-disable-next-line no-await-in-loop
 					const Mountain = await FolderContainsGlobViaMountain(
 						Context,
+
 						Glob,
 					);
+
 					if (typeof Mountain === "boolean") {
 						Hit = Mountain;
 					} else {
@@ -275,14 +336,19 @@ export const ActivateWorkspaceContainsExtensions = async (
 						Hit = await FolderContainsGlob(Folder.FsPath, Glob);
 					}
 				}
+
 				if (Hit) {
 					MatchingGlob = Glob;
+
 					MatchingFolder = Folder.FsPath;
+
 					break;
 				}
 			}
+
 			if (MatchingGlob) break;
 		}
+
 		if (!MatchingGlob) continue;
 
 		try {
@@ -296,12 +362,14 @@ export const ActivateWorkspaceContainsExtensions = async (
 			await ExtensionHostHandler.HandleActivateByEvent(Context, {
 				activationEvent: `${WORKSPACE_CONTAINS_PREFIX}${MatchingGlob}`,
 			});
+
 			ActivationCount += 1;
 		} catch (CaughtError: unknown) {
 			const Message =
 				CaughtError instanceof globalThis.Error
 					? CaughtError.message
 					: String(CaughtError);
+
 			try {
 				process.stdout.write(
 					`[LandFix:Activator] activate failed for ${Identifier}: ${Message}\n`,

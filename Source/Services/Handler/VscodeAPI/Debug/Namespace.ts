@@ -15,6 +15,7 @@ const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 		Context.Emitter.on(EventName, Listener);
+
 		return {
 			dispose: () => {
 				Context.Emitter.off(EventName, Listener);
@@ -26,6 +27,7 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 	WrapDebugNamespace({
 		registerDebugAdapterDescriptorFactory: (
 			DebugType: string,
+
 			_Factory: unknown,
 		) => {
 			const Handle = NextProviderHandle();
@@ -45,6 +47,7 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 
 		registerDebugConfigurationProvider: (
 			DebugType: string,
+
 			_Provider: unknown,
 		) => {
 			const Handle = NextProviderHandle();
@@ -56,6 +59,7 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 				dispose: () => {
 					Context.SendToMountain(
 						"unregister_debug_configuration_provider",
+
 						{
 							handle: Handle,
 						},
@@ -73,22 +77,28 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 		// DebugService.
 		registerDebugVisualizationProvider: (
 			_Id: string,
+
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
+
 		registerDebugVisualizationTreeProvider: (
 			_Id: string,
+
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
 
 		startDebugging: async (
 			Folder: unknown,
+
 			NameOrConfig: unknown,
+
 			ParentSession?: unknown,
 		): Promise<boolean> => {
 			try {
 				// Routed by CreateEffectForRequest as Debug.Start.
 				const Response = await Context.MountainClient?.sendRequest(
 					"Debug.Start",
+
 					[Folder, NameOrConfig, ParentSession],
 				);
 				return Boolean((Response as { success?: boolean })?.success);
@@ -127,26 +137,36 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 
 		onDidStartDebugSession: EventSubscriber(
 			Context,
+
 			"debug.didStartSession",
 		),
+
 		onDidTerminateDebugSession: EventSubscriber(
 			Context,
+
 			"debug.didTerminateSession",
 		),
+
 		onDidChangeActiveDebugSession: EventSubscriber(
 			Context,
+
 			"debug.didChangeActiveSession",
 		),
+
 		onDidReceiveDebugSessionCustomEvent: EventSubscriber(
 			Context,
+
 			"debug.didReceiveCustomEvent",
 		),
+
 		onDidChangeBreakpoints: EventSubscriber(
 			Context,
+
 			"debug.didChangeBreakpoints",
 		),
 
 		activeDebugSession: undefined as unknown,
+
 		activeDebugConsole: {
 			append: (Value: string) => {
 				Context.SendToMountain("debug.consoleAppend", {
@@ -159,6 +179,7 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 				}).catch(() => {});
 			},
 		},
+
 		breakpoints: [] as unknown[],
 
 		// Stable 1.88+ surface: current selected debug stack item. Land's
@@ -166,8 +187,10 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 		// as undefined and the associated event never fires. Real subscribe
 		// path is still a proper disposable so the extension teardown works.
 		activeStackItem: undefined as unknown,
+
 		onDidChangeActiveStackItem: EventSubscriber(
 			Context,
+
 			"debug.didChangeActiveStackItem",
 		),
 	});

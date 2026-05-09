@@ -52,38 +52,55 @@ export interface IPlatformService {
 
 	// OS operations
 	detectPlatform(): Effect.Effect<OSModule.PlatformNumber, Error>;
+
 	getOSInfo(): Effect.Effect<OSModule.OSInfo, Error>;
+
 	isWindows(): Effect.Effect<boolean>;
+
 	isMacintosh(): Effect.Effect<boolean>;
+
 	isLinux(): Effect.Effect<boolean>;
+
 	normalizePath(path: string): Effect.Effect<string, Error>;
+
 	joinPath(...segments: string[]): Effect.Effect<string>;
 
 	// Environment operations
 	getEnvironmentVariable(name: string): Effect.Effect<Option.Option<string>>;
+
 	setEnvironmentVariable(
 		name: string,
+
 		value: string,
 	): Effect.Effect<void, Error>;
+
 	getEnvironmentInfo(): Effect.Effect<
 		EnvironmentModule.EnvironmentInfo,
 		Error
 	>;
+
 	getLanguage(): Effect.Effect<string>;
+
 	getLocale(): Effect.Effect<string>;
+
 	getHomeDirectory(): Effect.Effect<string>;
+
 	getTempDirectory(): Effect.Effect<string>;
 
 	// Process operations
 	spawnProcess(
 		command: string,
+
 		args: string[],
+
 		options: ProcessModule.ProcessSpawnOptions,
 	): Effect.Effect<ProcessModule.ProcessInfo | null, Error>;
 
 	executeCommand(
 		command: string,
+
 		args: string[],
+
 		options?: ProcessModule.ProcessSpawnOptions,
 	): Effect.Effect<
 		{ stdout: string; stderr: string; exitCode: number | null },
@@ -91,6 +108,7 @@ export interface IPlatformService {
 	>;
 
 	killProcess(pid: number): Effect.Effect<boolean>;
+
 	getProcess(
 		pid: number,
 	): Effect.Effect<Option.Option<ProcessModule.ProcessInfo>>;
@@ -99,9 +117,11 @@ export interface IPlatformService {
 	convertOSInfoToDTO(
 		osInfo: OSModule.OSInfo,
 	): Effect.Effect<TypeConverterModule.MountainPlatformInfoDTO>;
+
 	convertEnvironmentInfoToDTO(
 		envInfo: EnvironmentModule.EnvironmentInfo,
 	): Effect.Effect<TypeConverterModule.MountainEnvironmentInfoDTO>;
+
 	convertProcessInfoToDTO(
 		procInfo: ProcessModule.ProcessInfo,
 	): Effect.Effect<TypeConverterModule.MountainProcessInfoDTO>;
@@ -109,7 +129,9 @@ export interface IPlatformService {
 	// Health and monitoring
 	getHealthStatus(): Effect.Effect<{
 		status: "healthy" | "degraded" | "unhealthy";
+
 		uptime: number;
+
 		lastUpdate: number;
 	}>;
 
@@ -124,8 +146,11 @@ export class PlatformService implements IPlatformService {
 	readonly _serviceBrand: undefined;
 
 	private startTime: number = 0;
+
 	private initialized: boolean = false;
+
 	private cache: Map<string, { value: any; timestamp: number }> = new Map();
+
 	private readonly CACHE_TTL = 60000; // 60 seconds
 
 	constructor() {
@@ -175,6 +200,7 @@ export class PlatformService implements IPlatformService {
 	 */
 	private getCached<T>(key: string, compute: () => T): T {
 		const cached = this.cache.get(key);
+
 		const now = Date.now();
 
 		if (cached && now - cached.timestamp < this.CACHE_TTL) {
@@ -182,7 +208,9 @@ export class PlatformService implements IPlatformService {
 		}
 
 		const value = compute();
+
 		this.cache.set(key, { value, timestamp: now });
+
 		return value;
 	}
 
@@ -262,6 +290,7 @@ export class PlatformService implements IPlatformService {
 	 */
 	setEnvironmentVariable(
 		name: string,
+
 		value: string,
 	): Effect.Effect<void, Error> {
 		return Effect.sync(() => {
@@ -321,7 +350,9 @@ export class PlatformService implements IPlatformService {
 	 */
 	spawnProcess(
 		command: string,
+
 		args: string[],
+
 		options: ProcessModule.ProcessSpawnOptions,
 	): Effect.Effect<ProcessModule.ProcessInfo | null, Error> {
 		return Effect.tryPromise({
@@ -335,7 +366,9 @@ export class PlatformService implements IPlatformService {
 	 */
 	executeCommand(
 		command: string,
+
 		args: string[],
+
 		options?: ProcessModule.ProcessSpawnOptions,
 	): Effect.Effect<
 		{ stdout: string; stderr: string; exitCode: number | null },
@@ -402,14 +435,18 @@ export class PlatformService implements IPlatformService {
 	 */
 	getHealthStatus(): Effect.Effect<{
 		status: "healthy" | "degraded" | "unhealthy";
+
 		uptime: number;
+
 		lastUpdate: number;
 	}> {
 		return Effect.sync(() => {
 			const uptime = Date.now() - this.startTime;
 			const lastUpdate = Math.max(
 				this.getCacheTimestamp("osInfo"),
+
 				this.getCacheTimestamp("envInfo"),
+
 				this.getCacheTimestamp("platform"),
 			);
 
@@ -435,6 +472,7 @@ export class PlatformService implements IPlatformService {
 	 */
 	private getCacheTimestamp(key: string): number {
 		const cached = this.cache.get(key);
+
 		return cached ? cached.timestamp : 0;
 	}
 
@@ -467,6 +505,7 @@ export const PlatformServiceTag =
  */
 export const PlatformServiceLayer = Layer.sync(
 	PlatformServiceTag,
+
 	() => new PlatformService(),
 );
 
@@ -480,6 +519,7 @@ export const LivePlatformService = PlatformServiceLayer;
  */
 export const TestPlatformService = Layer.succeed(
 	PlatformServiceTag,
+
 	new PlatformService(),
 );
 
@@ -497,6 +537,7 @@ export function DetectPlatform(): Effect.Effect<
 > {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) => service.detectPlatform(),
 	);
 }
@@ -511,6 +552,7 @@ export function GetOSInfo(): Effect.Effect<
 > {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) => service.getOSInfo(),
 	);
 }
@@ -523,6 +565,7 @@ export function NormalizePath(
 ): Effect.Effect<string, never, IPlatformService> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) => service.normalizePath(path),
 	);
 }
@@ -535,6 +578,7 @@ export function GetEnvironmentVariable(
 ): Effect.Effect<Option.Option<string>, never, IPlatformService> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) => service.getEnvironmentVariable(name),
 	);
 }
@@ -544,10 +588,12 @@ export function GetEnvironmentVariable(
  */
 export function SetEnvironmentVariable(
 	name: string,
+
 	value: string,
 ): Effect.Effect<void, never, IPlatformService> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) =>
 			service.setEnvironmentVariable(name, value),
 	);
@@ -558,7 +604,9 @@ export function SetEnvironmentVariable(
  */
 export function ExecuteCommand(
 	command: string,
+
 	args?: string[],
+
 	options?: ProcessModule.ProcessSpawnOptions,
 ): Effect.Effect<
 	{ stdout: string; stderr: string; exitCode: number | null },
@@ -567,6 +615,7 @@ export function ExecuteCommand(
 > {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) =>
 			service.executeCommand(command, args || [], options),
 	);
@@ -577,11 +626,14 @@ export function ExecuteCommand(
  */
 export function SpawnProcess(
 	command: string,
+
 	args: string[],
+
 	options: ProcessModule.ProcessSpawnOptions,
 ): Effect.Effect<ProcessModule.ProcessInfo | null, never, IPlatformService> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) =>
 			service.spawnProcess(command, args, options),
 	);
@@ -593,7 +645,9 @@ export function SpawnProcess(
 export function GetHealthStatus(): Effect.Effect<
 	{
 		status: "healthy" | "degraded" | "unhealthy";
+
 		uptime: number;
+
 		lastUpdate: number;
 	},
 	never,
@@ -601,6 +655,7 @@ export function GetHealthStatus(): Effect.Effect<
 > {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
+
 		(service: IPlatformService) => service.getHealthStatus(),
 	);
 }
@@ -620,19 +675,33 @@ export function InitializePlatformService(): Effect.Effect<void, never> {
  */
 export const PlatformServiceModule = {
 	IPlatformService,
+
 	PlatformService,
+
 	PlatformServiceTag,
+
 	PlatformServiceLayer,
+
 	LivePlatformService,
+
 	TestPlatformService,
+
 	DetectPlatform,
+
 	GetOSInfo,
+
 	NormalizePath,
+
 	GetEnvironmentVariable,
+
 	SetEnvironmentVariable,
+
 	ExecuteCommand,
+
 	SpawnProcess,
+
 	GetHealthStatus,
+
 	InitializePlatformService,
 };
 
@@ -640,6 +709,9 @@ export const PlatformServiceModule = {
  * Re-export submodules for convenience
  */
 export { OSModule as OS };
+
 export { EnvironmentModule as Environment };
+
 export { ProcessModule as Process };
+
 export { TypeConverterModule as TypeConverter };

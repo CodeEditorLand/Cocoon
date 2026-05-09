@@ -57,13 +57,21 @@ export const OldStyleServices = {
 	validateDependencies: () =>
 		Layer.mergeAll(
 			MountainClientServiceLayer,
+
 			ConfigurationLayer,
+
 			ModuleInterceptorServiceLayer,
+
 			ExtensionHostLayer,
+
 			APIFactoryLayer,
+
 			TerminalServiceLayer,
+
 			SecurityServiceLive,
+
 			PerformanceMonitoringServiceLive,
+
 			ErrorHandlingServiceLive,
 		),
 
@@ -74,15 +82,21 @@ export const OldStyleServices = {
 		// Base Infrastructure
 		const Base = Layer.mergeAll(
 			MountainClientServiceLayer,
+
 			MountainGRPCClientLayer,
+
 			SecurityServiceLive,
+
 			PerformanceMonitoringServiceLive,
+
 			ErrorHandlingServiceLive,
 		);
 
 		// Core Capabilities (Depend on Base)
 		const Config = ConfigurationLayer.pipe(Layer.provide(Base));
+
 		const Terminal = TerminalServiceLayer.pipe(Layer.provide(Base));
+
 		const ModuleInt = ModuleInterceptorServiceLayer.pipe(
 			Layer.provide(Base),
 		);
@@ -90,16 +104,22 @@ export const OldStyleServices = {
 		// API Factory (Depends on Config, Terminal, ModuleInt)
 		const API = APIFactoryLayer.pipe(
 			Layer.provide(Base),
+
 			Layer.provide(Config),
+
 			Layer.provide(Terminal),
+
 			Layer.provide(ModuleInt),
 		);
 
 		// Extension Host (Depends on API, Config, ModuleInt)
 		const ExtHost = ExtensionHostLayer.pipe(
 			Layer.provide(Base),
+
 			Layer.provide(Config),
+
 			Layer.provide(API),
+
 			Layer.provide(ModuleInt),
 		);
 
@@ -136,33 +156,48 @@ export const EffectServices = {
 
 		// Layer 1: Services that depend only on Telemetry
 		const Health = HealthLive.pipe(Layer.provide(Telemetry));
+
 		const MountainClient = MountainClientLive.pipe(
 			Layer.provide(Telemetry),
 		);
+
 		const ModuleInterceptor = ModuleInterceptorLive.pipe(
 			Layer.provide(Telemetry),
 		);
+
 		const Extension = ExtensionLive.pipe(Layer.provide(Telemetry));
+
 		const RPCServer = RPCServerLive.pipe(Layer.provide(Telemetry));
 
 		// Layer 2: Bootstrap depends on all services
 		const Bootstrap = BootstrapLive.pipe(
 			Layer.provide(Telemetry),
+
 			Layer.provide(Health),
+
 			Layer.provide(MountainClient),
+
 			Layer.provide(ModuleInterceptor),
+
 			Layer.provide(Extension),
+
 			Layer.provide(RPCServer),
 		);
 
 		// Merge all layers into a single application layer
 		return Layer.mergeAll(
 			Telemetry,
+
 			Health,
+
 			MountainClient,
+
 			ModuleInterceptor,
+
 			Extension,
+
 			RPCServer,
+
 			Bootstrap,
 		);
 	},
@@ -171,11 +206,17 @@ export const EffectServices = {
 	 * Get individual service layers for fine-grained composition
 	 */
 	getTelemetry: () => TelemetryLive,
+
 	getHealth: () => HealthLive,
+
 	getMountainClient: () => MountainClientLive,
+
 	getModuleInterceptor: () => ModuleInterceptorLive,
+
 	getExtension: () => ExtensionLive,
+
 	getRPCServer: () => RPCServerLive,
+
 	getBootstrap: () => BootstrapLive,
 };
 

@@ -28,10 +28,15 @@ import { ToDTO as SaveDialogOptionToDTO } from "./TypeConverter/Dialog/SaveDialo
  */
 const CreateDialogEffect = <Option, DTO, Result>(
 	IPC: IPC,
+
 	IPCMethod: string,
+
 	Options: Option | undefined,
+
 	Token: CancellationToken | undefined,
+
 	OptionsToDTO: (Options: Option | undefined) => DTO,
+
 	ResultFromDTO: (Result: any) => Result,
 ): Effect.Effect<Result, DialogProblem> => {
 	return Effect.gen(function* () {
@@ -43,6 +48,7 @@ const CreateDialogEffect = <Option, DTO, Result>(
 			Effect.catchIf(isCancellationError, () =>
 				Effect.succeed(undefined),
 			),
+
 			Effect.mapError(
 				(cause) =>
 					new DialogProblem({
@@ -62,10 +68,13 @@ const CreateDialogEffect = <Option, DTO, Result>(
 export interface Dialog {
 	readonly ShowOpenDialog: (
 		options?: OpenDialogOptions,
+
 		token?: CancellationToken,
 	) => Effect.Effect<Uri[] | undefined, DialogProblem>;
+
 	readonly ShowSaveDialog: (
 		options?: SaveDialogOptions,
+
 		token?: CancellationToken,
 	) => Effect.Effect<Uri | undefined, DialogProblem>;
 }
@@ -76,6 +85,7 @@ export interface Dialog {
  */
 export class DialogService extends Effect.Service<DialogService>()(
 	"Service/Dialog",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -83,6 +93,7 @@ export class DialogService extends Effect.Service<DialogService>()(
 			return {
 				ShowOpenDialog: (
 					Options?: OpenDialogOptions,
+
 					Token?: CancellationToken,
 				) =>
 					CreateDialogEffect<
@@ -91,22 +102,33 @@ export class DialogService extends Effect.Service<DialogService>()(
 						Uri[] | undefined
 					>(
 						IPC,
+
 						"$showOpenDialog",
+
 						Options,
+
 						Token,
+
 						OpenDialogOptionToDTO,
+
 						DTOToURIArray,
 					),
 				ShowSaveDialog: (
 					Options?: SaveDialogOptions,
+
 					Token?: CancellationToken,
 				) =>
 					CreateDialogEffect<SaveDialogOptions, any, Uri | undefined>(
 						IPC,
+
 						"$showSaveDialog",
+
 						Options,
+
 						Token,
+
 						SaveDialogOptionToDTO,
+
 						DTOToURI,
 					),
 			};

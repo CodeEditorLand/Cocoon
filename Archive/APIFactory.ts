@@ -31,7 +31,9 @@ import { WorkspaceService, type Workspace } from "./Workspace.js";
 // --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(
 	ExtensionId: ExtensionIdentifier,
+
 	Logger: Logger,
+
 	ActualEvent: VSCode.Event<T>,
 ): VSCode.Event<T> => {
 	return (Listener, ThisArgument, Disposables) => {
@@ -42,18 +44,22 @@ const CreateSafeEvent = <T>(
 				Effect.runFork(
 					Logger.Error(
 						`[${ExtensionId.value}] FAILED to handle event:`,
+
 						error,
 					),
 				);
 			}
 		};
+
 		const Handle = ActualEvent(SafeListener, undefined, Disposables);
+
 		return Handle;
 	};
 };
 
 const CreateCommandNamespace = (
 	Command: Command,
+
 	_ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
 	// This function creates the public `vscode.commands` object. The public API
@@ -61,8 +67,10 @@ const CreateCommandNamespace = (
 	return {
 		registerCommand: (Id, Handler, ThisArgument): Disposable =>
 			Command.registerCommand(true, Id, Handler, ThisArgument),
+
 		registerTextEditorCommand: (Id, Handler, ThisArgument): Disposable =>
 			Command.registerTextEditorCommand(Id, Handler, ThisArgument),
+
 		executeCommand: Command.executeCommand as any, // FIX: Cast to 'any' to resolve complex Thenable/Promise signature mismatch.
 		getCommands: (FilterInternal?: boolean) =>
 			Command.GetCommands(FilterInternal),
@@ -71,11 +79,17 @@ const CreateCommandNamespace = (
 
 const CreateWindowNamespace = (
 	Window: Window,
+
 	StatusBar: StatusBar,
+
 	WebviewPanel: WebviewPanel,
+
 	TreeView: TreeView,
+
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
+
 	Extension: IExtensionDescription,
+
 	Workspace: Workspace,
 ): typeof VSCode.window => {
 	const RunEffectAndReturnPromise = <T, E>(TheEffect: Effect.Effect<T, E>) =>
@@ -85,33 +99,44 @@ const CreateWindowNamespace = (
 		get state() {
 			return Window.state;
 		},
+
 		get onDidChangeWindowState() {
 			return AsEvent(Window.onDidChangeWindowState);
 		},
+
 		get activeTextEditor() {
 			return Workspace.activeTextEditor;
 		},
+
 		get visibleTextEditors() {
 			return Workspace.visibleTextEditors;
 		},
+
 		get onDidChangeActiveTextEditor() {
 			return AsEvent(Workspace.onDidChangeActiveTextEditor);
 		},
+
 		get onDidChangeVisibleTextEditors() {
 			return AsEvent(Workspace.onDidChangeVisibleTextEditors);
 		},
+
 		showTextDocument: (
 			documentOrUri: any,
+
 			columnOrOptions?: any,
+
 			preserveFocus?: any,
 		) =>
 			RunEffectAndReturnPromise(
 				Window.ShowTextDocument(
 					documentOrUri,
+
 					columnOrOptions,
+
 					preserveFocus,
 				),
 			),
+
 		createStatusBarItem: ((...args: any[]) => {
 			let id: string | undefined,
 				alignment: VSCode.StatusBarAlignment | undefined,
@@ -124,14 +149,19 @@ const CreateWindowNamespace = (
 			return Effect.runSync(
 				StatusBar.CreateStatusBarItem(
 					Extension,
+
 					id,
+
 					alignment,
+
 					priority,
 				),
 			);
 		}) as any,
+
 		createTreeView: <T>(
 			ViewId: string,
+
 			Options: VSCode.TreeViewOptions<T>,
 		): VSCode.TreeView<T> =>
 			Effect.runSync(
@@ -139,49 +169,73 @@ const CreateWindowNamespace = (
 					TreeView.CreateTreeView(ViewId, Options, Extension),
 				),
 			),
+
 		createWebviewPanel: (
 			ViewType: string,
+
 			Title: string,
+
 			ShowOptions:
 				| VSCode.ViewColumn
 				| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
+
 			Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
 		): VSCode.WebviewPanel =>
 			Effect.runSync(
 				Effect.orDie(
 					WebviewPanel.CreateWebviewPanel(
 						Extension,
+
 						ViewType,
+
 						Title,
+
 						ShowOptions,
+
 						Options,
 					),
 				),
 			),
+
 		registerWebviewPanelSerializer: (
 			ViewType: string,
+
 			Serializer: VSCode.WebviewPanelSerializer,
 		): Disposable =>
 			Effect.runSync(
 				WebviewPanel.RegisterWebviewPanelSerializer(
 					Extension,
+
 					ViewType,
+
 					Serializer,
 				),
 			),
+
 		// Stubs
 		activeTerminal: undefined,
+
 		terminals: [],
+
 		activeColorTheme: { kind: 1 as VSCode.ColorThemeKind.Light },
+
 		onDidChangeActiveTerminal: new Emitter<any>().event,
+
 		onDidOpenTerminal: new Emitter<any>().event,
+
 		onDidCloseTerminal: new Emitter<any>().event,
+
 		onDidChangeTerminalState: new Emitter<any>().event,
+
 		onDidChangeTextEditorSelection: new Emitter<any>().event,
+
 		onDidChangeTextEditorVisibleRanges: new Emitter<any>().event,
+
 		onDidChangeTextEditorOptions: new Emitter<any>().event,
+
 		onDidChangeTextEditorViewColumn: new Emitter<any>().event,
 	};
+
 	return WindowNamespace as typeof VSCode.window;
 };
 
@@ -201,6 +255,7 @@ export interface APIFactory {
  */
 export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 	"Service/APIFactory",
+
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
@@ -239,7 +294,9 @@ export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 				const SafeEvent = <T>(SourceEvent: VSCode.Event<T>) =>
 					CreateSafeEvent(
 						ExtensionDescription.identifier,
+
 						Logger,
+
 						SourceEvent,
 					);
 
@@ -247,15 +304,21 @@ export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 					version: "1.85.0",
 					commands: CreateCommandNamespace(
 						Command,
+
 						ExtensionDescription,
 					),
 					window: CreateWindowNamespace(
 						Window,
+
 						StatusBar,
+
 						WebviewPanel as any, // TODO: Fix this
 						TreeView,
+
 						SafeEvent,
+
 						ExtensionDescription,
+
 						Workspace,
 					),
 					workspace: Workspace as unknown as typeof VSCode.workspace,
@@ -272,6 +335,7 @@ export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 				if (
 					ProposedAPI.IsEnabled(
 						ExtensionDescription.identifier,
+
 						"someProposedApi",
 					)
 				) {

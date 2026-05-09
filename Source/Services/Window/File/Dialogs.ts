@@ -28,7 +28,9 @@ export const ShowOpenDialog = (
 	MountainClient: {
 		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
 	},
+
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+
 	Options?: VSCode.OpenDialogOptions,
 ): Effect.Effect<VSCode.Uri[] | undefined, Error> =>
 	Effect.gen(function* () {
@@ -42,6 +44,7 @@ export const ShowOpenDialog = (
 			try: async () => {
 				const Response = await MountainClient.sendRequest(
 					"UserInterface.ShowOpenDialog",
+
 					[OptionsDTO],
 				);
 
@@ -79,7 +82,9 @@ export const ShowSaveDialog = (
 	MountainClient: {
 		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
 	},
+
 	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+
 	Options?: VSCode.SaveDialogOptions,
 ): Effect.Effect<VSCode.Uri | undefined, Error> =>
 	Effect.gen(function* () {
@@ -93,6 +98,7 @@ export const ShowSaveDialog = (
 			try: async () => {
 				const Response = await MountainClient.sendRequest(
 					"UserInterface.ShowSaveDialog",
+
 					[OptionsDTO],
 				);
 

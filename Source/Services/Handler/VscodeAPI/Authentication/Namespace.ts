@@ -15,6 +15,7 @@ const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 		Context.Emitter.on(EventName, Listener);
+
 		return {
 			dispose: () => {
 				Context.Emitter.off(EventName, Listener);
@@ -26,8 +27,11 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 	WrapAuthenticationNamespace({
 		registerAuthenticationProvider: (
 			ProviderId: string,
+
 			Label: string,
+
 			_Provider: unknown,
+
 			Options?: { supportsMultipleAccounts?: boolean },
 		) => {
 			const Handle = NextProviderHandle();
@@ -43,6 +47,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 				dispose: () => {
 					Context.SendToMountain(
 						"unregister_authentication_provider",
+
 						{
 							handle: Handle,
 						},
@@ -53,7 +58,9 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 		getSession: async (
 			ProviderId: string,
+
 			Scopes: readonly string[],
+
 			Options?: {
 				createIfNone?: boolean;
 				clearSessionPreference?: boolean;
@@ -65,6 +72,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 				// Authentication.GetSession - not yet routed; catch returns undefined.
 				return await Context.MountainClient?.sendRequest(
 					"Authentication.GetSession",
+
 					[ProviderId, Scopes, Options ?? {}],
 				);
 			} catch {
@@ -77,6 +85,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 				// Authentication.GetAccounts - not yet routed; catch returns [].
 				const Result = await Context.MountainClient?.sendRequest(
 					"Authentication.GetAccounts",
+
 					[ProviderId],
 				);
 				return Array.isArray(Result) ? Result : [];

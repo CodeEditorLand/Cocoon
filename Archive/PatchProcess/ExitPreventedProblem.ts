@@ -5,6 +5,7 @@
 
 export class ExitPreventedProblem extends Error {
 	readonly _tag = "ExitPreventedProblem";
+
 	constructor(Message?: string) {
 		super(Message ?? "Process exit was prevented");
 	}

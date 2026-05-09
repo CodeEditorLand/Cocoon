@@ -21,24 +21,30 @@ const ParseConfiguration = (
 	Configuration: string[] | EnabledAPIProposals | undefined,
 ) => {
 	const GlobalAPIs = new Set<string>();
+
 	const ExtensionAPIs = new Map<string, Set<string>>();
+
 	if (Array.isArray(Configuration)) {
 		for (const Proposal of Configuration) GlobalAPIs.add(Proposal);
 	} else if (typeof Configuration === "object" && Configuration !== null) {
 		for (const Key in Configuration) {
 			const Proposals = (Configuration as any)[Key];
+
 			if (Array.isArray(Proposals)) {
 				if (Key === "*") {
 					for (const Proposal of Proposals) GlobalAPIs.add(Proposal);
 				} else {
 					const ExistingSet =
 						ExtensionAPIs.get(Key) ?? new Set<string>();
+
 					for (const Proposal of Proposals) ExistingSet.add(Proposal);
+
 					ExtensionAPIs.set(Key, ExistingSet);
 				}
 			}
 		}
 	}
+
 	return { GlobalAPIs, ExtensionAPIs };
 };
 
@@ -49,6 +55,7 @@ const ParseConfiguration = (
 export interface ProposedAPI {
 	readonly IsEnabled: (
 		ExtensionId: ExtensionIdentifier,
+
 		ProposalName: string,
 	) => boolean;
 }
@@ -61,6 +68,7 @@ export interface ProposedAPI {
  */
 export class ProposedAPIService extends Effect.Service<ProposedAPIService>()(
 	"Service/ProposedAPI",
+
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
@@ -93,11 +101,13 @@ export class ProposedAPIService extends Effect.Service<ProposedAPIService>()(
 
 			const IsEnabled = (
 				ExtensionId: ExtensionIdentifier,
+
 				ProposalName: string,
 			): boolean => {
 				if (AllGlobalAPIs.has(ProposalName)) return true;
 				const ExtensionProposals = HashMap.get(
 					ReadonlyExtensionAPIs,
+
 					ExtensionId.value,
 				);
 				if (ExtensionProposals._tag === "Some") {

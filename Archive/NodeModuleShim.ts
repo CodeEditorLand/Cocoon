@@ -32,6 +32,7 @@ export interface NodeModuleShim {
 	 */
 	readonly Load: (
 		Request: string,
+
 		ParentUri?: Uri,
 	) => Exit.Exit<any, ModuleBlockedProblem | ModuleNotShimmedProblem>;
 }
@@ -42,6 +43,7 @@ export interface NodeModuleShim {
  */
 export class NodeModuleShimService extends Effect.Service<NodeModuleShimService>()(
 	"Service/NodeModuleShim",
+
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
@@ -53,31 +55,50 @@ export class NodeModuleShimService extends Effect.Service<NodeModuleShimService>
 
 			const BlockedModules = new Set<string>([
 				"fs",
+
 				"node:fs",
+
 				"fs/promises",
+
 				"node:fs/promises",
+
 				"path",
+
 				"node:path",
+
 				"child_process",
+
 				"node:child_process",
+
 				"worker_threads",
+
 				"node:worker_threads",
+
 				"cluster",
+
 				"node:cluster",
+
 				"vm",
+
 				"node:vm",
 			]);
 			const Shims = new Map<string, any>([
 				["os", OsShim],
+
 				["node:os", OsShim],
+
 				["crypto", CryptoShim],
+
 				["node:crypto", CryptoShim],
+
 				["process", ProcessShim],
+
 				["node:process", ProcessShim],
 			]);
 
 			const Load = (
 				Request: string,
+
 				ParentUri?: Uri,
 			): Exit.Exit<
 				any,

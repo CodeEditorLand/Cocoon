@@ -100,17 +100,28 @@ export interface MountainConfig {
  */
 export const defaultMountainConfig: MountainConfig = {
 	host: "localhost",
+
 	port: 50051,
+
 	connectionTimeout: 30000,
+
 	maxRetries: 3,
+
 	retryDelay: 1000,
+
 	keepAlive: true,
+
 	keepAliveInterval: 10000,
+
 	maxMessageSize: 104857600, // 100MB
 	useTls: false,
+
 	debug: false,
+
 	autoReconnect: true,
+
 	autoReconnectDelay: 5000,
+
 	maxAutoReconnectAttempts: 5,
 };
 
@@ -127,6 +138,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_PORT) {
 		const port = parseInt(process.env.MOUNTAIN_PORT, 10);
+
 		if (!isNaN(port) && port > 0 && port <= 65535) {
 			config.port = port;
 		}
@@ -134,6 +146,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_CONNECTION_TIMEOUT) {
 		const timeout = parseInt(process.env.MOUNTAIN_CONNECTION_TIMEOUT, 10);
+
 		if (!isNaN(timeout) && timeout > 0) {
 			config.connectionTimeout = timeout;
 		}
@@ -141,6 +154,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_MAX_RETRIES) {
 		const retries = parseInt(process.env.MOUNTAIN_MAX_RETRIES, 10);
+
 		if (!isNaN(retries) && retries > 0) {
 			config.maxRetries = retries;
 		}
@@ -148,6 +162,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_RETRY_DELAY) {
 		const delay = parseInt(process.env.MOUNTAIN_RETRY_DELAY, 10);
+
 		if (!isNaN(delay) && delay > 0) {
 			config.retryDelay = delay;
 		}
@@ -160,6 +175,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_KEEP_ALIVE_INTERVAL) {
 		const interval = parseInt(process.env.MOUNTAIN_KEEP_ALIVE_INTERVAL, 10);
+
 		if (!isNaN(interval) && interval > 0) {
 			config.keepAliveInterval = interval;
 		}
@@ -167,6 +183,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_MAX_MESSAGE_SIZE) {
 		const size = parseInt(process.env.MOUNTAIN_MAX_MESSAGE_SIZE, 10);
+
 		if (!isNaN(size) && size > 0) {
 			config.maxMessageSize = size;
 		}
@@ -191,6 +208,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 
 	if (process.env.MOUNTAIN_AUTO_RECONNECT_DELAY) {
 		const delay = parseInt(process.env.MOUNTAIN_AUTO_RECONNECT_DELAY, 10);
+
 		if (!isNaN(delay) && delay > 0) {
 			config.autoReconnectDelay = delay;
 		}
@@ -199,8 +217,10 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	if (process.env.MOUNTAIN_MAX_AUTO_RECONNECT_ATTEMPTS) {
 		const attempts = parseInt(
 			process.env.MOUNTAIN_MAX_AUTO_RECONNECT_ATTEMPTS,
+
 			10,
 		);
+
 		if (!isNaN(attempts) && attempts > 0) {
 			config.maxAutoReconnectAttempts = attempts;
 		}
@@ -267,6 +287,7 @@ export function createMountainConfig(
 	const config = { ...defaultMountainConfig, ...overrides };
 
 	const errors = validateMountainConfig(config);
+
 	if (errors.length > 0) {
 		throw new Error(`Invalid Mountain configuration: ${errors.join(", ")}`);
 	}
@@ -280,17 +301,25 @@ export function createMountainConfig(
 export function getMountainConfigSummary(config: MountainConfig): string {
 	return `Mountain Configuration:
   Host: ${config.host}
+
   Port: ${config.port}
+
   Connection Timeout: ${config.connectionTimeout}ms
   Max Retries: ${config.maxRetries}
+
   Retry Delay: ${config.retryDelay}ms
   Keep Alive: ${config.keepAlive}
+
   Keep Alive Interval: ${config.keepAliveInterval}ms
   Max Message Size: ${config.maxMessageSize} bytes
   Use TLS: ${config.useTls}
+
   TLS Cert Path: ${config.tlsCertPath || "Not specified"}
+
   Debug: ${config.debug}
+
   Auto Reconnect: ${config.autoReconnect}
+
   Auto Reconnect Delay: ${config.autoReconnectDelay}ms
   Max Auto Reconnect Attempts: ${config.maxAutoReconnectAttempts}`;
 }

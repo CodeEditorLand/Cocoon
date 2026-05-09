@@ -16,16 +16,25 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 export default (
 	Context: HandlerContext,
+
 	Handle: string | number,
+
 	ViewType: string,
+
 	Title: string,
+
 	ShowOptions: unknown,
+
 	Options: Record<string, unknown> | undefined,
+
 	ToWebviewUri: (Input: unknown) => unknown,
+
 	SharedCspSource: string,
 ): any => {
 	let CurrentHtml = "";
+
 	let CurrentOptions = (Options ?? {}) as Record<string, unknown>;
+
 	// Named-key payload bypasses Mountain's positional-to-named
 	// canonicalisation entirely - SkyBridge's `sky://webview/create`
 	// listener can read `Payload.viewType`, `Payload.title`,
@@ -41,24 +50,32 @@ export default (
 
 	const Panel = {
 		viewType: ViewType,
+
 		title: Title,
+
 		iconPath: undefined,
+
 		webview: {
 			get options() {
 				return CurrentOptions;
 			},
+
 			set options(Value: Record<string, unknown>) {
 				CurrentOptions = Value;
+
 				Context.MountainClient?.sendRequest("webview.setOptions", {
 					handle: Handle,
 					options: Value,
 				}).catch(() => {});
 			},
+
 			get html() {
 				return CurrentHtml;
 			},
+
 			set html(Value: string) {
 				CurrentHtml = Value;
+
 				try {
 					if (process.env["Trace"]) {
 						process.stdout.write(
@@ -68,6 +85,7 @@ export default (
 				} catch {
 					/* stdout may be unavailable mid-teardown */
 				}
+
 				Context.MountainClient?.sendRequest("webview.setHtml", {
 					handle: Handle,
 					html: Value,
@@ -92,22 +110,30 @@ export default (
 					},
 				);
 			},
+
 			cspSource: SharedCspSource,
+
 			asWebviewUri: ToWebviewUri,
+
 			postMessage: async (Message: unknown) => {
 				try {
 					await Context.MountainClient?.sendRequest(
 						"webview.postMessage",
+
 						{ handle: Handle, message: Message },
 					);
+
 					return true;
 				} catch {
 					return false;
 				}
 			},
+
 			onDidReceiveMessage: (Listener: (Message: unknown) => any) => {
 				const Event = `webview.message:${Handle}`;
+
 				Context.Emitter.on(Event, Listener);
+
 				return {
 					dispose: () => {
 						Context.Emitter.removeListener(Event, Listener);
@@ -115,10 +141,15 @@ export default (
 				};
 			},
 		},
+
 		options: CurrentOptions,
+
 		viewColumn: 1,
+
 		active: true,
+
 		visible: true,
+
 		reveal: (Column?: number, PreserveFocus?: boolean) => {
 			Context.MountainClient?.sendRequest("webview.reveal", {
 				handle: Handle,
@@ -126,24 +157,32 @@ export default (
 				preserveFocus: PreserveFocus,
 			}).catch(() => {});
 		},
+
 		dispose: () => {
 			Context.Emitter.removeAllListeners(`webview.message:${Handle}`);
+
 			Context.MountainClient?.sendRequest("webview.dispose", {
 				handle: Handle,
 			}).catch(() => {});
 		},
+
 		onDidDispose: (Listener: () => any) => {
 			const Event = `webview.dispose:${Handle}`;
+
 			Context.Emitter.on(Event, Listener);
+
 			return {
 				dispose: () => {
 					Context.Emitter.removeListener(Event, Listener);
 				},
 			};
 		},
+
 		onDidChangeViewState: (Listener: (State: unknown) => any) => {
 			const Event = `webview.viewState:${Handle}`;
+
 			Context.Emitter.on(Event, Listener);
+
 			return {
 				dispose: () => {
 					Context.Emitter.removeListener(Event, Listener);
@@ -151,5 +190,6 @@ export default (
 			};
 		},
 	};
+
 	return Panel;
 };

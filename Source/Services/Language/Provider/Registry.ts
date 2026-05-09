@@ -46,11 +46,13 @@ export function Unregister(Handle: number): void {
  */
 export function Get(Handle: number): ProviderObject | undefined {
 	const Provider = Callbacks.get(Handle);
+
 	if (process.env.Trace) {
 		console.warn(
 			`[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`,
 		);
 	}
+
 	return Provider;
 }
 
@@ -66,7 +68,9 @@ let NextHandle = 10000;
  */
 export function RegisterAutoHandle(Provider: ProviderObject): number {
 	const Handle = NextHandle++;
+
 	Callbacks.set(Handle, Provider);
+
 	return Handle;
 }
 
@@ -115,7 +119,9 @@ export function HasCommand(CommandId: string): boolean {
  */
 export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
 	const Handler = Commands.get(CommandId);
+
 	if (Handler) return Handler(...Args);
+
 	return undefined;
 }
 

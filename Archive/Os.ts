@@ -18,43 +18,64 @@ import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench
  */
 export const CreateOsShim = (InitData: IExtensionHostInitData) => {
 	const IsWindows = process.platform === "win32";
+
 	const UserHome = InitData.environment.globalStorageHome;
 
 	const OsShim = {
 		EOL: IsWindows ? "\r\n" : "\n",
+
 		arch: () => process.arch,
+
 		platform: () => process.platform,
+
 		constants: NodeOs.constants,
+
 		cpus: () => NodeOs.cpus(),
+
 		freemem: () => NodeOs.freemem(),
+
 		homedir: () =>
 			UserHome.fsPath ||
 			process.env["HOME"] ||
 			process.env["USERPROFILE"] ||
 			"",
+
 		hostname: () => InitData.environment.appHost || "localhost",
+
 		loadavg: () => NodeOs.loadavg(),
+
 		networkInterfaces: () => NodeOs.networkInterfaces(),
+
 		release: () => NodeOs.release(),
+
 		tmpdir: () => NodeOs.tmpdir(),
+
 		totalmem: () => NodeOs.totalmem(),
+
 		type: () =>
 			IsWindows
 				? "Windows_NT"
 				: process.platform === "darwin"
 					? "Darwin"
 					: "Linux",
+
 		userInfo: (_options?: { encoding: string }) => {
 			const Username =
 				UserHome.fsPath.split(/\/|\\/).pop() || "cocoon-user";
+
 			return {
 				uid: -1,
+
 				gid: -1,
+
 				username: Username,
+
 				homedir: UserHome.fsPath,
+
 				shell: null,
 			};
 		},
+
 		uptime: () => NodeOs.uptime(),
 	};
 

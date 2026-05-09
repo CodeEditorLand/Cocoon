@@ -141,6 +141,7 @@ describe("SynchronizationService", () => {
 
 			expect(mockInvoke).toHaveBeenCalledWith(
 				"mountain_apply_document_change",
+
 				{
 					change: expect.objectContaining({
 						changeId: "test-change-2",

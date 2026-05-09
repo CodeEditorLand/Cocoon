@@ -40,23 +40,32 @@ import { WindowService } from "./Window.js";
 export interface Command {
 	readonly registerCommand: (
 		global: boolean,
+
 		id: string,
+
 		command: <T>(...args: any[]) => T | Promise<T>,
+
 		thisArg?: any,
 	) => IDisposable;
+
 	readonly registerTextEditorCommand: (
 		id: string,
+
 		callback: (
 			textEditor: VSCode.TextEditor,
+
 			edit: VSCode.TextEditorEdit,
 			...args: any[]
 		) => void,
+
 		thisArg?: any,
 	) => IDisposable;
+
 	readonly executeCommand: <T>(
 		id: string,
 		...args: any[]
 	) => Promise<T | undefined>;
+
 	readonly GetCommands: (FilterInternal?: boolean) => Promise<string[]>;
 }
 
@@ -67,8 +76,11 @@ export interface Command {
  */
 export interface InternalCommand {
 	readonly Id: string;
+
 	readonly Callback: (...args: any[]) => any;
+
 	readonly ThisArg: any;
+
 	readonly Extension: IExtensionDescription | undefined;
 }
 
@@ -80,6 +92,7 @@ export interface InternalCommand {
  */
 export class CommandService extends Effect.Service<CommandService>()(
 	"Service/Command",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -101,6 +114,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			 */
 			const ExecuteLocalCommand = (
 				Command: InternalCommand,
+
 				Arguments: any[],
 			) =>
 				Effect.tryPromise({
@@ -117,21 +131,26 @@ export class CommandService extends Effect.Service<CommandService>()(
 			// Register the RPC handler for commands invoked from the main thread.
 			IPC.RegisterInvokeHandler(
 				"$executeContributedCommand",
+
 				([Id, ...Arguments]) =>
 					Effect.runPromise(
 						Ref.get(CommandsReference).pipe(
 							Effect.flatMap((Map) =>
 								Effect.fromNullable(Map.get(Id)),
 							),
+
 							Effect.flatMap((Command) =>
 								ExecuteLocalCommand(
 									Command as InternalCommand,
+
 									Arguments,
 								),
 							),
+
 							Effect.catchAll((Error) =>
 								Logger.Error(
 									`Failed to execute local command '${Id}'`,
+
 									Error,
 								).pipe(Effect.as(undefined)),
 							),
@@ -142,12 +161,16 @@ export class CommandService extends Effect.Service<CommandService>()(
 			const ServiceImplementation: Command = {
 				registerCommand: (
 					Global: boolean,
+
 					Id: string,
+
 					Callback: <T>(...args: any[]) => T | Promise<T>,
+
 					ThisArg?: any,
 				): IDisposable => {
 					const CommandRegistration = Ref.update(
 						CommandsReference,
+
 						(Map) =>
 							Map.set(Id, {
 								Id,
@@ -171,6 +194,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 						dispose: () => {
 							const Cleanup = Ref.update(
 								CommandsReference,
+
 								(Map) => (Map.delete(Id), Map),
 							).pipe(
 								Effect.tap(() => {
@@ -186,11 +210,14 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 				registerTextEditorCommand: (
 					Id: string,
+
 					Callback: (
 						textEditor: VSCode.TextEditor,
+
 						edit: VSCode.TextEditorEdit,
 						...args: any[]
 					) => void,
+
 					ThisArg?: any,
 				): IDisposable => {
 					const AdaptedCallback = (
@@ -208,6 +235,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 						return ActiveEditor.edit((editBuilder) => {
 							Callback.apply(ThisArg, [
 								ActiveEditor,
+
 								editBuilder,
 								...args,
 							]);
@@ -215,7 +243,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 					};
 					return ServiceImplementation.registerCommand(
 						true,
+
 						Id,
+
 						AdaptedCallback,
 					);
 				},
@@ -232,13 +262,16 @@ export class CommandService extends Effect.Service<CommandService>()(
 						return Effect.runPromise(
 							ExecuteLocalCommand(
 								AllCommands.get(Id)!,
+
 								Arguments,
 							),
 						) as Promise<T | undefined>;
 					}
 					return MainThreadProxy.$executeCommand(
 						Id,
+
 						Arguments,
+
 						true,
 					) as Promise<T | undefined>;
 				},

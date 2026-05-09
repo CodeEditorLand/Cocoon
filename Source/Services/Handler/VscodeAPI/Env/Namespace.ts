@@ -26,28 +26,39 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		if (typeof Raw !== "string" || Raw.length === 0) {
 			LandFixLog.Warn(
 				"EnvNs",
+
 				"appRoot empty or non-string, returning ''",
 			);
+
 			return "";
 		}
+
 		if (!Raw.startsWith("file:")) {
 			LandFixLog.Info("EnvNs", `appRoot already plain path: ${Raw}`);
+
 			return Raw;
 		}
+
 		try {
 			const Normalised = decodeURIComponent(
 				new URL(Raw).pathname,
 			).replace(/\/$/, "");
+
 			LandFixLog.Info(
 				"EnvNs",
+
 				`appRoot normalised file-URL ${Raw} → ${Normalised}`,
 			);
+
 			return Normalised;
 		} catch (Error: unknown) {
 			const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+
 			LandFixLog.Warn(
 				"EnvNs",
+
 				`appRoot URL parse failed; fallback ${Raw} → ${Fallback}`,
+
 				{
 					error:
 						Error instanceof globalThis.Error
@@ -55,17 +66,20 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 							: String(Error),
 				},
 			);
+
 			return Fallback;
 		}
 	};
 
 	const Call = async <T>(
 		Method: string,
+
 		Parameters: unknown,
 	): Promise<T | undefined> => {
 		try {
 			return await (Context.MountainClient?.sendRequest(
 				Method,
+
 				Parameters,
 			) as Promise<T> | undefined);
 		} catch {
@@ -75,17 +89,23 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 
 	const Concrete = {
 		appName: (Env["appName"] as string) ?? "CodeEditorLand",
+
 		appRoot: NormalizeAppRoot(Env["appRoot"]),
+
 		appHost: (Env["appHost"] as string) ?? "desktop",
+
 		uiKind: 1, // vscode.UIKind.Desktop
 		language: (Env["language"] as string) ?? "en",
+
 		machineId:
 			(Context.ExtensionHostInitData?.telemetry?.machineId as string) ??
 			(Env["machineId"] as string) ??
 			"land",
+
 		sessionId:
 			(Env["sessionId"] as string) ??
 			`land-session-${Date.now().toString(36)}`,
+
 		// VS Code build identity strings. `vscode.tunnel-forwarding` and
 		// other extensions read `appCommit?.substring(0, 7)` to surface a
 		// short SHA in their telemetry / status bar. Returning the
@@ -94,18 +114,28 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		// string so optional-chained reads short-circuit cleanly; populate
 		// from build env when a real commit hash is available.
 		appCommit: (Env["appCommit"] as string) ?? "",
+
 		appQuality: (Env["appQuality"] as string) ?? "stable",
+
 		isNewAppInstall: false,
+
 		isAppPortable: false,
+
 		isTelemetryEnabled: false,
+
 		onDidChangeTelemetryEnabled: () => ({ dispose: () => {} }),
+
 		// Land's bundled shell is fixed for the session; there's no UI to
 		// switch it, so this event can never fire. Stub preserves the
 		// disposable contract extensions rely on at activation time.
 		onDidChangeShell: () => ({ dispose: () => {} }),
+
 		uriScheme: (Env["uriScheme"] as string) ?? "vscode",
+
 		shell: (Env["shell"] as string) ?? process.env["SHELL"] ?? "",
+
 		remoteName: undefined,
+
 		clipboard: {
 			// Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
 			// routed). Fallback: native OS clipboard CLI - pbcopy/pbpaste on
@@ -114,9 +144,12 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			// on an unavailable clipboard subsystem.
 			readText: async (): Promise<string> => {
 				const FromMountain = await Call<string>("Clipboard.Read", []);
+
 				if (typeof FromMountain === "string") return FromMountain;
+
 				try {
 					const { spawn } = await import("node:child_process");
+
 					const Candidates =
 						process.platform === "darwin"
 							? [["pbpaste", []]]
@@ -124,21 +157,28 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								? [
 										[
 											"powershell.exe",
+
 											[
 												"-NoProfile",
+
 												"-Command",
+
 												"Get-Clipboard -Raw",
 											],
 										],
 									]
 								: [
 										["wl-paste", ["-n"]],
+
 										[
 											"xclip",
+
 											["-selection", "clipboard", "-o"],
 										],
+
 										["xsel", ["--clipboard", "--output"]],
 									];
+
 					for (const [Cmd, Args] of Candidates as Array<
 						[string, string[]]
 					>) {
@@ -150,6 +190,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								let Out = "";
 								Child.stdout.on(
 									"data",
+
 									(Chunk: Buffer) =>
 										(Out += Chunk.toString("utf8")),
 								);
@@ -159,17 +200,22 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								);
 							},
 						);
+
 						if (Text !== undefined) return Text;
 					}
 				} catch {}
+
 				return "";
 			},
+
 			writeText: async (Value: string): Promise<void> => {
 				await Call<void>("Clipboard.Write", [Value]);
+
 				// Mirror to native clipboard as well so the UI and terminal
 				// stay in sync even when only one route is wired up.
 				try {
 					const { spawn } = await import("node:child_process");
+
 					const Candidates =
 						process.platform === "darwin"
 							? [["pbcopy", []]]
@@ -177,9 +223,12 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								? [["clip.exe", []]]
 								: [
 										["wl-copy", []],
+
 										["xclip", ["-selection", "clipboard"]],
+
 										["xsel", ["--clipboard", "--input"]],
 									];
+
 					for (const [Cmd, Args] of Candidates as Array<
 						[string, string[]]
 					>) {
@@ -195,29 +244,37 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								Resolve(false);
 							}
 						});
+
 						if (Ok) return;
 					}
 				} catch {}
 			},
 		},
+
 		openExternal: async (Target: unknown): Promise<boolean> => {
 			const Url = typeof Target === "string" ? Target : String(Target);
+
 			const OkFromMountain = await Call<boolean>(
 				"NativeHost.OpenExternal",
+
 				[Url],
 			);
+
 			if (OkFromMountain === true) return true;
+
 			// Fallback: platform-native URL opener. `open` on macOS,
 			// `xdg-open` on Linux, `cmd /c start` on Windows. Returns true iff
 			// the child process exits successfully within 2 s.
 			try {
 				const { spawn } = await import("node:child_process");
+
 				const Command: [string, string[]] =
 					process.platform === "darwin"
 						? ["open", [Url]]
 						: process.platform === "win32"
 							? ["cmd.exe", ["/c", "start", "", Url]]
 							: ["xdg-open", [Url]];
+
 				const Ok = await new Promise<boolean>((Resolve) => {
 					const Child = spawn(Command[0], Command[1], {
 						stdio: "ignore",
@@ -239,12 +296,15 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 					});
 					Child.unref();
 				});
+
 				return Ok;
 			} catch {
 				return false;
 			}
 		},
+
 		asExternalUri: async (Target: unknown) => Target,
+
 		createTelemetryLogger: (_Sender: unknown, _Options?: unknown) => ({
 			isUsageEnabled: false,
 			isErrorsEnabled: false,
@@ -253,9 +313,12 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			logError: (_EventNameOrError: unknown, _Data?: unknown) => {},
 			dispose: () => {},
 		}),
+
 		logLevel: 2,
+
 		onDidChangeLogLevel: () => ({ dispose: () => {} }),
 	};
+
 	return WrapEnvNamespace(Concrete);
 };
 

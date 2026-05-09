@@ -17,8 +17,10 @@ export class ModuleNotShimmedProblem extends Data.TaggedError(
 	readonly ModuleName: string;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: { readonly ModuleName: string }) {
 		super(Properties);
+
 		this.message = `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
 	}
 }

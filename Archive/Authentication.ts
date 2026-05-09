@@ -20,32 +20,48 @@ import { CreateEventStream } from "./Utility/EventStream.js";
 export interface Authentication {
 	readonly getSession: (
 		providerId: string,
+
 		scopes: readonly string[],
+
 		options?: AuthenticationGetSessionOptions,
 	) => Promise<AuthenticationSession | undefined>;
+
 	readonly getAccounts: (
 		providerId: string,
 	) => Promise<readonly { label: string; id: string }[]>;
+
 	readonly onDidChangeSessions: Event<AuthenticationSessionsChangeEvent>;
+
 	readonly registerAuthenticationProvider: (
 		id: string,
+
 		label: string,
+
 		provider: AuthenticationProvider,
+
 		options?: AuthenticationProviderOptions,
 	) => Disposable;
+
 	readonly getProviderInfos: () => Promise<
 		AuthenticationProviderInformation[]
 	>;
+
 	readonly getSessions: (
 		providerId: string,
+
 		scopes: readonly string[],
+
 		options: AuthenticationGetSessionOptions,
 	) => Promise<readonly AuthenticationSession[]>;
+
 	readonly login: (
 		providerId: string,
+
 		scopes: readonly string[],
+
 		options: AuthenticationProviderSessionOptions,
 	) => Promise<AuthenticationSession>;
+
 	readonly logout: (providerId: string, sessionId: string) => Promise<void>;
 }
 
@@ -55,6 +71,7 @@ export interface Authentication {
  */
 export class AuthenticationService extends Effect.Service<AuthenticationService>()(
 	"Service/Authentication",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -81,9 +98,11 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 							label: DTO.label,
 						})),
 					),
+
 					Effect.tap((Infos) =>
 						Ref.set(ProviderInfosReference, Infos),
 					),
+
 					Effect.mapError((Cause) => new Error(String(Cause))),
 				);
 
@@ -96,11 +115,14 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 			 */
 			const GetSession = (
 				ProviderId: string,
+
 				Scopes: readonly string[],
+
 				Options?: AuthenticationGetSessionOptions,
 			): Effect.Effect<AuthenticationSession | undefined, Error> =>
 				IPC.SendRequest<AuthenticationSession | undefined>(
 					"$getSession",
+
 					[ProviderId, Scopes, Options ?? {}],
 				).pipe(Effect.mapError((Cause) => new Error(String(Cause))));
 
@@ -113,6 +135,7 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 			): Effect.Effect<readonly { label: string; id: string }[], Error> =>
 				IPC.SendRequest<readonly { label: string; id: string }[]>(
 					"$getAccounts",
+
 					[ProviderId],
 				).pipe(Effect.mapError((Cause) => new Error(String(Cause))));
 
@@ -127,8 +150,11 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 
 				registerAuthenticationProvider: (
 					_Id: string,
+
 					_Label: string,
+
 					_Provider: AuthenticationProvider,
+
 					_Options?: AuthenticationProviderOptions,
 				): Disposable => {
 					// A real implementation would manage providers and proxy calls.
@@ -145,7 +171,9 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 
 				getSessions: (
 					ProviderId: string,
+
 					Scopes: readonly string[],
+
 					Options: AuthenticationGetSessionOptions,
 				) =>
 					// A real implementation would be more nuanced, but for now we can
@@ -153,6 +181,7 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 					Effect.runPromise(
 						IPC.SendRequest<AuthenticationSession[]>(
 							"$getSessions",
+
 							[ProviderId, Scopes, Options],
 						).pipe(
 							Effect.mapError(
@@ -163,13 +192,17 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 
 				login: (
 					ProviderId: string,
+
 					Scopes: readonly string[],
+
 					Options: AuthenticationProviderSessionOptions,
 				) =>
 					Effect.runPromise(
 						IPC.SendRequest<AuthenticationSession>("$login", [
 							ProviderId,
+
 							Scopes,
+
 							Options,
 						]).pipe(
 							Effect.mapError(
@@ -182,6 +215,7 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 					Effect.runPromise(
 						IPC.SendNotification("$logout", [
 							ProviderId,
+
 							SessionId,
 						]).pipe(
 							Effect.mapError(

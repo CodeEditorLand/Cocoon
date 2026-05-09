@@ -23,7 +23,9 @@ export interface APIDeprecation {
 	 */
 	readonly Report: (
 		ExtensionId: ExtensionIdentifier,
+
 		Usage: string,
+
 		Message: string,
 	) => Effect.Effect<void, never>;
 
@@ -36,7 +38,9 @@ export interface APIDeprecation {
 	 */
 	readonly Deprecated: (
 		ExtensionId: ExtensionIdentifier,
+
 		Feature: string,
+
 		Message: string,
 	) => PropertyDecorator;
 }
@@ -48,13 +52,16 @@ export interface APIDeprecation {
  */
 export class APIDeprecationService extends Effect.Service<APIDeprecationService>()(
 	"Service/APIDeprecation",
+
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
 
 			const Report = (
 				ExtensionId: ExtensionIdentifier,
+
 				Usage: string,
+
 				Message: string,
 			): Effect.Effect<void, never> =>
 				Logger.Warn(
@@ -63,13 +70,17 @@ export class APIDeprecationService extends Effect.Service<APIDeprecationService>
 
 			const Deprecated = (
 				ExtensionId: ExtensionIdentifier,
+
 				Feature: string,
+
 				Message: string,
 			): PropertyDecorator => {
 				const CreateReport = (PropertyName: string | symbol) =>
 					Report(
 						ExtensionId,
+
 						`${Feature} (property: ${String(PropertyName)})`,
+
 						Message,
 					);
 

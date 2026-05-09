@@ -43,16 +43,20 @@ export const ToAPI = (
 ): VSCodeMarkdownString => {
 	const result = new MarkdownString(
 		MarkdownStringDTO.value,
+
 		typeof MarkdownStringDTO.isTrusted === "boolean"
 			? MarkdownStringDTO.isTrusted
 			: !!(MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions),
 	);
+
 	// FIX: Handle optional properties correctly
 	if (MarkdownStringDTO.baseUri) {
 		result.baseUri = MarkdownStringDTO.baseUri as unknown as Uri;
 	}
+
 	if (MarkdownStringDTO.supportHtml) {
 		result.supportHtml = MarkdownStringDTO.supportHtml;
 	}
+
 	return result;
 };

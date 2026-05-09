@@ -14,11 +14,16 @@ import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Servi
 export interface ITerminalService {
 	createTerminal(
 		name: string,
+
 		shellPath?: string,
+
 		cwd?: string,
 	): Promise<number>;
+
 	sendText(terminalId: number, text: string): Promise<void>;
+
 	resize(terminalId: number, cols: number, rows: number): Promise<void>;
+
 	kill(terminalId: number): Promise<void>;
 }
 
@@ -34,19 +39,24 @@ export class TerminalService implements ITerminalService {
 
 	async createTerminal(
 		name: string,
+
 		shellPath?: string,
+
 		cwd?: string,
 	): Promise<number> {
 		console.log(`[Terminal] Creating terminal: ${name}`);
+
 		// Call Spine (v0.5 Terminal Batch)
 		const terminalId = await this.mountainClient.sendRequest(
 			"terminal.create",
+
 			{
 				name,
 				shell_path: shellPath,
 				cwd,
 			},
 		);
+
 		return terminalId;
 	}
 
@@ -60,17 +70,21 @@ export class TerminalService implements ITerminalService {
 
 	async resize(
 		terminalId: number,
+
 		cols: number,
+
 		rows: number,
 	): Promise<void> {
 		// Call Spine (Method pending in backend wiring, but we can stub it or implement)
 		// Let's assume we add terminal.resize to backend if missing, or use a generic call
 		console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
+
 		// await this.mountainClient.sendRequest("terminal.resize", { id: terminalId, cols, rows });
 	}
 
 	async kill(terminalId: number): Promise<void> {
 		console.log(`[Terminal] Kill ${terminalId}`);
+
 		// await this.mountainClient.sendRequest("terminal.kill", { id: terminalId });
 	}
 }
@@ -80,6 +94,7 @@ export class TerminalService implements ITerminalService {
  */
 export const TerminalServiceLayer = Layer.effect(
 	ITerminalService,
+
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
 		return new TerminalService(mountainClient);

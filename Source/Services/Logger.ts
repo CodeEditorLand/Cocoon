@@ -46,21 +46,28 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly Fatal: (
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
+
 	readonly SetExtensionId: (ExtensionId: string) => Effect.Effect<void>;
+
 	readonly GetExtensionId: () => Effect.Effect<string>;
 }
 
@@ -87,6 +94,7 @@ export const Logger = Context.Tag<Logger>("Service/Logger");
  */
 export class LoggerService extends Effect.Service<LoggerService>()(
 	"Service/Logger",
+
 	{
 		effect: Effect.gen(function* () {
 			// Current extension ID context
@@ -107,7 +115,9 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			 */
 			const FormatMessage = (
 				Message: string,
+
 				Level: string,
+
 				ExtensionId?: string,
 			) => {
 				const Timestamp = new Date().toISOString();
@@ -129,7 +139,9 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 					if (LogLevel === "trace") {
 						const FormattedMessage = FormatMessage(
 							Message,
+
 							"trace",
+
 							ExtensionId,
 						);
 
@@ -168,7 +180,9 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 					if (LogLevel === "trace" || LogLevel === "debug") {
 						const FormattedMessage = FormatMessage(
 							Message,
+
 							"debug",
+
 							ExtensionId,
 						);
 
@@ -193,7 +207,9 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 					const FormattedMessage = FormatMessage(
 						Message,
+
 						"info",
+
 						ExtensionId,
 					);
 

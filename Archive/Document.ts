@@ -31,15 +31,22 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 export interface Document {
 	readonly TextDocuments: readonly TextDocument[];
+
 	readonly OnDidOpenTextDocument: Event<TextDocument>;
+
 	readonly OnDidCloseTextDocument: Event<TextDocument>;
+
 	readonly OnDidChangeTextDocument: Event<TextDocumentChangeEvent>;
+
 	readonly OnDidSaveTextDocument: Event<TextDocument>;
+
 	readonly GetDocument: (
 		Uri: Uri,
 	) => Effect.Effect<Option.Option<TextDocument>, never>;
+
 	readonly RegisterTextDocumentContentProvider: (
 		Scheme: string,
+
 		Provider: TextDocumentContentProvider,
 	) => Disposable;
 }
@@ -50,6 +57,7 @@ export interface Document {
  */
 export class DocumentService extends Effect.Service<DocumentService>()(
 	"Service/Document",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -79,17 +87,25 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 					const RevivedUri = UriToAPI(Data.uri);
 					const DocumentData = new ExtHostDocumentData(
 						MainThreadDocumentsProxy,
+
 						RevivedUri,
+
 						Data.lines,
+
 						Data.eol,
+
 						Data.versionId,
+
 						Data.languageId,
+
 						Data.isDirty,
+
 						Data.encoding,
 					);
 					yield* Ref.update(DocumentMapRef, (Map) =>
 						Map.set(
 							DocumentData.document.uri.toString(),
+
 							DocumentData,
 						),
 					);
@@ -105,6 +121,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 					if (DocumentData) {
 						yield* Ref.update(
 							DocumentMapRef,
+
 							(Map) => (Map.delete(UriString), Map),
 						);
 						yield* FireClose(DocumentData.document);
@@ -158,6 +175,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 						Promise.resolve(
 							Provider.value.provideTextDocumentContent(
 								Uri,
+
 								Token,
 							) as ProviderResult<string>,
 						),
@@ -183,6 +201,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 			);
 			IPC.RegisterInvokeHandler(
 				"$provideTextDocumentContent",
+
 				([UriComponents]) =>
 					Effect.runPromise(
 						ProvideTextDocumentContent(UriComponents),
@@ -205,15 +224,18 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 						Effect.map((Map) =>
 							Option.fromNullable(Map.get(Uri.toString())),
 						),
+
 						Effect.map(Option.map((data) => data.document)),
 					),
 				RegisterTextDocumentContentProvider: (
 					Scheme: string,
+
 					Provider: TextDocumentContentProvider,
 				) => {
 					Effect.runFork(
 						IPC.SendNotification(
 							"$registerTextDocumentContentProvider",
+
 							[Scheme],
 						),
 					);
@@ -225,11 +247,13 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 					return new Disposable(() => {
 						const Unregister = Ref.update(
 							ContentProvidersRef,
+
 							(Map) => (Map.delete(Scheme), Map),
 						).pipe(
 							Effect.andThen(
 								IPC.SendNotification(
 									"$unregisterTextDocumentContentProvider",
+
 									[Scheme],
 								),
 							),

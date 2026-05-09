@@ -89,7 +89,9 @@ export class CocoonEchoClient {
 	/** Registered host information */
 	private hostInfo: {
 		hostId: string;
+
 		hostRegistryId: string;
+
 		heartbeatIntervalSec: number;
 	} | null = null;
 
@@ -102,6 +104,7 @@ export class CocoonEchoClient {
 	 */
 	constructor(mountainUrl: string, hostId?: string) {
 		this.mountainUrl = mountainUrl;
+
 		this.hostId = hostId || `cocoon-${uuidv4()}`;
 
 		this.logger.info(`Cocoon Echo Client created: ${this.hostId}`);
@@ -117,6 +120,7 @@ export class CocoonEchoClient {
 		return new Promise((resolve, _reject) => {
 			this.client = new EchoActionServiceClient(
 				this.mountainUrl,
+
 				credentials.createInsecure(),
 			);
 
@@ -142,15 +146,20 @@ export class CocoonEchoClient {
 		// Stop heartbeat
 		if (this.heartbeatIntervalId) {
 			clearInterval(this.heartbeatIntervalId);
+
 			this.heartbeatIntervalId = null;
 		}
 
 		this.client = null;
+
 		this.isConnected = false;
+
 		this.connectionStartTime = null;
+
 		this.hostInfo = null;
 
 		this.logger.info("Disconnected from Mountain");
+
 		this.metrics.increment("echo_client.disconnect");
 	}
 
@@ -160,7 +169,9 @@ export class CocoonEchoClient {
 	 */
 	async register(): Promise<{
 		hostId: string;
+
 		hostRegistryId: string;
+
 		heartbeatIntervalSec: number;
 	}> {
 		if (!this.client) {
@@ -171,24 +182,38 @@ export class CocoonEchoClient {
 
 		const request: RegisterExtensionHostRequest = {
 			host_id: this.hostId,
+
 			host_type: 1, // Cocoon
 			capabilities: {
 				supports_terminals: "true",
+
 				supports_processes: "true",
+
 				supports_debug: "true",
+
 				supports_webviews: "true",
+
 				supports_scm: "true",
+
 				max_memory_mb: "4096",
 			},
+
 			metadata: {
 				version: process.env.npm_package_version || "0.0.1",
+
 				build_hash: process.env.BUILD_HASH || "unknown",
+
 				supported_extensions: ["vsix"],
+
 				max_memory_mb: 4096,
+
 				enabled_features: [
 					"nodejs",
+
 					"terminals",
+
 					"debug-protocol",
+
 					"scm-support",
 				],
 			},
@@ -261,7 +286,9 @@ export class CocoonEchoClient {
 					this.logger.error(`EchoAction failed: ${err.message}`);
 					this.metrics.recordTiming(
 						"echo_action.duration_ms",
+
 						duration,
+
 						{
 							success: "false",
 							type: action.actionType,
@@ -300,13 +327,18 @@ export class CocoonEchoClient {
 	 */
 	async sendRpc(
 		rpcMethod: string,
+
 		payload: Buffer,
+
 		targetHost?: string,
 	): Promise<Buffer> {
 		const headers: Record<string, string> = {
 			rpc_method: rpcMethod,
+
 			host_type: "cocoon",
+
 			node_version: process.version,
+
 			platform: process.platform,
 		};
 
@@ -316,15 +348,22 @@ export class CocoonEchoClient {
 
 		const action: EchoAction = {
 			actionId: uuidv4(),
+
 			source: this.hostId,
+
 			target: targetHost || "mountain",
+
 			actionType: "rpc",
+
 			payload,
+
 			headers,
+
 			timestamp: Date.now(),
 		};
 
 		const response = await this.sendEchoAction(action);
+
 		return Buffer.from(response.result);
 	}
 
@@ -334,22 +373,31 @@ export class CocoonEchoClient {
 	 */
 	async sendEvent(
 		eventName: string,
+
 		payload: Buffer,
+
 		metadata: Record<string, string> = {},
 	): Promise<void> {
 		const headers: Record<string, string> = {
 			event_name: eventName,
+
 			host_type: "cocoon",
 			...metadata,
 		};
 
 		const action: EchoAction = {
 			actionId: uuidv4(),
+
 			source: this.hostId,
+
 			target: "mountain",
+
 			actionType: "event",
+
 			payload,
+
 			headers,
+
 			timestamp: Date.now(),
 		};
 
@@ -362,22 +410,31 @@ export class CocoonEchoClient {
 	 */
 	async sendState(
 		stateType: string,
+
 		payload: Buffer,
+
 		metadata: Record<string, string> = {},
 	): Promise<void> {
 		const headers: Record<string, string> = {
 			state_type: stateType,
+
 			host_type: "cocoon",
 			...metadata,
 		};
 
 		const action: EchoAction = {
 			actionId: uuidv4(),
+
 			source: this.hostId,
+
 			target: "mountain",
+
 			actionType: "state",
+
 			payload,
+
 			headers,
+
 			timestamp: Date.now(),
 		};
 
@@ -399,15 +456,22 @@ export class CocoonEchoClient {
 
 		const action: EchoAction = {
 			actionId: uuidv4(),
+
 			source: this.hostId,
+
 			target: "mountain",
+
 			actionType: "discovery",
+
 			payload: Buffer.alloc(0),
+
 			headers,
+
 			timestamp: Date.now(),
 		};
 
 		const response = await this.sendEchoAction(action);
+
 		return JSON.parse(response.result.toString());
 	}
 
@@ -437,21 +501,30 @@ export class CocoonEchoClient {
 	 */
 	getStatus(): {
 		connected: boolean;
+
 		hostId: string;
+
 		uptime: number | null;
+
 		hostInfo: typeof this.hostInfo;
+
 		lastHeartbeat: Date | null;
 	} {
 		let uptime: number | null = null;
+
 		if (this.connectionStartTime) {
 			uptime = Date.now() - this.connectionStartTime.getTime();
 		}
 
 		return {
 			connected: this.isConnected,
+
 			hostId: this.hostId,
+
 			uptime,
+
 			hostInfo: this.hostInfo,
+
 			lastHeartbeat: this.lastHeartbeat,
 		};
 	}
@@ -464,7 +537,9 @@ export class CocoonEchoClient {
 		this.logger.warn("Attempting to reconnect to Mountain");
 
 		await this.disconnect();
+
 		await this.connect();
+
 		await this.register();
 
 		this.logger.info("Successfully reconnected to Mountain");
@@ -489,12 +564,19 @@ export type EchoActionType =
  */
 export interface EchoActionProps {
 	actionId: string;
+
 	source: string;
+
 	target: string;
+
 	actionType: EchoActionType;
+
 	payload: Buffer;
+
 	headers: Record<string, string>;
+
 	timestamp: number;
+
 	nestedActions?: EchoActionProps[];
 }
 
@@ -504,10 +586,15 @@ export interface EchoActionProps {
  */
 export interface EchoActionResponseProps {
 	actionId: string;
+
 	success: boolean;
+
 	result: Buffer;
+
 	error?: string;
+
 	metadata: Record<string, string>;
+
 	processingTimeMs: number;
 }
 
@@ -522,11 +609,15 @@ export const CocoonEchoClientFactory = {
 	 */
 	async createAndConnect(
 		mountainUrl: string,
+
 		hostId?: string,
 	): Promise<CocoonEchoClient> {
 		const client = new CocoonEchoClient(mountainUrl, hostId);
+
 		await client.connect();
+
 		await client.register();
+
 		return client;
 	},
 };

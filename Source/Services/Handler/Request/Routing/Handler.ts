@@ -54,6 +54,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// Route to ExtensionHostService via ServiceMapping
 			const { ServiceMapping } =
 				await import("../../../../Service/Mapping.js");
+
 			const { IExtensionHostService } =
 				await import("../../../../Interfaces/I/Extension/Host/Service.js");
 
@@ -61,26 +62,34 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				case "extension.activate": {
 					const ExtensionHostService =
 						await ServiceMapping.getService(IExtensionHostService);
+
 					return await ExtensionHostService.activateExtension(
 						Params.extensionId,
+
 						Params.reason,
 					);
 				}
+
 				case "extension.deactivate": {
 					const ExtensionHostService =
 						await ServiceMapping.getService(IExtensionHostService);
+
 					await ExtensionHostService.deactivateExtension(
 						Params.extensionId,
 					);
+
 					return { success: true };
 				}
+
 				case "extension.get": {
 					const ExtensionHostService =
 						await ServiceMapping.getService(IExtensionHostService);
+
 					return ExtensionHostService.getActivatedExtension(
 						Params.extensionId,
 					);
 				}
+
 				default:
 					throw new Error(`Unknown extension method: ${Method}`);
 			}
@@ -90,6 +99,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// Route to ConfigurationService via ServiceMapping
 			const { ServiceMapping } =
 				await import("../../../../Service/Mapping.js");
+
 			const { IConfigurationService } =
 				await import("../../../../Interfaces/I/Configuration/Service.js");
 
@@ -98,33 +108,46 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const ConfigService = await ServiceMapping.getService(
 						IConfigurationService,
 					);
+
 					return await ConfigService.getValue(
 						Params.key,
+
 						Params.scope,
 					);
 				}
+
 				case "configuration.set": {
 					const ConfigService = await ServiceMapping.getService(
 						IConfigurationService,
 					);
+
 					await ConfigService.setValue(
 						Params.key,
+
 						Params.value,
+
 						Params.scope,
 					);
+
 					return { success: true };
 				}
+
 				case "configuration.update": {
 					const ConfigService = await ServiceMapping.getService(
 						IConfigurationService,
 					);
+
 					await ConfigService.updateValue(
 						Params.key,
+
 						Params.updater,
+
 						Params.scope,
 					);
+
 					return { success: true };
 				}
+
 				default:
 					throw new Error(`Unknown configuration method: ${Method}`);
 			}
@@ -139,12 +162,17 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		"^\\$provideTreeChildren$": async (_Method: string, Params: any) => {
 			const { TreeDataProvidersByViewId } =
 				await import("../../VscodeAPI/Window/Namespace.js");
+
 			const ViewId = Params?.viewId ?? Params?.[0];
+
 			const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
+
 			const Provider = TreeDataProvidersByViewId.get(String(ViewId));
+
 			if (!Provider) {
 				return { items: [] };
 			}
+
 			// `itemHandle` is the caller-chosen token for an element the
 			// provider previously returned; for root calls it is empty.
 			// We only have the handle string (Mountain doesn't yet mint
@@ -368,7 +396,9 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						const Result =
 							(await Provider.resolveWebviewView?.(
 								View,
+
 								Ctx,
+
 								Token,
 							)) ?? null;
 						if (process.env["Trace"]) {
@@ -392,17 +422,21 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						try {
 							console.warn(
 								`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}:`,
+
 								(ResolveError as any)?.message ??
 									String(ResolveError),
 							);
 						} catch {
 							/* console may be replaced */
 						}
+
 						return null;
 					}
 				}
+
 				case "webview.resolveCustomEditor": {
 					const Provider = CustomEditorProviders.get(String(Handle));
+
 					if (!Provider) {
 						// Same soft-fail rationale as `webview.resolveView`
 						// above - throwing rejects the workbench-side
@@ -416,10 +450,14 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						} catch {
 							/* console may be replaced */
 						}
+
 						return null;
 					}
+
 					const Document = Params?.document ?? Params?.[1];
+
 					const Panel = Params?.panel ?? Params?.[2];
+
 					// Stock VS Code: `resolveCustomEditor(document, webviewPanel, token)`.
 					// The previous third arg `{ asAbsolutePath }` is wrong -
 					// that property lives on `ExtensionContext`, not on a
@@ -429,15 +467,19 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const Token = Params?.token ??
 						Params?.[3] ?? {
 							isCancellationRequested: false,
+
 							onCancellationRequested: () => ({
 								dispose: () => {},
 							}),
 						};
+
 					try {
 						return (
 							(await Provider.resolveCustomEditor?.(
 								Document,
+
 								Panel,
+
 								Token,
 							)) ?? null
 						);
@@ -445,19 +487,24 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						try {
 							console.warn(
 								`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}:`,
+
 								(ResolveError as any)?.message ??
 									String(ResolveError),
 							);
 						} catch {
 							/* console may be replaced */
 						}
+
 						return null;
 					}
 				}
+
 				default: {
 					// Default: panels host one-off events
 					const Panel = WebviewPanels.get(String(Handle));
+
 					if (!Panel) return null;
+
 					return null;
 				}
 			}
@@ -467,6 +514,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// Route to PerformanceMonitoringService via ServiceMapping
 			const { ServiceMapping } =
 				await import("../../../../Service/Mapping.js");
+
 			const { IPerformanceMonitoringService } =
 				await import("../../../../Interfaces/I/Performance/Monitoring/Service.js");
 
@@ -475,20 +523,26 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const PerfService = await ServiceMapping.getService(
 						IPerformanceMonitoringService,
 					);
+
 					return PerfService.getMetrics();
 				}
+
 				case "performance.alerts": {
 					const PerfService = await ServiceMapping.getService(
 						IPerformanceMonitoringService,
 					);
+
 					return PerfService.getAlerts();
 				}
+
 				case "performance.report": {
 					const PerfService = await ServiceMapping.getService(
 						IPerformanceMonitoringService,
 					);
+
 					return PerfService.generateReport();
 				}
+
 				default:
 					throw new Error(`Unknown performance method: ${Method}`);
 			}
@@ -498,6 +552,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// Route to SecurityService via ServiceMapping
 			const { ServiceMapping } =
 				await import("../../../../Service/Mapping.js");
+
 			const { ISecurityService } =
 				await import("../../../../Interfaces/I/Security/Service.js");
 
@@ -505,20 +560,26 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				case "security.policy": {
 					const SecurityService =
 						await ServiceMapping.getService(ISecurityService);
+
 					return await SecurityService.getSecurityPolicy(
 						Params.extensionId,
 					);
 				}
+
 				case "security.audit": {
 					const SecurityService =
 						await ServiceMapping.getService(ISecurityService);
+
 					return SecurityService.getAuditLog();
 				}
+
 				case "security.incidents": {
 					const SecurityService =
 						await ServiceMapping.getService(ISecurityService);
+
 					return SecurityService.getActiveIncidents();
 				}
+
 				default:
 					throw new Error(`Unknown security method: ${Method}`);
 			}
@@ -534,26 +595,33 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	// becomes a clean `return await Handler(Method, Parameters)`.
 	for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
 		const Regex = new RegExp(Pattern);
+
 		if (Regex.test(Method)) {
 			if (process.env["NODE_ENV"] !== "production") {
 				const StartMillis = Date.now();
+
 				let Ok = true;
+
 				try {
 					return await Handler(Method, Parameters);
 				} catch (Error) {
 					Ok = false;
+
 					throw Error;
 				} finally {
 					const DurationMs = Date.now() - StartMillis;
+
 					try {
 						const { CaptureHandler } =
 							await import("../../../../Telemetry/Post/Hog/Bridge.js");
+
 						CaptureHandler(Method, DurationMs, Ok);
 					} catch {
 						// Telemetry must not raise into the dispatcher.
 					}
 				}
 			}
+
 			// Production path: no timing, no capture, just dispatch.
 			return Handler(Method, Parameters);
 		}

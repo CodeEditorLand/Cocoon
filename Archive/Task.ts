@@ -35,7 +35,9 @@ import { CreateEventStream } from "./Utility/EventStream.js";
  */
 export interface ProviderEntry<T extends VSCodeTask> {
 	readonly Type: string;
+
 	readonly Provider: TaskProvider<T>;
+
 	readonly Extension: IExtensionDescription;
 }
 
@@ -49,8 +51,11 @@ export interface ProviderEntry<T extends VSCodeTask> {
  */
 const ProvideTasks = (
 	Registry: Ref.Ref<Map<number, ProviderEntry<VSCodeTask>>>,
+
 	Handle: number,
+
 	TokenId: number,
+
 	Cancellation: Cancellation,
 ) => {
 	return Effect.gen(function* () {
@@ -88,20 +93,30 @@ const ProvideTasks = (
  */
 export interface Task {
 	readonly onDidStartTask: Event<TaskStartEvent>;
+
 	readonly onDidEndTask: Event<TaskEndEvent>;
+
 	readonly onDidStartTaskProcess: Event<TaskProcessStartEvent>;
+
 	readonly onDidEndTaskProcess: Event<TaskProcessEndEvent>;
+
 	readonly taskExecutions: readonly TaskExecution[];
+
 	readonly RegisterTaskProvider: <T extends VSCodeTask>(
 		type: string,
+
 		provider: TaskProvider<T>,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
+
 	readonly FetchTasks: (
 		filter?: TaskFilter,
 	) => Effect.Effect<VSCodeTask[], Error>;
+
 	readonly ExecuteTask: (
 		task: VSCodeTask,
+
 		extension: IExtensionDescription,
 	) => Effect.Effect<TaskExecution, Error>;
 }
@@ -121,12 +136,16 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 
 		IPC.RegisterInvokeHandler(
 			"$provideTasks",
+
 			([Handle, TokenId]: [number, number]) =>
 				Effect.runPromise(
 					ProvideTasks(
 						TaskProvidersRef,
+
 						Handle,
+
 						TokenId,
+
 						Cancellation,
 					),
 				),
@@ -151,7 +170,9 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 
 			RegisterTaskProvider: <T extends VSCodeTask>(
 				Type: string,
+
 				Provider: TaskProvider<T>,
+
 				Extension: IExtensionDescription,
 			) =>
 				Effect.sync(() => {
@@ -169,17 +190,20 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 					Effect.runFork(
 						IPC.SendNotification("$registerTaskProvider", [
 							Handle,
+
 							Type,
 						]),
 					);
 					return new Disposable(() => {
 						const Cleanup = Ref.update(
 							TaskProvidersRef,
+
 							(Map) => (Map.delete(Handle), Map),
 						).pipe(
 							Effect.andThen(
 								IPC.SendNotification(
 									"$unregisterTaskProvider",
+
 									[Handle],
 								),
 							),
@@ -187,16 +211,20 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 						Effect.runFork(Cleanup);
 					});
 				}),
+
 			FetchTasks: (Filter?: TaskFilter) =>
 				IPC.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
 					Effect.map((TaskDTOs) =>
 						TaskDTOs.map((DTO) => TaskToAPI(DTO)),
 					),
+
 					Effect.mapError((Cause) => new Error(String(Cause))),
 				),
+
 			// FIX: Add explicit types to parameters
 			ExecuteTask: (
 				TaskToExecute: VSCodeTask,
+
 				Extension: IExtensionDescription,
 			) =>
 				IPC.SendRequest<any>("$executeTask", [
@@ -205,6 +233,7 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 					Effect.map((ExecutionDTO) =>
 						ExecutionToAPI(ExecutionDTO, TaskToExecute),
 					),
+
 					Effect.mapError((Cause) => new Error(String(Cause))),
 				),
 		};

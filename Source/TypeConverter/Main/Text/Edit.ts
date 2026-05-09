@@ -15,8 +15,11 @@ import { FromAPI as RangeFromAPI, ToAPI as RangeToAPI } from "../Range.js";
 function ToExtHostRange(range: VSCodeRange): ExtHostRange {
 	return new ExtHostRange(
 		range.start.line,
+
 		range.start.character,
+
 		range.end.line,
+
 		range.end.character,
 	);
 }
@@ -44,5 +47,6 @@ export const ToAPI = (
 ): VSCodeTextEdit =>
 	new ExtHostTextEdit(
 		ToExtHostRange(RangeToAPI(TextEditDTO.range)),
+
 		TextEditDTO.text ?? "",
 	);

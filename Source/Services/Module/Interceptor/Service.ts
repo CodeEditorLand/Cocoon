@@ -23,9 +23,13 @@ import {
 // Module interception configuration
 interface ModuleInterceptorConfig {
 	allowNodeBuiltins: boolean;
+
 	allowFileSystemAccess: boolean;
+
 	allowNetworkAccess: boolean;
+
 	allowedModules: string[];
+
 	blockedModules: string[];
 }
 
@@ -39,7 +43,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private readonly _serviceBrand: undefined;
 
 	private config: ModuleInterceptorConfig;
+
 	private moduleCache: Map<string, any>;
+
 	private securitySandbox: Map<string, Function>;
 
 	constructor() {
@@ -48,7 +54,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		);
 
 		this.config = this.loadDefaultConfig();
+
 		this.moduleCache = new Map();
+
 		this.securitySandbox = this.createSecuritySandbox();
 
 		console.log(
@@ -62,23 +70,38 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private loadDefaultConfig(): ModuleInterceptorConfig {
 		return {
 			allowNodeBuiltins: true,
+
 			allowFileSystemAccess: false,
+
 			allowNetworkAccess: false,
+
 			allowedModules: [
 				"path",
+
 				"url",
+
 				"util",
+
 				"events",
+
 				"stream",
+
 				"buffer",
 			],
+
 			blockedModules: [
 				"fs",
+
 				"child_process",
+
 				"net",
+
 				"http",
+
 				"https",
+
 				"os",
+
 				"crypto",
 			],
 		};
@@ -92,15 +115,22 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		// Safe JavaScript globals
 		sandbox.set("console.log", console.log.bind(console));
+
 		sandbox.set("console.error", console.error.bind(console));
+
 		sandbox.set("console.warn", console.warn.bind(console));
+
 		sandbox.set("setTimeout", setTimeout.bind(global));
+
 		sandbox.set("setInterval", setInterval.bind(global));
+
 		sandbox.set("clearTimeout", clearTimeout.bind(global));
+
 		sandbox.set("clearInterval", clearInterval.bind(global));
 
 		// Safe utility functions
 		sandbox.set("JSON.parse", JSON.parse);
+
 		sandbox.set("JSON.stringify", JSON.stringify);
 
 		return sandbox;
@@ -126,6 +156,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		// Analyze module security
 		const moduleSecurity = this.analyzeModuleSecurity(modulePath);
+
 		if (!moduleSecurity.isSafe) {
 			throw new Error(
 				`Module security violation: ${modulePath} - ${moduleSecurity.reason}`,
@@ -150,6 +181,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private validateModuleAccess(
 		modulePath: string,
+
 		parentPath: string,
 	): boolean {
 		// Check blocked modules
@@ -157,6 +189,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			console.warn(
 				`[ModuleInterceptorService] Blocked module access: ${modulePath}`,
 			);
+
 			return false;
 		}
 
@@ -170,6 +203,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			console.warn(
 				`[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`,
 			);
+
 			return false;
 		}
 
@@ -182,20 +216,34 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private isNodeBuiltin(modulePath: string): boolean {
 		const builtins = [
 			"fs",
+
 			"path",
+
 			"os",
+
 			"net",
+
 			"http",
+
 			"https",
+
 			"child_process",
+
 			"crypto",
+
 			"util",
+
 			"events",
+
 			"stream",
+
 			"buffer",
+
 			"url",
+
 			"querystring",
 		];
+
 		return builtins.includes(modulePath);
 	}
 
@@ -204,6 +252,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private analyzeModuleSecurity(modulePath: string): {
 		isSafe: boolean;
+
 		reason: string;
 	} {
 		try {
@@ -213,9 +262,11 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 			// Load module source code with enhanced error handling
 			const fs = require("fs");
+
 			const path = require("path");
 
 			const resolvedPath = require.resolve(modulePath);
+
 			const sourceCode = fs.readFileSync(resolvedPath, "utf8");
 
 			// Enhanced AST parsing with comprehensive options
@@ -231,11 +282,13 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 			// Advanced security analysis with multiple detection layers
 			const securityIssues: string[] = [];
+
 			const securityWarnings: string[] = [];
 
 			// Layer 1: Dangerous function calls and patterns
 			walk.simple(
 				ast,
+
 				{
 					CallExpression(node: any) {
 						const callee = node.callee;
@@ -283,6 +336,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							if (
 								this.isCriticalDangerousPropertyAccess(
 									objectName,
+
 									propertyName,
 								)
 							) {
@@ -292,6 +346,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							} else if (
 								this.isDangerousPropertyAccess(
 									objectName,
+
 									propertyName,
 								)
 							) {
@@ -316,6 +371,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 								if (
 									this.isCriticalDangerousAssignment(
 										objectName,
+
 										propertyName,
 									)
 								) {
@@ -325,6 +381,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 								} else if (
 									this.isDangerousAssignment(
 										objectName,
+
 										propertyName,
 									)
 								) {
@@ -358,19 +415,24 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 						}
 					},
 				},
+
 				this,
 			);
 
 			// Layer 2: Pattern-based security analysis
 			this.performPatternAnalysis(
 				sourceCode,
+
 				securityIssues,
+
 				securityWarnings,
 			);
 
 			// Combine results
 			const allIssues = [...securityIssues, ...securityWarnings];
+
 			const isSafe = securityIssues.length === 0;
+
 			const reason =
 				allIssues.length > 0
 					? `Security analysis: ${allIssues.join(", ")}`
@@ -382,15 +444,19 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 			return {
 				isSafe,
+
 				reason,
 			};
 		} catch (error) {
 			console.error(
 				`[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
+
 				error,
 			);
+
 			return {
 				isSafe: false,
+
 				reason: `Advanced security analysis error: ${error}`,
 			};
 		}
@@ -402,16 +468,26 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private isCriticalDangerousFunction(functionName: string): boolean {
 		const criticalFunctions = [
 			"eval",
+
 			"Function",
+
 			"exec",
+
 			"spawn",
+
 			"execFile",
+
 			"fork",
+
 			"require",
+
 			"import",
+
 			"process.binding",
+
 			"vm.runInContext",
 		];
+
 		return criticalFunctions.includes(functionName);
 	}
 
@@ -421,12 +497,18 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private isDangerousFunction(functionName: string): boolean {
 		const dangerousFunctions = [
 			"setTimeout",
+
 			"setInterval",
+
 			"setImmediate",
+
 			"require.cache",
+
 			"module.constructor",
+
 			"global.eval",
 		];
+
 		return dangerousFunctions.includes(functionName);
 	}
 
@@ -435,13 +517,18 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private isCriticalDangerousPropertyAccess(
 		objectName: string,
+
 		propertyName: string,
 	): boolean {
 		const criticalAccesses = [
 			{ object: "process", property: "env" },
+
 			{ object: "global", property: "process" },
+
 			{ object: "window", property: "location" },
+
 			{ object: "process", property: "mainModule" },
+
 			{ object: "process", property: "binding" },
 		];
 
@@ -457,12 +544,16 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private isDangerousPropertyAccess(
 		objectName: string,
+
 		propertyName: string,
 	): boolean {
 		const dangerousAccesses = [
 			{ object: "global", property: "eval" },
+
 			{ object: "window", property: "eval" },
+
 			{ object: "process", property: "argv" },
+
 			{ object: "process", property: "cwd" },
 		];
 
@@ -478,11 +569,14 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private isDangerousPropertyAccess(
 		objectName: string,
+
 		propertyName: string,
 	): boolean {
 		const dangerousAccesses = [
 			{ object: "process", property: "env" },
+
 			{ object: "global", property: "process" },
+
 			{ object: "window", property: "location" },
 		];
 
@@ -498,12 +592,16 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private isCriticalDangerousAssignment(
 		objectName: string,
+
 		propertyName: string,
 	): boolean {
 		const criticalAssignments = [
 			{ object: "process", property: "env" },
+
 			{ object: "global", property: "process" },
+
 			{ object: "require", property: "cache" },
+
 			{ object: "module", property: "exports" },
 		];
 
@@ -519,10 +617,12 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private isDangerousAssignment(
 		objectName: string,
+
 		propertyName: string,
 	): boolean {
 		const dangerousAssignments = [
 			{ object: "global", property: "eval" },
+
 			{ object: "window", property: "eval" },
 		];
 
@@ -539,17 +639,28 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private isDangerousImport(importSource: string): boolean {
 		const dangerousImports = [
 			"fs",
+
 			"child_process",
+
 			"net",
+
 			"http",
+
 			"https",
+
 			"os",
+
 			"crypto",
+
 			"vm",
+
 			"module",
+
 			"process",
+
 			"sys",
 		];
+
 		return dangerousImports.includes(importSource);
 	}
 
@@ -559,10 +670,14 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private isDangerousConstructor(constructorName: string): boolean {
 		const dangerousConstructors = [
 			"Function",
+
 			"eval",
+
 			"process",
+
 			"require",
 		];
+
 		return dangerousConstructors.includes(constructorName);
 	}
 
@@ -571,7 +686,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private performPatternAnalysis(
 		sourceCode: string,
+
 		securityIssues: string[],
+
 		securityWarnings: string[],
 	): void {
 		const dangerousPatterns = [
@@ -583,14 +700,17 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			},
 			{
 				pattern: /process\.binding/,
+
 				description: "Process binding access",
 			},
 			{
 				pattern: /vm\.runInContext/,
+
 				description: "VM context execution",
 			},
 			{
 				pattern: /child_process\.spawn/,
+
 				description: "Child process spawning",
 			},
 		];
@@ -613,6 +733,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			// Create security wrapper
 			const interceptedModule = this.createSecurityWrapper(
 				originalModule,
+
 				modulePath,
 			);
 
@@ -620,6 +741,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		} catch (error) {
 			console.error(
 				`[ModuleInterceptorService] Failed to load module ${modulePath}:`,
+
 				error,
 			);
 			throw error;
@@ -631,6 +753,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private createSecurityWrapper(
 		originalModule: any,
+
 		modulePath: string,
 	): any {
 		const wrapper: any = {};
@@ -642,7 +765,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			if (typeof originalValue === "function") {
 				wrapper[key] = this.wrapFunction(
 					originalValue,
+
 					modulePath,
+
 					key,
 				);
 			} else {
@@ -658,7 +783,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 */
 	private wrapFunction(
 		originalFn: Function,
+
 		modulePath: string,
+
 		functionName: string,
 	): Function {
 		return (...args: any[]) => {
@@ -698,6 +825,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		} catch (error) {
 			console.error(
 				`[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
+
 				error,
 			);
 			throw error;
@@ -714,9 +842,13 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		const context = {
 			extensionId,
+
 			globalState: new Map(),
+
 			workspaceState: new Map(),
+
 			subscriptions: [],
+
 			asAbsolutePath: (relativePath: string) => {
 				// FUTURE: Use ExtensionContext.extensionUri for proper path resolution
 				// For now, construct path from extension ID (placeholder)
@@ -755,7 +887,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	} {
 		return {
 			cacheSize: this.moduleCache.size,
+
 			config: this.config,
+
 			securityRules:
 				this.config.allowedModules.length +
 				this.config.blockedModules.length,
@@ -768,6 +902,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
  */
 export const ModuleInterceptorServiceLayer = Layer.effect(
 	IModuleInterceptorService,
+
 	Effect.sync(() => new ModuleInterceptorService()),
 );
 
@@ -776,6 +911,7 @@ export const ModuleInterceptorServiceLayer = Layer.effect(
  */
 export const ModuleInterceptorServiceLive = Layer.effect(
 	IModuleInterceptorService,
+
 	Effect.sync(() => new ModuleInterceptorService()),
 );
 

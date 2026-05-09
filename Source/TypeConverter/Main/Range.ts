@@ -29,5 +29,6 @@ export const FromAPI = (RangeInstance: VSCodeRange): IRange => ({
 export const ToAPI = (RangeDTO: IRange): VSCodeRange =>
 	new Range(
 		new Position(RangeDTO.startLineNumber - 1, RangeDTO.startColumn - 1),
+
 		new Position(RangeDTO.endLineNumber - 1, RangeDTO.endColumn - 1),
 	);

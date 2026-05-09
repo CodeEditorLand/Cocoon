@@ -14,100 +14,148 @@
 
 interface SynchronizationConfig {
 	host: string;
+
 	port: number;
+
 	secure: boolean;
+
 	timeout: number;
+
 	retryAttempts: number;
 }
 
 interface SyncStatus {
 	totalDocuments: number;
+
 	syncedDocuments: number;
+
 	conflictedDocuments: number;
+
 	offlineDocuments: number;
+
 	lastSyncDurationMs: number;
 }
 
 interface SynchronizedDocument {
 	documentId: string;
+
 	filePath: string;
+
 	lastModified: number;
+
 	contentHash: string;
+
 	syncState: SyncState;
+
 	version: number;
 }
 
 enum SyncState {
 	Modified = "modified",
+
 	Synced = "synced",
+
 	Conflicted = "conflicted",
+
 	Offline = "offline",
 }
 
 interface DocumentChange {
 	changeId: string;
+
 	documentId: string;
+
 	changeType: ChangeType;
+
 	content?: string;
+
 	applied: boolean;
 }
 
 enum ChangeType {
 	Update = "update",
+
 	Insert = "insert",
+
 	Delete = "delete",
+
 	Move = "move",
+
 	Other = "other",
 }
 
 interface RealTimeUpdate {
 	target: string;
+
 	data: string;
 }
 
 interface PerformanceMetrics {
 	connectionTime: number;
+
 	syncTime: number;
+
 	messageLatency: number;
+
 	throughput: number;
+
 	errorRate: number;
+
 	successRate: number;
+
 	resourceUsage: {
 		memory: number;
+
 		cpu: number;
+
 		network: number;
 	};
 }
 
 export class SynchronizationService {
 	private isConnected: boolean = false;
+
 	private config: SynchronizationConfig;
+
 	private retryCount: number = 0;
+
 	private connectionTimeout?: NodeJS.Timeout;
 
 	// Document synchronization state
 	private synchronizedDocuments: Map<string, SynchronizedDocument> =
 		new Map();
+
 	private pendingChanges: Map<string, DocumentChange[]> = new Map();
+
 	private lastSyncTime: number = 0;
 
 	// Real-time communication
 	private realTimeSubscribers: Set<(update: RealTimeUpdate) => void> =
 		new Set();
+
 	private updateQueue: RealTimeUpdate[] = [];
+
 	private lastBroadcast: number = 0;
 
 	// Performance monitoring
 	private performanceMetrics: PerformanceMetrics = {
 		connectionTime: 0,
+
 		syncTime: 0,
+
 		messageLatency: 0,
+
 		throughput: 0,
+
 		errorRate: 0,
+
 		successRate: 0,
+
 		resourceUsage: {
 			memory: 0,
+
 			cpu: 0,
+
 			network: 0,
 		},
 	};
@@ -115,17 +163,24 @@ export class SynchronizationService {
 	// Error tracking
 	private errorStats = {
 		connectionErrors: 0,
+
 		syncErrors: 0,
+
 		realTimeErrors: 0,
+
 		lastErrorTime: 0,
 	};
 
 	constructor(config?: Partial<SynchronizationConfig>) {
 		this.config = {
 			host: "localhost",
+
 			port: 50051,
+
 			secure: false,
+
 			timeout: 30000,
+
 			retryAttempts: 5,
 			...config,
 		};
@@ -160,16 +215,22 @@ export class SynchronizationService {
 	 */
 	private _setupAdvancedErrorTracking(): void {
 		const errorWindow: Error[] = [];
+
 		const maxErrorWindow = 100;
 
 		this._analyzeErrorPatterns = (): {
 			errorRate: number;
+
 			errorTypes: Record<string, number>;
+
 			recoverySuggestion: string;
+
 			circuitBreakerState: "closed" | "open" | "half-open";
+
 			recommendedAction: string;
 		} => {
 			const errorRate = errorWindow.length / maxErrorWindow;
+
 			const errorTypes: Record<string, number> = {};
 
 			errorWindow.forEach((error) => {
@@ -184,33 +245,44 @@ export class SynchronizationService {
 			});
 
 			let circuitBreakerState: "closed" | "open" | "half-open" = "closed";
+
 			let recoverySuggestion = "Check Mountain backend availability";
+
 			let recommendedAction = "Continue normal operation";
 
 			if (errorRate > 0.8) {
 				circuitBreakerState = "open";
+
 				recoverySuggestion =
 					"High error rate detected - circuit breaker opened";
+
 				recommendedAction =
 					"Wait for automatic recovery or check backend status";
 			} else if (errorRate > 0.5) {
 				circuitBreakerState = "half-open";
+
 				recoverySuggestion =
 					"Moderate error rate - circuit breaker in half-open state";
+
 				recommendedAction = "Proceed with caution, monitor error rates";
 			}
 
 			return {
 				errorRate,
+
 				errorTypes,
+
 				recoverySuggestion,
+
 				circuitBreakerState,
+
 				recommendedAction,
 			};
 		};
 
 		this._addErrorToWindow = (error: Error): void => {
 			errorWindow.push(error);
+
 			if (errorWindow.length > maxErrorWindow) {
 				errorWindow.shift();
 			}
@@ -225,33 +297,39 @@ export class SynchronizationService {
 	private _initializePerformanceMonitoring(): void {
 		this._trackConnectionPerformance = (startTime: number): void => {
 			const connectionTime = performance.now() - startTime;
+
 			this.performanceMetrics.connectionTime = connectionTime;
 
 			if (connectionTime > 5000) {
 				console.warn(
 					`[SynchronizationService] Slow connection: ${connectionTime.toFixed(0)}ms`,
 				);
+
 				this._degradePerformanceForHighLatency();
 			}
 		};
 
 		this._trackMessageLatency = (
 			messageId: string,
+
 			startTime: number,
 		): void => {
 			const latency = performance.now() - startTime;
+
 			this.performanceMetrics.messageLatency = latency;
 
 			if (latency > 1000) {
 				console.warn(
 					`[SynchronizationService] High message latency: ${latency.toFixed(0)}ms`,
 				);
+
 				this._prioritizeCriticalMessages();
 			}
 		};
 
 		this._calculateThroughput = (
 			messageCount: number,
+
 			timeWindow: number,
 		): void => {
 			this.performanceMetrics.throughput =
@@ -261,6 +339,7 @@ export class SynchronizationService {
 				console.warn(
 					`[SynchronizationService] Low throughput: ${this.performanceMetrics.throughput.toFixed(2)} msg/s`,
 				);
+
 				this._optimizeThroughput();
 			}
 		};
@@ -274,6 +353,7 @@ export class SynchronizationService {
 
 			this.performanceMetrics.resourceUsage = {
 				memory: memoryUsage,
+
 				cpu: 0, // TODO: Implement CPU monitoring
 				network: 0, // TODO: Implement network monitoring
 			};
@@ -293,10 +373,12 @@ export class SynchronizationService {
 			}
 
 			const errorAnalysis = this._analyzeErrorPatterns!();
+
 			if (errorAnalysis.errorRate > 0.8) {
 				console.warn(
 					"[SynchronizationService] High error rate - delaying reconnection",
 				);
+
 				return false;
 			}
 
@@ -305,7 +387,9 @@ export class SynchronizationService {
 
 		this._calculateReconnectionDelay = (attempt: number): number => {
 			const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
+
 			const jitter = Math.random() * 1000;
+
 			return baseDelay + jitter;
 		};
 	}
@@ -313,21 +397,32 @@ export class SynchronizationService {
 	// Type declarations for advanced methods
 	private _analyzeErrorPatterns?: () => {
 		errorRate: number;
+
 		errorTypes: Record<string, number>;
+
 		recoverySuggestion: string;
 	};
+
 	private _addErrorToWindow?: (error: Error) => void;
+
 	private _trackConnectionPerformance?: (startTime: number) => void;
+
 	private _trackMessageLatency?: (
 		messageId: string,
+
 		startTime: number,
 	) => void;
+
 	private _calculateThroughput?: (
 		messageCount: number,
+
 		timeWindow: number,
 	) => void;
+
 	private _monitorResourceUsage?: () => void;
+
 	private _shouldAttemptReconnection?: () => boolean;
+
 	private _calculateReconnectionDelay?: (attempt: number) => number;
 
 	/**
@@ -338,7 +433,9 @@ export class SynchronizationService {
 
 		try {
 			await this.connect();
+
 			this.setupConnectionMonitoring();
+
 			this.startBackgroundSync();
 
 			console.log(
@@ -347,8 +444,10 @@ export class SynchronizationService {
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] [ERROR] Service initialization failed:",
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -363,6 +462,7 @@ export class SynchronizationService {
 
 		if (this.isConnected) {
 			console.log("[SynchronizationService] Already connected");
+
 			return;
 		}
 
@@ -370,6 +470,7 @@ export class SynchronizationService {
 			await this.attemptConnectionWithRetry();
 
 			this.isConnected = true;
+
 			this.retryCount = 0;
 
 			console.log(
@@ -384,9 +485,12 @@ export class SynchronizationService {
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] [ERROR] Failed to connect to Mountain backend:",
+
 				error,
 			);
+
 			this.isConnected = false;
+
 			throw error;
 		}
 	}
@@ -408,10 +512,12 @@ export class SynchronizationService {
 				console.log(
 					`[SynchronizationService] [OK] Connection attempt ${attempt} successful`,
 				);
+
 				return;
 			} catch (error) {
 				console.warn(
 					`[SynchronizationService] [ERROR] Connection attempt ${attempt} failed:`,
+
 					error,
 				);
 
@@ -421,8 +527,10 @@ export class SynchronizationService {
 
 				const backoffTime = Math.min(
 					1000 * Math.pow(2, attempt - 1),
+
 					30000,
 				);
+
 				console.log(
 					`[SynchronizationService] Retrying in ${backoffTime}ms...`,
 				);
@@ -449,25 +557,34 @@ export class SynchronizationService {
 			// Perform connection via Tauri IPC
 			const result = await invoke<{
 				connected: boolean;
+
 				version: string;
+
 				features: string[];
 			}>("mountain_ipc_connect", {
 				host: this.config.host,
+
 				port: this.config.port,
+
 				secure: this.config.secure,
+
 				timeout: this.config.timeout,
 			});
 
 			console.log(
 				"[SynchronizationService] [OK] Connected to Mountain:",
+
 				result,
 			);
+
 			return;
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] Connection to Mountain failed:",
+
 				error,
 			);
+
 			throw new Error(
 				`Failed to connect to Mountain: ${error instanceof Error ? error.message : String(error)}`,
 			);
@@ -488,6 +605,7 @@ export class SynchronizationService {
 				this.performHealthCheck().catch((error) => {
 					console.warn(
 						"[SynchronizationService] Health check failed:",
+
 						error,
 					);
 				});
@@ -534,11 +652,14 @@ export class SynchronizationService {
 			console.warn(
 				"[SynchronizationService] Cannot synchronize - not connected",
 			);
+
 			return;
 		}
 
 		const startTime = performance.now();
+
 		let successCount = 0;
+
 		let errorCount = 0;
 
 		try {
@@ -551,13 +672,17 @@ export class SynchronizationService {
 			for (const change of changes) {
 				try {
 					await this.applyDocumentChange(change);
+
 					successCount++;
 				} catch (error) {
 					errorCount++;
+
 					console.error(
 						"[SynchronizationService] Failed to apply document change:",
+
 						error,
 					);
+
 					this._addErrorToWindow?.(error as Error);
 				}
 			}
@@ -566,14 +691,17 @@ export class SynchronizationService {
 			this.updateSyncStatus();
 
 			const syncDuration = performance.now() - startTime;
+
 			console.log(
 				`[SynchronizationService] [OK] Document sync completed: ${successCount} success, ${errorCount} errors, ${syncDuration.toFixed(2)}ms`,
 			);
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] [ERROR] Document synchronization failed:",
+
 				error,
 			);
+
 			this._addErrorToWindow?.(error as Error);
 		}
 	}
@@ -583,11 +711,13 @@ export class SynchronizationService {
 	 */
 	private getPendingChanges(): DocumentChange[] {
 		const changes: DocumentChange[] = [];
+
 		this.pendingChanges.forEach((documentChanges) => {
 			changes.push(
 				...documentChanges.filter((change) => !change.applied),
 			);
 		});
+
 		return changes;
 	}
 
@@ -606,6 +736,7 @@ export class SynchronizationService {
 			console.warn(
 				`[SynchronizationService] Conflict detected for change: ${change.changeId}`,
 			);
+
 			throw new Error(
 				`Conflict detected for document: ${change.documentId}`,
 			);
@@ -629,14 +760,17 @@ export class SynchronizationService {
 			this.markChangeAsApplied(change.changeId);
 
 			const duration = performance.now() - startTime;
+
 			console.log(
 				`[SynchronizationService] [OK] Change applied successfully in ${duration.toFixed(2)}ms: ${change.changeId}`,
 			);
 		} catch (error) {
 			console.error(
 				`[SynchronizationService] [ERROR] Failed to apply change: ${change.changeId}`,
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -672,8 +806,10 @@ export class SynchronizationService {
 			const changeIndex = changes.findIndex(
 				(change) => change.changeId === changeId,
 			);
+
 			if (changeIndex !== -1) {
 				changes[changeIndex].applied = true;
+
 				break;
 			}
 		}
@@ -684,12 +820,15 @@ export class SynchronizationService {
 	 */
 	private updateSyncStatus(): void {
 		const totalDocuments = this.synchronizedDocuments.size;
+
 		const syncedDocuments = Array.from(
 			this.synchronizedDocuments.values(),
 		).filter((doc) => doc.syncState === SyncState.Synced).length;
+
 		const conflictedDocuments = Array.from(
 			this.synchronizedDocuments.values(),
 		).filter((doc) => doc.syncState === SyncState.Conflicted).length;
+
 		const offlineDocuments = Array.from(
 			this.synchronizedDocuments.values(),
 		).filter((doc) => doc.syncState === SyncState.Offline).length;
@@ -718,6 +857,7 @@ export class SynchronizationService {
 		}
 
 		const updates = [...this.updateQueue];
+
 		this.updateQueue = [];
 
 		try {
@@ -728,6 +868,7 @@ export class SynchronizationService {
 					} catch (error) {
 						console.error(
 							"[SynchronizationService] Error in subscriber callback:",
+
 							error,
 						);
 					}
@@ -738,8 +879,10 @@ export class SynchronizationService {
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] [ERROR] Failed to broadcast updates:",
+
 				error,
 			);
+
 			this._addErrorToWindow?.(error as Error);
 		}
 	}
@@ -772,10 +915,15 @@ export class SynchronizationService {
 
 		const document: SynchronizedDocument = {
 			documentId,
+
 			filePath,
+
 			lastModified: Date.now(),
+
 			contentHash: "",
+
 			syncState: SyncState.Synced,
+
 			version: 1,
 		};
 
@@ -794,6 +942,7 @@ export class SynchronizationService {
 	): Promise<void> {
 		const fullChange: DocumentChange = {
 			...change,
+
 			applied: false,
 		};
 
@@ -813,21 +962,28 @@ export class SynchronizationService {
 	 */
 	getSyncStatus(): SyncStatus {
 		const totalDocuments = this.synchronizedDocuments.size;
+
 		const syncedDocuments = Array.from(
 			this.synchronizedDocuments.values(),
 		).filter((doc) => doc.syncState === SyncState.Synced).length;
+
 		const conflictedDocuments = Array.from(
 			this.synchronizedDocuments.values(),
 		).filter((doc) => doc.syncState === SyncState.Conflicted).length;
+
 		const offlineDocuments = Array.from(
 			this.synchronizedDocuments.values(),
 		).filter((doc) => doc.syncState === SyncState.Offline).length;
 
 		return {
 			totalDocuments,
+
 			syncedDocuments,
+
 			conflictedDocuments,
+
 			offlineDocuments,
+
 			lastSyncDurationMs: 0, // TODO: Track actual sync duration
 		};
 	}
@@ -849,6 +1005,7 @@ export class SynchronizationService {
 
 			if (!result.healthy) {
 				console.warn("[SynchronizationService] Health check failed");
+
 				this.isConnected = false;
 
 				// Attempt reconnection
@@ -856,6 +1013,7 @@ export class SynchronizationService {
 					this.connect().catch((error) => {
 						console.error(
 							"[SynchronizationService] Reconnection failed:",
+
 							error,
 						);
 					});
@@ -866,9 +1024,12 @@ export class SynchronizationService {
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] Health check error:",
+
 				error,
 			);
+
 			this.isConnected = false;
+
 			return false;
 		}
 	}
@@ -881,6 +1042,7 @@ export class SynchronizationService {
 
 		if (!this.isConnected) {
 			console.log("[SynchronizationService] Already disconnected");
+
 			return;
 		}
 
@@ -903,9 +1065,12 @@ export class SynchronizationService {
 		} catch (error) {
 			console.error(
 				"[SynchronizationService] [ERROR] Error during disconnect:",
+
 				error,
 			);
+
 			this.isConnected = false;
+
 			throw error;
 		}
 	}
@@ -915,12 +1080,16 @@ export class SynchronizationService {
 	 */
 	getConnectionStatus(): {
 		connected: boolean;
+
 		retryCount: number;
+
 		lastError?: string;
 	} {
 		return {
 			connected: this.isConnected,
+
 			retryCount: this.retryCount,
+
 			lastError: this.isConnected ? undefined : "Disconnected",
 		};
 	}
@@ -936,6 +1105,7 @@ export class SynchronizationService {
 
 		// Clear synchronization state
 		this.synchronizedDocuments.clear();
+
 		this.pendingChanges.clear();
 
 		// Clear timeout
@@ -951,6 +1121,7 @@ export class SynchronizationService {
 		console.log(
 			"[SynchronizationService] Degrading performance for high latency...",
 		);
+
 		// TODO: Implement graceful performance degradation
 	}
 
@@ -958,11 +1129,13 @@ export class SynchronizationService {
 		console.log(
 			"[SynchronizationService] Prioritizing critical messages...",
 		);
+
 		// TODO: Implement message prioritization queue
 	}
 
 	private _optimizeThroughput(): void {
 		console.log("[SynchronizationService] Optimizing throughput...");
+
 		// TODO: Implement throughput optimization strategies
 	}
 }

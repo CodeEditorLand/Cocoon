@@ -16,8 +16,11 @@ import { Effect, PubSub } from "effect";
  */
 export interface EventStream<T> {
 	readonly Fire: (Data: T) => Effect.Effect<void, never>;
+
 	readonly PubSub: PubSub.PubSub<T>;
+
 	readonly event: Event<T>;
+
 	readonly Shutdown: () => Effect.Effect<void, never>;
 }
 
@@ -27,24 +30,30 @@ export interface EventStream<T> {
  */
 export const CreateEventStream = <T>(): EventStream<T> => {
 	const VSCodeEmitter = new Emitter<T>();
+
 	const PubSubInstance = Effect.runSync(PubSub.unbounded<T>());
 
 	const Fire = (Data: T): Effect.Effect<void, never> =>
 		PubSub.publish(PubSubInstance, Data).pipe(
 			Effect.andThen(Effect.sync(() => VSCodeEmitter.fire(Data))),
+
 			Effect.asVoid,
 		);
 
 	const Shutdown = (): Effect.Effect<void, never> =>
 		Effect.all([
 			PubSub.shutdown(PubSubInstance),
+
 			Effect.sync(() => VSCodeEmitter.dispose()),
 		]).pipe(Effect.asVoid);
 
 	return {
 		Fire,
+
 		PubSub: PubSubInstance,
+
 		event: VSCodeEmitter.event,
+
 		Shutdown,
 	};
 };

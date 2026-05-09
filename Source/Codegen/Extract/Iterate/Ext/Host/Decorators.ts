@@ -25,21 +25,29 @@ import { IsExtHostFile } from "../../../Is/Ext/Host/File.js";
 
 const MainThreadCounterpartName = (decoratorName: string): string | null => {
 	if (!decoratorName.startsWith("IExtHost")) return null;
+
 	const Suffix = decoratorName.slice("IExtHost".length);
+
 	return `MainThread${Suffix}Shape`;
 };
 
 const FindInterfaceDocComment = (
 	source: string,
+
 	interfaceName: string,
 ): string | null => {
 	const Pattern = new RegExp(
 		`((?:\\s*\\/\\*\\*[\\s\\S]*?\\*\\/\\s*)*)(?:export\\s+)?interface\\s+${interfaceName}\\b`,
 	);
+
 	const Match = Pattern.exec(source);
+
 	if (!Match) return null;
+
 	const DocBlock = /\/\*\*([\s\S]*?)\*\//.exec(Match[1] ?? "");
+
 	if (!DocBlock) return null;
+
 	return (DocBlock[1] ?? "")
 		.split(/\r?\n/)
 		.map((line) =>
@@ -57,36 +65,53 @@ export const IterateExtHostDecorators = async function* (
 ): AsyncIterableIterator<ExtHostDecoratorRecord> {
 	for await (const File of files) {
 		if (!IsExtHostFile(File.SourcePath)) continue;
+
 		const Matches = ExtractDecoratorMatches(File.Contents);
+
 		if (Matches.length === 0) continue;
+
 		for (const Match of Matches) {
 			let Members = ExtractInterfaceMembers(
 				File.Contents,
+
 				Match.InterfaceName,
 			);
+
 			let InterfaceDoc = FindInterfaceDocComment(
 				File.Contents,
+
 				Match.InterfaceName,
 			);
+
 			if (Members.length === 0) {
 				const CrossFile = await ResolveInterfaceCrossFile({
 					InterfaceName: Match.InterfaceName,
 					DecoratorFilePath: File.AbsolutePath,
 					DecoratorFileContents: File.Contents,
 				});
+
 				if (CrossFile) {
 					Members = CrossFile.Members;
 				}
 			}
+
 			yield {
 				DecoratorName: Match.DecoratorName,
+
 				DecoratorTag: Match.DecoratorTag,
+
 				InterfaceName: Match.InterfaceName,
+
 				SourcePath: File.SourcePath,
+
 				SourceLine: Match.SourceLine,
+
 				Members,
+
 				DecoratorDocComment: Match.DocComment,
+
 				InterfaceDocComment: InterfaceDoc,
+
 				MainThreadCounterpart: MainThreadCounterpartName(
 					Match.DecoratorName,
 				),

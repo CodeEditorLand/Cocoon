@@ -15,16 +15,21 @@
 
 const ExtHostPathSegments: ReadonlyArray<string> = [
 	"vs/workbench/api/common/extHost",
+
 	"vs/workbench/api/browser/extHost",
+
 	"vs/workbench/api/worker/extHost",
+
 	"vs/workbench/api/electron-browser/extHost",
 ];
 
 export const IsExtHostFile = (sourcePath: string): boolean => {
 	const Normalised = sourcePath.replace(/\\/g, "/");
+
 	for (const Segment of ExtHostPathSegments) {
 		if (Normalised.includes(Segment)) return true;
 	}
+
 	return false;
 };
 

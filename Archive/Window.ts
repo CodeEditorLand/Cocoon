@@ -44,11 +44,16 @@ import { WorkspaceService } from "./Workspace.js";
  */
 export interface Window {
 	readonly state: WindowState;
+
 	readonly onDidChangeWindowState: Event<WindowState>;
+
 	readonly activeTextEditor: TextEditor | undefined;
+
 	readonly ShowTextDocument: (
 		documentOrUri: Uri | TextDocument,
+
 		columnOrOptions?: ViewColumn | TextDocumentShowOptions,
+
 		preserveFocus?: boolean,
 	) => Effect.Effect<TextEditor, Error>;
 }
@@ -59,6 +64,7 @@ export interface Window {
  */
 export class WindowService extends Effect.Service<WindowService>()(
 	"Service/Window",
+
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -80,13 +86,16 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 			IPC.RegisterInvokeHandler(
 				"$acceptWindowStateChanged",
+
 				([IsFocused]) =>
 					Effect.runPromise(AcceptWindowStateChanged(IsFocused)),
 			);
 
 			const ShowTextDocument = (
 				documentOrUri: Uri | TextDocument,
+
 				columnOrOptions?: ViewColumn | TextDocumentShowOptions,
+
 				preserveFocus?: boolean,
 			): Effect.Effect<TextEditor, Error> =>
 				Effect.gen(function* () {
@@ -114,6 +123,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 					const EditorId = yield* IPC.SendRequest<string>(
 						"$showTextDocument",
+
 						[TheUri.toJSON(), ViewColumnDTO, OptionsDTO],
 					);
 

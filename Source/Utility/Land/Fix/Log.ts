@@ -33,8 +33,11 @@
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 const Mode = process.env["Mend"] ?? "short";
+
 const Enabled = Mode !== "off";
+
 const Long = Mode === "long";
+
 const DebugEnabled = Long;
 
 const AllowList: ReadonlySet<string> | undefined = (() => {
@@ -54,7 +57,9 @@ const PadThree = (Value: number): string =>
 
 const FormatTimestamp = (): string => {
 	const Now = new Date();
+
 	if (Long) return Now.toISOString();
+
 	return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
 		Now.getSeconds(),
 	)}.${PadThree(Now.getMilliseconds())}`;
@@ -64,6 +69,7 @@ const SerializeContext = (
 	Context: Readonly<Record<string, unknown>>,
 ): string => {
 	const Seen = new WeakSet<object>();
+
 	try {
 		return JSON.stringify(Context, (_Key, Value: unknown) => {
 			if (Value instanceof Error) {
@@ -87,24 +93,35 @@ const LevelTag = (Level: LogLevel): string =>
 
 const FormatLine = (
 	Level: LogLevel,
+
 	Tag: string,
+
 	Message: string,
+
 	Context: Readonly<Record<string, unknown>> | undefined,
 ): string => {
 	const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+
 	if (!Context) return `${Head}\n`;
+
 	return `${Head} ${SerializeContext(Context)}\n`;
 };
 
 const Emit = (
 	Stream: NodeJS.WriteStream,
+
 	Level: LogLevel,
+
 	Tag: string,
+
 	Message: string,
+
 	Context: Readonly<Record<string, unknown>> | undefined,
 ): void => {
 	if (!Enabled) return;
+
 	if (AllowList && !AllowList.has(Tag)) return;
+
 	try {
 		Stream.write(FormatLine(Level, Tag, Message, Context));
 	} catch {
@@ -115,7 +132,9 @@ const Emit = (
 
 const Info = (
 	Tag: string,
+
 	Message: string,
+
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
 	Emit(process.stdout, "info", Tag, Message, Context);
@@ -123,7 +142,9 @@ const Info = (
 
 const Warn = (
 	Tag: string,
+
 	Message: string,
+
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
 	Emit(process.stdout, "warn", Tag, Message, Context);
@@ -131,7 +152,9 @@ const Warn = (
 
 const ErrorLog = (
 	Tag: string,
+
 	Message: string,
+
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
 	Emit(process.stderr, "error", Tag, Message, Context);
@@ -139,10 +162,13 @@ const ErrorLog = (
 
 const Debug = (
 	Tag: string,
+
 	Message: string,
+
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
 	if (!DebugEnabled) return;
+
 	Emit(process.stdout, "debug", Tag, Message, Context);
 };
 
@@ -153,38 +179,59 @@ const SeenOnce = new Set<string>();
 
 const DebugOnce = (
 	Tag: string,
+
 	Key: string,
+
 	Message: string,
+
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
 	if (!DebugEnabled) return;
+
 	const Combined = `${Tag}:${Key}`;
+
 	if (SeenOnce.has(Combined)) return;
+
 	SeenOnce.add(Combined);
+
 	Emit(process.stdout, "debug", Tag, Message, Context);
 };
 
 const InfoOnce = (
 	Tag: string,
+
 	Key: string,
+
 	Message: string,
+
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
 	const Combined = `${Tag}:${Key}`;
+
 	if (SeenOnce.has(Combined)) return;
+
 	SeenOnce.add(Combined);
+
 	Emit(process.stdout, "info", Tag, Message, Context);
 };
 
 const LandFixLog = {
 	Info,
+
 	InfoOnce,
+
 	Warn,
+
 	Error: ErrorLog,
+
 	Debug,
+
 	DebugOnce,
+
 	IsEnabled: (): boolean => Enabled,
+
 	IsDebugEnabled: (): boolean => DebugEnabled,
+
 	Mode: (): "off" | "short" | "long" =>
 		Mode === "off" ? "off" : Long ? "long" : "short",
 } as const;

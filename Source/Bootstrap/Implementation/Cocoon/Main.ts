@@ -35,21 +35,37 @@ type PostHogBridgeModule =
 // JSON-encoded value via the `define` map in Configuration/ESBuild.
 // ============================================================================
 declare const __LandTier_RemoteProcedureCall__: string;
+
 declare const __LandTier_HTTPProxy__: string;
+
 declare const __LandTier_Logger__: string;
+
 declare const __LandTier_FileSystem__: string;
+
 declare const __LandTier_FindFiles__: string;
+
 declare const __LandTier_Glob__: string;
+
 declare const __LandTier_FileWatcher__: string;
+
 declare const __LandTier_SchemeAssets__: string;
+
 declare const __LandTier_Configuration__: string;
+
 declare const __LandTier_Diagnostics__: string;
+
 declare const __LandTier_Clipboard__: string;
+
 declare const __LandTier_OpenExternal__: string;
+
 declare const __LandTier_DocumentMirror__: string;
+
 declare const __LandTier_ExtensionActivation__: string;
+
 declare const __LandTier_ExtensionScan__: string;
+
 declare const __LandTier_ModuleCache__: string;
+
 declare const __LandTier_Telemetry__: string;
 
 (globalThis as { __LandTiers?: Record<string, string> }).__LandTiers = {
@@ -57,66 +73,82 @@ declare const __LandTier_Telemetry__: string;
 		typeof __LandTier_RemoteProcedureCall__ === "string"
 			? __LandTier_RemoteProcedureCall__
 			: (process.env["TierRemoteProcedureCall"] ?? "GRPC"),
+
 	HTTPProxy:
 		typeof __LandTier_HTTPProxy__ === "string"
 			? __LandTier_HTTPProxy__
 			: (process.env["TierHTTPProxy"] ?? "HandRolled"),
+
 	Logger:
 		typeof __LandTier_Logger__ === "string"
 			? __LandTier_Logger__
 			: (process.env["TierLogger"] ?? "Standard"),
+
 	FileSystem:
 		typeof __LandTier_FileSystem__ === "string"
 			? __LandTier_FileSystem__
 			: (process.env["TierFileSystem"] ?? "Layer2"),
+
 	FindFiles:
 		typeof __LandTier_FindFiles__ === "string"
 			? __LandTier_FindFiles__
 			: (process.env["TierFindFiles"] ?? "Layer3"),
+
 	Glob:
 		typeof __LandTier_Glob__ === "string"
 			? __LandTier_Glob__
 			: (process.env["TierGlob"] ?? "JavaScript"),
+
 	FileWatcher:
 		typeof __LandTier_FileWatcher__ === "string"
 			? __LandTier_FileWatcher__
 			: (process.env["TierFileWatcher"] ?? "Layer4"),
+
 	SchemeAssets:
 		typeof __LandTier_SchemeAssets__ === "string"
 			? __LandTier_SchemeAssets__
 			: (process.env["TierSchemeAssets"] ?? "Embedded"),
+
 	Configuration:
 		typeof __LandTier_Configuration__ === "string"
 			? __LandTier_Configuration__
 			: (process.env["TierConfiguration"] ?? "Cache"),
+
 	Diagnostics:
 		typeof __LandTier_Diagnostics__ === "string"
 			? __LandTier_Diagnostics__
 			: (process.env["TierDiagnostics"] ?? "Full"),
+
 	Clipboard:
 		typeof __LandTier_Clipboard__ === "string"
 			? __LandTier_Clipboard__
 			: (process.env["TierClipboard"] ?? "Layer3"),
+
 	OpenExternal:
 		typeof __LandTier_OpenExternal__ === "string"
 			? __LandTier_OpenExternal__
 			: (process.env["TierOpenExternal"] ?? "Layer3"),
+
 	DocumentMirror:
 		typeof __LandTier_DocumentMirror__ === "string"
 			? __LandTier_DocumentMirror__
 			: (process.env["TierDocumentMirror"] ?? "Full"),
+
 	ExtensionActivation:
 		typeof __LandTier_ExtensionActivation__ === "string"
 			? __LandTier_ExtensionActivation__
 			: (process.env["TierExtensionActivation"] ?? "Parallel8"),
+
 	ExtensionScan:
 		typeof __LandTier_ExtensionScan__ === "string"
 			? __LandTier_ExtensionScan__
 			: (process.env["TierExtensionScan"] ?? "Sequential"),
+
 	ModuleCache:
 		typeof __LandTier_ModuleCache__ === "string"
 			? __LandTier_ModuleCache__
 			: (process.env["TierModuleCache"] ?? "Simple"),
+
 	Telemetry:
 		typeof __LandTier_Telemetry__ === "string"
 			? __LandTier_Telemetry__
@@ -132,8 +164,11 @@ declare const __LandTier_Telemetry__: string;
 if (process.env["NODE_ENV"] !== "production") {
 	const PostHogBridge: PostHogBridgeModule =
 		await import("../../../Telemetry/Post/Hog/Bridge.js");
+
 	PostHogBridge.default.Initialize();
+
 	const _CocoonEntryLoadMillis = Date.now();
+
 	PostHogBridge.default.CaptureEntryLoad("CocoonMain");
 
 	// `setImmediate` defers the loaded event one tick after CocoonMain's
@@ -145,6 +180,7 @@ if (process.env["NODE_ENV"] !== "production") {
 	setImmediate(() => {
 		PostHogBridge.default.CaptureEntryLoaded(
 			"CocoonMain",
+
 			Date.now() - _CocoonEntryLoadMillis,
 		);
 	});
@@ -164,6 +200,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 
 	telemetry.log(
 		"info",
+
 		"[CocoonMain] Starting Cocoon bootstrap with Effect-TS...",
 	);
 
@@ -176,6 +213,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 		// connection (Stage 3) failed temporarily.
 		telemetry.log(
 			"warn",
+
 			"[CocoonMain] Bootstrap partially failed (continuing in degraded mode)",
 		);
 		try {
@@ -187,6 +225,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 			if (!stage.success) {
 				telemetry.log(
 					"warn",
+
 					`[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`,
 				);
 				try {
@@ -201,11 +240,13 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 	if (result.success) {
 		telemetry.log(
 			"info",
+
 			"[CocoonMain] [OK] Bootstrap completed successfully",
 		);
 	}
 	telemetry.log(
 		"info",
+
 		`[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`,
 	);
 
@@ -223,6 +264,7 @@ const mapUnknownToError = (error: unknown): Error => {
 	if (error instanceof Error) {
 		return error;
 	}
+
 	return new Error(String(error));
 };
 
@@ -236,21 +278,25 @@ const mainEffectWithServices = bootstrapCocoonEffect.pipe(
 			const mappedError = mapUnknownToError(error);
 			telemetry.log(
 				"error",
+
 				`[CocoonMain] Fatal error: ${mappedError.message}`,
 			);
 			if (mappedError.stack) {
 				telemetry.log(
 					"error",
+
 					`[CocoonMain] Error stack: ${mappedError.stack}`,
 				);
 			}
 		}),
 	),
+
 	Effect.ensuring(
 		Effect.gen(function* () {
 			const telemetry = yield* TelemetryTag;
 			telemetry.log(
 				"info",
+
 				"[CocoonMain] Cocoon extension host shutting down",
 			);
 		}),
@@ -262,6 +308,7 @@ const mainEffectWithServices = bootstrapCocoonEffect.pipe(
  */
 const mainEffect = mainEffectWithServices.pipe(
 	Effect.provide(EffectServices.composeAppLayer()),
+
 	Effect.scoped,
 );
 

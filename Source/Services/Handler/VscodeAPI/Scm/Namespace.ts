@@ -26,8 +26,10 @@ import WrapScmNamespace from "../Wrap/Scm/Namespace.js";
  */
 const ScmTraceEnabled =
 	typeof process !== "undefined" && typeof process.env["Trace"] === "string";
+
 const ScmTrace = (Message: string): void => {
 	if (!ScmTraceEnabled) return;
+
 	try {
 		process.stdout.write(`[DEV:SCM-TRACE] ${Message}\n`);
 	} catch {}
@@ -47,41 +49,61 @@ const ScmTrace = (Message: string): void => {
  */
 const SanitizeResourceState = (Raw: unknown): unknown => {
 	if (Raw == null || typeof Raw !== "object") return Raw;
+
 	const Source = Raw as Record<string, unknown>;
+
 	const Out: Record<string, unknown> = {};
+
 	if (Source["resourceUri"] !== undefined)
 		Out["resourceUri"] = Source["resourceUri"];
+
 	const Command = Source["command"];
+
 	if (Command && typeof Command === "object") {
 		const C = Command as Record<string, unknown>;
+
 		// Strip Command.arguments - that's the most common cycle root
 		// (extension stuffs the Repository instance there). Title/id
 		// pass through; the workbench resolves arguments by command id
 		// at execution time anyway.
 		Out["command"] = {
 			title: C["title"] ?? "",
+
 			command: C["command"] ?? "",
+
 			tooltip: C["tooltip"] ?? "",
 		};
 	}
+
 	const Decorations = Source["decorations"];
+
 	if (Decorations && typeof Decorations === "object") {
 		const D = Decorations as Record<string, unknown>;
+
 		const SafeDecorations: Record<string, unknown> = {};
+
 		for (const Key of [
 			"strikeThrough",
+
 			"faded",
+
 			"tooltip",
+
 			"iconPath",
+
 			"light",
+
 			"dark",
 		] as const) {
 			if (D[Key] !== undefined) SafeDecorations[Key] = D[Key];
 		}
+
 		Out["decorations"] = SafeDecorations;
 	}
+
 	if (Source["contextValue"] !== undefined)
 		Out["contextValue"] = Source["contextValue"];
+
 	return Out;
 };
 
@@ -141,6 +163,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 			// gRPC writer scheduling).
 			const ProviderReady = Context.SendToMountain(
 				"register_scm_provider",
+
 				{
 					handle: Handle,
 					id: Id,
@@ -189,6 +212,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				rootUri: RootUri,
 				inputBox: WrapNamespaceWithHeuristics(
 					`scm.sourceControl[${Id}].inputBox`,
+
 					{
 						value: "",
 						placeholder: "",
@@ -224,10 +248,13 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 					const State = { resourceStates: [] as unknown[] };
 					return {
 						id: GroupId,
+
 						label: GroupLabel,
+
 						get resourceStates() {
 							return State.resourceStates;
 						},
+
 						set resourceStates(Value: unknown[]) {
 							State.resourceStates = Value;
 							ScmTrace(
@@ -274,6 +301,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 							GroupReady.then(() =>
 								Context.SendToMountain(
 									"unregister_scm_resource_group",
+
 									{
 										scmHandle: Handle,
 										groupHandle: GroupHandle,
@@ -300,6 +328,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 			};
 			return WrapNamespaceWithHeuristics(
 				`scm.sourceControl[${Id}]`,
+
 				ConcreteSourceControl,
 			);
 		},

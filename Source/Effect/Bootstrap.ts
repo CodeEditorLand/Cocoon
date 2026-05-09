@@ -34,7 +34,9 @@ import { TelemetryTag, withSpan } from "./Telemetry.js";
  */
 const ProbeTcp = (
 	Host: string,
+
 	Port: number,
+
 	TimeoutMs: number,
 ): Effect.Effect<boolean, never> =>
 	Effect.async<boolean, never>((Resume) => {
@@ -71,22 +73,31 @@ const ProbeTcp = (
 
 export interface BootstrapOptions {
 	readonly debugMode?: boolean;
+
 	readonly verboseLogging?: boolean;
+
 	readonly enablePerformanceTracking?: boolean;
+
 	readonly skipHealthCheck?: boolean;
 }
 
 export interface StageResult {
 	readonly stageName: string;
+
 	readonly success: boolean;
+
 	readonly duration: number;
+
 	readonly error: Error | undefined;
 }
 
 export interface BootstrapResult {
 	readonly success: boolean;
+
 	readonly totalDuration: number;
+
 	readonly stages: ReadonlyArray<StageResult>;
+
 	readonly error: Error | undefined;
 }
 
@@ -111,16 +122,19 @@ export class BootstrapTag extends Context.Tag("Cocoon/Bootstrap")<
 
 const stage1_Environment = withSpan(
 	"stage1_environment",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const StageStart = Date.now();
 		CocoonDevLog(
 			"bootstrap-stage",
+
 			"[Bootstrap] stage=Environment event=start",
 		);
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 1: Detecting environment...",
 		);
 
@@ -130,11 +144,13 @@ const stage1_Environment = withSpan(
 
 		telemetry.log(
 			"info",
+
 			`[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform}/${arch}`,
 		);
 
 		CocoonDevLog(
 			"bootstrap-stage",
+
 			`[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform}/${arch} duration_ms=${Date.now() - StageStart}`,
 		);
 		return {
@@ -148,16 +164,19 @@ const stage1_Environment = withSpan(
 
 const stage2_Configuration = withSpan(
 	"stage2_configuration",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const StageStart = Date.now();
 		CocoonDevLog(
 			"bootstrap-stage",
+
 			"[Bootstrap] stage=Configuration event=start",
 		);
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 2: Loading configuration...",
 		);
 
@@ -172,6 +191,7 @@ const stage2_Configuration = withSpan(
 		//       so downstream stages / handlers can read without re-parsing.
 		const ParsePort = (
 			Raw: string | undefined,
+
 			Fallback: number,
 		): number => {
 			if (Raw === undefined) return Fallback;
@@ -197,12 +217,14 @@ const stage2_Configuration = withSpan(
 
 		LandFixLog.Info(
 			"Bootstrap",
+
 			`Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`,
 		);
 		telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
 
 		CocoonDevLog(
 			"bootstrap-stage",
+
 			`[Bootstrap] stage=Configuration event=ok mountain_port=${ResolvedConfig.MountainPort} cocoon_port=${ResolvedConfig.CocoonPort} node_env=${ResolvedConfig.NodeEnv} duration_ms=${Date.now() - StageStart}`,
 		);
 		return {
@@ -222,18 +244,23 @@ const stage2_Configuration = withSpan(
  * observed in every rebuild so far with generous headroom.
  */
 const MountainProbeTimeoutMs = 250;
+
 const MountainProbeMaxAttempts = 15;
+
 const MountainProbeDelayMs = 200;
+
 const MountainConnectMaxAttempts = 20;
 
 const stage3_MountainConnection = withSpan(
 	"stage3_mountain_connection",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const mountainClient = yield* MountainClientTag;
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 3: Connecting to Mountain...",
 		);
 
@@ -241,6 +268,7 @@ const stage3_MountainConnection = withSpan(
 		// Mountain sets MOUNTAIN_GRPC_PORT env var when spawning Cocoon.
 		const MountainPort = parseInt(
 			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+
 			10,
 		);
 		const MountainHost = "localhost";
@@ -255,12 +283,15 @@ const stage3_MountainConnection = withSpan(
 			ProbeAttempt++;
 			Listening = yield* ProbeTcp(
 				MountainHost,
+
 				MountainPort,
+
 				MountainProbeTimeoutMs,
 			);
 			if (Listening) {
 				LandFixLog.Info(
 					"Bootstrap",
+
 					`Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`,
 				);
 				break;
@@ -270,6 +301,7 @@ const stage3_MountainConnection = withSpan(
 		if (!Listening) {
 			LandFixLog.Warn(
 				"Bootstrap",
+
 				`Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`,
 			);
 		}
@@ -294,6 +326,7 @@ const stage3_MountainConnection = withSpan(
 							: String(Failure);
 					LandFixLog.Warn(
 						"Bootstrap",
+
 						`MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`,
 					);
 				}),
@@ -301,6 +334,7 @@ const stage3_MountainConnection = withSpan(
 			Effect.retry(
 				Schedule.exponential(Duration.millis(500)).pipe(
 					Schedule.union(Schedule.spaced(Duration.seconds(5))),
+
 					Schedule.intersect(
 						Schedule.recurs(MountainConnectMaxAttempts - 1),
 					),
@@ -314,10 +348,12 @@ const stage3_MountainConnection = withSpan(
 
 		LandFixLog.Info(
 			"Bootstrap",
+
 			`MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`,
 		);
 		telemetry.log(
 			"info",
+
 			`[Cocoon Bootstrap] Connected to Mountain (v${version})`,
 		);
 
@@ -332,12 +368,14 @@ const stage3_MountainConnection = withSpan(
 
 const stage4_ModuleInterceptor = withSpan(
 	"stage4_module_interceptor",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const moduleInterceptor = yield* ModuleInterceptorTag;
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 4: Setting up module interceptor...",
 		);
 
@@ -349,6 +387,7 @@ const stage4_ModuleInterceptor = withSpan(
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Module interceptor installed successfully",
 		);
 
@@ -363,12 +402,14 @@ const stage4_ModuleInterceptor = withSpan(
 
 const stage5_RPCServer = withSpan(
 	"stage5_rpc_server",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const rpcServer = yield* RPCServerTag;
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 5: Starting gRPC server...",
 		);
 
@@ -376,6 +417,7 @@ const stage5_RPCServer = withSpan(
 		// Port from env var (set by Mountain) or default 50052.
 		const CocoonPort = parseInt(
 			process.env["COCOON_GRPC_PORT"] || "50052",
+
 			10,
 		);
 		console.log(
@@ -399,12 +441,14 @@ const stage5_RPCServer = withSpan(
 
 const stage6_Extensions = withSpan(
 	"stage6_extensions",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const extension = yield* ExtensionTag;
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 6: Initializing extensions...",
 		);
 
@@ -412,6 +456,7 @@ const stage6_Extensions = withSpan(
 		const extensions = yield* extension.getAll;
 		telemetry.log(
 			"info",
+
 			`[Cocoon Bootstrap] Found ${extensions.length} extensions`,
 		);
 
@@ -426,9 +471,11 @@ const stage6_Extensions = withSpan(
 		);
 		const ActivationAttempts = yield* Effect.forEach(
 			EligibleExtensions,
+
 			(Ext) =>
 				extension.activate(Ext.id).pipe(
 					Effect.map(() => ({ Id: Ext.id, Ok: true as const })),
+
 					Effect.catchAll((Failure) => {
 						const Message =
 							Failure instanceof Error
@@ -436,6 +483,7 @@ const stage6_Extensions = withSpan(
 								: String(Failure);
 						telemetry.log(
 							"warn",
+
 							`[Cocoon Bootstrap] Extension ${Ext.id} activation failed: ${Message}`,
 						);
 						return Effect.succeed({
@@ -445,6 +493,7 @@ const stage6_Extensions = withSpan(
 						});
 					}),
 				),
+
 			{ concurrency: 8 },
 		);
 		const Successful = ActivationAttempts.filter((R) => R.Ok).length;
@@ -453,6 +502,7 @@ const stage6_Extensions = withSpan(
 		const activeCount = yield* extension.getActiveCount;
 		telemetry.log(
 			"info",
+
 			`[Cocoon Bootstrap] Activated ${activeCount} extensions (${Successful} this stage, ${FailedCount} failed)`,
 		);
 
@@ -467,12 +517,14 @@ const stage6_Extensions = withSpan(
 
 const stage7_HealthCheck = withSpan(
 	"stage7_healthcheck",
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const health = yield* HealthTag;
 
 		telemetry.log(
 			"info",
+
 			"[Cocoon Bootstrap] Stage 7: Running health checks...",
 		);
 
@@ -480,12 +532,14 @@ const stage7_HealthCheck = withSpan(
 
 		telemetry.log(
 			"info",
+
 			`[Cocoon Bootstrap] Health check result: ${systemHealth.overallStatus}`,
 		);
 
 		if (systemHealth.overallStatus === "unhealthy") {
 			telemetry.log(
 				"error",
+
 				"[Cocoon Bootstrap] Some services are unhealthy!",
 			);
 		}
@@ -514,18 +568,22 @@ const makeBootstrap = (): BootstrapService => ({
 
 			telemetry.log(
 				"info",
+
 				"[Cocoon Bootstrap] ===============================================",
 			);
 			telemetry.log(
 				"info",
+
 				"[Cocoon Bootstrap] Cocoon Extension Host Bootstrap",
 			);
 			telemetry.log(
 				"info",
+
 				`[Cocoon Bootstrap] Debug mode: ${debugMode}`,
 			);
 			telemetry.log(
 				"info",
+
 				"[Cocoon Bootstrap] ===============================================",
 			);
 
@@ -585,18 +643,22 @@ const makeBootstrap = (): BootstrapService => ({
 
 			telemetry.log(
 				"info",
+
 				"[Cocoon Bootstrap] ===============================================",
 			);
 			telemetry.log(
 				"info",
+
 				`[Cocoon Bootstrap] ${allSuccess ? "✓ Bootstrap completed successfully" : "✗ Bootstrap failed"}`,
 			);
 			telemetry.log(
 				"info",
+
 				`[Cocoon Bootstrap] Total duration: ${totalDuration}ms`,
 			);
 			telemetry.log(
 				"info",
+
 				"[Cocoon Bootstrap] ===============================================",
 			);
 
@@ -606,6 +668,7 @@ const makeBootstrap = (): BootstrapService => ({
 				for (const failed of failedStages) {
 					telemetry.log(
 						"error",
+
 						`[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`,
 					);
 				}
@@ -626,6 +689,7 @@ const makeBootstrap = (): BootstrapService => ({
 
 export const BootstrapLive = Layer.effect(
 	BootstrapTag,
+
 	Effect.succeed(makeBootstrap()),
 );
 
@@ -689,6 +753,7 @@ export const makeMockBootstrap = (): BootstrapService => ({
 
 export const BootstrapMock = Layer.effect(
 	BootstrapTag,
+
 	Effect.succeed(makeMockBootstrap()),
 );
 

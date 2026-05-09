@@ -19,8 +19,11 @@ export type ServerState =
 	| { readonly _tag: "Starting"; readonly startTime: number }
 	| {
 			readonly _tag: "Running";
+
 			readonly address: string;
+
 			readonly port: number;
+
 			readonly startedAt: number;
 	  }
 	| { readonly _tag: "Stopping" }
@@ -29,34 +32,51 @@ export type ServerState =
 
 export interface ServerConfig {
 	readonly host: string;
+
 	readonly port: number;
+
 	readonly maxConnections?: number;
+
 	readonly enableCompression?: boolean;
+
 	readonly enableTls?: boolean;
+
 	readonly tlsCertPath?: string;
+
 	readonly tlsKeyPath?: string;
 }
 
 export interface ServerMetrics {
 	readonly uptime: number;
+
 	readonly connections: number;
+
 	readonly requestsHandled: number;
+
 	readonly errors: number;
+
 	readonly averageLatency: number;
 }
 
 export interface RPCRequest {
 	readonly method: string;
+
 	readonly params: Readonly<Record<string, unknown>>;
+
 	readonly requestId: string;
+
 	readonly timestamp: number;
 }
 
 export interface RPCResponse {
 	readonly requestId: string;
+
 	readonly success: boolean;
+
 	readonly data: unknown;
+
 	readonly error?: string;
+
 	readonly timestamp: number;
 }
 
@@ -66,8 +86,10 @@ export interface RPCResponse {
 
 export class ServerStartError extends Error {
 	readonly _tag = "ServerStartError";
+
 	constructor(
 		override readonly message: string,
+
 		readonly cause?: unknown,
 	) {
 		super(message);
@@ -76,8 +98,10 @@ export class ServerStartError extends Error {
 
 export class ServerStopError extends Error {
 	readonly _tag = "ServerStopError";
+
 	constructor(
 		override readonly message: string,
+
 		readonly cause?: unknown,
 	) {
 		super(message);
@@ -86,6 +110,7 @@ export class ServerStopError extends Error {
 
 export class ServerNotRunningError extends Error {
 	readonly _tag = "ServerNotRunningError";
+
 	constructor() {
 		super("Server is not running");
 	}
@@ -136,6 +161,7 @@ export const RPCServer = RPCServerTag;
 
 export const RPCServerLive = Layer.effect(
 	RPCServer,
+
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
@@ -188,6 +214,7 @@ export const RPCServerLive = Layer.effect(
 				// Must NOT be 50051 (Mountain's own gRPC server).
 				const CocoonPort = parseInt(
 					process.env["COCOON_GRPC_PORT"] || "50052",
+
 					10,
 				);
 				currentConfig = config ?? {
@@ -209,6 +236,7 @@ export const RPCServerLive = Layer.effect(
 				);
 				telemetry.log(
 					"info",
+
 					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
 				);
 
@@ -239,6 +267,7 @@ export const RPCServerLive = Layer.effect(
 
 					telemetry.log(
 						"info",
+
 						`[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`,
 					);
 				} catch (error) {
@@ -249,12 +278,14 @@ export const RPCServerLive = Layer.effect(
 
 					telemetry.log(
 						"error",
+
 						`[RPCServer] Failed to start gRPC server: ${String(error)}`,
 					);
 
 					return yield* Effect.fail(
 						new ServerStartError(
 							"Failed to start gRPC server",
+
 							error,
 						),
 					);
@@ -311,6 +342,7 @@ export const RPCServerLive = Layer.effect(
 
 				telemetry.log(
 					"debug",
+
 					`[RPCServer] Handling request: ${request.method} (${request.requestId})`,
 				);
 
@@ -333,6 +365,7 @@ export const RPCServerLive = Layer.effect(
 
 				telemetry.log(
 					"debug",
+
 					`[RPCServer] Request completed: ${request.method} (${processingTime}ms)`,
 				);
 
@@ -353,6 +386,7 @@ export const RPCServerLive = Layer.effect(
 
 						telemetry.log(
 							"error",
+
 							`[RPCServer] Request failed: ${request.method} (${error})`,
 						);
 
@@ -385,6 +419,7 @@ export const RPCServerLive = Layer.effect(
 			state: stateRef.get,
 			stateChanges: Effect.map(
 				stateRef.get,
+
 				(state) => [state] as readonly ServerState[],
 			),
 			start,
@@ -404,9 +439,13 @@ export const makeMockRPCServer = (): RPCServerService => {
 
 	return {
 		state: Effect.succeed(mockStateRef),
+
 		stateChanges: Effect.succeed([mockStateRef] as readonly ServerState[]),
+
 		start: () => Effect.succeed(undefined),
+
 		stop: Effect.succeed(undefined as void),
+
 		handleRequest: (request: RPCRequest) =>
 			Effect.succeed({
 				requestId: request.requestId,
@@ -414,6 +453,7 @@ export const makeMockRPCServer = (): RPCServerService => {
 				data: { method: request.method, result: "mock" },
 				timestamp: Date.now(),
 			}),
+
 		getMetrics: Effect.succeed({
 			uptime: 0,
 			connections: 0,
@@ -426,5 +466,6 @@ export const makeMockRPCServer = (): RPCServerService => {
 
 export const RPCServerMock = Layer.effect(
 	RPCServer,
+
 	Effect.succeed(makeMockRPCServer()),
 );

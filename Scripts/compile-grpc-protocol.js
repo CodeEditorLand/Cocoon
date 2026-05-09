@@ -14,10 +14,13 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
 
 const MOUNTAIN_PROTO_PATH = "../Mountain/Proto/Vine.proto";
+
 const OUTPUT_DIR = join(__dirname, "../Source/Generated");
+
 const TS_PROTO_OUTPUT = join(OUTPUT_DIR, "Vine.ts");
 
 /**
@@ -45,8 +48,10 @@ async function compilegRPCProtocol() {
 	} catch (error) {
 		console.error(
 			"[compile-grpc-protocol] Protocol compilation failed:",
+
 			error,
 		);
+
 		process.exit(1);
 	}
 }
@@ -57,14 +62,17 @@ async function compilegRPCProtocol() {
 function checkProtocAvailability() {
 	try {
 		execSync("protoc --version", { stdio: "ignore" });
+
 		console.log("[compile-grpc-protocol] protoc compiler found");
 	} catch (error) {
 		console.error(
 			"[compile-grpc-protocol] protoc compiler not found. Please install protobuf compiler.",
 		);
+
 		console.error(
 			"Installation: https://grpc.io/docs/protoc-installation/",
 		);
+
 		throw error;
 	}
 }
@@ -78,6 +86,7 @@ function ensureProtoFileExists() {
 			`Mountain proto file not found at: ${MOUNTAIN_PROTO_PATH}`,
 		);
 	}
+
 	console.log(
 		`[compile-grpc-protocol] Found proto file: ${MOUNTAIN_PROTO_PATH}`,
 	);
@@ -89,6 +98,7 @@ function ensureProtoFileExists() {
 function ensureOutputDirectory() {
 	if (!existsSync(OUTPUT_DIR)) {
 		execSync(`mkdir -p ${OUTPUT_DIR}`);
+
 		console.log(
 			`[compile-grpc-protocol] Created output directory: ${OUTPUT_DIR}`,
 		);
@@ -104,9 +114,13 @@ function compileProtoToTypeScript() {
 	// Try multiple approaches for protoc-gen-ts
 	const pluginPaths = [
 		"./node_modules/.bin/protoc-gen-ts",
+
 		"./node_modules/.bin/protoc-gen-ts.cmd",
+
 		"./node_modules/.bin/protoc-gen-ts.exe",
+
 		"./node_modules/.bin/protoc-gen-ts_proto",
+
 		"protoc-gen-ts",
 	];
 
@@ -123,14 +137,18 @@ function compileProtoToTypeScript() {
                 ${MOUNTAIN_PROTO_PATH}`;
 
 			execSync(command, { stdio: "inherit" });
+
 			console.log(
 				`[compile-grpc-protocol] Proto compilation successful with ${pluginPath}`,
 			);
+
 			successfulCompilation = true;
+
 			break;
 		} catch (error) {
 			console.warn(
 				`[compile-grpc-protocol] Plugin ${pluginPath} failed:`,
+
 				error.message,
 			);
 		}
@@ -143,6 +161,7 @@ function compileProtoToTypeScript() {
 		console.log(
 			"[compile-grpc-protocol] Generating enhanced TypeScript interfaces from proto...",
 		);
+
 		generateServiceInterfaces();
 	} else {
 		// Generate enhanced service interfaces if compilation succeeded
@@ -170,54 +189,76 @@ function generateManualTypeScriptInterfaces() {
 
 // Service interfaces
 export interface MountainService {
+
     ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+
     SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+
     CancelOperation(request: CancelOperationRequest): Promise<Empty>;
 }
 
 export interface CocoonService {
+
     ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+
     SendMountainNotification(request: GenericNotification): Promise<Empty>;
+
     CancelOperation(request: CancelOperationRequest): Promise<Empty>;
 }
 
 // Message interfaces based on Vine.proto
 export interface GenericRequest {
+
     RequestIdentifier: bigint;
+
     Method: string;
+
     Parameter: Buffer;
 }
 
 export interface GenericResponse {
+
     RequestIdentifier: bigint;
+
     Result: Buffer;
+
     error?: RPCError;
 }
 
 export interface GenericNotification {
+
     Method: string;
+
     Parameter: Buffer;
 }
 
 export interface RPCError {
+
     Code: number;
+
     Message: string;
+
     Data?: Buffer;
 }
 
 export interface CancelOperationRequest {
+
     RequestIdentifierToCancel: bigint;
 }
 
 export interface Empty {}
 
 export interface RPCDataPayload {
+
     Data: Buffer;
 }
+
 `;
 
 	const fs = require("fs");
+
 	fs.writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
+
 	console.log(
 		`[compile-grpc-protocol] Manual TypeScript interfaces generated: ${TS_PROTO_OUTPUT}`,
 	);
@@ -242,6 +283,7 @@ function generateServiceInterfaces() {
 
 	// Write interfaces to file
 	writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
+
 	console.log(
 		`[compile-grpc-protocol] Generated enhanced service interfaces: ${TS_PROTO_OUTPUT}`,
 	);
@@ -255,10 +297,12 @@ function parseServiceDefinitionsEnhanced(protoContent) {
 
 	// Enhanced regex pattern to handle proto3 syntax
 	const servicePattern = /service\s+(\w+)\s*\{([^}]+)\}/g;
+
 	let serviceMatch;
 
 	while ((serviceMatch = servicePattern.exec(protoContent)) !== null) {
 		const serviceName = serviceMatch[1];
+
 		const serviceBody = serviceMatch[2];
 
 		services.push({
@@ -278,10 +322,12 @@ function parseMessageDefinitionsEnhanced(protoContent) {
 
 	// Pattern to match message definitions (handles empty messages too)
 	const messagePattern = /message\s+(\w+)\s*\{([^}]*)\}/g;
+
 	let messageMatch;
 
 	while ((messageMatch = messagePattern.exec(protoContent)) !== null) {
 		const messageName = messageMatch[1];
+
 		const messageBody = messageMatch[2];
 
 		// Parse fields from message body
@@ -304,10 +350,12 @@ function parseEnumDefinitionsEnhanced(protoContent) {
 
 	// Pattern to match enum definitions
 	const enumPattern = /enum\s+(\w+)\s*\{([^}]+)\}/g;
+
 	let enumMatch;
 
 	while ((enumMatch = enumPattern.exec(protoContent)) !== null) {
 		const enumName = enumMatch[1];
+
 		const enumBody = enumMatch[2];
 
 		// Parse enum values
@@ -330,6 +378,7 @@ function parseEnumValues(enumBody) {
 
 	// Pattern to match enum values: NAME = number;
 	const valuePattern = /(\w+)\s*=\s*(\d+)/g;
+
 	let valueMatch;
 
 	while ((valueMatch = valuePattern.exec(enumBody)) !== null) {
@@ -351,13 +400,16 @@ function parseMessageFields(messageBody) {
 	// Pattern to match field definitions (simplified for proto3)
 	// Format: type name = number [options];
 	const fieldPattern = /(\w+)\s+(\w+)\s*=\s*\d+\s*(?:\[\s*([^]]+)\s*\])?;?/g;
+
 	let fieldMatch;
 
 	while ((fieldMatch = fieldPattern.exec(messageBody)) !== null) {
 		const field = {
 			type: mapProtoTypeToTypeScript(fieldMatch[1]),
+
 			name: fieldMatch[2],
 		};
+
 		fields.push(field);
 	}
 
@@ -370,20 +422,35 @@ function parseMessageFields(messageBody) {
 function mapProtoTypeToTypeScript(protoType) {
 	const typeMap = {
 		"string": "string",
+
 		"int32": "number",
+
 		"int64": "number",
+
 		"uint32": "number",
+
 		"uint64": "number",
+
 		"sint32": "number",
+
 		"sint64": "number",
+
 		"fixed32": "number",
+
 		"fixed64": "number",
+
 		"sfixed32": "number",
+
 		"sfixed64": "number",
+
 		"float": "number",
+
 		"double": "number",
+
 		"bool": "boolean",
+
 		"bytes": "Buffer",
+
 		"repeated": undefined, // This is a modifier, not a type
 	};
 
@@ -395,8 +462,10 @@ function mapProtoTypeToTypeScript(protoType) {
  */
 function parseServiceMethodsEnhanced(serviceBody) {
 	const methods = [];
+
 	const methodPattern =
 		/rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)/g;
+
 	let methodMatch;
 
 	while ((methodMatch = methodPattern.exec(serviceBody)) !== null) {
@@ -433,10 +502,12 @@ function generateEnhancedTypeScriptInterfaces(services) {
 
 	// Generate enums first
 	const enumDefinitions = parseEnumDefinitionsEnhanced(protoContent);
+
 	tsCode += generateEnumInterfaces(enumDefinitions);
 
 	// Generate message interfaces
 	const messageDefinitions = parseMessageDefinitionsEnhanced(protoContent);
+
 	tsCode += generateMessageInterfaces(messageDefinitions);
 
 	// Generate service interfaces with enhanced signatures

@@ -21,8 +21,10 @@ export class ActiveEditorNotFoundProblem extends Data.TaggedError(
 	"ActiveEditorNotFoundProblem",
 )<{}> {
 	public override readonly message: string;
+
 	constructor() {
 		super();
+
 		this.message =
 			"No active text editor found. Please open a file to process.";
 	}
@@ -38,12 +40,15 @@ export class ProcessingServiceProblem extends Data.TaggedError(
 	readonly Cause: unknown;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: { readonly Cause: unknown }) {
 		super(Properties);
+
 		const CauseMessage =
 			this.Cause instanceof Error
 				? this.Cause.message
 				: String(this.Cause);
+
 		this.message = `Failed to connect to the processing service: ${CauseMessage}`;
 	}
 }
@@ -78,6 +83,7 @@ const GetDocumentText = (
  */
 export interface ProcessingResult {
 	readonly ID: string;
+
 	readonly Status: "Success";
 }
 
@@ -111,6 +117,7 @@ export const ProcessUserData = Effect.gen(function* () {
 	const MaybeEditor = yield* GetActiveTextEditor;
 	const Editor = yield* Effect.mapError(
 		MaybeEditor,
+
 		() => new ActiveEditorNotFoundProblem(),
 	);
 	const TextContent = yield* GetDocumentText(Editor.document);

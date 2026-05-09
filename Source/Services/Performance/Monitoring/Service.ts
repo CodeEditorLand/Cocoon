@@ -13,32 +13,49 @@ import { Effect, Layer } from "effect";
 // Performance metrics interface
 export interface PerformanceMetrics {
 	extensionLoadTime: number;
+
 	apiCallLatency: number;
+
 	memoryUsage: number;
+
 	cpuUsage: number;
+
 	concurrentExtensions: number;
+
 	errorRate: number;
+
 	cacheHitRate: number;
+
 	requestThroughput: number;
 }
 
 // Performance alert interface
 export interface PerformanceAlert {
 	id: string;
+
 	type: "warning" | "critical" | "info";
+
 	message: string;
+
 	metric: keyof PerformanceMetrics;
+
 	threshold: number;
+
 	currentValue: number;
+
 	timestamp: number;
 }
 
 // Optimization suggestion interface
 export interface OptimizationSuggestion {
 	id: string;
+
 	description: string;
+
 	impact: "low" | "medium" | "high";
+
 	difficulty: "easy" | "medium" | "hard";
+
 	estimatedSavings: number;
 }
 
@@ -48,22 +65,33 @@ export interface OptimizationSuggestion {
 export class PerformanceMonitoringService {
 	private metrics: PerformanceMetrics = {
 		extensionLoadTime: 0,
+
 		apiCallLatency: 0,
+
 		memoryUsage: 0,
+
 		cpuUsage: 0,
+
 		concurrentExtensions: 0,
+
 		errorRate: 0,
+
 		cacheHitRate: 0,
+
 		requestThroughput: 0,
 	};
 
 	private alerts: PerformanceAlert[] = [];
+
 	private optimizationSuggestions: OptimizationSuggestion[] = [];
+
 	private monitoringActive: boolean = false;
+
 	private monitoringInterval: NodeJS.Timeout | null = null;
 
 	constructor() {
 		this._serviceBrand = undefined;
+
 		console.log(
 			"[PerformanceMonitoringService] Initializing performance monitoring",
 		);
@@ -92,8 +120,10 @@ export class PerformanceMonitoringService {
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to initialize:",
+
 				error,
 			);
+
 			throw error;
 		}
 	}
@@ -132,17 +162,25 @@ export class PerformanceMonitoringService {
 	private async collectMetrics(): Promise<void> {
 		try {
 			const memoryUsage = process.memoryUsage();
+
 			const cpuUsage = await this.getCpuUsage();
 
 			this.metrics = {
 				...this.metrics,
+
 				memoryUsage: memoryUsage.heapUsed / 1024 / 1024, // MB
 				cpuUsage: cpuUsage,
+
 				concurrentExtensions: await this.getConcurrentExtensions(),
+
 				extensionLoadTime: await this.getAverageExtensionLoadTime(),
+
 				apiCallLatency: await this.getAverageApiLatency(),
+
 				errorRate: await this.getErrorRate(),
+
 				cacheHitRate: await this.getCacheHitRate(),
+
 				requestThroughput: await this.getRequestThroughput(),
 			};
 
@@ -155,6 +193,7 @@ export class PerformanceMonitoringService {
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to collect metrics:",
+
 				error,
 			);
 		}
@@ -167,18 +206,24 @@ export class PerformanceMonitoringService {
 		try {
 			const { MountainClientService } =
 				await import("../../Mountain/Client/Service.js");
+
 			const mountainClient = new MountainClientService();
 
 			const telemetryData = {
 				metrics: this.metrics,
+
 				timestamp: Date.now(),
+
 				processId: process.pid,
+
 				hostname: require("os").hostname(),
+
 				version: process.env.npm_package_version || "0.0.1",
 			};
 
 			await mountainClient.sendNotification(
 				"performance.metrics",
+
 				telemetryData,
 			);
 
@@ -188,17 +233,21 @@ export class PerformanceMonitoringService {
 		} catch (error) {
 			console.warn(
 				"[PerformanceMonitoringService] Failed to send metrics to Mountain:",
+
 				error,
 			);
+
 			// Continue without telemetry if Mountain is unavailable
 		}
 	}
+
 	/**
 	 * Get accurate CPU usage measurement
 	 */
 	private async getCpuUsage(): Promise<number> {
 		try {
 			const startUsage = process.cpuUsage();
+
 			await this.delay(100); // Measure over 100ms
 			const endUsage = process.cpuUsage(startUsage);
 
@@ -211,8 +260,10 @@ export class PerformanceMonitoringService {
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to measure CPU usage:",
+
 				error,
 			);
+
 			return 0;
 		}
 	}
@@ -232,19 +283,24 @@ export class PerformanceMonitoringService {
 			// Import ExtensionHostService dynamically
 			const { ExtensionHostService } =
 				await import("../../Extension/Host/Service.js");
+
 			const extensionHostService = new ExtensionHostService(
 				{} as any,
+
 				{} as any,
 			);
 
 			// Get extension status
 			const status = extensionHostService.getStatus();
+
 			return status.activatedExtensions;
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to get extension count:",
+
 				error,
 			);
+
 			return 0;
 		}
 	}
@@ -264,12 +320,15 @@ export class PerformanceMonitoringService {
 			const average =
 				loadTimes.reduce((sum, time) => sum + time, 0) /
 				loadTimes.length;
+
 			return average;
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to get extension load times:",
+
 				error,
 			);
+
 			return 200; // Fallback value
 		}
 	}
@@ -288,12 +347,15 @@ export class PerformanceMonitoringService {
 			const average =
 				latencies.reduce((sum, latency) => sum + latency, 0) /
 				latencies.length;
+
 			return average;
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to get API latencies:",
+
 				error,
 			);
+
 			return 35; // Fallback value
 		}
 	}
@@ -306,10 +368,13 @@ export class PerformanceMonitoringService {
 			// Track error rates from ErrorHandlingService
 			const { ErrorHandlingService } =
 				await import("../../Error/Handling/Service.js");
+
 			const errorService = new ErrorHandlingService();
 
 			const stats = errorService.getStatistics();
+
 			const totalOperations = stats.totalCircuitBreakers;
+
 			const failedOperations =
 				stats.openCircuitBreakers + stats.halfOpenCircuitBreakers;
 
@@ -319,8 +384,10 @@ export class PerformanceMonitoringService {
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to get error rate:",
+
 				error,
 			);
+
 			return 0.01; // Fallback value
 		}
 	}
@@ -333,18 +400,23 @@ export class PerformanceMonitoringService {
 			// Track cache performance from APIFactoryService
 			const { APIFactoryService } =
 				await import("../../API/Factory/Service.js");
+
 			const apiFactoryService = new APIFactoryService(
 				{} as any,
+
 				{} as any,
 			);
 
 			const usageStats = await apiFactoryService.getUsageStatistics();
+
 			return usageStats.performanceMetrics.cacheHitRate || 0.85;
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to get cache hit rate:",
+
 				error,
 			);
+
 			return 0.85; // Fallback value
 		}
 	}
@@ -357,6 +429,7 @@ export class PerformanceMonitoringService {
 			// Track throughput from GRPCServerService
 			const { GRPCServerService } =
 				await import("../../GRPC/Server/Service.js");
+
 			const grpcServerService = new GRPCServerService();
 
 			const status = grpcServerService.getStatus();
@@ -371,8 +444,10 @@ export class PerformanceMonitoringService {
 		} catch (error) {
 			console.error(
 				"[PerformanceMonitoringService] Failed to get throughput:",
+
 				error,
 			);
+
 			return 100; // Fallback value
 		}
 	}
@@ -461,6 +536,7 @@ export class PerformanceMonitoringService {
 			console.warn(
 				`[PerformanceMonitoringService] Generated ${newAlerts.length} alerts`,
 			);
+
 			newAlerts.forEach((alert) => {
 				console.warn(
 					`[PerformanceMonitoringService] ${alert.type.toUpperCase()}: ${alert.message}`,
@@ -549,6 +625,7 @@ export class PerformanceMonitoringService {
 	clearOldAlerts(maxAge: number = 3600000): void {
 		// 1 hour default
 		const cutoffTime = Date.now() - maxAge;
+
 		this.alerts = this.alerts.filter(
 			(alert) => alert.timestamp > cutoffTime,
 		);
@@ -563,8 +640,11 @@ export class PerformanceMonitoringService {
 	 */
 	generateReport(): {
 		summary: PerformanceMetrics;
+
 		alerts: PerformanceAlert[];
+
 		optimizations: OptimizationSuggestion[];
+
 		recommendations: string[];
 	} {
 		const recommendations: string[] = [];
@@ -588,8 +668,11 @@ export class PerformanceMonitoringService {
 
 		return {
 			summary: this.metrics,
+
 			alerts: this.alerts,
+
 			optimizations: this.optimizationSuggestions,
+
 			recommendations,
 		};
 	}
@@ -606,22 +689,31 @@ export class PerformanceMonitoringService {
 
 		if (this.monitoringInterval) {
 			clearInterval(this.monitoringInterval);
+
 			this.monitoringInterval = null;
 		}
 
 		// Clear metrics and alerts
 		this.metrics = {
 			extensionLoadTime: 0,
+
 			apiCallLatency: 0,
+
 			memoryUsage: 0,
+
 			cpuUsage: 0,
+
 			concurrentExtensions: 0,
+
 			errorRate: 0,
+
 			cacheHitRate: 0,
+
 			requestThroughput: 0,
 		};
 
 		this.alerts = [];
+
 		this.optimizationSuggestions = [];
 
 		console.log(
@@ -635,6 +727,7 @@ export class PerformanceMonitoringService {
  */
 export const PerformanceMonitoringServiceLayer = Layer.effect(
 	"PerformanceMonitoringService",
+
 	Effect.sync(() => new PerformanceMonitoringService()),
 );
 
@@ -643,5 +736,6 @@ export const PerformanceMonitoringServiceLayer = Layer.effect(
  */
 export const PerformanceMonitoringServiceLive = Layer.effect(
 	"PerformanceMonitoringService",
+
 	Effect.sync(() => new PerformanceMonitoringService()),
 );

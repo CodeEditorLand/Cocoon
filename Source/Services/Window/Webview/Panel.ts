@@ -20,10 +20,13 @@ import { WebviewPanelImplementation } from "../../../WebviewPanel/Webview/Panel/
 interface WebviewIPC {
 	SendNotification: (
 		Method: string,
+
 		Params: unknown[],
 	) => Effect.Effect<void, Error>;
+
 	SendRequest: <T>(
 		Method: string,
+
 		Params: unknown[],
 	) => Effect.Effect<T, Error>;
 }
@@ -46,6 +49,7 @@ export const CreateWebviewPanel = (
 	MountainClient: {
 		sendNotification: (method: string, params: unknown) => Promise<void>;
 	},
+
 	GRPCClient: {
 		createWebviewPanel: (params: {
 			viewType: string;
@@ -58,15 +62,20 @@ export const CreateWebviewPanel = (
 			localResourceRoots: string[] | undefined;
 		}) => Effect.Effect<unknown, Error>;
 	},
+
 	Logger: {
 		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
+
 	ViewType: string,
+
 	Title: string,
+
 	ShowOptions:
 		| VSCode.ViewColumn
 		| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
+
 	Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
 ): Effect.Effect<VSCode.WebviewPanel, Error> =>
 	Effect.gen(function* () {
@@ -130,6 +139,7 @@ export const CreateWebviewPanel = (
 				}),
 			SendRequest: <T>(
 				_Method: string,
+
 				_Params: unknown[],
 			): Effect.Effect<T, Error> =>
 				Effect.gen(function* () {
@@ -148,17 +158,24 @@ export const CreateWebviewPanel = (
 		// Create and return webview panel implementation
 		const WebviewPanel = new WebviewPanelImplementation(
 			PanelId,
+
 			IPCProxy,
+
 			ExtensionDescription,
+
 			() => {
 				// Dispose callback: notify Mountain to destroy the webview panel
 				MountainClient.sendNotification("webview.dispose", {
 					panelId: PanelId,
 				}).catch(() => {});
 			},
+
 			ViewType,
+
 			Title,
+
 			PanelOptionsDTO ?? {},
+
 			ViewColumn,
 		);
 

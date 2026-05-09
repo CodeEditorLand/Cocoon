@@ -31,9 +31,13 @@ import { type IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode
  */
 export interface IPCRequest {
 	readonly Id: string;
+
 	readonly Channel: string;
+
 	readonly Method: string;
+
 	readonly Parameters: unknown[];
+
 	readonly TokenCancellationToken?: string;
 }
 
@@ -42,9 +46,13 @@ export interface IPCRequest {
  */
 export interface IPCResponse {
 	readonly Id: string;
+
 	readonly Success: boolean;
+
 	readonly Data?: unknown;
+
 	readonly ErrorMessage?: string;
+
 	readonly ErrorCode?: number;
 }
 
@@ -53,7 +61,9 @@ export interface IPCResponse {
  */
 export interface IPCNotification {
 	readonly Channel: string;
+
 	readonly Type: string;
+
 	readonly Data?: unknown;
 }
 
@@ -67,7 +77,9 @@ export type IPCProtocolMessage = IPCRequest | IPCResponse | IPCNotification;
  */
 export enum ProtocolMessageType {
 	Request = "request",
+
 	Response = "response",
+
 	Notification = "notification",
 }
 
@@ -76,6 +88,7 @@ export enum ProtocolMessageType {
  */
 export interface ProtocolMessage {
 	readonly Type: ProtocolMessageType;
+
 	readonly Message: IPCProtocolMessage;
 }
 
@@ -84,6 +97,7 @@ export interface ProtocolMessage {
  */
 export type RequestHandler<T = unknown, TResult = unknown> = (
 	parameter: T,
+
 	token: CancellationToken,
 ) => Promise<TResult> | TResult;
 
@@ -99,8 +113,11 @@ export type NotificationHandler<T = unknown> = (
  */
 export interface ChannelHandler {
 	readonly Channel: string;
+
 	readonly Method: string;
+
 	readonly Handler: RequestHandler;
+
 	readonly Description?: string;
 }
 
@@ -109,8 +126,11 @@ export interface ChannelHandler {
  */
 export interface NotificationSubscription {
 	readonly Channel: string;
+
 	readonly Type: string;
+
 	readonly Handler: NotificationHandler;
+
 	readonly Subscription: IDisposable;
 }
 
@@ -119,8 +139,11 @@ export interface NotificationSubscription {
  */
 export interface ProtocolOptions {
 	readonly Timeout: number;
+
 	readonly MaxMessageSize: number;
+
 	readonly EnableCompression: boolean;
+
 	readonly EnableEncryption: boolean;
 }
 
@@ -129,8 +152,10 @@ export interface ProtocolOptions {
  */
 export const DEFAULT_PROTOCOL_OPTIONS: ProtocolOptions = {
 	Timeout: 30000,
+
 	MaxMessageSize: 10485760, // 10MB
 	EnableCompression: false,
+
 	EnableEncryption: false,
 } as const;
 
@@ -150,12 +175,15 @@ export function GetMessageType(
 	if ("Id" in message && "Channel" in message && "Method" in message) {
 		return ProtocolMessageType.Request;
 	}
+
 	if ("Id" in message && "Success" in message) {
 		return ProtocolMessageType.Response;
 	}
+
 	if ("Channel" in message && "Type" in message && !("Id" in message)) {
 		return ProtocolMessageType.Notification;
 	}
+
 	throw new Error("Invalid IPC protocol message");
 }
 
@@ -199,6 +227,7 @@ export function ValidateMessage(message: unknown): boolean {
 export function WrapMessage(message: IPCProtocolMessage): ProtocolMessage {
 	return {
 		Type: GetMessageType(message),
+
 		Message: message,
 	};
 }
@@ -215,13 +244,18 @@ export function UnwrapMessage(envelope: ProtocolMessage): IPCProtocolMessage {
  */
 export function CreateErrorResponse(
 	id: string,
+
 	message: string,
+
 	code?: number,
 ): IPCResponse {
 	return {
 		Id: id,
+
 		Success: false,
+
 		ErrorMessage: message,
+
 		ErrorCode: code,
 	};
 }
@@ -232,7 +266,9 @@ export function CreateErrorResponse(
 export function CreateSuccessResponse<T>(id: string, data: T): IPCResponse {
 	return {
 		Id: id,
+
 		Success: true,
+
 		Data: data,
 	};
 }
@@ -242,6 +278,7 @@ export function CreateSuccessResponse<T>(id: string, data: T): IPCResponse {
  */
 export function SerializeMessage(message: ProtocolMessage): VSBuffer {
 	const json = JSON.stringify(message);
+
 	return VSBuffer.fromString(json);
 }
 
@@ -251,6 +288,7 @@ export function SerializeMessage(message: ProtocolMessage): VSBuffer {
 export function DeserializeMessage(buffer: VSBuffer): ProtocolMessage {
 	try {
 		const json = buffer.toString();
+
 		const message = JSON.parse(json) as ProtocolMessage;
 
 		if (!ValidateMessage(message.Message)) {

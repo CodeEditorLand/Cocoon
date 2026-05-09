@@ -78,20 +78,31 @@ import { WebviewImplementation } from "./Webview/Implementation.js";
  */
 export interface PanelOptions {
 	readonly Handle: string;
+
 	readonly Extension: IExtensionDescription;
+
 	readonly ViewType: string;
+
 	readonly Title: string;
+
 	readonly ShowOptions: {
 		readonly ViewColumn?: number;
+
 		readonly PreserveFocus?: boolean;
 	};
+
 	readonly Options?: {
 		readonly EnableScripts?: boolean;
+
 		readonly RetainContextWhenHidden?: boolean;
+
 		readonly EnableFindWidget?: boolean;
+
 		readonly LocalResourceRoots?: readonly unknown[];
+
 		readonly PortMapping?: readonly unknown[];
 	};
+
 	readonly OnDispose: () => void;
 }
 
@@ -101,7 +112,9 @@ export interface PanelOptions {
  */
 export interface ViewState {
 	readonly Active: boolean;
+
 	readonly Visible: boolean;
+
 	readonly ViewColumn: ViewColumn;
 }
 
@@ -112,53 +125,88 @@ export interface ViewState {
  */
 export class Panel implements VSCodeWebviewPanel {
 	private IsDisposed = false;
+
 	private _title: string;
+
 	private _iconPath:
 		| Uri
 		| { readonly light: Uri; readonly dark: Uri }
 		| undefined;
+
 	private _active: boolean;
+
 	private _visible: boolean;
+
 	private _viewColumn: ViewColumn;
 
 	private readonly OnDidDisposeEmitter = CreateEventStream<void>();
+
 	public readonly onDidDispose: Event<void>;
+
 	private readonly OnDidChangeViewStateEmitter =
 		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>();
+
 	public readonly onDidChangeViewState: Event<WebviewPanelOnDidChangeViewStateEvent>;
+
 	public readonly webview: Webview;
+
 	public readonly viewType: string;
+
 	public readonly options: WebviewPanelOptions;
+
 	handle!: string;
+
 	readonly ipcService: IPC;
+
 	readonly extension: IExtensionDescription;
 
 	constructor(
 		private readonly FactoryHandle: string,
+
 		IPCSvc: IPC,
+
 		Extension: IExtensionDescription,
+
 		InitialViewType: string,
+
 		InitialTitle: string,
+
 		InitialOptions: WebviewPanelOptions,
+
 		InitialViewColumn: ViewColumn,
 	) {
 		this.handle = this.FactoryHandle;
+
 		this.ipcService = IPCSvc;
+
 		this.extension = Extension;
+
 		this.viewType = InitialViewType;
+
 		this.options = InitialOptions;
+
 		this.webview = new WebviewImplementation(
 			this.handle,
+
 			IPCSvc,
+
 			Extension,
+
 			InitialOptions,
 		);
+
 		this._title = InitialTitle;
+
 		this._viewColumn = InitialViewColumn;
+
 		this._active = true;
+
 		this._visible = true;
+
 		this._iconPath = undefined;
+
 		this.onDidDispose = this.OnDidDisposeEmitter.event;
+
 		this.onDidChangeViewState = this.OnDidChangeViewStateEmitter.event;
 	}
 
@@ -178,11 +226,17 @@ export class Panel implements VSCodeWebviewPanel {
 
 			const PanelInstance = new Panel(
 				Options.Handle,
+
 				mockIPC as any,
+
 				Options.Extension,
+
 				Options.ViewType,
+
 				Options.Title,
+
 				Options.Options ?? {},
+
 				ViewColumnValue,
 			);
 
@@ -194,38 +248,51 @@ export class Panel implements VSCodeWebviewPanel {
 	get viewColumn(): ViewColumn | undefined {
 		return this._viewColumn;
 	}
+
 	get active(): boolean {
 		return this._active;
 	}
+
 	get visible(): boolean {
 		return this._visible;
 	}
+
 	get title(): string {
 		return this._title;
 	}
+
 	set title(Value: string) {
 		if (this.IsDisposed || this._title === Value) return;
+
 		this._title = Value;
+
 		Effect.runFork(
 			this.ipcService.SendNotification("$setWebviewTitle", [
 				this.handle,
+
 				Value,
 			]),
 		);
 	}
+
 	get iconPath(): Uri | { readonly light: Uri; readonly dark: Uri } {
 		return this._iconPath as any;
 	}
+
 	set iconPath(Value: Uri | { readonly light: Uri; readonly dark: Uri }) {
 		const InternalValue = Value as
 			| Uri
 			| { readonly light: Uri; readonly dark: Uri }
 			| undefined;
+
 		if (this.IsDisposed || this._iconPath === InternalValue) return;
+
 		this._iconPath = InternalValue;
+
 		Effect.runFork(
 			this.ipcService.SendNotification("$setWebviewIconPath", [
 				this.handle,
+
 				InternalValue,
 			]),
 		);
@@ -236,10 +303,13 @@ export class Panel implements VSCodeWebviewPanel {
 	 */
 	reveal(ViewColumnParam?: ViewColumn, PreserveFocus?: boolean): void {
 		if (this.IsDisposed) return;
+
 		Effect.runFork(
 			this.ipcService.SendNotification("$revealWebviewPanel", [
 				this.handle,
+
 				ViewColumnParam,
+
 				PreserveFocus,
 			]),
 		);
@@ -252,9 +322,13 @@ export class Panel implements VSCodeWebviewPanel {
 		if (this.IsDisposed) {
 			return;
 		}
+
 		this.IsDisposed = true;
+
 		this.OnDidDisposeEmitter.Fire();
+
 		(this.webview as WebviewImplementation).dispose();
+
 		Effect.runFork(
 			this.ipcService.SendNotification("$disposeWebview", [this.handle]),
 		);
@@ -276,13 +350,18 @@ export class Panel implements VSCodeWebviewPanel {
 	 */
 	UpdateViewState(NewState: ViewState): void {
 		if (this.IsDisposed) return;
+
 		const Changed =
 			this._active !== NewState.Active ||
 			this._visible !== NewState.Visible ||
 			this._viewColumn !== NewState.ViewColumn;
+
 		this._active = NewState.Active;
+
 		this._visible = NewState.Visible;
+
 		this._viewColumn = NewState.ViewColumn;
+
 		if (Changed) {
 			this.OnDidChangeViewStateEmitter.Fire({
 				webviewPanel: this as any,

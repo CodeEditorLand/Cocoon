@@ -23,7 +23,9 @@ import { ExitPreventedProblem } from "./PatchProcess/ExitPreventedProblem.js";
  */
 export interface PatchProcess {
 	readonly NativeExit: (code?: number) => never;
+
 	readonly NativeCrash: (() => void) | undefined;
+
 	readonly AllowExit: () => boolean;
 }
 
@@ -36,12 +38,14 @@ export interface PatchProcess {
  */
 export class PatchProcessService extends Effect.Service<PatchProcessService>()(
 	"Service/PatchProcess",
+
 	{
 		effect: Effect.gen(function* () {
 			const AllowExit = yield* Config.boolean("AllowExit").pipe(
 				Effect.catchAll((Error) =>
 					Effect.log(
 						"Failed to load PatchProcess config, using defaults.",
+
 						{ Error, LogLevel: "Warning" },
 					).pipe(
 						Effect.as(false), // Default to not allowing exit on error.
@@ -87,6 +91,7 @@ const PatchProcessCrash = Effect.gen(function* () {
 			Effect.runSync(
 				Effect.logWarning(
 					`A call to 'process.crash()' was intercepted and PREVENTED by host policy.`,
+
 					`Call stack for prevented crash:\n${PreventionStack ?? "(Stack trace unavailable)"}`,
 				),
 			);
@@ -118,6 +123,7 @@ const PatchProcessExit = Effect.gen(function* () {
 		Effect.runSync(
 			Effect.logWarning(
 				"Blocked call to process.exit by host policy.",
+
 				PreventionError,
 			),
 		);
@@ -128,14 +134,17 @@ const PatchProcessExit = Effect.gen(function* () {
 
 class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
 	readonly Context: string;
+
 	readonly Cause?: unknown;
 }> {
 	public override readonly message: string;
+
 	constructor(Properties: {
 		readonly Context: string;
 		readonly Cause?: unknown;
 	}) {
 		super(Properties);
+
 		this.message = `Failed to patch Node.js module loader: ${this.Context}`;
 	}
 }
@@ -146,7 +155,9 @@ const BlockNativesModule = Effect.try({
 			const OriginalLoad = (Module as any)._load;
 			(Module as any)._load = function (
 				Request: string,
+
 				Parent: any,
+
 				IsMain: boolean,
 			): any {
 				if (Request === "natives") {
@@ -176,14 +187,17 @@ const BlockNativesModule = Effect.try({
 
 const SafeToString = (Arguments: ArrayLike<unknown>): string => {
 	const Slices: string[] = [];
+
 	for (let i = 0; i < Arguments.length; i++) {
 		const Argument = Arguments[i];
+
 		Slices.push(
 			typeof Argument === "object"
 				? JSON.stringify(Argument, null, 2)
 				: String(Argument),
 		);
 	}
+
 	return Slices.join(" ");
 };
 
@@ -196,6 +210,7 @@ const PipeLogging = Effect.gen(function* () {
 	const IPC = yield* IPCService;
 	const ForwardConsoleCall = (
 		Severity: "log" | "warn" | "error",
+
 		Arguments: ArrayLike<unknown>,
 	) => {
 		const Payload = {
@@ -249,6 +264,7 @@ const HandleException = Effect.gen(function* () {
 				Effect.sync(() =>
 					console.error(
 						`[HandleException] FATAL: Failed to send error to host: ${ErrorValue}`,
+
 						Payload,
 					),
 				),
@@ -332,6 +348,7 @@ export const RunPatchProcess = Effect.gen(function* () {
 	Effect.catchAll((Error) =>
 		Effect.logFatal(
 			"A critical error occurred during the bootstrap process patching. The environment may be unstable.",
+
 			Error,
 		),
 	),

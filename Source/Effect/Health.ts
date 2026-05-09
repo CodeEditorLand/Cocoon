@@ -17,22 +17,33 @@ export type HealthStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
 
 export interface ServiceHealth {
 	readonly serviceName: string;
+
 	readonly status: HealthStatus;
+
 	readonly message: string;
+
 	readonly lastChecked: number;
+
 	readonly responseTime: number;
+
 	readonly details: Readonly<Record<string, unknown>> | undefined;
 }
 
 export interface SystemHealth {
 	readonly overallStatus: HealthStatus;
+
 	readonly services: ReadonlyArray<ServiceHealth>;
+
 	readonly systemInfo: {
 		readonly platform: string;
+
 		readonly architecture: string;
+
 		readonly nodeVersion: string;
+
 		readonly upSince: number;
 	};
+
 	readonly lastChecked: number;
 }
 
@@ -40,10 +51,14 @@ export interface HealthService {
 	readonly checkService: (
 		serviceName: string,
 	) => Effect.Effect<ServiceHealth, never>;
+
 	readonly checkAllServices: () => Effect.Effect<SystemHealth, never>;
+
 	readonly getOverallStatus: () => Effect.Effect<HealthStatus, never>;
+
 	readonly monitorService: (
 		serviceName: string,
+
 		intervalMs: number,
 	) => Effect.Effect<void, never>;
 }
@@ -63,9 +78,13 @@ export class HealthTag extends Context.Tag("Cocoon/Health")<
 
 const createServiceHealth = (
 	name: string,
+
 	status: HealthStatus,
+
 	message: string,
+
 	responseTime: number,
+
 	details?: Readonly<Record<string, unknown>>,
 ): ServiceHealth => ({
 	serviceName: name,
@@ -86,8 +105,11 @@ const makeHealthChecker = (): HealthService => ({
 					const envTime = Date.now() - startTime;
 					return createServiceHealth(
 						"Environment",
+
 						"healthy",
+
 						"Environment service available",
+
 						envTime,
 					);
 				}
@@ -101,17 +123,24 @@ const makeHealthChecker = (): HealthService => ({
 							Effect.map(() =>
 								createServiceHealth(
 									"Telemetry",
+
 									"healthy",
+
 									"Telemetry service available",
+
 									telemetryTime,
 								),
 							),
+
 							Effect.catchAll(() =>
 								Effect.succeed(
 									createServiceHealth(
 										"Telemetry",
+
 										"unhealthy",
+
 										"Telemetry service error",
+
 										telemetryTime,
 									),
 								),
@@ -123,8 +152,11 @@ const makeHealthChecker = (): HealthService => ({
 					const grpcTime = Date.now() - startTime;
 					return createServiceHealth(
 						"gRPC",
+
 						"healthy",
+
 						"gRPC service available",
+
 						grpcTime,
 					);
 				}
@@ -133,8 +165,11 @@ const makeHealthChecker = (): HealthService => ({
 					const extensionTime = Date.now() - startTime;
 					return createServiceHealth(
 						"Extension",
+
 						"healthy",
+
 						"Extension service available",
+
 						extensionTime,
 					);
 				}
@@ -142,8 +177,11 @@ const makeHealthChecker = (): HealthService => ({
 				default:
 					return createServiceHealth(
 						serviceName,
+
 						"unknown",
+
 						`Unknown service: ${serviceName}`,
+
 						0,
 					);
 			}
@@ -162,6 +200,7 @@ const makeHealthChecker = (): HealthService => ({
 
 			telemetry.log(
 				"info",
+
 				"[Health] Running health checks for all services...",
 			);
 
@@ -219,6 +258,7 @@ const makeHealthChecker = (): HealthService => ({
 
 export const HealthLive = Layer.effect(
 	HealthTag,
+
 	Effect.succeed(makeHealthChecker()),
 );
 
@@ -235,10 +275,13 @@ export const makeMockHealth = (
 			const status = overrides?.[serviceName] ?? defaultStatus;
 			return createServiceHealth(
 				serviceName,
+
 				status,
+
 				status === "healthy"
 					? "Mock service healthy"
 					: "Mock service unhealthy",
+
 				0,
 			);
 		}),
@@ -249,8 +292,11 @@ export const makeMockHealth = (
 			const results = services.map((name) =>
 				createServiceHealth(
 					name,
+
 					overrides?.[name] ?? "healthy",
+
 					"Mock service check",
+
 					0,
 				),
 			);
@@ -275,5 +321,6 @@ export const makeMockHealth = (
 
 export const HealthMock = Layer.effect(
 	HealthTag,
+
 	Effect.succeed(makeMockHealth()),
 );

@@ -46,9 +46,12 @@ import LandFixLog from "../../../../../../Utility/Land/Fix/Log.js";
 
 type CaptureEventFn = (
 	Name: string,
+
 	Properties?: Record<string, unknown>,
 ) => void;
+
 let LazyCaptureEvent: CaptureEventFn | undefined;
+
 if (process.env["NODE_ENV"] !== "production") {
 	void import("../../../../../../Telemetry/Post/Hog/Bridge.js")
 		.then((Module) => {
@@ -76,7 +79,9 @@ type Heuristic = {
 		| "bool-check"
 		| "factory"
 		| "default";
+
 	readonly Sync: boolean;
+
 	readonly Produce: (...Arguments: unknown[]) => unknown;
 };
 
@@ -103,24 +108,33 @@ const ClassifyProperty = (Property: string): Heuristic => {
 	if (IsTrustFamily(Property)) {
 		return {
 			Kind: "trust",
+
 			Sync: false,
+
 			Produce: () => true,
 		} satisfies Heuristic;
 	}
+
 	if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
 		return {
 			Kind: "event",
+
 			Sync: true,
+
 			Produce: () => NoopDisposable,
 		} satisfies Heuristic;
 	}
+
 	if (Property.startsWith("register")) {
 		return {
 			Kind: "register",
+
 			Sync: true,
+
 			Produce: () => NoopDisposable,
 		} satisfies Heuristic;
 	}
+
 	if (
 		Property.startsWith("is") ||
 		Property.startsWith("has") ||
@@ -128,10 +142,13 @@ const ClassifyProperty = (Property: string): Heuristic => {
 	) {
 		return {
 			Kind: "bool-check",
+
 			Sync: false,
+
 			Produce: () => false,
 		} satisfies Heuristic;
 	}
+
 	if (
 		Property.startsWith("create") ||
 		Property.startsWith("get") ||
@@ -139,13 +156,18 @@ const ClassifyProperty = (Property: string): Heuristic => {
 	) {
 		return {
 			Kind: "factory",
+
 			Sync: true,
+
 			Produce: () => undefined,
 		} satisfies Heuristic;
 	}
+
 	return {
 		Kind: "default",
+
 		Sync: false,
+
 		Produce: () => undefined,
 	} satisfies Heuristic;
 };
@@ -160,15 +182,21 @@ const ClassifyProperty = (Property: string): Heuristic => {
  */
 const RecordGap = (
 	NamespaceName: string,
+
 	Property: string,
+
 	Kind: Heuristic["Kind"],
 ): void => {
 	const Key = `${NamespaceName}.${Property}`;
+
 	LandFixLog.InfoOnce(
 		"VSCODE-API-GAP",
+
 		Key,
+
 		`${NamespaceName}.${Property} → ${Kind}`,
 	);
+
 	if (process.env["NODE_ENV"] !== "production") {
 		LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
 			namespace: NamespaceName,
@@ -189,6 +217,7 @@ const BuildHeuristicMethod =
 	(NamespaceName: string, Property: string, Heuristic: Heuristic) =>
 	(...Arguments: unknown[]): unknown => {
 		const SpanName = `vscode.${NamespaceName}.${Property}`;
+
 		const Program = Effect.gen(function* () {
 			yield* Effect.sync(() => {
 				try {
@@ -231,6 +260,7 @@ const BuildHeuristicMethod =
 				},
 			}),
 		);
+
 		try {
 			return Heuristic.Sync
 				? Effect.runSync(Program)
@@ -244,11 +274,14 @@ const BuildHeuristicMethod =
 			switch (Heuristic.Kind) {
 				case "trust":
 					return Heuristic.Sync ? true : Promise.resolve(true);
+
 				case "event":
 				case "register":
 					return NoopDisposable;
+
 				case "bool-check":
 					return Heuristic.Sync ? false : Promise.resolve(false);
+
 				default:
 					return Heuristic.Sync
 						? undefined
@@ -276,7 +309,9 @@ const BuildHeuristicMethod =
  */
 const WrapNamespaceWithHeuristics = <T extends object>(
 	NamespaceName: string,
+
 	Concrete: T,
+
 	Overrides?: HeuristicOverrides,
 ): T =>
 	new Proxy(Concrete, {

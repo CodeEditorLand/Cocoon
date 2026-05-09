@@ -7,10 +7,15 @@ import { Context, Effect, Layer } from "effect";
 
 export interface InitData {
 	readonly commit: string;
+
 	readonly version: string;
+
 	readonly parentPid: number;
+
 	readonly extensions: ReadonlyArray<unknown>;
+
 	readonly workspace: unknown;
+
 	readonly environment: Record<string, unknown>;
 }
 
@@ -25,6 +30,7 @@ export class InitDataService extends Context.Tag("Cocoon/InitData")<
 // block that sourced .env.Land. Fall back to VS Code base + "dev" if
 // the env vars are somehow missing so the extension host still boots.
 const ResolvedVersion = process.env["ProductVersion"] ?? "1.118.0";
+
 const ResolvedCommit = process.env["ProductCommit"] ?? "dev";
 
 export const InitDataLive = Layer.succeed(InitDataService, {

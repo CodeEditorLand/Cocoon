@@ -36,6 +36,7 @@ export interface IPCConfiguration {
  */
 export class IPCConfigurationService extends Effect.Service<IPCConfigurationService>()(
 	"Service/IPCConfiguration",
+
 	{
 		effect: Effect.gen(function* () {
 			// This is a synchronous effect, but we use Effect.gen for consistency with the protocol.

@@ -26,10 +26,15 @@ export type ConfigurationChangeEvent = {
 
 export type ConfigurationState = {
 	ConfigCache: Map<string, unknown>;
+
 	ConfigInFlight: Set<string>;
+
 	ConfigListeners: Set<(Event: ConfigurationChangeEvent) => void>;
+
 	FireConfigChange: (ChangedKey: string) => void;
+
 	PrimeConfig: (Key: string) => void;
+
 	/**
 	 * Walk `contributes.configuration.properties` on the given extension
 	 * manifest and seed the cache with each declared default. Extensions
@@ -47,18 +52,22 @@ export const CreateConfigurationState = (
 	Context: HandlerContext,
 ): ConfigurationState => {
 	const ConfigCache = new Map<string, unknown>();
+
 	const ConfigInFlight = new Set<string>();
+
 	const ConfigListeners = new Set<
 		(Event: ConfigurationChangeEvent) => void
 	>();
 
 	const FireConfigChange = (ChangedKey: string): void => {
 		if (ConfigListeners.size === 0) return;
+
 		const Event = {
 			affectsConfiguration: (QueryKey: string): boolean =>
 				ChangedKey === QueryKey ||
 				ChangedKey.startsWith(`${QueryKey}.`),
 		};
+
 		for (const Listener of ConfigListeners) {
 			try {
 				Listener(Event);
@@ -70,10 +79,14 @@ export const CreateConfigurationState = (
 
 	const PrimeConfig = (Key: string): void => {
 		if (ConfigInFlight.has(Key)) return;
+
 		ConfigInFlight.add(Key);
+
 		void Call<{ value?: unknown } | unknown>(
 			Context,
+
 			"Configuration.Inspect",
+
 			[Key],
 		).then((Value) => {
 			ConfigInFlight.delete(Key);
@@ -162,6 +175,7 @@ export const CreateConfigurationState = (
 		// log via the existing `[Cocoon stdout]` sink.
 		CocoonDevLog(
 			"config-prime",
+
 			`[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`,
 		);
 	};
@@ -226,6 +240,7 @@ export const CreateConfigurationState = (
  */
 const SynthesiseSubtree = (
 	Cache: Map<string, unknown>,
+
 	Full: string,
 ): Record<string, unknown> | undefined => {
 	const Prefix = `${Full}.`;
@@ -272,6 +287,7 @@ export const BuildGetConfiguration =
 					if (Subtree !== undefined) {
 						CocoonDevLog(
 							"config-prime",
+
 							`[ConfigPrime] synthesise key=${Full} source=null-shadowed`,
 						);
 						return Subtree as T;
@@ -287,6 +303,7 @@ export const BuildGetConfiguration =
 			if (Subtree !== undefined) {
 				CocoonDevLog(
 					"config-prime",
+
 					`[ConfigPrime] synthesise key=${Full} source=miss`,
 				);
 				return Subtree as T;
@@ -307,7 +324,9 @@ export const BuildGetConfiguration =
 							: 0;
 			await Call<void>(Context, "Configuration.Update", [
 				Full,
+
 				Value,
+
 				TargetIndex,
 			]);
 			// Write through so the next `get()` reflects the change and
@@ -358,7 +377,9 @@ export const BuildOnDidChangeConfiguration =
 	(State: ConfigurationState) =>
 	(
 		Listener: (Event: ConfigurationChangeEvent) => void,
+
 		ThisArg?: unknown,
+
 		Disposables?: { push: (D: { dispose: () => void }) => unknown },
 	) => {
 		// VS Code's event contract is `(listener, thisArg?, disposables?)` -

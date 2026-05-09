@@ -15,6 +15,7 @@ const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 		Context.Emitter.on(EventName, Listener);
+
 		return {
 			dispose: () => {
 				Context.Emitter.off(EventName, Listener);
@@ -44,6 +45,7 @@ const CreateTasksNamespace = (Context: HandlerContext) =>
 			try {
 				const Response = await Context.MountainClient?.sendRequest(
 					"Task.Fetch",
+
 					[Filter],
 				);
 				return Array.isArray(Response) ? Response : [];
@@ -56,6 +58,7 @@ const CreateTasksNamespace = (Context: HandlerContext) =>
 			try {
 				return await Context.MountainClient?.sendRequest(
 					"Task.Execute",
+
 					[Task],
 				);
 			} catch {
