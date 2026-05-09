@@ -1,1 +1,56 @@
-export*from"./Constant/Environment/Constant.js";import{default as i}from"./Config/Base/Config.js";import{default as f}from"./Config/Target/Config.js";import{default as d}from"./Config/Compile/Config.js";const o={entryPoints:["Source/**/*.ts"],outdir:"Target",bundle:!0,platform:"node",target:"esnext",format:"esm",sourcemap:!0,external:["@playform/build","vscode","electron","@effect/*","@grpc/grpc-js","@grpc/proto-loader","google-protobuf","protobufjs","node:*"],jsx:"preserve",loader:{".ts":"ts",".tsx":"tsx"},supported:{"generator-function":!0,"async-generator":!0},define:{"process.env.NODE_ENV":JSON.stringify(process.env.NODE_ENV||"production")},resolveExtensions:[".ts",".tsx",".js",".jsx",".json"],tsconfig:"tsconfig.json"},e={...o,sourcemap:!0,minify:!1,define:{"process.env.NODE_ENV":JSON.stringify("development")}},t={...o,sourcemap:!1,minify:!0,define:{"process.env.NODE_ENV":JSON.stringify("production")}};export{i as BaseConfig,o as CocoonESBuildConfig,e as CocoonESBuildDevConfig,t as CocoonESBuildProdConfig,d as CompileConfig,f as TargetConfig};
+import { default as i } from "./Config/Base/Config.js";
+import { default as d } from "./Config/Compile/Config.js";
+import { default as f } from "./Config/Target/Config.js";
+
+export * from "./Constant/Environment/Constant.js";
+
+const o = {
+		entryPoints: ["Source/**/*.ts"],
+		outdir: "Target",
+		bundle: !0,
+		platform: "node",
+		target: "esnext",
+		format: "esm",
+		sourcemap: !0,
+		external: [
+			"@playform/build",
+			"vscode",
+			"electron",
+			"@effect/*",
+			"@grpc/grpc-js",
+			"@grpc/proto-loader",
+			"google-protobuf",
+			"protobufjs",
+			"node:*",
+		],
+		jsx: "preserve",
+		loader: { ".ts": "ts", ".tsx": "tsx" },
+		supported: { "generator-function": !0, "async-generator": !0 },
+		define: {
+			"process.env.NODE_ENV": JSON.stringify(
+				process.env.NODE_ENV || "production",
+			),
+		},
+		resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+		tsconfig: "tsconfig.json",
+	},
+	e = {
+		...o,
+		sourcemap: !0,
+		minify: !1,
+		define: { "process.env.NODE_ENV": JSON.stringify("development") },
+	},
+	t = {
+		...o,
+		sourcemap: !1,
+		minify: !0,
+		define: { "process.env.NODE_ENV": JSON.stringify("production") },
+	};
+export {
+	i as BaseConfig,
+	o as CocoonESBuildConfig,
+	e as CocoonESBuildDevConfig,
+	t as CocoonESBuildProdConfig,
+	d as CompileConfig,
+	f as TargetConfig,
+};

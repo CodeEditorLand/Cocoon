@@ -34,8 +34,12 @@ export const BespokeCocoonMethods: ReadonlySet<string> = new Set<string>(["FindT
 
 /** Summary counts - used by DualTrack for boot-time banner. */
 export const RouteManifestSummary = {
+
 	mountain: 91,
+
 	stockLift: 0,
+
 	bespoke: 1,
+
 	generatedAt: "2026-05-09T15:30:09Z",
 } as const;
