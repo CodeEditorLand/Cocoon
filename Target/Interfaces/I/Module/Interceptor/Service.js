@@ -1,1 +1,17 @@
-import{Context as t}from"effect";var r=(e=>(e.TRUSTED="TRUSTED",e.SANDBOXED="SANDBOXED",e.RESTRICTED="RESTRICTED",e.BLOCKED="BLOCKED",e))(r||{}),o=t.Tag("IModuleInterceptorService");export{o as IModuleInterceptorService,r as SecurityLevel};
+// Source/Interfaces/I/Module/Interceptor/Service.ts
+import { Context } from "effect";
+var SecurityLevel = /* @__PURE__ */ ((SecurityLevel2) => {
+  SecurityLevel2["TRUSTED"] = "TRUSTED";
+  SecurityLevel2["SANDBOXED"] = "SANDBOXED";
+  SecurityLevel2["RESTRICTED"] = "RESTRICTED";
+  SecurityLevel2["BLOCKED"] = "BLOCKED";
+  return SecurityLevel2;
+})(SecurityLevel || {});
+var IModuleInterceptorService = Context.Tag(
+  "IModuleInterceptorService"
+);
+export {
+  IModuleInterceptorService,
+  SecurityLevel
+};
+//# sourceMappingURL=Service.js.map

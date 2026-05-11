@@ -1,3 +1,630 @@
-import{Context as oe,Effect as t,HashMap as x,Layer as K,Ref as R,SubscriptionRef as N}from"effect";import{Context as ee,Effect as d,HashMap as v,Layer as U,Option as k,Ref as E,Stream as te,SubscriptionRef as C}from"effect";var w=class extends ee.Tag("Cocoon/Telemetry")(){},j=w,le=U.effect(j,d.gen(function*(){let n=yield*C.make(v.empty()),s=yield*C.make(v.empty()),r=yield*C.make([]),l=(c,y,i)=>d.gen(function*(){let p={name:c,value:y,timestamp:Date.now(),labels:i},M=yield*r.get;yield*E.set(r,[...M,{type:"metric",timestamp:p.timestamp,data:p}]);let I=yield*n.get,e=v.get(I,c).pipe(k.getOrElse(()=>[]));yield*E.set(n,v.set(I,c,[...e,p]))}),u=(c,y)=>d.gen(function*(){let i=Date.now(),p={name:c,startTime:i,success:!1,labels:y??{}},M=yield*r.get;return yield*E.set(r,[...M,{type:"span",timestamp:i,data:p}]),{end:(I,e)=>d.gen(function*(){let o=Date.now(),a={...p,endTime:o,duration:o-i,success:I,error:e},f=yield*r.get;yield*E.set(r,[...f,{type:"span",timestamp:o,data:a}]);let g=yield*s.get,S=v.get(g,c).pipe(k.getOrElse(()=>[]));yield*E.set(s,v.set(g,c,[...S,a]))})}}),T=(c,y,i)=>d.gen(function*(){let p={level:c,message:y,context:i},M=Date.now(),I=yield*r.get;yield*E.set(r,[...I,{type:"log",timestamp:M,data:p}]);let e=`[Cocoon Telemetry] [${c.toUpperCase()}]`,o="";if(i&&Object.keys(i).length>0)try{o=` ${JSON.stringify(i)}`}catch{o=" [unserializable-context]"}let a=`${e} ${y}${o}
-`,f=c==="error"?process.stderr:process.stdout;try{f.write(a)}catch{}}),L=c=>d.gen(function*(){let y=yield*n.get;return v.get(y,c).pipe(k.getOrElse(()=>[]))}),b=c=>d.gen(function*(){let y=yield*s.get,i=v.get(y,c).pipe(k.getOrElse(()=>[]));return i.length===0?0:i.reduce((M,I)=>M+(I.duration??0),0)/i.length}),D=c=>d.gen(function*(){let y=yield*s.get,i=v.get(y,c).pipe(k.getOrElse(()=>[]));return i.length===0?1:i.filter(M=>M.success).length/i.length}),_=d.gen(function*(){yield*E.set(n,v.empty()),yield*E.set(s,v.empty()),yield*E.set(r,[])});return{recordMetric:l,startSpan:u,log:T,events:r.changes,getMetrics:L,getAverageDuration:b,getSuccessRate:D,flush:_}})),ne=()=>({recordMetric:()=>d.void,startSpan:()=>d.succeed({end:()=>d.void}),log:(n,s,r)=>d.sync(()=>{let l=`[Cocoon Telemetry Mock] [${n.toUpperCase()}]`,u="";if(r&&Object.keys(r).length>0)try{u=` ${JSON.stringify(r)}`}catch{u=" [unserializable-context]"}let T=n==="error"?process.stderr:process.stdout;try{T.write(`${l} ${s}${u}
-`)}catch{}}),events:te.empty,getMetrics:()=>d.succeed([]),getAverageDuration:()=>d.succeed(0),getSuccessRate:()=>d.succeed(1),flush:d.void}),ce=U.effect(j,d.succeed(ne()));var re=(u=>(u.TRUSTED="TRUSTED",u.SANDBOXED="SANDBOXED",u.RESTRICTED="RESTRICTED",u.BLOCKED="BLOCKED",u))(re||{}),H=class extends Error{constructor(r,l){super(`Module not found: ${r} for extension ${l}`);this.moduleId=r;this.extensionId=l}moduleId;extensionId;_tag="ModuleNotFoundError"},X=class extends Error{constructor(r,l){super(`Module access denied: ${r} - ${l}`);this.moduleId=r;this.reason=l}moduleId;reason;_tag="ModuleAccessDeniedError"},V=class extends Error{constructor(r){super(`Security policy not found for extension: ${r}`);this.extensionId=r}extensionId;_tag="SecurityPolicyNotFoundError"},B=class extends oe.Tag("Cocoon/ModuleInterceptor")(){},J=B,F={allowedModules:["path","url","util","events","stream","buffer"],blockedModules:["fs","child_process","net","http","https","os","crypto"],securityLevel:"SANDBOXED",maxMemoryUsage:128*1024*1024,maxExecutionTime:5e3},ye=K.effect(J,t.gen(function*(){let n=yield*w,s=yield*N.make(x.empty()),r=yield*N.make(x.empty()),l=yield*N.make({totalInterceptions:0,blockedModules:0,averageResolutionTime:0,securityViolations:0}),u=[],T=e=>["fs","path","os","net","http","https","child_process","crypto","util","events","stream","buffer","url","querystring"].includes(e),L=t.gen(function*(){n.log("info","[ModuleInterceptor] Initializing module interceptor service..."),yield*t.sleep("5 millis"),n.log("info","[ModuleInterceptor] Module interceptor service initialized")}),b=new Map,D=t.gen(function*(){n.log("info","[ModuleInterceptor] Installing Node.js Module._load hook...");let{default:e}=yield*t.tryPromise({try:()=>import("node:module"),catch:a=>new Error(`[ModuleInterceptor] import('node:module') failed: ${a}`)}),o=e._load;e._load=function(f,g,S){if(f==="vscode"){let $=g?.filename??g?.id??"";for(let[A,O]of b)if($.includes(A))return O;if(b.size>0)return[...b.values()].pop();let h=globalThis.__cocoonVscodeAPI;return h||{}}return o.apply(this,[f,g,S])},n.log("info","[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted")}),_=e=>t.gen(function*(){let o=Date.now(),a=yield*l.get;yield*R.set(l,{...a,totalInterceptions:a.totalInterceptions+1});let f=x.get(yield*s.get,e.extensionId);f._tag==="None"&&(yield*n.log("warn",`[ModuleInterceptor] No policy for extension ${e.extensionId}, using default`));let g=f._tag==="Some"?f.value:{...F,extensionId:e.extensionId};if(g.blockedModules.includes(e.moduleId)){yield*n.log("warn",`[ModuleInterceptor] Blocked module access: ${e.moduleId} for ${e.extensionId}`);let m=yield*l.get;return yield*R.set(l,{...m,blockedModules:m.blockedModules+1,securityViolations:m.securityViolations+1}),{success:!1,error:`Module access denied: ${e.moduleId}`,securityLevel:"BLOCKED"}}if(!g.allowedModules.includes(e.moduleId)&&!T(e.moduleId)){yield*n.log("warn",`[ModuleInterceptor] Module not in allowlist: ${e.moduleId} for ${e.extensionId}`);let m=yield*l.get;return yield*R.set(l,{...m,blockedModules:m.blockedModules+1,securityViolations:m.securityViolations+1}),{success:!1,error:`Module not in allowlist: ${e.moduleId}`,securityLevel:"RESTRICTED"}}let S=`${e.extensionId}:${e.moduleId}`,$=x.get(yield*r.get,S);if($._tag==="Some"){let m=Date.now()-o;u.push(m);let P=[...u],W=P.reduce((Z,q)=>Z+q,0)/P.length,Y=yield*l.get;return yield*R.set(l,{...Y,averageResolutionTime:W}),n.log("debug",`[ModuleInterceptor] Module cache hit: ${e.moduleId} (${m}ms)`),{success:!0,module:$.value,securityLevel:g.securityLevel}}yield*t.sleep("5 millis"),n.log("info",`[ModuleInterceptor] Module loaded: ${e.moduleId} for ${e.extensionId}`);let h={module:e.moduleId},A=yield*r.get;yield*R.set(r,x.set(A,S,h));let O=Date.now()-o;u.push(O);let z=[...u],G=z.reduce((m,P)=>m+P,0)/z.length,Q=yield*l.get;return yield*R.set(l,{...Q,averageResolutionTime:G}),{success:!0,module:h,securityLevel:g.securityLevel}}),c=(e,o)=>t.gen(function*(){return yield*t.sleep("5 millis"),o?`/node_modules/${o}/index.js`:yield*t.fail(new H(o,e))}),y=e=>t.gen(function*(){let o=yield*s.get;yield*R.set(s,x.set(o,e.extensionId,e)),n.log("info",`[ModuleInterceptor] Security policy set for extension ${e.extensionId} (${e.securityLevel})`)}),i=e=>t.gen(function*(){let o=yield*s.get,a=x.get(o,e);return a._tag==="None"?yield*t.fail(new V(e)):a.value}),p=(e,o)=>t.gen(function*(){let a=yield*s.get,f=x.get(a,e);if(f._tag==="None"){let S={...F,extensionId:e};return!S.blockedModules.includes(o)||S.allowedModules.includes(o)||T(o)}let g=f.value;return!g.blockedModules.includes(o)||g.allowedModules.includes(o)||T(o)}),M=t.gen(function*(){return yield*l.get});return{initialize:L,install:D,registerVscodeAPI:(e,o)=>t.gen(function*(){b.set(e,o),n.log("info",`[ModuleInterceptor] Registered vscode API for extension: ${e}`)}),interceptRequire:_,resolveModule:c,setSecurityPolicy:y,getSecurityPolicy:i,validateModuleSecurity:p,getStatistics:M}})),se=()=>({initialize:t.gen(function*(){yield*t.sleep("1 millis")}),install:t.gen(function*(){yield*t.sleep("1 millis")}),registerVscodeAPI:(n,s)=>t.gen(function*(){yield*t.sleep("1 millis")}),interceptRequire:n=>t.gen(function*(){return yield*t.sleep("1 millis"),{success:!0,module:{mock:!0,moduleId:n.moduleId},securityLevel:"SANDBOXED"}}),resolveModule:(n,s)=>t.gen(function*(){return yield*t.sleep("1 millis"),`/node_modules/${s}/index.js`}),setSecurityPolicy:n=>t.gen(function*(){yield*t.sleep("1 millis")}),getSecurityPolicy:n=>t.gen(function*(){return yield*t.sleep("1 millis"),{extensionId:n,allowedModules:["path","util"],blockedModules:["fs"],securityLevel:"SANDBOXED"}}),validateModuleSecurity:(n,s)=>t.gen(function*(){return yield*t.sleep("1 millis"),!0}),getStatistics:t.gen(function*(){return yield*t.sleep("1 millis"),{totalInterceptions:100,blockedModules:5,averageResolutionTime:2.5,securityViolations:3}})}),ge=K.effect(J,t.succeed(se()));export{X as ModuleAccessDeniedError,J as ModuleInterceptor,ye as ModuleInterceptorLive,ge as ModuleInterceptorMock,B as ModuleInterceptorTag,H as ModuleNotFoundError,re as SecurityLevel,V as SecurityPolicyNotFoundError,se as makeMockModuleInterceptor};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Effect/Telemetry.ts
+import {
+  Context,
+  Effect,
+  HashMap,
+  Layer,
+  Option,
+  Ref,
+  Stream,
+  SubscriptionRef
+} from "effect";
+var TelemetryCollectionError = class extends Error {
+  constructor(operation, cause) {
+    super(
+      `Telemetry collection failed for '${operation}': ${String(cause)}`
+    );
+    this.operation = operation;
+    this.cause = cause;
+  }
+  operation;
+  cause;
+  static {
+    __name(this, "TelemetryCollectionError");
+  }
+  _tag = "TelemetryCollectionError";
+};
+var TelemetryTag = class extends Context.Tag("Cocoon/Telemetry")() {
+  static {
+    __name(this, "TelemetryTag");
+  }
+};
+var Telemetry = TelemetryTag;
+var TelemetryLive = Layer.effect(
+  Telemetry,
+  Effect.gen(function* () {
+    const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
+    const spansRef = yield* SubscriptionRef.make(HashMap.empty());
+    const eventsRef = yield* SubscriptionRef.make([]);
+    const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect.gen(function* () {
+      const metric = {
+        name,
+        value,
+        timestamp: Date.now(),
+        labels
+      };
+      const events = yield* eventsRef.get;
+      yield* Ref.set(eventsRef, [
+        ...events,
+        {
+          type: "metric",
+          timestamp: metric.timestamp,
+          data: metric
+        }
+      ]);
+      const currentMetrics = yield* metricsRef.get;
+      const nameMetrics = HashMap.get(currentMetrics, name).pipe(
+        Option.getOrElse(() => [])
+      );
+      yield* Ref.set(
+        metricsRef,
+        HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+      );
+    }), "recordMetric");
+    const startSpan = /* @__PURE__ */ __name((name, labels) => Effect.gen(function* () {
+      const startTime = Date.now();
+      const span = {
+        name,
+        startTime,
+        success: false,
+        labels: labels ?? {}
+      };
+      const events = yield* eventsRef.get;
+      yield* Ref.set(eventsRef, [
+        ...events,
+        { type: "span", timestamp: startTime, data: span }
+      ]);
+      return {
+        end: /* @__PURE__ */ __name((success, error) => Effect.gen(function* () {
+          const endTime = Date.now();
+          const completedSpan = {
+            ...span,
+            endTime,
+            duration: endTime - startTime,
+            success,
+            error
+          };
+          const events2 = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events2,
+            {
+              type: "span",
+              timestamp: endTime,
+              data: completedSpan
+            }
+          ]);
+          const currentSpans = yield* spansRef.get;
+          const nameSpans = HashMap.get(
+            currentSpans,
+            name
+          ).pipe(Option.getOrElse(() => []));
+          yield* Ref.set(
+            spansRef,
+            HashMap.set(currentSpans, name, [
+              ...nameSpans,
+              completedSpan
+            ])
+          );
+        }), "end")
+      };
+    }), "startSpan");
+    const log = /* @__PURE__ */ __name((level, message, context) => Effect.gen(function* () {
+      const logEntry = {
+        level,
+        message,
+        context
+      };
+      const timestamp = Date.now();
+      const events = yield* eventsRef.get;
+      yield* Ref.set(eventsRef, [
+        ...events,
+        { type: "log", timestamp, data: logEntry }
+      ]);
+      const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+      let ContextText = "";
+      if (context && Object.keys(context).length > 0) {
+        try {
+          ContextText = ` ${JSON.stringify(context)}`;
+        } catch {
+          ContextText = " [unserializable-context]";
+        }
+      }
+      const Line = `${Prefix} ${message}${ContextText}
+`;
+      const Stream2 = level === "error" ? process.stderr : process.stdout;
+      try {
+        Stream2.write(Line);
+      } catch {
+      }
+    }), "log");
+    const getMetrics = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
+      const metrics = yield* metricsRef.get;
+      return HashMap.get(metrics, name).pipe(
+        Option.getOrElse(() => [])
+      );
+    }), "getMetrics");
+    const getAverageDuration = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
+      const spans = yield* spansRef.get;
+      const nameSpans = HashMap.get(spans, name).pipe(
+        Option.getOrElse(() => [])
+      );
+      if (nameSpans.length === 0) {
+        return 0;
+      }
+      const totalDuration = nameSpans.reduce(
+        (sum, span) => {
+          return sum + (span.duration ?? 0);
+        },
+        0
+      );
+      return totalDuration / nameSpans.length;
+    }), "getAverageDuration");
+    const getSuccessRate = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
+      const spans = yield* spansRef.get;
+      const nameSpans = HashMap.get(spans, name).pipe(
+        Option.getOrElse(() => [])
+      );
+      if (nameSpans.length === 0) {
+        return 1;
+      }
+      const successCount = nameSpans.filter(
+        (span) => span.success
+      ).length;
+      return successCount / nameSpans.length;
+    }), "getSuccessRate");
+    const flush = Effect.gen(function* () {
+      yield* Ref.set(metricsRef, HashMap.empty());
+      yield* Ref.set(spansRef, HashMap.empty());
+      yield* Ref.set(eventsRef, []);
+    });
+    return {
+      recordMetric,
+      startSpan,
+      log,
+      events: eventsRef.changes,
+      getMetrics,
+      getAverageDuration,
+      getSuccessRate,
+      flush
+    };
+  })
+);
+var makeMockTelemetry = /* @__PURE__ */ __name(() => ({
+  recordMetric: /* @__PURE__ */ __name(() => Effect.void, "recordMetric"),
+  startSpan: /* @__PURE__ */ __name(() => Effect.succeed({
+    end: /* @__PURE__ */ __name(() => Effect.void, "end")
+  }), "startSpan"),
+  log: /* @__PURE__ */ __name((level, message, context) => Effect.sync(() => {
+    const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+    let ContextText = "";
+    if (context && Object.keys(context).length > 0) {
+      try {
+        ContextText = ` ${JSON.stringify(context)}`;
+      } catch {
+        ContextText = " [unserializable-context]";
+      }
+    }
+    const Stream2 = level === "error" ? process.stderr : process.stdout;
+    try {
+      Stream2.write(`${Prefix} ${message}${ContextText}
+`);
+    } catch {
+    }
+  }), "log"),
+  events: Stream.empty,
+  getMetrics: /* @__PURE__ */ __name(() => Effect.succeed([]), "getMetrics"),
+  getAverageDuration: /* @__PURE__ */ __name(() => Effect.succeed(0), "getAverageDuration"),
+  getSuccessRate: /* @__PURE__ */ __name(() => Effect.succeed(1), "getSuccessRate"),
+  flush: Effect.void
+}), "makeMockTelemetry");
+var TelemetryMock = Layer.effect(
+  Telemetry,
+  Effect.succeed(makeMockTelemetry())
+);
+var withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect.gen(function* () {
+  const telemetry = yield* Telemetry;
+  const span = yield* telemetry.startSpan(name, labels);
+  const result = yield* effect.pipe(
+    Effect.catchAll(
+      (error) => Effect.gen(function* () {
+        yield* span.end(false, String(error));
+        return yield* Effect.fail(error);
+      })
+    )
+  );
+  yield* span.end(true);
+  return result;
+}), "withSpan");
+
+// Source/Effect/Module/Interceptor.ts
+import { Context as Context2, Effect as Effect2, HashMap as HashMap2, Layer as Layer2, Ref as Ref2, SubscriptionRef as SubscriptionRef2 } from "effect";
+var SecurityLevel = /* @__PURE__ */ ((SecurityLevel2) => {
+  SecurityLevel2["TRUSTED"] = "TRUSTED";
+  SecurityLevel2["SANDBOXED"] = "SANDBOXED";
+  SecurityLevel2["RESTRICTED"] = "RESTRICTED";
+  SecurityLevel2["BLOCKED"] = "BLOCKED";
+  return SecurityLevel2;
+})(SecurityLevel || {});
+var ModuleNotFoundError = class extends Error {
+  constructor(moduleId, extensionId) {
+    super(`Module not found: ${moduleId} for extension ${extensionId}`);
+    this.moduleId = moduleId;
+    this.extensionId = extensionId;
+  }
+  moduleId;
+  extensionId;
+  static {
+    __name(this, "ModuleNotFoundError");
+  }
+  _tag = "ModuleNotFoundError";
+};
+var ModuleAccessDeniedError = class extends Error {
+  constructor(moduleId, reason) {
+    super(`Module access denied: ${moduleId} - ${reason}`);
+    this.moduleId = moduleId;
+    this.reason = reason;
+  }
+  moduleId;
+  reason;
+  static {
+    __name(this, "ModuleAccessDeniedError");
+  }
+  _tag = "ModuleAccessDeniedError";
+};
+var SecurityPolicyNotFoundError = class extends Error {
+  constructor(extensionId) {
+    super(`Security policy not found for extension: ${extensionId}`);
+    this.extensionId = extensionId;
+  }
+  extensionId;
+  static {
+    __name(this, "SecurityPolicyNotFoundError");
+  }
+  _tag = "SecurityPolicyNotFoundError";
+};
+var ModuleInterceptorTag = class extends Context2.Tag(
+  "Cocoon/ModuleInterceptor"
+)() {
+  static {
+    __name(this, "ModuleInterceptorTag");
+  }
+};
+var ModuleInterceptor = ModuleInterceptorTag;
+var defaultSecurityPolicy = {
+  allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
+  blockedModules: [
+    "fs",
+    "child_process",
+    "net",
+    "http",
+    "https",
+    "os",
+    "crypto"
+  ],
+  securityLevel: "SANDBOXED" /* SANDBOXED */,
+  maxMemoryUsage: 128 * 1024 * 1024,
+  // 128MB
+  maxExecutionTime: 5e3
+  // 5 seconds
+};
+var ModuleInterceptorLive = Layer2.effect(
+  ModuleInterceptor,
+  Effect2.gen(function* () {
+    const telemetry = yield* TelemetryTag;
+    const policiesRef = yield* SubscriptionRef2.make(HashMap2.empty());
+    const moduleCacheRef = yield* SubscriptionRef2.make(HashMap2.empty());
+    const statsRef = yield* SubscriptionRef2.make({
+      totalInterceptions: 0,
+      blockedModules: 0,
+      averageResolutionTime: 0,
+      securityViolations: 0
+    });
+    const resolutionTimes = [];
+    const isNodeBuiltin = /* @__PURE__ */ __name((moduleId) => {
+      const builtins = [
+        "fs",
+        "path",
+        "os",
+        "net",
+        "http",
+        "https",
+        "child_process",
+        "crypto",
+        "util",
+        "events",
+        "stream",
+        "buffer",
+        "url",
+        "querystring"
+      ];
+      return builtins.includes(moduleId);
+    }, "isNodeBuiltin");
+    const initialize = Effect2.gen(function* () {
+      telemetry.log(
+        "info",
+        "[ModuleInterceptor] Initializing module interceptor service..."
+      );
+      yield* Effect2.sleep("5 millis");
+      telemetry.log(
+        "info",
+        "[ModuleInterceptor] Module interceptor service initialized"
+      );
+    });
+    const vscodeAPIRegistry = /* @__PURE__ */ new Map();
+    const install = Effect2.gen(function* () {
+      telemetry.log(
+        "info",
+        "[ModuleInterceptor] Installing Node.js Module._load hook..."
+      );
+      const { default: NodeModule } = yield* Effect2.tryPromise({
+        try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
+        catch: /* @__PURE__ */ __name((Err) => new Error(
+          `[ModuleInterceptor] import('node:module') failed: ${Err}`
+        ), "catch")
+      });
+      const OriginalLoad = NodeModule._load;
+      NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
+        if (Request === "vscode") {
+          const ParentFilename = Parent?.filename ?? Parent?.id ?? "";
+          for (const [ExtensionId, API] of vscodeAPIRegistry) {
+            if (ParentFilename.includes(ExtensionId)) {
+              return API;
+            }
+          }
+          if (vscodeAPIRegistry.size > 0) {
+            const LastAPI = [...vscodeAPIRegistry.values()].pop();
+            return LastAPI;
+          }
+          const GlobalAPI = globalThis.__cocoonVscodeAPI;
+          if (GlobalAPI) {
+            return GlobalAPI;
+          }
+          console.warn(
+            `[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`
+          );
+          return {};
+        }
+        return OriginalLoad.apply(this, [Request, Parent, IsMain]);
+      }, "PatchedLoad");
+      telemetry.log(
+        "info",
+        "[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted"
+      );
+    });
+    const interceptRequire = /* @__PURE__ */ __name((request) => Effect2.gen(function* () {
+      const startTime = Date.now();
+      const currentStats = yield* statsRef.get;
+      yield* Ref2.set(statsRef, {
+        ...currentStats,
+        totalInterceptions: currentStats.totalInterceptions + 1
+      });
+      const policyOpt = HashMap2.get(
+        yield* policiesRef.get,
+        request.extensionId
+      );
+      if (policyOpt._tag === "None") {
+        yield* telemetry.log(
+          "warn",
+          `[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`
+        );
+      }
+      const policy = policyOpt._tag === "Some" ? policyOpt.value : {
+        ...defaultSecurityPolicy,
+        extensionId: request.extensionId
+      };
+      if (policy.blockedModules.includes(request.moduleId)) {
+        yield* telemetry.log(
+          "warn",
+          `[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`
+        );
+        const statsAfter2 = yield* statsRef.get;
+        yield* Ref2.set(statsRef, {
+          ...statsAfter2,
+          blockedModules: statsAfter2.blockedModules + 1,
+          securityViolations: statsAfter2.securityViolations + 1
+        });
+        return {
+          success: false,
+          error: `Module access denied: ${request.moduleId}`,
+          securityLevel: "BLOCKED" /* BLOCKED */
+        };
+      }
+      if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
+        yield* telemetry.log(
+          "warn",
+          `[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`
+        );
+        const statsAfter2 = yield* statsRef.get;
+        yield* Ref2.set(statsRef, {
+          ...statsAfter2,
+          blockedModules: statsAfter2.blockedModules + 1,
+          securityViolations: statsAfter2.securityViolations + 1
+        });
+        return {
+          success: false,
+          error: `Module not in allowlist: ${request.moduleId}`,
+          securityLevel: "RESTRICTED" /* RESTRICTED */
+        };
+      }
+      const cacheKey = `${request.extensionId}:${request.moduleId}`;
+      const cachedModule = HashMap2.get(
+        yield* moduleCacheRef.get,
+        cacheKey
+      );
+      if (cachedModule._tag === "Some") {
+        const duration2 = Date.now() - startTime;
+        resolutionTimes.push(duration2);
+        const allTimes2 = [...resolutionTimes];
+        const avgTime2 = allTimes2.reduce((a, b) => a + b, 0) / allTimes2.length;
+        const statsAfter2 = yield* statsRef.get;
+        yield* Ref2.set(statsRef, {
+          ...statsAfter2,
+          averageResolutionTime: avgTime2
+        });
+        telemetry.log(
+          "debug",
+          `[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration2}ms)`
+        );
+        return {
+          success: true,
+          module: cachedModule.value,
+          securityLevel: policy.securityLevel
+        };
+      }
+      yield* Effect2.sleep("5 millis");
+      telemetry.log(
+        "info",
+        `[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`
+      );
+      const module = { module: request.moduleId };
+      const currentCache = yield* moduleCacheRef.get;
+      yield* Ref2.set(
+        moduleCacheRef,
+        HashMap2.set(currentCache, cacheKey, module)
+      );
+      const duration = Date.now() - startTime;
+      resolutionTimes.push(duration);
+      const allTimes = [...resolutionTimes];
+      const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+      const statsAfter = yield* statsRef.get;
+      yield* Ref2.set(statsRef, {
+        ...statsAfter,
+        averageResolutionTime: avgTime
+      });
+      return {
+        success: true,
+        module,
+        securityLevel: policy.securityLevel
+      };
+    }), "interceptRequire");
+    const resolveModule = /* @__PURE__ */ __name((extensionId, modulePath) => Effect2.gen(function* () {
+      yield* Effect2.sleep("5 millis");
+      if (!modulePath) {
+        return yield* Effect2.fail(
+          new ModuleNotFoundError(modulePath, extensionId)
+        );
+      }
+      const resolvedPath = `/node_modules/${modulePath}/index.js`;
+      return resolvedPath;
+    }), "resolveModule");
+    const setSecurityPolicy = /* @__PURE__ */ __name((policy) => Effect2.gen(function* () {
+      const currentPolicies = yield* policiesRef.get;
+      yield* Ref2.set(
+        policiesRef,
+        HashMap2.set(currentPolicies, policy.extensionId, policy)
+      );
+      telemetry.log(
+        "info",
+        `[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`
+      );
+    }), "setSecurityPolicy");
+    const getSecurityPolicy = /* @__PURE__ */ __name((extensionId) => Effect2.gen(function* () {
+      const policies = yield* policiesRef.get;
+      const policy = HashMap2.get(policies, extensionId);
+      if (policy._tag === "None") {
+        return yield* Effect2.fail(
+          new SecurityPolicyNotFoundError(extensionId)
+        );
+      }
+      return policy.value;
+    }), "getSecurityPolicy");
+    const validateModuleSecurity = /* @__PURE__ */ __name((extensionId, moduleId) => Effect2.gen(function* () {
+      const policies = yield* policiesRef.get;
+      const policyOpt = HashMap2.get(policies, extensionId);
+      if (policyOpt._tag === "None") {
+        const policy2 = { ...defaultSecurityPolicy, extensionId };
+        return !policy2.blockedModules.includes(moduleId) || policy2.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
+      }
+      const policy = policyOpt.value;
+      return !policy.blockedModules.includes(moduleId) || policy.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
+    }), "validateModuleSecurity");
+    const getStatistics = Effect2.gen(function* () {
+      return yield* statsRef.get;
+    });
+    const registerVscodeAPI = /* @__PURE__ */ __name((extensionId, api) => Effect2.gen(function* () {
+      vscodeAPIRegistry.set(extensionId, api);
+      telemetry.log(
+        "info",
+        `[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`
+      );
+    }), "registerVscodeAPI");
+    return {
+      initialize,
+      install,
+      registerVscodeAPI,
+      interceptRequire,
+      resolveModule,
+      setSecurityPolicy,
+      getSecurityPolicy,
+      validateModuleSecurity,
+      getStatistics
+    };
+  })
+);
+var makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
+  initialize: Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+  }),
+  install: Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+  }),
+  registerVscodeAPI: /* @__PURE__ */ __name((_extensionId, _api) => Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+  }), "registerVscodeAPI"),
+  interceptRequire: /* @__PURE__ */ __name((request) => Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+    return {
+      success: true,
+      module: { mock: true, moduleId: request.moduleId },
+      securityLevel: "SANDBOXED" /* SANDBOXED */
+    };
+  }), "interceptRequire"),
+  resolveModule: /* @__PURE__ */ __name((_extensionId, modulePath) => Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+    return `/node_modules/${modulePath}/index.js`;
+  }), "resolveModule"),
+  setSecurityPolicy: /* @__PURE__ */ __name((_policy) => Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+  }), "setSecurityPolicy"),
+  getSecurityPolicy: /* @__PURE__ */ __name((extensionId) => Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+    return {
+      extensionId,
+      allowedModules: ["path", "util"],
+      blockedModules: ["fs"],
+      securityLevel: "SANDBOXED" /* SANDBOXED */
+    };
+  }), "getSecurityPolicy"),
+  validateModuleSecurity: /* @__PURE__ */ __name((_extensionId, _moduleId) => Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+    return true;
+  }), "validateModuleSecurity"),
+  getStatistics: Effect2.gen(function* () {
+    yield* Effect2.sleep("1 millis");
+    return {
+      totalInterceptions: 100,
+      blockedModules: 5,
+      averageResolutionTime: 2.5,
+      securityViolations: 3
+    };
+  })
+}), "makeMockModuleInterceptor");
+var ModuleInterceptorMock = Layer2.effect(
+  ModuleInterceptor,
+  Effect2.succeed(makeMockModuleInterceptor())
+);
+export {
+  ModuleAccessDeniedError,
+  ModuleInterceptor,
+  ModuleInterceptorLive,
+  ModuleInterceptorMock,
+  ModuleInterceptorTag,
+  ModuleNotFoundError,
+  SecurityLevel,
+  SecurityPolicyNotFoundError,
+  makeMockModuleInterceptor
+};
+//# sourceMappingURL=Interceptor.js.map

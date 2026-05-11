@@ -1,1 +1,9 @@
-import{Context as e}from"effect";var n=e.Tag("IExtensionHostService");export{n as IExtensionHostService};
+// Source/Interfaces/I/Extension/Host/Service.ts
+import { Context } from "effect";
+var IExtensionHostService = Context.Tag(
+  "IExtensionHostService"
+);
+export {
+  IExtensionHostService
+};
+//# sourceMappingURL=Service.js.map

@@ -1,1 +1,7 @@
-import{Context as e}from"effect";var i=e.Tag();export{i as ITerminalService};
+// Source/Interfaces/I/Terminal/Service.ts
+import { Context } from "effect";
+var ITerminalService = Context.Tag();
+export {
+  ITerminalService
+};
+//# sourceMappingURL=Service.js.map

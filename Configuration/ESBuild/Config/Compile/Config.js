@@ -1,24 +1,28 @@
-import e from "../Target/Config.js";
-
-const r = (await import("deepmerge-ts")).deepmergeCustom({ mergeArrays: !1 });
-
-var i = async (o) =>
-	r(await e(o), {
-		bundle: !0,
-		outbase: "Target",
-		tsconfig: "Configuration/tsconfig/Target/Compile.json",
-		plugins: [],
-		allowOverwrite: !0,
-		external: [
-			"@playform/build",
-			"vscode",
-			"electron",
-			"@effect/*",
-			"@grpc/grpc-js",
-			"@grpc/proto-loader",
-			"google-protobuf",
-			"protobufjs",
-			"node:*",
-		],
-	});
-export { i as default };
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import TargetConfig from "../Target/Config.js";
+const Merge = (await import("deepmerge-ts")).deepmergeCustom({
+  mergeArrays: false
+});
+var Config_default = /* @__PURE__ */ __name(async (Current) => Merge(await TargetConfig(Current), {
+  bundle: true,
+  outbase: "Target",
+  tsconfig: "Configuration/tsconfig/Target/Compile.json",
+  plugins: [],
+  allowOverwrite: true,
+  external: [
+    "@playform/build",
+    "vscode",
+    "electron",
+    "@effect/*",
+    "@grpc/grpc-js",
+    "@grpc/proto-loader",
+    "google-protobuf",
+    "protobufjs",
+    "node:*"
+  ]
+}), "default");
+export {
+  Config_default as default
+};
+//# sourceMappingURL=Config.js.map

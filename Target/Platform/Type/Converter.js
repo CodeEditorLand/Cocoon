@@ -1,2 +1,369 @@
-import{Option as u}from"effect";function t(e){return e<0||e>3?0:e}function p(e){return t(e)}function o(e){return["x64","arm64","arm","ia32","unknown"].includes(e)?e:"unknown"}function s(e){return e<1||e>3?3:e}function l(e){return s(e)}function a(e){let n=Date.now();return{platform_number:t(e.platformNumber||e.platform),platform_name:String(e.platform||e.platformName),operating_system:s(e.operatingSystem||e.OS),architecture:o(e.architecture||"unknown"),path_separator:String(e.pathSeparator||"/"),line_ending:String(e.lineEnding||`
-`),locale:String(e.locale||"en-US"),language:String(e.language||"en"),is_little_endian:!!e.isLittleEndian,is_web:!!e.isWeb,is_electron:!!e.isElectron,is_ci:!!e.isCI,user_agent:e.userAgent?String(e.userAgent):void 0,timestamp:n}}function g(e){return{platformNumber:t(e.platform_number),platform:e.platform_name,operatingSystem:l(e.operating_system),architecture:o(e.architecture),pathSeparator:e.path_separator,lineEnding:e.line_ending,locale:e.locale,language:e.language,isLittleEndian:e.is_little_endian,isWeb:e.is_web,isElectron:e.is_electron,isCI:e.is_ci,userAgent:e.user_agent}}function b(e){let n=["PASSWORD","TOKEN","SECRET","KEY","AUTH","CREDENTIAL","PRIVATE","API_KEY","ACCESS_KEY"],r=e.toUpperCase();return n.some(i=>r.startsWith(i))}function _(e){return["PATH","HOME","USERPROFILE","TEMP","TMP","TMPDIR","APPDATA","LOCALAPPDATA","PROGRAMFILES","SYSTEMROOT","WINDIR"].includes(e.toUpperCase())}function f(e){return e.startsWith("VSCODE_")?"system":e.startsWith("NODE_ENV")?"process":["PATH","HOME","USERPROFILE"].includes(e.toUpperCase())?"system":"user"}function d(e,n){return{name:String(e),value:String(n),is_sensitive:b(e),is_readonly:_(e),source:f(e)}}function T(e){return{name:e.name,value:e.value}}function y(e){return{language:String(e.language??"en"),locale:String(e.locale??"en-US"),home_directory:String(e.homeDirectory??""),temp_directory:String(e.tempDirectory??""),user_data_directory:String(e.userDataDirectory??""),platform_home:String(e.platformHome??""),variable_count:Number(e.variables?Object.keys(e.variables).length:0),is_development:!!e.isDevelopment,is_production:!!e.isProduction,is_ci:!!e.isCI,is_vscode:!!e.isVSCode,timestamp:Date.now()}}function O(e){return{language:e.language,locale:e.locale,homeDirectory:e.home_directory,tempDirectory:e.temp_directory,userDataDirectory:e.user_data_directory,platformHome:e.platform_home,isDevelopment:e.is_development,isProduction:e.is_production,isCI:e.is_ci,isVSCode:e.is_vscode}}function D(e){let n=Date.now(),r=e.startTime??n;return{pid:Number(e.pid),command:String(e.command??""),args:Array.isArray(e.args)?e.args.map(String):[],cwd:String(e.cwd??""),parent_pid:e.parentPid?Number(e.parentPid):void 0,start_time:Number(r),end_time:e.status==="stopped"?e.endTime??n:void 0,status:["running","stopped","error"].includes(e.status)?e.status:"error",exit_code:e.exitCode!==null?Number(e.exitCode):null,signal:e.signal?String(e.signal):null,uptime:Number(n-r),is_detached:!!e.detached,timestamp:n}}function v(e){return{pid:e.pid,command:e.command,args:e.args,cwd:e.cwd,parentPid:e.parent_pid,startTime:e.start_time,endTime:e.end_time,status:e.status,exitCode:e.exit_code,signal:e.signal,detached:e.is_detached}}function S(e){return{cwd:e.cwd?String(e.cwd):void 0,env_variables:e.env?{...e.env}:{},detached:!!e.detached,shell:!!e.shell,windows_hide:e.windowsHide!==!1,timeout:e.timeout?Number(e.timeout):void 0,max_buffer:Number(e.maxBuffer??1048576),uid:e.uid?Number(e.uid):void 0,gid:e.gid?Number(e.gid):void 0}}function P(e){return{cwd:e.cwd,env:e.env_variables,detached:e.detached,shell:e.shell,windowsHide:e.windows_hide,timeout:e.timeout,maxBuffer:e.max_buffer,uid:e.uid,gid:e.gid}}function h(e,n,r=5e3,i=!1){return{pid:Number(e),signal:String(n),timeout:Number(r),force:!!i}}function E(e){return{pid:e.pid,signal:e.signal,timeout:e.timeout,force:e.force}}function m(e){try{return JSON.stringify(e)}catch(n){throw new Error(`DTO serialization failed: ${n}`)}}function c(e,n){try{let r=JSON.parse(e);return n&&!n(r)?null:r}catch{return null}}function w(e){return typeof e=="object"&&typeof e.platform_number=="number"&&typeof e.platform_name=="string"&&typeof e.operating_system=="number"&&typeof e.architecture=="string"&&typeof e.path_separator=="string"&&typeof e.line_ending=="string"&&typeof e.locale=="string"&&typeof e.language=="string"&&typeof e.is_little_endian=="boolean"&&typeof e.is_web=="boolean"&&typeof e.is_electron=="boolean"&&typeof e.is_ci=="boolean"&&typeof e.timestamp=="number"}function x(e){return typeof e=="object"&&typeof e.name=="string"&&typeof e.value=="string"&&typeof e.is_sensitive=="boolean"&&typeof e.is_readonly=="boolean"&&typeof e.source=="string"}function C(e){return typeof e=="object"&&typeof e.pid=="number"&&typeof e.command=="string"&&Array.isArray(e.args)&&typeof e.cwd=="string"&&typeof e.start_time=="number"&&["running","stopped","error"].includes(e.status)&&typeof e.timestamp=="number"}function A(e){return{dto:a(e),json:m(a(e))}}function N(e,n){let r=c(e,n);return r?u.some(r):u.none()}var V={ConvertPlatformNumberToDTO:t,ConvertDTOToPlatformNumber:p,ConvertArchitectureToString:o,ConvertOperatingSystemToNumber:s,ConvertNumberToOperatingSystem:l,ConvertOSInfoToDTO:a,ConvertDTOToOSInfo:g,ConvertEnvironmentVariableToDTO:d,ConvertDTOToEnvironmentVariable:T,ConvertEnvironmentInfoToDTO:y,ConvertDTOToEnvironmentInfo:O,ConvertProcessInfoToDTO:D,ConvertDTOToProcessInfo:v,ConvertProcessSpawnOptionsToDTO:S,ConvertDTOToProcessSpawnOptions:P,ConvertProcessSignalToDTO:h,ConvertDTOToProcessSignal:E,SerializeDTO:m,DeserializeDTO:c,ValidatePlatformInfoDTO:w,ValidateEnvironmentVariableDTO:x,ValidateProcessInfoDTO:C};export{o as ConvertArchitectureToString,O as ConvertDTOToEnvironmentInfo,T as ConvertDTOToEnvironmentVariable,g as ConvertDTOToOSInfo,p as ConvertDTOToPlatformNumber,v as ConvertDTOToProcessInfo,E as ConvertDTOToProcessSignal,P as ConvertDTOToProcessSpawnOptions,y as ConvertEnvironmentInfoToDTO,d as ConvertEnvironmentVariableToDTO,l as ConvertNumberToOperatingSystem,a as ConvertOSInfoToDTO,A as ConvertOSInfoToDTOEffect,s as ConvertOperatingSystemToNumber,t as ConvertPlatformNumberToDTO,D as ConvertProcessInfoToDTO,h as ConvertProcessSignalToDTO,S as ConvertProcessSpawnOptionsToDTO,c as DeserializeDTO,N as DeserializeDTOEffect,m as SerializeDTO,V as TypeConverter,x as ValidateEnvironmentVariableDTO,w as ValidatePlatformInfoDTO,C as ValidateProcessInfoDTO};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Platform/Type/Converter.ts
+import { Option } from "effect";
+function ConvertPlatformNumberToDTO(platformNumber) {
+  if (platformNumber < 0 || platformNumber > 3) {
+    console.warn(
+      `[TypeConverter] Invalid platform number: ${platformNumber}, using default`
+    );
+    return 0;
+  }
+  return platformNumber;
+}
+__name(ConvertPlatformNumberToDTO, "ConvertPlatformNumberToDTO");
+function ConvertDTOToPlatformNumber(dtoNumber) {
+  return ConvertPlatformNumberToDTO(dtoNumber);
+}
+__name(ConvertDTOToPlatformNumber, "ConvertDTOToPlatformNumber");
+function ConvertArchitectureToString(architecture) {
+  const validArchitectures = ["x64", "arm64", "arm", "ia32", "unknown"];
+  if (validArchitectures.includes(architecture)) {
+    return architecture;
+  }
+  return "unknown";
+}
+__name(ConvertArchitectureToString, "ConvertArchitectureToString");
+function ConvertOperatingSystemToNumber(os) {
+  if (os < 1 || os > 3) {
+    console.warn(
+      `[TypeConverter] Invalid operating system: ${os}, using default`
+    );
+    return 3;
+  }
+  return os;
+}
+__name(ConvertOperatingSystemToNumber, "ConvertOperatingSystemToNumber");
+function ConvertNumberToOperatingSystem(number) {
+  return ConvertOperatingSystemToNumber(number);
+}
+__name(ConvertNumberToOperatingSystem, "ConvertNumberToOperatingSystem");
+function ConvertOSInfoToDTO(osInfo) {
+  const timestamp = Date.now();
+  return {
+    platform_number: ConvertPlatformNumberToDTO(
+      osInfo.platformNumber || osInfo.platform
+    ),
+    platform_name: String(osInfo.platform || osInfo.platformName),
+    operating_system: ConvertOperatingSystemToNumber(
+      osInfo.operatingSystem || osInfo.OS
+    ),
+    architecture: ConvertArchitectureToString(
+      osInfo.architecture || "unknown"
+    ),
+    path_separator: String(osInfo.pathSeparator || "/"),
+    line_ending: String(osInfo.lineEnding || "\n"),
+    locale: String(osInfo.locale || "en-US"),
+    language: String(osInfo.language || "en"),
+    is_little_endian: Boolean(osInfo.isLittleEndian),
+    is_web: Boolean(osInfo.isWeb),
+    is_electron: Boolean(osInfo.isElectron),
+    is_ci: Boolean(osInfo.isCI),
+    user_agent: osInfo.userAgent ? String(osInfo.userAgent) : void 0,
+    timestamp
+  };
+}
+__name(ConvertOSInfoToDTO, "ConvertOSInfoToDTO");
+function ConvertDTOToOSInfo(dto) {
+  return {
+    platformNumber: ConvertPlatformNumberToDTO(dto.platform_number),
+    platform: dto.platform_name,
+    operatingSystem: ConvertNumberToOperatingSystem(dto.operating_system),
+    architecture: ConvertArchitectureToString(dto.architecture),
+    pathSeparator: dto.path_separator,
+    lineEnding: dto.line_ending,
+    locale: dto.locale,
+    language: dto.language,
+    isLittleEndian: dto.is_little_endian,
+    isWeb: dto.is_web,
+    isElectron: dto.is_electron,
+    isCI: dto.is_ci,
+    userAgent: dto.user_agent
+  };
+}
+__name(ConvertDTOToOSInfo, "ConvertDTOToOSInfo");
+function IsSensitiveVariable(name) {
+  const sensitivePrefixes = [
+    "PASSWORD",
+    "TOKEN",
+    "SECRET",
+    "KEY",
+    "AUTH",
+    "CREDENTIAL",
+    "PRIVATE",
+    "API_KEY",
+    "ACCESS_KEY"
+  ];
+  const upperName = name.toUpperCase();
+  return sensitivePrefixes.some((prefix) => upperName.startsWith(prefix));
+}
+__name(IsSensitiveVariable, "IsSensitiveVariable");
+function IsReadonlyVariable(name) {
+  const readonlyVariables = [
+    "PATH",
+    "HOME",
+    "USERPROFILE",
+    "TEMP",
+    "TMP",
+    "TMPDIR",
+    "APPDATA",
+    "LOCALAPPDATA",
+    "PROGRAMFILES",
+    "SYSTEMROOT",
+    "WINDIR"
+  ];
+  return readonlyVariables.includes(name.toUpperCase());
+}
+__name(IsReadonlyVariable, "IsReadonlyVariable");
+function DetectVariableSource(name) {
+  if (name.startsWith("VSCODE_")) {
+    return "system";
+  }
+  if (name.startsWith("NODE_ENV")) {
+    return "process";
+  }
+  if (["PATH", "HOME", "USERPROFILE"].includes(name.toUpperCase())) {
+    return "system";
+  }
+  return "user";
+}
+__name(DetectVariableSource, "DetectVariableSource");
+function ConvertEnvironmentVariableToDTO(name, value) {
+  return {
+    name: String(name),
+    value: String(value),
+    is_sensitive: IsSensitiveVariable(name),
+    is_readonly: IsReadonlyVariable(name),
+    source: DetectVariableSource(name)
+  };
+}
+__name(ConvertEnvironmentVariableToDTO, "ConvertEnvironmentVariableToDTO");
+function ConvertDTOToEnvironmentVariable(dto) {
+  return {
+    name: dto.name,
+    value: dto.value
+  };
+}
+__name(ConvertDTOToEnvironmentVariable, "ConvertDTOToEnvironmentVariable");
+function ConvertEnvironmentInfoToDTO(envInfo) {
+  return {
+    language: String(envInfo.language ?? "en"),
+    locale: String(envInfo.locale ?? "en-US"),
+    home_directory: String(envInfo.homeDirectory ?? ""),
+    temp_directory: String(envInfo.tempDirectory ?? ""),
+    user_data_directory: String(envInfo.userDataDirectory ?? ""),
+    platform_home: String(envInfo.platformHome ?? ""),
+    variable_count: Number(
+      envInfo.variables ? Object.keys(envInfo.variables).length : 0
+    ),
+    is_development: Boolean(envInfo.isDevelopment),
+    is_production: Boolean(envInfo.isProduction),
+    is_ci: Boolean(envInfo.isCI),
+    is_vscode: Boolean(envInfo.isVSCode),
+    timestamp: Date.now()
+  };
+}
+__name(ConvertEnvironmentInfoToDTO, "ConvertEnvironmentInfoToDTO");
+function ConvertDTOToEnvironmentInfo(dto) {
+  return {
+    language: dto.language,
+    locale: dto.locale,
+    homeDirectory: dto.home_directory,
+    tempDirectory: dto.temp_directory,
+    userDataDirectory: dto.user_data_directory,
+    platformHome: dto.platform_home,
+    isDevelopment: dto.is_development,
+    isProduction: dto.is_production,
+    isCI: dto.is_ci,
+    isVSCode: dto.is_vscode
+  };
+}
+__name(ConvertDTOToEnvironmentInfo, "ConvertDTOToEnvironmentInfo");
+function ConvertProcessInfoToDTO(procInfo) {
+  const now = Date.now();
+  const startTime = procInfo.startTime ?? now;
+  return {
+    pid: Number(procInfo.pid),
+    command: String(procInfo.command ?? ""),
+    args: Array.isArray(procInfo.args) ? procInfo.args.map(String) : [],
+    cwd: String(procInfo.cwd ?? ""),
+    parent_pid: procInfo.parentPid ? Number(procInfo.parentPid) : void 0,
+    start_time: Number(startTime),
+    end_time: procInfo.status === "stopped" ? procInfo.endTime ?? now : void 0,
+    status: ["running", "stopped", "error"].includes(procInfo.status) ? procInfo.status : "error",
+    exit_code: procInfo.exitCode !== null ? Number(procInfo.exitCode) : null,
+    signal: procInfo.signal ? String(procInfo.signal) : null,
+    uptime: Number(now - startTime),
+    is_detached: Boolean(procInfo.detached),
+    timestamp: now
+  };
+}
+__name(ConvertProcessInfoToDTO, "ConvertProcessInfoToDTO");
+function ConvertDTOToProcessInfo(dto) {
+  return {
+    pid: dto.pid,
+    command: dto.command,
+    args: dto.args,
+    cwd: dto.cwd,
+    parentPid: dto.parent_pid,
+    startTime: dto.start_time,
+    endTime: dto.end_time,
+    status: dto.status,
+    exitCode: dto.exit_code,
+    signal: dto.signal,
+    detached: dto.is_detached
+  };
+}
+__name(ConvertDTOToProcessInfo, "ConvertDTOToProcessInfo");
+function ConvertProcessSpawnOptionsToDTO(options) {
+  return {
+    cwd: options.cwd ? String(options.cwd) : void 0,
+    env_variables: options.env ? { ...options.env } : {},
+    detached: Boolean(options.detached),
+    shell: Boolean(options.shell),
+    windows_hide: options.windowsHide !== false,
+    timeout: options.timeout ? Number(options.timeout) : void 0,
+    max_buffer: Number(options.maxBuffer ?? 1048576),
+    // 1MB default
+    uid: options.uid ? Number(options.uid) : void 0,
+    gid: options.gid ? Number(options.gid) : void 0
+  };
+}
+__name(ConvertProcessSpawnOptionsToDTO, "ConvertProcessSpawnOptionsToDTO");
+function ConvertDTOToProcessSpawnOptions(dto) {
+  return {
+    cwd: dto.cwd,
+    env: dto.env_variables,
+    detached: dto.detached,
+    shell: dto.shell,
+    windowsHide: dto.windows_hide,
+    timeout: dto.timeout,
+    maxBuffer: dto.max_buffer,
+    uid: dto.uid,
+    gid: dto.gid
+  };
+}
+__name(ConvertDTOToProcessSpawnOptions, "ConvertDTOToProcessSpawnOptions");
+function ConvertProcessSignalToDTO(pid, signal, timeout = 5e3, force = false) {
+  return {
+    pid: Number(pid),
+    signal: String(signal),
+    timeout: Number(timeout),
+    force: Boolean(force)
+  };
+}
+__name(ConvertProcessSignalToDTO, "ConvertProcessSignalToDTO");
+function ConvertDTOToProcessSignal(dto) {
+  return {
+    pid: dto.pid,
+    signal: dto.signal,
+    timeout: dto.timeout,
+    force: dto.force
+  };
+}
+__name(ConvertDTOToProcessSignal, "ConvertDTOToProcessSignal");
+function SerializeDTO(dto) {
+  try {
+    return JSON.stringify(dto);
+  } catch (error) {
+    console.error("[TypeConverter] Failed to serialize DTO:", error);
+    throw new Error(`DTO serialization failed: ${error}`);
+  }
+}
+__name(SerializeDTO, "SerializeDTO");
+function DeserializeDTO(json, validator) {
+  try {
+    const parsed = JSON.parse(json);
+    if (validator && !validator(parsed)) {
+      console.warn("[TypeConverter] DTO validation failed");
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    console.error("[TypeConverter] Failed to deserialize DTO:", error);
+    return null;
+  }
+}
+__name(DeserializeDTO, "DeserializeDTO");
+function ValidatePlatformInfoDTO(dto) {
+  return typeof dto === "object" && typeof dto.platform_number === "number" && typeof dto.platform_name === "string" && typeof dto.operating_system === "number" && typeof dto.architecture === "string" && typeof dto.path_separator === "string" && typeof dto.line_ending === "string" && typeof dto.locale === "string" && typeof dto.language === "string" && typeof dto.is_little_endian === "boolean" && typeof dto.is_web === "boolean" && typeof dto.is_electron === "boolean" && typeof dto.is_ci === "boolean" && typeof dto.timestamp === "number";
+}
+__name(ValidatePlatformInfoDTO, "ValidatePlatformInfoDTO");
+function ValidateEnvironmentVariableDTO(dto) {
+  return typeof dto === "object" && typeof dto.name === "string" && typeof dto.value === "string" && typeof dto.is_sensitive === "boolean" && typeof dto.is_readonly === "boolean" && typeof dto.source === "string";
+}
+__name(ValidateEnvironmentVariableDTO, "ValidateEnvironmentVariableDTO");
+function ValidateProcessInfoDTO(dto) {
+  return typeof dto === "object" && typeof dto.pid === "number" && typeof dto.command === "string" && Array.isArray(dto.args) && typeof dto.cwd === "string" && typeof dto.start_time === "number" && ["running", "stopped", "error"].includes(dto.status) && typeof dto.timestamp === "number";
+}
+__name(ValidateProcessInfoDTO, "ValidateProcessInfoDTO");
+function ConvertOSInfoToDTOEffect(osInfo) {
+  return {
+    dto: ConvertOSInfoToDTO(osInfo),
+    json: SerializeDTO(ConvertOSInfoToDTO(osInfo))
+  };
+}
+__name(ConvertOSInfoToDTOEffect, "ConvertOSInfoToDTOEffect");
+function DeserializeDTOEffect(json, validator) {
+  const parsed = DeserializeDTO(json, validator);
+  return parsed ? Option.some(parsed) : Option.none();
+}
+__name(DeserializeDTOEffect, "DeserializeDTOEffect");
+var TypeConverter = {
+  // Platform converters
+  ConvertPlatformNumberToDTO,
+  ConvertDTOToPlatformNumber,
+  ConvertArchitectureToString,
+  ConvertOperatingSystemToNumber,
+  ConvertNumberToOperatingSystem,
+  ConvertOSInfoToDTO,
+  ConvertDTOToOSInfo,
+  // Environment converters
+  ConvertEnvironmentVariableToDTO,
+  ConvertDTOToEnvironmentVariable,
+  ConvertEnvironmentInfoToDTO,
+  ConvertDTOToEnvironmentInfo,
+  // Process converters
+  ConvertProcessInfoToDTO,
+  ConvertDTOToProcessInfo,
+  ConvertProcessSpawnOptionsToDTO,
+  ConvertDTOToProcessSpawnOptions,
+  ConvertProcessSignalToDTO,
+  ConvertDTOToProcessSignal,
+  // Serialization
+  SerializeDTO,
+  DeserializeDTO,
+  // Validation
+  ValidatePlatformInfoDTO,
+  ValidateEnvironmentVariableDTO,
+  ValidateProcessInfoDTO
+};
+export {
+  ConvertArchitectureToString,
+  ConvertDTOToEnvironmentInfo,
+  ConvertDTOToEnvironmentVariable,
+  ConvertDTOToOSInfo,
+  ConvertDTOToPlatformNumber,
+  ConvertDTOToProcessInfo,
+  ConvertDTOToProcessSignal,
+  ConvertDTOToProcessSpawnOptions,
+  ConvertEnvironmentInfoToDTO,
+  ConvertEnvironmentVariableToDTO,
+  ConvertNumberToOperatingSystem,
+  ConvertOSInfoToDTO,
+  ConvertOSInfoToDTOEffect,
+  ConvertOperatingSystemToNumber,
+  ConvertPlatformNumberToDTO,
+  ConvertProcessInfoToDTO,
+  ConvertProcessSignalToDTO,
+  ConvertProcessSpawnOptionsToDTO,
+  DeserializeDTO,
+  DeserializeDTOEffect,
+  SerializeDTO,
+  TypeConverter,
+  ValidateEnvironmentVariableDTO,
+  ValidatePlatformInfoDTO,
+  ValidateProcessInfoDTO
+};
+//# sourceMappingURL=Converter.js.map

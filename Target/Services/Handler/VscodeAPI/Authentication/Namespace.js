@@ -1,4 +1,804 @@
-var me=Object.defineProperty;var d=(e,n)=>()=>(e&&(n=e(e=0)),n);var _=(e,n)=>{for(var t in n)me(e,t,{get:n[t],enumerable:!0})};var Oe,Pe,N,$e,He,p,y=d(()=>{"use strict";Oe={$app:"land-editor",$app_version:"0.0.1",$build_mode:"debug",$component:"cocoon",$tier:"cocoon",$lib:"cocoon-posthog-bridge"},Pe=(e,n={})=>({Name:e,Timestamp:new Date().toISOString(),Properties:n}),$e=e=>{N=e},He=e=>({...e,...Oe,$node_version:process.version,...N?{$trace_id:N}:{}}),p={Create:Pe,Enrich:He,SetTraceIdentifier:$e}});import*as F from"node:https";var Le,q,U=d(()=>{"use strict";y();Le=5e3,q=(e,n,t,r)=>{if(r.length===0)return;let o=JSON.stringify({api_key:n,batch:r.map(s=>({event:s.Name,timestamp:s.Timestamp,distinct_id:t,properties:p.Enrich(s.Properties)}))});try{let s=new URL("/batch/",e),i=F.request({method:"POST",hostname:s.hostname,port:s.port||443,path:s.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(o)},timeout:Le},c=>{c.resume()});i.on("error",()=>{}),i.on("timeout",()=>{i.destroy()}),i.write(o),i.end()}catch{}}});var G,z=d(()=>{"use strict";y();U();G=(e,n)=>{let t=[],r,o=()=>{if(t.length===0)return;let i=t;t=[],q(e.Host,e.Key,n,i)},s=()=>{r||(r=setTimeout(()=>{r=void 0,o()},e.BatchWindowMilliseconds),r.unref?.())};return{Enqueue:(i,c)=>{if(t.push(p.Create(i,c)),t.length>=e.BatchMaximum){o();return}s()},Drain:()=>{r&&(clearTimeout(r),r=void 0),o()}}}});var De,k,O,J,Q,b,P=d(()=>{"use strict";De="https://eu.i.posthog.com",k=(e,n)=>{let t=process.env[e];return t&&t.length>0?t:n},O=(e,n)=>{let t=process.env[e];return t===void 0?n:!["false","0","off",""].includes(t.toLowerCase())},J=(e,n)=>{let t=process.env[e],r=t?Number(t):Number.NaN;return Number.isFinite(r)&&r>0?r:n},Q=O("Capture",!0),b=()=>({Key:k("Authorize",""),Host:k("Beam",De),Enabled:O("Report",!0)&&Q&&process.env.NODE_ENV!=="production",BatchWindowMilliseconds:J("Buffer",3e3),BatchMaximum:J("Batch",50),DistinctIdentifierSeed:process.env.Brand??"",OTLPEndpoint:k("OTLPEndpoint","http://127.0.0.1:4318"),OTLPEnabled:O("OTLPEnabled",!0)&&Q&&process.env.NODE_ENV!=="production"})});var V,Z=d(()=>{"use strict";V=e=>e.length>0?e:`land-dev-${process.env.USER??process.env.USERNAME??"unknown"}`});var te={};_(te,{CaptureSpan:()=>S,TraceIdentifier:()=>L,WithSpan:()=>ee,default:()=>Me});import*as Ie from"node:http";import*as Ae from"node:https";var X,E,Y,$,L,H,S,ee,Me,ne=d(()=>{"use strict";P();X=b(),E=X.OTLPEnabled,Y=e=>{let n="";for(let t=0;t<e;t=t+1)n=n+Math.floor(Math.random()*256).toString(16).padStart(2,"0");return n},L=()=>($||($=Y(16)),$),H=()=>{let e=process.hrtime();return BigInt(e[0])*1000000000n+BigInt(e[1])},S=(e,n,t,r=[])=>{if(process.env.NODE_ENV==="production"||!E)return;let o=Y(8),s=L(),i=e.includes("error")?2:1,c=r.map(([a,M])=>({key:a,value:{stringValue:M}})),l=JSON.stringify({resourceSpans:[{resource:{attributes:[{key:"service.name",value:{stringValue:"land-editor-cocoon"}},{key:"service.version",value:{stringValue:"0.0.1"}},{key:"land.tier",value:{stringValue:"cocoon"}}]},scopeSpans:[{scope:{name:"land.cocoon",version:"1.0.0"},spans:[{traceId:s,spanId:o,name:e,kind:1,startTimeUnixNano:n.toString(),endTimeUnixNano:t.toString(),attributes:c,status:{code:i}}]}]}]});try{let a=new URL("/v1/traces",X.OTLPEndpoint),g=(a.protocol==="https:"?Ae:Ie).request({method:"POST",hostname:a.hostname,port:a.port||(a.protocol==="https:"?443:80),path:a.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(l)},timeout:200},x=>{(x.statusCode===void 0||x.statusCode>=300)&&(E=!1),x.resume()});g.on("error",()=>{E=!1}),g.on("timeout",()=>{g.destroy()}),g.write(l),g.end()}catch{E=!1}},ee=async(e,n,t=[])=>{let r=H();try{let o=await n(),s=H();return S(e,r,s,t),o}catch(o){let s=H();throw S(`${e}:error`,r,s,[...t,["error",String(o.message??o)]]),o}},Me={CaptureSpan:S,TraceIdentifier:L,WithSpan:ee}});var ue={};_(ue,{CaptureEntryLoad:()=>ce,CaptureEntryLoaded:()=>de,CaptureError:()=>oe,CaptureEvent:()=>u,CaptureHandler:()=>ie,CaptureStub:()=>ae,Initialize:()=>se,default:()=>Be});var I,_e,D,re,A,u,oe,se,ie,ae,ce,de,Be,le=d(()=>{"use strict";z();P();y();Z();I=b(),_e=V(I.DistinctIdentifierSeed),re=!1,A=()=>{if(I.Enabled)return D||(D=G(I,_e)),D},u=(e,n={})=>{if(process.env.NODE_ENV!=="production")try{A()?.Enqueue(e,n)}catch{}},oe=(e,n,t={})=>{if(process.env.NODE_ENV==="production")return;let r=A();r&&(r.Enqueue("land:cocoon:error",{...t,error_tag:e,error_message:n}),r.Drain())},se=()=>{if(process.env.NODE_ENV==="production"||re)return;re=!0;let e=A();if(!e)return;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(ne(),te)).then(t=>{p.SetTraceIdentifier(t.TraceIdentifier())}).catch(()=>{});let n=()=>e.Drain();process.once("exit",n),process.once("SIGINT",n),process.once("SIGTERM",n),u("land:cocoon:session:start",{pid:process.pid,platform:process.platform,arch:process.arch,node_version:process.version})},ie=(e,n,t)=>{u("land:cocoon:handler:complete",{feature:e,duration_ms:n,ok:t})},ae=(e,n)=>{u("land:cocoon:stub:active",{feature:e,reason:n})},ce=e=>{u("land:cocoon:entry:load",{entry:e})},de=(e,n)=>{u("land:cocoon:entry:loaded",{entry:e,duration_ms:n})},Be={CaptureEvent:u,CaptureError:oe,CaptureHandler:ie,CaptureStub:ae,CaptureEntryLoad:ce,CaptureEntryLoaded:de,Initialize:se}});var he=1e4;function B(){return he++}import{Effect as m}from"effect";var R=process.env.Mend??"short",K=R!=="off",C=R==="long",T=C,W=(()=>{let e=process.env.Mend;if(!e||e.trim().length===0)return;let n=e.split(",").map(t=>t.trim()).filter(t=>t.length>0);return n.length===0?void 0:new Set(n)})(),w=e=>e<10?`0${e}`:String(e),ve=e=>e<10?`00${e}`:e<100?`0${e}`:String(e),ye=()=>{let e=new Date;return C?e.toISOString():`${w(e.getHours())}:${w(e.getMinutes())}:${w(e.getSeconds())}.${ve(e.getMilliseconds())}`},be=e=>{let n=new WeakSet;try{return JSON.stringify(e,(t,r)=>{if(r instanceof Error)return{name:r.name,message:r.message};if(typeof r=="bigint")return String(r);if(typeof r=="function")return"[Function]";if(typeof r=="object"&&r!==null){if(n.has(r))return"[Circular]";n.add(r)}return r})}catch{return'"[Unserializable]"'}},Ee=e=>e==="info"?"":` ${e.toUpperCase()}`,Se=(e,n,t,r)=>{let o=`${ye()} [LandFix:${n}]${Ee(e)} ${t}`;return r?`${o} ${be(r)}
-`:`${o}
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 
-`},f=(e,n,t,r,o)=>{if(K&&!(W&&!W.has(t)))try{e.write(Se(n,t,r,o))}catch{}},xe=(e,n,t)=>{f(process.stdout,"info",e,n,t)},we=(e,n,t)=>{f(process.stdout,"warn",e,n,t)},Re=(e,n,t)=>{f(process.stderr,"error",e,n,t)},Ce=(e,n,t)=>{T&&f(process.stdout,"debug",e,n,t)},v=new Set,Te=(e,n,t,r)=>{if(!T)return;let o=`${e}:${n}`;v.has(o)||(v.add(o),f(process.stdout,"debug",e,t,r))},Ne=(e,n,t,r)=>{let o=`${e}:${n}`;v.has(o)||(v.add(o),f(process.stdout,"info",e,t,r))},ke={Info:xe,InfoOnce:Ne,Warn:we,Error:Re,Debug:Ce,DebugOnce:Te,IsEnabled:()=>K,IsDebugEnabled:()=>T,Mode:()=>R==="off"?"off":C?"long":"short"},j=ke;var fe;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(le(),ue)).then(e=>{fe=e.CaptureEvent}).catch(()=>{});var h={dispose:()=>{}},We=e=>e==="requestResourceTrust"||e==="isResourceTrusted"||e==="requestWorkspaceTrust"||/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(e),Ke=e=>We(e)?{Kind:"trust",Sync:!1,Produce:()=>!0}:e.startsWith("onDid")||e.startsWith("onWill")?{Kind:"event",Sync:!0,Produce:()=>h}:e.startsWith("register")?{Kind:"register",Sync:!0,Produce:()=>h}:e.startsWith("is")||e.startsWith("has")||e.startsWith("should")?{Kind:"bool-check",Sync:!1,Produce:()=>!1}:e.startsWith("create")||e.startsWith("get")||e.startsWith("make")?{Kind:"factory",Sync:!0,Produce:()=>{}}:{Kind:"default",Sync:!1,Produce:()=>{}},je=(e,n,t)=>{let r=`${e}.${n}`;j.InfoOnce("VSCODE-API-GAP",r,`${e}.${n} \u2192 ${t}`),process.env.NODE_ENV!=="production"&&fe?.("land:cocoon:vscode_api_gap",{namespace:e,method:n,kind:t})},Fe=(e,n,t)=>(...r)=>{let o=`vscode.${e}.${n}`,s=m.gen(function*(){yield*m.sync(()=>{try{je(e,n,t.Kind)}catch{}});try{return t.Produce(...r)}catch{switch(t.Kind){case"trust":return!0;case"event":return h;case"register":return h;case"bool-check":return!1;default:return}}}).pipe(m.withSpan(o,{attributes:{"vscode.namespace":e,"vscode.method":n,"vscode.heuristic":t.Kind}}));try{return t.Sync?m.runSync(s):m.runPromise(s)}catch{switch(t.Kind){case"trust":return t.Sync?!0:Promise.resolve(!0);case"event":case"register":return h;case"bool-check":return t.Sync?!1:Promise.resolve(!1);default:return t.Sync?void 0:Promise.resolve(void 0)}}},qe=(e,n,t)=>new Proxy(n,{get(r,o){if(Reflect.has(r,o))return Reflect.get(r,o);if(typeof o!="string"||o==="then")return;if(o==="toJSON")return()=>{let i={_namespace:e};for(let c of Object.keys(r)){let l=r[c],a=typeof l;i[c]=a==="function"?"[Function]":a==="object"&&l!==null?"[Object]":l}return i};if(o==="toString"||o==="valueOf")return;let s=t?.[o]??Ke(o);return Fe(e,o,s)},has(r,o){return Reflect.has(r,o)?!0:typeof o=="string"&&o!=="then"}}),pe=qe;var Ue=e=>pe("authentication",e),ge=Ue;var Ge=(e,n)=>t=>(e.Emitter.on(n,t),{dispose:()=>{e.Emitter.off(n,t)}}),ze=e=>ge({registerAuthenticationProvider:(n,t,r,o)=>{let s=B();return e.SendToMountain("register_authentication_provider",{handle:s,providerId:n,label:t,supportsMultipleAccounts:o?.supportsMultipleAccounts??!1,extensionId:""}).catch(()=>{}),{dispose:()=>{e.SendToMountain("unregister_authentication_provider",{handle:s}).catch(()=>{})}}},getSession:async(n,t,r)=>{try{return await e.MountainClient?.sendRequest("Authentication.GetSession",[n,t,r??{}])}catch{return}},getAccounts:async n=>{try{let t=await e.MountainClient?.sendRequest("Authentication.GetAccounts",[n]);return Array.isArray(t)?t:[]}catch{return[]}},onDidChangeSessions:Ge(e,"auth.didChangeSessions")}),vt=ze;export{vt as default};
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey, DefaultHost, DefaultBatchWindowMilliseconds, DefaultBatchMaximum, ReadString, ReadBoolean, ReadNumber, TelemetryCaptureEnabled, Configuration_default;
+var init_Configuration = __esm({
+  "Source/Telemetry/PostHog/Configuration.ts"() {
+    "use strict";
+    DefaultKey = "";
+    DefaultHost = "https://eu.i.posthog.com";
+    DefaultBatchWindowMilliseconds = 3e3;
+    DefaultBatchMaximum = 50;
+    ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      return Value && Value.length > 0 ? Value : Fallback;
+    }, "ReadString");
+    ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      if (Value === void 0) return Fallback;
+      return !["false", "0", "off", ""].includes(Value.toLowerCase());
+    }, "ReadBoolean");
+    ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      const Parsed = Value ? Number(Value) : Number.NaN;
+      return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+    }, "ReadNumber");
+    TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+    Configuration_default = /* @__PURE__ */ __name(() => ({
+      Key: ReadString("Authorize", DefaultKey),
+      Host: ReadString("Beam", DefaultHost),
+      Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+      BatchWindowMilliseconds: ReadNumber(
+        "Buffer",
+        DefaultBatchWindowMilliseconds
+      ),
+      BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+      DistinctIdentifierSeed: process.env["Brand"] ?? "",
+      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
+      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+    }), "default");
+  }
+});
+
+// Source/Telemetry/OTLPBridge.ts
+var OTLPBridge_exports = {};
+__export(OTLPBridge_exports, {
+  CaptureSpan: () => CaptureSpan,
+  TraceIdentifier: () => TraceIdentifier,
+  WithSpan: () => WithSpan,
+  default: () => OTLPBridge_default
+});
+import * as NodeHttp from "node:http";
+import * as NodeHttps from "node:https";
+var Configuration, OTLPAvailable, RandomHex, TraceIdentifierCached, TraceIdentifier, NowNano, CaptureSpan, WithSpan, OTLPBridge_default;
+var init_OTLPBridge = __esm({
+  "Source/Telemetry/OTLPBridge.ts"() {
+    "use strict";
+    init_Configuration();
+    Configuration = Configuration_default();
+    OTLPAvailable = Configuration.OTLPEnabled;
+    RandomHex = /* @__PURE__ */ __name((Bytes) => {
+      let Output = "";
+      for (let Index = 0; Index < Bytes; Index = Index + 1) {
+        Output = Output + Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+      }
+      return Output;
+    }, "RandomHex");
+    TraceIdentifier = /* @__PURE__ */ __name(() => {
+      if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
+      return TraceIdentifierCached;
+    }, "TraceIdentifier");
+    NowNano = /* @__PURE__ */ __name(() => {
+      const Hr = process.hrtime();
+      return BigInt(Hr[0]) * 1000000000n + BigInt(Hr[1]);
+    }, "NowNano");
+    CaptureSpan = /* @__PURE__ */ __name((Name, StartNano, EndNano, Attributes = []) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (!OTLPAvailable) return;
+      const SpanIdentifier = RandomHex(8);
+      const TraceIdentifierResolved = TraceIdentifier();
+      const StatusCode = Name.includes("error") ? 2 : 1;
+      const AttributesPayload = Attributes.map(([Key, Value]) => ({
+        key: Key,
+        value: { stringValue: Value }
+      }));
+      const Payload = JSON.stringify({
+        resourceSpans: [
+          {
+            resource: {
+              attributes: [
+                {
+                  key: "service.name",
+                  value: { stringValue: "land-editor-cocoon" }
+                },
+                {
+                  key: "service.version",
+                  value: { stringValue: "0.0.1" }
+                },
+                {
+                  key: "land.tier",
+                  value: { stringValue: "cocoon" }
+                }
+              ]
+            },
+            scopeSpans: [
+              {
+                scope: { name: "land.cocoon", version: "1.0.0" },
+                spans: [
+                  {
+                    traceId: TraceIdentifierResolved,
+                    spanId: SpanIdentifier,
+                    name: Name,
+                    kind: 1,
+                    startTimeUnixNano: StartNano.toString(),
+                    endTimeUnixNano: EndNano.toString(),
+                    attributes: AttributesPayload,
+                    status: { code: StatusCode }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      try {
+        const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
+        const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
+        const Request = HttpModule.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || (Address.protocol === "https:" ? 443 : 80),
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: 200
+          },
+          (Response) => {
+            if (Response.statusCode === void 0 || Response.statusCode >= 300) {
+              OTLPAvailable = false;
+            }
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+          OTLPAvailable = false;
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+        OTLPAvailable = false;
+      }
+    }, "CaptureSpan");
+    WithSpan = /* @__PURE__ */ __name(async (Name, Body, Attributes = []) => {
+      const StartNano = NowNano();
+      try {
+        const Output = await Body();
+        const EndNano = NowNano();
+        CaptureSpan(Name, StartNano, EndNano, Attributes);
+        return Output;
+      } catch (Error2) {
+        const EndNano = NowNano();
+        CaptureSpan(`${Name}:error`, StartNano, EndNano, [
+          ...Attributes,
+          ["error", String(Error2.message ?? Error2)]
+        ]);
+        throw Error2;
+      }
+    }, "WithSpan");
+    OTLPBridge_default = { CaptureSpan, TraceIdentifier, WithSpan };
+  }
+});
+
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties, Create, CurrentTraceIdentifier, SetTraceIdentifier, Enrich, Event_default;
+var init_Event = __esm({
+  "Source/Telemetry/PostHog/Event.ts"() {
+    "use strict";
+    BaseProperties = {
+      $app: "land-editor",
+      $app_version: "0.0.1",
+      $build_mode: "debug",
+      $component: "cocoon",
+      $tier: "cocoon",
+      $lib: "cocoon-posthog-bridge"
+    };
+    Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+      Name,
+      Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      Properties
+    }), "Create");
+    SetTraceIdentifier = /* @__PURE__ */ __name((Identifier) => {
+      CurrentTraceIdentifier = Identifier;
+    }, "SetTraceIdentifier");
+    Enrich = /* @__PURE__ */ __name((Properties) => ({
+      ...Properties,
+      ...BaseProperties,
+      $node_version: process.version,
+      ...CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}
+    }), "Enrich");
+    Event_default = { Create, Enrich, SetTraceIdentifier };
+  }
+});
+
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps2 from "node:https";
+var RequestTimeoutMilliseconds, Transport_default;
+var init_Transport = __esm({
+  "Source/Telemetry/PostHog/Transport.ts"() {
+    "use strict";
+    init_Event();
+    RequestTimeoutMilliseconds = 5e3;
+    Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+      if (Batch.length === 0) return;
+      const Payload = JSON.stringify({
+        api_key: Key,
+        batch: Batch.map((Entry) => ({
+          event: Entry.Name,
+          timestamp: Entry.Timestamp,
+          distinct_id: DistinctIdentifier2,
+          properties: Event_default.Enrich(Entry.Properties)
+        }))
+      });
+      try {
+        const Address = new URL("/batch/", Host);
+        const Request = NodeHttps2.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || 443,
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: RequestTimeoutMilliseconds
+          },
+          (Response) => {
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+      }
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default;
+var init_Buffer = __esm({
+  "Source/Telemetry/PostHog/Buffer.ts"() {
+    "use strict";
+    init_Event();
+    init_Transport();
+    Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+      let Queue = [];
+      let FlushTimer;
+      const Send = /* @__PURE__ */ __name(() => {
+        if (Queue.length === 0) return;
+        const Pending = Queue;
+        Queue = [];
+        Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+      }, "Send");
+      const ScheduleFlush = /* @__PURE__ */ __name(() => {
+        if (FlushTimer) return;
+        FlushTimer = setTimeout(() => {
+          FlushTimer = void 0;
+          Send();
+        }, Config.BatchWindowMilliseconds);
+        FlushTimer.unref?.();
+      }, "ScheduleFlush");
+      return {
+        Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+          Queue.push(Event_default.Create(Name, Properties));
+          if (Queue.length >= Config.BatchMaximum) {
+            Send();
+            return;
+          }
+          ScheduleFlush();
+        }, "Enqueue"),
+        Drain: /* @__PURE__ */ __name(() => {
+          if (FlushTimer) {
+            clearTimeout(FlushTimer);
+            FlushTimer = void 0;
+          }
+          Send();
+        }, "Drain")
+      };
+    }, "default");
+  }
+});
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default;
+var init_Identifier = __esm({
+  "Source/Telemetry/PostHog/Identifier.ts"() {
+    "use strict";
+    Identifier_default = /* @__PURE__ */ __name((Seed) => {
+      if (Seed.length > 0) return Seed;
+      const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+      return `land-dev-${Username}`;
+    }, "default");
+  }
+});
+
+// Source/Telemetry/Post/Hog/Bridge.ts
+var Bridge_exports = {};
+__export(Bridge_exports, {
+  CaptureEntryLoad: () => CaptureEntryLoad,
+  CaptureEntryLoaded: () => CaptureEntryLoaded,
+  CaptureError: () => CaptureError,
+  CaptureEvent: () => CaptureEvent,
+  CaptureHandler: () => CaptureHandler,
+  CaptureStub: () => CaptureStub,
+  Initialize: () => Initialize,
+  default: () => Bridge_default
+});
+var Configuration2, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, CaptureHandler, CaptureStub, CaptureEntryLoad, CaptureEntryLoaded, Bridge_default;
+var init_Bridge = __esm({
+  "Source/Telemetry/Post/Hog/Bridge.ts"() {
+    "use strict";
+    init_Buffer();
+    init_Configuration();
+    init_Event();
+    init_Identifier();
+    Configuration2 = Configuration_default();
+    DistinctIdentifier = Identifier_default(
+      Configuration2.DistinctIdentifierSeed
+    );
+    Initialized = false;
+    Buffered = /* @__PURE__ */ __name(() => {
+      if (!Configuration2.Enabled) return void 0;
+      if (!ActiveBuffer) {
+        ActiveBuffer = Buffer_default(Configuration2, DistinctIdentifier);
+      }
+      return ActiveBuffer;
+    }, "Buffered");
+    CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      try {
+        Buffered()?.Enqueue(Name, Properties);
+      } catch {
+      }
+    }, "CaptureEvent");
+    CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      Bridge.Enqueue("land:cocoon:error", {
+        ...Extra,
+        error_tag: Tag,
+        error_message: Message
+      });
+      Bridge.Drain();
+    }, "CaptureError");
+    Initialize = /* @__PURE__ */ __name(() => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (Initialized) return;
+      Initialized = true;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      if (process.env["NODE_ENV"] !== "production") {
+        void Promise.resolve().then(() => (init_OTLPBridge(), OTLPBridge_exports)).then((OTLP) => {
+          Event_default.SetTraceIdentifier(OTLP.TraceIdentifier());
+        }).catch(() => {
+        });
+      }
+      const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+      process.once("exit", OnExit);
+      process.once("SIGINT", OnExit);
+      process.once("SIGTERM", OnExit);
+      CaptureEvent("land:cocoon:session:start", {
+        pid: process.pid,
+        platform: process.platform,
+        arch: process.arch,
+        node_version: process.version
+      });
+    }, "Initialize");
+    CaptureHandler = /* @__PURE__ */ __name((Feature, DurationMs, Ok) => {
+      CaptureEvent("land:cocoon:handler:complete", {
+        feature: Feature,
+        duration_ms: DurationMs,
+        ok: Ok
+      });
+    }, "CaptureHandler");
+    CaptureStub = /* @__PURE__ */ __name((Feature, Reason) => {
+      CaptureEvent("land:cocoon:stub:active", {
+        feature: Feature,
+        reason: Reason
+      });
+    }, "CaptureStub");
+    CaptureEntryLoad = /* @__PURE__ */ __name((Entry) => {
+      CaptureEvent("land:cocoon:entry:load", { entry: Entry });
+    }, "CaptureEntryLoad");
+    CaptureEntryLoaded = /* @__PURE__ */ __name((Entry, DurationMs) => {
+      CaptureEvent("land:cocoon:entry:loaded", {
+        entry: Entry,
+        duration_ms: DurationMs
+      });
+    }, "CaptureEntryLoaded");
+    Bridge_default = {
+      CaptureEvent,
+      CaptureError,
+      CaptureHandler,
+      CaptureStub,
+      CaptureEntryLoad,
+      CaptureEntryLoaded,
+      Initialize
+    };
+  }
+});
+
+// Source/Services/Language/Provider/Registry.ts
+var Callbacks = /* @__PURE__ */ new Map();
+function Register(Handle, Provider) {
+  Callbacks.set(Handle, Provider);
+}
+__name(Register, "Register");
+function Unregister(Handle) {
+  Callbacks.delete(Handle);
+}
+__name(Unregister, "Unregister");
+function Get(Handle) {
+  const Provider = Callbacks.get(Handle);
+  if (process.env.Trace) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
+}
+__name(Get, "Get");
+var NextHandle = 1e4;
+function RegisterAutoHandle(Provider) {
+  const Handle = NextHandle++;
+  Callbacks.set(Handle, Provider);
+  return Handle;
+}
+__name(RegisterAutoHandle, "RegisterAutoHandle");
+function NextProviderHandle() {
+  return NextHandle++;
+}
+__name(NextProviderHandle, "NextProviderHandle");
+var Commands = /* @__PURE__ */ new Map();
+function RegisterCommand(CommandId, Callback) {
+  Commands.set(CommandId, Callback);
+}
+__name(RegisterCommand, "RegisterCommand");
+function HasCommand(CommandId) {
+  return Commands.has(CommandId);
+}
+__name(HasCommand, "HasCommand");
+function ExecuteCommand(CommandId, ...Args) {
+  const Handler = Commands.get(CommandId);
+  if (Handler) return Handler(...Args);
+  return void 0;
+}
+__name(ExecuteCommand, "ExecuteCommand");
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+__name(UnregisterCommand, "UnregisterCommand");
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+__name(ListCommands, "ListCommands");
+function ListHandles() {
+  return Array.from(Callbacks.keys());
+}
+__name(ListHandles, "ListHandles");
+
+// Source/Utility/Land/Fix/Log.ts
+var Mode = process.env["Mend"] ?? "short";
+var Enabled = Mode !== "off";
+var Long = Mode === "long";
+var DebugEnabled = Long;
+var AllowList = (() => {
+  const Raw = process.env["Mend"];
+  if (!Raw || Raw.trim().length === 0) return void 0;
+  const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+  return Tags.length === 0 ? void 0 : new Set(Tags);
+})();
+var PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+var PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+var FormatTimestamp = /* @__PURE__ */ __name(() => {
+  const Now = /* @__PURE__ */ new Date();
+  if (Long) return Now.toISOString();
+  return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+    Now.getSeconds()
+  )}.${PadThree(Now.getMilliseconds())}`;
+}, "FormatTimestamp");
+var SerializeContext = /* @__PURE__ */ __name((Context) => {
+  const Seen = /* @__PURE__ */ new WeakSet();
+  try {
+    return JSON.stringify(Context, (_Key, Value) => {
+      if (Value instanceof Error) {
+        return { name: Value.name, message: Value.message };
+      }
+      if (typeof Value === "bigint") return String(Value);
+      if (typeof Value === "function") return "[Function]";
+      if (typeof Value === "object" && Value !== null) {
+        if (Seen.has(Value)) return "[Circular]";
+        Seen.add(Value);
+      }
+      return Value;
+    });
+  } catch {
+    return '"[Unserializable]"';
+  }
+}, "SerializeContext");
+var LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+var FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+  const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+  if (!Context) return `${Head}
+`;
+  return `${Head} ${SerializeContext(Context)}
+`;
+}, "FormatLine");
+var Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+  if (!Enabled) return;
+  if (AllowList && !AllowList.has(Tag)) return;
+  try {
+    Stream.write(FormatLine(Level, Tag, Message, Context));
+  } catch {
+  }
+}, "Emit");
+var Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "Info");
+var Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "warn", Tag, Message, Context);
+}, "Warn");
+var ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stderr, "error", Tag, Message, Context);
+}, "ErrorLog");
+var Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  if (!DebugEnabled) return;
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "Debug");
+var SeenOnce = /* @__PURE__ */ new Set();
+var DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  if (!DebugEnabled) return;
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "DebugOnce");
+var InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "InfoOnce");
+var LandFixLog = {
+  Info,
+  InfoOnce,
+  Warn,
+  Error: ErrorLog,
+  Debug,
+  DebugOnce,
+  IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+  IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+  Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+};
+var Log_default = LandFixLog;
+
+// Source/Services/Handler/VscodeAPI/Wrap/Namespace/With/Heuristics.ts
+import { Effect } from "effect";
+var LazyCaptureEvent;
+if (process.env["NODE_ENV"] !== "production") {
+  void Promise.resolve().then(() => (init_Bridge(), Bridge_exports)).then((Module) => {
+    LazyCaptureEvent = Module.CaptureEvent;
+  }).catch(() => {
+  });
+}
+var NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+}, "dispose") };
+var IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
+var ClassifyProperty = /* @__PURE__ */ __name((Property) => {
+  if (IsTrustFamily(Property)) {
+    return {
+      Kind: "trust",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => true, "Produce")
+    };
+  }
+  if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+    return {
+      Kind: "event",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("register")) {
+    return {
+      Kind: "register",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("is") || Property.startsWith("has") || Property.startsWith("should")) {
+    return {
+      Kind: "bool-check",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => false, "Produce")
+    };
+  }
+  if (Property.startsWith("create") || Property.startsWith("get") || Property.startsWith("make")) {
+    return {
+      Kind: "factory",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+    };
+  }
+  return {
+    Kind: "default",
+    Sync: false,
+    Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+  };
+}, "ClassifyProperty");
+var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
+  const Key = `${NamespaceName}.${Property}`;
+  Log_default.InfoOnce(
+    "VSCODE-API-GAP",
+    Key,
+    `${NamespaceName}.${Property} \u2192 ${Kind}`
+  );
+  if (process.env["NODE_ENV"] !== "production") {
+    LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
+      namespace: NamespaceName,
+      method: Property,
+      kind: Kind
+    });
+  }
+}, "RecordGap");
+var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
+  const SpanName = `vscode.${NamespaceName}.${Property}`;
+  const Program = Effect.gen(function* () {
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
+  }).pipe(
+    Effect.withSpan(SpanName, {
+      attributes: {
+        "vscode.namespace": NamespaceName,
+        "vscode.method": Property,
+        "vscode.heuristic": Heuristic.Kind
+      }
+    })
+  );
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
+}, "BuildHeuristicMethod");
+var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
+  get(Target, Property) {
+    if (Reflect.has(Target, Property)) {
+      return Reflect.get(Target, Property);
+    }
+    if (typeof Property !== "string") return void 0;
+    if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = {
+          _namespace: NamespaceName
+        };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
+    const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+    return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
+  },
+  has(Target, Property) {
+    if (Reflect.has(Target, Property)) return true;
+    return typeof Property === "string" && Property !== "then";
+  }
+}), "WrapNamespaceWithHeuristics");
+var Heuristics_default = WrapNamespaceWithHeuristics;
+
+// Source/Services/Handler/VscodeAPI/Wrap/Authentication/Namespace.ts
+var WrapAuthenticationNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("authentication", Concrete), "WrapAuthenticationNamespace");
+var Namespace_default = WrapAuthenticationNamespace;
+
+// Source/Services/Handler/VscodeAPI/Authentication/Namespace.ts
+var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
+  Context.Emitter.on(EventName, Listener);
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.Emitter.off(EventName, Listener);
+    }, "dispose")
+  };
+}, "EventSubscriber");
+var CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
+  registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
+    const Handle = NextProviderHandle();
+    Context.SendToMountain("register_authentication_provider", {
+      handle: Handle,
+      providerId: ProviderId,
+      label: Label,
+      supportsMultipleAccounts: Options?.supportsMultipleAccounts ?? false,
+      extensionId: ""
+    }).catch(() => {
+    });
+    return {
+      dispose: /* @__PURE__ */ __name(() => {
+        Context.SendToMountain(
+          "unregister_authentication_provider",
+          {
+            handle: Handle
+          }
+        ).catch(() => {
+        });
+      }, "dispose")
+    };
+  }, "registerAuthenticationProvider"),
+  getSession: /* @__PURE__ */ __name(async (ProviderId, Scopes, Options) => {
+    try {
+      return await Context.MountainClient?.sendRequest(
+        "Authentication.GetSession",
+        [ProviderId, Scopes, Options ?? {}]
+      );
+    } catch {
+      return void 0;
+    }
+  }, "getSession"),
+  getAccounts: /* @__PURE__ */ __name(async (ProviderId) => {
+    try {
+      const Result = await Context.MountainClient?.sendRequest(
+        "Authentication.GetAccounts",
+        [ProviderId]
+      );
+      return Array.isArray(Result) ? Result : [];
+    } catch {
+      return [];
+    }
+  }, "getAccounts"),
+  onDidChangeSessions: EventSubscriber(Context, "auth.didChangeSessions")
+}), "CreateAuthenticationNamespace");
+var Namespace_default2 = CreateAuthenticationNamespace;
+export {
+  Namespace_default2 as default
+};
+//# sourceMappingURL=Namespace.js.map

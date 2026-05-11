@@ -1,1 +1,42 @@
-var i=(e,t,o,a)=>{let n={id:t,alignment:typeof o=="number"?o:1,priority:a,text:"",tooltip:"",command:void 0,show:()=>{e.SendToMountain("statusBar.update",{handle:t,text:n.text,tooltip:n.tooltip,command:n.command,visible:!0}).catch(()=>{})},hide:()=>{e.SendToMountain("statusBar.update",{handle:t,visible:!1}).catch(()=>{})},dispose:()=>{e.SendToMountain("statusBar.dispose",{handle:t}).catch(()=>{})}};return n};export{i as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts
+var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, AlignmentOrId, Priority) => {
+  const Item = {
+    id: Handle,
+    alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+    priority: Priority,
+    text: "",
+    tooltip: "",
+    command: void 0,
+    show: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("statusBar.update", {
+        handle: Handle,
+        text: Item.text,
+        tooltip: Item.tooltip,
+        command: Item.command,
+        visible: true
+      }).catch(() => {
+      });
+    }, "show"),
+    hide: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("statusBar.update", {
+        handle: Handle,
+        visible: false
+      }).catch(() => {
+      });
+    }, "hide"),
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("statusBar.dispose", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "dispose")
+  };
+  return Item;
+}, "default");
+export {
+  CreateStatusBarItem_default as default
+};
+//# sourceMappingURL=CreateStatusBarItem.js.map

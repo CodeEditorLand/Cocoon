@@ -1,1 +1,7 @@
-import{Context as e}from"effect";var t=e.Tag("IAPIFactoryService");export{t as IAPIFactoryService};
+// Source/Interfaces/IAPI/Factory/Service.ts
+import { Context } from "effect";
+var IAPIFactoryService = Context.Tag("IAPIFactoryService");
+export {
+  IAPIFactoryService
+};
+//# sourceMappingURL=Service.js.map

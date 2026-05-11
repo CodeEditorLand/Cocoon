@@ -1,1 +1,63 @@
-import{Context as m,Effect as s,Layer as l}from"effect";import*as i from"effect/Effect";var a=i.Service()("Service/MountainClient",{effect:i.gen(function*(){return{}})});var c=m.Tag("ITerminalService")(),r=class{constructor(e){this.mountainClient=e}mountainClient;async createTerminal(e,n,o){return await this.mountainClient.sendRequest("terminal.create",{name:e,shell_path:n,cwd:o})}async sendText(e,n){await this.mountainClient.sendRequest("terminal.write",{id:e,data:n})}async resize(e,n,o){}async kill(e){}},I=l.effect(c,s.gen(function*(){let t=yield*a;return new r(t)}));export{c as ITerminalService,r as TerminalService,I as TerminalServiceLayer};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/I/Mountain/Client/Service.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/Terminal/Service.ts
+import { Context, Effect as Effect2, Layer } from "effect";
+var ITerminalService = Context.Tag("ITerminalService")();
+var TerminalService = class {
+  constructor(mountainClient) {
+    this.mountainClient = mountainClient;
+  }
+  mountainClient;
+  static {
+    __name(this, "TerminalService");
+  }
+  async createTerminal(name, shellPath, cwd) {
+    console.log(`[Terminal] Creating terminal: ${name}`);
+    const terminalId = await this.mountainClient.sendRequest(
+      "terminal.create",
+      {
+        name,
+        shell_path: shellPath,
+        cwd
+      }
+    );
+    return terminalId;
+  }
+  async sendText(terminalId, text) {
+    await this.mountainClient.sendRequest("terminal.write", {
+      id: terminalId,
+      data: text
+    });
+  }
+  async resize(terminalId, cols, rows) {
+    console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
+  }
+  async kill(terminalId) {
+    console.log(`[Terminal] Kill ${terminalId}`);
+  }
+};
+var TerminalServiceLayer = Layer.effect(
+  ITerminalService,
+  Effect2.gen(function* () {
+    const mountainClient = yield* IMountainClientService;
+    return new TerminalService(mountainClient);
+  })
+);
+export {
+  ITerminalService,
+  TerminalService,
+  TerminalServiceLayer
+};
+//# sourceMappingURL=Service.js.map

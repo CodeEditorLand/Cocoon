@@ -1,30 +1,2088 @@
-var Oe=Object.defineProperty;var b=(e,n)=>()=>(e&&(n=e(e=0)),n);var Q=(e,n)=>{for(var o in n)Oe(e,o,{get:n[o],enumerable:!0})};var Ve,Qe,N,Je,Ze,k,R=b(()=>{"use strict";Ve={$app:"land-editor",$app_version:"0.0.1",$build_mode:"debug",$component:"cocoon",$tier:"cocoon",$lib:"cocoon-posthog-bridge"},Qe=(e,n={})=>({Name:e,Timestamp:new Date().toISOString(),Properties:n}),Je=e=>{N=e},Ze=e=>({...e,...Ve,$node_version:process.version,...N?{$trace_id:N}:{}}),k={Create:Qe,Enrich:Ze,SetTraceIdentifier:Je}});import*as Y from"node:https";var Xe,ee,ne=b(()=>{"use strict";R();Xe=5e3,ee=(e,n,o,s)=>{if(s.length===0)return;let a=JSON.stringify({api_key:n,batch:s.map(t=>({event:t.Name,timestamp:t.Timestamp,distinct_id:o,properties:k.Enrich(t.Properties)}))});try{let t=new URL("/batch/",e),r=Y.request({method:"POST",hostname:t.hostname,port:t.port||443,path:t.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(a)},timeout:Xe},i=>{i.resume()});r.on("error",()=>{}),r.on("timeout",()=>{r.destroy()}),r.write(a),r.end()}catch{}}});var te,re=b(()=>{"use strict";R();ne();te=(e,n)=>{let o=[],s,a=()=>{if(o.length===0)return;let r=o;o=[],ee(e.Host,e.Key,n,r)},t=()=>{s||(s=setTimeout(()=>{s=void 0,a()},e.BatchWindowMilliseconds),s.unref?.())};return{Enqueue:(r,i)=>{if(o.push(k.Create(r,i)),o.length>=e.BatchMaximum){a();return}t()},Drain:()=>{s&&(clearTimeout(s),s=void 0),a()}}}});var Ye,H,I,oe,ie,M,q=b(()=>{"use strict";Ye="https://eu.i.posthog.com",H=(e,n)=>{let o=process.env[e];return o&&o.length>0?o:n},I=(e,n)=>{let o=process.env[e];return o===void 0?n:!["false","0","off",""].includes(o.toLowerCase())},oe=(e,n)=>{let o=process.env[e],s=o?Number(o):Number.NaN;return Number.isFinite(s)&&s>0?s:n},ie=I("Capture",!0),M=()=>({Key:H("Authorize",""),Host:H("Beam",Ye),Enabled:I("Report",!0)&&ie&&process.env.NODE_ENV!=="production",BatchWindowMilliseconds:oe("Buffer",3e3),BatchMaximum:oe("Batch",50),DistinctIdentifierSeed:process.env.Brand??"",OTLPEndpoint:H("OTLPEndpoint","http://127.0.0.1:4318"),OTLPEnabled:I("OTLPEnabled",!0)&&ie&&process.env.NODE_ENV!=="production"})});var se,ae=b(()=>{"use strict";se=e=>e.length>0?e:`land-dev-${process.env.USER??process.env.USERNAME??"unknown"}`});var le={};Q(le,{CaptureSpan:()=>C,TraceIdentifier:()=>K,WithSpan:()=>ce,default:()=>tn});import*as en from"node:http";import*as nn from"node:https";var de,P,ue,F,K,j,C,ce,tn,pe=b(()=>{"use strict";q();de=M(),P=de.OTLPEnabled,ue=e=>{let n="";for(let o=0;o<e;o=o+1)n=n+Math.floor(Math.random()*256).toString(16).padStart(2,"0");return n},K=()=>(F||(F=ue(16)),F),j=()=>{let e=process.hrtime();return BigInt(e[0])*1000000000n+BigInt(e[1])},C=(e,n,o,s=[])=>{if(process.env.NODE_ENV==="production"||!P)return;let a=ue(8),t=K(),r=e.includes("error")?2:1,i=s.map(([d,g])=>({key:d,value:{stringValue:g}})),u=JSON.stringify({resourceSpans:[{resource:{attributes:[{key:"service.name",value:{stringValue:"land-editor-cocoon"}},{key:"service.version",value:{stringValue:"0.0.1"}},{key:"land.tier",value:{stringValue:"cocoon"}}]},scopeSpans:[{scope:{name:"land.cocoon",version:"1.0.0"},spans:[{traceId:t,spanId:a,name:e,kind:1,startTimeUnixNano:n.toString(),endTimeUnixNano:o.toString(),attributes:i,status:{code:r}}]}]}]});try{let d=new URL("/v1/traces",de.OTLPEndpoint),c=(d.protocol==="https:"?nn:en).request({method:"POST",hostname:d.hostname,port:d.port||(d.protocol==="https:"?443:80),path:d.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(u)},timeout:200},l=>{(l.statusCode===void 0||l.statusCode>=300)&&(P=!1),l.resume()});c.on("error",()=>{P=!1}),c.on("timeout",()=>{c.destroy()}),c.write(u),c.end()}catch{P=!1}},ce=async(e,n,o=[])=>{let s=j();try{let a=await n(),t=j();return C(e,s,t,o),a}catch(a){let t=j();throw C(`${e}:error`,s,t,[...o,["error",String(a.message??a)]]),a}},tn={CaptureSpan:C,TraceIdentifier:K,WithSpan:ce}});var ye={};Q(ye,{CaptureEntryLoad:()=>ve,CaptureEntryLoaded:()=>be,CaptureError:()=>me,CaptureEvent:()=>y,CaptureHandler:()=>we,CaptureStub:()=>he,Initialize:()=>fe,default:()=>on});var z,rn,U,ge,G,y,me,fe,we,he,ve,be,on,Se=b(()=>{"use strict";re();q();R();ae();z=M(),rn=se(z.DistinctIdentifierSeed),ge=!1,G=()=>{if(z.Enabled)return U||(U=te(z,rn)),U},y=(e,n={})=>{if(process.env.NODE_ENV!=="production")try{G()?.Enqueue(e,n)}catch{}},me=(e,n,o={})=>{if(process.env.NODE_ENV==="production")return;let s=G();s&&(s.Enqueue("land:cocoon:error",{...o,error_tag:e,error_message:n}),s.Drain())},fe=()=>{if(process.env.NODE_ENV==="production"||ge)return;ge=!0;let e=G();if(!e)return;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(pe(),le)).then(o=>{k.SetTraceIdentifier(o.TraceIdentifier())}).catch(()=>{});let n=()=>e.Drain();process.once("exit",n),process.once("SIGINT",n),process.once("SIGTERM",n),y("land:cocoon:session:start",{pid:process.pid,platform:process.platform,arch:process.arch,node_version:process.version})},we=(e,n,o)=>{y("land:cocoon:handler:complete",{feature:e,duration_ms:n,ok:o})},he=(e,n)=>{y("land:cocoon:stub:active",{feature:e,reason:n})},ve=e=>{y("land:cocoon:entry:load",{entry:e})},be=(e,n)=>{y("land:cocoon:entry:loaded",{entry:e,duration_ms:n})},on={CaptureEvent:y,CaptureError:me,CaptureHandler:we,CaptureStub:he,CaptureEntryLoad:ve,CaptureEntryLoaded:be,Initialize:fe}});var Ae=1e4;function f(){return Ae++}import{Effect as T}from"effect";var A=process.env.Mend??"short",Z=A!=="off",x=A==="long",B=x,J=(()=>{let e=process.env.Mend;if(!e||e.trim().length===0)return;let n=e.split(",").map(o=>o.trim()).filter(o=>o.length>0);return n.length===0?void 0:new Set(n)})(),O=e=>e<10?`0${e}`:String(e),xe=e=>e<10?`00${e}`:e<100?`0${e}`:String(e),Be=()=>{let e=new Date;return x?e.toISOString():`${O(e.getHours())}:${O(e.getMinutes())}:${O(e.getSeconds())}.${xe(e.getMilliseconds())}`},Ne=e=>{let n=new WeakSet;try{return JSON.stringify(e,(o,s)=>{if(s instanceof Error)return{name:s.name,message:s.message};if(typeof s=="bigint")return String(s);if(typeof s=="function")return"[Function]";if(typeof s=="object"&&s!==null){if(n.has(s))return"[Circular]";n.add(s)}return s})}catch{return'"[Unserializable]"'}},He=e=>e==="info"?"":` ${e.toUpperCase()}`,Ie=(e,n,o,s)=>{let a=`${Be()} [LandFix:${n}]${He(e)} ${o}`;return s?`${a} ${Ne(s)}
-`:`${a}
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 
-`},S=(e,n,o,s,a)=>{if(Z&&!(J&&!J.has(o)))try{e.write(Ie(n,o,s,a))}catch{}},qe=(e,n,o)=>{S(process.stdout,"info",e,n,o)},Fe=(e,n,o)=>{S(process.stdout,"warn",e,n,o)},je=(e,n,o)=>{S(process.stderr,"error",e,n,o)},Ke=(e,n,o)=>{B&&S(process.stdout,"debug",e,n,o)},D=new Set,Ue=(e,n,o,s)=>{if(!B)return;let a=`${e}:${n}`;D.has(a)||(D.add(a),S(process.stdout,"debug",e,o,s))},ze=(e,n,o,s)=>{let a=`${e}:${n}`;D.has(a)||(D.add(a),S(process.stdout,"info",e,o,s))},Ge={Info:qe,InfoOnce:ze,Warn:Fe,Error:je,Debug:Ke,DebugOnce:Ue,IsEnabled:()=>Z,IsDebugEnabled:()=>B,Mode:()=>A==="off"?"off":x?"long":"short"},X=Ge;var ke;process.env.NODE_ENV!=="production"&&Promise.resolve().then(()=>(Se(),ye)).then(e=>{ke=e.CaptureEvent}).catch(()=>{});var E={dispose:()=>{}},sn=e=>e==="requestResourceTrust"||e==="isResourceTrusted"||e==="requestWorkspaceTrust"||/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(e),an=e=>sn(e)?{Kind:"trust",Sync:!1,Produce:()=>!0}:e.startsWith("onDid")||e.startsWith("onWill")?{Kind:"event",Sync:!0,Produce:()=>E}:e.startsWith("register")?{Kind:"register",Sync:!0,Produce:()=>E}:e.startsWith("is")||e.startsWith("has")||e.startsWith("should")?{Kind:"bool-check",Sync:!1,Produce:()=>!1}:e.startsWith("create")||e.startsWith("get")||e.startsWith("make")?{Kind:"factory",Sync:!0,Produce:()=>{}}:{Kind:"default",Sync:!1,Produce:()=>{}},dn=(e,n,o)=>{let s=`${e}.${n}`;X.InfoOnce("VSCODE-API-GAP",s,`${e}.${n} \u2192 ${o}`),process.env.NODE_ENV!=="production"&&ke?.("land:cocoon:vscode_api_gap",{namespace:e,method:n,kind:o})},un=(e,n,o)=>(...s)=>{let a=`vscode.${e}.${n}`,t=T.gen(function*(){yield*T.sync(()=>{try{dn(e,n,o.Kind)}catch{}});try{return o.Produce(...s)}catch{switch(o.Kind){case"trust":return!0;case"event":return E;case"register":return E;case"bool-check":return!1;default:return}}}).pipe(T.withSpan(a,{attributes:{"vscode.namespace":e,"vscode.method":n,"vscode.heuristic":o.Kind}}));try{return o.Sync?T.runSync(t):T.runPromise(t)}catch{switch(o.Kind){case"trust":return o.Sync?!0:Promise.resolve(!0);case"event":case"register":return E;case"bool-check":return o.Sync?!1:Promise.resolve(!1);default:return o.Sync?void 0:Promise.resolve(void 0)}}},cn=(e,n,o)=>new Proxy(n,{get(s,a){if(Reflect.has(s,a))return Reflect.get(s,a);if(typeof a!="string"||a==="then")return;if(a==="toJSON")return()=>{let r={_namespace:e};for(let i of Object.keys(s)){let u=s[i],d=typeof u;r[i]=d==="function"?"[Function]":d==="object"&&u!==null?"[Object]":u}return r};if(a==="toString"||a==="valueOf")return;let t=o?.[a]??an(a);return un(e,a,t)},has(s,a){return Reflect.has(s,a)?!0:typeof a=="string"&&a!=="then"}}),Te=cn;var ln=e=>Te("window",e),Ee=ln;var De=(e,n,o,s)=>{let a=typeof s=="object"&&s!==null?s.log===!0:!1;e.SendToMountain("outputChannel.create",{handle:n,name:o,log:a}).catch(()=>{});let t=i=>{e.SendToMountain("outputChannel.append",{handle:n,name:o,value:i}).catch(()=>{})};return{name:o,append:t,appendLine:i=>t(`${i}
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey, DefaultHost, DefaultBatchWindowMilliseconds, DefaultBatchMaximum, ReadString, ReadBoolean, ReadNumber, TelemetryCaptureEnabled, Configuration_default;
+var init_Configuration = __esm({
+  "Source/Telemetry/PostHog/Configuration.ts"() {
+    "use strict";
+    DefaultKey = "";
+    DefaultHost = "https://eu.i.posthog.com";
+    DefaultBatchWindowMilliseconds = 3e3;
+    DefaultBatchMaximum = 50;
+    ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      return Value && Value.length > 0 ? Value : Fallback;
+    }, "ReadString");
+    ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      if (Value === void 0) return Fallback;
+      return !["false", "0", "off", ""].includes(Value.toLowerCase());
+    }, "ReadBoolean");
+    ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+      const Value = process.env[Key];
+      const Parsed = Value ? Number(Value) : Number.NaN;
+      return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+    }, "ReadNumber");
+    TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+    Configuration_default = /* @__PURE__ */ __name(() => ({
+      Key: ReadString("Authorize", DefaultKey),
+      Host: ReadString("Beam", DefaultHost),
+      Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+      BatchWindowMilliseconds: ReadNumber(
+        "Buffer",
+        DefaultBatchWindowMilliseconds
+      ),
+      BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+      DistinctIdentifierSeed: process.env["Brand"] ?? "",
+      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
+      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+    }), "default");
+  }
+});
 
-`),clear:()=>{e.SendToMountain("outputChannel.clear",{handle:n}).catch(()=>{})},show:()=>{e.SendToMountain("outputChannel.show",{handle:n}).catch(()=>{})},hide:()=>{e.SendToMountain("outputChannel.hide",{handle:n}).catch(()=>{})},replace:i=>{e.SendToMountain("outputChannel.clear",{handle:n}).catch(()=>{}),t(i)},dispose:()=>{e.SendToMountain("outputChannel.dispose",{handle:n}).catch(()=>{})},logLevel:2,onDidChangeLogLevel:i=>({dispose:()=>{}}),trace:(i,...u)=>t(`[trace] ${i}
+// Source/Telemetry/OTLPBridge.ts
+var OTLPBridge_exports = {};
+__export(OTLPBridge_exports, {
+  CaptureSpan: () => CaptureSpan,
+  TraceIdentifier: () => TraceIdentifier,
+  WithSpan: () => WithSpan,
+  default: () => OTLPBridge_default
+});
+import * as NodeHttp from "node:http";
+import * as NodeHttps from "node:https";
+var Configuration, OTLPAvailable, RandomHex, TraceIdentifierCached, TraceIdentifier, NowNano, CaptureSpan, WithSpan, OTLPBridge_default;
+var init_OTLPBridge = __esm({
+  "Source/Telemetry/OTLPBridge.ts"() {
+    "use strict";
+    init_Configuration();
+    Configuration = Configuration_default();
+    OTLPAvailable = Configuration.OTLPEnabled;
+    RandomHex = /* @__PURE__ */ __name((Bytes) => {
+      let Output = "";
+      for (let Index = 0; Index < Bytes; Index = Index + 1) {
+        Output = Output + Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+      }
+      return Output;
+    }, "RandomHex");
+    TraceIdentifier = /* @__PURE__ */ __name(() => {
+      if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
+      return TraceIdentifierCached;
+    }, "TraceIdentifier");
+    NowNano = /* @__PURE__ */ __name(() => {
+      const Hr = process.hrtime();
+      return BigInt(Hr[0]) * 1000000000n + BigInt(Hr[1]);
+    }, "NowNano");
+    CaptureSpan = /* @__PURE__ */ __name((Name, StartNano, EndNano, Attributes = []) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (!OTLPAvailable) return;
+      const SpanIdentifier = RandomHex(8);
+      const TraceIdentifierResolved = TraceIdentifier();
+      const StatusCode = Name.includes("error") ? 2 : 1;
+      const AttributesPayload = Attributes.map(([Key, Value]) => ({
+        key: Key,
+        value: { stringValue: Value }
+      }));
+      const Payload = JSON.stringify({
+        resourceSpans: [
+          {
+            resource: {
+              attributes: [
+                {
+                  key: "service.name",
+                  value: { stringValue: "land-editor-cocoon" }
+                },
+                {
+                  key: "service.version",
+                  value: { stringValue: "0.0.1" }
+                },
+                {
+                  key: "land.tier",
+                  value: { stringValue: "cocoon" }
+                }
+              ]
+            },
+            scopeSpans: [
+              {
+                scope: { name: "land.cocoon", version: "1.0.0" },
+                spans: [
+                  {
+                    traceId: TraceIdentifierResolved,
+                    spanId: SpanIdentifier,
+                    name: Name,
+                    kind: 1,
+                    startTimeUnixNano: StartNano.toString(),
+                    endTimeUnixNano: EndNano.toString(),
+                    attributes: AttributesPayload,
+                    status: { code: StatusCode }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      try {
+        const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
+        const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
+        const Request = HttpModule.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || (Address.protocol === "https:" ? 443 : 80),
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: 200
+          },
+          (Response) => {
+            if (Response.statusCode === void 0 || Response.statusCode >= 300) {
+              OTLPAvailable = false;
+            }
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+          OTLPAvailable = false;
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+        OTLPAvailable = false;
+      }
+    }, "CaptureSpan");
+    WithSpan = /* @__PURE__ */ __name(async (Name, Body, Attributes = []) => {
+      const StartNano = NowNano();
+      try {
+        const Output = await Body();
+        const EndNano = NowNano();
+        CaptureSpan(Name, StartNano, EndNano, Attributes);
+        return Output;
+      } catch (Error2) {
+        const EndNano = NowNano();
+        CaptureSpan(`${Name}:error`, StartNano, EndNano, [
+          ...Attributes,
+          ["error", String(Error2.message ?? Error2)]
+        ]);
+        throw Error2;
+      }
+    }, "WithSpan");
+    OTLPBridge_default = { CaptureSpan, TraceIdentifier, WithSpan };
+  }
+});
 
-`),debug:(i,...u)=>t(`[debug] ${i}
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties, Create, CurrentTraceIdentifier, SetTraceIdentifier, Enrich, Event_default;
+var init_Event = __esm({
+  "Source/Telemetry/PostHog/Event.ts"() {
+    "use strict";
+    BaseProperties = {
+      $app: "land-editor",
+      $app_version: "0.0.1",
+      $build_mode: "debug",
+      $component: "cocoon",
+      $tier: "cocoon",
+      $lib: "cocoon-posthog-bridge"
+    };
+    Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+      Name,
+      Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      Properties
+    }), "Create");
+    SetTraceIdentifier = /* @__PURE__ */ __name((Identifier) => {
+      CurrentTraceIdentifier = Identifier;
+    }, "SetTraceIdentifier");
+    Enrich = /* @__PURE__ */ __name((Properties) => ({
+      ...Properties,
+      ...BaseProperties,
+      $node_version: process.version,
+      ...CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}
+    }), "Enrich");
+    Event_default = { Create, Enrich, SetTraceIdentifier };
+  }
+});
 
-`),info:(i,...u)=>t(`[info] ${i}
+// Source/Telemetry/PostHog/Transport.ts
+import * as NodeHttps2 from "node:https";
+var RequestTimeoutMilliseconds, Transport_default;
+var init_Transport = __esm({
+  "Source/Telemetry/PostHog/Transport.ts"() {
+    "use strict";
+    init_Event();
+    RequestTimeoutMilliseconds = 5e3;
+    Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+      if (Batch.length === 0) return;
+      const Payload = JSON.stringify({
+        api_key: Key,
+        batch: Batch.map((Entry) => ({
+          event: Entry.Name,
+          timestamp: Entry.Timestamp,
+          distinct_id: DistinctIdentifier2,
+          properties: Event_default.Enrich(Entry.Properties)
+        }))
+      });
+      try {
+        const Address = new URL("/batch/", Host);
+        const Request = NodeHttps2.request(
+          {
+            method: "POST",
+            hostname: Address.hostname,
+            port: Address.port || 443,
+            path: Address.pathname,
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(Payload)
+            },
+            timeout: RequestTimeoutMilliseconds
+          },
+          (Response) => {
+            Response.resume();
+          }
+        );
+        Request.on("error", () => {
+        });
+        Request.on("timeout", () => {
+          Request.destroy();
+        });
+        Request.write(Payload);
+        Request.end();
+      } catch {
+      }
+    }, "default");
+  }
+});
 
-`),warn:(i,...u)=>t(`[warn] ${i}
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default;
+var init_Buffer = __esm({
+  "Source/Telemetry/PostHog/Buffer.ts"() {
+    "use strict";
+    init_Event();
+    init_Transport();
+    Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+      let Queue = [];
+      let FlushTimer;
+      const Send = /* @__PURE__ */ __name(() => {
+        if (Queue.length === 0) return;
+        const Pending = Queue;
+        Queue = [];
+        Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+      }, "Send");
+      const ScheduleFlush = /* @__PURE__ */ __name(() => {
+        if (FlushTimer) return;
+        FlushTimer = setTimeout(() => {
+          FlushTimer = void 0;
+          Send();
+        }, Config.BatchWindowMilliseconds);
+        FlushTimer.unref?.();
+      }, "ScheduleFlush");
+      return {
+        Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+          Queue.push(Event_default.Create(Name, Properties));
+          if (Queue.length >= Config.BatchMaximum) {
+            Send();
+            return;
+          }
+          ScheduleFlush();
+        }, "Enqueue"),
+        Drain: /* @__PURE__ */ __name(() => {
+          if (FlushTimer) {
+            clearTimeout(FlushTimer);
+            FlushTimer = void 0;
+          }
+          Send();
+        }, "Drain")
+      };
+    }, "default");
+  }
+});
 
-`),error:(i,...u)=>{let d=i instanceof Error?i.stack??i.message:String(i);t(`[error] ${d}
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default;
+var init_Identifier = __esm({
+  "Source/Telemetry/PostHog/Identifier.ts"() {
+    "use strict";
+    Identifier_default = /* @__PURE__ */ __name((Seed) => {
+      if (Seed.length > 0) return Seed;
+      const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+      return `land-dev-${Username}`;
+    }, "default");
+  }
+});
 
-`)}}};var Re=(e,n,o,s)=>{let a={id:n,alignment:typeof o=="number"?o:1,priority:s,text:"",tooltip:"",command:void 0,show:()=>{e.SendToMountain("statusBar.update",{handle:n,text:a.text,tooltip:a.tooltip,command:a.command,visible:!0}).catch(()=>{})},hide:()=>{e.SendToMountain("statusBar.update",{handle:n,visible:!1}).catch(()=>{})},dispose:()=>{e.SendToMountain("statusBar.dispose",{handle:n}).catch(()=>{})}};return a};var Me=(e,n,o)=>{let s=o?.name??`Terminal ${n}`;e.SendToMountain("window.createTerminal",{handle:n,name:s,options:o??{}}).catch(()=>{});let a,t=()=>(a!==void 0||(a=(async()=>{try{let r=await e.MountainClient?.sendRequest("Terminal.GetProcessId",[n]);return typeof r=="number"?r:r&&typeof r.pid=="number"?r.pid:void 0}catch{return}})()),a);return{name:s,get processId(){return t()},sendText:async(r,i)=>{e.SendToMountain("terminal.sendText",{handle:n,text:r}).catch(()=>{})},show:r=>{e.SendToMountain("terminal.show",{handle:n,preserveFocus:r}).catch(()=>{})},hide:()=>{e.SendToMountain("terminal.hide",{handle:n}).catch(()=>{})},dispose:()=>{e.SendToMountain("terminal.dispose",{handle:n}).catch(()=>{})},resize:async(r,i)=>{try{await e.MountainClient?.sendRequest("Terminal.Resize",[n,r,i])}catch{}}}};var Pe=(e,n,o,s,a,t,r,i)=>{let u="",d=t??{};return e.MountainClient?.sendRequest("webview.create",{handle:n,viewType:o,title:s,showOptions:a,options:d}).catch(()=>{}),{viewType:o,title:s,iconPath:void 0,webview:{get options(){return d},set options(c){d=c,e.MountainClient?.sendRequest("webview.setOptions",{handle:n,options:c}).catch(()=>{})},get html(){return u},set html(c){u=c;try{process.env.Trace&&process.stdout.write(`[WebviewPanel] set-html-enter handle=${n} htmlLen=${String(c??"").length} hasMountainClient=${!!e.MountainClient}
+// Source/Telemetry/Post/Hog/Bridge.ts
+var Bridge_exports = {};
+__export(Bridge_exports, {
+  CaptureEntryLoad: () => CaptureEntryLoad,
+  CaptureEntryLoaded: () => CaptureEntryLoaded,
+  CaptureError: () => CaptureError,
+  CaptureEvent: () => CaptureEvent,
+  CaptureHandler: () => CaptureHandler,
+  CaptureStub: () => CaptureStub,
+  Initialize: () => Initialize,
+  default: () => Bridge_default
+});
+var Configuration2, DistinctIdentifier, ActiveBuffer, Initialized, Buffered, CaptureEvent, CaptureError, Initialize, CaptureHandler, CaptureStub, CaptureEntryLoad, CaptureEntryLoaded, Bridge_default;
+var init_Bridge = __esm({
+  "Source/Telemetry/Post/Hog/Bridge.ts"() {
+    "use strict";
+    init_Buffer();
+    init_Configuration();
+    init_Event();
+    init_Identifier();
+    Configuration2 = Configuration_default();
+    DistinctIdentifier = Identifier_default(
+      Configuration2.DistinctIdentifierSeed
+    );
+    Initialized = false;
+    Buffered = /* @__PURE__ */ __name(() => {
+      if (!Configuration2.Enabled) return void 0;
+      if (!ActiveBuffer) {
+        ActiveBuffer = Buffer_default(Configuration2, DistinctIdentifier);
+      }
+      return ActiveBuffer;
+    }, "Buffered");
+    CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      try {
+        Buffered()?.Enqueue(Name, Properties);
+      } catch {
+      }
+    }, "CaptureEvent");
+    CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+      if (process.env["NODE_ENV"] === "production") return;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      Bridge.Enqueue("land:cocoon:error", {
+        ...Extra,
+        error_tag: Tag,
+        error_message: Message
+      });
+      Bridge.Drain();
+    }, "CaptureError");
+    Initialize = /* @__PURE__ */ __name(() => {
+      if (process.env["NODE_ENV"] === "production") return;
+      if (Initialized) return;
+      Initialized = true;
+      const Bridge = Buffered();
+      if (!Bridge) return;
+      if (process.env["NODE_ENV"] !== "production") {
+        void Promise.resolve().then(() => (init_OTLPBridge(), OTLPBridge_exports)).then((OTLP) => {
+          Event_default.SetTraceIdentifier(OTLP.TraceIdentifier());
+        }).catch(() => {
+        });
+      }
+      const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+      process.once("exit", OnExit);
+      process.once("SIGINT", OnExit);
+      process.once("SIGTERM", OnExit);
+      CaptureEvent("land:cocoon:session:start", {
+        pid: process.pid,
+        platform: process.platform,
+        arch: process.arch,
+        node_version: process.version
+      });
+    }, "Initialize");
+    CaptureHandler = /* @__PURE__ */ __name((Feature, DurationMs, Ok) => {
+      CaptureEvent("land:cocoon:handler:complete", {
+        feature: Feature,
+        duration_ms: DurationMs,
+        ok: Ok
+      });
+    }, "CaptureHandler");
+    CaptureStub = /* @__PURE__ */ __name((Feature, Reason) => {
+      CaptureEvent("land:cocoon:stub:active", {
+        feature: Feature,
+        reason: Reason
+      });
+    }, "CaptureStub");
+    CaptureEntryLoad = /* @__PURE__ */ __name((Entry) => {
+      CaptureEvent("land:cocoon:entry:load", { entry: Entry });
+    }, "CaptureEntryLoad");
+    CaptureEntryLoaded = /* @__PURE__ */ __name((Entry, DurationMs) => {
+      CaptureEvent("land:cocoon:entry:loaded", {
+        entry: Entry,
+        duration_ms: DurationMs
+      });
+    }, "CaptureEntryLoaded");
+    Bridge_default = {
+      CaptureEvent,
+      CaptureError,
+      CaptureHandler,
+      CaptureStub,
+      CaptureEntryLoad,
+      CaptureEntryLoaded,
+      Initialize
+    };
+  }
+});
 
-`)}catch{}e.MountainClient?.sendRequest("webview.setHtml",{handle:n,html:c}).then(()=>{try{process.env.Trace&&process.stdout.write(`[WebviewPanel] set-html-sent handle=${n}
+// Source/Services/Language/Provider/Registry.ts
+var Callbacks = /* @__PURE__ */ new Map();
+function Register(Handle, Provider) {
+  Callbacks.set(Handle, Provider);
+}
+__name(Register, "Register");
+function Unregister(Handle) {
+  Callbacks.delete(Handle);
+}
+__name(Unregister, "Unregister");
+function Get(Handle) {
+  const Provider = Callbacks.get(Handle);
+  if (process.env.Trace) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
+}
+__name(Get, "Get");
+var NextHandle = 1e4;
+function RegisterAutoHandle(Provider) {
+  const Handle = NextHandle++;
+  Callbacks.set(Handle, Provider);
+  return Handle;
+}
+__name(RegisterAutoHandle, "RegisterAutoHandle");
+function NextProviderHandle() {
+  return NextHandle++;
+}
+__name(NextProviderHandle, "NextProviderHandle");
+var Commands = /* @__PURE__ */ new Map();
+function RegisterCommand(CommandId, Callback) {
+  Commands.set(CommandId, Callback);
+}
+__name(RegisterCommand, "RegisterCommand");
+function HasCommand(CommandId) {
+  return Commands.has(CommandId);
+}
+__name(HasCommand, "HasCommand");
+function ExecuteCommand(CommandId, ...Args) {
+  const Handler = Commands.get(CommandId);
+  if (Handler) return Handler(...Args);
+  return void 0;
+}
+__name(ExecuteCommand, "ExecuteCommand");
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+__name(UnregisterCommand, "UnregisterCommand");
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+__name(ListCommands, "ListCommands");
+function ListHandles() {
+  return Array.from(Callbacks.keys());
+}
+__name(ListHandles, "ListHandles");
 
-`)}catch{}},l=>{try{process.env.Trace&&process.stdout.write(`[WebviewPanel] set-html-failed handle=${n} error=${String(l?.message??l).slice(0,120)}
+// Source/Utility/Land/Fix/Log.ts
+var Mode = process.env["Mend"] ?? "short";
+var Enabled = Mode !== "off";
+var Long = Mode === "long";
+var DebugEnabled = Long;
+var AllowList = (() => {
+  const Raw = process.env["Mend"];
+  if (!Raw || Raw.trim().length === 0) return void 0;
+  const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+  return Tags.length === 0 ? void 0 : new Set(Tags);
+})();
+var PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+var PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+var FormatTimestamp = /* @__PURE__ */ __name(() => {
+  const Now = /* @__PURE__ */ new Date();
+  if (Long) return Now.toISOString();
+  return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+    Now.getSeconds()
+  )}.${PadThree(Now.getMilliseconds())}`;
+}, "FormatTimestamp");
+var SerializeContext = /* @__PURE__ */ __name((Context) => {
+  const Seen = /* @__PURE__ */ new WeakSet();
+  try {
+    return JSON.stringify(Context, (_Key, Value) => {
+      if (Value instanceof Error) {
+        return { name: Value.name, message: Value.message };
+      }
+      if (typeof Value === "bigint") return String(Value);
+      if (typeof Value === "function") return "[Function]";
+      if (typeof Value === "object" && Value !== null) {
+        if (Seen.has(Value)) return "[Circular]";
+        Seen.add(Value);
+      }
+      return Value;
+    });
+  } catch {
+    return '"[Unserializable]"';
+  }
+}, "SerializeContext");
+var LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+var FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+  const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+  if (!Context) return `${Head}
+`;
+  return `${Head} ${SerializeContext(Context)}
+`;
+}, "FormatLine");
+var Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+  if (!Enabled) return;
+  if (AllowList && !AllowList.has(Tag)) return;
+  try {
+    Stream.write(FormatLine(Level, Tag, Message, Context));
+  } catch {
+  }
+}, "Emit");
+var Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "Info");
+var Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "warn", Tag, Message, Context);
+}, "Warn");
+var ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stderr, "error", Tag, Message, Context);
+}, "ErrorLog");
+var Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  if (!DebugEnabled) return;
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "Debug");
+var SeenOnce = /* @__PURE__ */ new Set();
+var DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  if (!DebugEnabled) return;
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "DebugOnce");
+var InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "InfoOnce");
+var LandFixLog = {
+  Info,
+  InfoOnce,
+  Warn,
+  Error: ErrorLog,
+  Debug,
+  DebugOnce,
+  IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+  IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+  Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+};
+var Log_default = LandFixLog;
 
-`)}catch{}})},cspSource:i,asWebviewUri:r,postMessage:async c=>{try{return await e.MountainClient?.sendRequest("webview.postMessage",{handle:n,message:c}),!0}catch{return!1}},onDidReceiveMessage:c=>{let l=`webview.message:${n}`;return e.Emitter.on(l,c),{dispose:()=>{e.Emitter.removeListener(l,c)}}}},options:d,viewColumn:1,active:!0,visible:!0,reveal:(c,l)=>{e.MountainClient?.sendRequest("webview.reveal",{handle:n,viewColumn:c,preserveFocus:l}).catch(()=>{})},dispose:()=>{e.Emitter.removeAllListeners(`webview.message:${n}`),e.MountainClient?.sendRequest("webview.dispose",{handle:n}).catch(()=>{})},onDidDispose:c=>{let l=`webview.dispose:${n}`;return e.Emitter.on(l,c),{dispose:()=>{e.Emitter.removeListener(l,c)}}},onDidChangeViewState:c=>{let l=`webview.viewState:${n}`;return e.Emitter.on(l,c),{dispose:()=>{e.Emitter.removeListener(l,c)}}}}};var Ce=(e,n,o,s,a)=>{let t="",r=!0,i=new Set,u=new Set,d=`webview.viewVisibility:${n}`,g=`webview.dispose:${n}`,c=p=>{r=!!p;for(let v of i)try{v(!!p)}catch{}},l=()=>{for(let p of u)try{p()}catch{}u.clear(),i.clear(),e.Emitter?.off?.(d,c),e.Emitter?.off?.(g,l)};e.Emitter?.on?.(d,c),e.Emitter?.on?.(g,l);let w,h,L,W=()=>{e.SendToMountain("webview.updateView",{handle:n,viewId:o,title:w??null,description:h??null,badge:L??null}).catch(()=>{})};return{viewType:o,get visible(){return r},set visible(p){},get title(){return w},set title(p){w=p,W()},get description(){return h},set description(p){h=p,W()},get badge(){return L},set badge(p){L=p,W()},webview:{get html(){return t},set html(p){t=String(p??"");try{process.env.Trace&&process.stdout.write(`[WebviewView] set-html-enter handle=${n} viewId=${o} htmlLen=${t.length}
+// Source/Services/Handler/VscodeAPI/Wrap/Namespace/With/Heuristics.ts
+import { Effect } from "effect";
+var LazyCaptureEvent;
+if (process.env["NODE_ENV"] !== "production") {
+  void Promise.resolve().then(() => (init_Bridge(), Bridge_exports)).then((Module) => {
+    LazyCaptureEvent = Module.CaptureEvent;
+  }).catch(() => {
+  });
+}
+var NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+}, "dispose") };
+var IsTrustFamily = /* @__PURE__ */ __name((Property) => Property === "requestResourceTrust" || Property === "isResourceTrusted" || Property === "requestWorkspaceTrust" || /^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property), "IsTrustFamily");
+var ClassifyProperty = /* @__PURE__ */ __name((Property) => {
+  if (IsTrustFamily(Property)) {
+    return {
+      Kind: "trust",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => true, "Produce")
+    };
+  }
+  if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+    return {
+      Kind: "event",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("register")) {
+    return {
+      Kind: "register",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => NoopDisposable, "Produce")
+    };
+  }
+  if (Property.startsWith("is") || Property.startsWith("has") || Property.startsWith("should")) {
+    return {
+      Kind: "bool-check",
+      Sync: false,
+      Produce: /* @__PURE__ */ __name(() => false, "Produce")
+    };
+  }
+  if (Property.startsWith("create") || Property.startsWith("get") || Property.startsWith("make")) {
+    return {
+      Kind: "factory",
+      Sync: true,
+      Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+    };
+  }
+  return {
+    Kind: "default",
+    Sync: false,
+    Produce: /* @__PURE__ */ __name(() => void 0, "Produce")
+  };
+}, "ClassifyProperty");
+var RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
+  const Key = `${NamespaceName}.${Property}`;
+  Log_default.InfoOnce(
+    "VSCODE-API-GAP",
+    Key,
+    `${NamespaceName}.${Property} \u2192 ${Kind}`
+  );
+  if (process.env["NODE_ENV"] !== "production") {
+    LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
+      namespace: NamespaceName,
+      method: Property,
+      kind: Kind
+    });
+  }
+}, "RecordGap");
+var BuildHeuristicMethod = /* @__PURE__ */ __name((NamespaceName, Property, Heuristic) => (...Arguments) => {
+  const SpanName = `vscode.${NamespaceName}.${Property}`;
+  const Program = Effect.gen(function* () {
+    yield* Effect.sync(() => {
+      try {
+        RecordGap(NamespaceName, Property, Heuristic.Kind);
+      } catch {
+      }
+    });
+    try {
+      return Heuristic.Produce(...Arguments);
+    } catch {
+      switch (Heuristic.Kind) {
+        case "trust":
+          return true;
+        case "event":
+          return NoopDisposable;
+        case "register":
+          return NoopDisposable;
+        case "bool-check":
+          return false;
+        case "factory":
+        case "default":
+        default:
+          return void 0;
+      }
+    }
+  }).pipe(
+    Effect.withSpan(SpanName, {
+      attributes: {
+        "vscode.namespace": NamespaceName,
+        "vscode.method": Property,
+        "vscode.heuristic": Heuristic.Kind
+      }
+    })
+  );
+  try {
+    return Heuristic.Sync ? Effect.runSync(Program) : Effect.runPromise(Program);
+  } catch {
+    switch (Heuristic.Kind) {
+      case "trust":
+        return Heuristic.Sync ? true : Promise.resolve(true);
+      case "event":
+      case "register":
+        return NoopDisposable;
+      case "bool-check":
+        return Heuristic.Sync ? false : Promise.resolve(false);
+      default:
+        return Heuristic.Sync ? void 0 : Promise.resolve(void 0);
+    }
+  }
+}, "BuildHeuristicMethod");
+var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concrete, Overrides) => new Proxy(Concrete, {
+  get(Target, Property) {
+    if (Reflect.has(Target, Property)) {
+      return Reflect.get(Target, Property);
+    }
+    if (typeof Property !== "string") return void 0;
+    if (Property === "then") return void 0;
+    if (Property === "toJSON") {
+      return () => {
+        const Out = {
+          _namespace: NamespaceName
+        };
+        for (const Key of Object.keys(Target)) {
+          const Value = Target[Key];
+          const T = typeof Value;
+          Out[Key] = T === "function" ? "[Function]" : T === "object" && Value !== null ? "[Object]" : Value;
+        }
+        return Out;
+      };
+    }
+    if (Property === "toString" || Property === "valueOf") {
+      return void 0;
+    }
+    const Heuristic = Overrides?.[Property] ?? ClassifyProperty(Property);
+    return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
+  },
+  has(Target, Property) {
+    if (Reflect.has(Target, Property)) return true;
+    return typeof Property === "string" && Property !== "then";
+  }
+}), "WrapNamespaceWithHeuristics");
+var Heuristics_default = WrapNamespaceWithHeuristics;
 
-`)}catch{}e.SendToMountain("webview.setHtml",{handle:n,viewId:o,html:t}).then(()=>{try{process.env.Trace&&process.stdout.write(`[WebviewView] set-html-sent handle=${n} viewId=${o}
+// Source/Services/Handler/VscodeAPI/Wrap/Window/Namespace.ts
+var WrapWindowNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_default("window", Concrete), "WrapWindowNamespace");
+var Namespace_default = WrapWindowNamespace;
 
-`)}catch{}},v=>{try{process.env.Trace&&process.stdout.write(`[WebviewView] set-html-failed handle=${n} viewId=${o} error=${String(v?.message??v).slice(0,120)}
+// Source/Services/Handler/VscodeAPI/Window/CreateOutputChannel.ts
+var CreateOutputChannel_default = /* @__PURE__ */ __name((Context, Handle, Name, Options) => {
+  const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
+  Context.SendToMountain("outputChannel.create", {
+    handle: Handle,
+    name: Name,
+    log: IsLog
+  }).catch(() => {
+  });
+  const Append = /* @__PURE__ */ __name((Value) => {
+    Context.SendToMountain("outputChannel.append", {
+      handle: Handle,
+      name: Name,
+      value: Value
+    }).catch(() => {
+    });
+  }, "Append");
+  const Channel = {
+    name: Name,
+    append: Append,
+    appendLine: /* @__PURE__ */ __name((Value) => Append(`${Value}
+`), "appendLine"),
+    clear: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("outputChannel.clear", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "clear"),
+    show: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("outputChannel.show", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "show"),
+    hide: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("outputChannel.hide", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "hide"),
+    replace: /* @__PURE__ */ __name((Value) => {
+      Context.SendToMountain("outputChannel.clear", {
+        handle: Handle
+      }).catch(() => {
+      });
+      Append(Value);
+    }, "replace"),
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("outputChannel.dispose", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "dispose"),
+    logLevel: 2,
+    // VS Code's LogLevel.Info
+    onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "onDidChangeLogLevel"),
+    trace: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[trace] ${Message}
+`), "trace"),
+    debug: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[debug] ${Message}
+`), "debug"),
+    info: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[info] ${Message}
+`), "info"),
+    warn: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[warn] ${Message}
+`), "warn"),
+    error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
+      const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
+      Append(`[error] ${Text}
+`);
+    }, "error")
+  };
+  return Channel;
+}, "default");
 
-`)}catch{}})},options:{enableScripts:!0,enableCommandUris:!0,enableForms:!0,localResourceRoots:[],portMapping:[]},cspSource:a,asWebviewUri:s,postMessage:async p=>(await e.SendToMountain("webview.postMessage",{handle:n,viewId:o,message:p}).catch(()=>{}),!0),onDidReceiveMessage:p=>{let v=`webview.message:${n}`;return e.Emitter?.on?.(v,p),{dispose:()=>e.Emitter?.off?.(v,p)}}},show:p=>{e.SendToMountain("webview.reveal",{handle:n,viewId:o,preserveFocus:!!p}).catch(()=>{})},onDidChangeVisibility:p=>(i.add(p),{dispose:()=>i.delete(p)}),onDispose:p=>(u.add(p),{dispose:()=>u.delete(p)}),onDidDispose:p=>(u.add(p),{dispose:()=>u.delete(p)}),dispose:()=>{l()}}};var m=(e,n)=>(o,s,a)=>{let t=s===void 0?o:o.bind(s);e.Emitter.on(n,t);let r={dispose:()=>{e.Emitter.off(n,t)}};return a&&typeof a.push=="function"&&a.push(r),r},V=new Map,_=new Map,_e=new Map,$e=new Map,Le=new Map,$=new Map,pn=new Map,We=(e,n,o,s,a)=>{let t=f();Le.set(String(t),o),$.set(n,{Provider:o,Readonly:a,Handle:t}),e.MountainClient?.sendRequest("webview.registerCustomEditor",{handle:t,viewType:n,options:{readonly:a,supportsMultipleEditorsPerDocument:s.supportsMultipleEditorsPerDocument??!1,webviewOptions:s.webviewOptions??{}}}).catch(()=>{});let r=async(d,g,c)=>{let l=$.get(c?.viewType??n);if(!l||l.Handle!==t||l.Readonly&&g!=="resolveCustomEditor")return;let w=l.Provider?.[g];if(typeof w=="function")try{return await w.call(l.Provider,c?.document,c?.context??c?.destination,c?.token)}catch(h){try{process.stdout.write(`[CustomEditor:${d}] provider for "${n}" threw: ${h instanceof globalThis.Error?h.message:String(h)}
+// Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts
+var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, AlignmentOrId, Priority) => {
+  const Item = {
+    id: Handle,
+    alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+    priority: Priority,
+    text: "",
+    tooltip: "",
+    command: void 0,
+    show: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("statusBar.update", {
+        handle: Handle,
+        text: Item.text,
+        tooltip: Item.tooltip,
+        command: Item.command,
+        visible: true
+      }).catch(() => {
+      });
+    }, "show"),
+    hide: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("statusBar.update", {
+        handle: Handle,
+        visible: false
+      }).catch(() => {
+      });
+    }, "hide"),
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("statusBar.dispose", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "dispose")
+  };
+  return Item;
+}, "default");
 
-`)}catch{}return}},i=[],u=(d,g)=>{let c=l=>{r(d,g,l)};e.Emitter.on(d,c),i.push({Channel:d,Listener:c})};return u("customEditor.saveDocument","saveCustomDocument"),u("customEditor.saveDocumentAs","saveCustomDocumentAs"),u("customEditor.revertCustomDocument","revertCustomDocument"),u("customEditor.backupCustomDocument","backupCustomDocument"),u("customEditor.willSaveCustomDocument","willSaveCustomDocument"),u("customEditor.didChangeCustomDocument","didChangeCustomDocument"),{dispose:()=>{for(let{Channel:g,Listener:c}of i)e.Emitter.off(g,c);i.length=0,Le.delete(String(t));let d=$.get(n);d&&d.Handle===t&&$.delete(n),e.MountainClient?.sendRequest("webview.unregisterCustomEditor",{handle:t,viewType:n}).catch(()=>{})}}},gn=e=>{let n=t=>async(r,...i)=>{let u,d=i;i.length>0&&i[0]&&typeof i[0]=="object"&&!Array.isArray(i[0])&&"modal"in i[0]&&(u=i[0],d=i.slice(1));try{return await e.MountainClient?.sendRequest("Window.ShowMessage",[{message:r,level:t,items:d,options:u??{}}])??void 0}catch{return}},o=t=>{if(t==null)return t;if(typeof t=="string"){if(t.startsWith("vscode-file://"))return t;if(t.startsWith("vscode-webview-resource://")){let d=t.match(/^vscode-webview-resource:\/\/[^/]+(.*)$/);return d?`vscode-file://vscode-app${d[1]??""}`:t}return t.startsWith("vscode-resource://")?t.replace("vscode-resource://","vscode-file://vscode-app/"):t.startsWith("file://")?t.replace("file://","vscode-file://vscode-app"):t}let r=t,i=String(r.scheme??""),u=String(r.path??"");if(i==="file"&&u){let d={...r,scheme:"vscode-file",authority:"vscode-app",path:u,query:String(r.query??""),fragment:String(r.fragment??"")},g=d.query?"?"+d.query:"",c=d.fragment?"#"+d.fragment:"",l=`vscode-file://vscode-app${u}${g}${c}`;return d.toString=()=>l,d.toJSON=()=>l,d}if(i==="vscode-webview-resource"||i==="vscode-resource"){let d={...r,scheme:"vscode-file",authority:"vscode-app"},g=`vscode-file://vscode-app${u}`;return d.toString=()=>g,d.toJSON=()=>g,d}return t},s="vscode-file: vscode-resource: vscode-webview-resource: blob: data: https:",a={showInformationMessage:n("info"),showErrorMessage:n("error"),showWarningMessage:n("warn"),showQuickPick:async(t,r)=>{try{return await e.MountainClient?.sendRequest("Window.ShowQuickPick",[t,r??{}])}catch{return}},showInputBox:async t=>{try{return await e.MountainClient?.sendRequest("Window.ShowInputBox",[t??{}])}catch{return}},showOpenDialog:async t=>{try{let r=await e.MountainClient?.sendRequest("Window.ShowOpenDialog",[t??{}]);return Array.isArray(r)?r:[]}catch{return[]}},showSaveDialog:async t=>{try{return await e.MountainClient?.sendRequest("Window.ShowSaveDialog",[t??{}])}catch{return}},createTerminal:t=>Me(e,f(),t),createStatusBarItem:(t,r)=>Re(e,f(),t,r),createOutputChannel:(t,r)=>De(e,f(),t,r),createTextEditorDecorationType:t=>{let r=`decoration:${Math.random().toString(36).slice(2)}`;return e.SendToMountain("window.createTextEditorDecorationType",{key:r,options:t??{}}).catch(()=>{}),{key:r,dispose:()=>{e.SendToMountain("window.disposeTextEditorDecorationType",{key:r}).catch(()=>{})}}},registerTerminalQuickFixProvider:(t,r)=>({dispose:()=>{}}),registerTerminalCompletionProvider:(t,r,...i)=>({dispose:()=>{}}),createQuickPick:()=>({value:"",placeholder:void 0,items:[],activeItems:[],selectedItems:[],canSelectMany:!1,matchOnDescription:!1,matchOnDetail:!1,busy:!1,enabled:!0,ignoreFocusOut:!1,step:void 0,totalSteps:void 0,title:void 0,buttons:[],show:()=>{},hide:()=>{},dispose:()=>{},onDidAccept:()=>({dispose:()=>{}}),onDidChangeValue:()=>({dispose:()=>{}}),onDidChangeActive:()=>({dispose:()=>{}}),onDidChangeSelection:()=>({dispose:()=>{}}),onDidTriggerButton:()=>({dispose:()=>{}}),onDidTriggerItemButton:()=>({dispose:()=>{}}),onDidHide:()=>({dispose:()=>{}})}),createInputBox:()=>({value:"",valueSelection:void 0,placeholder:void 0,password:!1,busy:!1,enabled:!0,ignoreFocusOut:!1,prompt:void 0,validationMessage:void 0,step:void 0,totalSteps:void 0,title:void 0,buttons:[],show:()=>{},hide:()=>{},dispose:()=>{},onDidAccept:()=>({dispose:()=>{}}),onDidChangeValue:()=>({dispose:()=>{}}),onDidTriggerButton:()=>({dispose:()=>{}}),onDidHide:()=>({dispose:()=>{}})}),createWebviewPanel:(t,r,i,u)=>{let d=f(),g=Pe(e,d,t,r,i,u,o,s);return pn.set(String(d),g),g},showTextDocument:async(t,r,i)=>{e.SendToMountain("window.showTextDocument",{document:t,column:r,preserveFocus:i}).catch(()=>{})},showNotebookDocument:async(t,r)=>{},tabGroups:{all:[],activeTabGroup:{tabs:[],isActive:!0,viewColumn:1,activeTab:void 0},onDidChangeTabs:m(e,"window.didChangeTabs"),onDidChangeTabGroups:m(e,"window.didChangeTabGroups"),close:async(t,r)=>{try{return await e.MountainClient?.sendRequest("Command.Execute",["workbench.action.closeActiveEditor",[]]),!0}catch{return!1}}},activeColorTheme:{kind:2,onDidChange:m(e,"window.didChangeActiveColorTheme")},onDidChangeActiveColorTheme:m(e,"window.didChangeActiveColorTheme"),createTreeView:(t,r)=>{let i=r?.treeDataProvider;if(i){let u=f();V.set(String(u),i),_.set(t,i);let d={showCollapseAll:r?.showCollapseAll===!0,canSelectMany:r?.canSelectMany===!0,manageCheckboxStateManually:r?.manageCheckboxStateManually===!0};e.MountainClient?.sendRequest("tree.register",[u,t,d]).catch(()=>{})}return{reveal:async()=>{},dispose:()=>{_.delete(t),e.MountainClient?.sendRequest("tree.dispose",[t]).catch(()=>{})},selection:[],visible:!0,title:void 0,description:void 0,message:void 0,badge:void 0,onDidChangeSelection:()=>({dispose:()=>{}}),onDidChangeVisibility:()=>({dispose:()=>{}}),onDidCollapseElement:()=>({dispose:()=>{}}),onDidExpandElement:()=>({dispose:()=>{}}),onDidChangeCheckboxState:()=>({dispose:()=>{}})}},registerTreeDataProvider:(t,r)=>{let i=f();return V.set(String(i),r),_.set(t,r),e.MountainClient?.sendRequest("tree.register",[i,t,{}]).catch(()=>{}),{dispose:()=>{V.delete(String(i)),_.delete(t),e.MountainClient?.sendRequest("tree.unregister",[i]).catch(()=>{})}}},registerWebviewPanelSerializer:()=>({dispose:()=>{}}),registerWebviewViewProvider:(t,r)=>{let i=f();return _e.set(String(i),r),$e.set(String(i),()=>Ce(e,i,t,o,s)),e.MountainClient?.sendRequest("webview.registerView",{handle:i,viewId:t}).catch(()=>{}),{dispose:()=>{_e.delete(String(i)),$e.delete(String(i)),e.MountainClient?.sendRequest("webview.unregisterView",{handle:i,viewId:t}).catch(()=>{})}}},registerCustomEditorProvider:(t,r,i)=>We(e,t,r,i??{},!1),registerCustomReadonlyEditorProvider:(t,r,i)=>We(e,t,r,i??{},!0),registerFileDecorationProvider:t=>{let r=f();return e.SendToMountain("register_file_decoration_provider",{handle:r,extensionId:""}).catch(()=>{}),e.ExtensionRegistry.set(`__fileDecorationProvider:${r}`,t),{dispose:()=>{e.ExtensionRegistry.delete(`__fileDecorationProvider:${r}`),e.SendToMountain("unregister_file_decoration_provider",{handle:r}).catch(()=>{})}}},registerUriHandler:t=>{let r=f();return e.SendToMountain("register_uri_handler",{handle:r,extensionId:""}).catch(()=>{}),e.ExtensionRegistry.set(`__uriHandler:${r}`,t),{dispose:()=>{e.ExtensionRegistry.delete(`__uriHandler:${r}`),e.SendToMountain("unregister_uri_handler",{handle:r}).catch(()=>{})}}},registerTerminalLinkProvider:t=>{let r=f();return e.SendToMountain("register_terminal_link_provider",{handle:r,extensionId:""}).catch(()=>{}),e.ExtensionRegistry.set(`__terminalLinkProvider:${r}`,t),{dispose:()=>{e.ExtensionRegistry.delete(`__terminalLinkProvider:${r}`),e.SendToMountain("unregister_terminal_link_provider",{handle:r}).catch(()=>{})}}},registerTerminalProfileProvider:(t,r)=>{let i=f();return e.SendToMountain("register_terminal_profile_provider",{handle:i,profileId:t,extensionId:""}).catch(()=>{}),e.ExtensionRegistry.set(`__terminalProfileProvider:${i}`,r),{dispose:()=>{e.ExtensionRegistry.delete(`__terminalProfileProvider:${i}`),e.SendToMountain("unregister_terminal_profile_provider",{handle:i}).catch(()=>{})}}},registerProfileContentHandler:(t,r)=>({dispose:()=>{}}),registerExternalUriOpener:(t,r,i)=>{let u=f();return e.SendToMountain("register_external_uri_opener",{handle:u,openerId:t,extensionId:""}).catch(()=>{}),{dispose:()=>{e.SendToMountain("unregister_external_uri_opener",{handle:u}).catch(()=>{})}}},withProgress:async(t,r)=>{let i=f(),u=t&&typeof t=="object"&&t.title||"Progress",d=(t&&typeof t=="object"&&t.location)??15,g=0,c={report:w=>{w?.increment&&(g+=w.increment),e.SendToMountain("progress.report",{handle:i,title:u,location:d,message:w?.message,increment:g}).catch(()=>{})}},l={isCancellationRequested:!1,onCancellationRequested:()=>({dispose:()=>{}})};e.SendToMountain("progress.start",{handle:i,title:u,location:d}).catch(()=>{});try{return await r(c,l)}finally{e.SendToMountain("progress.end",{handle:i}).catch(()=>{})}},setStatusBarMessage:(t,r)=>(e.SendToMountain("statusBar.message",{text:t,hideAfter:typeof r=="number"?r:void 0}).catch(()=>{}),{dispose:()=>{}}),showWorkspaceFolderPick:async t=>(e.ExtensionHostInitData?.workspace?.folders??[])[0],withScmProgress:async t=>t({report:()=>{}}),registerQuickDiffProvider:(t,r,i,u,d)=>({dispose:()=>{}}),onDidChangeActiveTextEditor:m(e,"window.didChangeActiveTextEditor"),onDidChangeVisibleTextEditors:m(e,"window.didChangeVisibleTextEditors"),onDidChangeTextEditorSelection:m(e,"window.didChangeTextEditorSelection"),onDidChangeTextEditorVisibleRanges:m(e,"window.didChangeTextEditorVisibleRanges"),onDidChangeTextEditorOptions:m(e,"window.didChangeTextEditorOptions"),onDidChangeTextEditorViewColumn:m(e,"window.didChangeTextEditorViewColumn"),onDidOpenTerminal:m(e,"window.didOpenTerminal"),onDidCloseTerminal:m(e,"window.didCloseTerminal"),onDidChangeActiveTerminal:m(e,"window.didChangeActiveTerminal"),onDidChangeTerminalState:m(e,"window.didChangeTerminalState"),onDidWriteTerminalData:m(e,"terminalData"),onDidChangeTerminalShellIntegration:m(e,"window.didChangeTerminalShellIntegration"),onDidStartTerminalShellExecution:m(e,"window.didStartTerminalShellExecution"),onDidEndTerminalShellExecution:m(e,"window.didEndTerminalShellExecution"),onDidChangeWindowState:m(e,"window.didChangeWindowState"),onDidChangeTextEditorDiffInformation:m(e,"window.didChangeTextEditorDiffInformation"),onDidExecuteTerminalCommand:m(e,"window.didExecuteTerminalCommand"),activeTextEditor:void 0,visibleTextEditors:[],visibleNotebookEditors:[],activeNotebookEditor:void 0,notebookEditors:[],terminals:[],activeTerminal:void 0,state:{focused:!0,active:!0}};return Ee(a)},Qn=gn;export{Le as CustomEditorProviders,$ as CustomEditorProvidersByViewType,V as TreeDataProviders,_ as TreeDataProvidersByViewId,pn as WebviewPanels,$e as WebviewViewBuilders,_e as WebviewViewProviders,Qn as default};
+// Source/Services/Handler/VscodeAPI/Window/CreateTerminal.ts
+var CreateTerminal_default = /* @__PURE__ */ __name((Context, Handle, Options) => {
+  const Name = Options?.name ?? `Terminal ${Handle}`;
+  Context.SendToMountain("window.createTerminal", {
+    handle: Handle,
+    name: Name,
+    options: Options ?? {}
+  }).catch(() => {
+  });
+  let ProcessIdPromise;
+  const ResolveProcessId = /* @__PURE__ */ __name(() => {
+    if (ProcessIdPromise !== void 0) return ProcessIdPromise;
+    ProcessIdPromise = (async () => {
+      try {
+        const Response = await Context.MountainClient?.sendRequest(
+          "Terminal.GetProcessId",
+          [Handle]
+        );
+        if (typeof Response === "number") return Response;
+        if (Response && typeof Response.pid === "number") {
+          return Response.pid;
+        }
+        return void 0;
+      } catch {
+        return void 0;
+      }
+    })();
+    return ProcessIdPromise;
+  }, "ResolveProcessId");
+  return {
+    name: Name,
+    get processId() {
+      return ResolveProcessId();
+    },
+    sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+      Context.SendToMountain("terminal.sendText", {
+        handle: Handle,
+        text: Text
+      }).catch(() => {
+      });
+    }, "sendText"),
+    show: /* @__PURE__ */ __name((PreserveFocus) => {
+      Context.SendToMountain("terminal.show", {
+        handle: Handle,
+        preserveFocus: PreserveFocus
+      }).catch(() => {
+      });
+    }, "show"),
+    hide: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("terminal.hide", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "hide"),
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.SendToMountain("terminal.dispose", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "dispose"),
+    resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
+      try {
+        await Context.MountainClient?.sendRequest("Terminal.Resize", [
+          Handle,
+          Columns,
+          Rows
+        ]);
+      } catch {
+      }
+    }, "resize")
+  };
+}, "default");
+
+// Source/Services/Handler/VscodeAPI/Window/CreateWebviewPanel.ts
+var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewType, Title, ShowOptions, Options, ToWebviewUri, SharedCspSource) => {
+  let CurrentHtml = "";
+  let CurrentOptions = Options ?? {};
+  Context.MountainClient?.sendRequest("webview.create", {
+    handle: Handle,
+    viewType: ViewType,
+    title: Title,
+    showOptions: ShowOptions,
+    options: CurrentOptions
+  }).catch(() => {
+  });
+  const Panel = {
+    viewType: ViewType,
+    title: Title,
+    iconPath: void 0,
+    webview: {
+      get options() {
+        return CurrentOptions;
+      },
+      set options(Value) {
+        CurrentOptions = Value;
+        Context.MountainClient?.sendRequest("webview.setOptions", {
+          handle: Handle,
+          options: Value
+        }).catch(() => {
+        });
+      },
+      get html() {
+        return CurrentHtml;
+      },
+      set html(Value) {
+        CurrentHtml = Value;
+        try {
+          if (process.env["Trace"]) {
+            process.stdout.write(
+              `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context.MountainClient}
+`
+            );
+          }
+        } catch {
+        }
+        Context.MountainClient?.sendRequest("webview.setHtml", {
+          handle: Handle,
+          html: Value
+        }).then(
+          () => {
+            try {
+              if (process.env["Trace"]) {
+                process.stdout.write(
+                  `[WebviewPanel] set-html-sent handle=${Handle}
+`
+                );
+              }
+            } catch {
+            }
+          },
+          (Error2) => {
+            try {
+              if (process.env["Trace"]) {
+                process.stdout.write(
+                  `[WebviewPanel] set-html-failed handle=${Handle} error=${String(Error2?.message ?? Error2).slice(0, 120)}
+`
+                );
+              }
+            } catch {
+            }
+          }
+        );
+      },
+      cspSource: SharedCspSource,
+      asWebviewUri: ToWebviewUri,
+      postMessage: /* @__PURE__ */ __name(async (Message) => {
+        try {
+          await Context.MountainClient?.sendRequest(
+            "webview.postMessage",
+            { handle: Handle, message: Message }
+          );
+          return true;
+        } catch {
+          return false;
+        }
+      }, "postMessage"),
+      onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+        const Event = `webview.message:${Handle}`;
+        Context.Emitter.on(Event, Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context.Emitter.removeListener(Event, Listener);
+          }, "dispose")
+        };
+      }, "onDidReceiveMessage")
+    },
+    options: CurrentOptions,
+    viewColumn: 1,
+    active: true,
+    visible: true,
+    reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
+      Context.MountainClient?.sendRequest("webview.reveal", {
+        handle: Handle,
+        viewColumn: Column,
+        preserveFocus: PreserveFocus
+      }).catch(() => {
+      });
+    }, "reveal"),
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.Emitter.removeAllListeners(`webview.message:${Handle}`);
+      Context.MountainClient?.sendRequest("webview.dispose", {
+        handle: Handle
+      }).catch(() => {
+      });
+    }, "dispose"),
+    onDidDispose: /* @__PURE__ */ __name((Listener) => {
+      const Event = `webview.dispose:${Handle}`;
+      Context.Emitter.on(Event, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.Emitter.removeListener(Event, Listener);
+        }, "dispose")
+      };
+    }, "onDidDispose"),
+    onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
+      const Event = `webview.viewState:${Handle}`;
+      Context.Emitter.on(Event, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.Emitter.removeListener(Event, Listener);
+        }, "dispose")
+      };
+    }, "onDidChangeViewState")
+  };
+  return Panel;
+}, "default");
+
+// Source/Services/Handler/VscodeAPI/Window/CreateWebviewViewBuilder.ts
+var CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context, Handle, ViewId, ToWebviewUri, SharedCspSource) => {
+  let CurrentHtml = "";
+  let CurrentVisible = true;
+  const VisibilityListeners = /* @__PURE__ */ new Set();
+  const DisposeListeners = /* @__PURE__ */ new Set();
+  const ChannelVisibility = `webview.viewVisibility:${Handle}`;
+  const ChannelDispose = `webview.dispose:${Handle}`;
+  const VisibilityForward = /* @__PURE__ */ __name((Visible) => {
+    CurrentVisible = !!Visible;
+    for (const L of VisibilityListeners) {
+      try {
+        L(!!Visible);
+      } catch (_e) {
+      }
+    }
+  }, "VisibilityForward");
+  const DisposeForward = /* @__PURE__ */ __name(() => {
+    for (const L of DisposeListeners) {
+      try {
+        L();
+      } catch (_e) {
+      }
+    }
+    DisposeListeners.clear();
+    VisibilityListeners.clear();
+    Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+    Context.Emitter?.off?.(ChannelDispose, DisposeForward);
+  }, "DisposeForward");
+  Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+  Context.Emitter?.on?.(ChannelDispose, DisposeForward);
+  let CurrentTitle;
+  let CurrentDescription;
+  let CurrentBadge;
+  const FireMetadataUpdate = /* @__PURE__ */ __name(() => {
+    Context.SendToMountain("webview.updateView", {
+      handle: Handle,
+      viewId: ViewId,
+      title: CurrentTitle ?? null,
+      description: CurrentDescription ?? null,
+      badge: CurrentBadge ?? null
+    }).catch(() => {
+    });
+  }, "FireMetadataUpdate");
+  const View = {
+    // `viewType` is the manifest-declared id from
+    // `contributes.views[*].id` - same string as `ViewId`. Roo
+    // and others log it when the view resolves and crash on
+    // `undefined.toString()`.
+    viewType: ViewId,
+    // Stock VS Code's `WebviewView.visible: boolean` reflects
+    // whether the pane is body-visible. Roo, Claude, GitLens
+    // all early-return from `resolveWebviewView` /
+    // `getHtmlContent` when this reads falsy - the missing
+    // getter previously made every `view.visible` read produce
+    // `undefined` and the React mount pipeline never kicked
+    // off. Backed by `CurrentVisible` which is updated by the
+    // visibility channel forwarder above.
+    get visible() {
+      return CurrentVisible;
+    },
+    // Some extensions (Continue, occasionally GitLens) cache the
+    // view in their own state and reassign `view.visible = X`
+    // when they think they detect external visibility changes.
+    // Stock VS Code's `WebviewView.visible` is read-only - in
+    // strict-mode ES modules a getter-only property would throw
+    // `TypeError: Cannot set property visible` on those writes
+    // and bring down the resolver chain. A no-op setter
+    // (matching the read-only spirit of the spec) absorbs those
+    // writes without observable behaviour change; the truth
+    // still flows through the visibility channel.
+    set visible(_Ignored) {
+    },
+    get title() {
+      return CurrentTitle;
+    },
+    set title(Value) {
+      CurrentTitle = Value;
+      FireMetadataUpdate();
+    },
+    get description() {
+      return CurrentDescription;
+    },
+    set description(Value) {
+      CurrentDescription = Value;
+      FireMetadataUpdate();
+    },
+    get badge() {
+      return CurrentBadge;
+    },
+    set badge(Value) {
+      CurrentBadge = Value;
+      FireMetadataUpdate();
+    },
+    webview: {
+      get html() {
+        return CurrentHtml;
+      },
+      set html(Value) {
+        CurrentHtml = String(Value ?? "");
+        try {
+          if (process.env["Trace"]) {
+            process.stdout.write(
+              `[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}
+`
+            );
+          }
+        } catch {
+        }
+        Context.SendToMountain("webview.setHtml", {
+          handle: Handle,
+          viewId: ViewId,
+          html: CurrentHtml
+        }).then(
+          () => {
+            try {
+              if (process.env["Trace"]) {
+                process.stdout.write(
+                  `[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}
+`
+                );
+              }
+            } catch {
+            }
+          },
+          (Error2) => {
+            try {
+              if (process.env["Trace"]) {
+                process.stdout.write(
+                  `[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String(Error2?.message ?? Error2).slice(0, 120)}
+`
+                );
+              }
+            } catch {
+            }
+          }
+        );
+      },
+      // Stock VS Code populates `webview.options` from the
+      // `WebviewOptions` passed to
+      // `registerWebviewViewProvider(viewId, provider, { webviewOptions })`.
+      // Roo / Claude / Continue all read
+      // `view.webview.options.localResourceRoots` when composing
+      // CSP and `<script nonce>` attributes - `undefined`
+      // crashed those reads or produced a CSP that blocked the
+      // extension's own bundle. Permissive dev-time defaults
+      // keep extensions that never set options happy.
+      options: {
+        enableScripts: true,
+        enableCommandUris: true,
+        enableForms: true,
+        localResourceRoots: [],
+        portMapping: []
+      },
+      cspSource: SharedCspSource,
+      asWebviewUri: ToWebviewUri,
+      postMessage: /* @__PURE__ */ __name(async (Message) => {
+        await Context.SendToMountain("webview.postMessage", {
+          handle: Handle,
+          viewId: ViewId,
+          message: Message
+        }).catch(() => {
+        });
+        return true;
+      }, "postMessage"),
+      onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+        const Channel = `webview.message:${Handle}`;
+        Context.Emitter?.on?.(Channel, Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => Context.Emitter?.off?.(Channel, Listener), "dispose")
+        };
+      }, "onDidReceiveMessage")
+    },
+    show: /* @__PURE__ */ __name((PreserveFocus) => {
+      Context.SendToMountain("webview.reveal", {
+        handle: Handle,
+        viewId: ViewId,
+        preserveFocus: !!PreserveFocus
+      }).catch(() => {
+      });
+    }, "show"),
+    onDidChangeVisibility: /* @__PURE__ */ __name((Listener) => {
+      VisibilityListeners.add(Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => VisibilityListeners.delete(Listener), "dispose")
+      };
+    }, "onDidChangeVisibility"),
+    onDispose: /* @__PURE__ */ __name((Listener) => {
+      DisposeListeners.add(Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+      };
+    }, "onDispose"),
+    // Canonical VS Code API name. Roo's `resolveWebviewView` calls
+    // `webviewView.onDidDispose(() => {})`; without this alias the
+    // call surfaces as `r.onDidDispose is not a function` and the
+    // resolver promise rejects AFTER `webview.html` was already
+    // set. VS Code spells the listener `onDidDispose: Event<void>`;
+    // alias to the existing `onDispose` listener-set rather than
+    // duplicate the storage.
+    onDidDispose: /* @__PURE__ */ __name((Listener) => {
+      DisposeListeners.add(Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => DisposeListeners.delete(Listener), "dispose")
+      };
+    }, "onDidDispose"),
+    dispose: /* @__PURE__ */ __name(() => {
+      DisposeForward();
+    }, "dispose")
+  };
+  return View;
+}, "default");
+
+// Source/Services/Handler/VscodeAPI/Window/Namespace.ts
+var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
+  const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
+  Context.Emitter.on(EventName, Bound);
+  const Subscription = {
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.Emitter.off(EventName, Bound);
+    }, "dispose")
+  };
+  if (Disposables && typeof Disposables.push === "function") {
+    Disposables.push(Subscription);
+  }
+  return Subscription;
+}, "MakeEventSubscriber");
+var TreeDataProviders = /* @__PURE__ */ new Map();
+var TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
+var WebviewViewProviders = /* @__PURE__ */ new Map();
+var WebviewViewBuilders = /* @__PURE__ */ new Map();
+var CustomEditorProviders = /* @__PURE__ */ new Map();
+var CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
+var WebviewPanels = /* @__PURE__ */ new Map();
+var RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, Options, IsReadonly) => {
+  const Handle = NextProviderHandle();
+  CustomEditorProviders.set(String(Handle), Provider);
+  CustomEditorProvidersByViewType.set(ViewType, {
+    Provider,
+    Readonly: IsReadonly,
+    Handle
+  });
+  Context.MountainClient?.sendRequest("webview.registerCustomEditor", {
+    handle: Handle,
+    viewType: ViewType,
+    options: {
+      readonly: IsReadonly,
+      supportsMultipleEditorsPerDocument: Options.supportsMultipleEditorsPerDocument ?? false,
+      webviewOptions: Options.webviewOptions ?? {}
+    }
+  }).catch(() => {
+  });
+  const SafeAwait = /* @__PURE__ */ __name(async (Channel, MethodName, Payload) => {
+    const Entry = CustomEditorProvidersByViewType.get(
+      Payload?.viewType ?? ViewType
+    );
+    if (!Entry || Entry.Handle !== Handle) return void 0;
+    if (Entry.Readonly && MethodName !== "resolveCustomEditor")
+      return void 0;
+    const Method = Entry.Provider?.[MethodName];
+    if (typeof Method !== "function") return void 0;
+    try {
+      const Result = await Method.call(
+        Entry.Provider,
+        Payload?.document,
+        Payload?.context ?? Payload?.destination,
+        Payload?.token
+      );
+      return Result;
+    } catch (Error2) {
+      try {
+        process.stdout.write(
+          `[CustomEditor:${Channel}] provider for "${ViewType}" threw: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}
+`
+        );
+      } catch {
+      }
+      return void 0;
+    }
+  }, "SafeAwait");
+  const Listeners = [];
+  const Subscribe = /* @__PURE__ */ __name((Channel, MethodName) => {
+    const Listener = /* @__PURE__ */ __name((Payload) => {
+      void SafeAwait(Channel, MethodName, Payload);
+    }, "Listener");
+    Context.Emitter.on(Channel, Listener);
+    Listeners.push({ Channel, Listener });
+  }, "Subscribe");
+  Subscribe("customEditor.saveDocument", "saveCustomDocument");
+  Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
+  Subscribe("customEditor.revertCustomDocument", "revertCustomDocument");
+  Subscribe("customEditor.backupCustomDocument", "backupCustomDocument");
+  Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
+  Subscribe(
+    "customEditor.didChangeCustomDocument",
+    "didChangeCustomDocument"
+  );
+  return {
+    dispose: /* @__PURE__ */ __name(() => {
+      for (const { Channel, Listener } of Listeners) {
+        Context.Emitter.off(
+          Channel,
+          Listener
+        );
+      }
+      Listeners.length = 0;
+      CustomEditorProviders.delete(String(Handle));
+      const ByViewType = CustomEditorProvidersByViewType.get(ViewType);
+      if (ByViewType && ByViewType.Handle === Handle) {
+        CustomEditorProvidersByViewType.delete(ViewType);
+      }
+      Context.MountainClient?.sendRequest(
+        "webview.unregisterCustomEditor",
+        { handle: Handle, viewType: ViewType }
+      ).catch(() => {
+      });
+    }, "dispose")
+  };
+}, "RegisterCustomEditor");
+var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
+  const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
+    let Options = void 0;
+    let Actions = Items;
+    if (Items.length > 0 && Items[0] && typeof Items[0] === "object" && !Array.isArray(Items[0]) && "modal" in Items[0]) {
+      Options = Items[0];
+      Actions = Items.slice(1);
+    }
+    try {
+      const Selection = await Context.MountainClient?.sendRequest(
+        "Window.ShowMessage",
+        [
+          {
+            message: Message,
+            level: Level,
+            items: Actions,
+            options: Options ?? {}
+          }
+        ]
+      );
+      return Selection ?? void 0;
+    } catch {
+      return void 0;
+    }
+  }, "ShowMessage");
+  const ToWebviewUri = /* @__PURE__ */ __name((Input) => {
+    if (Input == null) return Input;
+    if (typeof Input === "string") {
+      if (Input.startsWith("vscode-file://")) return Input;
+      if (Input.startsWith("vscode-webview-resource://")) {
+        const Match = Input.match(
+          /^vscode-webview-resource:\/\/[^/]+(.*)$/
+        );
+        return Match ? `vscode-file://vscode-app${Match[1] ?? ""}` : Input;
+      }
+      if (Input.startsWith("vscode-resource://")) {
+        return Input.replace(
+          "vscode-resource://",
+          "vscode-file://vscode-app/"
+        );
+      }
+      if (Input.startsWith("file://")) {
+        return Input.replace("file://", "vscode-file://vscode-app");
+      }
+      return Input;
+    }
+    const Anything = Input;
+    const Scheme = String(Anything.scheme ?? "");
+    const Path = String(Anything.path ?? "");
+    if (Scheme === "file" && Path) {
+      const Rewritten = {
+        ...Anything,
+        scheme: "vscode-file",
+        authority: "vscode-app",
+        path: Path,
+        query: String(Anything.query ?? ""),
+        fragment: String(Anything.fragment ?? "")
+      };
+      const SerialisedQuery = Rewritten.query ? "?" + Rewritten.query : "";
+      const SerialisedFragment = Rewritten.fragment ? "#" + Rewritten.fragment : "";
+      const Serialised = `vscode-file://vscode-app${Path}${SerialisedQuery}${SerialisedFragment}`;
+      Rewritten.toString = () => Serialised;
+      Rewritten.toJSON = () => Serialised;
+      return Rewritten;
+    }
+    if (Scheme === "vscode-webview-resource" || Scheme === "vscode-resource") {
+      const Rewritten = {
+        ...Anything,
+        scheme: "vscode-file",
+        authority: "vscode-app"
+      };
+      const Serialised = `vscode-file://vscode-app${Path}`;
+      Rewritten.toString = () => Serialised;
+      Rewritten.toJSON = () => Serialised;
+      return Rewritten;
+    }
+    return Input;
+  }, "ToWebviewUri");
+  const SharedCspSource = "vscode-file: vscode-resource: vscode-webview-resource: blob: data: https:";
+  const Concrete = {
+    showInformationMessage: ShowMessage("info"),
+    showErrorMessage: ShowMessage("error"),
+    showWarningMessage: ShowMessage("warn"),
+    showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          "Window.ShowQuickPick",
+          [Items, Options ?? {}]
+        );
+      } catch {
+        return void 0;
+      }
+    }, "showQuickPick"),
+    showInputBox: /* @__PURE__ */ __name(async (Options) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          "Window.ShowInputBox",
+          [Options ?? {}]
+        );
+      } catch {
+        return void 0;
+      }
+    }, "showInputBox"),
+    showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
+      try {
+        const Selected = await Context.MountainClient?.sendRequest(
+          "Window.ShowOpenDialog",
+          [Options ?? {}]
+        );
+        return Array.isArray(Selected) ? Selected : [];
+      } catch {
+        return [];
+      }
+    }, "showOpenDialog"),
+    showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          "Window.ShowSaveDialog",
+          [Options ?? {}]
+        );
+      } catch {
+        return void 0;
+      }
+    }, "showSaveDialog"),
+    createTerminal: /* @__PURE__ */ __name((Options) => CreateTerminal_default(Context, NextProviderHandle(), Options), "createTerminal"),
+    createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => CreateStatusBarItem_default(
+      Context,
+      NextProviderHandle(),
+      AlignmentOrId,
+      Priority
+    ), "createStatusBarItem"),
+    createOutputChannel: /* @__PURE__ */ __name((Name, Options) => CreateOutputChannel_default(Context, NextProviderHandle(), Name, Options), "createOutputChannel"),
+    createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
+      const Key = `decoration:${Math.random().toString(36).slice(2)}`;
+      Context.SendToMountain("window.createTextEditorDecorationType", {
+        key: Key,
+        options: Options ?? {}
+      }).catch(() => {
+      });
+      return {
+        key: Key,
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.SendToMountain(
+            "window.disposeTextEditorDecorationType",
+            {
+              key: Key
+            }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "createTextEditorDecorationType"),
+    registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerTerminalQuickFixProvider"),
+    registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerTerminalCompletionProvider"),
+    createQuickPick: /* @__PURE__ */ __name(() => ({
+      value: "",
+      placeholder: void 0,
+      items: [],
+      activeItems: [],
+      selectedItems: [],
+      canSelectMany: false,
+      matchOnDescription: false,
+      matchOnDetail: false,
+      busy: false,
+      enabled: true,
+      ignoreFocusOut: false,
+      step: void 0,
+      totalSteps: void 0,
+      title: void 0,
+      buttons: [],
+      show: /* @__PURE__ */ __name(() => {
+      }, "show"),
+      hide: /* @__PURE__ */ __name(() => {
+      }, "hide"),
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose"),
+      onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidAccept"),
+      onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidChangeValue"),
+      onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidChangeActive"),
+      onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidChangeSelection"),
+      onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidTriggerButton"),
+      onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidTriggerItemButton"),
+      onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidHide")
+    }), "createQuickPick"),
+    createInputBox: /* @__PURE__ */ __name(() => ({
+      value: "",
+      valueSelection: void 0,
+      placeholder: void 0,
+      password: false,
+      busy: false,
+      enabled: true,
+      ignoreFocusOut: false,
+      prompt: void 0,
+      validationMessage: void 0,
+      step: void 0,
+      totalSteps: void 0,
+      title: void 0,
+      buttons: [],
+      show: /* @__PURE__ */ __name(() => {
+      }, "show"),
+      hide: /* @__PURE__ */ __name(() => {
+      }, "hide"),
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose"),
+      onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidAccept"),
+      onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidChangeValue"),
+      onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidTriggerButton"),
+      onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "onDidHide")
+    }), "createInputBox"),
+    createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
+      const Handle = NextProviderHandle();
+      const Panel = CreateWebviewPanel_default(
+        Context,
+        Handle,
+        ViewType,
+        Title,
+        ShowOptions,
+        Options,
+        ToWebviewUri,
+        SharedCspSource
+      );
+      WebviewPanels.set(String(Handle), Panel);
+      return Panel;
+    }, "createWebviewPanel"),
+    showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
+      Context.SendToMountain("window.showTextDocument", {
+        document: _Document,
+        column: _Column,
+        preserveFocus: _PreserveFocus
+      }).catch(() => {
+      });
+      return void 0;
+    }, "showTextDocument"),
+    showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
+    tabGroups: {
+      all: [],
+      activeTabGroup: {
+        tabs: [],
+        isActive: true,
+        viewColumn: 1,
+        activeTab: void 0
+      },
+      onDidChangeTabs: MakeEventSubscriber(
+        Context,
+        "window.didChangeTabs"
+      ),
+      onDidChangeTabGroups: MakeEventSubscriber(
+        Context,
+        "window.didChangeTabGroups"
+      ),
+      close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+        try {
+          await Context.MountainClient?.sendRequest(
+            "Command.Execute",
+            ["workbench.action.closeActiveEditor", []]
+          );
+          return true;
+        } catch {
+          return false;
+        }
+      }, "close")
+    },
+    activeColorTheme: {
+      kind: 2,
+      // ColorThemeKind.Dark
+      onDidChange: MakeEventSubscriber(
+        Context,
+        "window.didChangeActiveColorTheme"
+      )
+    },
+    onDidChangeActiveColorTheme: MakeEventSubscriber(
+      Context,
+      "window.didChangeActiveColorTheme"
+    ),
+    createTreeView: /* @__PURE__ */ __name((Id, Options) => {
+      const Provider = Options?.treeDataProvider;
+      if (Provider) {
+        const Handle = NextProviderHandle();
+        TreeDataProviders.set(String(Handle), Provider);
+        TreeDataProvidersByViewId.set(Id, Provider);
+        const SerializableOptions = {
+          showCollapseAll: Options?.showCollapseAll === true,
+          canSelectMany: Options?.canSelectMany === true,
+          manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
+        };
+        Context.MountainClient?.sendRequest("tree.register", [
+          Handle,
+          Id,
+          SerializableOptions
+        ]).catch(() => {
+        });
+      }
+      return {
+        reveal: /* @__PURE__ */ __name(async () => {
+        }, "reveal"),
+        dispose: /* @__PURE__ */ __name(() => {
+          TreeDataProvidersByViewId.delete(Id);
+          Context.MountainClient?.sendRequest("tree.dispose", [
+            Id
+          ]).catch(() => {
+          });
+        }, "dispose"),
+        selection: [],
+        visible: true,
+        title: void 0,
+        description: void 0,
+        message: void 0,
+        badge: void 0,
+        onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeSelection"),
+        onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeVisibility"),
+        onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidCollapseElement"),
+        onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidExpandElement"),
+        onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeCheckboxState")
+      };
+    }, "createTreeView"),
+    registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+      const Handle = NextProviderHandle();
+      TreeDataProviders.set(String(Handle), Provider);
+      TreeDataProvidersByViewId.set(ViewId, Provider);
+      Context.MountainClient?.sendRequest("tree.register", [
+        Handle,
+        ViewId,
+        {}
+      ]).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          TreeDataProviders.delete(String(Handle));
+          TreeDataProvidersByViewId.delete(ViewId);
+          Context.MountainClient?.sendRequest("tree.unregister", [
+            Handle
+          ]).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTreeDataProvider"),
+    registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerWebviewPanelSerializer"),
+    registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+      const Handle = NextProviderHandle();
+      WebviewViewProviders.set(String(Handle), Provider);
+      WebviewViewBuilders.set(String(Handle), () => {
+        return CreateWebviewViewBuilder_default(
+          Context,
+          Handle,
+          ViewId,
+          ToWebviewUri,
+          SharedCspSource
+        );
+      });
+      Context.MountainClient?.sendRequest("webview.registerView", {
+        handle: Handle,
+        viewId: ViewId
+      }).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          WebviewViewProviders.delete(String(Handle));
+          WebviewViewBuilders.delete(String(Handle));
+          Context.MountainClient?.sendRequest(
+            "webview.unregisterView",
+            { handle: Handle, viewId: ViewId }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerWebviewViewProvider"),
+    registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+      Context,
+      ViewType,
+      Provider,
+      Options ?? {},
+      false
+    ), "registerCustomEditorProvider"),
+    // `vscode.window.registerCustomReadonlyEditorProvider(ViewType, Provider)`
+    // is the read-only variant: extensions implementing media viewers
+    // (image previews, hex dumps) register here. The wire flow is the
+    // same as `registerCustomEditorProvider`; only the
+    // `readonly: true` flag and the absence of `OnSave*` participants
+    // distinguishes them. We set the same `customEditor.*` listener
+    // registrations so the workbench-side lifecycle still runs the
+    // resolveCustomTextEditor / resolveCustomEditor path correctly.
+    registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+      Context,
+      ViewType,
+      Provider,
+      Options ?? {},
+      true
+    ), "registerCustomReadonlyEditorProvider"),
+    registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_file_decoration_provider", {
+        handle: Handle,
+        extensionId: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(
+        `__fileDecorationProvider:${Handle}`,
+        Provider
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(
+            `__fileDecorationProvider:${Handle}`
+          );
+          Context.SendToMountain(
+            "unregister_file_decoration_provider",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerFileDecorationProvider"),
+    registerUriHandler: /* @__PURE__ */ __name((Handler) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_uri_handler", {
+        handle: Handle,
+        extensionId: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+          Context.SendToMountain("unregister_uri_handler", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerUriHandler"),
+    registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_terminal_link_provider", {
+        handle: Handle,
+        extensionId: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(
+        `__terminalLinkProvider:${Handle}`,
+        Provider
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(
+            `__terminalLinkProvider:${Handle}`
+          );
+          Context.SendToMountain(
+            "unregister_terminal_link_provider",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTerminalLinkProvider"),
+    registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_terminal_profile_provider", {
+        handle: Handle,
+        profileId: Id,
+        extensionId: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(
+        `__terminalProfileProvider:${Handle}`,
+        Provider
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(
+            `__terminalProfileProvider:${Handle}`
+          );
+          Context.SendToMountain(
+            "unregister_terminal_profile_provider",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTerminalProfileProvider"),
+    registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "registerProfileContentHandler"),
+    registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_external_uri_opener", {
+        handle: Handle,
+        openerId: Id,
+        extensionId: ""
+      }).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.SendToMountain("unregister_external_uri_opener", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerExternalUriOpener"),
+    // Runs a Task with a progress object that reports to Mountain, which
+    // in turn updates the status-bar progress indicator in Sky.
+    // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
+    // We provide a real `report({ message, increment })` path and a
+    // no-op CancellationToken (no cancellation plumbing yet). The
+    // Task's return value is forwarded verbatim.
+    withProgress: /* @__PURE__ */ __name(async (Options, Task) => {
+      const Handle = NextProviderHandle();
+      const Title = Options && typeof Options === "object" && Options.title || "Progress";
+      const Location = (Options && typeof Options === "object" && Options.location) ?? 15;
+      let Increment = 0;
+      const Progress = {
+        report: /* @__PURE__ */ __name((Value) => {
+          if (Value?.increment) Increment += Value.increment;
+          Context.SendToMountain("progress.report", {
+            handle: Handle,
+            title: Title,
+            location: Location,
+            message: Value?.message,
+            increment: Increment
+          }).catch(() => {
+          });
+        }, "report")
+      };
+      const CancellationToken = {
+        isCancellationRequested: false,
+        onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onCancellationRequested")
+      };
+      Context.SendToMountain("progress.start", {
+        handle: Handle,
+        title: Title,
+        location: Location
+      }).catch(() => {
+      });
+      try {
+        return await Task(Progress, CancellationToken);
+      } finally {
+        Context.SendToMountain("progress.end", {
+          handle: Handle
+        }).catch(() => {
+        });
+      }
+    }, "withProgress"),
+    setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
+      Context.SendToMountain("statusBar.message", {
+        text: Text,
+        hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
+      }).catch(() => {
+      });
+      return { dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") };
+    }, "setStatusBarMessage"),
+    // `showWorkspaceFolderPick` - stable API. Stock routes through
+    // `MainThreadMessageService` to open a quick pick seeded with the
+    // current `workspace.workspaceFolders`. Land's folder list lives
+    // in `ExtensionHostInitData.workspace.folders`; pick the first by
+    // default (no picker UI yet). Extensions only use this when a
+    // command has to choose a folder for multi-root; degrading to
+    // "auto-pick first folder" keeps those flows functional until the
+    // picker is wired to Sky.
+    showWorkspaceFolderPick: /* @__PURE__ */ __name(async (_Options) => {
+      const Folders = Context.ExtensionHostInitData?.workspace?.folders ?? [];
+      return Folders[0];
+    }, "showWorkspaceFolderPick"),
+    // `withScmProgress` - deprecated in `vscode.d.ts` but still present
+    // for extensions that never migrated to `withProgress`. Run the
+    // task with a no-op number-progress channel and surface its return
+    // value. Stock extHost implementation does the same degradation
+    // path.
+    withScmProgress: /* @__PURE__ */ __name(async (Task) => Task({
+      report: /* @__PURE__ */ __name(() => {
+      }, "report")
+    }), "withScmProgress"),
+    // `registerQuickDiffProvider` - proposed API used by SCM-adjacent
+    // extensions to overlay a diff gutter. Stub-as-disposable lets
+    // opt-in extensions activate until Land wires a real quick-diff
+    // channel to Mountain's git surface.
+    registerQuickDiffProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Id, _Label, _RootUri) => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerQuickDiffProvider"),
+    // Events sourced from Mountain gRPC notifications → Context.Emitter
+    onDidChangeActiveTextEditor: MakeEventSubscriber(
+      Context,
+      "window.didChangeActiveTextEditor"
+    ),
+    onDidChangeVisibleTextEditors: MakeEventSubscriber(
+      Context,
+      "window.didChangeVisibleTextEditors"
+    ),
+    onDidChangeTextEditorSelection: MakeEventSubscriber(
+      Context,
+      "window.didChangeTextEditorSelection"
+    ),
+    onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
+      Context,
+      "window.didChangeTextEditorVisibleRanges"
+    ),
+    onDidChangeTextEditorOptions: MakeEventSubscriber(
+      Context,
+      "window.didChangeTextEditorOptions"
+    ),
+    onDidChangeTextEditorViewColumn: MakeEventSubscriber(
+      Context,
+      "window.didChangeTextEditorViewColumn"
+    ),
+    onDidOpenTerminal: MakeEventSubscriber(
+      Context,
+      "window.didOpenTerminal"
+    ),
+    onDidCloseTerminal: MakeEventSubscriber(
+      Context,
+      "window.didCloseTerminal"
+    ),
+    onDidChangeActiveTerminal: MakeEventSubscriber(
+      Context,
+      "window.didChangeActiveTerminal"
+    ),
+    onDidChangeTerminalState: MakeEventSubscriber(
+      Context,
+      "window.didChangeTerminalState"
+    ),
+    onDidWriteTerminalData: MakeEventSubscriber(Context, "terminalData"),
+    // Shell-integration events added for openai.chatgpt activation;
+    // Land doesn't track shell integration yet so these fire never.
+    // Must be a subscribable function, not a plain object.
+    onDidChangeTerminalShellIntegration: MakeEventSubscriber(
+      Context,
+      "window.didChangeTerminalShellIntegration"
+    ),
+    onDidStartTerminalShellExecution: MakeEventSubscriber(
+      Context,
+      "window.didStartTerminalShellExecution"
+    ),
+    onDidEndTerminalShellExecution: MakeEventSubscriber(
+      Context,
+      "window.didEndTerminalShellExecution"
+    ),
+    onDidChangeWindowState: MakeEventSubscriber(
+      Context,
+      "window.didChangeWindowState"
+    ),
+    // `vscode.git`'s `init()` subscribes to this at
+    // `extensions/git/out/main.js` (via the diff decoration pipeline
+    // it registers post-activation). Stock `extHostWindow.ts`
+    // exposes this event; our shim didn't, so git activate() threw
+    // `TypeError: …onDidChangeTextEditorDiffInformation is not a
+    // function` and never reached `scm.createSourceControl`, leaving
+    // the Source Control panel showing "No source control providers
+    // registered". No Mountain-side event source yet; stub with the
+    // disposable contract so subscription is a no-op. Real wiring
+    // would route Mountain's diff-decoration change stream into a
+    // `window.didChangeTextEditorDiffInformation` emit.
+    onDidChangeTextEditorDiffInformation: MakeEventSubscriber(
+      Context,
+      "window.didChangeTextEditorDiffInformation"
+    ),
+    onDidExecuteTerminalCommand: MakeEventSubscriber(
+      Context,
+      "window.didExecuteTerminalCommand"
+    ),
+    activeTextEditor: void 0,
+    // `activeColorTheme` and `tabGroups` already defined earlier in
+    // this object literal (lines ~614 and ~581) - leaving the
+    // fuller event-aware definitions intact and only mirroring the
+    // remaining state placeholders here.
+    visibleTextEditors: [],
+    visibleNotebookEditors: [],
+    activeNotebookEditor: void 0,
+    notebookEditors: [],
+    terminals: [],
+    activeTerminal: void 0,
+    state: { focused: true, active: true }
+  };
+  return Namespace_default(Concrete);
+}, "CreateWindowNamespace");
+var Namespace_default2 = CreateWindowNamespace;
+export {
+  CustomEditorProviders,
+  CustomEditorProvidersByViewType,
+  TreeDataProviders,
+  TreeDataProvidersByViewId,
+  WebviewPanels,
+  WebviewViewBuilders,
+  WebviewViewProviders,
+  Namespace_default2 as default
+};
+//# sourceMappingURL=Namespace.js.map
