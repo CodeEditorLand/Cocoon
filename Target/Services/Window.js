@@ -19400,7 +19400,7 @@ var LoggerService = class extends Effect3.Service()(
   }
 };
 
-// Source/Services/Mountain/GRPC/Client.ts
+// Source/Services/Mountain/gRPC/Client.ts
 import { Context as Context2, Effect as Effect4, Layer } from "effect";
 var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
 var MountainGRPCClientLive = Layer.effect(

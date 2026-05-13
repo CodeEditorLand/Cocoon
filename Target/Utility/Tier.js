@@ -112,7 +112,7 @@ var Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
 var Tier = {
   RemoteProcedureCall: Pick(
     "RemoteProcedureCall",
-    "GRPC"
+    "gRPC"
   ),
   HTTPProxy: Pick("HTTPProxy", "HandRolled"),
   Logger: Pick("Logger", "Standard"),

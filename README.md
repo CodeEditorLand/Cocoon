@@ -100,7 +100,7 @@ high-fidelity `vscode` API, see the following source files:
   Extension activation and lifecycle management.
 - **[`IPC/Channel.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Channel.ts)** -
   Bi-directional `gRPC` communication.
-- **[`Services/MountainGRPCClient.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/GRPC/Client.ts)** -
+- **[`Services/MountainGRPCClient.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/gRPC/Client.ts)** -
   `gRPC` client for `Mountain` backend.
 - **[`PatchProcess/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/PatchProcess/)** -
   Process hardening and security.
@@ -147,7 +147,7 @@ and communicating with `Mountain`.
    service.
 6. `Window` creates an `Effect` that sends a `showMessage` `gRPC` request to
    `Mountain` via
-   [`MountainGRPCClient`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/GRPC/Client.ts).
+   [`MountainGRPCClient`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/gRPC/Client.ts).
 7. `Mountain`'s `Vine` layer receives the request. Its `Track` dispatcher routes
    it to the native UI handler.
 8. `Mountain` displays the native OS notification and awaits user interaction.

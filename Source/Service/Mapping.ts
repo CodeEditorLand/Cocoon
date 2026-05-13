@@ -35,7 +35,7 @@ import { ErrorHandlingServiceLive } from "../Services/Error/Handling/Service.js"
 import { ExtensionHostLayer } from "../Services/Extension/Host/Service.js";
 import { ModuleInterceptorServiceLayer } from "../Services/Module/Interceptor/Service.js";
 import { MountainClientServiceLayer } from "../Services/Mountain/Client/Service.js";
-import { MountainGRPCClientLayer } from "../Services/Mountain/GRPC/Client.js";
+import { MountainGRPCClientLayer } from "../Services/Mountain/gRPC/Client.js";
 import { PerformanceMonitoringServiceLive } from "../Services/Performance/Monitoring/Service.js";
 import { SecurityServiceLive } from "../Services/Security/Service.js";
 import { TerminalServiceLayer } from "../Services/Terminal/Service.js";

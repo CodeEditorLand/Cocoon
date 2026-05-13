@@ -428,7 +428,7 @@ export class PerformanceMonitoringService {
 		try {
 			// Track throughput from GRPCServerService
 			const { GRPCServerService } =
-				await import("../../GRPC/Server/Service.js");
+				await import("../../gRPC/Server/Service.js");
 
 			const grpcServerService = new GRPCServerService();
 

@@ -25202,11 +25202,11 @@ var init_Logger = __esm({
   }
 });
 
-// Source/Services/Mountain/GRPC/Client.ts
+// Source/Services/Mountain/gRPC/Client.ts
 import { Context as Context16, Effect as Effect17, Layer as Layer15 } from "effect";
 var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
 var init_Client2 = __esm({
-  "Source/Services/Mountain/GRPC/Client.ts"() {
+  "Source/Services/Mountain/gRPC/Client.ts"() {
     "use strict";
     init_Service2();
     init_Logger();
@@ -29012,14 +29012,14 @@ var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummar
 var init_RouteManifest = __esm({
   "Source/Generated/RouteManifest.ts"() {
     "use strict";
-    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$languageFeatures:registerProvider", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
+    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
     StockLiftExports = /* @__PURE__ */ new Set();
     BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
     RouteManifestSummary = {
-      mountain: 91,
+      mountain: 118,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-10T20:53:01Z"
+      generatedAt: "2026-05-13T15:54:57Z"
     };
   }
 });
@@ -32399,7 +32399,7 @@ var init_Tier = __esm({
     Tier = {
       RemoteProcedureCall: Pick(
         "RemoteProcedureCall",
-        "GRPC"
+        "gRPC"
       ),
       HTTPProxy: Pick("HTTPProxy", "HandRolled"),
       Logger: Pick("Logger", "Standard"),
@@ -38376,7 +38376,7 @@ var init_Handler5 = __esm({
   }
 });
 
-// Source/Services/GRPC/Server/Service.ts
+// Source/Services/gRPC/Server/Service.ts
 var Service_exports9 = {};
 __export(Service_exports9, {
   GRPCServerService: () => GRPCServerService,
@@ -38392,7 +38392,7 @@ import * as protoLoader2 from "@grpc/proto-loader";
 import { Effect as Effect21, Layer as Layer19 } from "effect";
 var __filename2, __dirname2, require3, GRPCServerService, GRPCServerServiceLayer, GRPCServerServiceLive;
 var init_Service18 = __esm({
-  async "Source/Services/GRPC/Server/Service.ts"() {
+  async "Source/Services/gRPC/Server/Service.ts"() {
     "use strict";
     init_Service17();
     init_Handler2();

@@ -72,7 +72,7 @@ declare const __LandTier_Telemetry__: string;
 	RemoteProcedureCall:
 		typeof __LandTier_RemoteProcedureCall__ === "string"
 			? __LandTier_RemoteProcedureCall__
-			: (process.env["TierRemoteProcedureCall"] ?? "GRPC"),
+			: (process.env["TierRemoteProcedureCall"] ?? "gRPC"),
 
 	HTTPProxy:
 		typeof __LandTier_HTTPProxy__ === "string"

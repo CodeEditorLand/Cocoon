@@ -42,7 +42,7 @@ import type * as VSCode from "vscode";
 import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
-import { MountainGRPCClientService } from "./Mountain/GRPC/Client.js";
+import { MountainGRPCClientService } from "./Mountain/gRPC/Client.js";
 
 /**
  * @interface InternalCommandMetadata

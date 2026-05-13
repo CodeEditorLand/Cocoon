@@ -51,7 +51,7 @@ import {
 	GenericNotification,
 	GenericRequest,
 	GenericResponse,
-} from "../Generated/Vine";
+} from "../Generated/Vine.js";
 
 // ESM compatibility - provide __dirname and require() for proto loading
 const __filename = fileURLToPath(import.meta.url);

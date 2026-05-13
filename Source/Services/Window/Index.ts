@@ -26,7 +26,7 @@ import type * as VSCode from "vscode";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
 import { CreateEventStream } from "../../Utility/Event/Stream.js";
-import { MountainGRPCClientService } from "../Mountain/GRPC/Client.js";
+import { MountainGRPCClientService } from "../Mountain/gRPC/Client.js";
 import { ShowOpenDialog, ShowSaveDialog } from "./File/Dialogs.js";
 import type { Logger, Window, Workspace } from "./Interfaces.js";
 import { CreateOutputChannel } from "./Output/Channel.js";

@@ -28,7 +28,7 @@
  * FUTURE: Hot-reload - use fs.watch to detect platform info changes
  * DEPENDENCY: Wind PlatformServiceTag - create in Wind services
  * DEPENDENCY: Wind PlatformService init - call in Wind main()
- * DEPENDENCY: Mountain GRPC endpoints - pending Mountain backend
+ * DEPENDENCY: Mountain gRPC endpoints - pending Mountain backend
  * TESTING: Integration tests - add vitest integration test suite
  * PERFORMANCE: Adaptive cache - track access patterns for cache size
  * DOCUMENTATION: API docs - generate with TypeDoc

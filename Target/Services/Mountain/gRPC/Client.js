@@ -129,7 +129,7 @@ var LoggerService = class extends Effect2.Service()(
   }
 };
 
-// Source/Services/Mountain/GRPC/Client.ts
+// Source/Services/Mountain/gRPC/Client.ts
 import { Context as Context2, Effect as Effect3, Layer } from "effect";
 var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
 var MountainGRPCClientLive = Layer.effect(
