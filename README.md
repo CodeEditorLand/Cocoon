@@ -258,11 +258,10 @@ graph LR
 
 ## Getting Started&#x2001;🚀
 
-`Cocoon` is developed as a core component of the main **Land**&#x2001;🏞️
-project. To work on or run `Cocoon`, follow the instructions in the main
-[`Land` Repository README](https://github.com/CodeEditorLand/Land). The
-`Bundle=true` build variable is essential, as it triggers the `Rest` element to
-prepare the necessary `VS Code` platform code for `Cocoon` to consume.
+`Cocoon` is developed as a core component of the **Land**&#x2001;🏞️ project. It
+is built as part of the monorepo and requires the `Bundle=true` build variable,
+which triggers the `Rest` element to prepare the necessary `VS Code` platform
+code for `Cocoon` to consume.
 
 **Key Dependencies:**
 
