@@ -28774,7 +28774,7 @@ var init_RouteManifest = __esm({
       mountain: 118,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-14T00:39:00Z"
+      generatedAt: "2026-05-14T01:24:30Z"
     };
   }
 });
@@ -39781,7 +39781,7 @@ await init_Mapping();
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect as Effect23 } from "effect";
 globalThis.__LandTiers = {
-  RemoteProcedureCall: true ? "GRPC" : process.env["TierRemoteProcedureCall"] ?? "gRPC",
+  RemoteProcedureCall: true ? "gRPC" : process.env["TierRemoteProcedureCall"] ?? "gRPC",
   HTTPProxy: true ? "HandRolled" : process.env["TierHTTPProxy"] ?? "HandRolled",
   Logger: true ? "Standard" : process.env["TierLogger"] ?? "Standard",
   FileSystem: true ? "Layer2" : process.env["TierFileSystem"] ?? "Layer2",
