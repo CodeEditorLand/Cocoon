@@ -1,10 +1,13 @@
-# Cocoon: Node.js Extension Host
+# Cocoon: Node.js Extension Host 🦋
 
-This document describes Cocoon, the Node.js extension host sidecar for Land.
-Cocoon runs VS Code extensions in a supervised Node.js process, providing a
-`vscode` API shim via Effect-TS that translates extension API calls into
-declarative Effects. Effects are either handled in-process or dispatched to
-Mountain via gRPC for native execution.
+This document describes `Cocoon`, the `Node.js` extension host sidecar for
+`Land`.
+
+- `Cocoon` runs VS Code extensions in a supervised `Node.js` process.
+- It provides a `vscode` API shim via `Effect-TS`.
+- This shim translates extension API calls into declarative Effects.
+- `Effects` are either handled in-process.
+- Or dispatched to `Mountain` via `gRPC` for native execution.
 
 ---
 
@@ -50,24 +53,25 @@ graph TB
     MOUNTAIN["Mountain<br/>gRPC Server"] <-->|"Vine protocol :50052"| GRPC_C
 ```
 
-## Overview
+## Overview 📋
 
-Cocoon is a TypeScript application built with Effect-TS that replicates the VS
-Code Extension Host API. It communicates with Mountain via gRPC (Vine protocol)
-on port 50052. It is spawned and supervised by Mountain's ProcessManagement
-module.
+`Cocoon` is a `TypeScript` application built with `Effect-TS`.
 
-| Attribute    | Value                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------- |
-| Language     | TypeScript (Effect-TS v3.21)                                                                            |
-| Runtime      | Node.js (managed by SideCar)                                                                            |
-| IPC          | gRPC (Vine protocol)                                                                                    |
-| Dependencies | effect, @effect/platform, @effect/platform-node, @grpc/grpc-js, @codeeditorland/output, google-protobuf |
-| Managed by   | Mountain ProcessManagement/CocoonManagement.rs                                                          |
+- It replicates the VS Code Extension Host API.
+- It communicates with `Mountain` via `gRPC` (`Vine` protocol) on port 50052.
+- It is spawned and supervised by `Mountain`'s `ProcessManagement` module.
+
+| Attribute    | Value                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Language     | `TypeScript` (`Effect-TS` v3.21)                                                                                    |
+| Runtime      | `Node.js` (managed by `SideCar`)                                                                                    |
+| IPC          | `gRPC` (`Vine` protocol)                                                                                            |
+| Dependencies | `effect`, `@effect/platform`, `@effect/platform-node`, `@grpc/grpc-js`, `@codeeditorland/output`, `google-protobuf` |
+| Managed by   | `Mountain` `ProcessManagement/CocoonManagement.rs`                                                                  |
 
 ---
 
-## Architecture
+## Architecture 🏗️
 
 ```
 +------------------------------------------------------------------+
@@ -95,33 +99,33 @@ module.
 +------------------------------------------------------------------+
 ```
 
-### Module Map
+### Module Map 🗺️
 
-| Path                                            | Purpose                                        |
-| ----------------------------------------------- | ---------------------------------------------- |
-| `Source/Bootstrap/Implementation/CocoonMain.ts` | Entry point; initialization prelude            |
-| `Source/PatchProcess/`                          | Process hardening, signal handling, log piping |
-| `Source/Core/ExtensionHost.ts`                  | Extension activation and lifecycle             |
-| `Source/Core/RequireInterceptor.ts`             | Require() patching for VS Code module loading  |
-| `Source/Core/ApiFactory.ts`                     | Constructs vscode.\* API objects per extension |
-| `Source/Services/Commands.ts`                   | Command registration and execution             |
-| `Source/Services/Window.ts`                     | Window and editor management                   |
-| `Source/Services/Workspace.ts`                  | Workspace and file system operations           |
-| `Source/Services/Configuration.ts`              | Configuration read/write                       |
-| `Source/Services/gRPC/Client.ts`                | gRPC client for Mountain communication         |
-| `Source/API/`                                   | API surface construction and type definitions  |
-| `Source/ModuleInterceptor/`                     | ESM and CommonJS module interception           |
-| `Source/TypeConverter/`                         | Type conversion between extensions and gRPC    |
-| `Source/Telemetry/`                             | PostHog + OTLP telemetry                       |
-| `Source/IPC/`                                   | Internal message channel system                |
-| `Source/Utility/Tier.ts`                        | Tier configuration reader                      |
-| `Source/WebviewPanel/`                          | Webview panel lifecycle management             |
-| `Source/Generated/`                             | Proto-generated TypeScript types               |
-| `Source/Configuration/ESBuild/`                 | Build configuration                            |
+| Path                                            | Purpose                                          |
+| ----------------------------------------------- | ------------------------------------------------ |
+| `Source/Bootstrap/Implementation/CocoonMain.ts` | Entry point; initialization prelude              |
+| `Source/PatchProcess/`                          | Process hardening, signal handling, log piping   |
+| `Source/Core/ExtensionHost.ts`                  | Extension activation and lifecycle               |
+| `Source/Core/RequireInterceptor.ts`             | Require() patching for VS Code module loading    |
+| `Source/Core/ApiFactory.ts`                     | Constructs vscode.\\\* API objects per extension |
+| `Source/Services/Commands.ts`                   | Command registration and execution               |
+| `Source/Services/Window.ts`                     | Window and editor management                     |
+| `Source/Services/Workspace.ts`                  | Workspace and file system operations             |
+| `Source/Services/Configuration.ts`              | Configuration read/write                         |
+| `Source/Services/gRPC/Client.ts`                | gRPC client for Mountain communication           |
+| `Source/API/`                                   | API surface construction and type definitions    |
+| `Source/ModuleInterceptor/`                     | ESM and CommonJS module interception             |
+| `Source/TypeConverter/`                         | Type conversion between extensions and gRPC      |
+| `Source/Telemetry/`                             | PostHog + OTLP telemetry                         |
+| `Source/IPC/`                                   | Internal message channel system                  |
+| `Source/Utility/Tier.ts`                        | Tier configuration reader                        |
+| `Source/WebviewPanel/`                          | Webview panel lifecycle management               |
+| `Source/Generated/`                             | Proto-generated TypeScript types                 |
+| `Source/Configuration/ESBuild/`                 | Build configuration                              |
 
 ---
 
-## Startup Sequence
+## Startup Sequence 🚀
 
 ```
 1. Node.js process starts (bootstrap-fork.js)
@@ -168,9 +172,9 @@ Extension host ready for use
 
 ---
 
-## VS Code API Shim
+## VS Code API Shim 📦
 
-Cocoon constructs VS Code API objects for each extension via `ApiFactory.ts`:
+`Cocoon` constructs VS Code API objects for each extension via `ApiFactory.ts`:
 
 ```typescript
 // Cocoon constructs a vscode namespace for each extension
@@ -184,7 +188,7 @@ const vscode = ApiFactory.create(extensionId, {
 });
 ```
 
-### API Namespace Providers
+### API Namespace Providers 📋
 
 | Namespace             | Provider            | Track                       |
 | --------------------- | ------------------- | --------------------------- |
@@ -203,27 +207,27 @@ const vscode = ApiFactory.create(extensionId, {
 
 ---
 
-## Service Providers
+## Service Providers 🔌
 
-Each service is implemented as an Effect-TS Layer:
+Each service is implemented as an `Effect-TS` `Layer`:
 
-| Service               | Module                      | Key Methods                                                                    |
-| --------------------- | --------------------------- | ------------------------------------------------------------------------------ |
-| CommandsProvider      | `Services/Commands.ts`      | registerCommand, executeCommand, getCommands                                   |
-| WindowProvider        | `Services/Window.ts`        | createWebviewPanel, showTextDocument, activeTextEditor, showInformationMessage |
-| WorkspaceProvider     | `Services/Workspace.ts`     | workspaceFolders, openTextDocument, findFiles, applyEdit, getConfiguration     |
-| LanguagesProvider     | `Services/Language/`        | registerHoverProvider, registerCompletionProvider, registerDefinitionProvider  |
-| ConfigurationProvider | `Services/Configuration.ts` | get, has, inspect, update, onDidChange                                         |
-| WebviewProvider       | `Services/WebviewPanel/`    | createWebviewPanel, postMessage, onDidReceiveMessage                           |
-| FileSystemProvider    | `Services/File/`            | readFile, writeFile, stat, readDirectory, createDirectory, delete, rename      |
+| Service               | Module                      | Key Methods                                                                             |
+| --------------------- | --------------------------- | --------------------------------------------------------------------------------------- |
+| CommandsProvider      | `Services/Commands.ts`      | `registerCommand`, `executeCommand`, `getCommands`                                      |
+| WindowProvider        | `Services/Window.ts`        | `createWebviewPanel`, `showTextDocument`, `activeTextEditor`, `showInformationMessage`  |
+| WorkspaceProvider     | `Services/Workspace.ts`     | `workspaceFolders`, `openTextDocument`, `findFiles`, `applyEdit`, `getConfiguration`    |
+| LanguagesProvider     | `Services/Language/`        | `registerHoverProvider`, `registerCompletionProvider`, `registerDefinitionProvider`     |
+| ConfigurationProvider | `Services/Configuration.ts` | `get`, `has`, `inspect`, `update`, `onDidChange`                                        |
+| WebviewProvider       | `Services/WebviewPanel/`    | `createWebviewPanel`, `postMessage`, `onDidReceiveMessage`                              |
+| FileSystemProvider    | `Services/File/`            | `readFile`, `writeFile`, `stat`, `readDirectory`, `createDirectory`, `delete`, `rename` |
 
 ---
 
-## gRPC Communication
+## gRPC Communication 🌐
 
-Cocoon communicates with Mountain via the Vine gRPC protocol:
+`Cocoon` communicates with `Mountain` via the `Vine` `gRPC` protocol.
 
-### Client Implementation
+### Client Implementation 💻
 
 ```typescript
 // gRPC client connects to Mountain on port 50051
@@ -248,37 +252,37 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 });
 ```
 
-### Connection Management
+### Connection Management 🔗
 
 | Feature      | Implementation                                |
 | ------------ | --------------------------------------------- |
 | Connection   | Unary gRPC calls + bidirectional streaming    |
-| Heartbeat    | 5-second interval via Heartbeat RPC           |
+| Heartbeat    | 5-second interval via `Heartbeat` RPC         |
 | Reconnection | Automatic on disconnect (exponential backoff) |
 | Timeout      | 30-second request timeout                     |
 | Backpressure | gRPC flow control                             |
 
 ---
 
-## RequireInterceptor
+## RequireInterceptor 🪝
 
-The RequireInterceptor patches Node.js's `require()` to enable VS Code module
-loading:
+The `RequireInterceptor` patches `Node.js`'s `require()` to enable VS Code
+module loading.
 
-### Interception Rules
+### Interception Rules 📋
 
-| Module Pattern            | Replacement                      | Behavior                                |
-| ------------------------- | -------------------------------- | --------------------------------------- |
-| `electron`                | (empty stub)                     | No-op module with expected method stubs |
-| `original-fs`             | `fs`                             | Redirect to Node.js standard library    |
-| `keytar`                  | Custom stub                      | OS keychain via Mountain gRPC           |
-| `spdlog`                  | Custom stub                      | No-op logging                           |
-| `vscode-windows-registry` | Custom stub                      | No-op (macOS-only)                      |
-| `./extHost*.js`           | Load from @codeeditorland/output | VS Code stock source                    |
-| `./mainThread*.js`        | Load from @codeeditorland/output | VS Code stock source                    |
-| `vscode`                  | ApiFactory construct             | Extension-specific API surface          |
+| Module Pattern            | Replacement                        | Behavior                                |
+| ------------------------- | ---------------------------------- | --------------------------------------- |
+| `electron`                | (empty stub)                       | No-op module with expected method stubs |
+| `original-fs`             | `fs`                               | Redirect to Node.js standard library    |
+| `keytar`                  | Custom stub                        | OS keychain via Mountain gRPC           |
+| `spdlog`                  | Custom stub                        | No-op logging                           |
+| `vscode-windows-registry` | Custom stub                        | No-op (macOS-only)                      |
+| `./extHost*.js`           | Load from `@codeeditorland/output` | VS Code stock source                    |
+| `./mainThread*.js`        | Load from `@codeeditorland/output` | VS Code stock source                    |
+| `vscode`                  | `ApiFactory` construct             | Extension-specific API surface          |
 
-### Installation
+### Installation ⚙️
 
 ```typescript
 // Installed before any VS Code source code is loaded
@@ -291,7 +295,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 
 ---
 
-## Extension Lifecycle
+## Extension Lifecycle 🔄
 
 ```
 1. Extension Discovery
@@ -324,16 +328,16 @@ const vscode = require("vscode"); // Returns per-extension API surface
 
 ---
 
-## Dual-Track Routing
+## Dual-Track Routing 🛤️
 
-Cocoon routes extension API calls through two tracks:
+`Cocoon` routes extension API calls through two tracks:
 
 | Track               | Implementation                   | Latency    | When Used                                  |
 | ------------------- | -------------------------------- | ---------- | ------------------------------------------ |
 | **A - Stock Node**  | Unmodified VS Code `extHost*.ts` | In-process | Default for all APIs                       |
-| **B - Rust Native** | gRPC ActionEffect to Mountain    | ~1ms       | I/O-heavy APIs (fs, terminal, search, git) |
+| **B - Rust Native** | gRPC `ActionEffect` to Mountain  | ~1ms       | I/O-heavy APIs (fs, terminal, search, git) |
 
-### Routing Decision
+### Routing Decision 🧭
 
 ```typescript
 // From Cocoon's tier router (simplified)
@@ -346,7 +350,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 }
 ```
 
-### Track Distribution by API
+### Track Distribution by API 📊
 
 | API                             | Default Track | Rationale                       |
 | ------------------------------- | ------------- | ------------------------------- |
@@ -361,20 +365,20 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 
 ---
 
-## Related Documentation
+## Related Documentation 📚
 
-- [Mountain](../Mountain/Documentation/GitHub/Architecture.md) - gRPC server and
-  ProcessManagement
-- [Wind](../Wind/Documentation/GitHub/Architecture.md) - Frontend service layer
-  (parallel API surface)
-- [Output](../Output/Documentation/GitHub/Architecture.md) - Compiled platform
-  code consumer
-- [Vine](../Vine/Documentation/GitHub/Architecture.md) - gRPC protocol
-  definitions
-- [Polyfills](../../../Documentation/GitHub/Polyfills.md) - Initialization
-  prelude
-- [EditorCore](../../../Documentation/GitHub/EditorCore.md) - VS Code API
-  coverage strategy
+- [Mountain](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/Architecture.md) -
+  `gRPC` server and `ProcessManagement`
+- [Wind](https://github.com/CodeEditorLand/Wind/tree/Current/Documentation/GitHub/Architecture.md) -
+  Frontend service layer (parallel API surface)
+- [Output](https://github.com/CodeEditorLand/Output/tree/Current/Documentation/GitHub/Architecture.md) -
+  Compiled platform code consumer
+- [Vine](https://github.com/CodeEditorLand/Vine/tree/Current/Documentation/GitHub/Architecture.md) -
+  `gRPC` protocol definitions
+- [Polyfills](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/Polyfills.md) -
+  Initialization prelude
+- [EditorCore](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/EditorCore.md) -
+  VS Code API coverage strategy
 
 ---
 

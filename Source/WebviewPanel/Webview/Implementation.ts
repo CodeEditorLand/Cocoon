@@ -92,7 +92,10 @@ export class WebviewImplementation implements Webview {
 		// content security policy and every extension-supplied icon /
 		// script / stylesheet 404s with a CSP refusal in DevTools.
 		// Legacy schemes are kept for extensions that hardcode them.
-		return "vscode-file: vscode-resource: vscode-webview-resource: https:";
+		// WKWebView does not recognise custom protocol scheme sources
+		// in CSP (e.g. "vscode-file:" in font-src), so include a
+		// wildcard fallback so fonts still render.
+		return "vscode-file: vscode-resource: vscode-webview-resource: https: *";
 	}
 
 	public postMessage(Message: any): Promise<boolean> {
