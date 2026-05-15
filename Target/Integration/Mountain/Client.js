@@ -884,9 +884,32 @@ message RPCDataPayload {
     try {
       const channel = this.client?.getChannel?.();
       if (channel) {
-        const state = channel.getConnectivityState(false);
-        if (state !== 2) {
-          throw new Error(`Channel not ready (state: ${state})`);
+        const state = channel.getConnectivityState(true);
+        if (state !== grpc.connectivityState.READY) {
+          await new Promise((resolve, reject) => {
+            const deadline = Date.now() + 3e3;
+            const poll = /* @__PURE__ */ __name(() => {
+              const st = channel.getConnectivityState(false);
+              if (st === grpc.connectivityState.READY) {
+                resolve();
+              } else if (st === grpc.connectivityState.TRANSIENT_FAILURE || st === grpc.connectivityState.SHUTDOWN) {
+                reject(
+                  new Error(
+                    `Channel in terminal state: ${grpc.connectivityState[st]}`
+                  )
+                );
+              } else if (Date.now() >= deadline) {
+                reject(
+                  new Error(
+                    `Channel not ready after 3s (state: ${st})`
+                  )
+                );
+              } else {
+                setTimeout(poll, 100);
+              }
+            }, "poll");
+            setTimeout(poll, 100);
+          });
         }
       }
       this.consecutiveSuccessfulHealthChecks++;

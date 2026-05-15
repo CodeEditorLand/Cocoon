@@ -1330,9 +1330,39 @@ message RPCDataPayload {
 			// (Mountain doesn't implement a health.check handler)
 			const channel = (this.client as any)?.getChannel?.();
 			if (channel) {
-				const state = channel.getConnectivityState(false);
-				if (state !== 2 /* READY */) {
-					throw new Error(`Channel not ready (state: ${state})`);
+				const state = channel.getConnectivityState(true);
+				if (state !== grpc.connectivityState.READY) {
+					// Channel isn't ready — wait for up to 3s for it to become READY
+					// (getConnectivityState(true) triggers a connection attempt if IDLE
+					// but returns immediately; the background handshake takes time)
+					await new Promise<void>((resolve, reject) => {
+						const deadline = Date.now() + 3000;
+						const poll = () => {
+							const st = channel.getConnectivityState(false);
+							if (st === grpc.connectivityState.READY) {
+								resolve();
+							} else if (
+								st ===
+									grpc.connectivityState.TRANSIENT_FAILURE ||
+								st === grpc.connectivityState.SHUTDOWN
+							) {
+								reject(
+									new Error(
+										`Channel in terminal state: ${grpc.connectivityState[st]}`,
+									),
+								);
+							} else if (Date.now() >= deadline) {
+								reject(
+									new Error(
+										`Channel not ready after 3s (state: ${st})`,
+									),
+								);
+							} else {
+								setTimeout(poll, 100);
+							}
+						};
+						setTimeout(poll, 100);
+					});
 				}
 			}
 			this.consecutiveSuccessfulHealthChecks++;
