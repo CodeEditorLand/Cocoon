@@ -43,7 +43,7 @@ the rest._\"
 [![Node.js Version](https://img.shields.io/badge/Node.js-v18+-blue.svg)](https://nodejs.org/)
 [![Effect Version](https://img.shields.io/badge/Effect-v3-blueviolet.svg)](https://www.npmjs.com/package/effect)
 
-Welcome to **Cocoon**&#x2001;🦋, a core component of the **Land**&#x2001;🏞️ Code
+Welcome to **Cocoon**, a core component of the **Land**&#x2001;🏞️ Code&#x2001;🦋
 Editor. `Cocoon` is a specialized `Node.js` sidecar process meticulously
 designed to host and execute existing `VS Code` extensions. It achieves this by
 providing a comprehensive, **`Effect-TS` native** environment that faithfully
@@ -143,7 +143,7 @@ high-fidelity `vscode` API, see the following source files:
 
 ---
 
-## `Cocoon`&#x2001;🦋 in the `Land`&#x2001;🏞️ Ecosystem&#x2001;🦋&#x2001;+&#x2001;🏞️
+## `Cocoon` in the `Land`&#x2001;🏞️ Ecosystem&#x2001;🦋&#x2001;+&#x2001;🏞️
 
 `Cocoon` operates as a standalone `Node.js` process, carefully orchestrated by
 and communicating with `Mountain`.
@@ -207,22 +207,22 @@ graph LR
     classDef effectts fill:#d4f5d4,stroke:#27ae60,stroke-width:1px,color:#0a3a0a;
     classDef vscode   fill:#ebebeb,stroke:#888,stroke-width:1px,stroke-dasharray:5 5,color:#333;
 
-    subgraph "🦋 Cocoon - Node.js SideCar"
+    subgraph "Cocoon - Node.js SideCar&#x2001;🦋"
         direction TB
-        Bootstrap["🚀 Bootstrap/Implementation/CocoonMain.ts"]:::effectts
-        AppLayer["🧩 Cocoon AppLayer"]:::effectts
-        EffectModules["⚡ Effect/ Modules - Bootstrap, Telemetry, Extension"]:::effectts
-        PatchProcess["🔒 PatchProcess/ - Process Hardening"]:::cocoon
-        APIServices["📚 Services/ - APIFactory, ExtensionHost, Window, Workspace…"]:::cocoon
-        IPCProtocol["📡 IPC/Channel.ts + IPC/ Protocol"]:::cocoon
-        GRPCClient["🌿 Services/Mountain/gRPC/Client.ts"]:::cocoon
-        GRPCServer["🔌 Services/gRPC/Server/Service.ts"]:::cocoon
-        TypeConverter["🔄 TypeConverter/ - DTO Serialization"]:::cocoon
-        CodegenModule["🔨 Codegen/ - ExtHost Schema Generation"]:::cocoon
-        PlatformModule["💻 Platform/ - OS, Env, Process Abstraction"]:::cocoon
-        WebviewPanel["🌐 WebviewPanel/ - Panel Factory & Lifecycle"]:::cocoon
-        TelemetryModule["📊 Telemetry/ - PostHog & OTLP Bridges"]:::cocoon
-        GeneratedRoute["🗺️ Generated/RouteManifest.ts"]:::cocoon
+        Bootstrap["Bootstrap/Implementation/CocoonMain.ts&#x2001;🚀"]:::effectts
+        AppLayer["Cocoon AppLayer&#x2001;🧩"]:::effectts
+        EffectModules["Effect/ Modules - Bootstrap, Telemetry, Extension&#x2001;⚡"]:::effectts
+        PatchProcess["PatchProcess/ - Process Hardening&#x2001;🔒"]:::cocoon
+        APIServices["Services/ - APIFactory, ExtensionHost, Window, Workspace…&#x2001;📚"]:::cocoon
+        IPCProtocol["IPC/Channel.ts + IPC/ Protocol&#x2001;📡"]:::cocoon
+        GRPCClient["Services/Mountain/gRPC/Client.ts&#x2001;🌿"]:::cocoon
+        GRPCServer["Services/gRPC/Server/Service.ts&#x2001;🔌"]:::cocoon
+        TypeConverter["TypeConverter/ - DTO Serialization&#x2001;🔄"]:::cocoon
+        CodegenModule["Codegen/ - ExtHost Schema Generation&#x2001;🔨"]:::cocoon
+        PlatformModule["Platform/ - OS, Env, Process Abstraction&#x2001;💻"]:::cocoon
+        WebviewPanel["WebviewPanel/ - Panel Factory & Lifecycle&#x2001;🌐"]:::cocoon
+        TelemetryModule["Telemetry/ - PostHog & OTLP Bridges&#x2001;📊"]:::cocoon
+        GeneratedRoute["Generated/RouteManifest.ts&#x2001;🗺️"]:::cocoon
 
         Bootstrap --> AppLayer
         AppLayer --> EffectModules
@@ -240,12 +240,12 @@ graph LR
         AppLayer -.-> TelemetryModule
     end
 
-    subgraph "⛰️ Mountain - Rust/Tauri Backend"
-        VineGRPC["🌿 Vine - gRPC Server"]:::mountain
+    subgraph "Mountain - Rust/Tauri Backend&#x2001;⛰️"
+        VineGRPC["Vine - gRPC Server&#x2001;🌿"]:::mountain
     end
 
-    subgraph "📦 VS Code Extension"
-        ExtensionCode["📜 Extension Code"]:::vscode
+    subgraph "VS Code Extension&#x2001;📦"
+        ExtensionCode["Extension Code&#x2001;📜"]:::vscode
     end
 
     APIServices -- provides `vscode` object to --> ExtensionCode
