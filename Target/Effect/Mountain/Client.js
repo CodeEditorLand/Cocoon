@@ -60,7 +60,7 @@ var MountainClientService = class {
     __name(this, "MountainClientService");
   }
   _serviceBrand;
-  // Core gRPC client and connection state
+  // Core gRPC state
   client = null;
   channel = null;
   mountainHost = "localhost";
@@ -71,30 +71,24 @@ var MountainClientService = class {
   errorCount = 0;
   requestCounter = 0;
   activeRequests = /* @__PURE__ */ new Map();
-  // Circuit breaker configuration with enhanced tracking
+  // Circuit breaker
   circuitBreakerState = "CLOSED" /* Closed */;
   circuitBreakerFailureCount = 0;
   circuitBreakerSuccessCount = 0;
   circuitBreakerThreshold = 5;
-  // Consecutive failures before opening
   circuitBreakerSuccessThreshold = 3;
-  // Consecutive successes to close
   circuitBreakerTimeout = 6e4;
-  // 60 seconds recovery timeout
+  // 60s recovery timeout
   circuitBreakerOpenTime = 0;
   circuitBreakerHalfOpenAttempts = 0;
-  // Retry configuration with exponential backoff and jitter
+  // Retry config with exponential backoff
   maxRetries = 3;
   baseRetryDelay = 1e3;
-  // Base delay in milliseconds
   maxRetryDelay = 1e4;
-  // Maximum delay in milliseconds
   retryJitterFactor = 0.2;
-  // 20% jitter
-  // Health monitoring with comprehensive tracking
+  // Health monitoring
   healthCheckInterval = null;
   healthCheckPeriod = 3e4;
-  // 30 seconds
   lastHealthCheck = 0;
   consecutiveSuccessfulHealthChecks = 0;
   healthCheckFailures = 0;
@@ -122,7 +116,7 @@ var MountainClientService = class {
     this.registerShutdownHandlers();
   }
   /**
-   * Parse environment variables with comprehensive configuration validation
+   * Parse environment variables
    */
   parseEnvironment() {
     const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST || "localhost";
@@ -162,7 +156,7 @@ var MountainClientService = class {
     }
   }
   /**
-   * Validate host configuration with comprehensive pattern matching
+   * Validate host configuration
    */
   isValidHost(host) {
     if (!host || host.trim().length === 0) {
@@ -187,7 +181,7 @@ var MountainClientService = class {
     return validHostPatterns.some((pattern) => pattern.test(host));
   }
   /**
-   * Register graceful shutdown handlers for VS Code extension compatibility
+   * Register shutdown handlers
    */
   registerShutdownHandlers() {
     process.on("SIGTERM", () => {
@@ -219,8 +213,7 @@ var MountainClientService = class {
     }
   }
   /**
-   * Connect to Mountain gRPC server with comprehensive circuit breaker protection
-   * and proper gRPC channel management
+   * Connect to Mountain gRPC server
    */
   async connect() {
     this.CheckCircuitBreaker();
@@ -299,7 +292,7 @@ var MountainClientService = class {
     }
   }
   /**
-   * Load protocol definition with comprehensive error handling and fallback strategies
+   * Load protocol definition with fallback strategies
    */
   async loadProtocolDefinition() {
     console.log(
@@ -450,7 +443,7 @@ message RPCDataPayload {
     }
   }
   /**
-   * Wait for connection with comprehensive timeout and readiness checking
+   * Wait for connection with timeout
    */
   waitForConnection() {
     return new Promise((resolve, reject) => {
@@ -489,8 +482,7 @@ message RPCDataPayload {
     });
   }
   /**
-   * Send request to Mountain with comprehensive circuit breaker, retry logic,
-   * cancellation support, and VS Code extension compatibility
+   * Send request to Mountain with circuit breaker and retry logic
    */
   async sendRequest(method, parameters, cancellationToken) {
     this.CheckCircuitBreaker();
@@ -642,7 +634,7 @@ message RPCDataPayload {
     }
   }
   /**
-   * Track comprehensive request performance metrics for observability
+   * Track request metrics
    */
   trackRequestMetrics(method, duration, success) {
     this.totalRequests++;
@@ -661,7 +653,7 @@ message RPCDataPayload {
     }
   }
   /**
-   * Check if error is a connection error with comprehensive pattern matching
+   * Check if error is a connection error
    */
   isConnectionError(error) {
     if (!error) return false;
@@ -700,7 +692,7 @@ message RPCDataPayload {
     return connectionErrorPatterns.some((pattern) => pattern === true);
   }
   /**
-   * Send request with exponential backoff retry logic
+   * Send request with exponential backoff retry
    */
   async SendRequestWithRetry(request) {
     if (!this.client) {
@@ -1106,6 +1098,9 @@ import {
   Stream,
   SubscriptionRef
 } from "effect";
+var MAX_EVENTS = 1e3;
+var MAX_METRICS_PER_NAME = 100;
+var MAX_SPANS_PER_NAME = 100;
 var TelemetryCollectionError = class extends Error {
   constructor(operation, cause) {
     super(
@@ -1141,21 +1136,29 @@ var TelemetryLive = Layer2.effect(
         labels
       };
       const events = yield* eventsRef.get;
-      yield* Ref.set(eventsRef, [
-        ...events,
-        {
-          type: "metric",
-          timestamp: metric.timestamp,
-          data: metric
-        }
-      ]);
+      events.push({
+        type: "metric",
+        timestamp: metric.timestamp,
+        data: metric
+      });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
       const currentMetrics = yield* metricsRef.get;
       const nameMetrics = HashMap.get(currentMetrics, name).pipe(
         Option.getOrElse(() => [])
       );
+      nameMetrics.push(metric);
+      if (nameMetrics.length > MAX_METRICS_PER_NAME) {
+        nameMetrics.splice(
+          0,
+          nameMetrics.length - MAX_METRICS_PER_NAME
+        );
+      }
       yield* Ref.set(
         metricsRef,
-        HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+        HashMap.set(currentMetrics, name, nameMetrics)
       );
     }), "recordMetric");
     const startSpan = /* @__PURE__ */ __name((name, labels) => Effect3.gen(function* () {
@@ -1167,10 +1170,15 @@ var TelemetryLive = Layer2.effect(
         labels: labels ?? {}
       };
       const events = yield* eventsRef.get;
-      yield* Ref.set(eventsRef, [
-        ...events,
-        { type: "span", timestamp: startTime, data: span }
-      ]);
+      events.push({
+        type: "span",
+        timestamp: startTime,
+        data: span
+      });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
       return {
         end: /* @__PURE__ */ __name((success, error) => Effect3.gen(function* () {
           const endTime = Date.now();
@@ -1182,25 +1190,30 @@ var TelemetryLive = Layer2.effect(
             error
           };
           const events2 = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events2,
-            {
-              type: "span",
-              timestamp: endTime,
-              data: completedSpan
-            }
-          ]);
+          events2.push({
+            type: "span",
+            timestamp: endTime,
+            data: completedSpan
+          });
+          if (events2.length > MAX_EVENTS) {
+            events2.splice(0, events2.length - MAX_EVENTS);
+          }
+          yield* Ref.set(eventsRef, events2);
           const currentSpans = yield* spansRef.get;
           const nameSpans = HashMap.get(
             currentSpans,
             name
           ).pipe(Option.getOrElse(() => []));
+          nameSpans.push(completedSpan);
+          if (nameSpans.length > MAX_SPANS_PER_NAME) {
+            nameSpans.splice(
+              0,
+              nameSpans.length - MAX_SPANS_PER_NAME
+            );
+          }
           yield* Ref.set(
             spansRef,
-            HashMap.set(currentSpans, name, [
-              ...nameSpans,
-              completedSpan
-            ])
+            HashMap.set(currentSpans, name, nameSpans)
           );
         }), "end")
       };
@@ -1213,10 +1226,11 @@ var TelemetryLive = Layer2.effect(
       };
       const timestamp = Date.now();
       const events = yield* eventsRef.get;
-      yield* Ref.set(eventsRef, [
-        ...events,
-        { type: "log", timestamp, data: logEntry }
-      ]);
+      events.push({ type: "log", timestamp, data: logEntry });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
       const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
       let ContextText = "";
       if (context && Object.keys(context).length > 0) {
@@ -1399,7 +1413,9 @@ var MountainClientLive = Layer3.effect(
       averageLatency: 0,
       lastRequestTime: 0
     };
-    const latencies = [];
+    const LatencyEmaAlpha = 0.1;
+    let latencyEma = 0;
+    let latencyEmaInitialized = false;
     let serverVersion = "";
     const connect = /* @__PURE__ */ __name((config) => Effect4.gen(function* () {
       const currentState = yield* stateRef.get;
@@ -1489,7 +1505,8 @@ var MountainClientLive = Layer3.effect(
         averageLatency: 0,
         lastRequestTime: 0
       };
-      latencies.length = 0;
+      latencyEma = 0;
+      latencyEmaInitialized = false;
       telemetry.log(
         "info",
         "[MountainClient] Disconnected from Mountain"
@@ -1539,9 +1556,13 @@ var MountainClientLive = Layer3.effect(
           () => realClient.sendRequest(method, params)
         );
         const processingTime = Date.now() - requestStartTime;
-        latencies.push(processingTime);
-        if (latencies.length > 100) latencies.shift();
-        metrics.averageLatency = latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length;
+        if (latencyEmaInitialized) {
+          latencyEma = processingTime * LatencyEmaAlpha + latencyEma * (1 - LatencyEmaAlpha);
+        } else {
+          latencyEma = processingTime;
+          latencyEmaInitialized = true;
+        }
+        metrics.averageLatency = latencyEma;
         metrics.lastRequestTime = Date.now();
         metrics.successfulRequests++;
         telemetry.log(

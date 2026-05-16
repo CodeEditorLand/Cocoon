@@ -9,11 +9,9 @@ export { default as TargetConfig } from "./Config/Target/Config.js";
 export { default as CompileConfig } from "./Config/Compile/Config.js";
 
 /**
- * ESBuild configuration for Cocoon that properly handles TypeScript generators
- * with `yield*` syntax in ES modules environment.
- *
- * This is the canonical external list for Cocoon's build pipeline.
- * The actual build uses Config/TargetConfig.ts and Config/CompileConfig.ts
+ * ESBuild config for Cocoon. Handles TypeScript generators with yield*
+ * in ESM environments. This is the canonical external list for Cocoon's
+ * build pipeline. Actual builds use TargetConfig.ts and CompileConfig.ts
  * which inherit this external array.
  */
 export const CocoonESBuildConfig: BuildOptions = {
@@ -66,6 +64,7 @@ export const CocoonESBuildProdConfig: BuildOptions = {
 	...CocoonESBuildConfig,
 	sourcemap: false,
 	minify: true,
+	treeShaking: true,
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("production"),
 	},

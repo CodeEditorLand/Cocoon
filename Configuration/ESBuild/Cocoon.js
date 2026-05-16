@@ -52,6 +52,7 @@ const CocoonESBuildProdConfig = {
 	...CocoonESBuildConfig,
 	sourcemap: false,
 	minify: true,
+	treeShaking: true,
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("production"),
 	},

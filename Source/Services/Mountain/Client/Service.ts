@@ -1,21 +1,10 @@
 /**
  * @module MountainClientService
  * @description
- * Cocoon's gRPC client implementation for Mountain integration.
- * Provides bidirectional communication with Mountain's gRPC server using the Vine protocol.
+ * Cocoon's gRPC client for Mountain integration using the Vine protocol.
+ * Handles connection management, circuit breaker, retry logic, health checks,
+ * request cancellation, and metrics tracking.
  *
- * RESPONSIBILITIES:
- * - Establish and maintain gRPC connection to Mountain backend with proper channel management
- * - Send requests and notifications to Mountain with Vine protocol serialization
- * - Implement comprehensive circuit breaker pattern with exponential backoff retry logic
- * - Monitor connection health with proactive health checks and auto-reconnection
- * - Cancel long-running operations with proper request identifier tracking
- * - Track request/response metrics for observability and performance monitoring
- * - Implement defensive coding practices with comprehensive error handling
- * - Support VS Code extension patterns and cancellation tokens
- *
- * Based on Mountain's Vine gRPC protocol specification.
- * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Mountain Client Implementation)
  * Protocol: /Element/Mountain/Proto/Vine.proto
  * Generated Types: /Element/Cocoon/Source/Generated/Vine.ts
  */
@@ -49,16 +38,16 @@ const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
 
 /**
- * Circuit breaker state for fault tolerance with comprehensive state management
+ * Circuit breaker state
  */
 enum CircuitBreakerState {
-	Closed = "CLOSED", // Normal operation - requests flow freely
-	Open = "OPEN", // Failing - reject all requests immediately
-	HalfOpen = "HALF_OPEN", // Testing - allow limited requests to test recovery
+	Closed = "CLOSED", // Normal operation
+	Open = "OPEN", // Reject all requests
+	HalfOpen = "HALF_OPEN", // Allow limited requests to test recovery
 }
 
 /**
- * Connection state tracking with detailed status information
+ * Connection state
  */
 enum ConnectionState {
 	Disconnected = "DISCONNECTED",
@@ -73,7 +62,7 @@ enum ConnectionState {
 }
 
 /**
- * Request cancellation token interface for VS Code compatibility
+ * Cancellation token for VS Code compatibility
  */
 interface CancellationToken {
 	readonly isCancellationRequested: boolean;
@@ -82,13 +71,13 @@ interface CancellationToken {
 }
 
 /**
- * MountainClientService implementation with comprehensive fault tolerance,
- * health monitoring, and VS Code extension compatibility
+ * MountainClientService - gRPC client with circuit breaker, health monitoring,
+ * and retry logic for Mountain integration.
  */
 export class MountainClientService implements IMountainClientService {
 	readonly _serviceBrand: undefined;
 
-	// Core gRPC client and connection state
+	// Core gRPC state
 	private client: MountainServiceClient | null = null;
 
 	private channel: grpc.Client | null = null;
@@ -107,7 +96,7 @@ export class MountainClientService implements IMountainClientService {
 	private activeRequests: Map<bigint, { method: string; startTime: number }> =
 		new Map();
 
-	// Circuit breaker configuration with enhanced tracking
+	// Circuit breaker
 	private circuitBreakerState: CircuitBreakerState =
 		CircuitBreakerState.Closed;
 
@@ -115,24 +104,24 @@ export class MountainClientService implements IMountainClientService {
 
 	private circuitBreakerSuccessCount: number = 0;
 
-	private readonly circuitBreakerThreshold: number = 5; // Consecutive failures before opening
-	private readonly circuitBreakerSuccessThreshold: number = 3; // Consecutive successes to close
-	private readonly circuitBreakerTimeout: number = 60000; // 60 seconds recovery timeout
+	private readonly circuitBreakerThreshold: number = 5;
+	private readonly circuitBreakerSuccessThreshold: number = 3;
+	private readonly circuitBreakerTimeout: number = 60000; // 60s recovery timeout
 	private circuitBreakerOpenTime: number = 0;
 
 	private circuitBreakerHalfOpenAttempts: number = 0;
 
-	// Retry configuration with exponential backoff and jitter
+	// Retry config with exponential backoff
 	private readonly maxRetries: number = 3;
 
-	private readonly baseRetryDelay: number = 1000; // Base delay in milliseconds
-	private readonly maxRetryDelay: number = 10000; // Maximum delay in milliseconds
-	private readonly retryJitterFactor: number = 0.2; // 20% jitter
+	private readonly baseRetryDelay: number = 1000;
+	private readonly maxRetryDelay: number = 10000;
+	private readonly retryJitterFactor: number = 0.2;
 
-	// Health monitoring with comprehensive tracking
+	// Health monitoring
 	private healthCheckInterval: NodeJS.Timeout | null = null;
 
-	private readonly healthCheckPeriod: number = 30000; // 30 seconds
+	private readonly healthCheckPeriod: number = 30000;
 	private lastHealthCheck: number = 0;
 
 	private consecutiveSuccessfulHealthChecks: number = 0;
@@ -168,19 +157,17 @@ export class MountainClientService implements IMountainClientService {
 			`[MountainClientService] Initializing Mountain gRPC client (ID: ${this.clientId})`,
 		);
 
-		// Parse environment variables with validation
 		this.parseEnvironment();
 
 		console.log(
 			`[MountainClientService] Configured for ${this.mountainHost}:${this.mountainPort}, Session: ${this.sessionId}`,
 		);
 
-		// Register graceful shutdown handlers
 		this.registerShutdownHandlers();
 	}
 
 	/**
-	 * Parse environment variables with comprehensive configuration validation
+	 * Parse environment variables
 	 */
 	private parseEnvironment(): void {
 		const mountainHost =
@@ -202,12 +189,10 @@ export class MountainClientService implements IMountainClientService {
 
 		this.mountainPort = parseInt(mountainPort, 10);
 
-		// Update retry configuration if provided
 		if (maxRetries) {
 			this.maxRetries = parseInt(maxRetries, 10);
 		}
 
-		// Update health check period if provided
 		if (healthCheckPeriod) {
 			this.healthCheckPeriod = parseInt(healthCheckPeriod, 10);
 		}
@@ -216,7 +201,7 @@ export class MountainClientService implements IMountainClientService {
 			`[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}, MAX_RETRIES=${this.maxRetries}`,
 		);
 
-		// Comprehensive configuration validation
+		// Validate configuration
 		if (!this.isValidHost(this.mountainHost)) {
 			throw new Error(`Invalid Mountain host: ${this.mountainHost}`);
 		}
@@ -243,7 +228,7 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Validate host configuration with comprehensive pattern matching
+	 * Validate host configuration
 	 */
 	private isValidHost(host: string): boolean {
 		if (!host || host.trim().length === 0) {
@@ -264,10 +249,9 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Register graceful shutdown handlers for VS Code extension compatibility
+	 * Register shutdown handlers
 	 */
 	private registerShutdownHandlers(): void {
-		// Handle process termination gracefully
 		process.on("SIGTERM", () => {
 			console.log(
 				"[MountainClientService] Received SIGTERM, shutting down gracefully",
@@ -307,11 +291,9 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Connect to Mountain gRPC server with comprehensive circuit breaker protection
-	 * and proper gRPC channel management
+	 * Connect to Mountain gRPC server
 	 */
 	async connect(): Promise<void> {
-		// Check circuit breaker state before attempting connection
 		this.CheckCircuitBreaker();
 
 		if (
@@ -332,7 +314,7 @@ export class MountainClientService implements IMountainClientService {
 		this.connectionState = ConnectionState.Connecting;
 
 		try {
-			// Load protocol definition with proper error handling
+			// Load protocol definition
 			const packageDefinition = await this.loadProtocolDefinition();
 
 			const protoDescriptor = grpc.loadPackageDefinition(
@@ -415,7 +397,7 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Load protocol definition with comprehensive error handling and fallback strategies
+	 * Load protocol definition with fallback strategies
 	 */
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
 		console.log(
@@ -589,7 +571,7 @@ message RPCDataPayload {
 	}
 
 	/**
-	 * Wait for connection with comprehensive timeout and readiness checking
+	 * Wait for connection with timeout
 	 */
 	private waitForConnection(): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -642,8 +624,7 @@ message RPCDataPayload {
 	}
 
 	/**
-	 * Send request to Mountain with comprehensive circuit breaker, retry logic,
-	 * cancellation support, and VS Code extension compatibility
+	 * Send request to Mountain with circuit breaker and retry logic
 	 */
 	async sendRequest(
 		method: string,
@@ -963,7 +944,7 @@ message RPCDataPayload {
 	}
 
 	/**
-	 * Track comprehensive request performance metrics for observability
+	 * Track request metrics
 	 */
 	private trackRequestMetrics(
 		method: string,
@@ -1019,7 +1000,7 @@ message RPCDataPayload {
 	}
 
 	/**
-	 * Check if error is a connection error with comprehensive pattern matching
+	 * Check if error is a connection error
 	 */
 	private isConnectionError(error: any): boolean {
 		if (!error) return false;
@@ -1075,7 +1056,7 @@ message RPCDataPayload {
 	}
 
 	/**
-	 * Send request with exponential backoff retry logic
+	 * Send request with exponential backoff retry
 	 */
 	private async SendRequestWithRetry(
 		request: GenericRequest,
@@ -1332,7 +1313,7 @@ message RPCDataPayload {
 			if (channel) {
 				const state = channel.getConnectivityState(true);
 				if (state !== grpc.connectivityState.READY) {
-					// Channel isn't ready — wait for up to 3s for it to become READY
+					// Channel isn't ready - wait for up to 3s for it to become READY
 					// (getConnectivityState(true) triggers a connection attempt if IDLE
 					// but returns immediately; the background handshake takes time)
 					await new Promise<void>((resolve, reject) => {

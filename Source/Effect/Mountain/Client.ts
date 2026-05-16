@@ -1,8 +1,7 @@
 /**
  * @module Effect/MountainClient
  * @description
- * Atomic Mountain client service for Cocoon Extension Host using Effect-TS.
- * Manages the gRPC client for Cocoon → Mountain communication.
+ * Mountain client service managing the gRPC client for Cocoon → Mountain communication.
  */
 
 import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
@@ -112,21 +111,21 @@ export class DisconnectionError extends Error {
 // ============================================================================
 
 export interface MountainClientService {
-	/** Current connection state */
+	/** Connection state */
 	readonly connectionState: Effect.Effect<ConnectionState, never>;
 
-	/** Stream of connection state changes */
+	/** State change stream */
 	readonly connectionChanges: Effect.Effect<
 		ReadonlyArray<ConnectionState>,
 		never
 	>;
 
-	/** Connect to Mountain backend */
+	/** Connect to Mountain */
 	readonly connect: (
 		config?: ClientConfig,
 	) => Effect.Effect<void, ConnectionError>;
 
-	/** Disconnect from Mountain backend */
+	/** Disconnect from Mountain */
 	readonly disconnect: Effect.Effect<void, DisconnectionError>;
 
 	/** Execute RPC method */
@@ -140,7 +139,7 @@ export interface MountainClientService {
 	/** Health check */
 	readonly healthCheck: Effect.Effect<boolean, never>;
 
-	/** Get client metrics */
+	/** Client metrics */
 	readonly getMetrics: Effect.Effect<ClientMetrics, never>;
 }
 
@@ -165,18 +164,18 @@ export const MountainClientLive = Layer.effect(
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
-		// Connection state as reactive ref
+		// Reactive connection state ref
 		const stateRef = yield* SubscriptionRef.make<ConnectionState>({
 			_tag: "Disconnected",
 		});
 
-		// Real gRPC client (from MountainClientService)
+		// Real gRPC client
 		let realClient: RealMountainClient | undefined;
 
 		// Client config
 		let currentConfig: ClientConfig | undefined;
 
-		// Metrics - use mutable let for tracking
+		// Mutable tracking
 		let metrics: {
 			totalRequests: number;
 			successfulRequests: number;
@@ -191,16 +190,20 @@ export const MountainClientLive = Layer.effect(
 			lastRequestTime: 0,
 		};
 
-		// Latency tracking
-		const latencies: number[] = [];
+		// EMA for latency: O(1) per request, no array ops. Alpha=0.1 ≈ 10-sample window.
+		const LatencyEmaAlpha = 0.1;
+
+		let latencyEma = 0;
+
+		let latencyEmaInitialized = false;
 
 		// Server version
 		let serverVersion = "";
 
-		// Atom: Connect to Mountain
+		// Connect
 		const connect = (config?: ClientConfig) =>
 			Effect.gen(function* () {
-				// Check if already connected
+				// Already connected? short-circuit
 				const currentState = yield* stateRef.get;
 				if (currentState._tag === "Connected") {
 					telemetry.log(
@@ -211,7 +214,7 @@ export const MountainClientLive = Layer.effect(
 					return;
 				}
 
-				// Set config
+				// Build config
 				currentConfig = config ?? {
 					host: "localhost",
 					port: 50052,
@@ -228,13 +231,13 @@ export const MountainClientLive = Layer.effect(
 					`[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`,
 				);
 
-				// Update state to connecting
+				// State: Connecting
 				yield* Ref.set(stateRef, {
 					_tag: "Connecting",
 					attempt: 1,
 				});
 
-				// Connect real gRPC client to Mountain
+				// Connect real client
 				try {
 					realClient = new RealMountainClient();
 					(realClient as any).mountainHost = currentConfig.host;
@@ -262,7 +265,7 @@ export const MountainClientLive = Layer.effect(
 					);
 				}
 
-				// Update state to connected
+				// State: Connected
 				yield* Ref.set(stateRef, {
 					_tag: "Connected",
 					serverVersion,
@@ -276,11 +279,11 @@ export const MountainClientLive = Layer.effect(
 				);
 			});
 
-		// Atom: Disconnect from Mountain
+		// Disconnect
 		const disconnect = Effect.gen(function* () {
 			const currentState = yield* stateRef.get;
 
-			// Check if connected
+			// Connected? short-circuit
 			if (currentState._tag !== "Connected") {
 				telemetry.log(
 					"warn",
@@ -290,7 +293,7 @@ export const MountainClientLive = Layer.effect(
 				return;
 			}
 
-			// Update state to disconnecting
+			// State: Disconnecting
 			yield* Ref.set(stateRef, {
 				_tag: "Disconnecting",
 			});
@@ -301,13 +304,13 @@ export const MountainClientLive = Layer.effect(
 				"[MountainClient] Disconnecting from Mountain...",
 			);
 
-			// Disconnect real gRPC client
+			// Disconnect real client
 			if (realClient) {
 				yield* Effect.promise(() => realClient!.disconnect());
 				realClient = undefined;
 			}
 
-			// Update state to disconnected
+			// State: Disconnected
 			yield* Ref.set(stateRef, {
 				_tag: "Disconnected",
 			});
@@ -320,7 +323,9 @@ export const MountainClientLive = Layer.effect(
 				averageLatency: 0,
 				lastRequestTime: 0,
 			};
-			latencies.length = 0;
+			// Reset EMA
+			latencyEma = 0;
+			latencyEmaInitialized = false;
 
 			telemetry.log(
 				"info",
@@ -348,7 +353,7 @@ export const MountainClientLive = Layer.effect(
 			),
 		);
 
-		// Atom: Execute RPC method
+		// RPC
 		const rpc =
 			<T>(method: string) =>
 			(params?: Record<string, unknown>) =>
@@ -356,7 +361,7 @@ export const MountainClientLive = Layer.effect(
 					const requestStartTime = Date.now();
 					const currentState = yield* stateRef.get;
 
-					// Check if connected
+					// Connected? short-circuit
 					if (currentState._tag !== "Connected") {
 						metrics.failedRequests++;
 
@@ -373,10 +378,10 @@ export const MountainClientLive = Layer.effect(
 						params,
 					);
 
-					// Update metrics
+					// Increment metrics
 					metrics.totalRequests++;
 
-					// Real gRPC call via MountainClientService
+					// gRPC call
 					try {
 						if (!realClient) {
 							return yield* Effect.fail(
@@ -392,11 +397,16 @@ export const MountainClientLive = Layer.effect(
 						);
 
 						const processingTime = Date.now() - requestStartTime;
-						latencies.push(processingTime);
-						if (latencies.length > 100) latencies.shift();
-						metrics.averageLatency =
-							latencies.reduce((sum, lat) => sum + lat, 0) /
-							latencies.length;
+						// EMA update O(1)
+						if (latencyEmaInitialized) {
+							latencyEma =
+								processingTime * LatencyEmaAlpha +
+								latencyEma * (1 - LatencyEmaAlpha);
+						} else {
+							latencyEma = processingTime;
+							latencyEmaInitialized = true;
+						}
+						metrics.averageLatency = latencyEma;
 						metrics.lastRequestTime = Date.now();
 						metrics.successfulRequests++;
 
@@ -428,7 +438,7 @@ export const MountainClientLive = Layer.effect(
 					}
 				});
 
-		// Atom: Get Mountain version
+		// Version
 		const version = Effect.gen(function* () {
 			const currentState = yield* stateRef.get;
 
@@ -441,13 +451,7 @@ export const MountainClientLive = Layer.effect(
 			return currentState.serverVersion;
 		});
 
-		// Atom: Health check - fast local-state check followed by a real gRPC
-		// round-trip against `FileSystem.Stat` (cheap, always routed). A
-		// healthy connection must (a) be in the Connected state locally and
-		// (b) respond to a stat of `/` within the timeout. A transport
-		// failure flips the state to Error so the next request triggers
-		// auto-reconnect; an application-level error (file missing etc.) is
-		// still treated as healthy because it proves the server responds.
+		// Health check: Connected state + gRPC round-trip (stat `/`). Transport failure → Error → auto-reconnect. App errors are healthy.
 		const HealthCheckTimeoutMs = 1_000;
 		const healthCheck = Effect.gen(function* () {
 			const currentState = yield* stateRef.get;
@@ -488,8 +492,7 @@ export const MountainClientLive = Layer.effect(
 				return false;
 			}
 			if (Outcome.Kind === "app-error") {
-				// Distinguish transport failure from an application error. The
-				// server is clearly responsive (it replied) - stay Connected.
+				// Transport vs app error: server replied → stay Connected
 				const LooksLikeTransport =
 					/UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
 						Outcome.Message,
@@ -510,7 +513,7 @@ export const MountainClientLive = Layer.effect(
 			return true;
 		});
 
-		// Atom: Get metrics
+		// Get metrics
 		const getMetrics = Effect.succeed({ ...metrics } as ClientMetrics);
 
 		return {

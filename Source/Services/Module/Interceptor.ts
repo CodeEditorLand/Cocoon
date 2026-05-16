@@ -1578,36 +1578,6 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		console.log("[ModuleInterceptor] Service cleaned up");
 	}
-
-	/**
-	 * InterRequire (legacy method for backward compatibility)
-	 * @deprecated Use interceptRequire instead
-	 */
-	interceptRequire(modulePath: string, parentPath: string): any {
-		console.warn(
-			"[ModuleInterceptor] interceptRequire(modulePath, parentPath) is deprecated. Use interceptRequire(request) instead.",
-		);
-
-		// Convert to new interface
-		return this.interceptRequire({
-			moduleId: modulePath,
-			parentModule: parentPath,
-			extensionId: "legacy",
-			requirePath: modulePath,
-		});
-	}
-
-	/**
-	 * Create extension context with isolated environment
-	 * @deprecated Use createSecurityContext instead
-	 */
-	createExtensionContext(extensionId: string): any {
-		console.warn(
-			"[ModuleInterceptor] createExtensionContext is deprecated. Use createSecurityContext instead.",
-		);
-
-		return this.createSecurityContext(extensionId);
-	}
 }
 
 /**

@@ -2,15 +2,7 @@
  * @module Effect/Bootstrap
  * @description
  * Bootstrap orchestration for Cocoon Extension Host using Effect-TS.
- * Coordinates initialization stages for the extension host system.
- *
- * Bootstrap Stages:
- * 1. Environment Detection
- * 2. Configuration Loading
- * 3. gRPC Connection to Mountain
- * 4. Module Interceptor Setup
- * 5. Extension Registry Initialization
- * 6. Health Checks
+ * Coordinates initialization: environment, config, gRPC, modules, extensions, health.
  */
 
 import { createConnection } from "node:net";
@@ -27,10 +19,8 @@ import { RPCServerTag } from "./RPCServer.js";
 import { TelemetryTag, withSpan } from "./Telemetry.js";
 
 /**
- * Fast TCP port probe - returns true if a client socket can ESTABLISH (not
- * just send SYN) inside `TimeoutMs`. Used as Stage 3's pre-flight so we only
- * attempt the expensive gRPC handshake once Mountain's listener is live.
- * Cheap: one socket, one timeout, no retries.
+ * Fast TCP port probe. Returns true if a connection ESTABLISHES within TimeoutMs.
+ * Pre-flight check before the gRPC handshake.
  */
 const ProbeTcp = (
 	Host: string,
@@ -180,15 +170,7 @@ const stage2_Configuration = withSpan(
 			"[Cocoon Bootstrap] Stage 2: Loading configuration...",
 		);
 
-		// Real bootstrap configuration comes in through the environment -
-		// Mountain spawns Cocoon with `MOUNTAIN_GRPC_PORT`, `COCOON_GRPC_PORT`,
-		// `Trace`, `NODE_ENV`, etc. Extension-host settings arrive later
-		// via `InitializeExtensionHost`. Here we:
-		//   (a) parse + validate the bootstrap env vars once,
-		//   (b) report each resolved value via telemetry so a pasted log makes
-		//       misconfiguration obvious, and
-		//   (c) attach the parsed block to `globalThis.__cocoonBootstrapConfig`
-		//       so downstream stages / handlers can read without re-parsing.
+		// Parse bootstrap env vars and attach to globalThis for downstream use.
 		const ParsePort = (
 			Raw: string | undefined,
 
@@ -237,19 +219,20 @@ const stage2_Configuration = withSpan(
 );
 
 /**
- * Stage 3 tuning - exposed as constants so a future test harness can override.
- * Total worst-case duration before we give up: probe 15× + connect retry up to
- * `MountainConnectMaxAttempts`. With 250 ms probe + 500 ms initial backoff
- * doubling to 5 s cap, 15 attempts covers the 5-8 s Mountain startup window
- * observed in every rebuild so far with generous headroom.
+ * Stage 3 tuning constants. Exponential backoff TCP probe: 200ms→400ms→800ms→1s max.
+ * ~10 probes × (500ms timeout + variable gap) worst-case ~15s, typical 2-4s.
  */
-const MountainProbeTimeoutMs = 250;
+const MountainProbeTimeoutMs = 500;
 
-const MountainProbeMaxAttempts = 15;
+const MountainProbeMaxAttempts = 10;
 
 const MountainProbeDelayMs = 200;
 
-const MountainConnectMaxAttempts = 20;
+const MountainProbeBackoffFactor = 2;
+
+const MountainProbeMaxDelayMs = 1_000;
+
+const MountainConnectMaxAttempts = 15;
 
 const stage3_MountainConnection = withSpan(
 	"stage3_mountain_connection",
@@ -264,8 +247,7 @@ const stage3_MountainConnection = withSpan(
 			"[Cocoon Bootstrap] Stage 3: Connecting to Mountain...",
 		);
 
-		// Connect to Mountain's gRPC server (MountainService on port 50051).
-		// Mountain sets MOUNTAIN_GRPC_PORT env var when spawning Cocoon.
+		// Connect to Mountain gRPC server (MountainService on port from env).
 		const MountainPort = parseInt(
 			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
 
@@ -273,11 +255,9 @@ const stage3_MountainConnection = withSpan(
 		);
 		const MountainHost = "localhost";
 
-		// Pre-flight: wait for the TCP listener to come up before attempting
-		// the gRPC handshake. Without this, the first `mountainClient.connect`
-		// attempt races Mountain's boot and reports a hard ConnectionError
-		// before the in-client retry loop (SendRequestWithRetry) can recover.
+		// Pre-flight TCP probe - wait for listener before gRPC handshake.
 		let ProbeAttempt = 0;
+		let ProbeDelay = MountainProbeDelayMs;
 		let Listening = false;
 		while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
 			ProbeAttempt++;
@@ -296,7 +276,12 @@ const stage3_MountainConnection = withSpan(
 				);
 				break;
 			}
-			yield* Effect.sleep(Duration.millis(MountainProbeDelayMs));
+			// Exponential backoff: 200ms → 400ms → 800ms → 1000ms (capped)
+			yield* Effect.sleep(Duration.millis(ProbeDelay));
+			ProbeDelay = Math.min(
+				ProbeDelay * MountainProbeBackoffFactor,
+				MountainProbeMaxDelayMs,
+			);
 		}
 		if (!Listening) {
 			LandFixLog.Warn(
@@ -306,10 +291,7 @@ const stage3_MountainConnection = withSpan(
 			);
 		}
 
-		// Attempt the gRPC connect with exponential backoff. Schedule.exponential
-		// doubles each delay from 500 ms; Schedule.recurs caps total attempts.
-		// On every recur, log the failure so a pasted terminal log surfaces the
-		// cause without having to re-run with a verbose flag.
+		// gRPC connect with exponential backoff. Log failures on each retry.
 		const AttemptRef = { value: 0 };
 		const Connect = Effect.gen(function* () {
 			AttemptRef.value++;
@@ -379,10 +361,10 @@ const stage4_ModuleInterceptor = withSpan(
 			"[Cocoon Bootstrap] Stage 4: Setting up module interceptor...",
 		);
 
-		// Initialize module interceptor service
+		// Initialize and install module interceptor
 		yield* moduleInterceptor.initialize;
 
-		// Install module interceptor into Node.js module system
+		// Install into Node.js module system
 		yield* moduleInterceptor.install;
 
 		telemetry.log(
@@ -414,7 +396,6 @@ const stage5_RPCServer = withSpan(
 		);
 
 		// Start gRPC server for Mountain ← Cocoon communication.
-		// Port from env var (set by Mountain) or default 50052.
 		const CocoonPort = parseInt(
 			process.env["COCOON_GRPC_PORT"] || "50052",
 
@@ -460,12 +441,7 @@ const stage6_Extensions = withSpan(
 			`[Cocoon Bootstrap] Found ${extensions.length} extensions`,
 		);
 
-		// Parallel activation with bounded concurrency (8) and per-extension
-		// error isolation - one bad activate must not abort the stage. Sequential
-		// for-loops used to serialise activations behind any slow I/O inside an
-		// extension's activate callback (file reads, LSP launches). Effect.forEach
-		// runs up to 8 concurrently and collects all successes; failures log and
-		// fall through.
+		// Parallel activation (concurrency 8) with error isolation.
 		const EligibleExtensions = extensions.filter(
 			(Ext) => Ext.manifest.enabled,
 		);
@@ -605,8 +581,7 @@ const makeBootstrap = (): BootstrapService => ({
 
 			for (const [StageName, stage] of stages) {
 				const stageStartTime = Date.now();
-				// Wrap each stage in Effect.catchAllCause to survive fiber failures.
-				// JavaScript try/catch does NOT catch Effect fiber failures.
+				// Wrap in catchAllCause to survive fiber failures.
 				const SafeStage = Effect.suspend(() => stage as any).pipe(
 					Effect.catchAllCause((Cause) => {
 						const Message = String(Cause).slice(0, 300);

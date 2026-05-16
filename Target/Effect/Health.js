@@ -12,6 +12,9 @@ import {
   Stream,
   SubscriptionRef
 } from "effect";
+var MAX_EVENTS = 1e3;
+var MAX_METRICS_PER_NAME = 100;
+var MAX_SPANS_PER_NAME = 100;
 var TelemetryCollectionError = class extends Error {
   constructor(operation, cause) {
     super(
@@ -47,21 +50,29 @@ var TelemetryLive = Layer.effect(
         labels
       };
       const events = yield* eventsRef.get;
-      yield* Ref.set(eventsRef, [
-        ...events,
-        {
-          type: "metric",
-          timestamp: metric.timestamp,
-          data: metric
-        }
-      ]);
+      events.push({
+        type: "metric",
+        timestamp: metric.timestamp,
+        data: metric
+      });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
       const currentMetrics = yield* metricsRef.get;
       const nameMetrics = HashMap.get(currentMetrics, name).pipe(
         Option.getOrElse(() => [])
       );
+      nameMetrics.push(metric);
+      if (nameMetrics.length > MAX_METRICS_PER_NAME) {
+        nameMetrics.splice(
+          0,
+          nameMetrics.length - MAX_METRICS_PER_NAME
+        );
+      }
       yield* Ref.set(
         metricsRef,
-        HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+        HashMap.set(currentMetrics, name, nameMetrics)
       );
     }), "recordMetric");
     const startSpan = /* @__PURE__ */ __name((name, labels) => Effect.gen(function* () {
@@ -73,10 +84,15 @@ var TelemetryLive = Layer.effect(
         labels: labels ?? {}
       };
       const events = yield* eventsRef.get;
-      yield* Ref.set(eventsRef, [
-        ...events,
-        { type: "span", timestamp: startTime, data: span }
-      ]);
+      events.push({
+        type: "span",
+        timestamp: startTime,
+        data: span
+      });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
       return {
         end: /* @__PURE__ */ __name((success, error) => Effect.gen(function* () {
           const endTime = Date.now();
@@ -88,25 +104,30 @@ var TelemetryLive = Layer.effect(
             error
           };
           const events2 = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events2,
-            {
-              type: "span",
-              timestamp: endTime,
-              data: completedSpan
-            }
-          ]);
+          events2.push({
+            type: "span",
+            timestamp: endTime,
+            data: completedSpan
+          });
+          if (events2.length > MAX_EVENTS) {
+            events2.splice(0, events2.length - MAX_EVENTS);
+          }
+          yield* Ref.set(eventsRef, events2);
           const currentSpans = yield* spansRef.get;
           const nameSpans = HashMap.get(
             currentSpans,
             name
           ).pipe(Option.getOrElse(() => []));
+          nameSpans.push(completedSpan);
+          if (nameSpans.length > MAX_SPANS_PER_NAME) {
+            nameSpans.splice(
+              0,
+              nameSpans.length - MAX_SPANS_PER_NAME
+            );
+          }
           yield* Ref.set(
             spansRef,
-            HashMap.set(currentSpans, name, [
-              ...nameSpans,
-              completedSpan
-            ])
+            HashMap.set(currentSpans, name, nameSpans)
           );
         }), "end")
       };
@@ -119,10 +140,11 @@ var TelemetryLive = Layer.effect(
       };
       const timestamp = Date.now();
       const events = yield* eventsRef.get;
-      yield* Ref.set(eventsRef, [
-        ...events,
-        { type: "log", timestamp, data: logEntry }
-      ]);
+      events.push({ type: "log", timestamp, data: logEntry });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
       const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
       let ContextText = "";
       if (context && Object.keys(context).length > 0) {

@@ -12528,53 +12528,6 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       return [];
     }
   }, "getLanguages"),
-  // `match(selector, document)` - stable API used by extensions that
-  // need to score a DocumentSelector against a document before doing
-  // work (gitlens, copilot, prettier). Implements the same 0-10 rubric
-  // as stock `vs/editor/common/languageSelector.ts::score`: a plain
-  // language id match scores 10, a filter with language+scheme+pattern
-  // sums each hit, `*` is 5, unrelated is 0. Good enough to keep
-  // extensions from believing every document is unmatched.
-  match: /* @__PURE__ */ __name((Selector, Document) => {
-    const Doc = Document ?? {};
-    const ScoreOne = /* @__PURE__ */ __name((Candidate) => {
-      if (typeof Candidate === "string") {
-        if (Candidate === "*") return 5;
-        return Candidate === Doc.languageId ? 10 : 0;
-      }
-      if (Candidate && typeof Candidate === "object") {
-        const Filter = Candidate;
-        let Score = 0;
-        if (Filter.language !== void 0) {
-          if (Filter.language === "*") Score += 5;
-          else if (Filter.language === Doc.languageId)
-            Score += 10;
-          else return 0;
-        }
-        if (Filter.scheme !== void 0) {
-          if (Filter.scheme === "*") Score += 5;
-          else if (Filter.scheme === Doc.uri?.scheme) Score += 10;
-          else return 0;
-        }
-        if (Filter.pattern !== void 0) {
-          if (Doc.uri?.path?.includes(String(Filter.pattern)))
-            Score += 5;
-          else return 0;
-        }
-        return Score;
-      }
-      return 0;
-    }, "ScoreOne");
-    if (Array.isArray(Selector)) {
-      let Best = 0;
-      for (const Candidate of Selector) {
-        const Score = ScoreOne(Candidate);
-        if (Score > Best) Best = Score;
-      }
-      return Best;
-    }
-    return ScoreOne(Selector);
-  }, "match"),
   setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
     Context.SendToMountain("languages.setDocumentLanguage", {
       uri: Document?.uri?.toString?.() ?? "",

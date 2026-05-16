@@ -91,7 +91,7 @@ var init_Service2 = __esm({
         __name(this, "MountainClientService");
       }
       _serviceBrand;
-      // Core gRPC client and connection state
+      // Core gRPC state
       client = null;
       channel = null;
       mountainHost = "localhost";
@@ -102,30 +102,24 @@ var init_Service2 = __esm({
       errorCount = 0;
       requestCounter = 0;
       activeRequests = /* @__PURE__ */ new Map();
-      // Circuit breaker configuration with enhanced tracking
+      // Circuit breaker
       circuitBreakerState = "CLOSED" /* Closed */;
       circuitBreakerFailureCount = 0;
       circuitBreakerSuccessCount = 0;
       circuitBreakerThreshold = 5;
-      // Consecutive failures before opening
       circuitBreakerSuccessThreshold = 3;
-      // Consecutive successes to close
       circuitBreakerTimeout = 6e4;
-      // 60 seconds recovery timeout
+      // 60s recovery timeout
       circuitBreakerOpenTime = 0;
       circuitBreakerHalfOpenAttempts = 0;
-      // Retry configuration with exponential backoff and jitter
+      // Retry config with exponential backoff
       maxRetries = 3;
       baseRetryDelay = 1e3;
-      // Base delay in milliseconds
       maxRetryDelay = 1e4;
-      // Maximum delay in milliseconds
       retryJitterFactor = 0.2;
-      // 20% jitter
-      // Health monitoring with comprehensive tracking
+      // Health monitoring
       healthCheckInterval = null;
       healthCheckPeriod = 3e4;
-      // 30 seconds
       lastHealthCheck = 0;
       consecutiveSuccessfulHealthChecks = 0;
       healthCheckFailures = 0;
@@ -153,7 +147,7 @@ var init_Service2 = __esm({
         this.registerShutdownHandlers();
       }
       /**
-       * Parse environment variables with comprehensive configuration validation
+       * Parse environment variables
        */
       parseEnvironment() {
         const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST || "localhost";
@@ -193,7 +187,7 @@ var init_Service2 = __esm({
         }
       }
       /**
-       * Validate host configuration with comprehensive pattern matching
+       * Validate host configuration
        */
       isValidHost(host) {
         if (!host || host.trim().length === 0) {
@@ -218,7 +212,7 @@ var init_Service2 = __esm({
         return validHostPatterns.some((pattern) => pattern.test(host));
       }
       /**
-       * Register graceful shutdown handlers for VS Code extension compatibility
+       * Register shutdown handlers
        */
       registerShutdownHandlers() {
         process.on("SIGTERM", () => {
@@ -250,8 +244,7 @@ var init_Service2 = __esm({
         }
       }
       /**
-       * Connect to Mountain gRPC server with comprehensive circuit breaker protection
-       * and proper gRPC channel management
+       * Connect to Mountain gRPC server
        */
       async connect() {
         this.CheckCircuitBreaker();
@@ -330,7 +323,7 @@ var init_Service2 = __esm({
         }
       }
       /**
-       * Load protocol definition with comprehensive error handling and fallback strategies
+       * Load protocol definition with fallback strategies
        */
       async loadProtocolDefinition() {
         console.log(
@@ -481,7 +474,7 @@ message RPCDataPayload {
         }
       }
       /**
-       * Wait for connection with comprehensive timeout and readiness checking
+       * Wait for connection with timeout
        */
       waitForConnection() {
         return new Promise((resolve, reject) => {
@@ -520,8 +513,7 @@ message RPCDataPayload {
         });
       }
       /**
-       * Send request to Mountain with comprehensive circuit breaker, retry logic,
-       * cancellation support, and VS Code extension compatibility
+       * Send request to Mountain with circuit breaker and retry logic
        */
       async sendRequest(method, parameters, cancellationToken) {
         this.CheckCircuitBreaker();
@@ -673,7 +665,7 @@ message RPCDataPayload {
         }
       }
       /**
-       * Track comprehensive request performance metrics for observability
+       * Track request metrics
        */
       trackRequestMetrics(method, duration, success) {
         this.totalRequests++;
@@ -692,7 +684,7 @@ message RPCDataPayload {
         }
       }
       /**
-       * Check if error is a connection error with comprehensive pattern matching
+       * Check if error is a connection error
        */
       isConnectionError(error) {
         if (!error) return false;
@@ -731,7 +723,7 @@ message RPCDataPayload {
         return connectionErrorPatterns.some((pattern) => pattern === true);
       }
       /**
-       * Send request with exponential backoff retry logic
+       * Send request with exponential backoff retry
        */
       async SendRequestWithRetry(request) {
         if (!this.client) {

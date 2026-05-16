@@ -976,31 +976,6 @@ var ModuleInterceptor = class {
     };
     console.log("[ModuleInterceptor] Service cleaned up");
   }
-  /**
-   * InterRequire (legacy method for backward compatibility)
-   * @deprecated Use interceptRequire instead
-   */
-  interceptRequire(modulePath, parentPath) {
-    console.warn(
-      "[ModuleInterceptor] interceptRequire(modulePath, parentPath) is deprecated. Use interceptRequire(request) instead."
-    );
-    return this.interceptRequire({
-      moduleId: modulePath,
-      parentModule: parentPath,
-      extensionId: "legacy",
-      requirePath: modulePath
-    });
-  }
-  /**
-   * Create extension context with isolated environment
-   * @deprecated Use createSecurityContext instead
-   */
-  createExtensionContext(extensionId) {
-    console.warn(
-      "[ModuleInterceptor] createExtensionContext is deprecated. Use createSecurityContext instead."
-    );
-    return this.createSecurityContext(extensionId);
-  }
 };
 var ModuleInterceptorLayer = Layer.effect(
   IModuleInterceptor,

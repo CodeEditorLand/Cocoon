@@ -548,34 +548,17 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		propertyName: string,
 	): boolean {
 		const dangerousAccesses = [
-			{ object: "global", property: "eval" },
-
-			{ object: "window", property: "eval" },
-
 			{ object: "process", property: "argv" },
 
 			{ object: "process", property: "cwd" },
-		];
 
-		return dangerousAccesses.some(
-			(access) =>
-				access.object === objectName &&
-				access.property === propertyName,
-		);
-	}
-
-	/**
-	 * Check if property access is dangerous
-	 */
-	private isDangerousPropertyAccess(
-		objectName: string,
-
-		propertyName: string,
-	): boolean {
-		const dangerousAccesses = [
 			{ object: "process", property: "env" },
 
+			{ object: "global", property: "eval" },
+
 			{ object: "global", property: "process" },
+
+			{ object: "window", property: "eval" },
 
 			{ object: "window", property: "location" },
 		];

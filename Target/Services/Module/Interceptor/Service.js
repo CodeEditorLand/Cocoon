@@ -345,22 +345,12 @@ var ModuleInterceptorService = class {
    */
   isDangerousPropertyAccess(objectName, propertyName) {
     const dangerousAccesses = [
-      { object: "global", property: "eval" },
-      { object: "window", property: "eval" },
       { object: "process", property: "argv" },
-      { object: "process", property: "cwd" }
-    ];
-    return dangerousAccesses.some(
-      (access) => access.object === objectName && access.property === propertyName
-    );
-  }
-  /**
-   * Check if property access is dangerous
-   */
-  isDangerousPropertyAccess(objectName, propertyName) {
-    const dangerousAccesses = [
+      { object: "process", property: "cwd" },
       { object: "process", property: "env" },
+      { object: "global", property: "eval" },
       { object: "global", property: "process" },
+      { object: "window", property: "eval" },
       { object: "window", property: "location" }
     ];
     return dangerousAccesses.some(

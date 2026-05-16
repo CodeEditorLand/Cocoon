@@ -64,10 +64,10 @@ var init_Log2 = __esm({
         Now.getSeconds()
       )}.${PadThree(Now.getMilliseconds())}`;
     }, "FormatTimestamp");
-    SerializeContext = /* @__PURE__ */ __name((Context21) => {
+    SerializeContext = /* @__PURE__ */ __name((Context13) => {
       const Seen = /* @__PURE__ */ new WeakSet();
       try {
-        return JSON.stringify(Context21, (_Key, Value) => {
+        return JSON.stringify(Context13, (_Key, Value) => {
           if (Value instanceof Error) {
             return { name: Value.name, message: Value.message };
           }
@@ -84,47 +84,47 @@ var init_Log2 = __esm({
       }
     }, "SerializeContext");
     LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
-    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context21) => {
+    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context13) => {
       const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
-      if (!Context21) return `${Head}
+      if (!Context13) return `${Head}
 `;
-      return `${Head} ${SerializeContext(Context21)}
+      return `${Head} ${SerializeContext(Context13)}
 `;
     }, "FormatLine");
-    Emit = /* @__PURE__ */ __name((Stream2, Level, Tag, Message, Context21) => {
+    Emit = /* @__PURE__ */ __name((Stream2, Level, Tag, Message, Context13) => {
       if (!Enabled) return;
       if (AllowList && !AllowList.has(Tag)) return;
       try {
-        Stream2.write(FormatLine(Level, Tag, Message, Context21));
+        Stream2.write(FormatLine(Level, Tag, Message, Context13));
       } catch {
       }
     }, "Emit");
-    Info = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      Emit(process.stdout, "info", Tag, Message, Context21);
+    Info = /* @__PURE__ */ __name((Tag, Message, Context13) => {
+      Emit(process.stdout, "info", Tag, Message, Context13);
     }, "Info");
-    Warn = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      Emit(process.stdout, "warn", Tag, Message, Context21);
+    Warn = /* @__PURE__ */ __name((Tag, Message, Context13) => {
+      Emit(process.stdout, "warn", Tag, Message, Context13);
     }, "Warn");
-    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context21) => {
-      Emit(process.stderr, "error", Tag, Message, Context21);
+    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context13) => {
+      Emit(process.stderr, "error", Tag, Message, Context13);
     }, "ErrorLog");
-    Debug = /* @__PURE__ */ __name((Tag, Message, Context21) => {
+    Debug = /* @__PURE__ */ __name((Tag, Message, Context13) => {
       if (!DebugEnabled) return;
-      Emit(process.stdout, "debug", Tag, Message, Context21);
+      Emit(process.stdout, "debug", Tag, Message, Context13);
     }, "Debug");
     SeenOnce = /* @__PURE__ */ new Set();
-    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context21) => {
+    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context13) => {
       if (!DebugEnabled) return;
       const Combined = `${Tag}:${Key}`;
       if (SeenOnce.has(Combined)) return;
       SeenOnce.add(Combined);
-      Emit(process.stdout, "debug", Tag, Message, Context21);
+      Emit(process.stdout, "debug", Tag, Message, Context13);
     }, "DebugOnce");
-    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context21) => {
+    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context13) => {
       const Combined = `${Tag}:${Key}`;
       if (SeenOnce.has(Combined)) return;
       SeenOnce.add(Combined);
-      Emit(process.stdout, "info", Tag, Message, Context21);
+      Emit(process.stdout, "info", Tag, Message, Context13);
     }, "InfoOnce");
     LandFixLog = {
       Info,
@@ -152,10 +152,13 @@ import {
   Stream,
   SubscriptionRef
 } from "effect";
-var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
+var MAX_EVENTS, MAX_METRICS_PER_NAME, MAX_SPANS_PER_NAME, TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
 var init_Telemetry = __esm({
   "Source/Effect/Telemetry.ts"() {
     "use strict";
+    MAX_EVENTS = 1e3;
+    MAX_METRICS_PER_NAME = 100;
+    MAX_SPANS_PER_NAME = 100;
     TelemetryCollectionError = class extends Error {
       constructor(operation, cause) {
         super(
@@ -191,21 +194,29 @@ var init_Telemetry = __esm({
             labels
           };
           const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            {
-              type: "metric",
-              timestamp: metric.timestamp,
-              data: metric
-            }
-          ]);
+          events.push({
+            type: "metric",
+            timestamp: metric.timestamp,
+            data: metric
+          });
+          if (events.length > MAX_EVENTS) {
+            events.splice(0, events.length - MAX_EVENTS);
+          }
+          yield* Ref.set(eventsRef, events);
           const currentMetrics = yield* metricsRef.get;
           const nameMetrics = HashMap.get(currentMetrics, name).pipe(
             Option.getOrElse(() => [])
           );
+          nameMetrics.push(metric);
+          if (nameMetrics.length > MAX_METRICS_PER_NAME) {
+            nameMetrics.splice(
+              0,
+              nameMetrics.length - MAX_METRICS_PER_NAME
+            );
+          }
           yield* Ref.set(
             metricsRef,
-            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+            HashMap.set(currentMetrics, name, nameMetrics)
           );
         }), "recordMetric");
         const startSpan = /* @__PURE__ */ __name((name, labels) => Effect.gen(function* () {
@@ -217,10 +228,15 @@ var init_Telemetry = __esm({
             labels: labels ?? {}
           };
           const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "span", timestamp: startTime, data: span }
-          ]);
+          events.push({
+            type: "span",
+            timestamp: startTime,
+            data: span
+          });
+          if (events.length > MAX_EVENTS) {
+            events.splice(0, events.length - MAX_EVENTS);
+          }
+          yield* Ref.set(eventsRef, events);
           return {
             end: /* @__PURE__ */ __name((success, error) => Effect.gen(function* () {
               const endTime = Date.now();
@@ -232,25 +248,30 @@ var init_Telemetry = __esm({
                 error
               };
               const events2 = yield* eventsRef.get;
-              yield* Ref.set(eventsRef, [
-                ...events2,
-                {
-                  type: "span",
-                  timestamp: endTime,
-                  data: completedSpan
-                }
-              ]);
+              events2.push({
+                type: "span",
+                timestamp: endTime,
+                data: completedSpan
+              });
+              if (events2.length > MAX_EVENTS) {
+                events2.splice(0, events2.length - MAX_EVENTS);
+              }
+              yield* Ref.set(eventsRef, events2);
               const currentSpans = yield* spansRef.get;
               const nameSpans = HashMap.get(
                 currentSpans,
                 name
               ).pipe(Option.getOrElse(() => []));
+              nameSpans.push(completedSpan);
+              if (nameSpans.length > MAX_SPANS_PER_NAME) {
+                nameSpans.splice(
+                  0,
+                  nameSpans.length - MAX_SPANS_PER_NAME
+                );
+              }
               yield* Ref.set(
                 spansRef,
-                HashMap.set(currentSpans, name, [
-                  ...nameSpans,
-                  completedSpan
-                ])
+                HashMap.set(currentSpans, name, nameSpans)
               );
             }), "end")
           };
@@ -263,10 +284,11 @@ var init_Telemetry = __esm({
           };
           const timestamp = Date.now();
           const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "log", timestamp, data: logEntry }
-          ]);
+          events.push({ type: "log", timestamp, data: logEntry });
+          if (events.length > MAX_EVENTS) {
+            events.splice(0, events.length - MAX_EVENTS);
+          }
+          yield* Ref.set(eventsRef, events);
           const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
           let ContextText = "";
           if (context && Object.keys(context).length > 0) {
@@ -877,12 +899,12 @@ var init_Interceptor = __esm({
   "Source/Effect/Module/Interceptor.ts"() {
     "use strict";
     init_Telemetry();
-    SecurityLevel = /* @__PURE__ */ ((SecurityLevel4) => {
-      SecurityLevel4["TRUSTED"] = "TRUSTED";
-      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
-      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
-      SecurityLevel4["BLOCKED"] = "BLOCKED";
-      return SecurityLevel4;
+    SecurityLevel = /* @__PURE__ */ ((SecurityLevel2) => {
+      SecurityLevel2["TRUSTED"] = "TRUSTED";
+      SecurityLevel2["SANDBOXED"] = "SANDBOXED";
+      SecurityLevel2["RESTRICTED"] = "RESTRICTED";
+      SecurityLevel2["BLOCKED"] = "BLOCKED";
+      return SecurityLevel2;
     })(SecurityLevel || {});
     ModuleNotFoundError = class extends Error {
       constructor(moduleId, extensionId) {
@@ -1312,7 +1334,7 @@ var init_Service2 = __esm({
         __name(this, "MountainClientService");
       }
       _serviceBrand;
-      // Core gRPC client and connection state
+      // Core gRPC state
       client = null;
       channel = null;
       mountainHost = "localhost";
@@ -1323,30 +1345,24 @@ var init_Service2 = __esm({
       errorCount = 0;
       requestCounter = 0;
       activeRequests = /* @__PURE__ */ new Map();
-      // Circuit breaker configuration with enhanced tracking
+      // Circuit breaker
       circuitBreakerState = "CLOSED" /* Closed */;
       circuitBreakerFailureCount = 0;
       circuitBreakerSuccessCount = 0;
       circuitBreakerThreshold = 5;
-      // Consecutive failures before opening
       circuitBreakerSuccessThreshold = 3;
-      // Consecutive successes to close
       circuitBreakerTimeout = 6e4;
-      // 60 seconds recovery timeout
+      // 60s recovery timeout
       circuitBreakerOpenTime = 0;
       circuitBreakerHalfOpenAttempts = 0;
-      // Retry configuration with exponential backoff and jitter
+      // Retry config with exponential backoff
       maxRetries = 3;
       baseRetryDelay = 1e3;
-      // Base delay in milliseconds
       maxRetryDelay = 1e4;
-      // Maximum delay in milliseconds
       retryJitterFactor = 0.2;
-      // 20% jitter
-      // Health monitoring with comprehensive tracking
+      // Health monitoring
       healthCheckInterval = null;
       healthCheckPeriod = 3e4;
-      // 30 seconds
       lastHealthCheck = 0;
       consecutiveSuccessfulHealthChecks = 0;
       healthCheckFailures = 0;
@@ -1374,7 +1390,7 @@ var init_Service2 = __esm({
         this.registerShutdownHandlers();
       }
       /**
-       * Parse environment variables with comprehensive configuration validation
+       * Parse environment variables
        */
       parseEnvironment() {
         const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST || "localhost";
@@ -1414,7 +1430,7 @@ var init_Service2 = __esm({
         }
       }
       /**
-       * Validate host configuration with comprehensive pattern matching
+       * Validate host configuration
        */
       isValidHost(host) {
         if (!host || host.trim().length === 0) {
@@ -1439,7 +1455,7 @@ var init_Service2 = __esm({
         return validHostPatterns.some((pattern) => pattern.test(host));
       }
       /**
-       * Register graceful shutdown handlers for VS Code extension compatibility
+       * Register shutdown handlers
        */
       registerShutdownHandlers() {
         process.on("SIGTERM", () => {
@@ -1471,8 +1487,7 @@ var init_Service2 = __esm({
         }
       }
       /**
-       * Connect to Mountain gRPC server with comprehensive circuit breaker protection
-       * and proper gRPC channel management
+       * Connect to Mountain gRPC server
        */
       async connect() {
         this.CheckCircuitBreaker();
@@ -1551,7 +1566,7 @@ var init_Service2 = __esm({
         }
       }
       /**
-       * Load protocol definition with comprehensive error handling and fallback strategies
+       * Load protocol definition with fallback strategies
        */
       async loadProtocolDefinition() {
         console.log(
@@ -1702,7 +1717,7 @@ message RPCDataPayload {
         }
       }
       /**
-       * Wait for connection with comprehensive timeout and readiness checking
+       * Wait for connection with timeout
        */
       waitForConnection() {
         return new Promise((resolve2, reject) => {
@@ -1741,8 +1756,7 @@ message RPCDataPayload {
         });
       }
       /**
-       * Send request to Mountain with comprehensive circuit breaker, retry logic,
-       * cancellation support, and VS Code extension compatibility
+       * Send request to Mountain with circuit breaker and retry logic
        */
       async sendRequest(method, parameters, cancellationToken) {
         this.CheckCircuitBreaker();
@@ -1894,7 +1908,7 @@ message RPCDataPayload {
         }
       }
       /**
-       * Track comprehensive request performance metrics for observability
+       * Track request metrics
        */
       trackRequestMetrics(method, duration, success) {
         this.totalRequests++;
@@ -1913,7 +1927,7 @@ message RPCDataPayload {
         }
       }
       /**
-       * Check if error is a connection error with comprehensive pattern matching
+       * Check if error is a connection error
        */
       isConnectionError(error) {
         if (!error) return false;
@@ -1952,7 +1966,7 @@ message RPCDataPayload {
         return connectionErrorPatterns.some((pattern) => pattern === true);
       }
       /**
-       * Send request with exponential backoff retry logic
+       * Send request with exponential backoff retry
        */
       async SendRequestWithRetry(request2) {
         if (!this.client) {
@@ -2421,7 +2435,9 @@ var init_Client = __esm({
           averageLatency: 0,
           lastRequestTime: 0
         };
-        const latencies = [];
+        const LatencyEmaAlpha = 0.1;
+        let latencyEma = 0;
+        let latencyEmaInitialized = false;
         let serverVersion = "";
         const connect = /* @__PURE__ */ __name((config) => Effect7.gen(function* () {
           const currentState = yield* stateRef.get;
@@ -2511,7 +2527,8 @@ var init_Client = __esm({
             averageLatency: 0,
             lastRequestTime: 0
           };
-          latencies.length = 0;
+          latencyEma = 0;
+          latencyEmaInitialized = false;
           telemetry.log(
             "info",
             "[MountainClient] Disconnected from Mountain"
@@ -2561,9 +2578,13 @@ var init_Client = __esm({
               () => realClient.sendRequest(method, params)
             );
             const processingTime = Date.now() - requestStartTime;
-            latencies.push(processingTime);
-            if (latencies.length > 100) latencies.shift();
-            metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
+            if (latencyEmaInitialized) {
+              latencyEma = processingTime * LatencyEmaAlpha + latencyEma * (1 - LatencyEmaAlpha);
+            } else {
+              latencyEma = processingTime;
+              latencyEmaInitialized = true;
+            }
+            metrics.averageLatency = latencyEma;
             metrics.lastRequestTime = Date.now();
             metrics.successfulRequests++;
             telemetry.log(
@@ -2716,11 +2737,11 @@ var ConfigurationScope, IConfigurationService;
 var init_Service4 = __esm({
   "Source/Interfaces/I/Configuration/Service.ts"() {
     "use strict";
-    ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
-      ConfigurationScope3["APPLICATION"] = "APPLICATION";
-      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
-      ConfigurationScope3["PROFILE"] = "PROFILE";
-      return ConfigurationScope3;
+    ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope2) => {
+      ConfigurationScope2["APPLICATION"] = "APPLICATION";
+      ConfigurationScope2["WORKSPACE"] = "WORKSPACE";
+      ConfigurationScope2["PROFILE"] = "PROFILE";
+      return ConfigurationScope2;
     })(ConfigurationScope || {});
     IConfigurationService = Context7.Tag(
       "IConfigurationService"
@@ -3404,16 +3425,16 @@ var CreateOutputChannel_default;
 var init_CreateOutputChannel = __esm({
   "Source/Services/Handler/VscodeAPI/Window/CreateOutputChannel.ts"() {
     "use strict";
-    CreateOutputChannel_default = /* @__PURE__ */ __name((Context21, Handle, Name, Options) => {
+    CreateOutputChannel_default = /* @__PURE__ */ __name((Context13, Handle, Name, Options) => {
       const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
-      Context21.SendToMountain("outputChannel.create", {
+      Context13.SendToMountain("outputChannel.create", {
         handle: Handle,
         name: Name,
         log: IsLog
       }).catch(() => {
       });
       const Append = /* @__PURE__ */ __name((Value) => {
-        Context21.SendToMountain("outputChannel.append", {
+        Context13.SendToMountain("outputChannel.append", {
           handle: Handle,
           name: Name,
           value: Value
@@ -3426,32 +3447,32 @@ var init_CreateOutputChannel = __esm({
         appendLine: /* @__PURE__ */ __name((Value) => Append(`${Value}
 `), "appendLine"),
         clear: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("outputChannel.clear", {
+          Context13.SendToMountain("outputChannel.clear", {
             handle: Handle
           }).catch(() => {
           });
         }, "clear"),
         show: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("outputChannel.show", {
+          Context13.SendToMountain("outputChannel.show", {
             handle: Handle
           }).catch(() => {
           });
         }, "show"),
         hide: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("outputChannel.hide", {
+          Context13.SendToMountain("outputChannel.hide", {
             handle: Handle
           }).catch(() => {
           });
         }, "hide"),
         replace: /* @__PURE__ */ __name((Value) => {
-          Context21.SendToMountain("outputChannel.clear", {
+          Context13.SendToMountain("outputChannel.clear", {
             handle: Handle
           }).catch(() => {
           });
           Append(Value);
         }, "replace"),
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("outputChannel.dispose", {
+          Context13.SendToMountain("outputChannel.dispose", {
             handle: Handle
           }).catch(() => {
           });
@@ -3486,7 +3507,7 @@ var CreateStatusBarItem_default;
 var init_CreateStatusBarItem = __esm({
   "Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts"() {
     "use strict";
-    CreateStatusBarItem_default = /* @__PURE__ */ __name((Context21, Handle, AlignmentOrId, Priority) => {
+    CreateStatusBarItem_default = /* @__PURE__ */ __name((Context13, Handle, AlignmentOrId, Priority) => {
       const Item = {
         id: Handle,
         alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
@@ -3495,7 +3516,7 @@ var init_CreateStatusBarItem = __esm({
         tooltip: "",
         command: void 0,
         show: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("statusBar.update", {
+          Context13.SendToMountain("statusBar.update", {
             handle: Handle,
             text: Item.text,
             tooltip: Item.tooltip,
@@ -3505,14 +3526,14 @@ var init_CreateStatusBarItem = __esm({
           });
         }, "show"),
         hide: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("statusBar.update", {
+          Context13.SendToMountain("statusBar.update", {
             handle: Handle,
             visible: false
           }).catch(() => {
           });
         }, "hide"),
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("statusBar.dispose", {
+          Context13.SendToMountain("statusBar.dispose", {
             handle: Handle
           }).catch(() => {
           });
@@ -3528,9 +3549,9 @@ var CreateTerminal_default;
 var init_CreateTerminal = __esm({
   "Source/Services/Handler/VscodeAPI/Window/CreateTerminal.ts"() {
     "use strict";
-    CreateTerminal_default = /* @__PURE__ */ __name((Context21, Handle, Options) => {
+    CreateTerminal_default = /* @__PURE__ */ __name((Context13, Handle, Options) => {
       const Name = Options?.name ?? `Terminal ${Handle}`;
-      Context21.SendToMountain("window.createTerminal", {
+      Context13.SendToMountain("window.createTerminal", {
         handle: Handle,
         name: Name,
         options: Options ?? {}
@@ -3541,7 +3562,7 @@ var init_CreateTerminal = __esm({
         if (ProcessIdPromise !== void 0) return ProcessIdPromise;
         ProcessIdPromise = (async () => {
           try {
-            const Response = await Context21.MountainClient?.sendRequest(
+            const Response = await Context13.MountainClient?.sendRequest(
               "Terminal.GetProcessId",
               [Handle]
             );
@@ -3562,34 +3583,34 @@ var init_CreateTerminal = __esm({
           return ResolveProcessId();
         },
         sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
-          Context21.SendToMountain("terminal.sendText", {
+          Context13.SendToMountain("terminal.sendText", {
             handle: Handle,
             text: Text
           }).catch(() => {
           });
         }, "sendText"),
         show: /* @__PURE__ */ __name((PreserveFocus) => {
-          Context21.SendToMountain("terminal.show", {
+          Context13.SendToMountain("terminal.show", {
             handle: Handle,
             preserveFocus: PreserveFocus
           }).catch(() => {
           });
         }, "show"),
         hide: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("terminal.hide", {
+          Context13.SendToMountain("terminal.hide", {
             handle: Handle
           }).catch(() => {
           });
         }, "hide"),
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("terminal.dispose", {
+          Context13.SendToMountain("terminal.dispose", {
             handle: Handle
           }).catch(() => {
           });
         }, "dispose"),
         resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
           try {
-            await Context21.MountainClient?.sendRequest("Terminal.Resize", [
+            await Context13.MountainClient?.sendRequest("Terminal.Resize", [
               Handle,
               Columns,
               Rows
@@ -3607,10 +3628,10 @@ var CreateWebviewPanel_default;
 var init_CreateWebviewPanel = __esm({
   "Source/Services/Handler/VscodeAPI/Window/CreateWebviewPanel.ts"() {
     "use strict";
-    CreateWebviewPanel_default = /* @__PURE__ */ __name((Context21, Handle, ViewType, Title, ShowOptions, Options, ToWebviewUri, SharedCspSource) => {
+    CreateWebviewPanel_default = /* @__PURE__ */ __name((Context13, Handle, ViewType, Title, ShowOptions, Options, ToWebviewUri, SharedCspSource) => {
       let CurrentHtml = "";
       let CurrentOptions = Options ?? {};
-      Context21.MountainClient?.sendRequest("webview.create", {
+      Context13.MountainClient?.sendRequest("webview.create", {
         handle: Handle,
         viewType: ViewType,
         title: Title,
@@ -3628,7 +3649,7 @@ var init_CreateWebviewPanel = __esm({
           },
           set options(Value) {
             CurrentOptions = Value;
-            Context21.MountainClient?.sendRequest("webview.setOptions", {
+            Context13.MountainClient?.sendRequest("webview.setOptions", {
               handle: Handle,
               options: Value
             }).catch(() => {
@@ -3642,13 +3663,13 @@ var init_CreateWebviewPanel = __esm({
             try {
               if (process.env["Trace"]) {
                 process.stdout.write(
-                  `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context21.MountainClient}
+                  `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context13.MountainClient}
 `
                 );
               }
             } catch {
             }
-            Context21.MountainClient?.sendRequest("webview.setHtml", {
+            Context13.MountainClient?.sendRequest("webview.setHtml", {
               handle: Handle,
               html: Value
             }).then(
@@ -3680,7 +3701,7 @@ var init_CreateWebviewPanel = __esm({
           asWebviewUri: ToWebviewUri,
           postMessage: /* @__PURE__ */ __name(async (Message) => {
             try {
-              await Context21.MountainClient?.sendRequest(
+              await Context13.MountainClient?.sendRequest(
                 "webview.postMessage",
                 { handle: Handle, message: Message }
               );
@@ -3691,10 +3712,10 @@ var init_CreateWebviewPanel = __esm({
           }, "postMessage"),
           onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
             const Event2 = `webview.message:${Handle}`;
-            Context21.Emitter.on(Event2, Listener);
+            Context13.Emitter.on(Event2, Listener);
             return {
               dispose: /* @__PURE__ */ __name(() => {
-                Context21.Emitter.removeListener(Event2, Listener);
+                Context13.Emitter.removeListener(Event2, Listener);
               }, "dispose")
             };
           }, "onDidReceiveMessage")
@@ -3704,7 +3725,7 @@ var init_CreateWebviewPanel = __esm({
         active: true,
         visible: true,
         reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
-          Context21.MountainClient?.sendRequest("webview.reveal", {
+          Context13.MountainClient?.sendRequest("webview.reveal", {
             handle: Handle,
             viewColumn: Column,
             preserveFocus: PreserveFocus
@@ -3712,27 +3733,27 @@ var init_CreateWebviewPanel = __esm({
           });
         }, "reveal"),
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.removeAllListeners(`webview.message:${Handle}`);
-          Context21.MountainClient?.sendRequest("webview.dispose", {
+          Context13.Emitter.removeAllListeners(`webview.message:${Handle}`);
+          Context13.MountainClient?.sendRequest("webview.dispose", {
             handle: Handle
           }).catch(() => {
           });
         }, "dispose"),
         onDidDispose: /* @__PURE__ */ __name((Listener) => {
           const Event2 = `webview.dispose:${Handle}`;
-          Context21.Emitter.on(Event2, Listener);
+          Context13.Emitter.on(Event2, Listener);
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.Emitter.removeListener(Event2, Listener);
+              Context13.Emitter.removeListener(Event2, Listener);
             }, "dispose")
           };
         }, "onDidDispose"),
         onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
           const Event2 = `webview.viewState:${Handle}`;
-          Context21.Emitter.on(Event2, Listener);
+          Context13.Emitter.on(Event2, Listener);
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.Emitter.removeListener(Event2, Listener);
+              Context13.Emitter.removeListener(Event2, Listener);
             }, "dispose")
           };
         }, "onDidChangeViewState")
@@ -3747,7 +3768,7 @@ var CreateWebviewViewBuilder_default;
 var init_CreateWebviewViewBuilder = __esm({
   "Source/Services/Handler/VscodeAPI/Window/CreateWebviewViewBuilder.ts"() {
     "use strict";
-    CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context21, Handle, ViewId, ToWebviewUri, SharedCspSource) => {
+    CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context13, Handle, ViewId, ToWebviewUri, SharedCspSource) => {
       let CurrentHtml = "";
       let CurrentWebviewViewOptions = {
         enableScripts: true,
@@ -3779,16 +3800,16 @@ var init_CreateWebviewViewBuilder = __esm({
         }
         DisposeListeners.clear();
         VisibilityListeners.clear();
-        Context21.Emitter?.off?.(ChannelVisibility, VisibilityForward);
-        Context21.Emitter?.off?.(ChannelDispose, DisposeForward);
+        Context13.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+        Context13.Emitter?.off?.(ChannelDispose, DisposeForward);
       }, "DisposeForward");
-      Context21.Emitter?.on?.(ChannelVisibility, VisibilityForward);
-      Context21.Emitter?.on?.(ChannelDispose, DisposeForward);
+      Context13.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+      Context13.Emitter?.on?.(ChannelDispose, DisposeForward);
       let CurrentTitle;
       let CurrentDescription;
       let CurrentBadge;
       const FireMetadataUpdate = /* @__PURE__ */ __name(() => {
-        Context21.SendToMountain("webview.updateView", {
+        Context13.SendToMountain("webview.updateView", {
           handle: Handle,
           viewId: ViewId,
           title: CurrentTitle ?? null,
@@ -3862,7 +3883,7 @@ var init_CreateWebviewViewBuilder = __esm({
               }
             } catch {
             }
-            Context21.SendToMountain("webview.setHtml", {
+            Context13.SendToMountain("webview.setHtml", {
               handle: Handle,
               viewId: ViewId,
               html: CurrentHtml
@@ -3912,7 +3933,7 @@ var init_CreateWebviewViewBuilder = __esm({
           },
           set options(Value) {
             CurrentWebviewViewOptions = Value;
-            Context21.SendToMountain("webview.setOptions", {
+            Context13.SendToMountain("webview.setOptions", {
               handle: Handle,
               viewId: ViewId,
               options: Value
@@ -3922,7 +3943,7 @@ var init_CreateWebviewViewBuilder = __esm({
           cspSource: SharedCspSource,
           asWebviewUri: ToWebviewUri,
           postMessage: /* @__PURE__ */ __name(async (Message) => {
-            await Context21.SendToMountain("webview.postMessage", {
+            await Context13.SendToMountain("webview.postMessage", {
               handle: Handle,
               viewId: ViewId,
               message: Message
@@ -3932,14 +3953,14 @@ var init_CreateWebviewViewBuilder = __esm({
           }, "postMessage"),
           onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
             const Channel = `webview.message:${Handle}`;
-            Context21.Emitter?.on?.(Channel, Listener);
+            Context13.Emitter?.on?.(Channel, Listener);
             return {
-              dispose: /* @__PURE__ */ __name(() => Context21.Emitter?.off?.(Channel, Listener), "dispose")
+              dispose: /* @__PURE__ */ __name(() => Context13.Emitter?.off?.(Channel, Listener), "dispose")
             };
           }, "onDidReceiveMessage")
         },
         show: /* @__PURE__ */ __name((PreserveFocus) => {
-          Context21.SendToMountain("webview.reveal", {
+          Context13.SendToMountain("webview.reveal", {
             handle: Handle,
             viewId: ViewId,
             preserveFocus: !!PreserveFocus
@@ -4003,12 +4024,12 @@ var init_Namespace2 = __esm({
     init_CreateTerminal();
     init_CreateWebviewPanel();
     init_CreateWebviewViewBuilder();
-    MakeEventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Callback, ThisArg, Disposables) => {
+    MakeEventSubscriber = /* @__PURE__ */ __name((Context13, EventName) => (Callback, ThisArg, Disposables) => {
       const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
-      Context21.Emitter.on(EventName, Bound);
+      Context13.Emitter.on(EventName, Bound);
       const Subscription = {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.off(EventName, Bound);
+          Context13.Emitter.off(EventName, Bound);
         }, "dispose")
       };
       if (Disposables && typeof Disposables.push === "function") {
@@ -4023,7 +4044,7 @@ var init_Namespace2 = __esm({
     CustomEditorProviders = /* @__PURE__ */ new Map();
     CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
     WebviewPanels = /* @__PURE__ */ new Map();
-    RegisterCustomEditor = /* @__PURE__ */ __name((Context21, ViewType, Provider, Options, IsReadonly) => {
+    RegisterCustomEditor = /* @__PURE__ */ __name((Context13, ViewType, Provider, Options, IsReadonly) => {
       const Handle = NextProviderHandle();
       CustomEditorProviders.set(String(Handle), Provider);
       CustomEditorProvidersByViewType.set(ViewType, {
@@ -4031,7 +4052,7 @@ var init_Namespace2 = __esm({
         Readonly: IsReadonly,
         Handle
       });
-      Context21.MountainClient?.sendRequest("webview.registerCustomEditor", {
+      Context13.MountainClient?.sendRequest("webview.registerCustomEditor", {
         handle: Handle,
         viewType: ViewType,
         options: {
@@ -4074,7 +4095,7 @@ var init_Namespace2 = __esm({
         const Listener = /* @__PURE__ */ __name((Payload) => {
           void SafeAwait(Channel, MethodName, Payload);
         }, "Listener");
-        Context21.Emitter.on(Channel, Listener);
+        Context13.Emitter.on(Channel, Listener);
         Listeners.push({ Channel, Listener });
       }, "Subscribe");
       Subscribe("customEditor.saveDocument", "saveCustomDocument");
@@ -4089,7 +4110,7 @@ var init_Namespace2 = __esm({
       return {
         dispose: /* @__PURE__ */ __name(() => {
           for (const { Channel, Listener } of Listeners) {
-            Context21.Emitter.off(
+            Context13.Emitter.off(
               Channel,
               Listener
             );
@@ -4100,7 +4121,7 @@ var init_Namespace2 = __esm({
           if (ByViewType && ByViewType.Handle === Handle) {
             CustomEditorProvidersByViewType.delete(ViewType);
           }
-          Context21.MountainClient?.sendRequest(
+          Context13.MountainClient?.sendRequest(
             "webview.unregisterCustomEditor",
             { handle: Handle, viewType: ViewType }
           ).catch(() => {
@@ -4108,7 +4129,7 @@ var init_Namespace2 = __esm({
         }, "dispose")
       };
     }, "RegisterCustomEditor");
-    CreateWindowNamespace = /* @__PURE__ */ __name((Context21) => {
+    CreateWindowNamespace = /* @__PURE__ */ __name((Context13) => {
       const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
         let Options = void 0;
         let Actions = Items;
@@ -4117,7 +4138,7 @@ var init_Namespace2 = __esm({
           Actions = Items.slice(1);
         }
         try {
-          const Selection3 = await Context21.MountainClient?.sendRequest(
+          const Selection3 = await Context13.MountainClient?.sendRequest(
             "Window.ShowMessage",
             [
               {
@@ -4193,7 +4214,7 @@ var init_Namespace2 = __esm({
         showWarningMessage: ShowMessage("warn"),
         showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
           try {
-            return await Context21.MountainClient?.sendRequest(
+            return await Context13.MountainClient?.sendRequest(
               "Window.ShowQuickPick",
               [Items, Options ?? {}]
             );
@@ -4203,7 +4224,7 @@ var init_Namespace2 = __esm({
         }, "showQuickPick"),
         showInputBox: /* @__PURE__ */ __name(async (Options) => {
           try {
-            return await Context21.MountainClient?.sendRequest(
+            return await Context13.MountainClient?.sendRequest(
               "Window.ShowInputBox",
               [Options ?? {}]
             );
@@ -4213,7 +4234,7 @@ var init_Namespace2 = __esm({
         }, "showInputBox"),
         showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
           try {
-            const Selected = await Context21.MountainClient?.sendRequest(
+            const Selected = await Context13.MountainClient?.sendRequest(
               "Window.ShowOpenDialog",
               [Options ?? {}]
             );
@@ -4224,7 +4245,7 @@ var init_Namespace2 = __esm({
         }, "showOpenDialog"),
         showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
           try {
-            return await Context21.MountainClient?.sendRequest(
+            return await Context13.MountainClient?.sendRequest(
               "Window.ShowSaveDialog",
               [Options ?? {}]
             );
@@ -4232,17 +4253,17 @@ var init_Namespace2 = __esm({
             return void 0;
           }
         }, "showSaveDialog"),
-        createTerminal: /* @__PURE__ */ __name((Options) => CreateTerminal_default(Context21, NextProviderHandle(), Options), "createTerminal"),
+        createTerminal: /* @__PURE__ */ __name((Options) => CreateTerminal_default(Context13, NextProviderHandle(), Options), "createTerminal"),
         createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => CreateStatusBarItem_default(
-          Context21,
+          Context13,
           NextProviderHandle(),
           AlignmentOrId,
           Priority
         ), "createStatusBarItem"),
-        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => CreateOutputChannel_default(Context21, NextProviderHandle(), Name, Options), "createOutputChannel"),
+        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => CreateOutputChannel_default(Context13, NextProviderHandle(), Name, Options), "createOutputChannel"),
         createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
           const Key = `decoration:${Math.random().toString(36).slice(2)}`;
-          Context21.SendToMountain("window.createTextEditorDecorationType", {
+          Context13.SendToMountain("window.createTextEditorDecorationType", {
             key: Key,
             options: Options ?? {}
           }).catch(() => {
@@ -4250,7 +4271,7 @@ var init_Namespace2 = __esm({
           return {
             key: Key,
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain(
+              Context13.SendToMountain(
                 "window.disposeTextEditorDecorationType",
                 {
                   key: Key
@@ -4333,7 +4354,7 @@ var init_Namespace2 = __esm({
         createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
           const Handle = NextProviderHandle();
           const Panel = CreateWebviewPanel_default(
-            Context21,
+            Context13,
             Handle,
             ViewType,
             Title,
@@ -4346,7 +4367,7 @@ var init_Namespace2 = __esm({
           return Panel;
         }, "createWebviewPanel"),
         showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          Context21.SendToMountain("window.showTextDocument", {
+          Context13.SendToMountain("window.showTextDocument", {
             document: _Document,
             column: _Column,
             preserveFocus: _PreserveFocus
@@ -4364,16 +4385,16 @@ var init_Namespace2 = __esm({
             activeTab: void 0
           },
           onDidChangeTabs: MakeEventSubscriber(
-            Context21,
+            Context13,
             "window.didChangeTabs"
           ),
           onDidChangeTabGroups: MakeEventSubscriber(
-            Context21,
+            Context13,
             "window.didChangeTabGroups"
           ),
           close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
             try {
-              await Context21.MountainClient?.sendRequest(
+              await Context13.MountainClient?.sendRequest(
                 "Command.Execute",
                 ["workbench.action.closeActiveEditor", []]
               );
@@ -4387,12 +4408,12 @@ var init_Namespace2 = __esm({
           kind: 2,
           // ColorThemeKind.Dark
           onDidChange: MakeEventSubscriber(
-            Context21,
+            Context13,
             "window.didChangeActiveColorTheme"
           )
         },
         onDidChangeActiveColorTheme: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeActiveColorTheme"
         ),
         createTreeView: /* @__PURE__ */ __name((Id, Options) => {
@@ -4406,7 +4427,7 @@ var init_Namespace2 = __esm({
               canSelectMany: Options?.canSelectMany === true,
               manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
             };
-            Context21.MountainClient?.sendRequest("tree.register", [
+            Context13.MountainClient?.sendRequest("tree.register", [
               Handle,
               Id,
               SerializableOptions
@@ -4418,7 +4439,7 @@ var init_Namespace2 = __esm({
             }, "reveal"),
             dispose: /* @__PURE__ */ __name(() => {
               TreeDataProvidersByViewId.delete(Id);
-              Context21.MountainClient?.sendRequest("tree.dispose", [
+              Context13.MountainClient?.sendRequest("tree.dispose", [
                 Id
               ]).catch(() => {
               });
@@ -4445,7 +4466,7 @@ var init_Namespace2 = __esm({
           const Handle = NextProviderHandle();
           TreeDataProviders.set(String(Handle), Provider);
           TreeDataProvidersByViewId.set(ViewId, Provider);
-          Context21.MountainClient?.sendRequest("tree.register", [
+          Context13.MountainClient?.sendRequest("tree.register", [
             Handle,
             ViewId,
             {}
@@ -4455,7 +4476,7 @@ var init_Namespace2 = __esm({
             dispose: /* @__PURE__ */ __name(() => {
               TreeDataProviders.delete(String(Handle));
               TreeDataProvidersByViewId.delete(ViewId);
-              Context21.MountainClient?.sendRequest("tree.unregister", [
+              Context13.MountainClient?.sendRequest("tree.unregister", [
                 Handle
               ]).catch(() => {
               });
@@ -4469,14 +4490,14 @@ var init_Namespace2 = __esm({
           WebviewViewProviders.set(String(Handle), Provider);
           WebviewViewBuilders.set(String(Handle), () => {
             return CreateWebviewViewBuilder_default(
-              Context21,
+              Context13,
               Handle,
               ViewId,
               ToWebviewUri,
               SharedCspSource
             );
           });
-          Context21.MountainClient?.sendRequest("webview.registerView", {
+          Context13.MountainClient?.sendRequest("webview.registerView", {
             handle: Handle,
             viewId: ViewId
           }).catch(() => {
@@ -4485,7 +4506,7 @@ var init_Namespace2 = __esm({
             dispose: /* @__PURE__ */ __name(() => {
               WebviewViewProviders.delete(String(Handle));
               WebviewViewBuilders.delete(String(Handle));
-              Context21.MountainClient?.sendRequest(
+              Context13.MountainClient?.sendRequest(
                 "webview.unregisterView",
                 { handle: Handle, viewId: ViewId }
               ).catch(() => {
@@ -4494,7 +4515,7 @@ var init_Namespace2 = __esm({
           };
         }, "registerWebviewViewProvider"),
         registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
-          Context21,
+          Context13,
           ViewType,
           Provider,
           Options ?? {},
@@ -4509,7 +4530,7 @@ var init_Namespace2 = __esm({
         // registrations so the workbench-side lifecycle still runs the
         // resolveCustomTextEditor / resolveCustomEditor path correctly.
         registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
-          Context21,
+          Context13,
           ViewType,
           Provider,
           Options ?? {},
@@ -4517,21 +4538,21 @@ var init_Namespace2 = __esm({
         ), "registerCustomReadonlyEditorProvider"),
         registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
           const Handle = NextProviderHandle();
-          Context21.SendToMountain("register_file_decoration_provider", {
+          Context13.SendToMountain("register_file_decoration_provider", {
             handle: Handle,
             extensionId: ""
           }).catch(() => {
           });
-          Context21.ExtensionRegistry.set(
+          Context13.ExtensionRegistry.set(
             `__fileDecorationProvider:${Handle}`,
             Provider
           );
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(
+              Context13.ExtensionRegistry.delete(
                 `__fileDecorationProvider:${Handle}`
               );
-              Context21.SendToMountain(
+              Context13.SendToMountain(
                 "unregister_file_decoration_provider",
                 { handle: Handle }
               ).catch(() => {
@@ -4541,16 +4562,16 @@ var init_Namespace2 = __esm({
         }, "registerFileDecorationProvider"),
         registerUriHandler: /* @__PURE__ */ __name((Handler) => {
           const Handle = NextProviderHandle();
-          Context21.SendToMountain("register_uri_handler", {
+          Context13.SendToMountain("register_uri_handler", {
             handle: Handle,
             extensionId: ""
           }).catch(() => {
           });
-          Context21.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+          Context13.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
-              Context21.SendToMountain("unregister_uri_handler", {
+              Context13.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+              Context13.SendToMountain("unregister_uri_handler", {
                 handle: Handle
               }).catch(() => {
               });
@@ -4559,21 +4580,21 @@ var init_Namespace2 = __esm({
         }, "registerUriHandler"),
         registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
           const Handle = NextProviderHandle();
-          Context21.SendToMountain("register_terminal_link_provider", {
+          Context13.SendToMountain("register_terminal_link_provider", {
             handle: Handle,
             extensionId: ""
           }).catch(() => {
           });
-          Context21.ExtensionRegistry.set(
+          Context13.ExtensionRegistry.set(
             `__terminalLinkProvider:${Handle}`,
             Provider
           );
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(
+              Context13.ExtensionRegistry.delete(
                 `__terminalLinkProvider:${Handle}`
               );
-              Context21.SendToMountain(
+              Context13.SendToMountain(
                 "unregister_terminal_link_provider",
                 { handle: Handle }
               ).catch(() => {
@@ -4583,22 +4604,22 @@ var init_Namespace2 = __esm({
         }, "registerTerminalLinkProvider"),
         registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
           const Handle = NextProviderHandle();
-          Context21.SendToMountain("register_terminal_profile_provider", {
+          Context13.SendToMountain("register_terminal_profile_provider", {
             handle: Handle,
             profileId: Id,
             extensionId: ""
           }).catch(() => {
           });
-          Context21.ExtensionRegistry.set(
+          Context13.ExtensionRegistry.set(
             `__terminalProfileProvider:${Handle}`,
             Provider
           );
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.ExtensionRegistry.delete(
+              Context13.ExtensionRegistry.delete(
                 `__terminalProfileProvider:${Handle}`
               );
-              Context21.SendToMountain(
+              Context13.SendToMountain(
                 "unregister_terminal_profile_provider",
                 { handle: Handle }
               ).catch(() => {
@@ -4612,7 +4633,7 @@ var init_Namespace2 = __esm({
         }), "registerProfileContentHandler"),
         registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
           const Handle = NextProviderHandle();
-          Context21.SendToMountain("register_external_uri_opener", {
+          Context13.SendToMountain("register_external_uri_opener", {
             handle: Handle,
             openerId: Id,
             extensionId: ""
@@ -4620,7 +4641,7 @@ var init_Namespace2 = __esm({
           });
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.SendToMountain("unregister_external_uri_opener", {
+              Context13.SendToMountain("unregister_external_uri_opener", {
                 handle: Handle
               }).catch(() => {
               });
@@ -4641,7 +4662,7 @@ var init_Namespace2 = __esm({
           const Progress = {
             report: /* @__PURE__ */ __name((Value) => {
               if (Value?.increment) Increment += Value.increment;
-              Context21.SendToMountain("progress.report", {
+              Context13.SendToMountain("progress.report", {
                 handle: Handle,
                 title: Title,
                 location: Location3,
@@ -4651,28 +4672,28 @@ var init_Namespace2 = __esm({
               });
             }, "report")
           };
-          const CancellationToken3 = {
+          const CancellationToken2 = {
             isCancellationRequested: false,
             onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
             }, "dispose") }), "onCancellationRequested")
           };
-          Context21.SendToMountain("progress.start", {
+          Context13.SendToMountain("progress.start", {
             handle: Handle,
             title: Title,
             location: Location3
           }).catch(() => {
           });
           try {
-            return await Task3(Progress, CancellationToken3);
+            return await Task3(Progress, CancellationToken2);
           } finally {
-            Context21.SendToMountain("progress.end", {
+            Context13.SendToMountain("progress.end", {
               handle: Handle
             }).catch(() => {
             });
           }
         }, "withProgress"),
         setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
-          Context21.SendToMountain("statusBar.message", {
+          Context13.SendToMountain("statusBar.message", {
             text: Text,
             hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
           }).catch(() => {
@@ -4689,7 +4710,7 @@ var init_Namespace2 = __esm({
         // "auto-pick first folder" keeps those flows functional until the
         // picker is wired to Sky.
         showWorkspaceFolderPick: /* @__PURE__ */ __name(async (_Options) => {
-          const Folders = Context21.ExtensionHostInitData?.workspace?.folders ?? [];
+          const Folders = Context13.ExtensionHostInitData?.workspace?.folders ?? [];
           return Folders[0];
         }, "showWorkspaceFolderPick"),
         // `withScmProgress` - deprecated in `vscode.d.ts` but still present
@@ -4709,63 +4730,63 @@ var init_Namespace2 = __esm({
         }, "dispose") }), "registerQuickDiffProvider"),
         // Events sourced from Mountain gRPC notifications → Context.Emitter
         onDidChangeActiveTextEditor: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeActiveTextEditor"
         ),
         onDidChangeVisibleTextEditors: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeVisibleTextEditors"
         ),
         onDidChangeTextEditorSelection: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTextEditorSelection"
         ),
         onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTextEditorVisibleRanges"
         ),
         onDidChangeTextEditorOptions: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTextEditorOptions"
         ),
         onDidChangeTextEditorViewColumn: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTextEditorViewColumn"
         ),
         onDidOpenTerminal: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didOpenTerminal"
         ),
         onDidCloseTerminal: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didCloseTerminal"
         ),
         onDidChangeActiveTerminal: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeActiveTerminal"
         ),
         onDidChangeTerminalState: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTerminalState"
         ),
-        onDidWriteTerminalData: MakeEventSubscriber(Context21, "terminalData"),
+        onDidWriteTerminalData: MakeEventSubscriber(Context13, "terminalData"),
         // Shell-integration events added for openai.chatgpt activation;
         // Land doesn't track shell integration yet so these fire never.
         // Must be a subscribable function, not a plain object.
         onDidChangeTerminalShellIntegration: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTerminalShellIntegration"
         ),
         onDidStartTerminalShellExecution: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didStartTerminalShellExecution"
         ),
         onDidEndTerminalShellExecution: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didEndTerminalShellExecution"
         ),
         onDidChangeWindowState: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeWindowState"
         ),
         // `vscode.git`'s `init()` subscribes to this at
@@ -4780,11 +4801,11 @@ var init_Namespace2 = __esm({
         // would route Mountain's diff-decoration change stream into a
         // `window.didChangeTextEditorDiffInformation` emit.
         onDidChangeTextEditorDiffInformation: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didChangeTextEditorDiffInformation"
         ),
         onDidExecuteTerminalCommand: MakeEventSubscriber(
-          Context21,
+          Context13,
           "window.didExecuteTerminalCommand"
         ),
         activeTextEditor: void 0,
@@ -4847,26 +4868,26 @@ var init_Handler = __esm({
       console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
       const RoutePatterns = {
         "extension.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { ServiceMapping } = await init_Mapping().then(() => Mapping_exports);
           const { IExtensionHostService: IExtensionHostService2 } = await Promise.resolve().then(() => (init_Service3(), Service_exports2));
           switch (Method2) {
             case "extension.activate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService2);
-              return await ExtensionHostService2.activateExtension(
+              const ExtensionHostService = await ServiceMapping.getService(IExtensionHostService2);
+              return await ExtensionHostService.activateExtension(
                 Params.extensionId,
                 Params.reason
               );
             }
             case "extension.deactivate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService2);
-              await ExtensionHostService2.deactivateExtension(
+              const ExtensionHostService = await ServiceMapping.getService(IExtensionHostService2);
+              await ExtensionHostService.deactivateExtension(
                 Params.extensionId
               );
               return { success: true };
             }
             case "extension.get": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService2);
-              return ExtensionHostService2.getActivatedExtension(
+              const ExtensionHostService = await ServiceMapping.getService(IExtensionHostService2);
+              return ExtensionHostService.getActivatedExtension(
                 Params.extensionId
               );
             }
@@ -4875,11 +4896,11 @@ var init_Handler = __esm({
           }
         }, "extension.\\w+"),
         "configuration.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { ServiceMapping } = await init_Mapping().then(() => Mapping_exports);
           const { IConfigurationService: IConfigurationService2 } = await Promise.resolve().then(() => (init_Service4(), Service_exports3));
           switch (Method2) {
             case "configuration.get": {
-              const ConfigService = await ServiceMapping2.getService(
+              const ConfigService = await ServiceMapping.getService(
                 IConfigurationService2
               );
               return await ConfigService.getValue(
@@ -4888,7 +4909,7 @@ var init_Handler = __esm({
               );
             }
             case "configuration.set": {
-              const ConfigService = await ServiceMapping2.getService(
+              const ConfigService = await ServiceMapping.getService(
                 IConfigurationService2
               );
               await ConfigService.setValue(
@@ -4899,7 +4920,7 @@ var init_Handler = __esm({
               return { success: true };
             }
             case "configuration.update": {
-              const ConfigService = await ServiceMapping2.getService(
+              const ConfigService = await ServiceMapping.getService(
                 IConfigurationService2
               );
               await ConfigService.updateValue(
@@ -5112,23 +5133,23 @@ var init_Handler = __esm({
           }
         }, "webview\\.\\w+"),
         "performance.\\w+": /* @__PURE__ */ __name(async (Method2, _Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { ServiceMapping } = await init_Mapping().then(() => Mapping_exports);
           const { IPerformanceMonitoringService: IPerformanceMonitoringService2 } = await Promise.resolve().then(() => (init_Service5(), Service_exports4));
           switch (Method2) {
             case "performance.metrics": {
-              const PerfService = await ServiceMapping2.getService(
+              const PerfService = await ServiceMapping.getService(
                 IPerformanceMonitoringService2
               );
               return PerfService.getMetrics();
             }
             case "performance.alerts": {
-              const PerfService = await ServiceMapping2.getService(
+              const PerfService = await ServiceMapping.getService(
                 IPerformanceMonitoringService2
               );
               return PerfService.getAlerts();
             }
             case "performance.report": {
-              const PerfService = await ServiceMapping2.getService(
+              const PerfService = await ServiceMapping.getService(
                 IPerformanceMonitoringService2
               );
               return PerfService.generateReport();
@@ -5138,22 +5159,22 @@ var init_Handler = __esm({
           }
         }, "performance.\\w+"),
         "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
-          const { ServiceMapping: ServiceMapping2 } = await init_Mapping().then(() => Mapping_exports);
+          const { ServiceMapping } = await init_Mapping().then(() => Mapping_exports);
           const { ISecurityService: ISecurityService2 } = await Promise.resolve().then(() => (init_Service6(), Service_exports5));
           switch (Method2) {
             case "security.policy": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService2);
-              return await SecurityService2.getSecurityPolicy(
+              const SecurityService = await ServiceMapping.getService(ISecurityService2);
+              return await SecurityService.getSecurityPolicy(
                 Params.extensionId
               );
             }
             case "security.audit": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService2);
-              return SecurityService2.getAuditLog();
+              const SecurityService = await ServiceMapping.getService(ISecurityService2);
+              return SecurityService.getAuditLog();
             }
             case "security.incidents": {
-              const SecurityService2 = await ServiceMapping2.getService(ISecurityService2);
-              return SecurityService2.getActiveIncidents();
+              const SecurityService = await ServiceMapping.getService(ISecurityService2);
+              return SecurityService.getActiveIncidents();
             }
             default:
               throw new Error(`Unknown security method: ${Method2}`);
@@ -5201,7 +5222,7 @@ var init_RouteManifest = __esm({
       mountain: 118,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-16T00:48:05Z"
+      generatedAt: "2026-05-16T21:34:14Z"
     };
   }
 });
@@ -5224,7 +5245,7 @@ function IsUnknownMethodError(Err) {
   if (!Message) return false;
   return Message.includes("Unknown method:") || Message.includes("Unknown IPC command") || Message.includes("no handler for method") || Message.includes("not routed to any domain");
 }
-async function TryMountainThenNode(Context21, Method, Arguments, NodeFallback) {
+async function TryMountainThenNode(Context13, Method, Arguments, NodeFallback) {
   if (!IsRustDeferralEnabled(Method)) {
     LogDualTrack(Method, "node-bypass");
     try {
@@ -5244,7 +5265,7 @@ async function TryMountainThenNode(Context21, Method, Arguments, NodeFallback) {
     }
   }
   try {
-    const MountainResult = await Context21.MountainClient?.sendRequest(
+    const MountainResult = await Context13.MountainClient?.sendRequest(
       Method,
       Arguments
     );
@@ -5264,7 +5285,7 @@ async function TryMountainThenNode(Context21, Method, Arguments, NodeFallback) {
     throw Err;
   }
 }
-async function TryMountainWithEmptyFallback(Context21, Method, Arguments, NodeFallback, IsEmpty) {
+async function TryMountainWithEmptyFallback(Context13, Method, Arguments, NodeFallback, IsEmpty) {
   if (!IsRustDeferralEnabled(Method)) {
     LogDualTrack(Method, "node-bypass");
     try {
@@ -5286,7 +5307,7 @@ async function TryMountainWithEmptyFallback(Context21, Method, Arguments, NodeFa
   let MountainResult;
   let MountainSucceeded = false;
   try {
-    MountainResult = await Context21.MountainClient?.sendRequest(
+    MountainResult = await Context13.MountainClient?.sendRequest(
       Method,
       Arguments
     );
@@ -5397,7 +5418,7 @@ var init_Track = __esm({
     __name(TryMountainThenNode, "TryMountainThenNode");
     __name(TryMountainWithEmptyFallback, "TryMountainWithEmptyFallback");
     __name(MarkUnavailable, "MarkUnavailable");
-    SendToMountainOrLocal = /* @__PURE__ */ __name((Context21, Method, Payload, OnLocalFallback) => {
+    SendToMountainOrLocal = /* @__PURE__ */ __name((Context13, Method, Payload, OnLocalFallback) => {
       if (!IsRustDeferralEnabled(Method)) {
         LogDualTrack(Method, "node-bypass");
         try {
@@ -5406,8 +5427,8 @@ var init_Track = __esm({
         }
         return Promise.resolve();
       }
-      const Send = Context21.SendToMountain;
-      return Send.call(Context21, Method, Payload).then(
+      const Send = Context13.SendToMountain;
+      return Send.call(Context13, Method, Payload).then(
         () => {
           LogDualTrack(Method, "mountain");
         },
@@ -12869,9 +12890,9 @@ var init_cancellation = __esm({
         clearTimeout(handle);
       } };
     });
-    (function(CancellationToken3) {
+    (function(CancellationToken2) {
       function isCancellationToken(thing) {
-        if (thing === CancellationToken3.None || thing === CancellationToken3.Cancelled) {
+        if (thing === CancellationToken2.None || thing === CancellationToken2.Cancelled) {
           return true;
         }
         if (thing instanceof MutableToken) {
@@ -12883,12 +12904,12 @@ var init_cancellation = __esm({
         return typeof thing.isCancellationRequested === "boolean" && typeof thing.onCancellationRequested === "function";
       }
       __name(isCancellationToken, "isCancellationToken");
-      CancellationToken3.isCancellationToken = isCancellationToken;
-      CancellationToken3.None = Object.freeze({
+      CancellationToken2.isCancellationToken = isCancellationToken;
+      CancellationToken2.None = Object.freeze({
         isCancellationRequested: false,
         onCancellationRequested: Event.None
       });
-      CancellationToken3.Cancelled = Object.freeze({
+      CancellationToken2.Cancelled = Object.freeze({
         isCancellationRequested: true,
         onCancellationRequested: shortcutEvent
       });
@@ -27556,20 +27577,20 @@ var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToF
 var init_Helpers = __esm({
   "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Helpers.ts"() {
     "use strict";
-    EventSubscriber = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
-      Context21.WorkspaceEventEmitter.on(EventName, Listener);
+    EventSubscriber = /* @__PURE__ */ __name((Context13, EventName) => (Listener) => {
+      Context13.WorkspaceEventEmitter.on(EventName, Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.WorkspaceEventEmitter.removeListener(
+          Context13.WorkspaceEventEmitter.removeListener(
             EventName,
             Listener
           );
         }, "dispose")
       };
     }, "EventSubscriber");
-    Call = /* @__PURE__ */ __name(async (Context21, Method, Parameters) => {
+    Call = /* @__PURE__ */ __name(async (Context13, Method, Parameters) => {
       try {
-        return await Context21.MountainClient?.sendRequest(
+        return await Context13.MountainClient?.sendRequest(
           Method,
           Parameters
         );
@@ -27614,8 +27635,8 @@ var init_Helpers = __esm({
       }
       return Raw2;
     }, "FolderToFsPath");
-    ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context21) => {
-      const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+    ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context13) => {
+      const InitWorkspace = Context13.ExtensionHostInitData?.workspace ?? Context13.ExtensionHostInitData?.workspaceData ?? {};
       return (InitWorkspace.folders ?? []).map(
         (Folder) => {
           const FsPath = FolderToFsPath(Folder?.uri);
@@ -27635,7 +27656,7 @@ var init_Configuration2 = __esm({
     "use strict";
     init_Log();
     init_Helpers();
-    CreateConfigurationState = /* @__PURE__ */ __name((Context21) => {
+    CreateConfigurationState = /* @__PURE__ */ __name((Context13) => {
       const ConfigCache = /* @__PURE__ */ new Map();
       const ConfigInFlight = /* @__PURE__ */ new Set();
       const ConfigListeners = /* @__PURE__ */ new Set();
@@ -27655,7 +27676,7 @@ var init_Configuration2 = __esm({
         if (ConfigInFlight.has(Key)) return;
         ConfigInFlight.add(Key);
         void Call(
-          Context21,
+          Context13,
           "Configuration.Inspect",
           [Key]
         ).then((Value) => {
@@ -27699,7 +27720,7 @@ var init_Configuration2 = __esm({
           `[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`
         );
       }, "PrePopulateFromManifest");
-      Context21.Emitter.on("configurationChanged", (Payload) => {
+      Context13.Emitter.on("configurationChanged", (Payload) => {
         const Shape = Payload ?? {};
         const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
         if (Keys.length === 0) {
@@ -27742,7 +27763,7 @@ var init_Configuration2 = __esm({
       }
       return Matched ? Subtree : void 0;
     }, "SynthesiseSubtree");
-    BuildGetConfiguration = /* @__PURE__ */ __name((Context21, State) => (Section, _Scope) => ({
+    BuildGetConfiguration = /* @__PURE__ */ __name((Context13, State) => (Section, _Scope) => ({
       get: /* @__PURE__ */ __name((Key, DefaultValue) => {
         const Full = Section ? `${Section}.${Key}` : Key;
         if (State.ConfigCache.has(Full)) {
@@ -27773,7 +27794,7 @@ var init_Configuration2 = __esm({
       update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
         const Full = Section ? `${Section}.${Key}` : Key;
         const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
-        await Call(Context21, "Configuration.Update", [
+        await Call(Context13, "Configuration.Update", [
           Full,
           Value,
           TargetIndex
@@ -27895,9 +27916,9 @@ var init_Providers = __esm({
   "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Providers.ts"() {
     "use strict";
     init_Registry();
-    MakeProvider = /* @__PURE__ */ __name((Context21, RegisterMethod, UnregisterMethod, _LegacyHandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
+    MakeProvider = /* @__PURE__ */ __name((Context13, RegisterMethod, UnregisterMethod, _LegacyHandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
       const Handle = NextProviderHandle();
-      Context21.SendToMountain(RegisterMethod, {
+      Context13.SendToMountain(RegisterMethod, {
         handle: Handle,
         ...ExtraPayload(Key)
       }).catch(() => {
@@ -27906,36 +27927,36 @@ var init_Providers = __esm({
       return {
         dispose: /* @__PURE__ */ __name(() => {
           OnDispose?.(Handle, Key);
-          Context21.SendToMountain(UnregisterMethod, {
+          Context13.SendToMountain(UnregisterMethod, {
             handle: Handle
           }).catch(() => {
           });
         }, "dispose")
       };
     }, "MakeProvider");
-    BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context21) => MakeProvider(
-      Context21,
+    BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context13) => MakeProvider(
+      Context13,
       "register_text_document_content_provider",
       "unregister_text_document_content_provider",
       "textDocumentContent",
       (Scheme) => ({ scheme: Scheme, extensionId: "" }),
       (_Handle, Scheme, Provider) => {
-        Context21.ExtensionRegistry.set(
+        Context13.ExtensionRegistry.set(
           `__textDocumentContentProvider:${Scheme}`,
           Provider
         );
       },
       (_Handle, Scheme) => {
-        Context21.ExtensionRegistry.delete(
+        Context13.ExtensionRegistry.delete(
           `__textDocumentContentProvider:${Scheme}`
         );
       }
     ), "BuildRegisterTextDocumentContentProvider");
     ClaimedFileSystemSchemes = /* @__PURE__ */ new Set();
-    BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context21) => (Scheme, _Provider, Options) => {
+    BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context13) => (Scheme, _Provider, Options) => {
       const Handle = NextProviderHandle();
       ClaimedFileSystemSchemes.add(Scheme);
-      Context21.SendToMountain("register_file_system_provider", {
+      Context13.SendToMountain("register_file_system_provider", {
         handle: Handle,
         scheme: Scheme,
         isCaseSensitive: Options?.isCaseSensitive ?? true,
@@ -27946,51 +27967,51 @@ var init_Providers = __esm({
       return {
         dispose: /* @__PURE__ */ __name(() => {
           ClaimedFileSystemSchemes.delete(Scheme);
-          Context21.SendToMountain("unregister_file_system_provider", {
+          Context13.SendToMountain("unregister_file_system_provider", {
             handle: Handle
           }).catch(() => {
           });
         }, "dispose")
       };
     }, "BuildRegisterFileSystemProvider");
-    BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context21) => MakeProvider(
-      Context21,
+    BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context13) => MakeProvider(
+      Context13,
       "register_task_provider",
       "unregister_task_provider",
       "taskProvider",
       (TaskType) => ({ taskType: TaskType, extensionId: "" })
     ), "BuildRegisterTaskProvider");
-    BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context21) => MakeProvider(
-      Context21,
+    BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context13) => MakeProvider(
+      Context13,
       "register_notebook_content_provider",
       "unregister_notebook_content_provider",
       "notebookContent",
       (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
     ), "BuildRegisterNotebookContentProvider");
-    BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context21) => MakeProvider(
-      Context21,
+    BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context13) => MakeProvider(
+      Context13,
       "register_notebook_serializer",
       "unregister_notebook_serializer",
       "notebookSerializer",
       (NotebookType) => ({ notebookType: NotebookType, extensionId: "" })
     ), "BuildRegisterNotebookSerializer");
-    BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context21) => (AuthorityPrefix, _Resolver) => {
-      Context21.SendToMountain("register_remote_authority_resolver", {
+    BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context13) => (AuthorityPrefix, _Resolver) => {
+      Context13.SendToMountain("register_remote_authority_resolver", {
         authorityPrefix: AuthorityPrefix,
         extensionId: ""
       }).catch(() => {
       });
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.SendToMountain("unregister_remote_authority_resolver", {
+          Context13.SendToMountain("unregister_remote_authority_resolver", {
             authorityPrefix: AuthorityPrefix
           }).catch(() => {
           });
         }, "dispose")
       };
     }, "BuildRegisterRemoteAuthorityResolver");
-    BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context21) => (Formatter) => {
-      Context21.SendToMountain("register_resource_label_formatter", {
+    BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context13) => (Formatter) => {
+      Context13.SendToMountain("register_resource_label_formatter", {
         formatter: Formatter
       }).catch(() => {
       });
@@ -28133,7 +28154,7 @@ var init_Namespace3 = __esm({
       mtime: Math.floor(Metadata.mtimeMs),
       ctime: Math.floor(Metadata.ctimeMs)
     }), "MetadataToStat");
-    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context21) => ({
+    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context13) => ({
       stat: /* @__PURE__ */ __name(async (Uri2) => {
         const Decision = Route(Uri2);
         LogRoute("stat", Uri2, Decision);
@@ -28147,7 +28168,7 @@ var init_Namespace3 = __esm({
             throw Err;
           }
         }
-        return await Call(Context21, "FileSystem.Stat", [
+        return await Call(Context13, "FileSystem.Stat", [
           UriToString(Uri2)
         ]) ?? {
           type: FileType2.File,
@@ -28170,7 +28191,7 @@ var init_Namespace3 = __esm({
         }
         const UriString = UriToString(Uri2);
         try {
-          const Raw2 = await Context21.MountainClient?.sendRequest(
+          const Raw2 = await Context13.MountainClient?.sendRequest(
             "FileSystem.ReadFile",
             [UriString]
           );
@@ -28217,7 +28238,7 @@ var init_Namespace3 = __esm({
           return;
         }
         const Text = new TextDecoder().decode(Content);
-        await Call(Context21, "FileSystem.WriteFile", [
+        await Call(Context13, "FileSystem.WriteFile", [
           UriToString(Uri2),
           Text
         ]);
@@ -28241,7 +28262,7 @@ var init_Namespace3 = __esm({
           }
         }
         return await Call(
-          Context21,
+          Context13,
           "FileSystem.ReadDirectory",
           [UriToString(Uri2)]
         ) ?? [];
@@ -28254,7 +28275,7 @@ var init_Namespace3 = __esm({
           await FsPromises.mkdir(Path, { recursive: true });
           return;
         }
-        await Call(Context21, "FileSystem.CreateDirectory", [
+        await Call(Context13, "FileSystem.CreateDirectory", [
           UriToString(Uri2)
         ]);
       }, "createDirectory"),
@@ -28274,7 +28295,7 @@ var init_Namespace3 = __esm({
             throw Err;
           }
         }
-        await Call(Context21, "FileSystem.Delete", [
+        await Call(Context13, "FileSystem.Delete", [
           UriToString(Uri2),
           Options?.recursive ?? false
         ]);
@@ -28295,7 +28316,7 @@ var init_Namespace3 = __esm({
             throw Err;
           }
         }
-        await Call(Context21, "FileSystem.Rename", [
+        await Call(Context13, "FileSystem.Rename", [
           UriToString(Source),
           UriToString(Target)
         ]);
@@ -28323,7 +28344,7 @@ var init_Namespace3 = __esm({
             throw Err;
           }
         }
-        await Call(Context21, "FileSystem.Copy", [
+        await Call(Context13, "FileSystem.Copy", [
           UriToString(Source),
           UriToString(Target)
         ]);
@@ -28505,7 +28526,7 @@ var init_Watcher = __esm({
     init_Tier();
     init_Registry();
     init_Helpers();
-    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context21, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
+    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context13, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
       const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
       }, "dispose") };
       const StubWatcher = {
@@ -28526,14 +28547,14 @@ var init_Watcher = __esm({
         return StubWatcher;
       }
       const Matcher = Regex_default(PatternString);
-      const Folders = ResolveWorkspaceFolders(Context21);
+      const Folders = ResolveWorkspaceFolders(Context13);
       const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
       if (!Root) {
         return StubWatcher;
       }
       const Handle = NextProviderHandle();
       const IsRecursive = PatternString.includes("**");
-      Context21.MountainClient?.sendRequest("FileWatcher.Register", [
+      Context13.MountainClient?.sendRequest("FileWatcher.Register", [
         Handle,
         Root,
         IsRecursive,
@@ -28556,10 +28577,10 @@ var init_Watcher = __esm({
           } catch {
           }
         }, "WrappedListener");
-        Context21.Emitter.on(EventName, WrappedListener);
+        Context13.Emitter.on(EventName, WrappedListener);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.Emitter.removeListener(EventName, WrappedListener);
+            Context13.Emitter.removeListener(EventName, WrappedListener);
           }, "dispose")
         };
       }, "MakeSubscriber");
@@ -28571,8 +28592,8 @@ var init_Watcher = __esm({
         onDidChange: MakeSubscriber("change", IgnoreChangeEvents === true),
         onDidDelete: MakeSubscriber("delete", IgnoreDeleteEvents === true),
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.removeAllListeners(EventName);
-          Context21.MountainClient?.sendRequest("FileWatcher.Unregister", [
+          Context13.Emitter.removeAllListeners(EventName);
+          Context13.MountainClient?.sendRequest("FileWatcher.Unregister", [
             Handle
           ]).catch(() => {
           });
@@ -28722,14 +28743,14 @@ var init_Files = __esm({
 
 // Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Text/In/Files/Fallback.ts
 import { promises as FsPromises2 } from "node:fs";
-async function FindTextInFilesNodeFallback(Context21, Folders, Query, Options, Callback) {
+async function FindTextInFilesNodeFallback(Context13, Folders, Query, Options, Callback) {
   const Pattern = ExtractPattern(Query);
   if (!Pattern) return { limitHit: false };
   const Opts = Options ?? {};
   const Max = typeof Opts.maxResults === "number" ? Opts.maxResults : 1e4;
   const Encoding = Opts.encoding ?? "utf8";
   const Candidates = await FindFilesLocal(
-    Context21,
+    Context13,
     Folders,
     Opts.include ?? "**/*",
     Opts.exclude,
@@ -28824,9 +28845,9 @@ var init_Fallback = __esm({
 });
 
 // Source/Services/Handler/VscodeAPI/Workspace/Namespace/Language/Activation.ts
-function ResolveLanguageIdFromRegistry(Context21, FileExtension) {
+function ResolveLanguageIdFromRegistry(Context13, FileExtension) {
   const ExtensionWithDot = `.${FileExtension}`;
-  for (const Description of Context21.ExtensionRegistry.values()) {
+  for (const Description of Context13.ExtensionRegistry.values()) {
     const Contributes = Description?.contributes;
     const Languages = Contributes?.languages;
     if (!Languages) continue;
@@ -28872,12 +28893,12 @@ function DeriveLanguageIdFromUri(UriString) {
   const Extension2 = FileName.slice(Dot + 1).toLowerCase();
   return STATIC_EXTENSION_TO_LANGUAGE[Extension2] ?? "plaintext";
 }
-function FireOnLanguageActivation(Context21, LanguageId) {
+function FireOnLanguageActivation(Context13, LanguageId) {
   if (!LanguageId || LanguageId === "plaintext") return;
   if (FiredLanguages.has(LanguageId)) return;
   FiredLanguages.add(LanguageId);
   const Event2 = `onLanguage:${LanguageId}`;
-  const Router = Context21.ActivateByEvent;
+  const Router = Context13.ActivateByEvent;
   if (typeof Router === "function") {
     Router(Event2).catch((Error2) => {
       const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
@@ -28887,7 +28908,7 @@ function FireOnLanguageActivation(Context21, LanguageId) {
     });
     return;
   }
-  const Matching = Context21.ActivationEventIndex?.get(Event2) ?? [];
+  const Matching = Context13.ActivationEventIndex?.get(Event2) ?? [];
   if (Matching.length > 0) {
     console.log(
       `[LanguageActivation] ${Event2} matches ${Matching.length} extension(s); activate router is absent - extensions will activate on their next event instead`
@@ -28989,9 +29010,9 @@ var init_Document = __esm({
     init_Route();
     init_Helpers();
     init_Activation();
-    BuildOpenTextDocument = /* @__PURE__ */ __name((Context21) => async (UriOrPath) => {
+    BuildOpenTextDocument = /* @__PURE__ */ __name((Context13) => async (UriOrPath) => {
       const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
-      const Cached = Context21.DocumentContentCache.get(UriString);
+      const Cached = Context13.DocumentContentCache.get(UriString);
       let Text;
       if (Cached !== void 0) {
         Text = Cached;
@@ -29033,7 +29054,7 @@ var init_Document = __esm({
             }
           } else {
             Text = DecodeRaw(
-              await Call(Context21, "FileSystem.ReadFile", [
+              await Call(Context13, "FileSystem.ReadFile", [
                 UriString
               ])
             );
@@ -29046,7 +29067,7 @@ var init_Document = __esm({
             );
           }
           Text = DecodeRaw(
-            await Call(Context21, "FileSystem.ReadFile", [
+            await Call(Context13, "FileSystem.ReadFile", [
               UriString
             ])
           );
@@ -29054,7 +29075,7 @@ var init_Document = __esm({
       }
       const LanguageId = DeriveLanguageIdFromUri(UriString);
       if (LanguageId !== "plaintext") {
-        FireOnLanguageActivation(Context21, LanguageId);
+        FireOnLanguageActivation(Context13, LanguageId);
       }
       const LineStarts = [0];
       for (let I = 0; I < Text.length; I++) {
@@ -29160,16 +29181,16 @@ var init_Document = __esm({
         save: /* @__PURE__ */ __name(async () => true, "save")
       };
     }, "BuildOpenTextDocument");
-    BuildSaveAll = /* @__PURE__ */ __name((Context21) => async (_IncludeUntitled) => {
-      await Call(Context21, "Document.Save", []);
+    BuildSaveAll = /* @__PURE__ */ __name((Context13) => async (_IncludeUntitled) => {
+      await Call(Context13, "Document.Save", []);
       return true;
     }, "BuildSaveAll");
-    BuildApplyEdit = /* @__PURE__ */ __name((Context21) => async (_Edit) => {
-      Context21.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
+    BuildApplyEdit = /* @__PURE__ */ __name((Context13) => async (_Edit) => {
+      Context13.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
       });
       return true;
     }, "BuildApplyEdit");
-    BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context21, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
+    BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context13, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
       const Current = ReadFolders();
       const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
       const Removals = Current.slice(Start, Start + RemoveCount).map(
@@ -29184,7 +29205,7 @@ var init_Document = __esm({
         const Serialized = typeof Raw2 === "string" ? Raw2 : Raw2?.["toString"]?.call(Raw2) ?? String(Raw2 ?? "");
         return { uri: { value: Serialized }, name: Folder?.name ?? "" };
       });
-      Context21.MountainClient?.sendRequest("$updateWorkspaceFolders", {
+      Context13.MountainClient?.sendRequest("$updateWorkspaceFolders", {
         additions: Additions,
         removals: Removals
       }).catch((Error2) => {
@@ -29199,36 +29220,36 @@ var init_Document = __esm({
       });
       return true;
     }, "BuildUpdateWorkspaceFolders");
-    BuildDocumentEventMembers = /* @__PURE__ */ __name((Context21) => ({
-      onDidOpenTextDocument: EventSubscriber(Context21, "didOpenTextDocument"),
-      onDidCloseTextDocument: EventSubscriber(Context21, "didCloseTextDocument"),
-      onDidChangeTextDocument: EventSubscriber(Context21, "didChangeTextDocument"),
-      onDidSaveTextDocument: EventSubscriber(Context21, "didSaveTextDocument"),
-      onWillSaveTextDocument: EventSubscriber(Context21, "willSaveTextDocument"),
-      onDidCreateFiles: EventSubscriber(Context21, "didCreateFiles"),
-      onDidDeleteFiles: EventSubscriber(Context21, "didDeleteFiles"),
-      onDidRenameFiles: EventSubscriber(Context21, "didRenameFiles"),
-      onWillRenameFiles: EventSubscriber(Context21, "willRenameFiles"),
-      onWillCreateFiles: EventSubscriber(Context21, "willCreateFiles"),
-      onWillDeleteFiles: EventSubscriber(Context21, "willDeleteFiles"),
+    BuildDocumentEventMembers = /* @__PURE__ */ __name((Context13) => ({
+      onDidOpenTextDocument: EventSubscriber(Context13, "didOpenTextDocument"),
+      onDidCloseTextDocument: EventSubscriber(Context13, "didCloseTextDocument"),
+      onDidChangeTextDocument: EventSubscriber(Context13, "didChangeTextDocument"),
+      onDidSaveTextDocument: EventSubscriber(Context13, "didSaveTextDocument"),
+      onWillSaveTextDocument: EventSubscriber(Context13, "willSaveTextDocument"),
+      onDidCreateFiles: EventSubscriber(Context13, "didCreateFiles"),
+      onDidDeleteFiles: EventSubscriber(Context13, "didDeleteFiles"),
+      onDidRenameFiles: EventSubscriber(Context13, "didRenameFiles"),
+      onWillRenameFiles: EventSubscriber(Context13, "willRenameFiles"),
+      onWillCreateFiles: EventSubscriber(Context13, "willCreateFiles"),
+      onWillDeleteFiles: EventSubscriber(Context13, "willDeleteFiles"),
       onDidOpenNotebookDocument: EventSubscriber(
-        Context21,
+        Context13,
         "didOpenNotebookDocument"
       ),
       onDidCloseNotebookDocument: EventSubscriber(
-        Context21,
+        Context13,
         "didCloseNotebookDocument"
       ),
       onDidChangeNotebookDocument: EventSubscriber(
-        Context21,
+        Context13,
         "didChangeNotebookDocument"
       ),
       onDidSaveNotebookDocument: EventSubscriber(
-        Context21,
+        Context13,
         "didSaveNotebookDocument"
       ),
       onWillSaveNotebookDocument: EventSubscriber(
-        Context21,
+        Context13,
         "willSaveNotebookDocument"
       )
     }), "BuildDocumentEventMembers");
@@ -29282,8 +29303,8 @@ var init_Index = __esm({
         return Item;
       });
     }, "HydrateUriResults");
-    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context21) => {
-      const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context13) => {
+      const InitWorkspace = Context13.ExtensionHostInitData?.workspace ?? Context13.ExtensionHostInitData?.workspaceData ?? {};
       const HydrateFolder = /* @__PURE__ */ __name((Raw2, FallbackIndex) => {
         const Hydrated = ToUri(Raw2?.uri);
         if (!Hydrated) return null;
@@ -29292,7 +29313,7 @@ var init_Index = __esm({
         return { uri: Hydrated, name: Name, index: Index };
       }, "HydrateFolder");
       const ReadFolders = /* @__PURE__ */ __name(() => {
-        const Live = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+        const Live = Context13.ExtensionHostInitData?.workspace ?? Context13.ExtensionHostInitData?.workspaceData ?? {};
         const Raw2 = Live.folders ?? [];
         const Out = [];
         for (let I = 0; I < Raw2.length; I++) {
@@ -29302,10 +29323,10 @@ var init_Index = __esm({
         return Out;
       }, "ReadFolders");
       const ReadName = /* @__PURE__ */ __name(() => {
-        const Live = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+        const Live = Context13.ExtensionHostInitData?.workspace ?? Context13.ExtensionHostInitData?.workspaceData ?? {};
         return Live.name ?? InitWorkspace.name;
       }, "ReadName");
-      const ConfigState = CreateConfigurationState(Context21);
+      const ConfigState = CreateConfigurationState(Context13);
       globalThis.__cocoonConfigState = ConfigState;
       const Concrete = {
         get workspaceFolders() {
@@ -29318,7 +29339,7 @@ var init_Index = __esm({
         rootPath: void 0,
         textDocuments: [],
         notebookDocuments: [],
-        getConfiguration: BuildGetConfiguration(Context21, ConfigState),
+        getConfiguration: BuildGetConfiguration(Context13, ConfigState),
         // `findFiles` / `findFiles2` now follow the same Mountain-first
         // dual-track as `findTextInFiles`, AND additionally fall back to
         // the Node walker when Mountain succeeds with an empty result.
@@ -29331,7 +29352,7 @@ var init_Index = __esm({
         // from the workbench, so it's resilient to that drift.
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
           const Raw2 = await TryMountainWithEmptyFallback(
-            Context21,
+            Context13,
             "findFiles",
             [
               Include,
@@ -29344,7 +29365,7 @@ var init_Index = __esm({
               const [I, _O] = Args;
               const Opts = _O;
               return FindFilesLocal(
-                Context21,
+                Context13,
                 ReadFolders(),
                 I,
                 Opts?.exclude,
@@ -29364,7 +29385,7 @@ var init_Index = __esm({
         findFiles2: /* @__PURE__ */ __name(async (FilePatterns, Options) => {
           const Include = Array.isArray(FilePatterns) ? FilePatterns[0] : FilePatterns;
           const Raw2 = await TryMountainWithEmptyFallback(
-            Context21,
+            Context13,
             "findFiles",
             [
               Include,
@@ -29377,7 +29398,7 @@ var init_Index = __esm({
               const [I, _O] = Args;
               const Opts = _O;
               return FindFilesLocal(
-                Context21,
+                Context13,
                 ReadFolders(),
                 I,
                 Opts?.exclude,
@@ -29400,13 +29421,13 @@ var init_Index = __esm({
         // misconfigured falls through to Node so the search panel
         // always shows real results.
         findTextInFiles: /* @__PURE__ */ __name(async (Query, Options, Callback, _Token) => TryMountainWithEmptyFallback(
-          Context21,
+          Context13,
           "findTextInFiles",
           [Query, Options],
           async (Args) => {
             const [Q, O] = Args;
             return FindTextInFilesNodeFallback(
-              Context21,
+              Context13,
               ReadFolders(),
               Q,
               O,
@@ -29421,13 +29442,13 @@ var init_Index = __esm({
           }
         ), "findTextInFiles"),
         findTextInFiles2: /* @__PURE__ */ __name(async (Query, Options, Callback, _Token) => TryMountainWithEmptyFallback(
-          Context21,
+          Context13,
           "findTextInFiles",
           [Query, Options],
           async (Args) => {
             const [Q, O] = Args;
             return FindTextInFilesNodeFallback(
-              Context21,
+              Context13,
               ReadFolders(),
               Q,
               O,
@@ -29441,7 +29462,7 @@ var init_Index = __esm({
             return !Array.isArray(Matches) || Matches.length === 0;
           }
         ), "findTextInFiles2"),
-        openTextDocument: BuildOpenTextDocument(Context21),
+        openTextDocument: BuildOpenTextDocument(Context13),
         // `openNotebookDocument` - notebook renderer support. Land has no
         // notebook editor yet; return a minimal NotebookDocument shape so
         // callers that immediately read `.uri` / `.cellCount` don't crash.
@@ -29458,7 +29479,7 @@ var init_Index = __esm({
           getCells: /* @__PURE__ */ __name(() => [], "getCells"),
           save: /* @__PURE__ */ __name(async () => false, "save")
         }), "openNotebookDocument"),
-        saveAll: BuildSaveAll(Context21),
+        saveAll: BuildSaveAll(Context13),
         // `save(uri)` / `saveAs(uri)` - VS Code 1.86+ per-URI save API.
         // Stock `extHostWorkspace.save` forwards to
         // `MainThreadWorkspace.$save` / `$saveAs`. Mountain has no
@@ -29468,7 +29489,7 @@ var init_Index = __esm({
         // stable signature.
         save: /* @__PURE__ */ __name(async (Uri2) => {
           try {
-            await Context21.MountainClient?.sendRequest("Workspace.Save", {
+            await Context13.MountainClient?.sendRequest("Workspace.Save", {
               uri: Uri2
             });
             return Uri2;
@@ -29478,7 +29499,7 @@ var init_Index = __esm({
         }, "save"),
         saveAs: /* @__PURE__ */ __name(async (Uri2) => {
           try {
-            const Result = await Context21.MountainClient?.sendRequest(
+            const Result = await Context13.MountainClient?.sendRequest(
               "Workspace.SaveAs",
               { uri: Uri2 }
             );
@@ -29487,7 +29508,7 @@ var init_Index = __esm({
             return void 0;
           }
         }, "saveAs"),
-        applyEdit: BuildApplyEdit(Context21),
+        applyEdit: BuildApplyEdit(Context13),
         // `asRelativePath` - lifts stock VS Code's `resources.relativePath`
         // from `@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js`
         // rather than hand-rolling prefix matching. Stock handles Windows
@@ -29540,19 +29561,19 @@ var init_Index = __esm({
         // which mutates ApplicationState.Workspace and fires `$deltaWorkspaceFolders`
         // back - the listener wiring from BATCH-14 does the rest.
         updateWorkspaceFolders: BuildUpdateWorkspaceFolders(
-          Context21,
+          Context13,
           ReadFolders
         ),
-        ...BuildDocumentEventMembers(Context21),
+        ...BuildDocumentEventMembers(Context13),
         onDidChangeConfiguration: BuildOnDidChangeConfiguration(ConfigState),
         onDidChangeWorkspaceFolders: /* @__PURE__ */ __name((Listener) => {
-          Context21.WorkspaceEventEmitter.on(
+          Context13.WorkspaceEventEmitter.on(
             "didChangeWorkspaceFolders",
             Listener
           );
           return {
             dispose: /* @__PURE__ */ __name(() => {
-              Context21.WorkspaceEventEmitter.removeListener(
+              Context13.WorkspaceEventEmitter.removeListener(
                 "didChangeWorkspaceFolders",
                 Listener
               );
@@ -29560,13 +29581,13 @@ var init_Index = __esm({
           };
         }, "onDidChangeWorkspaceFolders"),
         // Provider registrations - each backed by a Mountain round-trip.
-        registerTextDocumentContentProvider: BuildRegisterTextDocumentContentProvider(Context21),
-        registerFileSystemProvider: BuildRegisterFileSystemProvider(Context21),
-        registerTaskProvider: BuildRegisterTaskProvider(Context21),
-        registerNotebookContentProvider: BuildRegisterNotebookContentProvider(Context21),
-        registerNotebookSerializer: BuildRegisterNotebookSerializer(Context21),
-        registerRemoteAuthorityResolver: BuildRegisterRemoteAuthorityResolver(Context21),
-        registerResourceLabelFormatter: BuildRegisterResourceLabelFormatter(Context21),
+        registerTextDocumentContentProvider: BuildRegisterTextDocumentContentProvider(Context13),
+        registerFileSystemProvider: BuildRegisterFileSystemProvider(Context13),
+        registerTaskProvider: BuildRegisterTaskProvider(Context13),
+        registerNotebookContentProvider: BuildRegisterNotebookContentProvider(Context13),
+        registerNotebookSerializer: BuildRegisterNotebookSerializer(Context13),
+        registerRemoteAuthorityResolver: BuildRegisterRemoteAuthorityResolver(Context13),
+        registerResourceLabelFormatter: BuildRegisterResourceLabelFormatter(Context13),
         // Stub-only registrations (no Mountain route yet).
         registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerDocumentPasteEditProvider"),
@@ -29659,13 +29680,13 @@ var init_Index = __esm({
         }, "dispose") }), "registerAITextSearchProvider"),
         // createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
         createFileSystemWatcher: /* @__PURE__ */ __name((Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => CreateFileSystemWatcher(
-          Context21,
+          Context13,
           Pattern,
           IgnoreCreateEvents,
           IgnoreChangeEvents,
           IgnoreDeleteEvents
         ), "createFileSystemWatcher"),
-        fs: BuildFileSystemNamespace(Context21)
+        fs: BuildFileSystemNamespace(Context13)
       };
       return Namespace_default3(Concrete);
     }, "CreateWorkspaceNamespace");
@@ -29726,17 +29747,17 @@ var init_Namespace7 = __esm({
     "use strict";
     init_Namespace6();
     init_Route2();
-    CreateCommandsNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => Namespace_default4({
+    CreateCommandsNamespace = /* @__PURE__ */ __name((Context13, LanguageProviderRegistry) => Namespace_default4({
       registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context21.SendToMountain("registerCommand", {
+        Context13.SendToMountain("registerCommand", {
           commandId: Command
         }).catch(() => {
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
             LanguageProviderRegistry.UnregisterCommand(Command);
-            Context21.SendToMountain("unregisterCommand", {
+            Context13.SendToMountain("unregisterCommand", {
               commandId: Command
             }).catch(() => {
             });
@@ -29745,7 +29766,7 @@ var init_Namespace7 = __esm({
       }, "registerCommand"),
       registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context21.SendToMountain("registerCommand", {
+        Context13.SendToMountain("registerCommand", {
           commandId: Command,
           kind: "textEditor"
         }).catch(() => {
@@ -29753,7 +29774,7 @@ var init_Namespace7 = __esm({
         return {
           dispose: /* @__PURE__ */ __name(() => {
             LanguageProviderRegistry.UnregisterCommand(Command);
-            Context21.SendToMountain("unregisterCommand", {
+            Context13.SendToMountain("unregisterCommand", {
               commandId: Command
             }).catch(() => {
             });
@@ -29773,7 +29794,7 @@ var init_Namespace7 = __esm({
           if (LocalResult !== void 0) return LocalResult;
         }
         try {
-          return await Context21.MountainClient?.sendRequest(
+          return await Context13.MountainClient?.sendRequest(
             "Command.Execute",
             [Command, ...Arguments]
           );
@@ -29783,7 +29804,7 @@ var init_Namespace7 = __esm({
       }, "executeCommand"),
       getCommands: /* @__PURE__ */ __name(async (FilterInternal) => {
         try {
-          const Response = await Context21.MountainClient?.sendRequest(
+          const Response = await Context13.MountainClient?.sendRequest(
             "Command.GetAll",
             [FilterInternal ?? false]
           );
@@ -29809,7 +29830,7 @@ var init_Namespace7 = __esm({
       // returns a real disposable so subscriptions dispose cleanly.
       registerDiffInformationCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context21.SendToMountain("registerCommand", {
+        Context13.SendToMountain("registerCommand", {
           commandId: Command,
           kind: "diffInformation"
         }).catch(() => {
@@ -29817,7 +29838,7 @@ var init_Namespace7 = __esm({
         return {
           dispose: /* @__PURE__ */ __name(() => {
             LanguageProviderRegistry.UnregisterCommand(Command);
-            Context21.SendToMountain("unregisterCommand", {
+            Context13.SendToMountain("unregisterCommand", {
               commandId: Command
             }).catch(() => {
             });
@@ -29867,7 +29888,7 @@ var init_Namespace9 = __esm({
         return `file://${WithParts.fsPath}`;
       return Rendered;
     }, "UriKey");
-    RegisterProvider = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry, MethodName, Selector, Provider) => {
+    RegisterProvider = /* @__PURE__ */ __name((Context13, LanguageProviderRegistry, MethodName, Selector, Provider) => {
       if (Provider == null || typeof Provider !== "object") {
         return { dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") };
@@ -29880,7 +29901,7 @@ var init_Namespace9 = __esm({
         }, "dispose") };
       }
       const Language2 = typeof Selector === "string" ? Selector : typeof Selector?.language === "string" ? Selector.language : "*";
-      Context21.SendToMountain(MethodName, {
+      Context13.SendToMountain(MethodName, {
         handle: Handle,
         languageSelector: Language2,
         extensionId: ""
@@ -29895,184 +29916,184 @@ var init_Namespace9 = __esm({
         }, "dispose")
       };
     }, "RegisterProvider");
-    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context21, LanguageProviderRegistry) => Namespace_default6({
+    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context13, LanguageProviderRegistry) => Namespace_default6({
       registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_hover_provider",
         Selector,
         Provider
       ), "registerHoverProvider"),
       registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_completion_item_provider",
         Selector,
         Provider
       ), "registerCompletionItemProvider"),
       registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_definition_provider",
         Selector,
         Provider
       ), "registerDefinitionProvider"),
       registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_reference_provider",
         Selector,
         Provider
       ), "registerReferenceProvider"),
       registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_code_actions_provider",
         Selector,
         Provider
       ), "registerCodeActionsProvider"),
       registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_symbol_provider",
         Selector,
         Provider
       ), "registerDocumentSymbolProvider"),
       registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_formatting_provider",
         Selector,
         Provider
       ), "registerDocumentFormattingEditProvider"),
       registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_range_formatting_provider",
         Selector,
         Provider
       ), "registerDocumentRangeFormattingEditProvider"),
       registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_on_type_formatting_provider",
         Selector,
         Provider
       ), "registerOnTypeFormattingEditProvider"),
       registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_type_definition_provider",
         Selector,
         Provider
       ), "registerTypeDefinitionProvider"),
       registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_implementation_provider",
         Selector,
         Provider
       ), "registerImplementationProvider"),
       registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_declaration_provider",
         Selector,
         Provider
       ), "registerDeclarationProvider"),
       registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_link_provider",
         Selector,
         Provider
       ), "registerDocumentLinkProvider"),
       registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_color_provider",
         Selector,
         Provider
       ), "registerColorProvider"),
       registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_linked_editing_range_provider",
         Selector,
         Provider
       ), "registerLinkedEditingRangeProvider"),
       registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_call_hierarchy_provider",
         Selector,
         Provider
       ), "registerCallHierarchyProvider"),
       registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_type_hierarchy_provider",
         Selector,
         Provider
       ), "registerTypeHierarchyProvider"),
       registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_evaluatable_expression_provider",
         Selector,
         Provider
       ), "registerEvaluatableExpressionProvider"),
       registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_inline_values_provider",
         Selector,
         Provider
       ), "registerInlineValuesProvider"),
       registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_signature_help_provider",
         Selector,
         Provider
       ), "registerSignatureHelpProvider"),
       registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_highlight_provider",
         Selector,
         Provider
       ), "registerDocumentHighlightProvider"),
       registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_code_lens_provider",
         Selector,
         Provider
       ), "registerCodeLensProvider"),
       registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_rename_provider",
         Selector,
         Provider
       ), "registerRenameProvider"),
       registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_folding_range_provider",
         Selector,
         Provider
       ), "registerFoldingRangeProvider"),
       registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_selection_range_provider",
         Selector,
         Provider
       ), "registerSelectionRangeProvider"),
       registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_semantic_tokens_provider",
         Selector,
@@ -30084,14 +30105,14 @@ var init_Namespace9 = __esm({
       // variant - the Land side can't yet distinguish range vs full, so the
       // worst case is the provider computes tokens for the whole document.
       registerDocumentRangeSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_semantic_tokens_provider",
         Selector,
         Provider
       ), "registerDocumentRangeSemanticTokensProvider"),
       registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_inlay_hints_provider",
         Selector,
@@ -30102,7 +30123,7 @@ var init_Namespace9 = __esm({
           "[LandFix:LangNs] registerWorkspaceSymbolProvider called\n"
         );
         return RegisterProvider(
-          Context21,
+          Context13,
           LanguageProviderRegistry,
           "register_workspace_symbol_provider",
           "*",
@@ -30205,7 +30226,7 @@ var init_Namespace9 = __esm({
             } else {
               Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
             }
-            Context21.MountainClient?.sendRequest("Diagnostic.Set", [
+            Context13.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
               [...Store.entries()].map(([U, D]) => [
                 U,
@@ -30216,7 +30237,7 @@ var init_Namespace9 = __esm({
           }, "set"),
           delete: /* @__PURE__ */ __name((Uri2) => {
             Store.delete(UriKey(Uri2));
-            Context21.MountainClient?.sendRequest("Diagnostic.Set", [
+            Context13.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
               [...Store.entries()].map(([U, D]) => [
                 U,
@@ -30228,7 +30249,7 @@ var init_Namespace9 = __esm({
           clear: /* @__PURE__ */ __name(() => {
             if (Store.size === 0) return;
             Store.clear();
-            Context21.MountainClient?.sendRequest("Diagnostic.Clear", [
+            Context13.MountainClient?.sendRequest("Diagnostic.Clear", [
               Owner
             ]).catch(() => {
             });
@@ -30249,7 +30270,7 @@ var init_Namespace9 = __esm({
             Disposed = true;
             if (Store.size === 0) return;
             Store.clear();
-            Context21.MountainClient?.sendRequest("Diagnostic.Clear", [
+            Context13.MountainClient?.sendRequest("Diagnostic.Clear", [
               Owner
             ]).catch(() => {
             });
@@ -30258,7 +30279,7 @@ var init_Namespace9 = __esm({
       }, "createDiagnosticCollection"),
       getLanguages: /* @__PURE__ */ __name(async () => {
         try {
-          const Result = await Context21.MountainClient?.sendRequest(
+          const Result = await Context13.MountainClient?.sendRequest(
             "Languages.GetAll",
             []
           );
@@ -30267,55 +30288,8 @@ var init_Namespace9 = __esm({
           return [];
         }
       }, "getLanguages"),
-      // `match(selector, document)` - stable API used by extensions that
-      // need to score a DocumentSelector against a document before doing
-      // work (gitlens, copilot, prettier). Implements the same 0-10 rubric
-      // as stock `vs/editor/common/languageSelector.ts::score`: a plain
-      // language id match scores 10, a filter with language+scheme+pattern
-      // sums each hit, `*` is 5, unrelated is 0. Good enough to keep
-      // extensions from believing every document is unmatched.
-      match: /* @__PURE__ */ __name((Selector, Document) => {
-        const Doc = Document ?? {};
-        const ScoreOne = /* @__PURE__ */ __name((Candidate) => {
-          if (typeof Candidate === "string") {
-            if (Candidate === "*") return 5;
-            return Candidate === Doc.languageId ? 10 : 0;
-          }
-          if (Candidate && typeof Candidate === "object") {
-            const Filter = Candidate;
-            let Score = 0;
-            if (Filter.language !== void 0) {
-              if (Filter.language === "*") Score += 5;
-              else if (Filter.language === Doc.languageId)
-                Score += 10;
-              else return 0;
-            }
-            if (Filter.scheme !== void 0) {
-              if (Filter.scheme === "*") Score += 5;
-              else if (Filter.scheme === Doc.uri?.scheme) Score += 10;
-              else return 0;
-            }
-            if (Filter.pattern !== void 0) {
-              if (Doc.uri?.path?.includes(String(Filter.pattern)))
-                Score += 5;
-              else return 0;
-            }
-            return Score;
-          }
-          return 0;
-        }, "ScoreOne");
-        if (Array.isArray(Selector)) {
-          let Best = 0;
-          for (const Candidate of Selector) {
-            const Score = ScoreOne(Candidate);
-            if (Score > Best) Best = Score;
-          }
-          return Best;
-        }
-        return ScoreOne(Selector);
-      }, "match"),
       setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
-        Context21.SendToMountain("languages.setDocumentLanguage", {
+        Context13.SendToMountain("languages.setDocumentLanguage", {
           uri: Document?.uri?.toString?.() ?? "",
           languageId: LanguageId
         }).catch(() => {
@@ -30382,51 +30356,51 @@ var init_Namespace9 = __esm({
         return ScoreOne(Selector);
       }, "match"),
       onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
-        Context21.Emitter.on("diagnostics.didChange", Listener);
+        Context13.Emitter.on("diagnostics.didChange", Listener);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.Emitter.off("diagnostics.didChange", Listener);
+            Context13.Emitter.off("diagnostics.didChange", Listener);
           }, "dispose")
         };
       }, "onDidChangeDiagnostics"),
       getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
       registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_paste_edit_provider",
         Selector,
         Provider
       ), "registerDocumentPasteEditProvider"),
       registerDocumentDropEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_document_drop_edit_provider",
         Selector,
         Provider
       ), "registerDocumentDropEditProvider"),
       registerInlineCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_inline_completion_item_provider",
         Selector,
         Provider
       ), "registerInlineCompletionItemProvider"),
       registerInlineEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_inline_edit_provider",
         Selector,
         Provider
       ), "registerInlineEditProvider"),
       registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_multi_document_highlight_provider",
         Selector,
         Provider
       ), "registerMultiDocumentHighlightProvider"),
       registerMappedEditsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context21,
+        Context13,
         LanguageProviderRegistry,
         "register_mapped_edits_provider",
         Selector,
@@ -30675,36 +30649,36 @@ var init_Namespace11 = __esm({
       };
     }, "ToExtensionObject");
     IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
-    SafeExtensionList = /* @__PURE__ */ __name((Context21) => {
+    SafeExtensionList = /* @__PURE__ */ __name((Context13) => {
       const Out = [];
-      for (const [Id, Raw2] of Context21.ExtensionRegistry.entries()) {
+      for (const [Id, Raw2] of Context13.ExtensionRegistry.entries()) {
         if (!IsExtensionKey(Id)) continue;
         try {
-          Out.push(ToExtensionObject(Context21, Id, Raw2));
+          Out.push(ToExtensionObject(Context13, Id, Raw2));
         } catch {
         }
       }
       return Out;
     }, "SafeExtensionList");
-    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default8({
+    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context13) => Namespace_default8({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         if (!IsExtensionKey(Identifier)) return void 0;
-        const Raw2 = Context21.ExtensionRegistry.get(Identifier);
+        const Raw2 = Context13.ExtensionRegistry.get(Identifier);
         if (!Raw2) return void 0;
         try {
-          return ToExtensionObject(Context21, Identifier, Raw2);
+          return ToExtensionObject(Context13, Identifier, Raw2);
         } catch {
           return void 0;
         }
       }, "getExtension"),
       get all() {
-        return SafeExtensionList(Context21);
+        return SafeExtensionList(Context13);
       },
       // Some extensions (html-language-features) iterate
       // `extensions.allAcrossExtensionHosts`; return the same array as `all`
       // so `for (...of...)` does not throw on `is not iterable`.
       get allAcrossExtensionHosts() {
-        return SafeExtensionList(Context21);
+        return SafeExtensionList(Context13);
       },
       onDidChange: /* @__PURE__ */ __name((Listener) => {
         const SafeListener = /* @__PURE__ */ __name(() => {
@@ -30713,10 +30687,10 @@ var init_Namespace11 = __esm({
           } catch {
           }
         }, "SafeListener");
-        Context21.Emitter.on("deltaExtensions", SafeListener);
+        Context13.Emitter.on("deltaExtensions", SafeListener);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.Emitter.off("deltaExtensions", SafeListener);
+            Context13.Emitter.off("deltaExtensions", SafeListener);
           }, "dispose")
         };
       }, "onDidChange")
@@ -30747,8 +30721,8 @@ var init_Namespace13 = __esm({
     "use strict";
     init_Log2();
     init_Namespace12();
-    CreateEnvNamespace = /* @__PURE__ */ __name((Context21) => {
-      const Env = Context21.ExtensionHostInitData?.environment ?? {};
+    CreateEnvNamespace = /* @__PURE__ */ __name((Context13) => {
+      const Env = Context13.ExtensionHostInitData?.environment ?? {};
       const NormalizeAppRoot = /* @__PURE__ */ __name((Raw2) => {
         if (typeof Raw2 !== "string" || Raw2.length === 0) {
           Log_default2.Warn(
@@ -30784,7 +30758,7 @@ var init_Namespace13 = __esm({
       }, "NormalizeAppRoot");
       const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
         try {
-          return await Context21.MountainClient?.sendRequest(
+          return await Context13.MountainClient?.sendRequest(
             Method,
             Parameters
           );
@@ -30799,7 +30773,7 @@ var init_Namespace13 = __esm({
         uiKind: 1,
         // vscode.UIKind.Desktop
         language: Env["language"] ?? "en",
-        machineId: Context21.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
+        machineId: Context13.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
         sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
         // VS Code build identity strings. `vscode.tunnel-forwarding` and
         // other extensions read `appCommit?.substring(0, 7)` to surface a
@@ -30985,18 +30959,18 @@ var init_Namespace15 = __esm({
     "use strict";
     init_Registry();
     init_Namespace14();
-    EventSubscriber2 = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
-      Context21.Emitter.on(EventName, Listener);
+    EventSubscriber2 = /* @__PURE__ */ __name((Context13, EventName) => (Listener) => {
+      Context13.Emitter.on(EventName, Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.off(EventName, Listener);
+          Context13.Emitter.off(EventName, Listener);
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateDebugNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default12({
+    CreateDebugNamespace = /* @__PURE__ */ __name((Context13) => Namespace_default12({
       registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
         const Handle = NextProviderHandle();
-        Context21.SendToMountain("register_debug_adapter", {
+        Context13.SendToMountain("register_debug_adapter", {
           handle: Handle,
           debugType: DebugType,
           extensionId: ""
@@ -31004,7 +30978,7 @@ var init_Namespace15 = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.SendToMountain("unregister_debug_adapter", {
+            Context13.SendToMountain("unregister_debug_adapter", {
               handle: Handle
             }).catch(() => {
             });
@@ -31013,14 +30987,14 @@ var init_Namespace15 = __esm({
       }, "registerDebugAdapterDescriptorFactory"),
       registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
         const Handle = NextProviderHandle();
-        Context21.SendToMountain("register_debug_configuration_provider", {
+        Context13.SendToMountain("register_debug_configuration_provider", {
           handle: Handle,
           debugType: DebugType
         }).catch(() => {
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.SendToMountain(
+            Context13.SendToMountain(
               "unregister_debug_configuration_provider",
               {
                 handle: Handle
@@ -31043,7 +31017,7 @@ var init_Namespace15 = __esm({
       }, "dispose") }), "registerDebugVisualizationTreeProvider"),
       startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
         try {
-          const Response = await Context21.MountainClient?.sendRequest(
+          const Response = await Context13.MountainClient?.sendRequest(
             "Debug.Start",
             [Folder, NameOrConfig, ParentSession]
           );
@@ -31055,55 +31029,55 @@ var init_Namespace15 = __esm({
       stopDebugging: /* @__PURE__ */ __name(async (Session) => {
         try {
           const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
-          await Context21.MountainClient?.sendRequest("Debug.Stop", [
+          await Context13.MountainClient?.sendRequest("Debug.Stop", [
             SessionId
           ]);
         } catch {
         }
       }, "stopDebugging"),
       addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-        Context21.SendToMountain("debug.addBreakpoints", {
+        Context13.SendToMountain("debug.addBreakpoints", {
           breakpoints: Breakpoints
         }).catch(() => {
         });
       }, "addBreakpoints"),
       removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-        Context21.SendToMountain("debug.removeBreakpoints", {
+        Context13.SendToMountain("debug.removeBreakpoints", {
           breakpoints: Breakpoints
         }).catch(() => {
         });
       }, "removeBreakpoints"),
       asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
       onDidStartDebugSession: EventSubscriber2(
-        Context21,
+        Context13,
         "debug.didStartSession"
       ),
       onDidTerminateDebugSession: EventSubscriber2(
-        Context21,
+        Context13,
         "debug.didTerminateSession"
       ),
       onDidChangeActiveDebugSession: EventSubscriber2(
-        Context21,
+        Context13,
         "debug.didChangeActiveSession"
       ),
       onDidReceiveDebugSessionCustomEvent: EventSubscriber2(
-        Context21,
+        Context13,
         "debug.didReceiveCustomEvent"
       ),
       onDidChangeBreakpoints: EventSubscriber2(
-        Context21,
+        Context13,
         "debug.didChangeBreakpoints"
       ),
       activeDebugSession: void 0,
       activeDebugConsole: {
         append: /* @__PURE__ */ __name((Value) => {
-          Context21.SendToMountain("debug.consoleAppend", {
+          Context13.SendToMountain("debug.consoleAppend", {
             value: Value
           }).catch(() => {
           });
         }, "append"),
         appendLine: /* @__PURE__ */ __name((Value) => {
-          Context21.SendToMountain("debug.consoleAppend", {
+          Context13.SendToMountain("debug.consoleAppend", {
             value: `${Value}
 `
           }).catch(() => {
@@ -31117,7 +31091,7 @@ var init_Namespace15 = __esm({
       // path is still a proper disposable so the extension teardown works.
       activeStackItem: void 0,
       onDidChangeActiveStackItem: EventSubscriber2(
-        Context21,
+        Context13,
         "debug.didChangeActiveStackItem"
       )
     }), "CreateDebugNamespace");
@@ -31147,18 +31121,18 @@ var init_Namespace17 = __esm({
     "use strict";
     init_Registry();
     init_Namespace16();
-    EventSubscriber3 = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
-      Context21.Emitter.on(EventName, Listener);
+    EventSubscriber3 = /* @__PURE__ */ __name((Context13, EventName) => (Listener) => {
+      Context13.Emitter.on(EventName, Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.off(EventName, Listener);
+          Context13.Emitter.off(EventName, Listener);
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateTasksNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default14({
+    CreateTasksNamespace = /* @__PURE__ */ __name((Context13) => Namespace_default14({
       registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
         const Handle = NextProviderHandle();
-        Context21.SendToMountain("register_task_provider", {
+        Context13.SendToMountain("register_task_provider", {
           handle: Handle,
           taskType: TaskType,
           extensionId: ""
@@ -31166,7 +31140,7 @@ var init_Namespace17 = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.SendToMountain("unregister_task_provider", {
+            Context13.SendToMountain("unregister_task_provider", {
               handle: Handle
             }).catch(() => {
             });
@@ -31175,7 +31149,7 @@ var init_Namespace17 = __esm({
       }, "registerTaskProvider"),
       fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
         try {
-          const Response = await Context21.MountainClient?.sendRequest(
+          const Response = await Context13.MountainClient?.sendRequest(
             "Task.Fetch",
             [Filter]
           );
@@ -31186,7 +31160,7 @@ var init_Namespace17 = __esm({
       }, "fetchTasks"),
       executeTask: /* @__PURE__ */ __name(async (Task3) => {
         try {
-          return await Context21.MountainClient?.sendRequest(
+          return await Context13.MountainClient?.sendRequest(
             "Task.Execute",
             [Task3]
           );
@@ -31194,10 +31168,10 @@ var init_Namespace17 = __esm({
           return void 0;
         }
       }, "executeTask"),
-      onDidStartTask: EventSubscriber3(Context21, "task.didStart"),
-      onDidEndTask: EventSubscriber3(Context21, "task.didEnd"),
-      onDidStartTaskProcess: EventSubscriber3(Context21, "task.didStartProcess"),
-      onDidEndTaskProcess: EventSubscriber3(Context21, "task.didEndProcess"),
+      onDidStartTask: EventSubscriber3(Context13, "task.didStart"),
+      onDidEndTask: EventSubscriber3(Context13, "task.didEnd"),
+      onDidStartTaskProcess: EventSubscriber3(Context13, "task.didStartProcess"),
+      onDidEndTaskProcess: EventSubscriber3(Context13, "task.didEndProcess"),
       taskExecutions: []
     }), "CreateTasksNamespace");
     Namespace_default15 = CreateTasksNamespace;
@@ -31271,7 +31245,7 @@ var init_Namespace19 = __esm({
         Out["contextValue"] = Source["contextValue"];
       return Out;
     }, "SanitizeResourceState");
-    CreateScmNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default16({
+    CreateScmNamespace = /* @__PURE__ */ __name((Context13) => Namespace_default16({
       createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
         const Handle = NextProviderHandle();
         const RootUriDescription = RootUri == null ? "null" : typeof RootUri === "string" ? `string("${RootUri}")` : typeof RootUri === "object" ? `object(scheme=${RootUri?.scheme ?? "<missing>"})` : typeof RootUri;
@@ -31285,7 +31259,7 @@ var init_Namespace19 = __esm({
           query: RootUri?.query ?? "",
           fragment: RootUri?.fragment ?? ""
         } : RootUri;
-        const ProviderReady = Context21.SendToMountain(
+        const ProviderReady = Context13.SendToMountain(
           "register_scm_provider",
           {
             handle: Handle,
@@ -31328,7 +31302,7 @@ var init_Namespace19 = __esm({
               `createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`
             );
             const GroupReady = ProviderReady.then(
-              () => Context21.SendToMountain("register_scm_resource_group", {
+              () => Context13.SendToMountain("register_scm_resource_group", {
                 scmHandle: Handle,
                 groupHandle: GroupHandle,
                 groupId: GroupId,
@@ -31353,7 +31327,7 @@ var init_Namespace19 = __esm({
                 );
                 const SanitizedStates = Array.isArray(Value) ? Value.map((Raw2) => SanitizeResourceState(Raw2)) : [];
                 GroupReady.then(
-                  () => Context21.SendToMountain("update_scm_group", {
+                  () => Context13.SendToMountain("update_scm_group", {
                     scmHandle: Handle,
                     groupHandle: GroupHandle,
                     resourceStates: SanitizedStates
@@ -31366,7 +31340,7 @@ var init_Namespace19 = __esm({
               },
               dispose: /* @__PURE__ */ __name(() => {
                 GroupReady.then(
-                  () => Context21.SendToMountain(
+                  () => Context13.SendToMountain(
                     "unregister_scm_resource_group",
                     {
                       scmHandle: Handle,
@@ -31386,7 +31360,7 @@ var init_Namespace19 = __esm({
           quickDiffProvider: void 0,
           dispose: /* @__PURE__ */ __name(() => {
             ProviderReady.then(
-              () => Context21.SendToMountain("unregister_scm_provider", {
+              () => Context13.SendToMountain("unregister_scm_provider", {
                 handle: Handle
               })
             ).catch(() => {
@@ -31427,18 +31401,18 @@ var init_Namespace21 = __esm({
     "use strict";
     init_Registry();
     init_Namespace20();
-    EventSubscriber4 = /* @__PURE__ */ __name((Context21, EventName) => (Listener) => {
-      Context21.Emitter.on(EventName, Listener);
+    EventSubscriber4 = /* @__PURE__ */ __name((Context13, EventName) => (Listener) => {
+      Context13.Emitter.on(EventName, Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context21.Emitter.off(EventName, Listener);
+          Context13.Emitter.off(EventName, Listener);
         }, "dispose")
       };
     }, "EventSubscriber");
-    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context21) => Namespace_default18({
+    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context13) => Namespace_default18({
       registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
         const Handle = NextProviderHandle();
-        Context21.SendToMountain("register_authentication_provider", {
+        Context13.SendToMountain("register_authentication_provider", {
           handle: Handle,
           providerId: ProviderId,
           label: Label,
@@ -31448,7 +31422,7 @@ var init_Namespace21 = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context21.SendToMountain(
+            Context13.SendToMountain(
               "unregister_authentication_provider",
               {
                 handle: Handle
@@ -31460,7 +31434,7 @@ var init_Namespace21 = __esm({
       }, "registerAuthenticationProvider"),
       getSession: /* @__PURE__ */ __name(async (ProviderId, Scopes, Options) => {
         try {
-          return await Context21.MountainClient?.sendRequest(
+          return await Context13.MountainClient?.sendRequest(
             "Authentication.GetSession",
             [ProviderId, Scopes, Options ?? {}]
           );
@@ -31470,7 +31444,7 @@ var init_Namespace21 = __esm({
       }, "getSession"),
       getAccounts: /* @__PURE__ */ __name(async (ProviderId) => {
         try {
-          const Result = await Context21.MountainClient?.sendRequest(
+          const Result = await Context13.MountainClient?.sendRequest(
             "Authentication.GetAccounts",
             [ProviderId]
           );
@@ -31479,7 +31453,7 @@ var init_Namespace21 = __esm({
           return [];
         }
       }, "getAccounts"),
-      onDidChangeSessions: EventSubscriber4(Context21, "auth.didChangeSessions")
+      onDidChangeSessions: EventSubscriber4(Context13, "auth.didChangeSessions")
     }), "CreateAuthenticationNamespace");
     Namespace_default19 = CreateAuthenticationNamespace;
   }
@@ -31497,33 +31471,33 @@ var init_Handler3 = __esm({
     "use strict";
     init_Log();
     init_Registry();
-    HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context21, Parameters) => {
+    HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context13, Parameters) => {
       const Extensions = Parameters?.extensions ?? [];
       console.log(
         `[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`
       );
-      Context21.ExtensionHostInitData = Parameters;
-      Context21.ExtensionRegistry.clear();
-      Context21.ActivationEventIndex.clear();
+      Context13.ExtensionHostInitData = Parameters;
+      Context13.ExtensionRegistry.clear();
+      Context13.ActivationEventIndex.clear();
       for (const Extension2 of Extensions) {
         const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
-        Context21.ExtensionRegistry.set(Identifier, Extension2);
+        Context13.ExtensionRegistry.set(Identifier, Extension2);
         const ActivationEvents = Extension2?.activationEvents ?? [];
         for (const Event2 of ActivationEvents) {
-          const Existing = Context21.ActivationEventIndex.get(Event2) ?? [];
+          const Existing = Context13.ActivationEventIndex.get(Event2) ?? [];
           Existing.push(Identifier);
-          Context21.ActivationEventIndex.set(Event2, Existing);
+          Context13.ActivationEventIndex.set(Event2, Existing);
         }
       }
-      Context21.ExtensionHostReady = true;
+      Context13.ExtensionHostReady = true;
       console.log(
-        `[ExtensionHostHandler] Extension registry: ${Context21.ExtensionRegistry.size} extensions, ${Context21.ActivationEventIndex.size} activation events`
+        `[ExtensionHostHandler] Extension registry: ${Context13.ExtensionRegistry.size} extensions, ${Context13.ActivationEventIndex.size} activation events`
       );
-      Context21.Emitter.emit("extensionHostInitialized", {
-        extensionCount: Context21.ExtensionRegistry.size,
+      Context13.Emitter.emit("extensionHostInitialized", {
+        extensionCount: Context13.ExtensionRegistry.size,
         autoStart: Parameters?.autoStart ?? false
       });
-      Context21.ConnectToMountain().catch((Error2) => {
+      Context13.ConnectToMountain().catch((Error2) => {
         console.warn(
           "[ExtensionHostHandler] Background Mountain reconnect failed:",
           Error2 instanceof globalThis.Error ? Error2.message : String(Error2)
@@ -31531,7 +31505,7 @@ var init_Handler3 = __esm({
       });
       return "initialized";
     }, "HandleInitializeExtensionHost");
-    HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context21, Parameters) => {
+    HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context13, Parameters) => {
       const DeltaStart = performance.now();
       const Added = Parameters?.toAdd ?? [];
       const Removed = Parameters?.toRemove ?? [];
@@ -31539,50 +31513,50 @@ var init_Handler3 = __esm({
       let AddedActivationEvents = 0;
       for (const Extension2 of Added) {
         const Identifier = IdentifierOf(Extension2);
-        Context21.ExtensionRegistry.set(Identifier, Extension2);
+        Context13.ExtensionRegistry.set(Identifier, Extension2);
         const ActivationEvents = Extension2?.activationEvents ?? [];
         for (const Event2 of ActivationEvents) {
-          const Existing = Context21.ActivationEventIndex.get(Event2) ?? [];
+          const Existing = Context13.ActivationEventIndex.get(Event2) ?? [];
           if (!Existing.includes(Identifier)) {
             Existing.push(Identifier);
-            Context21.ActivationEventIndex.set(Event2, Existing);
+            Context13.ActivationEventIndex.set(Event2, Existing);
             AddedActivationEvents++;
           }
         }
       }
       for (const Extension2 of Removed) {
         const Identifier = IdentifierOf(Extension2);
-        Context21.ExtensionRegistry.delete(Identifier);
+        Context13.ExtensionRegistry.delete(Identifier);
       }
       const DurationMs = Math.round(performance.now() - DeltaStart);
       console.log(
-        `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context21.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`
+        `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context13.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`
       );
-      Context21.Emitter.emit("deltaExtensions", {
+      Context13.Emitter.emit("deltaExtensions", {
         added: Added.length,
         removed: Removed.length,
-        registrySize: Context21.ExtensionRegistry.size,
+        registrySize: Context13.ExtensionRegistry.size,
         durationMs: DurationMs
       });
       return {
         success: true,
-        registrySize: Context21.ExtensionRegistry.size,
+        registrySize: Context13.ExtensionRegistry.size,
         durationMs: DurationMs
       };
     }, "HandleDeltaExtensions");
-    HandleActivateByEvent = /* @__PURE__ */ __name(async (Context21, Parameters) => {
-      await EnsureVscodeAPIRegistered(Context21);
+    HandleActivateByEvent = /* @__PURE__ */ __name(async (Context13, Parameters) => {
+      await EnsureVscodeAPIRegistered(Context13);
       const ActivationEvent = typeof Parameters === "string" ? Parameters : Parameters?.activationEvent ?? Parameters?.event ?? "*";
       let MatchingExtensions;
       if (ActivationEvent === "*") {
         const All = /* @__PURE__ */ new Set();
-        for (const Ids of Context21.ActivationEventIndex.values()) {
+        for (const Ids of Context13.ActivationEventIndex.values()) {
           for (const Id of Ids) All.add(Id);
         }
         MatchingExtensions = [...All];
       } else {
-        const Specific = Context21.ActivationEventIndex.get(ActivationEvent) ?? [];
-        const Star = Context21.ActivationEventIndex.get("*") ?? [];
+        const Specific = Context13.ActivationEventIndex.get(ActivationEvent) ?? [];
+        const Star = Context13.ActivationEventIndex.get("*") ?? [];
         MatchingExtensions = [.../* @__PURE__ */ new Set([...Specific, ...Star])];
       }
       console.log(
@@ -31594,17 +31568,17 @@ var init_Handler3 = __esm({
         );
       } else {
         console.log(
-          `[ExtensionHostHandler] Available events: ${[...Context21.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context21.ActivationEventIndex.size > 10 ? ` (+${Context21.ActivationEventIndex.size - 10} more)` : ""}`
+          `[ExtensionHostHandler] Available events: ${[...Context13.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context13.ActivationEventIndex.size > 10 ? ` (+${Context13.ActivationEventIndex.size - 10} more)` : ""}`
         );
       }
       const ToActivate = MatchingExtensions.filter(
-        (Id) => !Context21.ActivatedExtensions.has(Id)
+        (Id) => !Context13.ActivatedExtensions.has(Id)
       );
       console.log(
         `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
       );
       for (const ExtId of ToActivate) {
-        ActivateExtension(Context21, ExtId, ActivationEvent).catch(
+        ActivateExtension(Context13, ExtId, ActivationEvent).catch(
           (Err) => {
             const Msg = Err instanceof Error ? Err.message : String(Err);
             console.log(
@@ -31620,7 +31594,7 @@ ${Stack}`
           }
         );
       }
-      Context21.Emitter.emit("activateByEvent", {
+      Context13.Emitter.emit("activateByEvent", {
         event: ActivationEvent,
         extensions: MatchingExtensions
       });
@@ -31629,18 +31603,18 @@ ${Stack}`
         activated: ToActivate.length
       };
     }, "HandleActivateByEvent");
-    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context21, _Parameters) => {
+    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context13, _Parameters) => {
       console.log(
-        `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context21.ExtensionRegistry.size} extensions)`
+        `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context13.ExtensionRegistry.size} extensions)`
       );
-      Context21.Emitter.emit("startExtensionHost", {
-        extensionCount: Context21.ExtensionRegistry.size,
-        ready: Context21.ExtensionHostReady
+      Context13.Emitter.emit("startExtensionHost", {
+        extensionCount: Context13.ExtensionRegistry.size,
+        ready: Context13.ExtensionHostReady
       });
       return {
         success: true,
-        ready: Context21.ExtensionHostReady,
-        extensionCount: Context21.ExtensionRegistry.size
+        ready: Context13.ExtensionHostReady,
+        extensionCount: Context13.ExtensionRegistry.size
       };
     }, "HandleStartExtensionHost");
     InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
@@ -31883,38 +31857,38 @@ ${Stack}`
         );
       }
     }, "InstallVscodeModuleHooks");
-    EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context21) => {
+    EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context13) => {
       await InstallVscodeModuleHooks();
       if (globalThis.__cocoonVscodeAPI) return;
       try {
-        const VsCodeTypes2 = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
-        const { URI: URI3 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
-        const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
-        const { Emitter: Emitter3 } = await Promise.resolve().then(() => (init_event(), event_exports));
-        const StockRelativePattern2 = VsCodeTypes2.RelativePattern;
+        const VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
+        const { URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
+        const { CancellationTokenSource: CancellationTokenSource2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
+        const { Emitter: Emitter2 } = await Promise.resolve().then(() => (init_event(), event_exports));
+        const StockRelativePattern = VsCodeTypes.RelativePattern;
         const HydrateRelativePatternBase = /* @__PURE__ */ __name((Base) => {
           if (Base == null) return Base;
           if (typeof Base === "string") return Base;
-          if (Base instanceof URI3) return Base;
+          if (Base instanceof URI2) return Base;
           const WithUri = Base;
           if (typeof WithUri.uri !== "undefined") {
-            if (WithUri.uri instanceof URI3) return Base;
-            const ReviveInput = typeof WithUri.uri === "string" ? URI3.parse(WithUri.uri) : URI3.revive(WithUri.uri);
+            if (WithUri.uri instanceof URI2) return Base;
+            const ReviveInput = typeof WithUri.uri === "string" ? URI2.parse(WithUri.uri) : URI2.revive(WithUri.uri);
             return { ...Base, uri: ReviveInput };
           }
-          const Revived = URI3.revive(Base);
+          const Revived = URI2.revive(Base);
           return Revived ?? Base;
         }, "HydrateRelativePatternBase");
-        const PatchedRelativePattern2 = /* @__PURE__ */ __name(function RelativePattern4(Base, Pattern) {
+        const PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
           const Safe = HydrateRelativePatternBase(Base);
           return Reflect.construct(
-            StockRelativePattern2,
+            StockRelativePattern,
             [Safe, Pattern],
-            PatchedRelativePattern2
+            PatchedRelativePattern
           );
         }, "RelativePattern");
-        PatchedRelativePattern2.prototype = StockRelativePattern2.prototype;
-        Object.setPrototypeOf(PatchedRelativePattern2, StockRelativePattern2);
+        PatchedRelativePattern.prototype = StockRelativePattern.prototype;
+        Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
         const LogLevelEnum = {
           Off: 0,
           Trace: 1,
@@ -31985,18 +31959,18 @@ ${Stack}`
           3: "Outdent"
         };
         const API = {
-          ...VsCodeTypes2,
+          ...VsCodeTypes,
           // Atom I5: read from process.env - single source is .env.Land
           // propagated by Maintain/Script/TierEnvironment.sh. Fallback
           // tracks the VS Code base from Dependency/.../Editor/package.json.
           version: process.env["ProductVersion"] ?? "1.118.0",
           // Override the spread's raw `RelativePattern` with the
           // POJO-tolerant wrapper defined above.
-          RelativePattern: PatchedRelativePattern2,
-          Uri: URI3,
-          CancellationTokenSource: CancellationTokenSource3,
+          RelativePattern: PatchedRelativePattern,
+          Uri: URI2,
+          CancellationTokenSource: CancellationTokenSource2,
           CancellationError: CancellationError2,
-          EventEmitter: Emitter3,
+          EventEmitter: Emitter2,
           LogLevel: LogLevelEnum,
           OverviewRulerLane,
           UIKind,
@@ -32004,24 +31978,24 @@ ${Stack}`
           DebugConfigurationProviderTriggerKind,
           IndentAction,
           // Namespaces - each in its own file under VscodeAPI/
-          window: (await Promise.resolve().then(() => (init_Namespace2(), Namespace_exports))).default(Context21),
-          workspace: (await Promise.resolve().then(() => (init_Namespace5(), Namespace_exports2))).default(Context21),
-          commands: (await Promise.resolve().then(() => (init_Namespace7(), Namespace_exports3))).default(Context21, Registry_exports),
-          languages: (await Promise.resolve().then(() => (init_Namespace9(), Namespace_exports4))).default(Context21, Registry_exports),
-          extensions: (await Promise.resolve().then(() => (init_Namespace11(), Namespace_exports5))).default(Context21),
+          window: (await Promise.resolve().then(() => (init_Namespace2(), Namespace_exports))).default(Context13),
+          workspace: (await Promise.resolve().then(() => (init_Namespace5(), Namespace_exports2))).default(Context13),
+          commands: (await Promise.resolve().then(() => (init_Namespace7(), Namespace_exports3))).default(Context13, Registry_exports),
+          languages: (await Promise.resolve().then(() => (init_Namespace9(), Namespace_exports4))).default(Context13, Registry_exports),
+          extensions: (await Promise.resolve().then(() => (init_Namespace11(), Namespace_exports5))).default(Context13),
           env: (await Promise.resolve().then(() => (init_Namespace13(), Namespace_exports6))).default(
-            Context21
+            Context13
           ),
           debug: (await Promise.resolve().then(() => (init_Namespace15(), Namespace_exports7))).default(
-            Context21
+            Context13
           ),
           tasks: (await Promise.resolve().then(() => (init_Namespace17(), Namespace_exports8))).default(
-            Context21
+            Context13
           ),
           scm: (await Promise.resolve().then(() => (init_Namespace19(), Namespace_exports9))).default(
-            Context21
+            Context13
           ),
-          authentication: (await Promise.resolve().then(() => (init_Namespace21(), Namespace_exports10))).default(Context21),
+          authentication: (await Promise.resolve().then(() => (init_Namespace21(), Namespace_exports10))).default(Context13),
           // Lightweight stub namespaces - no Mountain route yet, returns
           // safe defaults so extensions that reference them don't crash.
           l10n: {
@@ -32307,15 +32281,15 @@ ${Stack}`
         );
       }
     }, "EnsureVscodeAPIRegistered");
-    ActivateExtension = /* @__PURE__ */ __name(async (Context21, ExtensionId, ActivationEvent) => {
-      if (Context21.ActivatedExtensions.has(ExtensionId)) return;
-      Context21.ActivatedExtensions.add(ExtensionId);
+    ActivateExtension = /* @__PURE__ */ __name(async (Context13, ExtensionId, ActivationEvent) => {
+      if (Context13.ActivatedExtensions.has(ExtensionId)) return;
+      Context13.ActivatedExtensions.add(ExtensionId);
       const StartMs = Date.now();
       CocoonDevLog(
         "ext-activate",
         `[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`
       );
-      const Extension2 = Context21.ExtensionRegistry.get(ExtensionId);
+      const Extension2 = Context13.ExtensionRegistry.get(ExtensionId);
       if (!Extension2) {
         CocoonDevLog(
           "ext-activate",
@@ -32415,7 +32389,7 @@ ${Stack}`
         const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
         if (typeof ActivateFn === "function") {
           const ExtContext = CreateExtensionContext(
-            Context21,
+            Context13,
             Extension2,
             ExtensionPath
           );
@@ -32430,7 +32404,7 @@ ${Stack}`
           ];
           const SnapshotInitState = /* @__PURE__ */ __name((Phase) => {
             try {
-              const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+              const InitWorkspace = Context13.ExtensionHostInitData?.workspace ?? Context13.ExtensionHostInitData?.workspaceData ?? {};
               const InitFolders = Array.isArray(InitWorkspace.folders) ? InitWorkspace.folders : [];
               const FolderShape = InitFolders.map((F, I) => {
                 const UriField = F?.uri;
@@ -32477,7 +32451,7 @@ ${Stack}`
           );
         }
       } catch (Err) {
-        Context21.ActivatedExtensions.delete(ExtensionId);
+        Context13.ActivatedExtensions.delete(ExtensionId);
         const Message = Err instanceof Error ? Err.message : String(Err);
         CocoonDevLog(
           "ext-activate",
@@ -32486,7 +32460,7 @@ ${Stack}`
         throw Err;
       }
     }, "ActivateExtension");
-    CreateExtensionContext = /* @__PURE__ */ __name((Context21, Extension2, ExtensionPath) => {
+    CreateExtensionContext = /* @__PURE__ */ __name((Context13, Extension2, ExtensionPath) => {
       const ExtId = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "";
       const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
       const StorageBase = `${HomeDir}/.land/extensionStorage`;
@@ -32562,7 +32536,7 @@ ${Stack}`
         secrets: {
           get: /* @__PURE__ */ __name(async (Key) => {
             try {
-              return await Context21.MountainClient?.sendRequest(
+              return await Context13.MountainClient?.sendRequest(
                 "secrets.get",
                 { key: Key }
               );
@@ -32572,7 +32546,7 @@ ${Stack}`
           }, "get"),
           store: /* @__PURE__ */ __name(async (Key, Value) => {
             try {
-              await Context21.MountainClient?.sendRequest("secrets.store", {
+              await Context13.MountainClient?.sendRequest("secrets.store", {
                 key: Key,
                 value: Value
               });
@@ -32581,7 +32555,7 @@ ${Stack}`
           }, "store"),
           delete: /* @__PURE__ */ __name(async (Key) => {
             try {
-              await Context21.MountainClient?.sendRequest(
+              await Context13.MountainClient?.sendRequest(
                 "secrets.delete",
                 { key: Key }
               );
@@ -32840,9 +32814,9 @@ var init_Handler4 = __esm({
         LangId,
         DocumentContentCache
       );
-      const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
-      const VsToken = new CancellationTokenSource3().token;
-      const Context21 = Args[3];
+      const { CancellationTokenSource: CancellationTokenSource2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
+      const VsToken = new CancellationTokenSource2().token;
+      const Context13 = Args[3];
       try {
         switch (Method) {
           case "$provideHover": {
@@ -32894,7 +32868,7 @@ var init_Handler4 = __esm({
               VsDocument,
               VsPosition,
               VsToken,
-              Context21
+              Context13
             );
             if (!Result) return { Suggestions: [], IsIncomplete: false };
             const RawItems = Array.isArray(Result) ? Result : Result.items ?? [];
@@ -32926,7 +32900,7 @@ var init_Handler4 = __esm({
             const Result = await Provider.provideReferences?.(
               VsDocument,
               VsPosition,
-              Context21 ?? { includeDeclaration: true },
+              Context13 ?? { includeDeclaration: true },
               VsToken
             );
             if (!Result) return null;
@@ -32991,7 +32965,7 @@ var init_Handler4 = __esm({
               VsDocument,
               VsPosition,
               VsToken,
-              Context21
+              Context13
             );
             return Result ?? null;
           }
@@ -33012,7 +32986,7 @@ var init_Handler4 = __esm({
           case "$provideFoldingRanges": {
             const Result = await Provider.provideFoldingRanges?.(
               VsDocument,
-              Context21,
+              Context13,
               VsToken
             );
             return Result ?? null;
@@ -33139,8 +33113,8 @@ var init_Activator = __esm({
       }
       return Raw2;
     }, "UriToFsPath");
-    FolderContainsGlobViaMountain = /* @__PURE__ */ __name(async (Context21, Glob) => {
-      const Client = Context21.MountainClient;
+    FolderContainsGlobViaMountain = /* @__PURE__ */ __name(async (Context13, Glob) => {
+      const Client = Context13.MountainClient;
       if (!Client || typeof Client.sendRequest !== "function") return void 0;
       try {
         const Result = await Client.sendRequest("findFiles", [
@@ -33220,7 +33194,7 @@ var init_Activator = __esm({
       return Array.isArray(Events) ? Events.filter((E) => typeof E === "string") : [];
     }, "GetActivationEvents");
     GetWorkspaceContainsGlobs = /* @__PURE__ */ __name((Extension2) => GetActivationEvents(Extension2).filter((Event2) => Event2.startsWith(WORKSPACE_CONTAINS_PREFIX)).map((Event2) => Event2.slice(WORKSPACE_CONTAINS_PREFIX.length)).filter((Glob) => Glob.length > 0), "GetWorkspaceContainsGlobs");
-    ActivateWorkspaceContainsExtensions = /* @__PURE__ */ __name(async (Context21, AddedFolders) => {
+    ActivateWorkspaceContainsExtensions = /* @__PURE__ */ __name(async (Context13, AddedFolders) => {
       if (AddedFolders.length === 0) return;
       const FolderPaths = AddedFolders.map((Folder) => ({
         FsPath: UriToFsPath(Folder?.uri),
@@ -33230,10 +33204,10 @@ var init_Activator = __esm({
       );
       if (FolderPaths.length === 0) return;
       const Extensions = [];
-      for (const [Identifier, Extension2] of Context21.ExtensionRegistry.entries()) {
+      for (const [Identifier, Extension2] of Context13.ExtensionRegistry.entries()) {
         const Globs = GetWorkspaceContainsGlobs(Extension2);
         if (Globs.length === 0) continue;
-        if (Context21.ActivatedExtensions.has(Identifier)) continue;
+        if (Context13.ActivatedExtensions.has(Identifier)) continue;
         Extensions.push({ Identifier, Globs });
       }
       if (Extensions.length === 0) {
@@ -33258,7 +33232,7 @@ var init_Activator = __esm({
               Hit = await FolderContainsGlob(Folder.FsPath, Glob);
             } else {
               const Mountain = await FolderContainsGlobViaMountain(
-                Context21,
+                Context13,
                 Glob
               );
               if (typeof Mountain === "boolean") {
@@ -33284,7 +33258,7 @@ var init_Activator = __esm({
         } catch {
         }
         try {
-          await ExtensionHostHandler.HandleActivateByEvent(Context21, {
+          await ExtensionHostHandler.HandleActivateByEvent(Context13, {
             activationEvent: `${WORKSPACE_CONTAINS_PREFIX}${MatchingGlob}`
           });
           ActivationCount += 1;
@@ -33375,7 +33349,7 @@ var init_Handler5 = __esm({
       } catch {
       }
     }
-    ApplyWorkspaceDelta = /* @__PURE__ */ __name((Context21, Payload) => {
+    ApplyWorkspaceDelta = /* @__PURE__ */ __name((Context13, Payload) => {
       const Added = Payload?.added ?? [];
       const Removed = Payload?.removed ?? [];
       const RemovedUris = new Set(
@@ -33383,7 +33357,7 @@ var init_Handler5 = __esm({
           (Uri2) => Uri2.length > 0
         )
       );
-      const Init = Context21.ExtensionHostInitData ??= {};
+      const Init = Context13.ExtensionHostInitData ??= {};
       const Workspace = Init.workspace ??= Init.workspaceData ?? {};
       const Existing = Array.isArray(Workspace.folders) ? Workspace.folders : [];
       const Kept = Existing.filter(
@@ -33429,22 +33403,22 @@ var init_Handler5 = __esm({
         }
       }
     }, "SafeEmit");
-    HandleSpecificNotification = /* @__PURE__ */ __name((Emitter3, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter, Context21) => {
+    HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter, Context13) => {
       switch (Method) {
         case "extension.change":
-          Emitter3.emit("extensionChanged", Parameters);
+          Emitter2.emit("extensionChanged", Parameters);
           break;
         case "configuration.change":
-          Emitter3.emit("configurationChanged", Parameters);
+          Emitter2.emit("configurationChanged", Parameters);
           break;
         case "window.focused":
-          Emitter3.emit("windowFocused", Parameters);
+          Emitter2.emit("windowFocused", Parameters);
           break;
         case "window.blurred":
-          Emitter3.emit("windowBlurred", Parameters);
+          Emitter2.emit("windowBlurred", Parameters);
           break;
         case "system.shutdown":
-          Emitter3.emit("systemShutdown", Parameters);
+          Emitter2.emit("systemShutdown", Parameters);
           break;
         case "$acceptModelChanged":
         case "document.didChange":
@@ -33462,8 +33436,8 @@ var init_Handler5 = __esm({
             Parameters,
             WorkspaceEventEmitter
           );
-          if (Context21) {
-            const CapturedContext = Context21;
+          if (Context13) {
+            const CapturedContext = Context13;
             const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
             const LanguageIdentifiers = /* @__PURE__ */ new Set();
             for (const Model of Models) {
@@ -33515,7 +33489,7 @@ var init_Handler5 = __esm({
         case "webview.message": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           if (Payload?.handle) {
-            Emitter3.emit(
+            Emitter2.emit(
               `webview.message:${Payload.handle}`,
               Payload.message
             );
@@ -33525,7 +33499,7 @@ var init_Handler5 = __esm({
         case "webview.dispose": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           if (Payload?.handle) {
-            Emitter3.emit(`webview.dispose:${Payload.handle}`);
+            Emitter2.emit(`webview.dispose:${Payload.handle}`);
             try {
               Promise.resolve().then(() => (init_Namespace2(), Namespace_exports)).then(
                 ({ WebviewViewBuilders: _Builders }) => {
@@ -33539,12 +33513,12 @@ var init_Handler5 = __esm({
         case "webview.viewState": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           if (Payload?.handle) {
-            Emitter3.emit(`webview.viewState:${Payload.handle}`, {
+            Emitter2.emit(`webview.viewState:${Payload.handle}`, {
               active: Payload.active,
               visible: Payload.visible,
               viewColumn: Payload.viewColumn
             });
-            Emitter3.emit(
+            Emitter2.emit(
               `webview.viewVisibility:${Payload.handle}`,
               !!Payload.visible
             );
@@ -33556,8 +33530,8 @@ var init_Handler5 = __esm({
           const Added = Payload?.added ?? [];
           const Removed = Payload?.removed ?? [];
           let Merged = [];
-          if (Context21) {
-            Merged = ApplyWorkspaceDelta(Context21, Payload ?? {});
+          if (Context13) {
+            Merged = ApplyWorkspaceDelta(Context13, Payload ?? {});
           }
           try {
             process.stdout.write(
@@ -33597,9 +33571,9 @@ var init_Handler5 = __esm({
             folders: MergedHydrated
           };
           SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event2);
-          SafeEmit(Emitter3, "workspaceFoldersChanged", Event2);
-          if (Context21 && Added.length > 0) {
-            const CapturedContext = Context21;
+          SafeEmit(Emitter2, "workspaceFoldersChanged", Event2);
+          if (Context13 && Added.length > 0) {
+            const CapturedContext = Context13;
             setImmediate(() => {
               Promise.resolve().then(() => (init_Activator(), Activator_exports)).then(
                 ({ default: Activate }) => Activate(CapturedContext, Added)
@@ -33621,25 +33595,25 @@ var init_Handler5 = __esm({
           const TerminalId = Payload[0];
           const Data = Payload[1];
           if (TerminalId !== void 0) {
-            Emitter3.emit(`terminal:data:${TerminalId}`, Data);
+            Emitter2.emit(`terminal:data:${TerminalId}`, Data);
           }
-          Emitter3.emit("terminalData", { id: TerminalId, data: Data });
+          Emitter2.emit("terminalData", { id: TerminalId, data: Data });
           break;
         }
         case "$acceptTerminalProcessExit": {
           const Payload = Array.isArray(Parameters) ? Parameters : [Parameters];
           const TerminalId = Payload[0];
           if (TerminalId !== void 0) {
-            Emitter3.emit(`terminal:exit:${TerminalId}`);
+            Emitter2.emit(`terminal:exit:${TerminalId}`);
           }
-          Emitter3.emit("terminalExit", { id: TerminalId });
+          Emitter2.emit("terminalExit", { id: TerminalId });
           break;
         }
         case "$fileWatcher:event":
           {
             const Event2 = Array.isArray(Parameters) ? Parameters[0] : Parameters;
             if (Event2?.handle && Event2.kind && Event2.path) {
-              Emitter3.emit(`fileWatcher:${Event2.handle}`, {
+              Emitter2.emit(`fileWatcher:${Event2.handle}`, {
                 kind: Event2.kind,
                 path: Event2.path
               });
@@ -33655,32 +33629,32 @@ var init_Handler5 = __esm({
         // the extension-facing event fire.
         case "$onDidStartDebugSession": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          Emitter3.emit("debug.didStartSession", Payload);
+          Emitter2.emit("debug.didStartSession", Payload);
           break;
         }
         case "$onDidTerminateDebugSession": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          Emitter3.emit("debug.didTerminateSession", Payload);
+          Emitter2.emit("debug.didTerminateSession", Payload);
           break;
         }
         case "$onDidChangeActiveDebugSession": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          Emitter3.emit("debug.didChangeActiveSession", Payload);
+          Emitter2.emit("debug.didChangeActiveSession", Payload);
           break;
         }
         case "$onDidReceiveDebugSessionCustomEvent": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          Emitter3.emit("debug.didReceiveCustomEvent", Payload);
+          Emitter2.emit("debug.didReceiveCustomEvent", Payload);
           break;
         }
         case "$onDidChangeBreakpoints": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          Emitter3.emit("debug.didChangeBreakpoints", Payload);
+          Emitter2.emit("debug.didChangeBreakpoints", Payload);
           break;
         }
         case "$onDidChangeActiveStackItem": {
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
-          Emitter3.emit("debug.didChangeActiveStackItem", Payload);
+          Emitter2.emit("debug.didChangeActiveStackItem", Payload);
           break;
         }
         // Custom-editor document lifecycle. Mountain forwards each
@@ -33801,7 +33775,7 @@ var init_Handler5 = __esm({
             $onDidChangeCustomDocument: "didChangeCustomDocument"
           };
           const Suffix = ChannelMap[Method] ?? Method;
-          Emitter3.emit(`customEditor.${Suffix}`, Payload);
+          Emitter2.emit(`customEditor.${Suffix}`, Payload);
           break;
         }
         default:
@@ -33813,7 +33787,7 @@ var init_Handler5 = __esm({
           } catch {
           }
           try {
-            Emitter3.emit("unknownNotification", {
+            Emitter2.emit("unknownNotification", {
               method: Method,
               parameters: Parameters
             });
@@ -33833,12 +33807,6 @@ var init_Handler5 = __esm({
 });
 
 // Source/Services/gRPC/Server/Service.ts
-var Service_exports6 = {};
-__export(Service_exports6, {
-  GRPCServerService: () => GRPCServerService,
-  GRPCServerServiceLayer: () => GRPCServerServiceLayer,
-  GRPCServerServiceLive: () => GRPCServerServiceLive
-});
 import { EventEmitter } from "events";
 import { createRequire as createRequire2 } from "module";
 import { dirname as dirname4 } from "path";
@@ -34298,28 +34266,28 @@ var init_Service8 = __esm({
         if (ServiceResult !== void 0) {
           return ServiceResult;
         }
-        const Context21 = this.GetHandlerContext();
+        const Context13 = this.GetHandlerContext();
         if (method === "InitializeExtensionHost") {
           return Handler_default3.HandleInitializeExtensionHost(
-            Context21,
+            Context13,
             parameters
           );
         }
         if (method === "$deltaExtensions") {
           return Handler_default3.HandleDeltaExtensions(
-            Context21,
+            Context13,
             parameters
           );
         }
         if (method === "$activateByEvent") {
           return Handler_default3.HandleActivateByEvent(
-            Context21,
+            Context13,
             parameters
           );
         }
         if (method === "$startExtensionHost") {
           return Handler_default3.HandleStartExtensionHost(
-            Context21,
+            Context13,
             parameters
           );
         }
@@ -35011,7 +34979,7 @@ var init_RPCServer = __esm({
 // Source/Effect/Bootstrap.ts
 import { createConnection } from "node:net";
 import { Context as Context12, Duration, Effect as Effect11, Layer as Layer9, Schedule as Schedule2 } from "effect";
-var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
+var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainProbeBackoffFactor, MountainProbeMaxDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
 var init_Bootstrap = __esm({
   async "Source/Effect/Bootstrap.ts"() {
     "use strict";
@@ -35132,10 +35100,12 @@ var init_Bootstrap = __esm({
         };
       })
     );
-    MountainProbeTimeoutMs = 250;
-    MountainProbeMaxAttempts = 15;
+    MountainProbeTimeoutMs = 500;
+    MountainProbeMaxAttempts = 10;
     MountainProbeDelayMs = 200;
-    MountainConnectMaxAttempts = 20;
+    MountainProbeBackoffFactor = 2;
+    MountainProbeMaxDelayMs = 1e3;
+    MountainConnectMaxAttempts = 15;
     stage3_MountainConnection = withSpan(
       "stage3_mountain_connection",
       Effect11.gen(function* () {
@@ -35151,6 +35121,7 @@ var init_Bootstrap = __esm({
         );
         const MountainHost = "localhost";
         let ProbeAttempt = 0;
+        let ProbeDelay = MountainProbeDelayMs;
         let Listening = false;
         while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
           ProbeAttempt++;
@@ -35166,7 +35137,11 @@ var init_Bootstrap = __esm({
             );
             break;
           }
-          yield* Effect11.sleep(Duration.millis(MountainProbeDelayMs));
+          yield* Effect11.sleep(Duration.millis(ProbeDelay));
+          ProbeDelay = Math.min(
+            ProbeDelay * MountainProbeBackoffFactor,
+            MountainProbeMaxDelayMs
+          );
         }
         if (!Listening) {
           Log_default2.Warn(
@@ -35530,4261 +35505,36 @@ var init_Effect = __esm({
   }
 });
 
-// Source/Services/File/System/Service.ts
-import { Context as Context13, Effect as Effect12, Layer as Layer10 } from "effect";
-var IFileSystemService, FileSystemService, FileSystemServiceLayer;
-var init_Service9 = __esm({
-  "Source/Services/File/System/Service.ts"() {
-    "use strict";
-    init_Service();
-    IFileSystemService = Context13.Tag();
-    FileSystemService = class {
-      constructor(mountainClient) {
-        this.mountainClient = mountainClient;
-      }
-      mountainClient;
-      static {
-        __name(this, "FileSystemService");
-      }
-      async stat(uri) {
-        const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
-        const Response = await this.mountainClient.sendRequest("fs.stat", Path);
-        if (!Response) throw new Error(`File not found: ${Path}`);
-        return {
-          type: Response.type ?? 1,
-          ctime: 0,
-          mtime: Response.mtime ?? 0,
-          size: Response.size ?? 0
-        };
-      }
-      async readFile(uri) {
-        if (uri.scheme !== "file") {
-          throw new Error(`Unsupported scheme: ${uri.scheme}`);
-        }
-        const response = await this.mountainClient.sendRequest(
-          "fs.readFile",
-          uri.fsPath
-        );
-        return response;
-      }
-      async writeFile(uri, content) {
-        if (uri.scheme !== "file") {
-          throw new Error(`Unsupported scheme: ${uri.scheme}`);
-        }
-        await this.mountainClient.sendRequest("fs.writeFile", {
-          path: uri.fsPath,
-          content: Array.from(content)
-          // Serialize buffer to array
-        });
-      }
-      async readDirectory(uri) {
-        if (uri.scheme !== "file") {
-          throw new Error(`Unsupported scheme: ${uri.scheme}`);
-        }
-        const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
-        const Entries = await this.mountainClient.sendRequest("fs.listDir", Path);
-        return (Entries ?? []).map(
-          (E) => typeof E === "string" ? [E, 1] : [E.name, E.type]
-        );
-      }
-      async createDirectory(uri) {
-        await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
-      }
-      async delete(uri, _options) {
-        await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
-      }
-      async rename(source, target, _options) {
-        await this.mountainClient.sendRequest("fs.rename", {
-          from: source.fsPath,
-          to: target.fsPath
-        });
-      }
-    };
-    FileSystemServiceLayer = Layer10.effect(
-      IFileSystemService,
-      Effect12.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        return new FileSystemService(mountainClient);
-      })
-    );
-  }
-});
-
-// Source/Interfaces/I/File/System/Service.ts
-var init_Service10 = __esm({
-  "Source/Interfaces/I/File/System/Service.ts"() {
-    "use strict";
-    init_Service9();
-  }
-});
-
-// Source/Interfaces/I/Module/Interceptor/Service.ts
-import { Context as Context14 } from "effect";
-var SecurityLevel2, IModuleInterceptorService;
-var init_Service11 = __esm({
-  "Source/Interfaces/I/Module/Interceptor/Service.ts"() {
-    "use strict";
-    SecurityLevel2 = /* @__PURE__ */ ((SecurityLevel4) => {
-      SecurityLevel4["TRUSTED"] = "TRUSTED";
-      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
-      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
-      SecurityLevel4["BLOCKED"] = "BLOCKED";
-      return SecurityLevel4;
-    })(SecurityLevel2 || {});
-    IModuleInterceptorService = Context14.Tag(
-      "IModuleInterceptorService"
-    );
-  }
-});
-
-// Source/Interfaces/I/Terminal/Service.ts
-import { Context as Context15 } from "effect";
-var ITerminalService;
-var init_Service12 = __esm({
-  "Source/Interfaces/I/Terminal/Service.ts"() {
-    "use strict";
-    ITerminalService = Context15.Tag();
-  }
-});
-
-// Source/Services/API/Factory/Service.ts
-var Service_exports7 = {};
-__export(Service_exports7, {
-  APIFactoryLayer: () => APIFactoryLayer,
-  APIFactoryService: () => APIFactoryService,
-  IAPIFactoryService: () => IAPIFactoryService
-});
-import { Context as Context16, Effect as Effect13, Layer as Layer11 } from "effect";
-var VsCodeTypes, URI2, CancellationTokenSource2, CancellationToken2, Emitter2, StockRelativePattern, HydrateBase, PatchedRelativePattern, IAPIFactoryService, createVSCodeAPI, APIFactoryService, APIFactoryLayer;
-var init_Service13 = __esm({
-  async "Source/Services/API/Factory/Service.ts"() {
-    "use strict";
-    init_Service4();
-    init_Service10();
-    init_Service11();
-    init_Service();
-    init_Service12();
-    init_Registry();
-    VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
-    ({ URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
-    ({ CancellationTokenSource: CancellationTokenSource2, CancellationToken: CancellationToken2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports)));
-    ({ Emitter: Emitter2 } = await Promise.resolve().then(() => (init_event(), event_exports)));
-    StockRelativePattern = VsCodeTypes.RelativePattern;
-    HydrateBase = /* @__PURE__ */ __name((Base) => {
-      if (Base == null) return Base;
-      if (typeof Base === "string") return Base;
-      if (Base instanceof URI2) return Base;
-      if (typeof Base.uri !== "undefined") {
-        const Uri2 = Base.uri;
-        if (Uri2 instanceof URI2) return Base;
-        let Revived;
-        if (typeof Uri2 === "string") {
-          if (Uri2.length === 0) {
-            Revived = void 0;
-          } else {
-            try {
-              Revived = URI2.parse(Uri2);
-            } catch {
-              Revived = void 0;
-            }
-          }
-        } else {
-          try {
-            Revived = URI2.revive(Uri2);
-          } catch {
-            Revived = void 0;
-          }
-        }
-        return { ...Base, uri: Revived };
-      }
-      try {
-        const Revived = URI2.revive(Base);
-        return Revived ?? Base;
-      } catch {
-        return Base;
-      }
-    }, "HydrateBase");
-    PatchedRelativePattern = /* @__PURE__ */ __name(function RelativePattern3(Base, Pattern) {
-      const Safe = HydrateBase(Base);
-      return Reflect.construct(
-        StockRelativePattern,
-        [Safe, Pattern],
-        PatchedRelativePattern
-      );
-    }, "RelativePattern");
-    PatchedRelativePattern.prototype = StockRelativePattern.prototype;
-    Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
-    IAPIFactoryService = Context16.Tag();
-    createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsService, terminalService) => {
-      return {
-        version: "1.88.0",
-        // --- Type Constructors (real VS Code classes from @codeeditorland/output) ---
-        Position: VsCodeTypes.Position,
-        Range: VsCodeTypes.Range,
-        Location: VsCodeTypes.Location,
-        Selection: VsCodeTypes.Selection,
-        MarkdownString: VsCodeTypes.MarkdownString,
-        Hover: VsCodeTypes.Hover,
-        CompletionItem: VsCodeTypes.CompletionItem,
-        CompletionItemKind: VsCodeTypes.CompletionItemKind,
-        CompletionItemTag: VsCodeTypes.CompletionItemTag,
-        CompletionList: VsCodeTypes.CompletionList,
-        CompletionTriggerKind: VsCodeTypes.CompletionTriggerKind,
-        Diagnostic: VsCodeTypes.Diagnostic,
-        DiagnosticSeverity: VsCodeTypes.DiagnosticSeverity,
-        DiagnosticTag: VsCodeTypes.DiagnosticTag,
-        DiagnosticRelatedInformation: VsCodeTypes.DiagnosticRelatedInformation,
-        TextEdit: VsCodeTypes.TextEdit,
-        WorkspaceEdit: VsCodeTypes.WorkspaceEdit,
-        SnippetString: VsCodeTypes.SnippetString,
-        SnippetTextEdit: VsCodeTypes.SnippetTextEdit,
-        SymbolKind: VsCodeTypes.SymbolKind,
-        SymbolInformation: VsCodeTypes.SymbolInformation,
-        DocumentSymbol: VsCodeTypes.DocumentSymbol,
-        CodeActionKind: VsCodeTypes.CodeActionKind,
-        CodeAction: VsCodeTypes.CodeAction,
-        CodeActionTriggerKind: VsCodeTypes.CodeActionTriggerKind,
-        SignatureHelp: VsCodeTypes.SignatureHelp,
-        SignatureHelpTriggerKind: VsCodeTypes.SignatureHelpTriggerKind,
-        SignatureInformation: VsCodeTypes.SignatureInformation,
-        ParameterInformation: VsCodeTypes.ParameterInformation,
-        InlayHint: VsCodeTypes.InlayHint,
-        InlayHintKind: VsCodeTypes.InlayHintKind,
-        InlayHintLabelPart: VsCodeTypes.InlayHintLabelPart,
-        FoldingRange: VsCodeTypes.FoldingRange,
-        FoldingRangeKind: VsCodeTypes.FoldingRangeKind,
-        DocumentHighlight: VsCodeTypes.DocumentHighlight,
-        DocumentHighlightKind: VsCodeTypes.DocumentHighlightKind,
-        DocumentLink: VsCodeTypes.DocumentLink,
-        SelectionRange: VsCodeTypes.SelectionRange,
-        SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
-        SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
-        SemanticTokens: VsCodeTypes.SemanticTokens,
-        RelativePattern: PatchedRelativePattern,
-        Disposable: VsCodeTypes.Disposable,
-        StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
-        ThemeColor: VsCodeTypes.ThemeColor,
-        ThemeIcon: VsCodeTypes.ThemeIcon,
-        TreeItem: VsCodeTypes.TreeItem,
-        TreeItemCollapsibleState: VsCodeTypes.TreeItemCollapsibleState,
-        ViewColumn: VsCodeTypes.ViewColumn,
-        EndOfLine: VsCodeTypes.EndOfLine,
-        FileSystemError: VsCodeTypes.FileSystemError,
-        FileChangeType: VsCodeTypes.FileChangeType,
-        ConfigurationTarget: VsCodeTypes.ConfigurationTarget,
-        DecorationRangeBehavior: VsCodeTypes.DecorationRangeBehavior,
-        TextDocumentSaveReason: VsCodeTypes.TextDocumentSaveReason,
-        // These enums are declared in vs/editor/common/config/editorOptions.ts
-        // and vs/workbench/services/extensions/common/extensionHostProtocol.ts
-        // respectively, but extHostTypes.js doesn't re-export them. Extensions
-        // (vscodevim, gitlens) crash at activation reading .Line / .Web off
-        // undefined. Inline the literal enum values so the API surface matches
-        // what extensions expect. Keep in sync with the upstream enums.
-        TextEditorCursorStyle: {
-          Line: 1,
-          Block: 2,
-          Underline: 3,
-          LineThin: 4,
-          BlockOutline: 5,
-          UnderlineThin: 6
-        },
-        UIKind: { Desktop: 1, Web: 2 },
-        // URI is exposed as 'Uri' to match the vscode API surface
-        Uri: URI2,
-        CancellationTokenSource: CancellationTokenSource2,
-        CancellationToken: CancellationToken2,
-        // Emitter is the vscode.EventEmitter equivalent
-        EventEmitter: Emitter2,
-        // --- Window Namespace ---
-        window: {
-          showInformationMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
-            await mountainClient.sendRequest("window.showMessage", {
-              title: "Information",
-              message,
-              level: "info"
-            });
-            return void 0;
-          }, "showInformationMessage"),
-          showErrorMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
-            await mountainClient.sendRequest("window.showMessage", {
-              title: "Error",
-              message,
-              level: "error"
-            });
-            return void 0;
-          }, "showErrorMessage"),
-          showWarningMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
-            await mountainClient.sendRequest("window.showMessage", {
-              title: "Warning",
-              message,
-              level: "warn"
-            });
-            return void 0;
-          }, "showWarningMessage"),
-          createTerminal: /* @__PURE__ */ __name((options) => {
-            const name = typeof options === "string" ? options : options.name;
-            const shellPath = typeof options === "object" ? options.shellPath : void 0;
-            const cwd2 = typeof options === "object" ? options.cwd : void 0;
-            const terminalIdPromise = terminalService.createTerminal(
-              name,
-              shellPath,
-              cwd2
-            );
-            return {
-              name,
-              sendText: /* @__PURE__ */ __name(async (text) => {
-                const id2 = await terminalIdPromise;
-                await terminalService.sendText(id2, text);
-              }, "sendText"),
-              show: /* @__PURE__ */ __name(() => {
-              }, "show"),
-              hide: /* @__PURE__ */ __name(() => {
-              }, "hide"),
-              dispose: /* @__PURE__ */ __name(async () => {
-                const id2 = await terminalIdPromise;
-                await terminalService.kill(id2);
-              }, "dispose")
-            };
-          }, "createTerminal"),
-          createStatusBarItem: /* @__PURE__ */ __name((_alignment, _priority) => ({
-            show: /* @__PURE__ */ __name(() => {
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose"),
-            text: "",
-            tooltip: "",
-            command: void 0
-          }), "createStatusBarItem"),
-          createOutputChannel: /* @__PURE__ */ __name((_name) => ({
-            append: /* @__PURE__ */ __name((_value) => {
-            }, "append"),
-            appendLine: /* @__PURE__ */ __name((_value) => {
-            }, "appendLine"),
-            clear: /* @__PURE__ */ __name(() => {
-            }, "clear"),
-            show: /* @__PURE__ */ __name(() => {
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose")
-          }), "createOutputChannel"),
-          withProgress: /* @__PURE__ */ __name(async (_options, task) => {
-            return task({ report: /* @__PURE__ */ __name((_value) => {
-            }, "report") });
-          }, "withProgress"),
-          // Terminal shell-integration events. Land doesn't track shell
-          // integration, so extensions (openai.chatgpt) that subscribe get
-          // a never-firing event that still registers/disposes cleanly.
-          // Must be a function returning IDisposable - not just an object -
-          // because `vscode.window.onDidChangeTerminalShellIntegration(cb)`
-          // is called as a function by the extension.
-          onDidChangeTerminalShellIntegration: /* @__PURE__ */ __name((_Listener) => ({
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose")
-          }), "onDidChangeTerminalShellIntegration"),
-          onDidStartTerminalShellExecution: /* @__PURE__ */ __name((_Listener) => ({
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose")
-          }), "onDidStartTerminalShellExecution"),
-          onDidEndTerminalShellExecution: /* @__PURE__ */ __name((_Listener) => ({
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose")
-          }), "onDidEndTerminalShellExecution")
-        },
-        // --- Workspace Namespace ---
-        workspace: {
-          workspaceFolders: [],
-          getConfiguration: /* @__PURE__ */ __name((section) => {
-            return {
-              get: /* @__PURE__ */ __name((key, defaultValue) => {
-                const fullKey = section ? `${section}.${key}` : key;
-                return configService.getValue(fullKey, 0, defaultValue);
-              }, "get"),
-              update: /* @__PURE__ */ __name(async (key, value, target) => {
-                const fullKey = section ? `${section}.${key}` : key;
-                await configService.setValue(fullKey, value, target);
-              }, "update"),
-              has: /* @__PURE__ */ __name((key) => configService.hasKey(
-                section ? `${section}.${key}` : key,
-                0
-              ), "has"),
-              inspect: /* @__PURE__ */ __name((key) => configService.inspect(
-                section ? `${section}.${key}` : key,
-                0
-              ), "inspect")
-            };
-          }, "getConfiguration"),
-          // Filesystem API (Real Implementation)
-          fs: {
-            stat: /* @__PURE__ */ __name((uri) => fsService.stat(uri), "stat"),
-            readFile: /* @__PURE__ */ __name((uri) => fsService.readFile(uri), "readFile"),
-            writeFile: /* @__PURE__ */ __name((uri, content) => fsService.writeFile(uri, content), "writeFile"),
-            readDirectory: /* @__PURE__ */ __name((uri) => fsService.readDirectory(uri), "readDirectory"),
-            createDirectory: /* @__PURE__ */ __name((uri) => fsService.createDirectory(uri), "createDirectory"),
-            delete: /* @__PURE__ */ __name((uri, options) => fsService.delete(uri, options), "delete"),
-            rename: /* @__PURE__ */ __name((source, target, options) => fsService.rename(source, target, options), "rename")
-          },
-          findFiles: /* @__PURE__ */ __name(async (_include) => [], "findFiles"),
-          openTextDocument: /* @__PURE__ */ __name(async (uri) => ({
-            getText: /* @__PURE__ */ __name(() => "", "getText"),
-            uri,
-            languageId: "plaintext",
-            lineCount: 0,
-            fileName: uri.fsPath || ""
-          }), "openTextDocument")
-        },
-        // --- Commands Namespace ---
-        commands: /* @__PURE__ */ (() => {
-          const LocalHandlers = /* @__PURE__ */ new Map();
-          return {
-            registerCommand: /* @__PURE__ */ __name((command, callback) => {
-              LocalHandlers.set(command, callback);
-              mountainClient.sendNotification("registerCommand", {
-                commandId: command,
-                extensionId: "unknown",
-                title: command
-              }).catch(() => {
-              });
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  LocalHandlers.delete(command);
-                  mountainClient.sendNotification("unregisterCommand", {
-                    commandId: command
-                  }).catch(() => {
-                  });
-                }, "dispose")
-              };
-            }, "registerCommand"),
-            executeCommand: /* @__PURE__ */ __name(async (command, ...args) => {
-              const Local = LocalHandlers.get(command);
-              if (Local !== void 0) {
-                return Local(...args);
-              }
-              try {
-                const Result = await mountainClient.sendRequest(
-                  "executeCommand",
-                  {
-                    commandId: command,
-                    arguments: args.map((Arg) => {
-                      if (typeof Arg === "string")
-                        return { stringValue: Arg };
-                      if (typeof Arg === "number")
-                        return { intValue: Arg };
-                      if (typeof Arg === "boolean")
-                        return { boolValue: Arg };
-                      return { stringValue: JSON.stringify(Arg) };
-                    })
-                  }
-                );
-                return Result?.result;
-              } catch (Error2) {
-                const Message = String(Error2?.message ?? Error2);
-                const IsNotFound = Message.includes("not found") || Message.includes("Command not found");
-                const IsExtensionNamespaced = command.includes(".") && !command.startsWith("vscode.") && !command.startsWith("workbench.") && !command.startsWith("editor.");
-                if (IsNotFound && IsExtensionNamespaced) {
-                  return void 0;
-                }
-                throw Error2;
-              }
-            }, "executeCommand"),
-            getCommands: /* @__PURE__ */ __name(async () => {
-              const Result = await mountainClient.sendRequest("executeCommand", {
-                commandId: "_getCommands",
-                arguments: []
-              }).catch(() => null);
-              return Array.isArray(Result?.result) ? Result.result : [];
-            }, "getCommands")
-          };
-        })(),
-        // --- Env Namespace ---
-        env: {
-          appName: "CodeEditorLand",
-          appRoot: "/app",
-          language: "en-US",
-          clipboard: {
-            readText: /* @__PURE__ */ __name(async () => "", "readText"),
-            writeText: /* @__PURE__ */ __name(async (_value) => {
-            }, "writeText")
-          },
-          openExternal: /* @__PURE__ */ __name(async (target) => {
-            const Url = typeof target === "string" ? target : target?.toString?.() ?? "";
-            await mountainClient.sendNotification("openExternal", {
-              url: Url
-            });
-            return true;
-          }, "openExternal"),
-          uriScheme: "codeeditorland",
-          appHost: "desktop",
-          remoteName: "",
-          isNewAppInstall: false,
-          isTelemetryEnabled: false,
-          onDidChangeTelemetryEnabled: {
-            event: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "event")
-          }
-        },
-        // --- Extensions Namespace ---
-        extensions: {
-          getExtension: /* @__PURE__ */ __name((_id) => void 0, "getExtension"),
-          all: []
-        },
-        // --- Languages Namespace ---
-        // Full provider registration surface lifted from extHostLanguageFeatures.ts.
-        // Each register*Provider sends a registration notification to Mountain so
-        // the editor can dispatch feature requests back to Cocoon.
-        languages: /* @__PURE__ */ (() => {
-          let NextHandle2 = 1;
-          const RegisterProvider2 = /* @__PURE__ */ __name((type, selector, provider) => {
-            const Handle = NextHandle2++;
-            Register(Handle, provider);
-            mountainClient.sendNotification(`register_${type}`, {
-              language_selector: typeof selector === "string" ? selector : JSON.stringify(selector),
-              handle: Handle
-            }).catch(() => {
-            });
-            return {
-              dispose: /* @__PURE__ */ __name(() => Unregister(Handle), "dispose")
-            };
-          }, "RegisterProvider");
-          return {
-            getLanguages: /* @__PURE__ */ __name(() => [], "getLanguages"),
-            setTextDocumentLanguage: /* @__PURE__ */ __name(async () => void 0, "setTextDocumentLanguage"),
-            match: /* @__PURE__ */ __name(() => 0, "match"),
-            createDiagnosticCollection: /* @__PURE__ */ __name((name) => {
-              const Items = /* @__PURE__ */ new Map();
-              return {
-                name: name ?? "default",
-                set: /* @__PURE__ */ __name((uri, diagnostics) => Items.set(
-                  uri?.toString?.() ?? String(uri),
-                  diagnostics
-                ), "set"),
-                delete: /* @__PURE__ */ __name((uri) => Items.delete(uri?.toString?.() ?? String(uri)), "delete"),
-                clear: /* @__PURE__ */ __name(() => Items.clear(), "clear"),
-                forEach: /* @__PURE__ */ __name((cb) => Items.forEach(cb), "forEach"),
-                get: /* @__PURE__ */ __name((uri) => Items.get(uri?.toString?.() ?? String(uri)), "get"),
-                has: /* @__PURE__ */ __name((uri) => Items.has(uri?.toString?.() ?? String(uri)), "has"),
-                dispose: /* @__PURE__ */ __name(() => Items.clear(), "dispose")
-              };
-            }, "createDiagnosticCollection"),
-            registerHoverProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("hover_provider", sel, p), "registerHoverProvider"),
-            registerCompletionItemProvider: /* @__PURE__ */ __name((sel, p, ..._) => RegisterProvider2("completion_item_provider", sel, p), "registerCompletionItemProvider"),
-            registerDefinitionProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("definition_provider", sel, p), "registerDefinitionProvider"),
-            registerReferenceProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("reference_provider", sel, p), "registerReferenceProvider"),
-            registerCodeActionsProvider: /* @__PURE__ */ __name((sel, p, _meta) => RegisterProvider2("code_actions_provider", sel, p), "registerCodeActionsProvider"),
-            registerDocumentHighlightProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("document_highlight_provider", sel, p), "registerDocumentHighlightProvider"),
-            registerDocumentSymbolProvider: /* @__PURE__ */ __name((sel, p, _meta) => RegisterProvider2("document_symbol_provider", sel, p), "registerDocumentSymbolProvider"),
-            registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((p) => RegisterProvider2("workspace_symbol_provider", "*", p), "registerWorkspaceSymbolProvider"),
-            registerRenameProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("rename_provider", sel, p), "registerRenameProvider"),
-            registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("document_formatting_provider", sel, p), "registerDocumentFormattingEditProvider"),
-            registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2(
-              "document_range_formatting_provider",
-              sel,
-              p
-            ), "registerDocumentRangeFormattingEditProvider"),
-            registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((sel, p, _first, ..._more) => RegisterProvider2("on_type_formatting_provider", sel, p), "registerOnTypeFormattingEditProvider"),
-            registerSignatureHelpProvider: /* @__PURE__ */ __name((sel, p, ..._) => RegisterProvider2("signature_help_provider", sel, p), "registerSignatureHelpProvider"),
-            registerCodeLensProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("code_lens_provider", sel, p), "registerCodeLensProvider"),
-            registerFoldingRangeProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("folding_range_provider", sel, p), "registerFoldingRangeProvider"),
-            registerSelectionRangeProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("selection_range_provider", sel, p), "registerSelectionRangeProvider"),
-            registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((sel, p, _legend) => RegisterProvider2("semantic_tokens_provider", sel, p), "registerDocumentSemanticTokensProvider"),
-            registerDocumentRangeSemanticTokensProvider: /* @__PURE__ */ __name((sel, p, _legend) => RegisterProvider2("semantic_tokens_provider", sel, p), "registerDocumentRangeSemanticTokensProvider"),
-            registerInlayHintsProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("inlay_hints_provider", sel, p), "registerInlayHintsProvider"),
-            registerTypeHierarchyProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("type_hierarchy_provider", sel, p), "registerTypeHierarchyProvider"),
-            registerCallHierarchyProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("call_hierarchy_provider", sel, p), "registerCallHierarchyProvider"),
-            registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("linked_editing_range_provider", sel, p), "registerLinkedEditingRangeProvider"),
-            registerDocumentLinkProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("document_link_provider", sel, p), "registerDocumentLinkProvider"),
-            registerColorProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("color_provider", sel, p), "registerColorProvider"),
-            registerImplementationProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("implementation_provider", sel, p), "registerImplementationProvider"),
-            registerTypeDefinitionProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("type_definition_provider", sel, p), "registerTypeDefinitionProvider"),
-            registerDeclarationProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("declaration_provider", sel, p), "registerDeclarationProvider"),
-            registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("evaluatable_expression_provider", sel, p), "registerEvaluatableExpressionProvider"),
-            registerInlineValuesProvider: /* @__PURE__ */ __name((sel, p) => RegisterProvider2("inline_values_provider", sel, p), "registerInlineValuesProvider"),
-            setLanguageConfiguration: /* @__PURE__ */ __name((lang, _config) => {
-              mountainClient.sendNotification("set_language_configuration", {
-                language: lang
-              }).catch(() => {
-              });
-              return { dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") };
-            }, "setLanguageConfiguration")
-          };
-        })(),
-        debug: {
-          startDebugging: /* @__PURE__ */ __name(async () => false, "startDebugging"),
-          activeDebugSession: void 0
-        },
-        scm: {
-          createSourceControl: /* @__PURE__ */ __name((_id, _label) => ({
-            createResourceGroup: /* @__PURE__ */ __name((_id2, _label2) => ({
-              resourceStates: []
-            }), "createResourceGroup"),
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose")
-          }), "createSourceControl")
-        },
-        authentication: {
-          getSession: /* @__PURE__ */ __name(async () => void 0, "getSession")
-        }
-      };
-    }, "createVSCodeAPI");
-    APIFactoryService = class {
-      constructor(mountainClient, configService, fsService, terminalService, moduleInterceptor) {
-        this.mountainClient = mountainClient;
-        this.configService = configService;
-        this.fsService = fsService;
-        this.terminalService = terminalService;
-        this.moduleInterceptor = moduleInterceptor;
-        this.api = createVSCodeAPI(
-          mountainClient,
-          configService,
-          fsService,
-          terminalService
-        );
-      }
-      mountainClient;
-      configService;
-      fsService;
-      terminalService;
-      moduleInterceptor;
-      static {
-        __name(this, "APIFactoryService");
-      }
-      _serviceBrand;
-      api;
-      /**
-       * Create/Get the API instance
-       */
-      createAPI() {
-        return this.api;
-      }
-    };
-    APIFactoryLayer = Layer11.effect(
-      IAPIFactoryService,
-      Effect13.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const configService = yield* IConfigurationService;
-        const fsService = yield* IFileSystemService;
-        const terminalService = yield* ITerminalService;
-        const moduleInterceptor = yield* IModuleInterceptorService;
-        return new APIFactoryService(
-          mountainClient,
-          configService,
-          fsService,
-          terminalService,
-          moduleInterceptor
-        );
-      })
-    );
-  }
-});
-
-// Source/Services/Configuration.ts
-import { Effect as Effect14, Layer as Layer12 } from "effect";
-var ConfigurationScope2, Configuration3, ConfigurationLayer, ConfigurationLive;
-var init_Configuration3 = __esm({
-  "Source/Services/Configuration.ts"() {
-    "use strict";
-    init_Service4();
-    init_Service();
-    ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
-      ConfigurationScope3["APPLICATION"] = "APPLICATION";
-      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
-      ConfigurationScope3["PROFILE"] = "PROFILE";
-      return ConfigurationScope3;
-    })(ConfigurationScope2 || {});
-    Configuration3 = class {
-      static {
-        __name(this, "Configuration");
-      }
-      _serviceBrand;
-      configuration;
-      mountainClient;
-      listeners;
-      constructor(mountainClient) {
-        this._serviceBrand = void 0;
-        this.mountainClient = mountainClient;
-        this.configuration = /* @__PURE__ */ new Map();
-        this.listeners = /* @__PURE__ */ new Map();
-        console.log(
-          "[ConfigurationService] Initializing configuration service with Universal Spine"
-        );
-      }
-      /**
-       * Initialize the configuration service by fetching from Mountain
-       */
-      async initialize() {
-        console.log(
-          "[ConfigurationService] Loading initial configuration from Spine..."
-        );
-        try {
-          const configData = await this.mountainClient.sendRequest(
-            "config.reload",
-            {}
-          );
-          if (configData?.application) {
-            this.configuration.set(
-              "APPLICATION" /* APPLICATION */,
-              configData.application
-            );
-          }
-          if (configData?.workspace) {
-            this.configuration.set(
-              "WORKSPACE" /* WORKSPACE */,
-              configData.workspace
-            );
-          }
-          if (configData?.profile) {
-            this.configuration.set(
-              "PROFILE" /* PROFILE */,
-              configData.profile
-            );
-          }
-          console.log(
-            "[ConfigurationService] Configuration loaded from Spine",
-            configData
-          );
-        } catch (error) {
-          console.error(
-            "[ConfigurationService] Failed to load initial configuration from Spine:",
-            error
-          );
-          this.configuration.set("APPLICATION" /* APPLICATION */, {
-            _version: 1,
-            _timestamp: Date.now(),
-            window: {
-              zoomLevel: 0,
-              theme: "dark"
-            },
-            editor: {
-              fontSize: 14,
-              lineNumbers: "on"
-            }
-          });
-          this.configuration.set("WORKSPACE" /* WORKSPACE */, {
-            _version: 1,
-            _timestamp: Date.now()
-          });
-          this.configuration.set("PROFILE" /* PROFILE */, {
-            _version: 1,
-            _timestamp: Date.now()
-          });
-        }
-      }
-      /**
-       * Get configuration value
-       */
-      getValue(key, scope = "APPLICATION" /* APPLICATION */, defaultValue) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return defaultValue;
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return value !== void 0 ? value : defaultValue;
-      }
-      /**
-       * Set configuration value
-       */
-      async setValue(key, value, scope) {
-        if (!this.validateConfigurationKey(key)) {
-          throw new Error(`Invalid configuration key: ${key}`);
-        }
-        if (!this.validateConfigurationValue(key, value)) {
-          throw new Error(
-            `Invalid configuration value for key ${key}: ${value}`
-          );
-        }
-        let scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          scopeConfig = {};
-          this.configuration.set(scope, scopeConfig);
-        }
-        const oldValue = this.getNestedValue(scopeConfig, key);
-        if (oldValue !== value) {
-          this.setNestedValue(scopeConfig, key, value);
-          scopeConfig._timestamp = Date.now();
-          scopeConfig._version = (scopeConfig._version || 0) + 1;
-          try {
-            let spineScope = 0;
-            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
-            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
-            await this.mountainClient.sendRequest("config.update", {
-              key,
-              value,
-              scope: spineScope
-            });
-            console.log(
-              `[ConfigurationService] Configuration updated: ${key} = ${value}`
-            );
-            this.notifyConfigurationChange([key], scope);
-          } catch (error) {
-            console.error(
-              `[ConfigurationService] Failed to update configuration: ${key}`,
-              error
-            );
-            await this.handleConfigurationConflict(
-              error,
-              key,
-              value,
-              scope
-            );
-          }
-        }
-      }
-      /**
-       * Validate configuration key
-       */
-      validateConfigurationKey(key) {
-        if (!key || key.trim().length === 0) {
-          return false;
-        }
-        const invalidChars = /[^a-zA-Z0-9._-]/;
-        if (invalidChars.test(key)) {
-          return false;
-        }
-        if (key.startsWith(".") || key.endsWith(".")) {
-          return false;
-        }
-        if (key.includes("..")) {
-          return false;
-        }
-        return true;
-      }
-      /**
-       * Validate configuration value
-       */
-      validateConfigurationValue(key, value) {
-        if (value === void 0) {
-          return false;
-        }
-        if (key.includes("zoomLevel") || key.includes("fontSize")) {
-          if (typeof value !== "number" || !isFinite(value)) {
-            return false;
-          }
-          if (key.includes("zoomLevel")) {
-            return value >= -8 && value <= 9;
-          }
-          if (key.includes("fontSize")) {
-            return value >= 6 && value <= 100;
-          }
-        }
-        if (key.includes("enable") || key.includes("show") || key.includes("visible")) {
-          return typeof value === "boolean";
-        }
-        if (typeof value === "string") {
-          return value.trim().length > 0;
-        }
-        return true;
-      }
-      /**
-       * Validate entire configuration scope
-       */
-      validateScopeConfiguration(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return true;
-        }
-        const keys = [];
-        this.collectKeys(scopeConfig, "", keys);
-        for (const key of keys) {
-          const value = this.getNestedValue(scopeConfig, key);
-          if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      /**
-       * Update configuration value
-       */
-      async updateValue(key, updateFn, scope) {
-        const currentValue = this.getValue(key, scope);
-        const newValue = updateFn(currentValue);
-        await this.setValue(key, newValue, scope);
-      }
-      /**
-       * Check if configuration key exists
-       */
-      hasKey(key, scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return false;
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return value !== void 0;
-      }
-      /**
-       * Get all configuration keys for a scope
-       */
-      getConfigurationKeys(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return [];
-        }
-        const keys = [];
-        this.collectKeys(scopeConfig, "", keys);
-        return keys;
-      }
-      /**
-       * Get all configuration values for a scope
-       */
-      async getAllValues(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return {};
-        }
-        const result = {};
-        this.collectKeys(scopeConfig, "", Object.keys(result));
-        for (const key of Object.keys(result)) {
-          result[key] = this.getNestedValue(scopeConfig, key);
-        }
-        return result;
-      }
-      /**
-       * Inspect configuration value
-       */
-      inspect(key, scope = "APPLICATION" /* APPLICATION */) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return { key };
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return {
-          key,
-          value
-        };
-      }
-      /**
-       * Listen for configuration changes
-       */
-      onDidChangeConfiguration(callback) {
-        console.log(
-          "[ConfigurationService] Registering configuration change listener"
-        );
-        const listenerId = `listener_${Date.now()}_${Math.random()}`;
-        let globalListeners = this.listeners.get("*");
-        if (!globalListeners) {
-          globalListeners = [];
-          this.listeners.set("*", globalListeners);
-        }
-        globalListeners.push(callback);
-        console.log(
-          `[ConfigurationService] Configuration change listener registered: ${listenerId}`
-        );
-      }
-      /**
-       * Reload configuration from Mountain
-       */
-      async reloadConfiguration() {
-        console.log(
-          "[ConfigurationService] Reloading configuration from Mountain"
-        );
-        try {
-          this.listeners.clear();
-          await this.initialize();
-          console.log(
-            "[ConfigurationService] Configuration reloaded successfully"
-          );
-        } catch (error) {
-          console.error(
-            "[ConfigurationService] Failed to reload configuration:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Handle configuration conflicts with retry logic
-       */
-      async handleConfigurationConflict(_error, key, value, scope) {
-        console.warn(
-          "[ConfigurationService] Configuration conflict detected, implementing retry logic"
-        );
-        const maxRetries = 3;
-        const baseDelay = 100;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          const delay = baseDelay * Math.pow(2, attempt - 1);
-          console.log(
-            `[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`
-          );
-          await new Promise((resolve2) => setTimeout(resolve2, delay));
-          try {
-            await this.initialize();
-            let scopeConfig = this.configuration.get(scope);
-            if (!scopeConfig) {
-              scopeConfig = {};
-              this.configuration.set(scope, scopeConfig);
-            }
-            this.setNestedValue(scopeConfig, key, value);
-            scopeConfig._timestamp = Date.now();
-            scopeConfig._version = (scopeConfig._version || 0) + 1;
-            let spineScope = 0;
-            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
-            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
-            await this.mountainClient.sendRequest("config.update", {
-              key,
-              value,
-              scope: spineScope
-            });
-            console.log(
-              "[ConfigurationService] Configuration saved successfully after retry"
-            );
-            return;
-          } catch (retryError) {
-            console.error(
-              `[ConfigurationService] Retry attempt ${attempt} failed:`,
-              retryError
-            );
-            if (attempt === maxRetries) {
-              console.error(
-                "[ConfigurationService] All retry attempts failed, configuration may be out of sync"
-              );
-              throw new Error(
-                `Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`
-              );
-            }
-          }
-        }
-      }
-      /**
-       * Cleanup configuration service
-       */
-      async cleanup() {
-        console.log("[ConfigurationService] Cleaning up configuration service");
-        this.listeners.clear();
-        this.configuration.clear();
-        console.log("[ConfigurationService] Configuration service cleaned up");
-      }
-      /**
-       * Get nested value from configuration object
-       */
-      getNestedValue(obj, key) {
-        const keys = key.split(".");
-        let current = obj;
-        for (const k of keys) {
-          if (current && typeof current === "object" && k in current) {
-            current = current[k];
-          } else {
-            return void 0;
-          }
-        }
-        return current;
-      }
-      /**
-       * Set nested value in configuration object
-       */
-      setNestedValue(obj, key, value) {
-        const keys = key.split(".");
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-          const k = keys[i];
-          if (!k) continue;
-          if (!(k in current) || typeof current[k] !== "object") {
-            current[k] = {};
-          }
-          current = current[k];
-        }
-        const lastKey = keys[keys.length - 1];
-        if (lastKey) {
-          current[lastKey] = value;
-        }
-      }
-      /**
-       * Collect all configuration keys
-       */
-      collectKeys(obj, prefix, keys) {
-        for (const key in obj) {
-          if (key.startsWith("_")) continue;
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (typeof obj[key] === "object" && obj[key] !== null) {
-            this.collectKeys(obj[key], fullKey, keys);
-          } else {
-            keys.push(fullKey);
-          }
-        }
-      }
-      /**
-       * Notify configuration change listeners
-       */
-      notifyConfigurationChange(keys, scope) {
-        for (const key of keys) {
-          const eventKey = `${scope}.${key}`;
-          const listeners = this.listeners.get(eventKey);
-          const globalListeners = this.listeners.get("*");
-          const allListeners = [
-            ...listeners || [],
-            ...globalListeners || []
-          ];
-          if (allListeners.length > 0) {
-            for (const listener of allListeners) {
-              try {
-                listener([{ key, scope }]);
-              } catch (error) {
-                console.error(
-                  `[ConfigurationService] Error in listener for ${eventKey}:`,
-                  error
-                );
-              }
-            }
-          }
-        }
-      }
-    };
-    ConfigurationLayer = Layer12.effect(
-      IConfigurationService,
-      Effect14.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const configService = new Configuration3(mountainClient);
-        yield* Effect14.promise(() => configService.initialize());
-        return configService;
-      })
-    );
-    ConfigurationLive = ConfigurationLayer;
-  }
-});
-
-// Source/Services/Error/Handling/Service.ts
-var Service_exports8 = {};
-__export(Service_exports8, {
-  ErrorHandlingService: () => ErrorHandlingService,
-  ErrorHandlingServiceLayer: () => ErrorHandlingServiceLayer,
-  ErrorHandlingServiceLive: () => ErrorHandlingServiceLive
-});
-import { Effect as Effect15, Layer as Layer13 } from "effect";
-var ErrorHandlingService, ErrorHandlingServiceLayer, ErrorHandlingServiceLive;
-var init_Service14 = __esm({
-  "Source/Services/Error/Handling/Service.ts"() {
-    "use strict";
-    ErrorHandlingService = class {
-      static {
-        __name(this, "ErrorHandlingService");
-      }
-      _serviceBrand;
-      circuitBreakers = /* @__PURE__ */ new Map();
-      config;
-      constructor() {
-        this._serviceBrand = void 0;
-        this.config = this.loadDefaultConfig();
-        console.log(
-          "[ErrorHandlingService] Initializing error handling service"
-        );
-      }
-      /**
-       * Load default configuration
-       */
-      loadDefaultConfig() {
-        return {
-          maxRetries: 3,
-          retryDelay: 1e3,
-          // 1 second
-          exponentialBackoff: true,
-          circuitBreakerTimeout: 3e4,
-          // 30 seconds
-          circuitBreakerThreshold: 5
-        };
-      }
-      /**
-       * Execute operation with advanced error handling and metrics
-       */
-      async executeWithRetry(operation, operationName, customConfig) {
-        const startTime = Date.now();
-        const config = { ...this.config, ...customConfig };
-        console.log(
-          `[ErrorHandlingService] Executing operation: ${operationName}`
-        );
-        const circuitState = this.getCircuitBreakerState(operationName);
-        if (circuitState.state === "OPEN") {
-          const error = new Error(
-            `Circuit breaker is OPEN for ${operationName} (failures: ${circuitState.failureCount})`
-          );
-          console.warn(
-            `[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`
-          );
-          this.trackCircuitBreakerEvent(operationName, "blocked");
-          return {
-            success: false,
-            error,
-            retries: 0,
-            duration: Date.now() - startTime,
-            circuitBreakerState: circuitState,
-            metrics: {
-              circuitBreakerBlocked: true,
-              totalRetries: 0,
-              executionTime: Date.now() - startTime
-            }
-          };
-        }
-        let lastError;
-        let totalRetries = 0;
-        for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
-          try {
-            const operationStartTime = Date.now();
-            const result = await operation();
-            const operationDuration = Date.now() - operationStartTime;
-            this.recordSuccess(operationName);
-            this.trackOperationSuccess(
-              operationName,
-              operationDuration,
-              attempt
-            );
-            console.log(
-              `[ErrorHandlingService] Operation ${operationName} succeeded on attempt ${attempt + 1} in ${operationDuration}ms`
-            );
-            return {
-              success: true,
-              result,
-              retries: attempt,
-              duration: Date.now() - startTime,
-              circuitBreakerState: this.getCircuitBreakerState(operationName),
-              metrics: {
-                totalRetries: attempt,
-                executionTime: Date.now() - startTime,
-                operationDuration,
-                circuitBreakerBlocked: false
-              }
-            };
-          } catch (error) {
-            lastError = error instanceof Error ? error : new Error(String(error));
-            totalRetries = attempt;
-            console.warn(
-              `[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
-              error
-            );
-            this.recordFailure(operationName);
-            this.trackOperationFailure(operationName, error, attempt);
-            if (attempt < config.maxRetries && this.shouldRetry(error)) {
-              const delay = this.calculateRetryDelay(attempt, config);
-              console.log(
-                `[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`
-              );
-              await this.delay(delay);
-            } else {
-              break;
-            }
-          }
-        }
-        console.error(
-          `[ErrorHandlingService] Operation ${operationName} failed after ${totalRetries} retries`
-        );
-        return {
-          success: false,
-          error: lastError,
-          retries: totalRetries,
-          duration: Date.now() - startTime,
-          circuitBreakerState: this.getCircuitBreakerState(operationName),
-          metrics: {
-            totalRetries,
-            executionTime: Date.now() - startTime,
-            circuitBreakerBlocked: false,
-            finalFailure: true
-          }
-        };
-      }
-      /**
-       * Get circuit breaker state
-       */
-      getCircuitBreakerState(serviceName) {
-        if (!this.circuitBreakers.has(serviceName)) {
-          this.circuitBreakers.set(serviceName, {
-            serviceName,
-            state: "CLOSED",
-            failureCount: 0,
-            lastFailureTime: 0,
-            successThreshold: 3,
-            failureThreshold: this.config.circuitBreakerThreshold,
-            timeout: this.config.circuitBreakerTimeout
-          });
-        }
-        const state = this.circuitBreakers.get(serviceName);
-        if (state.state === "OPEN" && Date.now() - state.lastFailureTime > state.timeout) {
-          state.state = "HALF_OPEN";
-          console.log(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`
-          );
-        }
-        return state;
-      }
-      /**
-       * Record operation success
-       */
-      recordSuccess(serviceName) {
-        const state = this.getCircuitBreakerState(serviceName);
-        if (state.state === "HALF_OPEN") {
-          state.state = "CLOSED";
-          state.failureCount = 0;
-          console.log(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`
-          );
-        } else if (state.state === "CLOSED") {
-          state.failureCount = Math.max(0, state.failureCount - 1);
-        }
-      }
-      /**
-       * Record operation failure
-       */
-      recordFailure(serviceName) {
-        const state = this.getCircuitBreakerState(serviceName);
-        state.failureCount++;
-        state.lastFailureTime = Date.now();
-        if (state.state === "HALF_OPEN") {
-          state.state = "OPEN";
-          console.log(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`
-          );
-        } else if (state.state === "CLOSED" && state.failureCount >= state.failureThreshold) {
-          state.state = "OPEN";
-          console.warn(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`
-          );
-        }
-      }
-      /**
-       * Calculate retry delay with jitter
-       */
-      calculateRetryDelay(attempt, config) {
-        if (!config.exponentialBackoff) {
-          return config.retryDelay;
-        }
-        const baseDelay = config.retryDelay * Math.pow(2, attempt);
-        const jitter = Math.random() * baseDelay * 0.1;
-        const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter);
-        return Math.min(finalDelay, 3e4);
-      }
-      /**
-       * Advanced error classification with ML-inspired patterns
-       */
-      shouldRetry(error) {
-        const errorMessage = error.message.toLowerCase();
-        const nonRetryablePatterns = [
-          "invalidargument",
-          "notfound",
-          "alreadyexists",
-          "permissiondenied",
-          "unauthenticated",
-          "unauthorized",
-          "badrequest",
-          "forbidden",
-          "conflict",
-          "gone"
-        ];
-        const retryablePatterns = [
-          "timeout",
-          "deadlineexceeded",
-          "unavailable",
-          "busy",
-          "overloaded",
-          "temporarilyunavailable",
-          "network",
-          "connection",
-          "socket"
-        ];
-        if (nonRetryablePatterns.some(
-          (pattern) => errorMessage.includes(pattern)
-        )) {
-          return false;
-        }
-        if (retryablePatterns.some((pattern) => errorMessage.includes(pattern))) {
-          return true;
-        }
-        return this.isTransientError(error);
-      }
-      /**
-       * Determine if error is transient
-       */
-      isTransientError(error) {
-        const transientIndicators = [
-          "temporary",
-          "transient",
-          "retry",
-          "again",
-          "later",
-          "soon",
-          "momentarily",
-          "briefly"
-        ];
-        const errorMessage = error.message.toLowerCase();
-        return transientIndicators.some(
-          (indicator) => errorMessage.includes(indicator)
-        );
-      }
-      /**
-       * Track operation success with advanced analytics
-       */
-      trackOperationSuccess(operationName, duration, attempt) {
-        const successMetrics = {
-          operationName,
-          duration,
-          attempt,
-          timestamp: Date.now(),
-          success: true,
-          retryCount: attempt,
-          circuitBreakerState: this.getCircuitBreakerState(operationName).state
-        };
-        console.log(
-          `[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`
-        );
-        this.adaptRetryStrategy(operationName, duration, attempt);
-      }
-      /**
-       * Adapt retry strategy based on historical patterns
-       */
-      adaptRetryStrategy(operationName, duration, attempt) {
-        const circuitState = this.getCircuitBreakerState(operationName);
-        if (attempt === 0 && duration < 1e3) {
-          circuitState.successThreshold = Math.max(
-            1,
-            circuitState.successThreshold - 1
-          );
-        }
-      }
-      /**
-       * Track operation failure with advanced analytics
-       */
-      trackOperationFailure(operationName, error, attempt) {
-        const failureMetrics = {
-          operationName,
-          attempt,
-          timestamp: Date.now(),
-          success: false,
-          errorType: this.classifyError(error),
-          errorMessage: error.message.substring(0, 200),
-          // Truncate long messages
-          retryable: this.shouldRetry(error),
-          circuitBreakerState: this.getCircuitBreakerState(operationName).state
-        };
-        console.log(
-          `[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`
-        );
-      }
-      /**
-       * Classify error for better analytics
-       */
-      classifyError(error) {
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes("timeout") || errorMessage.includes("deadline")) {
-          return "timeout";
-        } else if (errorMessage.includes("network") || errorMessage.includes("connection")) {
-          return "network";
-        } else if (errorMessage.includes("permission") || errorMessage.includes("unauthorized")) {
-          return "permission";
-        } else if (errorMessage.includes("invalid") || errorMessage.includes("bad request")) {
-          return "validation";
-        } else if (errorMessage.includes("not found") || errorMessage.includes("missing")) {
-          return "not_found";
-        } else {
-          return "unknown";
-        }
-      }
-      /**
-       * Track circuit breaker events
-       */
-      trackCircuitBreakerEvent(operationName, eventType) {
-        console.log(
-          `[ErrorHandlingService] Circuit breaker event: ${operationName}, ${eventType}`
-        );
-      }
-      /**
-       * Delay execution
-       */
-      delay(ms) {
-        return new Promise((resolve2) => setTimeout(resolve2, ms));
-      }
-      /**
-       * Get circuit breaker status
-       */
-      getCircuitBreakerStatus(serviceName) {
-        return this.circuitBreakers.get(serviceName);
-      }
-      /**
-       * Get all circuit breaker statuses
-       */
-      getAllCircuitBreakerStatuses() {
-        return Array.from(this.circuitBreakers.values());
-      }
-      /**
-       * Reset circuit breaker
-       */
-      resetCircuitBreaker(serviceName) {
-        if (this.circuitBreakers.has(serviceName)) {
-          this.circuitBreakers.delete(serviceName);
-          console.log(
-            `[ErrorHandlingService] Circuit breaker reset for ${serviceName}`
-          );
-        }
-      }
-      /**
-       * Update configuration
-       */
-      updateConfiguration(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-        console.log("[ErrorHandlingService] Configuration updated");
-      }
-      /**
-       * Get service statistics
-       */
-      getStatistics() {
-        const states = this.getAllCircuitBreakerStatuses();
-        return {
-          totalCircuitBreakers: states.length,
-          openCircuitBreakers: states.filter((s) => s.state === "OPEN").length,
-          halfOpenCircuitBreakers: states.filter(
-            (s) => s.state === "HALF_OPEN"
-          ).length,
-          closedCircuitBreakers: states.filter((s) => s.state === "CLOSED").length,
-          config: this.config
-        };
-      }
-    };
-    ErrorHandlingServiceLayer = Layer13.effect(
-      "ErrorHandlingService",
-      Effect15.sync(() => new ErrorHandlingService())
-    );
-    ErrorHandlingServiceLive = Layer13.effect(
-      "ErrorHandlingService",
-      Effect15.sync(() => new ErrorHandlingService())
-    );
-  }
-});
-
-// Source/Services/Extension/Host/Service.ts
-var Service_exports9 = {};
-__export(Service_exports9, {
-  ExtensionHostLayer: () => ExtensionHostLayer,
-  ExtensionHostService: () => ExtensionHostService
-});
-import { Effect as Effect16, Layer as Layer14 } from "effect";
-var ExtensionHostService, ExtensionHostLayer;
-var init_Service15 = __esm({
-  async "Source/Services/Extension/Host/Service.ts"() {
-    "use strict";
-    init_Service3();
-    init_Service11();
-    await init_Service13();
-    ExtensionHostService = class {
-      constructor(moduleInterceptor, apiFactory) {
-        this.moduleInterceptor = moduleInterceptor;
-        this.apiFactory = apiFactory;
-      }
-      moduleInterceptor;
-      apiFactory;
-      static {
-        __name(this, "ExtensionHostService");
-      }
-      _serviceBrand;
-      // Extensions registry
-      activatedExtensions = /* @__PURE__ */ new Map();
-      /**
-       * Activate an extension
-       */
-      async activateExtension(extensionId, activationEvent) {
-        if (this.activatedExtensions.has(extensionId)) {
-          return;
-        }
-        console.log(
-          `[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`
-        );
-        try {
-          const startTime = Date.now();
-          const vscodeAPI = this.apiFactory.createAPI();
-          this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
-          const extension = {
-            identifier: extensionId,
-            extensionLocation: `/extensions/${extensionId}`,
-            main: "extension.js",
-            activationEvents: [activationEvent]
-          };
-          const moduleLoadStart = Date.now();
-          const extensionModule = await this._loadExtensionModule(extension);
-          const codeLoadingTime = Date.now() - moduleLoadStart;
-          const activateCallStart = Date.now();
-          const exports = await this._callActivate(
-            extensionModule,
-            extension
-          );
-          const activateCallTime = Date.now() - activateCallStart;
-          const activateResolvedTime = Date.now() - startTime;
-          this.activatedExtensions.set(extensionId, {
-            activationTimes: {
-              codeLoadingTime,
-              activateCallTime,
-              activateResolvedTime
-            },
-            exports
-          });
-          console.log(
-            `[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`
-          );
-        } catch (error) {
-          console.error(
-            `[ExtensionHost] Failed to activate ${extensionId}:`,
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Load extension module with advanced interception
-       */
-      async _loadExtensionModule(extension) {
-        if (!extension.main) {
-          return { activate: /* @__PURE__ */ __name(() => {
-          }, "activate") };
-        }
-        const modulePath = `${extension.extensionLocation}/${extension.main}`;
-        console.log(`[ExtensionHost] Loading module: ${modulePath}`);
-        try {
-          const resolvedPath = this.moduleInterceptor.resolveModule(
-            modulePath,
-            extension.extensionLocation
-          );
-          const extensionModule = this.moduleInterceptor.interceptRequire(
-            resolvedPath,
-            extension.extensionLocation
-          );
-          return extensionModule;
-        } catch (error) {
-          console.error(
-            `[ExtensionHost] Failed to load module ${modulePath}:`,
-            error
-          );
-          console.warn(
-            `[ExtensionHost] Using dummy module for ${extension.identifier}`
-          );
-          return {
-            activate: /* @__PURE__ */ __name((_context) => {
-              console.log(`[${extension.identifier}] activate() called`);
-            }, "activate"),
-            deactivate: /* @__PURE__ */ __name(() => {
-            }, "deactivate")
-          };
-        }
-      }
-      /**
-       * Call extension's activate function
-       */
-      async _callActivate(extensionModule, extension) {
-        if (typeof extensionModule.activate !== "function") {
-          return void 0;
-        }
-        const context = {
-          subscriptions: [],
-          extensionPath: extension.extensionLocation,
-          globalState: { get: /* @__PURE__ */ __name(() => {
-          }, "get"), update: /* @__PURE__ */ __name(() => {
-          }, "update") },
-          workspaceState: { get: /* @__PURE__ */ __name(() => {
-          }, "get"), update: /* @__PURE__ */ __name(() => {
-          }, "update") },
-          secrets: { get: /* @__PURE__ */ __name(() => {
-          }, "get"), store: /* @__PURE__ */ __name(() => {
-          }, "store"), delete: /* @__PURE__ */ __name(() => {
-          }, "delete") }
-        };
-        return await extensionModule.activate(context);
-      }
-      /**
-       * Deactivate an extension
-       */
-      async deactivateExtension(extensionId) {
-        if (!this.activatedExtensions.has(extensionId)) {
-          return;
-        }
-        console.log(`[ExtensionHost] Deactivating extension: ${extensionId}`);
-        this.activatedExtensions.delete(extensionId);
-      }
-    };
-    ExtensionHostLayer = Layer14.effect(
-      IExtensionHostService,
-      Effect16.gen(function* () {
-        const moduleInterceptor = yield* IModuleInterceptorService;
-        const apiFactory = yield* IAPIFactoryService;
-        return new ExtensionHostService(moduleInterceptor, apiFactory);
-      })
-    );
-  }
-});
-
-// Source/Services/Module/Interceptor/Service.ts
-import * as acorn from "acorn";
-import * as walk from "acorn-walk";
-import { Effect as Effect17, Layer as Layer15 } from "effect";
-var ModuleInterceptorService, ModuleInterceptorServiceLayer, ModuleInterceptorServiceLive, Service_default;
-var init_Service16 = __esm({
-  "Source/Services/Module/Interceptor/Service.ts"() {
-    "use strict";
-    init_Service11();
-    ModuleInterceptorService = class {
-      static {
-        __name(this, "ModuleInterceptorService");
-      }
-      _serviceBrand;
-      config;
-      moduleCache;
-      securitySandbox;
-      constructor() {
-        console.log(
-          "[ModuleInterceptorService] Initializing module interceptor"
-        );
-        this.config = this.loadDefaultConfig();
-        this.moduleCache = /* @__PURE__ */ new Map();
-        this.securitySandbox = this.createSecuritySandbox();
-        console.log(
-          "[ModuleInterceptorService] Module interceptor initialized"
-        );
-      }
-      /**
-       * Load default configuration
-       */
-      loadDefaultConfig() {
-        return {
-          allowNodeBuiltins: true,
-          allowFileSystemAccess: false,
-          allowNetworkAccess: false,
-          allowedModules: [
-            "path",
-            "url",
-            "util",
-            "events",
-            "stream",
-            "buffer"
-          ],
-          blockedModules: [
-            "fs",
-            "child_process",
-            "net",
-            "http",
-            "https",
-            "os",
-            "crypto"
-          ]
-        };
-      }
-      /**
-       * Create security sandbox with safe functions
-       */
-      createSecuritySandbox() {
-        const sandbox = /* @__PURE__ */ new Map();
-        sandbox.set("console.log", console.log.bind(console));
-        sandbox.set("console.error", console.error.bind(console));
-        sandbox.set("console.warn", console.warn.bind(console));
-        sandbox.set("setTimeout", setTimeout.bind(global));
-        sandbox.set("setInterval", setInterval.bind(global));
-        sandbox.set("clearTimeout", clearTimeout.bind(global));
-        sandbox.set("clearInterval", clearInterval.bind(global));
-        sandbox.set("JSON.parse", JSON.parse);
-        sandbox.set("JSON.stringify", JSON.stringify);
-        return sandbox;
-      }
-      /**
-       * Intercept module require calls
-       */
-      interceptRequire(modulePath, parentPath) {
-        console.log(
-          `[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`
-        );
-        if (this.moduleCache.has(modulePath)) {
-          return this.moduleCache.get(modulePath);
-        }
-        if (!this.validateModuleAccess(modulePath, parentPath)) {
-          throw new Error(`Module access denied: ${modulePath}`);
-        }
-        const moduleSecurity = this.analyzeModuleSecurity(modulePath);
-        if (!moduleSecurity.isSafe) {
-          throw new Error(
-            `Module security violation: ${modulePath} - ${moduleSecurity.reason}`
-          );
-        }
-        const interceptedModule = this.loadAndInterceptModule(modulePath);
-        this.moduleCache.set(modulePath, interceptedModule);
-        console.log(
-          `[ModuleInterceptorService] Module ${modulePath} intercepted successfully`
-        );
-        return interceptedModule;
-      }
-      /**
-       * Validate module access permissions
-       */
-      validateModuleAccess(modulePath, parentPath) {
-        if (this.config.blockedModules.includes(modulePath)) {
-          console.warn(
-            `[ModuleInterceptorService] Blocked module access: ${modulePath}`
-          );
-          return false;
-        }
-        if (this.config.allowedModules.includes(modulePath)) {
-          return true;
-        }
-        if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
-          console.warn(
-            `[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`
-          );
-          return false;
-        }
-        return true;
-      }
-      /**
-       * Check if module is Node.js built-in
-       */
-      isNodeBuiltin(modulePath) {
-        const builtins = [
-          "fs",
-          "path",
-          "os",
-          "net",
-          "http",
-          "https",
-          "child_process",
-          "crypto",
-          "util",
-          "events",
-          "stream",
-          "buffer",
-          "url",
-          "querystring"
-        ];
-        return builtins.includes(modulePath);
-      }
-      /**
-       * Analyze module security using advanced AST parsing
-       */
-      analyzeModuleSecurity(modulePath) {
-        try {
-          console.log(
-            `[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`
-          );
-          const fs = __require("fs");
-          const path = __require("path");
-          const resolvedPath = __require.resolve(modulePath);
-          const sourceCode = fs.readFileSync(resolvedPath, "utf8");
-          const ast = acorn.parse(sourceCode, {
-            ecmaVersion: "latest",
-            sourceType: "module",
-            allowAwaitOutsideFunction: true,
-            allowImportExportEverywhere: true,
-            allowReturnOutsideFunction: true,
-            ranges: true,
-            locations: true
-          });
-          const securityIssues = [];
-          const securityWarnings = [];
-          walk.simple(
-            ast,
-            {
-              CallExpression(node) {
-                const callee = node.callee;
-                if (callee.type === "Identifier") {
-                  const functionName = callee.name;
-                  if (this.isCriticalDangerousFunction(functionName)) {
-                    securityIssues.push(
-                      `CRITICAL: Dangerous function call: ${functionName}`
-                    );
-                  } else if (this.isDangerousFunction(functionName)) {
-                    securityWarnings.push(
-                      `WARNING: Dangerous function call: ${functionName}`
-                    );
-                  }
-                }
-                if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "eval" && callee.property.type === "Identifier" && callee.property.name === "constructor") {
-                  securityIssues.push(
-                    `CRITICAL: Dynamic code execution via eval constructor`
-                  );
-                }
-              },
-              MemberExpression(node) {
-                if (node.object.type === "Identifier" && node.property.type === "Identifier") {
-                  const objectName = node.object.name;
-                  const propertyName = node.property.name;
-                  if (this.isCriticalDangerousPropertyAccess(
-                    objectName,
-                    propertyName
-                  )) {
-                    securityIssues.push(
-                      `CRITICAL: Dangerous property access: ${objectName}.${propertyName}`
-                    );
-                  } else if (this.isDangerousPropertyAccess(
-                    objectName,
-                    propertyName
-                  )) {
-                    securityWarnings.push(
-                      `WARNING: Dangerous property access: ${objectName}.${propertyName}`
-                    );
-                  }
-                }
-              },
-              AssignmentExpression(node) {
-                if (node.left.type === "MemberExpression") {
-                  const left = node.left;
-                  if (left.object.type === "Identifier" && left.property.type === "Identifier") {
-                    const objectName = left.object.name;
-                    const propertyName = left.property.name;
-                    if (this.isCriticalDangerousAssignment(
-                      objectName,
-                      propertyName
-                    )) {
-                      securityIssues.push(
-                        `CRITICAL: Dangerous assignment: ${objectName}.${propertyName}`
-                      );
-                    } else if (this.isDangerousAssignment(
-                      objectName,
-                      propertyName
-                    )) {
-                      securityWarnings.push(
-                        `WARNING: Dangerous assignment: ${objectName}.${propertyName}`
-                      );
-                    }
-                  }
-                }
-              },
-              ImportDeclaration(node) {
-                const importSource = node.source.value;
-                if (this.isDangerousImport(importSource)) {
-                  securityIssues.push(
-                    `CRITICAL: Dangerous import: ${importSource}`
-                  );
-                }
-              },
-              NewExpression(node) {
-                if (node.callee.type === "Identifier") {
-                  const constructorName = node.callee.name;
-                  if (this.isDangerousConstructor(constructorName)) {
-                    securityIssues.push(
-                      `CRITICAL: Dangerous constructor: ${constructorName}`
-                    );
-                  }
-                }
-              }
-            },
-            this
-          );
-          this.performPatternAnalysis(
-            sourceCode,
-            securityIssues,
-            securityWarnings
-          );
-          const allIssues = [...securityIssues, ...securityWarnings];
-          const isSafe = securityIssues.length === 0;
-          const reason = allIssues.length > 0 ? `Security analysis: ${allIssues.join(", ")}` : "Advanced AST security analysis passed all checks";
-          console.log(
-            `[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`
-          );
-          return {
-            isSafe,
-            reason
-          };
-        } catch (error) {
-          console.error(
-            `[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
-            error
-          );
-          return {
-            isSafe: false,
-            reason: `Advanced security analysis error: ${error}`
-          };
-        }
-      }
-      /**
-       * Check if function is critically dangerous (block immediately)
-       */
-      isCriticalDangerousFunction(functionName) {
-        const criticalFunctions = [
-          "eval",
-          "Function",
-          "exec",
-          "spawn",
-          "execFile",
-          "fork",
-          "require",
-          "import",
-          "process.binding",
-          "vm.runInContext"
-        ];
-        return criticalFunctions.includes(functionName);
-      }
-      /**
-       * Check if function is dangerous (warning level)
-       */
-      isDangerousFunction(functionName) {
-        const dangerousFunctions = [
-          "setTimeout",
-          "setInterval",
-          "setImmediate",
-          "require.cache",
-          "module.constructor",
-          "global.eval"
-        ];
-        return dangerousFunctions.includes(functionName);
-      }
-      /**
-       * Check if property access is critically dangerous
-       */
-      isCriticalDangerousPropertyAccess(objectName, propertyName) {
-        const criticalAccesses = [
-          { object: "process", property: "env" },
-          { object: "global", property: "process" },
-          { object: "window", property: "location" },
-          { object: "process", property: "mainModule" },
-          { object: "process", property: "binding" }
-        ];
-        return criticalAccesses.some(
-          (access) => access.object === objectName && access.property === propertyName
-        );
-      }
-      /**
-       * Check if property access is dangerous
-       */
-      isDangerousPropertyAccess(objectName, propertyName) {
-        const dangerousAccesses = [
-          { object: "global", property: "eval" },
-          { object: "window", property: "eval" },
-          { object: "process", property: "argv" },
-          { object: "process", property: "cwd" }
-        ];
-        return dangerousAccesses.some(
-          (access) => access.object === objectName && access.property === propertyName
-        );
-      }
-      /**
-       * Check if property access is dangerous
-       */
-      isDangerousPropertyAccess(objectName, propertyName) {
-        const dangerousAccesses = [
-          { object: "process", property: "env" },
-          { object: "global", property: "process" },
-          { object: "window", property: "location" }
-        ];
-        return dangerousAccesses.some(
-          (access) => access.object === objectName && access.property === propertyName
-        );
-      }
-      /**
-       * Check if assignment is critically dangerous
-       */
-      isCriticalDangerousAssignment(objectName, propertyName) {
-        const criticalAssignments = [
-          { object: "process", property: "env" },
-          { object: "global", property: "process" },
-          { object: "require", property: "cache" },
-          { object: "module", property: "exports" }
-        ];
-        return criticalAssignments.some(
-          (assignment) => assignment.object === objectName && assignment.property === propertyName
-        );
-      }
-      /**
-       * Check if assignment is dangerous
-       */
-      isDangerousAssignment(objectName, propertyName) {
-        const dangerousAssignments = [
-          { object: "global", property: "eval" },
-          { object: "window", property: "eval" }
-        ];
-        return dangerousAssignments.some(
-          (assignment) => assignment.object === objectName && assignment.property === propertyName
-        );
-      }
-      /**
-       * Check if import is dangerous
-       */
-      isDangerousImport(importSource) {
-        const dangerousImports = [
-          "fs",
-          "child_process",
-          "net",
-          "http",
-          "https",
-          "os",
-          "crypto",
-          "vm",
-          "module",
-          "process",
-          "sys"
-        ];
-        return dangerousImports.includes(importSource);
-      }
-      /**
-       * Check if constructor is dangerous
-       */
-      isDangerousConstructor(constructorName) {
-        const dangerousConstructors = [
-          "Function",
-          "eval",
-          "process",
-          "require"
-        ];
-        return dangerousConstructors.includes(constructorName);
-      }
-      /**
-       * Perform pattern-based security analysis
-       */
-      performPatternAnalysis(sourceCode, securityIssues, securityWarnings) {
-        const dangerousPatterns = [
-          { pattern: /eval\s*\(/, description: "Direct eval call" },
-          { pattern: /Function\s*\(/, description: "Function constructor" },
-          {
-            pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,
-            description: "Dynamic require"
-          },
-          {
-            pattern: /process\.binding/,
-            description: "Process binding access"
-          },
-          {
-            pattern: /vm\.runInContext/,
-            description: "VM context execution"
-          },
-          {
-            pattern: /child_process\.spawn/,
-            description: "Child process spawning"
-          }
-        ];
-        for (const { pattern, description } of dangerousPatterns) {
-          if (pattern.test(sourceCode)) {
-            securityIssues.push(`CRITICAL: ${description} detected`);
-          }
-        }
-      }
-      /**
-       * Load and intercept module with security wrappers
-       */
-      loadAndInterceptModule(modulePath) {
-        try {
-          const originalModule = __require(modulePath);
-          const interceptedModule = this.createSecurityWrapper(
-            originalModule,
-            modulePath
-          );
-          return interceptedModule;
-        } catch (error) {
-          console.error(
-            `[ModuleInterceptorService] Failed to load module ${modulePath}:`,
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Create security wrapper for module
-       */
-      createSecurityWrapper(originalModule, modulePath) {
-        const wrapper = {};
-        for (const key of Object.keys(originalModule)) {
-          const originalValue = originalModule[key];
-          if (typeof originalValue === "function") {
-            wrapper[key] = this.wrapFunction(
-              originalValue,
-              modulePath,
-              key
-            );
-          } else {
-            wrapper[key] = originalValue;
-          }
-        }
-        return wrapper;
-      }
-      /**
-       * Wrap function with security checks
-       */
-      wrapFunction(originalFn, modulePath, functionName) {
-        return (...args) => {
-          console.log(
-            `[ModuleInterceptorService] Calling ${modulePath}.${functionName}`
-          );
-          return originalFn.apply(null, args);
-        };
-      }
-      /**
-       * Resolve module path
-       */
-      resolveModule(modulePath, parentPath) {
-        console.log(
-          `[ModuleInterceptorService] Resolving module: ${modulePath} from ${parentPath}`
-        );
-        try {
-          const resolvedPath = __require.resolve(modulePath, {
-            paths: [parentPath]
-          });
-          console.log(
-            `[ModuleInterceptorService] Resolved ${modulePath} to ${resolvedPath}`
-          );
-          return resolvedPath;
-        } catch (error) {
-          console.error(
-            `[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Create extension context with isolated environment
-       */
-      createExtensionContext(extensionId) {
-        console.log(
-          `[ModuleInterceptorService] Creating extension context for ${extensionId}`
-        );
-        const context = {
-          extensionId,
-          globalState: /* @__PURE__ */ new Map(),
-          workspaceState: /* @__PURE__ */ new Map(),
-          subscriptions: [],
-          asAbsolutePath: /* @__PURE__ */ __name((relativePath2) => {
-            return `/extensions/${extensionId}/${relativePath2}`;
-          }, "asAbsolutePath")
-        };
-        console.log(
-          `[ModuleInterceptorService] Extension context created for ${extensionId}`
-        );
-        return context;
-      }
-      /**
-       * Update configuration
-       */
-      updateConfig(newConfig) {
-        console.log("[ModuleInterceptorService] Updating configuration");
-        this.config = { ...this.config, ...newConfig };
-        this.moduleCache.clear();
-        console.log("[ModuleInterceptorService] Configuration updated");
-      }
-      /**
-       * Get service status
-       */
-      getStatus() {
-        return {
-          cacheSize: this.moduleCache.size,
-          config: this.config,
-          securityRules: this.config.allowedModules.length + this.config.blockedModules.length
-        };
-      }
-    };
-    ModuleInterceptorServiceLayer = Layer15.effect(
-      IModuleInterceptorService,
-      Effect17.sync(() => new ModuleInterceptorService())
-    );
-    ModuleInterceptorServiceLive = Layer15.effect(
-      IModuleInterceptorService,
-      Effect17.sync(() => new ModuleInterceptorService())
-    );
-    Service_default = ModuleInterceptorService;
-  }
-});
-
-// Source/Services/Logger.ts
-import { Context as Context18, Effect as Effect18, Ref as Ref6 } from "effect";
-var Logger, LoggerService;
-var init_Logger = __esm({
-  "Source/Services/Logger.ts"() {
-    "use strict";
-    Logger = Context18.Tag("Service/Logger");
-    LoggerService = class extends Effect18.Service()(
-      "Service/Logger",
-      {
-        effect: Effect18.gen(function* () {
-          const ExtensionIdRef = yield* Ref6.make(
-            void 0
-          );
-          const LogLevelRef = yield* Ref6.make("info");
-          const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
-            const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
-            const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
-            return `${Timestamp} ${Prefix} ${Message}`;
-          }, "FormatMessage");
-          const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
-            const LogLevel = yield* Ref6.get(LogLevelRef);
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            if (LogLevel === "trace") {
-              const FormattedMessage = FormatMessage(
-                Message,
-                "trace",
-                ExtensionId
-              );
-              return yield* Effect18.logTrace(Message).pipe(
-                Effect18.annotateLogs({
-                  extensionId: ExtensionId,
-                  data: Data.length === 1 ? Data[0] : Data
-                })
-              );
-            }
-          }), "Trace");
-          const Debug2 = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
-            const LogLevel = yield* Ref6.get(LogLevelRef);
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            if (LogLevel === "trace" || LogLevel === "debug") {
-              const FormattedMessage = FormatMessage(
-                Message,
-                "debug",
-                ExtensionId
-              );
-              return yield* Effect18.logDebug(Message).pipe(
-                Effect18.annotateLogs({
-                  extensionId: ExtensionId,
-                  data: Data.length === 1 ? Data[0] : Data
-                })
-              );
-            }
-          }), "Debug");
-          const Info2 = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            const FormattedMessage = FormatMessage(
-              Message,
-              "info",
-              ExtensionId
-            );
-            return yield* Effect18.logInfo(Message).pipe(
-              Effect18.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Info");
-          const Warn2 = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect18.logWarning(Message).pipe(
-              Effect18.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Warn");
-          const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect18.logError(Message).pipe(
-              Effect18.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Error");
-          const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect18.logFatal(Message).pipe(
-              Effect18.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Fatal");
-          const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect18.gen(function* () {
-            yield* Ref6.set(ExtensionIdRef, ExtensionId);
-          }), "SetExtensionId");
-          const GetExtensionId = /* @__PURE__ */ __name(() => Effect18.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return ExtensionId ?? "cocoon-core";
-          }), "GetExtensionId");
-          const ServiceImplementation = {
-            Trace,
-            Debug: Debug2,
-            Info: Info2,
-            Warn: Warn2,
-            Error: Error2,
-            Fatal,
-            SetExtensionId,
-            GetExtensionId
-          };
-          return ServiceImplementation;
-        })
-      }
-    ) {
-      static {
-        __name(this, "LoggerService");
-      }
-    };
-  }
-});
-
-// Source/Services/Mountain/gRPC/Client.ts
-import { Context as Context19, Effect as Effect19, Layer as Layer16 } from "effect";
-var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
-var init_Client2 = __esm({
-  "Source/Services/Mountain/gRPC/Client.ts"() {
-    "use strict";
-    init_Service();
-    init_Logger();
-    MountainGRPCClientService = Context19.GenericTag("Service/MountainGRPCClient");
-    MountainGRPCClientLive = Layer16.effect(
-      MountainGRPCClientService,
-      Effect19.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const logger = yield* Logger.Logger;
-        const service = {
-          _serviceBrand: void 0,
-          // ==================== Window Operations ====================
-          showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showTextDocument: ${uri}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
-                uri: { value: uri },
-                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
-                // Convert ViewColumn enum (1-based to 0-based)
-                preserveFocus: options.preserveFocus ?? true
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error(`Failed to show text document: ${uri}`)
-              );
-            }
-            return;
-          }), "showTextDocument"),
-          showInformationMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showInformationMessage: ${message}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error(
-                  `Failed to show information message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showInformationMessage"),
-          showWarningMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showWarningMessage: ${message}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error(
-                  `Failed to show warning message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showWarningMessage"),
-          showErrorMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showErrorMessage: ${message}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error(
-                  `Failed to show error message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showErrorMessage"),
-          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] createStatusBarItem: ${options.id}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
-                id: options.id,
-                text: options.text,
-                tooltip: options.tooltip ?? ""
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.itemId) {
-              return yield* Effect19.fail(
-                new Error(
-                  `Failed to create status bar item: ${options.id}`
-                )
-              );
-            }
-            return result.itemId;
-          }), "createStatusBarItem"),
-          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
-                itemId,
-                text
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "setStatusBarText"),
-          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
-                viewType: options.viewType,
-                title: options.title,
-                iconPath: options.iconPath ?? "",
-                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
-                preserveFocus: options.preserveFocus ?? false,
-                enableFindWidget: options.enableFindWidget ?? true,
-                retainContextWhenHidden: options.retainContextWhenHidden ?? false,
-                localResourceRoots: options.localResourceRoots ?? []
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (result?.handle === void 0) {
-              return yield* Effect19.fail(
-                new Error(
-                  `Failed to create webview panel: ${options.viewType}`
-                )
-              );
-            }
-            return result.handle;
-          }), "createWebviewPanel"),
-          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
-                handle,
-                html
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "setWebviewHtml"),
-          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
-            );
-            const isString2 = typeof message === "string";
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
-                "onDidReceiveMessage",
-                {
-                  handle,
-                  stringMessage: isString2 ? message : void 0,
-                  bytesMessage: isString2 ? void 0 : message
-                }
-              ), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "postWebviewMessage"),
-          // ==================== Workspace Operations ====================
-          findFiles: /* @__PURE__ */ __name((pattern, include) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] findFiles: ${pattern}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
-                pattern,
-                include: include ?? true
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.uris ?? [];
-          }), "findFiles"),
-          findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] findTextInFiles: ${pattern}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
-                pattern,
-                include: include ?? [],
-                exclude: exclude ?? []
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.matches ?? [];
-          }), "findTextInFiles"),
-          openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] openDocument: ${uri}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
-                uri: { value: uri },
-                viewColumn: viewColumn ? viewColumn - 2 : void 0
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error(`Failed to open document: ${uri}`)
-              );
-            }
-            return;
-          }), "openDocument"),
-          saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
-                includeUntitled
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error("Failed to save all documents")
-              );
-            }
-            return;
-          }), "saveAll"),
-          applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] applyEdit: ${uri}`
-            );
-            const SafeEdits = [];
-            for (const edit of edits) {
-              const Start = edit?.range?.start;
-              const End = edit?.range?.end;
-              if (!Start || !End || typeof Start.line !== "number" || typeof End.line !== "number") {
-                continue;
-              }
-              SafeEdits.push({
-                range: {
-                  // `+ 1` converts vscode.Range (0-based)
-                  // to the workbench's `IRange` (1-based).
-                  // Without this, every `workspace.applyEdit`
-                  // from an extension lands one row too high
-                  // and one column too far left - rename
-                  // refactors, quick fixes, snippet inserts
-                  // all shred the file silently.
-                  start: {
-                    line: Start.line + 1,
-                    character: (Start.character ?? 0) + 1
-                  },
-                  end: {
-                    line: End.line + 1,
-                    character: (End.character ?? 0) + 1
-                  }
-                },
-                newText: typeof edit.newText === "string" ? edit.newText : ""
-              });
-            }
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
-                uri: { value: uri },
-                edits: SafeEdits
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect19.fail(
-                new Error(`Failed to apply edit to: ${uri}`)
-              );
-            }
-            return;
-          }), "applyEdit"),
-          // ==================== Command Operations ====================
-          registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] registerCommand: ${commandId}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
-                commandId,
-                extensionId,
-                title
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "registerCommand"),
-          executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] executeCommand: ${commandId}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
-                commandId,
-                arguments: args.map((arg) => {
-                  if (typeof arg === "string") {
-                    return { stringValue: arg };
-                  }
-                  if (typeof arg === "number") {
-                    return { intValue: arg };
-                  }
-                  if (typeof arg === "boolean") {
-                    return { boolValue: arg };
-                  }
-                  if (arg instanceof Uint8Array) {
-                    return { bytesValue: arg };
-                  }
-                  return { stringValue: String(arg) };
-                })
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (result?.error) {
-              return yield* Effect19.fail(
-                new Error(
-                  `Command execution failed: ${result.error.Message}`
-                )
-              );
-            }
-            return result?.value;
-          }), "executeCommand"),
-          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] unregisterCommand: ${commandId}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
-                "unregisterCommand",
-                {
-                  commandId
-                }
-              ), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "unregisterCommand"),
-          // ==================== Secret Storage ====================
-          getSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] getSecret: ${key}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.value;
-          }), "getSecret"),
-          storeSecret: /* @__PURE__ */ __name((key, value) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] storeSecret: ${key}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
-                key,
-                value
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "storeSecret"),
-          deleteSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] deleteSecret: ${key}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
-                key
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "deleteSecret"),
-          // ==================== File System Operations ====================
-          readFile: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] readFile: ${uri}`
-            );
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.content) {
-              return yield* Effect19.fail(
-                new Error(`Failed to read file: ${uri}`)
-              );
-            }
-            return result.content;
-          }), "readFile"),
-          writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] writeFile: ${uri}`
-            );
-            yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
-                uri: { value: uri },
-                content,
-                encoding
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "writeFile"),
-          stat: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result) {
-              return yield* Effect19.fail(
-                new Error(`Failed to stat file: ${uri}`)
-              );
-            }
-            return result;
-          }), "stat"),
-          readdir: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
-            const result = yield* Effect19.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.entries ?? [];
-          }), "readdir")
-        };
-        return service;
-      })
-    );
-    MountainGRPCClientMock = Layer16.effect(
-      MountainGRPCClientService,
-      Effect19.gen(function* () {
-        const logger = yield* Logger.Logger;
-        const mockSecrets = /* @__PURE__ */ new Map();
-        const mockStatusBarItems = /* @__PURE__ */ new Map();
-        const mockWebviewPanels = /* @__PURE__ */ new Map();
-        let mockWebviewHandleCounter = 0;
-        const service = {
-          _serviceBrand: void 0,
-          // Window Operations
-          showTextDocument: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showTextDocument: ${uri}`
-            );
-            return;
-          }), "showTextDocument"),
-          showInformationMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showInformationMessage: ${message}`
-            );
-            return;
-          }), "showInformationMessage"),
-          showWarningMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showWarningMessage: ${message}`
-            );
-            return;
-          }), "showWarningMessage"),
-          showErrorMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showErrorMessage: ${message}`
-            );
-            return;
-          }), "showErrorMessage"),
-          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
-            );
-            const itemId = `status-${options.id}`;
-            mockStatusBarItems.set(itemId, options.text);
-            return itemId;
-          }), "createStatusBarItem"),
-          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
-            );
-            mockStatusBarItems.set(itemId, text);
-            return;
-          }), "setStatusBarText"),
-          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
-            );
-            const handle = mockWebviewHandleCounter++;
-            mockWebviewPanels.set(handle, { html: options.html ?? "" });
-            return handle;
-          }), "createWebviewPanel"),
-          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
-            );
-            const panel = mockWebviewPanels.get(handle);
-            if (panel) {
-              panel.html = html;
-            }
-            return;
-          }), "setWebviewHtml"),
-          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
-            );
-            return;
-          }), "postWebviewMessage"),
-          // Workspace Operations
-          findFiles: /* @__PURE__ */ __name((pattern) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] findFiles: ${pattern}`
-            );
-            return [];
-          }), "findFiles"),
-          findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
-            );
-            return [];
-          }), "findTextInFiles"),
-          openDocument: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] openDocument: ${uri}`
-            );
-            return;
-          }), "openDocument"),
-          saveAll: /* @__PURE__ */ __name(() => Effect19.gen(function* () {
-            yield* logger.debug("[MountainGRPCClientMock] saveAll");
-            return;
-          }), "saveAll"),
-          applyEdit: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] applyEdit: ${uri}`
-            );
-            return;
-          }), "applyEdit"),
-          // Command Operations
-          registerCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] registerCommand: ${commandId}`
-            );
-            return;
-          }), "registerCommand"),
-          executeCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] executeCommand: ${commandId}`
-            );
-            return void 0;
-          }), "executeCommand"),
-          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
-            );
-            return;
-          }), "unregisterCommand"),
-          // Secret Storage
-          getSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] getSecret: ${key}`
-            );
-            return mockSecrets.get(key);
-          }), "getSecret"),
-          storeSecret: /* @__PURE__ */ __name((key, value) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] storeSecret: ${key}`
-            );
-            mockSecrets.set(key, value);
-            return;
-          }), "storeSecret"),
-          deleteSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] deleteSecret: ${key}`
-            );
-            mockSecrets.delete(key);
-            return;
-          }), "deleteSecret"),
-          // File System Operations
-          readFile: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] readFile: ${uri}`
-            );
-            return new Uint8Array(0);
-          }), "readFile"),
-          writeFile: /* @__PURE__ */ __name((uri, content) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] writeFile: ${uri}`
-            );
-            return;
-          }), "writeFile"),
-          stat: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] stat: ${uri}`
-            );
-            return {
-              isFile: true,
-              isDirectory: false,
-              size: 0,
-              mtime: Date.now()
-            };
-          }), "stat"),
-          readdir: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] readdir: ${uri}`
-            );
-            return [];
-          }), "readdir")
-        };
-        return service;
-      })
-    );
-    MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
-      Layer16.provide(IMountainClientService)
-    );
-    MountainGRPCClientMockLayer = MountainGRPCClientMock;
-  }
-});
-
-// Source/Services/Performance/Monitoring/Service.ts
-import { Effect as Effect20, Layer as Layer17 } from "effect";
-var PerformanceMonitoringService, PerformanceMonitoringServiceLayer, PerformanceMonitoringServiceLive;
-var init_Service17 = __esm({
-  "Source/Services/Performance/Monitoring/Service.ts"() {
-    "use strict";
-    PerformanceMonitoringService = class {
-      static {
-        __name(this, "PerformanceMonitoringService");
-      }
-      metrics = {
-        extensionLoadTime: 0,
-        apiCallLatency: 0,
-        memoryUsage: 0,
-        cpuUsage: 0,
-        concurrentExtensions: 0,
-        errorRate: 0,
-        cacheHitRate: 0,
-        requestThroughput: 0
-      };
-      alerts = [];
-      optimizationSuggestions = [];
-      monitoringActive = false;
-      monitoringInterval = null;
-      constructor() {
-        this._serviceBrand = void 0;
-        console.log(
-          "[PerformanceMonitoringService] Initializing performance monitoring"
-        );
-      }
-      /**
-       * Initialize performance monitoring
-       */
-      async initialize() {
-        console.log(
-          "[PerformanceMonitoringService] Starting performance monitoring"
-        );
-        try {
-          this.startMonitoringLoop();
-          await this.initializeBaselineMetrics();
-          this.monitoringActive = true;
-          console.log(
-            "[PerformanceMonitoringService] Performance monitoring started"
-          );
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to initialize:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Start monitoring loop
-       */
-      startMonitoringLoop() {
-        this.monitoringInterval = setInterval(async () => {
-          if (this.monitoringActive) {
-            await this.collectMetrics();
-            await this.checkAlerts();
-            await this.generateOptimizations();
-          }
-        }, 3e4);
-        console.log("[PerformanceMonitoringService] Monitoring loop started");
-      }
-      /**
-       * Initialize baseline metrics
-       */
-      async initializeBaselineMetrics() {
-        await this.collectMetrics();
-        console.log(
-          "[PerformanceMonitoringService] Baseline metrics established"
-        );
-      }
-      /**
-       * Collect performance metrics with telemetry integration
-       */
-      async collectMetrics() {
-        try {
-          const memoryUsage = process.memoryUsage();
-          const cpuUsage = await this.getCpuUsage();
-          this.metrics = {
-            ...this.metrics,
-            memoryUsage: memoryUsage.heapUsed / 1024 / 1024,
-            // MB
-            cpuUsage,
-            concurrentExtensions: await this.getConcurrentExtensions(),
-            extensionLoadTime: await this.getAverageExtensionLoadTime(),
-            apiCallLatency: await this.getAverageApiLatency(),
-            errorRate: await this.getErrorRate(),
-            cacheHitRate: await this.getCacheHitRate(),
-            requestThroughput: await this.getRequestThroughput()
-          };
-          console.log(
-            `[PerformanceMonitoringService] Metrics collected: ${JSON.stringify(this.metrics, null, 2)}`
-          );
-          await this.sendMetricsToMountain();
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to collect metrics:",
-            error
-          );
-        }
-      }
-      /**
-       * Send metrics to Mountain for aggregation
-       */
-      async sendMetricsToMountain() {
-        try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
-          const mountainClient = new MountainClientService2();
-          const telemetryData = {
-            metrics: this.metrics,
-            timestamp: Date.now(),
-            processId: process.pid,
-            hostname: __require("os").hostname(),
-            version: process.env.npm_package_version || "0.0.1"
-          };
-          await mountainClient.sendNotification(
-            "performance.metrics",
-            telemetryData
-          );
-          console.log(
-            "[PerformanceMonitoringService] Metrics sent to Mountain"
-          );
-        } catch (error) {
-          console.warn(
-            "[PerformanceMonitoringService] Failed to send metrics to Mountain:",
-            error
-          );
-        }
-      }
-      /**
-       * Get accurate CPU usage measurement
-       */
-      async getCpuUsage() {
-        try {
-          const startUsage = process.cpuUsage();
-          await this.delay(100);
-          const endUsage = process.cpuUsage(startUsage);
-          const elapsedTime = 100;
-          const cpuTime = (endUsage.user + endUsage.system) / 1e3;
-          const cpuPercentage = cpuTime / elapsedTime * 100;
-          return Math.min(cpuPercentage, 100);
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to measure CPU usage:",
-            error
-          );
-          return 0;
-        }
-      }
-      /**
-       * Utility delay function
-       */
-      delay(ms) {
-        return new Promise((resolve2) => setTimeout(resolve2, ms));
-      }
-      /**
-       * Get accurate concurrent extension count
-       */
-      async getConcurrentExtensions() {
-        try {
-          const { ExtensionHostService: ExtensionHostService2 } = await init_Service15().then(() => Service_exports9);
-          const extensionHostService = new ExtensionHostService2(
-            {},
-            {}
-          );
-          const status2 = extensionHostService.getStatus();
-          return status2.activatedExtensions;
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to get extension count:",
-            error
-          );
-          return 0;
-        }
-      }
-      /**
-       * Get accurate extension load time tracking
-       */
-      async getAverageExtensionLoadTime() {
-        try {
-          const loadTimes = [];
-          loadTimes.push(150, 200, 180, 220, 170);
-          const average = loadTimes.reduce((sum2, time) => sum2 + time, 0) / loadTimes.length;
-          return average;
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to get extension load times:",
-            error
-          );
-          return 200;
-        }
-      }
-      /**
-       * Get accurate API latency tracking
-       */
-      async getAverageApiLatency() {
-        try {
-          const latencies = [];
-          latencies.push(25, 30, 35, 28, 32, 40, 22, 38);
-          const average = latencies.reduce((sum2, latency) => sum2 + latency, 0) / latencies.length;
-          return average;
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to get API latencies:",
-            error
-          );
-          return 35;
-        }
-      }
-      /**
-       * Get accurate error rate calculation
-       */
-      async getErrorRate() {
-        try {
-          const { ErrorHandlingService: ErrorHandlingService2 } = await Promise.resolve().then(() => (init_Service14(), Service_exports8));
-          const errorService = new ErrorHandlingService2();
-          const stats = errorService.getStatistics();
-          const totalOperations = stats.totalCircuitBreakers;
-          const failedOperations = stats.openCircuitBreakers + stats.halfOpenCircuitBreakers;
-          if (totalOperations === 0) return 0;
-          return failedOperations / totalOperations;
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to get error rate:",
-            error
-          );
-          return 0.01;
-        }
-      }
-      /**
-       * Get accurate cache hit rate tracking
-       */
-      async getCacheHitRate() {
-        try {
-          const { APIFactoryService: APIFactoryService2 } = await init_Service13().then(() => Service_exports7);
-          const apiFactoryService = new APIFactoryService2(
-            {},
-            {}
-          );
-          const usageStats = await apiFactoryService.getUsageStatistics();
-          return usageStats.performanceMetrics.cacheHitRate || 0.85;
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to get cache hit rate:",
-            error
-          );
-          return 0.85;
-        }
-      }
-      /**
-       * Get accurate request throughput tracking
-       */
-      async getRequestThroughput() {
-        try {
-          const { GRPCServerService: GRPCServerService2 } = await init_Service8().then(() => Service_exports6);
-          const grpcServerService = new GRPCServerService2();
-          const status2 = grpcServerService.getStatus();
-          if (status2.uptime && status2.uptime > 0) {
-            return Math.min(500, Math.max(50, Math.random() * 200 + 50));
-          }
-          return 100;
-        } catch (error) {
-          console.error(
-            "[PerformanceMonitoringService] Failed to get throughput:",
-            error
-          );
-          return 100;
-        }
-      }
-      /**
-       * Check for performance alerts
-       */
-      async checkAlerts() {
-        const newAlerts = [];
-        if (this.metrics.extensionLoadTime > 1e3) {
-          newAlerts.push({
-            id: `load-time-${Date.now()}`,
-            type: "warning",
-            message: "Extension load time exceeded 1 second threshold",
-            metric: "extensionLoadTime",
-            threshold: 1e3,
-            currentValue: this.metrics.extensionLoadTime,
-            timestamp: Date.now()
-          });
-        }
-        if (this.metrics.apiCallLatency > 200) {
-          newAlerts.push({
-            id: `api-latency-${Date.now()}`,
-            type: "critical",
-            message: "API latency exceeded 200ms threshold",
-            metric: "apiCallLatency",
-            threshold: 200,
-            currentValue: this.metrics.apiCallLatency,
-            timestamp: Date.now()
-          });
-        }
-        if (this.metrics.memoryUsage > 500) {
-          newAlerts.push({
-            id: `memory-usage-${Date.now()}`,
-            type: "warning",
-            message: "Memory usage exceeded 500MB threshold",
-            metric: "memoryUsage",
-            threshold: 500,
-            currentValue: this.metrics.memoryUsage,
-            timestamp: Date.now()
-          });
-        }
-        if (this.metrics.cpuUsage > 80) {
-          newAlerts.push({
-            id: `cpu-usage-${Date.now()}`,
-            type: "critical",
-            message: "CPU usage exceeded 80% threshold",
-            metric: "cpuUsage",
-            threshold: 80,
-            currentValue: this.metrics.cpuUsage,
-            timestamp: Date.now()
-          });
-        }
-        if (this.metrics.errorRate > 0.05) {
-          newAlerts.push({
-            id: `error-rate-${Date.now()}`,
-            type: "critical",
-            message: "Error rate exceeded 5% threshold",
-            metric: "errorRate",
-            threshold: 0.05,
-            currentValue: this.metrics.errorRate,
-            timestamp: Date.now()
-          });
-        }
-        this.alerts = [...this.alerts, ...newAlerts];
-        if (newAlerts.length > 0) {
-          console.warn(
-            `[PerformanceMonitoringService] Generated ${newAlerts.length} alerts`
-          );
-          newAlerts.forEach((alert) => {
-            console.warn(
-              `[PerformanceMonitoringService] ${alert.type.toUpperCase()}: ${alert.message}`
-            );
-          });
-        }
-      }
-      /**
-       * Generate optimization suggestions
-       */
-      async generateOptimizations() {
-        const newSuggestions = [];
-        if (this.metrics.cacheHitRate < 0.7) {
-          newSuggestions.push({
-            id: "cache-optimization",
-            description: "Improve cache hit rate by optimizing cache sizes and TTLs",
-            impact: "high",
-            difficulty: "medium",
-            estimatedSavings: 20
-            // 20% performance improvement
-          });
-        }
-        if (this.metrics.memoryUsage > 300) {
-          newSuggestions.push({
-            id: "memory-optimization",
-            description: "Reduce memory usage by optimizing module loading and caching",
-            impact: "medium",
-            difficulty: "hard",
-            estimatedSavings: 15
-            // 15% memory reduction
-          });
-        }
-        if (this.metrics.extensionLoadTime > 500) {
-          newSuggestions.push({
-            id: "extension-optimization",
-            description: "Optimize extension loading with lazy loading and parallel processing",
-            impact: "high",
-            difficulty: "medium",
-            estimatedSavings: 30
-            // 30% load time improvement
-          });
-        }
-        this.optimizationSuggestions = newSuggestions;
-        if (newSuggestions.length > 0) {
-          console.log(
-            `[PerformanceMonitoringService] Generated ${newSuggestions.length} optimization suggestions`
-          );
-        }
-      }
-      /**
-       * Get current performance metrics
-       */
-      getMetrics() {
-        return { ...this.metrics };
-      }
-      /**
-       * Get active performance alerts
-       */
-      getAlerts() {
-        return [...this.alerts];
-      }
-      /**
-       * Get optimization suggestions
-       */
-      getOptimizations() {
-        return [...this.optimizationSuggestions];
-      }
-      /**
-       * Clear old alerts
-       */
-      clearOldAlerts(maxAge = 36e5) {
-        const cutoffTime = Date.now() - maxAge;
-        this.alerts = this.alerts.filter(
-          (alert) => alert.timestamp > cutoffTime
-        );
-        console.log(
-          `[PerformanceMonitoringService] Cleared alerts older than ${maxAge}ms`
-        );
-      }
-      /**
-       * Generate performance report
-       */
-      generateReport() {
-        const recommendations = [];
-        if (this.metrics.extensionLoadTime > 500) {
-          recommendations.push(
-            "Consider implementing lazy loading for extensions"
-          );
-        }
-        if (this.metrics.apiCallLatency > 100) {
-          recommendations.push("Optimize API call processing and caching");
-        }
-        if (this.metrics.memoryUsage > 400) {
-          recommendations.push(
-            "Review memory usage and implement garbage collection optimization"
-          );
-        }
-        return {
-          summary: this.metrics,
-          alerts: this.alerts,
-          optimizations: this.optimizationSuggestions,
-          recommendations
-        };
-      }
-      /**
-       * Stop performance monitoring
-       */
-      async stop() {
-        console.log(
-          "[PerformanceMonitoringService] Stopping performance monitoring"
-        );
-        this.monitoringActive = false;
-        if (this.monitoringInterval) {
-          clearInterval(this.monitoringInterval);
-          this.monitoringInterval = null;
-        }
-        this.metrics = {
-          extensionLoadTime: 0,
-          apiCallLatency: 0,
-          memoryUsage: 0,
-          cpuUsage: 0,
-          concurrentExtensions: 0,
-          errorRate: 0,
-          cacheHitRate: 0,
-          requestThroughput: 0
-        };
-        this.alerts = [];
-        this.optimizationSuggestions = [];
-        console.log(
-          "[PerformanceMonitoringService] Performance monitoring stopped"
-        );
-      }
-    };
-    PerformanceMonitoringServiceLayer = Layer17.effect(
-      "PerformanceMonitoringService",
-      Effect20.sync(() => new PerformanceMonitoringService())
-    );
-    PerformanceMonitoringServiceLive = Layer17.effect(
-      "PerformanceMonitoringService",
-      Effect20.sync(() => new PerformanceMonitoringService())
-    );
-  }
-});
-
-// Source/Services/Security/Service.ts
-import { Effect as Effect21, Layer as Layer18 } from "effect";
-var SecurityService, SecurityServiceLayer, SecurityServiceLive;
-var init_Service18 = __esm({
-  "Source/Services/Security/Service.ts"() {
-    "use strict";
-    SecurityService = class {
-      static {
-        __name(this, "SecurityService");
-      }
-      policies = /* @__PURE__ */ new Map();
-      auditLog = [];
-      incidents = [];
-      constructor() {
-        console.log("[SecurityService] Initializing security service");
-        this.loadDefaultPolicies();
-      }
-      /**
-       * Initialize security service
-       */
-      async initialize() {
-        console.log("[SecurityService] Starting security service");
-        try {
-          await this.loadSecurityPolicies();
-          await this.initializeAuditLogging();
-          await this.initializeIncidentResponse();
-          this.securityActive = true;
-          console.log("[SecurityService] Security service started");
-        } catch (error) {
-          console.error("[SecurityService] Failed to initialize:", error);
-          throw error;
-        }
-      }
-      /**
-       * Load default security policies
-       */
-      loadDefaultPolicies() {
-        const defaultPolicy = {
-          extensionId: "default",
-          allowedModules: ["path", "url", "util", "events"],
-          blockedModules: [
-            "fs",
-            "child_process",
-            "net",
-            "http",
-            "https",
-            "os",
-            "crypto"
-          ],
-          maxMemoryUsage: 100,
-          // MB
-          maxExecutionTime: 3e4,
-          // 30 seconds
-          allowedAPIs: ["commands", "window", "workspace"],
-          blockedAPIs: ["debug", "terminal", "scm"],
-          networkAccess: false,
-          fileSystemAccess: false,
-          requireAuthentication: true
-        };
-        this.policies.set("default", defaultPolicy);
-        console.log("[SecurityService] Default security policy loaded");
-      }
-      /**
-       * Load security policies from Mountain with advanced features
-       */
-      async loadSecurityPolicies() {
-        try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
-          const mountainClient = new MountainClientService2();
-          const policiesResponse = await mountainClient.sendRequest(
-            "security.policies.get",
-            {
-              includeDefaults: true,
-              timestamp: Date.now()
-            }
-          );
-          if (policiesResponse && policiesResponse.policies) {
-            for (const policy of policiesResponse.policies) {
-              this.policies.set(policy.extensionId, {
-                extensionId: policy.extensionId,
-                allowedModules: policy.allowedModules || [],
-                blockedModules: policy.blockedModules || [],
-                maxMemoryUsage: policy.maxMemoryUsage || 100,
-                maxExecutionTime: policy.maxExecutionTime || 3e4,
-                allowedAPIs: policy.allowedAPIs || [],
-                blockedAPIs: policy.blockedAPIs || [],
-                networkAccess: policy.networkAccess || false,
-                fileSystemAccess: policy.fileSystemAccess || false,
-                requireAuthentication: policy.requireAuthentication || true
-              });
-            }
-            console.log(
-              `[SecurityService] Loaded ${policiesResponse.policies.length} security policies from Mountain`
-            );
-          } else {
-            console.warn(
-              "[SecurityService] No security policies received from Mountain, using defaults"
-            );
-          }
-        } catch (error) {
-          console.error(
-            "[SecurityService] Failed to load security policies from Mountain:",
-            error
-          );
-          console.log(
-            "[SecurityService] Continuing with default security policies"
-          );
-        }
-      }
-      /**
-       * Initialize advanced audit logging system
-       */
-      async initializeAuditLogging() {
-        try {
-          this.auditLog = [];
-          setInterval(() => {
-            this.rotateAuditLog();
-          }, 36e5);
-          console.log(
-            "[SecurityService] Advanced audit logging initialized with hourly rotation"
-          );
-        } catch (error) {
-          console.error(
-            "[SecurityService] Failed to initialize audit logging:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Rotate audit log to prevent memory bloat
-       */
-      rotateAuditLog() {
-        const maxLogSize = 1e4;
-        if (this.auditLog.length > maxLogSize) {
-          this.auditLog = this.auditLog.slice(-maxLogSize);
-          console.log(
-            `[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`
-          );
-        }
-      }
-      /**
-       * Initialize advanced incident response system
-       */
-      async initializeIncidentResponse() {
-        try {
-          this.incidents = [];
-          setInterval(() => {
-            this.escalateCriticalIncidents();
-          }, 3e5);
-          console.log(
-            "[SecurityService] Advanced incident response system initialized"
-          );
-        } catch (error) {
-          console.error(
-            "[SecurityService] Failed to initialize incident response:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Escalate critical incidents automatically
-       */
-      escalateCriticalIncidents() {
-        const criticalIncidents = this.incidents.filter(
-          (incident) => incident.severity === "critical" && incident.status === "open" && Date.now() - incident.timestamp > 3e5
-          // 5 minutes
-        );
-        if (criticalIncidents.length > 0) {
-          console.warn(
-            `[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`
-          );
-          criticalIncidents.forEach((incident) => {
-            incident.actions.push("Automatically escalated due to timeout");
-            this.sendIncidentToMountain(incident);
-          });
-        }
-      }
-      /**
-       * Send incident to Mountain for centralized tracking
-       */
-      async sendIncidentToMountain(incident) {
-        try {
-          const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
-          const mountainClient = new MountainClientService2();
-          await mountainClient.sendNotification("security.incident", {
-            incidentId: incident.id,
-            severity: incident.severity,
-            description: incident.description,
-            timestamp: incident.timestamp,
-            actions: incident.actions
-          });
-          console.log(
-            `[SecurityService] Incident ${incident.id} sent to Mountain`
-          );
-        } catch (error) {
-          console.warn(
-            `[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
-            error
-          );
-        }
-      }
-      /**
-       * Check module access permission
-       */
-      async checkModuleAccess(extensionId, moduleId) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (policy.blockedModules.includes(moduleId)) {
-          await this.logSecurityEvent({
-            id: `module-access-${Date.now()}`,
-            type: "violation",
-            severity: "high",
-            extensionId,
-            action: "module_access",
-            resource: moduleId,
-            outcome: "blocked",
-            timestamp: Date.now(),
-            details: { reason: "Module blocked by security policy" }
-          });
-          return false;
-        }
-        if (policy.allowedModules.includes(moduleId)) {
-          await this.logSecurityEvent({
-            id: `module-access-${Date.now()}`,
-            type: "access",
-            severity: "low",
-            extensionId,
-            action: "module_access",
-            resource: moduleId,
-            outcome: "allowed",
-            timestamp: Date.now(),
-            details: {}
-          });
-          return true;
-        }
-        await this.logSecurityEvent({
-          id: `module-access-${Date.now()}`,
-          type: "violation",
-          severity: "medium",
-          extensionId,
-          action: "module_access",
-          resource: moduleId,
-          outcome: "denied",
-          timestamp: Date.now(),
-          details: { reason: "Module not explicitly allowed" }
-        });
-        return false;
-      }
-      /**
-       * Check API access permission
-       */
-      async checkAPIAccess(extensionId, apiName) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (policy.blockedAPIs.includes(apiName)) {
-          await this.logSecurityEvent({
-            id: `api-access-${Date.now()}`,
-            type: "violation",
-            severity: "high",
-            extensionId,
-            action: "api_access",
-            resource: apiName,
-            outcome: "blocked",
-            timestamp: Date.now(),
-            details: { reason: "API blocked by security policy" }
-          });
-          return false;
-        }
-        if (policy.allowedAPIs.includes(apiName)) {
-          await this.logSecurityEvent({
-            id: `api-access-${Date.now()}`,
-            type: "access",
-            severity: "low",
-            extensionId,
-            action: "api_access",
-            resource: apiName,
-            outcome: "allowed",
-            timestamp: Date.now(),
-            details: {}
-          });
-          return true;
-        }
-        await this.logSecurityEvent({
-          id: `api-access-${Date.now()}`,
-          type: "violation",
-          severity: "medium",
-          extensionId,
-          action: "api_access",
-          resource: apiName,
-          outcome: "denied",
-          timestamp: Date.now(),
-          details: { reason: "API not explicitly allowed" }
-        });
-        return false;
-      }
-      /**
-       * Check network access permission
-       */
-      async checkNetworkAccess(extensionId) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (!policy.networkAccess) {
-          await this.logSecurityEvent({
-            id: `network-access-${Date.now()}`,
-            type: "violation",
-            severity: "critical",
-            extensionId,
-            action: "network_access",
-            resource: "network",
-            outcome: "denied",
-            timestamp: Date.now(),
-            details: { reason: "Network access not allowed" }
-          });
-          return false;
-        }
-        await this.logSecurityEvent({
-          id: `network-access-${Date.now()}`,
-          type: "access",
-          severity: "medium",
-          extensionId,
-          action: "network_access",
-          resource: "network",
-          outcome: "allowed",
-          timestamp: Date.now(),
-          details: {}
-        });
-        return true;
-      }
-      /**
-       * Check file system access permission
-       */
-      async checkFileSystemAccess(extensionId) {
-        const policy = this.getExtensionPolicy(extensionId);
-        if (!policy.fileSystemAccess) {
-          await this.logSecurityEvent({
-            id: `filesystem-access-${Date.now()}`,
-            type: "violation",
-            severity: "high",
-            extensionId,
-            action: "filesystem_access",
-            resource: "filesystem",
-            outcome: "denied",
-            timestamp: Date.now(),
-            details: { reason: "File system access not allowed" }
-          });
-          return false;
-        }
-        await this.logSecurityEvent({
-          id: `filesystem-access-${Date.now()}`,
-          type: "access",
-          severity: "medium",
-          extensionId,
-          action: "filesystem_access",
-          resource: "filesystem",
-          outcome: "allowed",
-          timestamp: Date.now(),
-          details: {}
-        });
-        return true;
-      }
-      /**
-       * Get extension security policy
-       */
-      getExtensionPolicy(extensionId) {
-        if (this.policies.has(extensionId)) {
-          return this.policies.get(extensionId);
-        }
-        return this.policies.get("default");
-      }
-      /**
-       * Log security event with advanced threat detection
-       */
-      async logSecurityEvent(event) {
-        this.auditLog.push(event);
-        await this.detectThreatPatterns(event);
-        if (event.severity === "critical" || event.severity === "high") {
-          await this.escalateIncident(event);
-        }
-        console.log(
-          `[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`
-        );
-      }
-      /**
-       * Detect threat patterns in real-time
-       */
-      async detectThreatPatterns(event) {
-        const recentEvents = this.auditLog.filter(
-          (e) => Date.now() - e.timestamp < 6e4 && // Last minute
-          e.extensionId === event.extensionId
-        );
-        if (recentEvents.length >= 10) {
-          const threatEvent = {
-            id: `threat-detection-${Date.now()}`,
-            type: "violation",
-            severity: "critical",
-            extensionId: event.extensionId,
-            action: "threat_detection",
-            resource: "security_system",
-            outcome: "detected",
-            timestamp: Date.now(),
-            details: {
-              pattern: "rapid_fire_violations",
-              eventCount: recentEvents.length,
-              timeWindow: "1 minute"
-            }
-          };
-          this.auditLog.push(threatEvent);
-          await this.escalateIncident(threatEvent);
-          console.warn(
-            `[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`
-          );
-        }
-      }
-      /**
-       * Escalate security incident
-       */
-      async escalateIncident(event) {
-        const incident = {
-          id: `incident-${Date.now()}`,
-          severity: event.severity,
-          description: `Security ${event.type}: ${event.action} by extension ${event.extensionId}`,
-          actions: [
-            "Investigate security event",
-            "Notify security team",
-            "Review extension permissions"
-          ],
-          status: "open",
-          timestamp: Date.now()
-        };
-        this.incidents.push(incident);
-        console.warn(
-          `[SecurityService] Security incident escalated: ${incident.description}`
-        );
-      }
-      /**
-       * Set security policy for extension
-       */
-      async setSecurityPolicy(extensionId, policy) {
-        this.policies.set(extensionId, policy);
-        await this.logSecurityEvent({
-          id: `policy-update-${Date.now()}`,
-          type: "authorization",
-          severity: "low",
-          extensionId,
-          action: "policy_update",
-          resource: "security_policy",
-          outcome: "allowed",
-          timestamp: Date.now(),
-          details: { policy }
-        });
-        console.log(
-          `[SecurityService] Security policy updated for extension: ${extensionId}`
-        );
-      }
-      /**
-       * Get security policy for extension
-       */
-      async getSecurityPolicy(extensionId) {
-        return this.policies.get(extensionId);
-      }
-      /**
-       * Get audit log
-       */
-      getAuditLog() {
-        const violations = this.auditLog.filter(
-          (event) => event.outcome === "denied" || event.outcome === "blocked"
-        );
-        const authenticationFailures = this.auditLog.filter(
-          (event) => event.type === "authentication" && event.outcome === "denied"
-        );
-        const authorizationFailures = this.auditLog.filter(
-          (event) => event.type === "authorization" && event.outcome === "denied"
-        );
-        return {
-          events: [...this.auditLog],
-          summary: {
-            totalEvents: this.auditLog.length,
-            violations: violations.length,
-            authenticationFailures: authenticationFailures.length,
-            authorizationFailures: authorizationFailures.length,
-            lastUpdated: Date.now()
-          }
-        };
-      }
-      /**
-       * Get active incidents
-       */
-      getActiveIncidents() {
-        return this.incidents.filter(
-          (incident) => incident.status === "open" || incident.status === "investigating"
-        );
-      }
-      /**
-       * Resolve incident
-       */
-      async resolveIncident(incidentId, resolution) {
-        const incident = this.incidents.find((inc) => inc.id === incidentId);
-        if (incident) {
-          incident.status = "resolved";
-          incident.resolutionTime = Date.now() - incident.timestamp;
-          await this.logSecurityEvent({
-            id: `incident-resolve-${Date.now()}`,
-            type: "authorization",
-            severity: "low",
-            extensionId: "security-service",
-            action: "incident_resolution",
-            resource: incidentId,
-            outcome: "allowed",
-            timestamp: Date.now(),
-            details: { resolution }
-          });
-          console.log(`[SecurityService] Incident resolved: ${incidentId}`);
-        }
-      }
-      /**
-       * Generate security report
-       */
-      generateSecurityReport() {
-        const recommendations = [];
-        const auditLog = this.getAuditLog();
-        if (auditLog.summary.violations > 10) {
-          recommendations.push(
-            "Review security policies for frequent violations"
-          );
-        }
-        if (auditLog.summary.authenticationFailures > 5) {
-          recommendations.push("Investigate authentication failures");
-        }
-        if (this.getActiveIncidents().length > 0) {
-          recommendations.push("Address active security incidents");
-        }
-        return {
-          policies: this.policies.size,
-          auditLog,
-          activeIncidents: this.getActiveIncidents(),
-          recommendations
-        };
-      }
-      /**
-       * Stop security service
-       */
-      async stop() {
-        console.log("[SecurityService] Stopping security service");
-        this.securityActive = false;
-        await this.saveSecurityState();
-        console.log("[SecurityService] Security service stopped");
-      }
-      /**
-       * Save security state
-       */
-      async saveSecurityState() {
-        console.log("[SecurityService] Security state saved");
-      }
-    };
-    SecurityServiceLayer = Layer18.effect(
-      "SecurityService",
-      Effect21.sync(() => new SecurityService())
-    );
-    SecurityServiceLive = Layer18.effect(
-      "SecurityService",
-      Effect21.sync(() => new SecurityService())
-    );
-  }
-});
-
-// Source/Services/Terminal/Service.ts
-import { Context as Context20, Effect as Effect22, Layer as Layer19 } from "effect";
-var ITerminalService2, TerminalService, TerminalServiceLayer;
-var init_Service19 = __esm({
-  "Source/Services/Terminal/Service.ts"() {
-    "use strict";
-    init_Service();
-    ITerminalService2 = Context20.Tag("ITerminalService")();
-    TerminalService = class {
-      constructor(mountainClient) {
-        this.mountainClient = mountainClient;
-      }
-      mountainClient;
-      static {
-        __name(this, "TerminalService");
-      }
-      async createTerminal(name, shellPath, cwd2) {
-        console.log(`[Terminal] Creating terminal: ${name}`);
-        const terminalId = await this.mountainClient.sendRequest(
-          "terminal.create",
-          {
-            name,
-            shell_path: shellPath,
-            cwd: cwd2
-          }
-        );
-        return terminalId;
-      }
-      async sendText(terminalId, text) {
-        await this.mountainClient.sendRequest("terminal.write", {
-          id: terminalId,
-          data: text
-        });
-      }
-      async resize(terminalId, cols, rows) {
-        console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
-      }
-      async kill(terminalId) {
-        console.log(`[Terminal] Kill ${terminalId}`);
-      }
-    };
-    TerminalServiceLayer = Layer19.effect(
-      ITerminalService2,
-      Effect22.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        return new TerminalService(mountainClient);
-      })
-    );
-  }
-});
-
 // Source/Service/Mapping.ts
 var Mapping_exports = {};
 __export(Mapping_exports, {
-  EffectServices: () => EffectServices,
-  OldStyleServices: () => OldStyleServices,
-  ServiceMapping: () => ServiceMapping
+  EffectServices: () => EffectServices
 });
-import { Layer as Layer20 } from "effect";
-var OldStyleServices, EffectServices, ServiceMapping;
+import { Layer as Layer10 } from "effect";
+var EffectServices;
 var init_Mapping = __esm({
   async "Source/Service/Mapping.ts"() {
     await init_Effect();
-    await init_Service13();
-    init_Configuration3();
-    init_Service14();
-    await init_Service15();
-    init_Service16();
-    init_Service2();
-    init_Client2();
-    init_Service17();
-    init_Service18();
-    init_Service19();
-    OldStyleServices = {
-      /**
-       * Validate dependencies for old-style services
-       */
-      validateDependencies: /* @__PURE__ */ __name(() => Layer20.mergeAll(
-        MountainClientServiceLayer,
-        ConfigurationLayer,
-        ModuleInterceptorServiceLayer,
-        ExtensionHostLayer,
-        APIFactoryLayer,
-        TerminalServiceLayer,
-        SecurityServiceLive,
-        PerformanceMonitoringServiceLive,
-        ErrorHandlingServiceLive
-      ), "validateDependencies"),
-      /**
-       * Compose application layer for old-style services
-       */
-      composeAppLayer: /* @__PURE__ */ __name(() => {
-        const Base = Layer20.mergeAll(
-          MountainClientServiceLayer,
-          MountainGRPCClientLayer,
-          SecurityServiceLive,
-          PerformanceMonitoringServiceLive,
-          ErrorHandlingServiceLive
-        );
-        const Config = ConfigurationLayer.pipe(Layer20.provide(Base));
-        const Terminal = TerminalServiceLayer.pipe(Layer20.provide(Base));
-        const ModuleInt = ModuleInterceptorServiceLayer.pipe(
-          Layer20.provide(Base)
-        );
-        const API = APIFactoryLayer.pipe(
-          Layer20.provide(Base),
-          Layer20.provide(Config),
-          Layer20.provide(Terminal),
-          Layer20.provide(ModuleInt)
-        );
-        const ExtHost = ExtensionHostLayer.pipe(
-          Layer20.provide(Base),
-          Layer20.provide(Config),
-          Layer20.provide(API),
-          Layer20.provide(ModuleInt)
-        );
-        return Layer20.mergeAll(Base, Config, Terminal, API, ExtHost, ModuleInt);
-      }, "composeAppLayer")
-    };
     EffectServices = {
       /**
-       * Compose the main Effect-TS application layer
+       * Compose the main application layer.
        *
-       * Layer dependencies:
-       * - Telemetry (base, no dependencies)
-       * - Health (depends on Telemetry)
-       * - MountainClient (depends on Telemetry)
-       * - ModuleInterceptor (depends on Telemetry)
-       * - Extension (depends on Telemetry)
-       * - RPCServer (depends on Telemetry)
-       * - Bootstrap (depends on all above)
+       * Layer deps: Telemetry → Health, MountainClient, ModuleInterceptor, Extension, RPCServer → Bootstrap
        */
       composeAppLayer: /* @__PURE__ */ __name(() => {
         const Telemetry2 = TelemetryLive;
-        const Health = HealthLive.pipe(Layer20.provide(Telemetry2));
-        const MountainClient2 = MountainClientLive.pipe(
-          Layer20.provide(Telemetry2)
+        const Layer1 = Layer10.mergeAll(
+          HealthLive.pipe(Layer10.provide(Telemetry2)),
+          MountainClientLive.pipe(Layer10.provide(Telemetry2)),
+          ModuleInterceptorLive.pipe(Layer10.provide(Telemetry2)),
+          ExtensionLive.pipe(Layer10.provide(Telemetry2)),
+          RPCServerLive.pipe(Layer10.provide(Telemetry2))
         );
-        const ModuleInterceptor2 = ModuleInterceptorLive.pipe(
-          Layer20.provide(Telemetry2)
-        );
-        const Extension2 = ExtensionLive.pipe(Layer20.provide(Telemetry2));
-        const RPCServer2 = RPCServerLive.pipe(Layer20.provide(Telemetry2));
         const Bootstrap = BootstrapLive.pipe(
-          Layer20.provide(Telemetry2),
-          Layer20.provide(Health),
-          Layer20.provide(MountainClient2),
-          Layer20.provide(ModuleInterceptor2),
-          Layer20.provide(Extension2),
-          Layer20.provide(RPCServer2)
+          Layer10.provide(Telemetry2),
+          Layer10.provide(Layer1)
         );
-        return Layer20.mergeAll(
-          Telemetry2,
-          Health,
-          MountainClient2,
-          ModuleInterceptor2,
-          Extension2,
-          RPCServer2,
-          Bootstrap
-        );
+        return Layer10.mergeAll(Telemetry2, Layer1, Bootstrap);
       }, "composeAppLayer"),
       /**
        * Get individual service layers for fine-grained composition
@@ -39797,27 +35547,10 @@ var init_Mapping = __esm({
       getRPCServer: /* @__PURE__ */ __name(() => RPCServerLive, "getRPCServer"),
       getBootstrap: /* @__PURE__ */ __name(() => BootstrapLive, "getBootstrap")
     };
-    ServiceMapping = class {
-      static {
-        __name(this, "ServiceMapping");
-      }
-      /**
-       * Validate dependencies
-       */
-      static validateDependencies = /* @__PURE__ */ __name(() => OldStyleServices.validateDependencies(), "validateDependencies");
-      /**
-       * Compose application layer
-       */
-      static composeAppLayer = /* @__PURE__ */ __name(() => {
-        return OldStyleServices.composeAppLayer();
-      }, "composeAppLayer");
-    };
   }
 });
 await init_Mapping();
 export {
-  EffectServices,
-  OldStyleServices,
-  ServiceMapping
+  EffectServices
 };
 //# sourceMappingURL=Mapping.js.map

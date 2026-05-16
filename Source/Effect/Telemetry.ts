@@ -1,8 +1,7 @@
 /**
  * @module Effect/Telemetry
  * @description
- * Atomic telemetry service for Cocoon Extension Host using Effect-TS.
- * Consolidates logging, metrics, and tracing into a unified system.
+ * Telemetry service consolidating logging, metrics, and tracing via Effect-TS.
  */
 
 import {
@@ -15,6 +14,15 @@ import {
 	Stream,
 	SubscriptionRef,
 } from "effect";
+
+// ============================================================================
+// BUDGET LIMITS - soft caps; excess data dropped silently.
+// ============================================================================
+const MAX_EVENTS = 1_000;
+
+const MAX_METRICS_PER_NAME = 100;
+
+const MAX_SPANS_PER_NAME = 100;
 
 // ============================================================================
 // TYPES
@@ -85,7 +93,7 @@ export class TelemetryCollectionError extends Error {
 // ============================================================================
 
 export interface TelemetryService {
-	/** Record a metric value */
+	/** Record metric */
 	readonly recordMetric: (
 		name: string,
 
@@ -94,14 +102,14 @@ export interface TelemetryService {
 		labels?: Record<string, string>,
 	) => Effect.Effect<void, never>;
 
-	/** Start a timed span */
+	/** Start timed span */
 	readonly startSpan: (
 		name: string,
 
 		labels?: Record<string, string>,
 	) => Effect.Effect<SpanHandle, never>;
 
-	/** Log an event */
+	/** Log event */
 	readonly log: (
 		level: TelemetryLog["level"],
 
@@ -110,25 +118,25 @@ export interface TelemetryService {
 		context?: Record<string, unknown>,
 	) => Effect.Effect<void, never>;
 
-	/** Stream of all telemetry events */
+	/** Event stream */
 	readonly events: Stream.Stream<ReadonlyArray<TelemetryEvent>, never>;
 
-	/** Get metrics by name */
+	/** Get metrics */
 	readonly getMetrics: (
 		name: string,
 	) => Effect.Effect<ReadonlyArray<TelemetryMetric>, never>;
 
-	/** Get average duration for spans */
+	/** Get average duration */
 	readonly getAverageDuration: (name: string) => Effect.Effect<number, never>;
 
-	/** Get success rate for spans */
+	/** Get success rate */
 	readonly getSuccessRate: (name: string) => Effect.Effect<number, never>;
 
-	/** Flush/clear all telemetry data */
+	/** Flush all data */
 	readonly flush: Effect.Effect<void, never>;
 }
 
-/** Handle for an active span */
+/** Active span handle */
 export interface SpanHandle {
 	readonly end: (
 		success: boolean,
@@ -152,7 +160,7 @@ export const TelemetryLive = Layer.effect(
 	Telemetry,
 
 	Effect.gen(function* () {
-		// Storage for metrics and spans
+		// In-memory metric, span, and event stores
 		const metricsRef = yield* SubscriptionRef.make<
 			HashMap.HashMap<string, ReadonlyArray<TelemetryMetric>>
 		>(HashMap.empty());
@@ -161,11 +169,9 @@ export const TelemetryLive = Layer.effect(
 			HashMap.HashMap<string, ReadonlyArray<TelemetrySpan>>
 		>(HashMap.empty());
 
-		const eventsRef = yield* SubscriptionRef.make<
-			ReadonlyArray<TelemetryEvent>
-		>([]);
+		const eventsRef = yield* SubscriptionRef.make<TelemetryEvent[]>([]);
 
-		// Atom: Record a metric
+		// Record metric - O(1) push with bounded trim
 		const recordMetric = (
 			name: string,
 
@@ -181,30 +187,38 @@ export const TelemetryLive = Layer.effect(
 					labels,
 				};
 
+				// Push with bounded cap
 				const events = yield* eventsRef.get;
-				yield* Ref.set(eventsRef, [
-					...events,
+				events.push({
+					type: "metric",
+					timestamp: metric.timestamp,
+					data: metric,
+				});
+				if (events.length > MAX_EVENTS) {
+					events.splice(0, events.length - MAX_EVENTS);
+				}
+				yield* Ref.set(eventsRef, events);
 
-					{
-						type: "metric",
-						timestamp: metric.timestamp,
-						data: metric,
-					},
-				]);
-
+				// Push under name key - bounded per name
 				const currentMetrics = yield* metricsRef.get;
 				const nameMetrics = HashMap.get(currentMetrics, name).pipe(
 					Option.getOrElse(() => []),
 				);
-
+				nameMetrics.push(metric);
+				if (nameMetrics.length > MAX_METRICS_PER_NAME) {
+					nameMetrics.splice(
+						0,
+						nameMetrics.length - MAX_METRICS_PER_NAME,
+					);
+				}
 				yield* Ref.set(
 					metricsRef,
 
-					HashMap.set(currentMetrics, name, [...nameMetrics, metric]),
+					HashMap.set(currentMetrics, name, nameMetrics),
 				);
 			});
 
-		// Atom: Start a span
+		// Start span - O(1) push with bounded cap
 		const startSpan = (name: string, labels?: Record<string, string>) =>
 			Effect.gen(function* () {
 				const startTime = Date.now();
@@ -215,12 +229,17 @@ export const TelemetryLive = Layer.effect(
 					labels: labels ?? {},
 				};
 
+				// Push start event
 				const events = yield* eventsRef.get;
-				yield* Ref.set(eventsRef, [
-					...events,
-
-					{ type: "span", timestamp: startTime, data: span },
-				]);
+				events.push({
+					type: "span",
+					timestamp: startTime,
+					data: span,
+				});
+				if (events.length > MAX_EVENTS) {
+					events.splice(0, events.length - MAX_EVENTS);
+				}
+				yield* Ref.set(eventsRef, events);
 
 				return {
 					end: (success: boolean, error?: string) =>
@@ -234,16 +253,17 @@ export const TelemetryLive = Layer.effect(
 								error,
 							};
 
+							// Push end event
 							const events = yield* eventsRef.get;
-							yield* Ref.set(eventsRef, [
-								...events,
-
-								{
-									type: "span",
-									timestamp: endTime,
-									data: completedSpan,
-								},
-							]);
+							events.push({
+								type: "span",
+								timestamp: endTime,
+								data: completedSpan,
+							});
+							if (events.length > MAX_EVENTS) {
+								events.splice(0, events.length - MAX_EVENTS);
+							}
+							yield* Ref.set(eventsRef, events);
 
 							const currentSpans = yield* spansRef.get;
 							const nameSpans = HashMap.get(
@@ -252,20 +272,24 @@ export const TelemetryLive = Layer.effect(
 								name,
 							).pipe(Option.getOrElse(() => []));
 
+							// Push under name key
+							nameSpans.push(completedSpan);
+							if (nameSpans.length > MAX_SPANS_PER_NAME) {
+								nameSpans.splice(
+									0,
+									nameSpans.length - MAX_SPANS_PER_NAME,
+								);
+							}
 							yield* Ref.set(
 								spansRef,
 
-								HashMap.set(currentSpans, name, [
-									...nameSpans,
-
-									completedSpan,
-								]),
+								HashMap.set(currentSpans, name, nameSpans),
 							);
 						}),
 				} satisfies SpanHandle;
 			});
 
-		// Atom: Log an event
+		// Log event - O(1) push with bounded cap
 		const log = (
 			level: TelemetryLog["level"],
 
@@ -281,17 +305,16 @@ export const TelemetryLive = Layer.effect(
 				};
 				const timestamp = Date.now();
 
+				// Push log event
 				const events = yield* eventsRef.get;
-				yield* Ref.set(eventsRef, [
-					...events,
+				events.push({ type: "log", timestamp, data: logEntry });
+				if (events.length > MAX_EVENTS) {
+					events.splice(0, events.length - MAX_EVENTS);
+				}
+				yield* Ref.set(eventsRef, events);
 
-					{ type: "log", timestamp, data: logEntry },
-				]);
-
-				// Emit via process.stdout.write / process.stderr.write so the
-				// line survives esbuild's production `drop: ["console"]` sweep.
-				// Context is JSON-encoded inline to keep the output one line
-				// per event (parseable by `Trace=long` pipelines).
+				// Write directly to stdout/stderr (survives esbuild console drop).
+				// Context JSON-encoded inline for single-line parseable output.
 				const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
 				let ContextText = "";
 				if (context && Object.keys(context).length > 0) {
@@ -307,12 +330,11 @@ export const TelemetryLive = Layer.effect(
 				try {
 					Stream.write(Line);
 				} catch {
-					// Broken pipe on shutdown - swallow silently rather than
-					// crashing the extension host fiber mid-telemetry.
+					// Broken pipe on shutdown - swallow silently.
 				}
 			});
 
-		// Atom: Get metrics by name
+		// Get metrics by name
 		const getMetrics = (name: string) =>
 			Effect.gen(function* () {
 				const metrics = yield* metricsRef.get;
@@ -321,7 +343,7 @@ export const TelemetryLive = Layer.effect(
 				);
 			});
 
-		// Atom: Get average duration for spans
+		// Get average duration
 		const getAverageDuration = (name: string) =>
 			Effect.gen(function* () {
 				const spans = yield* spansRef.get;
@@ -344,7 +366,7 @@ export const TelemetryLive = Layer.effect(
 				return totalDuration / nameSpans.length;
 			});
 
-		// Atom: Get success rate for spans
+		// Get success rate
 		const getSuccessRate = (name: string) =>
 			Effect.gen(function* () {
 				const spans = yield* spansRef.get;
@@ -362,7 +384,7 @@ export const TelemetryLive = Layer.effect(
 				return successCount / nameSpans.length;
 			});
 
-		// Atom: Flush all telemetry data
+		// Flush all data
 		const flush = Effect.gen(function* () {
 			yield* Ref.set(metricsRef, HashMap.empty());
 			yield* Ref.set(spansRef, HashMap.empty());
@@ -425,7 +447,7 @@ export const TelemetryMock = Layer.effect(
 // CONVENIENCE EXPORTS
 // ============================================================================
 
-/** Helper to wrap an effect with telemetry span */
+/** Wrap an effect with telemetry span */
 export const withSpan = <A, E, R>(
 	name: string,
 

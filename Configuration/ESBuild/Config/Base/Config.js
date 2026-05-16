@@ -3,8 +3,8 @@ import * as Environment from "../../Constant/Environment/Constant.js";
 var Config_default = {
 	color: true,
 	format: "esm",
-	logLevel: "debug",
-	metafile: true,
+	logLevel: Environment.On ? "debug" : "info",
+	metafile: Environment.On,
 	minify: !Environment.On,
 	outdir: "Configuration",
 	platform: "node",
