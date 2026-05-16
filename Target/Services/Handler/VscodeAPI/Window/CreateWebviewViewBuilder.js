@@ -4,6 +4,13 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // Source/Services/Handler/VscodeAPI/Window/CreateWebviewViewBuilder.ts
 var CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context, Handle, ViewId, ToWebviewUri, SharedCspSource) => {
   let CurrentHtml = "";
+  let CurrentWebviewViewOptions = {
+    enableScripts: true,
+    enableCommandUris: true,
+    enableForms: true,
+    localResourceRoots: [],
+    portMapping: []
+  };
   let CurrentVisible = true;
   const VisibilityListeners = /* @__PURE__ */ new Set();
   const DisposeListeners = /* @__PURE__ */ new Set();
@@ -148,12 +155,24 @@ var CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context, Handle, 
       // crashed those reads or produced a CSP that blocked the
       // extension's own bundle. Permissive dev-time defaults
       // keep extensions that never set options happy.
-      options: {
-        enableScripts: true,
-        enableCommandUris: true,
-        enableForms: true,
-        localResourceRoots: [],
-        portMapping: []
+      // Unlike CreateWebviewPanel.ts which forwards options via
+      // webview.setOptions, this view builder previously stored
+      // options as a static object with no forwarding — meaning
+      // the workbench webview never received enableScripts,
+      // enableForms, etc. and the preloader's toContentHtml()
+      // saw allowScripts as false/undefined, skipping the VS Code
+      // API polyfill injection.
+      get options() {
+        return CurrentWebviewViewOptions;
+      },
+      set options(Value) {
+        CurrentWebviewViewOptions = Value;
+        Context.SendToMountain("webview.setOptions", {
+          handle: Handle,
+          viewId: ViewId,
+          options: Value
+        }).catch(() => {
+        });
       },
       cspSource: SharedCspSource,
       asWebviewUri: ToWebviewUri,

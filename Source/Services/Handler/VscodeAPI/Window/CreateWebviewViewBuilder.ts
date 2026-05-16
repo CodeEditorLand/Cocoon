@@ -28,6 +28,14 @@ export default (
 ): any => {
 	let CurrentHtml = "";
 
+	let CurrentWebviewViewOptions: Record<string, unknown> = {
+		enableScripts: true,
+		enableCommandUris: true,
+		enableForms: true,
+		localResourceRoots: [],
+		portMapping: [],
+	};
+
 	// `resolveWebviewView` is invoked by the workbench at the
 	// moment the pane is being resolved-into-view; stock VS Code
 	// guarantees `view.visible === true` at this point. Roo's
@@ -186,7 +194,8 @@ export default (
 				try {
 					if (process.env["Trace"]) {
 						process.stdout.write(
-							`[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}\n`,
+							`[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}
+`,
 						);
 					}
 				} catch {
@@ -202,7 +211,8 @@ export default (
 						try {
 							if (process.env["Trace"]) {
 								process.stdout.write(
-									`[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}\n`,
+									`[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}
+`,
 								);
 							}
 						} catch {}
@@ -211,7 +221,8 @@ export default (
 						try {
 							if (process.env["Trace"]) {
 								process.stdout.write(
-									`[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}\n`,
+									`[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}
+`,
 								);
 							}
 						} catch {}
@@ -228,17 +239,26 @@ export default (
 			// crashed those reads or produced a CSP that blocked the
 			// extension's own bundle. Permissive dev-time defaults
 			// keep extensions that never set options happy.
-			options: {
-				enableScripts: true,
+			// Unlike CreateWebviewPanel.ts which forwards options via
+			// webview.setOptions, this view builder previously stored
+			// options as a static object with no forwarding — meaning
+			// the workbench webview never received enableScripts,
+			// enableForms, etc. and the preloader's toContentHtml()
+			// saw allowScripts as false/undefined, skipping the VS Code
+			// API polyfill injection.
+			get options(): Record<string, unknown> {
+				return CurrentWebviewViewOptions;
+			},
 
-				enableCommandUris: true,
+			set options(Value: Record<string, unknown>) {
+				CurrentWebviewViewOptions = Value;
 
-				enableForms: true,
-
-				localResourceRoots: [],
-
-				portMapping: [],
-			} as any,
+				Context.SendToMountain("webview.setOptions", {
+					handle: Handle,
+					viewId: ViewId,
+					options: Value,
+				}).catch(() => {});
+			},
 
 			cspSource: SharedCspSource,
 

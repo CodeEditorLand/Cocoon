@@ -71,7 +71,7 @@ graph TB
 
 ---
 
-## Architecture 🏗️
+## Architecture 🏗️
 
 ```
 +------------------------------------------------------------------+
@@ -99,7 +99,7 @@ graph TB
 +------------------------------------------------------------------+
 ```
 
-### Module Map 🗺️
+### Module Map 🗺️
 
 | Path                                            | Purpose                                          |
 | ----------------------------------------------- | ------------------------------------------------ |
@@ -125,7 +125,7 @@ graph TB
 
 ---
 
-## Startup Sequence 🚀
+## Startup Sequence 🚀
 
 ```
 1. Node.js process starts (bootstrap-fork.js)
@@ -172,7 +172,7 @@ Extension host ready for use
 
 ---
 
-## VS Code API Shim 📦
+## VS Code API Shim 📦
 
 `Cocoon` constructs VS Code API objects for each extension via `ApiFactory.ts`:
 
@@ -188,7 +188,7 @@ const vscode = ApiFactory.create(extensionId, {
 });
 ```
 
-### API Namespace Providers 📋
+### API Namespace Providers 📋
 
 | Namespace             | Provider            | Track                       |
 | --------------------- | ------------------- | --------------------------- |
@@ -207,7 +207,7 @@ const vscode = ApiFactory.create(extensionId, {
 
 ---
 
-## Service Providers 🔌
+## Service Providers 🔌
 
 Each service is implemented as an `Effect-TS` `Layer`:
 
@@ -223,11 +223,11 @@ Each service is implemented as an `Effect-TS` `Layer`:
 
 ---
 
-## gRPC Communication 🌐
+## gRPC Communication 🌐
 
 `Cocoon` communicates with `Mountain` via the `Vine` `gRPC` protocol.
 
-### Client Implementation 💻
+### Client Implementation 💻
 
 ```typescript
 // gRPC client connects to Mountain on port 50051
@@ -252,7 +252,7 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 });
 ```
 
-### Connection Management 🔗
+### Connection Management 🔗
 
 | Feature      | Implementation                                |
 | ------------ | --------------------------------------------- |
@@ -264,12 +264,12 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 
 ---
 
-## RequireInterceptor 🪝
+## RequireInterceptor 🪝
 
 The `RequireInterceptor` patches `Node.js`'s `require()` to enable VS Code
 module loading.
 
-### Interception Rules 📋
+### Interception Rules 📋
 
 | Module Pattern            | Replacement                        | Behavior                                |
 | ------------------------- | ---------------------------------- | --------------------------------------- |
@@ -282,7 +282,7 @@ module loading.
 | `./mainThread*.js`        | Load from `@codeeditorland/output` | VS Code stock source                    |
 | `vscode`                  | `ApiFactory` construct             | Extension-specific API surface          |
 
-### Installation ⚙️
+### Installation ⚙️
 
 ```typescript
 // Installed before any VS Code source code is loaded
@@ -295,7 +295,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 
 ---
 
-## Extension Lifecycle 🔄
+## Extension Lifecycle 🔄
 
 ```
 1. Extension Discovery
@@ -328,7 +328,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 
 ---
 
-## Dual-Track Routing 🛤️
+## Dual-Track Routing 🛤️
 
 `Cocoon` routes extension API calls through two tracks:
 
@@ -337,7 +337,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 | **A - Stock Node**  | Unmodified VS Code `extHost*.ts` | In-process | Default for all APIs                       |
 | **B - Rust Native** | gRPC `ActionEffect` to Mountain  | ~1ms       | I/O-heavy APIs (fs, terminal, search, git) |
 
-### Routing Decision 🧭
+### Routing Decision 🧭
 
 ```typescript
 // From Cocoon's tier router (simplified)
@@ -350,7 +350,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 }
 ```
 
-### Track Distribution by API 📊
+### Track Distribution by API 📊
 
 | API                             | Default Track | Rationale                       |
 | ------------------------------- | ------------- | ------------------------------- |
@@ -365,7 +365,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 
 ---
 
-## Related Documentation 📚
+## Related Documentation 📚
 
 - [Mountain](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/Architecture.md) -
   `gRPC` server and `ProcessManagement`
