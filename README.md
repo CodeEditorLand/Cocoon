@@ -8,7 +8,7 @@
 		</td>
 		<td align="left" valign="middle">
 			<h3 align="left">
-				<a href="https://Editor.Land" target="_blank">
+				<a href="https://Land.PlayForm.Cloud" target="_blank">
 					<picture>
 						<source media="(prefers-color-scheme: dark)" srcset="https://PlayForm.Cloud/Dark/Image/GitHub/Land.svg">
 						<source media="(prefers-color-scheme: light)" srcset="https://PlayForm.Cloud/Image/GitHub/Land.svg">
@@ -19,7 +19,7 @@
 		</td>
 		<td align="left" valign="middle">
 			<h3 align="left">
-				<a href="https://Editor.Land" target="_blank">Land&#x2001;🏞️</a>
+				<a href="https://Land.PlayForm.Cloud" target="_blank">Land&#x2001;🏞️</a>
 			</h3>
 		</td>
 	</tr>
@@ -288,10 +288,10 @@ the `PatchProcess` module and will appear in `Mountain`'s console output.
 
 ## See Also&#x2001;🔗
 
-- [Cocoon Documentation](https://editor.land/Doc/cocoon)
-- [Architecture Overview](https://editor.land/Doc/architecture)
-- [Why `Effect-TS`](https://editor.land/Doc/why-effect-ts)
-- [Why `gRPC`](https://editor.land/Doc/why-grpc)
+- [Cocoon Documentation](https://land.playform.cloud/Doc/cocoon)
+- [Architecture Overview](https://land.playform.cloud/Doc/architecture)
+- [Why `Effect-TS`](https://land.playform.cloud/Doc/why-effect-ts)
+- [Why `gRPC`](https://land.playform.cloud/Doc/why-grpc)
 - [`Mountain`](https://github.com/CodeEditorLand/Mountain)
 - [`Wind`](https://github.com/CodeEditorLand/Wind)
 - [`Vine`](https://github.com/CodeEditorLand/Vine)
@@ -340,7 +340,7 @@ Commons Fund grant.
 	<tbody>
 		<tr>
 			<td align="left" valign="middle">
-				<a href="https://Editor.Land">
+				<a href="https://Land.PlayForm.Cloud">
 					<img width="60" src="https://raw.githubusercontent.com/CodeEditorLand/Asset/refs/heads/Current/Logo/Land.svg" alt="Land">
 				</a>
 			</td>
@@ -366,7 +366,7 @@ Commons Fund grant.
 ---
 
 **Project Maintainers**: Source Open
-([Source/Open@Editor.Land](mailto:Source/Open@Editor.Land)) |
+([Source/Open@Land.PlayForm.Cloud](mailto:Source/Open@Land.PlayForm.Cloud)) |
 [GitHub Repository](https://github.com/CodeEditorLand/Cocoon) |
 [Report an Issue](https://github.com/CodeEditorLand/Cocoon/issues) |
 [Security Policy](https://github.com/CodeEditorLand/Cocoon/security/policy)
