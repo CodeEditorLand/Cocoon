@@ -315,7 +315,7 @@ a history of changes specific to **Cocoon**&#x2001;🦋.
 
 ---
 
-## Funding \& Acknowledgements&#x2001;🙏🏻
+## Funding & Acknowledgements&#x2001;🙏🏻
 
 **Cocoon**&#x2001;🦋 is a core element of the **Land**&#x2001;🏞️ ecosystem. This
 project is funded through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a

@@ -88,7 +88,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 	};
 
 	const Concrete = {
-		appName: (Env["appName"] as string) ?? "CodeEditorLand",
+		appName: (Env["appName"] as string) ?? "fiddee",
 
 		appRoot: NormalizeAppRoot(Env["appRoot"]),
 
@@ -100,7 +100,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		machineId:
 			(Context.ExtensionHostInitData?.telemetry?.machineId as string) ??
 			(Env["machineId"] as string) ??
-			"land",
+			"fiddee",
 
 		sessionId:
 			(Env["sessionId"] as string) ??

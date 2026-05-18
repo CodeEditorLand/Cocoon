@@ -37,7 +37,7 @@ const FormatParameter = (parameter: InterfaceMemberParameter): string =>
 	`${parameter.Name}${parameter.Optional ? "?" : ""}: ${parameter.TypeText}`;
 
 const FormatMember = (member: InterfaceMemberRecord): string => {
-	const Doc = FormatDocComment(member.DocComment, "\t");
+	const Doc = FormatDocComment(member.DocComment, "	");
 
 	const ReadonlyPrefix = member.Readonly ? "readonly " : "";
 
@@ -46,10 +46,10 @@ const FormatMember = (member: InterfaceMemberRecord): string => {
 	if (member.Kind === "Method") {
 		const Parameters = member.Parameters.map(FormatParameter).join(", ");
 
-		return `${Doc}\t${ReadonlyPrefix}${member.Name}${OptionalSuffix}(${Parameters}): ${member.TypeText};`;
+		return `${Doc}	${ReadonlyPrefix}${member.Name}${OptionalSuffix}(${Parameters}): ${member.TypeText};`;
 	}
 
-	return `${Doc}\t${ReadonlyPrefix}${member.Name}${OptionalSuffix}: ${member.TypeText};`;
+	return `${Doc}	${ReadonlyPrefix}${member.Name}${OptionalSuffix}: ${member.TypeText};`;
 };
 
 const FormatMemberRecord = (
@@ -71,25 +71,25 @@ const FormatMemberRecord = (
 	const Trailing = index === total - 1 ? "" : ",";
 
 	return [
-		`\t{`,
+		`	{`,
 
-		`\t\tKind: "${member.Kind}",`,
+		`		Kind: "${member.Kind}",`,
 
-		`\t\tName: ${JSON.stringify(member.Name)},`,
+		`		Name: ${JSON.stringify(member.Name)},`,
 
-		`\t\tReadonly: ${member.Readonly},`,
+		`		Readonly: ${member.Readonly},`,
 
-		`\t\tOptional: ${member.Optional},`,
+		`		Optional: ${member.Optional},`,
 
-		`\t\tTypeText: ${JSON.stringify(member.TypeText)},`,
+		`		TypeText: ${JSON.stringify(member.TypeText)},`,
 
-		`\t\tParameters: [${Parameters}],`,
+		`		Parameters: [${Parameters}],`,
 
-		`\t\tDocComment: ${DocText},`,
+		`		DocComment: ${DocText},`,
 
-		`\t\tSourceLine: ${member.SourceLine},`,
+		`		SourceLine: ${member.SourceLine},`,
 
-		`\t}${Trailing}`,
+		`	}${Trailing}`,
 	].join("\n");
 };
 
@@ -102,7 +102,7 @@ const FormatOutput = (record: ExtHostDecoratorRecord): string => {
 
 	const InterfaceBody =
 		Sorted.length === 0
-			? "\t// (no members extracted - resolve cross-file)"
+			? "	// (no members extracted - resolve cross-file)"
 			: Sorted.map(FormatMember).join("\n");
 
 	const RecordList =

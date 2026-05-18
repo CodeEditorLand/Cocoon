@@ -157,7 +157,7 @@ var CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context, Handle, 
       // keep extensions that never set options happy.
       // Unlike CreateWebviewPanel.ts which forwards options via
       // webview.setOptions, this view builder previously stored
-      // options as a static object with no forwarding — meaning
+      // options as a static object with no forwarding - meaning
       // the workbench webview never received enableScripts,
       // enableForms, etc. and the preloader's toContentHtml()
       // saw allowScripts as false/undefined, skipping the VS Code

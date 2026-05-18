@@ -190,7 +190,7 @@ var init_Event = __esm({
   "Source/Telemetry/PostHog/Event.ts"() {
     "use strict";
     BaseProperties = {
-      $app: "land-editor",
+      $app: "fiddee",
       $app_version: "0.0.1",
       $build_mode: "debug",
       $component: "cocoon",
@@ -730,13 +730,13 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
     }
   }, "Call");
   const Concrete = {
-    appName: Env["appName"] ?? "CodeEditorLand",
+    appName: Env["appName"] ?? "fiddee",
     appRoot: NormalizeAppRoot(Env["appRoot"]),
     appHost: Env["appHost"] ?? "desktop",
     uiKind: 1,
     // vscode.UIKind.Desktop
     language: Env["language"] ?? "en",
-    machineId: Context.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
+    machineId: Context.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "fiddee",
     sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
     // VS Code build identity strings. `vscode.tunnel-forwarding` and
     // other extensions read `appCommit?.substring(0, 7)` to surface a

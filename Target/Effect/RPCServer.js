@@ -3584,7 +3584,7 @@ var init_Event = __esm({
   "Source/Telemetry/PostHog/Event.ts"() {
     "use strict";
     BaseProperties = {
-      $app: "land-editor",
+      $app: "fiddee",
       $app_version: "0.0.1",
       $build_mode: "debug",
       $component: "cocoon",
@@ -4498,7 +4498,7 @@ var init_CreateWebviewViewBuilder = __esm({
           // keep extensions that never set options happy.
           // Unlike CreateWebviewPanel.ts which forwards options via
           // webview.setOptions, this view builder previously stored
-          // options as a static object with no forwarding — meaning
+          // options as a static object with no forwarding - meaning
           // the workbench webview never received enableScripts,
           // enableForms, etc. and the preloader's toContentHtml()
           // saw allowScripts as false/undefined, skipping the VS Code
@@ -5797,7 +5797,7 @@ var init_RouteManifest = __esm({
       mountain: 118,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-16T21:34:14Z"
+      generatedAt: "2026-05-18T00:19:31Z"
     };
   }
 });
@@ -31342,13 +31342,13 @@ var init_Namespace13 = __esm({
         }
       }, "Call");
       const Concrete = {
-        appName: Env["appName"] ?? "CodeEditorLand",
+        appName: Env["appName"] ?? "fiddee",
         appRoot: NormalizeAppRoot(Env["appRoot"]),
         appHost: Env["appHost"] ?? "desktop",
         uiKind: 1,
         // vscode.UIKind.Desktop
         language: Env["language"] ?? "en",
-        machineId: Context13.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
+        machineId: Context13.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "fiddee",
         sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
         // VS Code build identity strings. `vscode.tunnel-forwarding` and
         // other extensions read `appCommit?.substring(0, 7)` to surface a

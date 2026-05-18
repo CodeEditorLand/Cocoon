@@ -190,7 +190,7 @@ var init_Event = __esm({
   "Source/Telemetry/PostHog/Event.ts"() {
     "use strict";
     BaseProperties = {
-      $app: "land-editor",
+      $app: "fiddee",
       $app_version: "0.0.1",
       $build_mode: "debug",
       $component: "cocoon",

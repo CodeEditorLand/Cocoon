@@ -18,7 +18,7 @@ export type Event = {
 };
 
 const BaseProperties: Properties = {
-	$app: "land-editor",
+	$app: "fiddee",
 
 	$app_version: "0.0.1",
 

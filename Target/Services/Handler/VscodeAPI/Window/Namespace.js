@@ -190,7 +190,7 @@ var init_Event = __esm({
   "Source/Telemetry/PostHog/Event.ts"() {
     "use strict";
     BaseProperties = {
-      $app: "land-editor",
+      $app: "fiddee",
       $app_version: "0.0.1",
       $build_mode: "debug",
       $component: "cocoon",
@@ -1217,7 +1217,7 @@ var CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context, Handle, 
       // keep extensions that never set options happy.
       // Unlike CreateWebviewPanel.ts which forwards options via
       // webview.setOptions, this view builder previously stored
-      // options as a static object with no forwarding — meaning
+      // options as a static object with no forwarding - meaning
       // the workbench webview never received enableScripts,
       // enableForms, etc. and the preloader's toContentHtml()
       // saw allowScripts as false/undefined, skipping the VS Code

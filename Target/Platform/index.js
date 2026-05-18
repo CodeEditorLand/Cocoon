@@ -773,7 +773,7 @@ function GetTempDirectory() {
   }
   const platform = GetPlatformType();
   if (platform === "windows") {
-    return "\\temp";
+    return "	emp";
   }
   return "/tmp";
 }

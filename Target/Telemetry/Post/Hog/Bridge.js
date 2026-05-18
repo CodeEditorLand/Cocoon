@@ -186,7 +186,7 @@ var init_OTLPBridge = __esm({
 
 // Source/Telemetry/PostHog/Event.ts
 var BaseProperties = {
-  $app: "land-editor",
+  $app: "fiddee",
   $app_version: "0.0.1",
   $build_mode: "debug",
   $component: "cocoon",

@@ -564,7 +564,7 @@ export function GetTempDirectory(): string {
 	const platform = GetPlatformType();
 
 	if (platform === "windows") {
-		return "\\temp";
+		return "\	emp";
 	}
 
 	return "/tmp";

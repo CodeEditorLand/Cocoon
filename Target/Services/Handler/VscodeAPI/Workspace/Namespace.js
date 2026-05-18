@@ -190,7 +190,7 @@ var init_Event = __esm({
   "Source/Telemetry/PostHog/Event.ts"() {
     "use strict";
     BaseProperties = {
-      $app: "land-editor",
+      $app: "fiddee",
       $app_version: "0.0.1",
       $build_mode: "debug",
       $component: "cocoon",
@@ -438,7 +438,7 @@ var RouteManifestSummary = {
   mountain: 118,
   stockLift: 0,
   bespoke: 1,
-  generatedAt: "2026-05-16T21:34:14Z"
+  generatedAt: "2026-05-18T00:19:31Z"
 };
 
 // Source/Services/Dual/Track.ts
