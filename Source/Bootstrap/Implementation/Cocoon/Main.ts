@@ -4,6 +4,11 @@ import { Effect } from "effect";
 // Import Tier dispatcher *after* __LandTiers is populated.
 import "../../../Utility/Tier.js";
 
+// Dual-layer DebugServer (Cocoon half). Activated by the unified
+// `DebugServer` env var ("cocoon" | "both"). Safe no-op otherwise.
+import * as CocoonDebugServer from "../../../Debug/Server.js";
+
+
 import { BootstrapTag, TelemetryTag } from "../../../Effect/index.js";
 import { EffectServices } from "../../../Service/Mapping.js";
 
@@ -332,4 +337,12 @@ if (ParentPid && ParentPid > 1) {
 /**
  * Main entry - runs the composed Effect via NodeRuntime
  */
+// Start the Cocoon DebugServer listener (no-op unless DebugServer=cocoon|both).
+// Must run before runMain so the listener is reachable while bootstrap progresses.
+try {
+	CocoonDebugServer.Start();
+} catch (E) {
+	process.stderr.write(`[CocoonDebug] start failed: ${(E as Error)?.message ?? E}\n`);
+}
+
 NodeRuntime.runMain(mainEffect);
