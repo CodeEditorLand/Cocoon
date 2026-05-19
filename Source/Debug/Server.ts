@@ -49,15 +49,23 @@ type LayerMode = "off" | "mountain" | "cocoon" | "both";
 function ParseMode(): LayerMode {
 	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase();
 	if (
-		Raw === "" || Raw === "0" || Raw === "false"
-		|| Raw === "off" || Raw === "no"
-	) return "off";
+		Raw === "" ||
+		Raw === "0" ||
+		Raw === "false" ||
+		Raw === "off" ||
+		Raw === "no"
+	)
+		return "off";
 	if (Raw === "mountain" || Raw === "m" || Raw === "native" || Raw === "rust")
 		return "mountain";
 	if (
-		Raw === "cocoon" || Raw === "c" || Raw === "eh"
-		|| Raw === "extension-host" || Raw === "node"
-	) return "cocoon";
+		Raw === "cocoon" ||
+		Raw === "c" ||
+		Raw === "eh" ||
+		Raw === "extension-host" ||
+		Raw === "node"
+	)
+		return "cocoon";
 	if (Raw === "both" || Raw === "all" || Raw === "dual") return "both";
 	if (Raw === "1" || Raw === "true" || Raw === "on" || Raw === "yes")
 		return "mountain"; // legacy: 1 = mountain-only
@@ -69,7 +77,8 @@ function CocoonEnabled(M: LayerMode): boolean {
 }
 
 function MountainPort(): number {
-	const V = process.env.DebugServerPortMountain ?? process.env.DebugServerPort;
+	const V =
+		process.env.DebugServerPortMountain ?? process.env.DebugServerPort;
 	const N = V ? Number.parseInt(V, 10) : Number.NaN;
 	return Number.isFinite(N) ? N : 9933;
 }
@@ -121,7 +130,9 @@ export function Start(): number | null {
 				Res.statusCode = 500;
 				Res.setHeader("content-type", "application/json");
 				Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) }));
-			} catch { /* ignore */ }
+			} catch {
+				/* ignore */
+			}
 		});
 	});
 
@@ -145,7 +156,11 @@ export function Start(): number | null {
 /** Stops the listener. Used by tests and graceful shutdown. */
 export function Stop(): void {
 	if (!ServerInstance) return;
-	try { ServerInstance.close(); } catch { /* ignore */ }
+	try {
+		ServerInstance.close();
+	} catch {
+		/* ignore */
+	}
 	ServerInstance = null;
 }
 
@@ -157,12 +172,17 @@ async function ReadJsonBody(Req: Http.IncomingMessage): Promise<unknown> {
 	const Chunks: Buffer[] = [];
 	for await (const C of Req) Chunks.push(C as Buffer);
 	if (Chunks.length === 0) return {};
-	try { return JSON.parse(Buffer.concat(Chunks).toString("utf8")); }
-	catch { return {}; }
+	try {
+		return JSON.parse(Buffer.concat(Chunks).toString("utf8"));
+	} catch {
+		return {};
+	}
 }
 
 function SendJson(
-	Res: Http.ServerResponse, Status: number, Body: unknown,
+	Res: Http.ServerResponse,
+	Status: number,
+	Body: unknown,
 ): void {
 	const Text = JSON.stringify(Body);
 	Res.statusCode = Status;
@@ -172,7 +192,8 @@ function SendJson(
 }
 
 async function HandleRequest(
-	Req: Http.IncomingMessage, Res: Http.ServerResponse,
+	Req: Http.IncomingMessage,
+	Res: Http.ServerResponse,
 ): Promise<void> {
 	const Url = new URL(Req.url ?? "/", "http://127.0.0.1");
 	const Path = Url.pathname;
@@ -187,28 +208,45 @@ async function HandleRequest(
 			uptimeSeconds: Math.round(process.uptime()),
 			mode: ParseMode(),
 			capabilities: [
-				"health", "layers", "execute", "extensions",
-				"commands", "command", "processes",
+				"health",
+				"layers",
+				"execute",
+				"extensions",
+				"commands",
+				"command",
+				"processes",
 			],
 		});
 	}
 
 	if (Method === "GET" && Path === "/layers") {
 		return SendJson(Res, 200, {
-			mountain: { enabled: ParseMode() !== "cocoon" && ParseMode() !== "off", port: MountainPort() },
-			cocoon:   { enabled: CocoonEnabled(ParseMode()),                         port: CocoonPort()   },
+			mountain: {
+				enabled: ParseMode() !== "cocoon" && ParseMode() !== "off",
+				port: MountainPort(),
+			},
+			cocoon: { enabled: CocoonEnabled(ParseMode()), port: CocoonPort() },
 			mode: ParseMode(),
 		});
 	}
 
 	// ---------- EH eval ---------------------------------------------------
 	if (Method === "POST" && Path === "/execute") {
-		const Body = await ReadJsonBody(Req) as { js?: string; target?: string };
+		const Body = (await ReadJsonBody(Req)) as {
+			js?: string;
+			target?: string;
+		};
 		const Js = String(Body.js ?? "");
 		if (!Js) return SendJson(Res, 400, { error: "missing js" });
 		const Target = Body.target ?? "extension-host";
-		if (Target !== "extension-host" && Target !== "eh" && Target !== "cocoon")
-			return SendJson(Res, 400, { error: `unsupported target: ${Target}` });
+		if (
+			Target !== "extension-host" &&
+			Target !== "eh" &&
+			Target !== "cocoon"
+		)
+			return SendJson(Res, 400, {
+				error: `unsupported target: ${Target}`,
+			});
 		try {
 			// Indirect eval so the script runs in the global scope.
 			const Result = await (0, eval)(Js);
@@ -217,7 +255,10 @@ async function HandleRequest(
 				result: SafeSerialize(Result),
 			});
 		} catch (Err) {
-			return SendJson(Res, 500, { ok: false, error: String((Err as Error)?.stack ?? Err) });
+			return SendJson(Res, 500, {
+				ok: false,
+				error: String((Err as Error)?.stack ?? Err),
+			});
 		}
 	}
 
@@ -225,33 +266,54 @@ async function HandleRequest(
 	if (Method === "GET" && Path === "/extensions") {
 		try {
 			const Ids = Hooks.ListExtensions?.() ?? [];
-			return SendJson(Res, 200, { extensions: Ids, source: Hooks.ListExtensions ? "hook" : "unavailable" });
+			return SendJson(Res, 200, {
+				extensions: Ids,
+				source: Hooks.ListExtensions ? "hook" : "unavailable",
+			});
 		} catch (Err) {
-			return SendJson(Res, 500, { error: String((Err as Error)?.message ?? Err) });
+			return SendJson(Res, 500, {
+				error: String((Err as Error)?.message ?? Err),
+			});
 		}
 	}
 
 	if (Method === "GET" && Path === "/commands") {
 		try {
 			const Ids = Hooks.ListCommands?.() ?? [];
-			return SendJson(Res, 200, { commands: Ids, source: Hooks.ListCommands ? "hook" : "unavailable" });
+			return SendJson(Res, 200, {
+				commands: Ids,
+				source: Hooks.ListCommands ? "hook" : "unavailable",
+			});
 		} catch (Err) {
-			return SendJson(Res, 500, { error: String((Err as Error)?.message ?? Err) });
+			return SendJson(Res, 500, {
+				error: String((Err as Error)?.message ?? Err),
+			});
 		}
 	}
 
 	if (Method === "POST" && Path === "/command") {
-		const Body = await ReadJsonBody(Req) as { id?: string; args?: unknown[] };
+		const Body = (await ReadJsonBody(Req)) as {
+			id?: string;
+			args?: unknown[];
+		};
 		const Id = String(Body.id ?? "");
 		const Args = Array.isArray(Body.args) ? Body.args : [];
 		if (!Id) return SendJson(Res, 400, { error: "missing id" });
 		if (!Hooks.ExecuteCommand)
-			return SendJson(Res, 503, { error: "ExecuteCommand hook not registered" });
+			return SendJson(Res, 503, {
+				error: "ExecuteCommand hook not registered",
+			});
 		try {
 			const Result = await Hooks.ExecuteCommand(Id, Args);
-			return SendJson(Res, 200, { ok: true, result: SafeSerialize(Result) });
+			return SendJson(Res, 200, {
+				ok: true,
+				result: SafeSerialize(Result),
+			});
 		} catch (Err) {
-			return SendJson(Res, 500, { ok: false, error: String((Err as Error)?.stack ?? Err) });
+			return SendJson(Res, 500, {
+				ok: false,
+				error: String((Err as Error)?.stack ?? Err),
+			});
 		}
 	}
 
@@ -278,6 +340,10 @@ async function HandleRequest(
  */
 function SafeSerialize(V: unknown): unknown {
 	if (V === undefined) return null;
-	try { JSON.stringify(V); return V; }
-	catch { return String(V); }
+	try {
+		JSON.stringify(V);
+		return V;
+	} catch {
+		return String(V);
+	}
 }

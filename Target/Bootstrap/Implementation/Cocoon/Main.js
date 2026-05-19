@@ -5323,7 +5323,7 @@ var init_RouteManifest = __esm({
       mountain: 120,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-19T00:43:45Z"
+      generatedAt: "2026-05-19T01:54:32Z"
     };
   }
 });
@@ -28408,9 +28408,9 @@ var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlob
 var init_Regex = __esm({
   "Source/Utility/Glob/To/Regex.ts"() {
     "use strict";
-    FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
+    FindMatchingBrace = /* @__PURE__ */ __name((Input, Start2, Open, Close) => {
       let Depth = 1;
-      for (let I = Start + 1; I < Input.length; I++) {
+      for (let I = Start2 + 1; I < Input.length; I++) {
         const Character = Input[I];
         if (Character === "\\") {
           I++;
@@ -28427,7 +28427,7 @@ var init_Regex = __esm({
     SplitTopLevelCommas = /* @__PURE__ */ __name((Body) => {
       const Parts = [];
       let Depth = 0;
-      let Start = 0;
+      let Start2 = 0;
       for (let I = 0; I < Body.length; I++) {
         const Character = Body[I];
         if (Character === "\\") {
@@ -28437,11 +28437,11 @@ var init_Regex = __esm({
         if (Character === "{" || Character === "(") Depth++;
         else if (Character === "}" || Character === ")") Depth--;
         else if (Character === "," && Depth === 0) {
-          Parts.push(Body.slice(Start, I));
-          Start = I + 1;
+          Parts.push(Body.slice(Start2, I));
+          Start2 = I + 1;
         }
       }
-      Parts.push(Body.slice(Start));
+      Parts.push(Body.slice(Start2));
       return Parts;
     }, "SplitTopLevelCommas");
     ExpandBraces = /* @__PURE__ */ __name((Input) => {
@@ -28455,14 +28455,14 @@ var init_Regex = __esm({
       const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
       const Alternatives = [];
       if (RangeMatch) {
-        const Start = parseInt(RangeMatch[1], 10);
+        const Start2 = parseInt(RangeMatch[1], 10);
         const End = parseInt(RangeMatch[2], 10);
         const StepRaw = RangeMatch[3];
         const Step = StepRaw ? Math.abs(parseInt(StepRaw, 10)) : 1;
-        if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
+        if (Step > 0 && Number.isFinite(Start2) && Number.isFinite(End)) {
           const Width = RangeMatch[1].startsWith("0") || RangeMatch[2].startsWith("0") ? Math.max(RangeMatch[1].length, RangeMatch[2].length) : 0;
-          const Direction = Start <= End ? 1 : -1;
-          for (let Value = Start; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
+          const Direction = Start2 <= End ? 1 : -1;
+          for (let Value = Start2; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
             const Text = String(Math.abs(Value));
             const Padded = Width > 0 && Text.length < Width ? "0".repeat(Width - Text.length) + Text : Text;
             Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
@@ -29156,14 +29156,14 @@ var init_Document = __esm({
           Math.min(Math.floor(L), Lines.length - 1)
         );
         const Content = Lines[Clamped] ?? "";
-        const Start = { line: Clamped, character: 0 };
+        const Start2 = { line: Clamped, character: 0 };
         const End = { line: Clamped, character: Content.length };
         return {
           lineNumber: Clamped,
           text: Content,
-          range: { start: Start, end: End },
+          range: { start: Start2, end: End },
           rangeIncludingLineBreak: {
-            start: Start,
+            start: Start2,
             end: Clamped < Lines.length - 1 ? { line: Clamped + 1, character: 0 } : End
           },
           firstNonWhitespaceCharacterIndex: Content.search(/\S/) >>> 0,
@@ -29183,11 +29183,11 @@ var init_Document = __esm({
         Pattern.lastIndex = 0;
         let Match;
         while ((Match = Pattern.exec(Line)) !== null) {
-          const Start = Match.index;
-          const End = Start + Match[0].length;
-          if (C >= Start && C <= End) {
+          const Start2 = Match.index;
+          const End = Start2 + Match[0].length;
+          if (C >= Start2 && C <= End) {
             return {
-              start: { line: L, character: Start },
+              start: { line: L, character: Start2 },
               end: { line: L, character: End }
             };
           }
@@ -29207,7 +29207,7 @@ var init_Document = __esm({
         lineCount: Lines.length,
         getText: /* @__PURE__ */ __name((Range3) => {
           if (!Range3) return Text;
-          const Start = OffsetAt(
+          const Start2 = OffsetAt(
             Range3.start ?? { line: 0, character: 0 }
           );
           const End = OffsetAt(
@@ -29216,7 +29216,7 @@ var init_Document = __esm({
               character: Lines[Lines.length - 1]?.length ?? 0
             }
           );
-          return Text.slice(Math.min(Start, End), Math.max(Start, End));
+          return Text.slice(Math.min(Start2, End), Math.max(Start2, End));
         }, "getText"),
         positionAt: PositionAt,
         offsetAt: OffsetAt,
@@ -29236,10 +29236,10 @@ var init_Document = __esm({
       });
       return true;
     }, "BuildApplyEdit");
-    BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context13, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
+    BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context13, ReadFolders) => (Start2, DeleteCount, ...ToAdd) => {
       const Current = ReadFolders();
-      const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
-      const Removals = Current.slice(Start, Start + RemoveCount).map(
+      const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start2, 0)) : 0;
+      const Removals = Current.slice(Start2, Start2 + RemoveCount).map(
         (Folder) => ({
           uri: {
             value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
@@ -30223,15 +30223,15 @@ var init_Namespace9 = __esm({
         const NormaliseDiagnostic = /* @__PURE__ */ __name((D) => {
           const Obj = D ?? {};
           const Range3 = Obj.range ?? {};
-          const Start = Pos(Range3.start);
+          const Start2 = Pos(Range3.start);
           const End = Pos(Range3.end);
           const Out = {
             severity: NormaliseSeverity(Obj.severity),
             message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
             // `+ 1` converts vscode.Position (0-based) to
             // `IMarkerData` (1-based). See block comment above.
-            startLineNumber: Start.line + 1,
-            startColumn: Start.character + 1,
+            startLineNumber: Start2.line + 1,
+            startColumn: Start2.character + 1,
             endLineNumber: End.line + 1,
             endColumn: End.character + 1
           };
@@ -34490,12 +34490,12 @@ var init_Service8 = __esm({
           console.log("[GRPCServerService] Already connected to Mountain");
           return;
         }
-        const MountainPort = parseInt(
+        const MountainPort2 = parseInt(
           process.env["MOUNTAIN_GRPC_PORT"] || "50051",
           10
         );
         console.log(
-          `[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort}...`
+          `[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort2}...`
         );
         const { MountainClientService: MountainClientService2 } = await Promise.resolve().then(() => (init_Service2(), Service_exports));
         const Client = new MountainClientService2();
@@ -34504,7 +34504,7 @@ var init_Service8 = __esm({
         console.log(
           `[GRPCServerService] Connected to Mountain gRPC - return path active`
         );
-        this.emit("mountainConnected", { port: MountainPort });
+        this.emit("mountainConnected", { port: MountainPort2 });
       }
       /**
        * Send a notification back to Mountain (for forwarding to Wind).
@@ -34837,13 +34837,13 @@ var init_RPCServer = __esm({
             telemetry.log("warn", "[RPCServer] Server already running");
             return;
           }
-          const CocoonPort = parseInt(
+          const CocoonPort2 = parseInt(
             process.env["COCOON_GRPC_PORT"] || "50052",
             10
           );
           currentConfig = config ?? {
             host: "0.0.0.0",
-            port: CocoonPort,
+            port: CocoonPort2,
             maxConnections: 100,
             enableCompression: true,
             enableTls: false
@@ -35161,7 +35161,7 @@ var init_Bootstrap = __esm({
           "info",
           "[Cocoon Bootstrap] Stage 3: Connecting to Mountain..."
         );
-        const MountainPort = parseInt(
+        const MountainPort2 = parseInt(
           process.env["MOUNTAIN_GRPC_PORT"] || "50051",
           10
         );
@@ -35173,13 +35173,13 @@ var init_Bootstrap = __esm({
           ProbeAttempt++;
           Listening = yield* ProbeTcp(
             MountainHost,
-            MountainPort,
+            MountainPort2,
             MountainProbeTimeoutMs
           );
           if (Listening) {
             Log_default.Info(
               "Bootstrap",
-              `Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`
+              `Mountain TCP port ${MountainHost}:${MountainPort2} listening after ${ProbeAttempt} probe(s)`
             );
             break;
           }
@@ -35192,7 +35192,7 @@ var init_Bootstrap = __esm({
         if (!Listening) {
           Log_default.Warn(
             "Bootstrap",
-            `Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`
+            `Mountain TCP port ${MountainHost}:${MountainPort2} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`
           );
         }
         const AttemptRef = { value: 0 };
@@ -35200,7 +35200,7 @@ var init_Bootstrap = __esm({
           AttemptRef.value++;
           yield* mountainClient.connect({
             host: MountainHost,
-            port: MountainPort
+            port: MountainPort2
           });
         }).pipe(
           Effect11.tapError(
@@ -35271,16 +35271,16 @@ var init_Bootstrap = __esm({
           "info",
           "[Cocoon Bootstrap] Stage 5: Starting gRPC server..."
         );
-        const CocoonPort = parseInt(
+        const CocoonPort2 = parseInt(
           process.env["COCOON_GRPC_PORT"] || "50052",
           10
         );
         console.log(
-          `[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`
+          `[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort2}`
         );
         yield* rpcServer.start({
           host: "0.0.0.0",
-          port: CocoonPort
+          port: CocoonPort2
         });
         telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
         return {
@@ -35551,6 +35551,204 @@ var init_Effect = __esm({
   }
 });
 
+// Source/Debug/Server.ts
+import * as Http from "node:http";
+function ParseMode() {
+  const Raw2 = (process.env.DebugServer ?? "").trim().toLowerCase();
+  if (Raw2 === "" || Raw2 === "0" || Raw2 === "false" || Raw2 === "off" || Raw2 === "no") return "off";
+  if (Raw2 === "mountain" || Raw2 === "m" || Raw2 === "native" || Raw2 === "rust")
+    return "mountain";
+  if (Raw2 === "cocoon" || Raw2 === "c" || Raw2 === "eh" || Raw2 === "extension-host" || Raw2 === "node") return "cocoon";
+  if (Raw2 === "both" || Raw2 === "all" || Raw2 === "dual") return "both";
+  if (Raw2 === "1" || Raw2 === "true" || Raw2 === "on" || Raw2 === "yes")
+    return "mountain";
+  return "off";
+}
+__name(ParseMode, "ParseMode");
+function CocoonEnabled(M) {
+  return M === "cocoon" || M === "both";
+}
+__name(CocoonEnabled, "CocoonEnabled");
+function MountainPort() {
+  const V = process.env.DebugServerPortMountain ?? process.env.DebugServerPort;
+  const N = V ? Number.parseInt(V, 10) : Number.NaN;
+  return Number.isFinite(N) ? N : 9933;
+}
+__name(MountainPort, "MountainPort");
+function CocoonPort() {
+  const V = process.env.DebugServerPortCocoon;
+  const N = V ? Number.parseInt(V, 10) : Number.NaN;
+  return Number.isFinite(N) ? N : 9934;
+}
+__name(CocoonPort, "CocoonPort");
+var ServerInstance = null;
+var Hooks = {};
+function RegisterHooks(Next) {
+  Hooks = { ...Hooks, ...Next };
+}
+__name(RegisterHooks, "RegisterHooks");
+function Start() {
+  if (ServerInstance) return CocoonPort();
+  const Mode2 = ParseMode();
+  if (!CocoonEnabled(Mode2)) return null;
+  const Port = CocoonPort();
+  const Server2 = Http.createServer((Req, Res) => {
+    HandleRequest(Req, Res).catch((Err) => {
+      try {
+        Res.statusCode = 500;
+        Res.setHeader("content-type", "application/json");
+        Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) }));
+      } catch {
+      }
+    });
+  });
+  Server2.on("error", (Err) => {
+    process.stderr.write(
+      `[CocoonDebug] listener error on ${Port}: ${Err.code ?? Err.message}
+`
+    );
+  });
+  Server2.listen(Port, "127.0.0.1", () => {
+    process.stderr.write(
+      `[CocoonDebug] Cocoon layer listening on http://127.0.0.1:${Port} (mode=${Mode2})
+`
+    );
+  });
+  ServerInstance = Server2;
+  return Port;
+}
+__name(Start, "Start");
+function Stop() {
+  if (!ServerInstance) return;
+  try {
+    ServerInstance.close();
+  } catch {
+  }
+  ServerInstance = null;
+}
+__name(Stop, "Stop");
+async function ReadJsonBody(Req) {
+  const Chunks = [];
+  for await (const C of Req) Chunks.push(C);
+  if (Chunks.length === 0) return {};
+  try {
+    return JSON.parse(Buffer.concat(Chunks).toString("utf8"));
+  } catch {
+    return {};
+  }
+}
+__name(ReadJsonBody, "ReadJsonBody");
+function SendJson(Res, Status, Body) {
+  const Text = JSON.stringify(Body);
+  Res.statusCode = Status;
+  Res.setHeader("content-type", "application/json");
+  Res.setHeader("content-length", Buffer.byteLength(Text).toString());
+  Res.end(Text);
+}
+__name(SendJson, "SendJson");
+async function HandleRequest(Req, Res) {
+  const Url = new URL(Req.url ?? "/", "http://127.0.0.1");
+  const Path = Url.pathname;
+  const Method = (Req.method ?? "GET").toUpperCase();
+  if (Method === "GET" && Path === "/health") {
+    return SendJson(Res, 200, {
+      layer: "cocoon",
+      pid: process.pid,
+      node: process.version,
+      uptimeSeconds: Math.round(process.uptime()),
+      mode: ParseMode(),
+      capabilities: [
+        "health",
+        "layers",
+        "execute",
+        "extensions",
+        "commands",
+        "command",
+        "processes"
+      ]
+    });
+  }
+  if (Method === "GET" && Path === "/layers") {
+    return SendJson(Res, 200, {
+      mountain: { enabled: ParseMode() !== "cocoon" && ParseMode() !== "off", port: MountainPort() },
+      cocoon: { enabled: CocoonEnabled(ParseMode()), port: CocoonPort() },
+      mode: ParseMode()
+    });
+  }
+  if (Method === "POST" && Path === "/execute") {
+    const Body = await ReadJsonBody(Req);
+    const Js = String(Body.js ?? "");
+    if (!Js) return SendJson(Res, 400, { error: "missing js" });
+    const Target = Body.target ?? "extension-host";
+    if (Target !== "extension-host" && Target !== "eh" && Target !== "cocoon")
+      return SendJson(Res, 400, { error: `unsupported target: ${Target}` });
+    try {
+      const Result = await (0, eval)(Js);
+      return SendJson(Res, 200, {
+        ok: true,
+        result: SafeSerialize(Result)
+      });
+    } catch (Err) {
+      return SendJson(Res, 500, { ok: false, error: String(Err?.stack ?? Err) });
+    }
+  }
+  if (Method === "GET" && Path === "/extensions") {
+    try {
+      const Ids = Hooks.ListExtensions?.() ?? [];
+      return SendJson(Res, 200, { extensions: Ids, source: Hooks.ListExtensions ? "hook" : "unavailable" });
+    } catch (Err) {
+      return SendJson(Res, 500, { error: String(Err?.message ?? Err) });
+    }
+  }
+  if (Method === "GET" && Path === "/commands") {
+    try {
+      const Ids = Hooks.ListCommands?.() ?? [];
+      return SendJson(Res, 200, { commands: Ids, source: Hooks.ListCommands ? "hook" : "unavailable" });
+    } catch (Err) {
+      return SendJson(Res, 500, { error: String(Err?.message ?? Err) });
+    }
+  }
+  if (Method === "POST" && Path === "/command") {
+    const Body = await ReadJsonBody(Req);
+    const Id = String(Body.id ?? "");
+    const Args = Array.isArray(Body.args) ? Body.args : [];
+    if (!Id) return SendJson(Res, 400, { error: "missing id" });
+    if (!Hooks.ExecuteCommand)
+      return SendJson(Res, 503, { error: "ExecuteCommand hook not registered" });
+    try {
+      const Result = await Hooks.ExecuteCommand(Id, Args);
+      return SendJson(Res, 200, { ok: true, result: SafeSerialize(Result) });
+    } catch (Err) {
+      return SendJson(Res, 500, { ok: false, error: String(Err?.stack ?? Err) });
+    }
+  }
+  if (Method === "GET" && Path === "/processes") {
+    const Mem = process.memoryUsage();
+    return SendJson(Res, 200, {
+      pid: process.pid,
+      ppid: process.ppid,
+      uptimeSeconds: Math.round(process.uptime()),
+      rssMb: Math.round(Mem.rss / 1024 / 1024),
+      heapUsedMb: Math.round(Mem.heapUsed / 1024 / 1024),
+      heapTotalMb: Math.round(Mem.heapTotal / 1024 / 1024),
+      arch: process.arch,
+      platform: process.platform
+    });
+  }
+  SendJson(Res, 404, { error: "not found", method: Method, path: Path });
+}
+__name(HandleRequest, "HandleRequest");
+function SafeSerialize(V) {
+  if (V === void 0) return null;
+  try {
+    JSON.stringify(V);
+    return V;
+  } catch {
+    return String(V);
+  }
+}
+__name(SafeSerialize, "SafeSerialize");
+
 // Source/Bootstrap/Implementation/Cocoon/Main.ts
 init_Tier();
 await init_Effect();
@@ -35692,6 +35890,12 @@ if (ParentPid && ParentPid > 1) {
     }
   }, 5e3);
   ParentWatchInterval.unref?.();
+}
+try {
+  Start();
+} catch (E) {
+  process.stderr.write(`[CocoonDebug] start failed: ${E?.message ?? E}
+`);
 }
 NodeRuntime.runMain(mainEffect);
 //# sourceMappingURL=Main.js.map
