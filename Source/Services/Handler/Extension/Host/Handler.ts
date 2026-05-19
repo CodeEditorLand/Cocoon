@@ -13,6 +13,7 @@
 
 import * as NodeFS from "node:fs";
 
+import FiddeeRoot from "../../../../Platform/FiddeeRoot.js";
 import { CocoonDevLog } from "../../../Dev/Log.js";
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
 import type { HandlerContext } from "../../Handler/Context.js";
@@ -1576,15 +1577,15 @@ const CreateExtensionContext = (
 		Extension?.identifier ??
 		"";
 
-	// Resolve real storage paths for the extension
-	const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-	// Keep per-extension storage OUT of `~/.land/extensions/` -
-	// that directory is now a user-extension scan path in Mountain's
-	// `ScanPathConfigure.rs`, and the scanner warns on non-extension
-	// siblings like `storage/`. Use a dedicated, non-scanned root.
-	const StorageBase = `${HomeDir}/.land/extensionStorage`;
-	const GlobalStorageBase = `${HomeDir}/.land/globalStorage`;
-	const LogBase = `${HomeDir}/.land/logs`;
+	// Resolve real storage paths for the extension. Storage roots live
+	// under `~/.fiddee/...` via the `FiddeeRoot` atom, kept OUT of
+	// `~/.fiddee/extensions/` so the user-extension scanner in Mountain's
+	// `ScanPathConfigure.rs` doesn't warn on non-extension siblings like
+	// `storage/`.
+	const FiddeeRootPath = FiddeeRoot();
+	const StorageBase = `${FiddeeRootPath}/extensionStorage`;
+	const GlobalStorageBase = `${FiddeeRootPath}/globalStorage`;
+	const LogBase = `${FiddeeRootPath}/logs`;
 	const ExtStoragePath = `${StorageBase}/${ExtId}`;
 	const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
 	const LogPath = `${LogBase}/${ExtId}`;

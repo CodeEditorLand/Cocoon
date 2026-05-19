@@ -403,7 +403,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 										? ExtensionData.description
 										: undefined,
 								// LAND-FIX: empty-string URI guard. ruby-lsp's
-								// registry insert on Land/.land/extensions/...
+								// registry insert on Land/.fiddee/extensions/...
 								// occasionally lands with `path: ""`; the
 								// resulting `URI.parse("")` throws
 								// "[UriError]: Scheme contains illegal

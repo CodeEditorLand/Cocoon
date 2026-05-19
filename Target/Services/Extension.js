@@ -54,7 +54,7 @@ var ExtensionService = class extends Effect2.Service()(
               publisher: typeof ExtensionData === "object" && ExtensionData.publisher ? ExtensionData.publisher : void 0,
               description: typeof ExtensionData === "object" && ExtensionData.description ? ExtensionData.description : void 0,
               // LAND-FIX: empty-string URI guard. ruby-lsp's
-              // registry insert on Land/.land/extensions/...
+              // registry insert on Land/.fiddee/extensions/...
               // occasionally lands with `path: ""`; the
               // resulting `URI.parse("")` throws
               // "[UriError]: Scheme contains illegal

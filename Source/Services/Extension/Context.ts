@@ -38,6 +38,7 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+import FiddeeRoot from "../../Platform/FiddeeRoot.js";
 
 /**
  * @interface Logger
@@ -488,7 +489,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					const StoragePath = `${ExtensionPath}/.storage`;
 					const GlobalStorageRoot =
 						process.env.VSCODE_COCOON_GLOBAL_STORAGE ??
-						`${process.env.HOME ?? "."}/.land/globalStorage`;
+						`${FiddeeRoot()}/globalStorage`;
 					const GlobalStoragePath = `${GlobalStorageRoot}/${ExtensionId}`;
 					try {
 						mkdirSync(GlobalStoragePath, { recursive: true });

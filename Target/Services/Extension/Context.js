@@ -12,6 +12,17 @@ var IMountainClientService = Effect.Service()(
   }
 );
 
+// Source/Platform/FiddeeRoot.ts
+var DotfileName = ".fiddee";
+function FiddeeRoot() {
+  const Home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? null;
+  if (typeof Home === "string" && Home.length > 0) {
+    return `${Home}/${DotfileName}`;
+  }
+  return DotfileName;
+}
+__name(FiddeeRoot, "FiddeeRoot");
+
 // Source/Services/Extension/Context.ts
 import { mkdirSync } from "node:fs";
 import { Context, Effect as Effect2, Ref } from "effect";
@@ -253,7 +264,7 @@ var ExtensionContextService = class extends Effect2.Service()(
         );
         const ExtensionPath = ExtensionDescription.extensionLocation.fsPath;
         const StoragePath = `${ExtensionPath}/.storage`;
-        const GlobalStorageRoot = process.env.VSCODE_COCOON_GLOBAL_STORAGE ?? `${process.env.HOME ?? "."}/.land/globalStorage`;
+        const GlobalStorageRoot = process.env.VSCODE_COCOON_GLOBAL_STORAGE ?? `${FiddeeRoot()}/globalStorage`;
         const GlobalStoragePath = `${GlobalStorageRoot}/${ExtensionId}`;
         try {
           mkdirSync(GlobalStoragePath, { recursive: true });

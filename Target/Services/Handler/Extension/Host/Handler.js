@@ -21517,7 +21517,7 @@ var init_RouteManifest = __esm({
       mountain: 134,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-19T22:15:03Z"
+      generatedAt: "2026-05-19T22:34:18Z"
     };
   }
 });
@@ -28236,6 +28236,17 @@ var init_Namespace21 = __esm({
   }
 });
 
+// Source/Platform/FiddeeRoot.ts
+var DotfileName = ".fiddee";
+function FiddeeRoot() {
+  const Home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? null;
+  if (typeof Home === "string" && Home.length > 0) {
+    return `${Home}/${DotfileName}`;
+  }
+  return DotfileName;
+}
+__name(FiddeeRoot, "FiddeeRoot");
+
 // Source/Services/Handler/Extension/Host/Handler.ts
 init_Log2();
 init_Registry();
@@ -29231,10 +29242,10 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
 }, "ActivateExtension");
 var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, ExtensionPath) => {
   const ExtId = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "";
-  const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-  const StorageBase = `${HomeDir}/.land/extensionStorage`;
-  const GlobalStorageBase = `${HomeDir}/.land/globalStorage`;
-  const LogBase = `${HomeDir}/.land/logs`;
+  const FiddeeRootPath = FiddeeRoot();
+  const StorageBase = `${FiddeeRootPath}/extensionStorage`;
+  const GlobalStorageBase = `${FiddeeRootPath}/globalStorage`;
+  const LogBase = `${FiddeeRootPath}/logs`;
   const ExtStoragePath = `${StorageBase}/${ExtId}`;
   const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
   const LogPath = `${LogBase}/${ExtId}`;

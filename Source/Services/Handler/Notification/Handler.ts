@@ -152,7 +152,7 @@ if (
 					Text.includes("languageDetectionWorkerCache.json"));
 			// Extension-internal bugs: an extension's own code throws a
 			// TypeError whose stack lives entirely under
-			// `~/.land/extensions/<extId>/` or
+			// `~/.fiddee/extensions/<extId>/` or
 			// `Dependency/.../extensions/<extId>/`. These are NOT Land
 			// bugs - the extension would throw on stock VS Code too,
 			// it's just visible because Cocoon catches every rejection.
@@ -166,6 +166,7 @@ if (
 			// Pattern-match on the stack trace's `extensions/<vendor>.<ext>`
 			// segment so the filter survives extension version bumps.
 			const HasExtensionFrame =
+				Text.includes("/.fiddee/extensions/") ||
 				Text.includes("/.land/extensions/") ||
 				(Text.includes("/extensions/") &&
 					(Text.includes("DEVSENSE.phptools") ||

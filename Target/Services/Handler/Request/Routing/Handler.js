@@ -2801,7 +2801,7 @@ var init_RouteManifest = __esm({
       mountain: 134,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-19T22:15:03Z"
+      generatedAt: "2026-05-19T22:34:18Z"
     };
   }
 });
@@ -31088,6 +31088,23 @@ var init_Namespace21 = __esm({
   }
 });
 
+// Source/Platform/FiddeeRoot.ts
+function FiddeeRoot() {
+  const Home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? null;
+  if (typeof Home === "string" && Home.length > 0) {
+    return `${Home}/${DotfileName}`;
+  }
+  return DotfileName;
+}
+var DotfileName;
+var init_FiddeeRoot = __esm({
+  "Source/Platform/FiddeeRoot.ts"() {
+    "use strict";
+    DotfileName = ".fiddee";
+    __name(FiddeeRoot, "FiddeeRoot");
+  }
+});
+
 // Source/Services/Handler/Extension/Host/Handler.ts
 var Handler_exports = {};
 __export(Handler_exports, {
@@ -31100,6 +31117,7 @@ var init_Handler2 = __esm({
     "use strict";
     init_Log();
     init_Registry();
+    init_FiddeeRoot();
     HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context13, Parameters) => {
       const Extensions = Parameters?.extensions ?? [];
       console.log(
@@ -32091,10 +32109,10 @@ ${Stack}`
     }, "ActivateExtension");
     CreateExtensionContext = /* @__PURE__ */ __name((Context13, Extension2, ExtensionPath) => {
       const ExtId = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "";
-      const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-      const StorageBase = `${HomeDir}/.land/extensionStorage`;
-      const GlobalStorageBase = `${HomeDir}/.land/globalStorage`;
-      const LogBase = `${HomeDir}/.land/logs`;
+      const FiddeeRootPath = FiddeeRoot();
+      const StorageBase = `${FiddeeRootPath}/extensionStorage`;
+      const GlobalStorageBase = `${FiddeeRootPath}/globalStorage`;
+      const LogBase = `${FiddeeRootPath}/logs`;
       const ExtStoragePath = `${StorageBase}/${ExtId}`;
       const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
       const LogPath = `${LogBase}/${ExtId}`;
@@ -33026,7 +33044,7 @@ var init_Handler4 = __esm({
           const Stack = Reason instanceof globalThis.Error ? Reason.stack?.split("\n").slice(0, 6).join(" | ") : String(Reason);
           const Text = Stack ?? "unknown";
           const IsBenignEnoent = Text.includes("ENOENT") && (Text.includes("/.registers") || Text.includes("/globalStorage/") || Text.includes("/workspaceStorage/") || Text.includes("/User/snippets") || Text.includes("/User/prompts") || Text.includes("/User/keybindings.json") || Text.includes("aiGeneratedWorkspaces.json") || Text.includes("languageDetectionWorkerCache.json"));
-          const HasExtensionFrame = Text.includes("/.land/extensions/") || Text.includes("/extensions/") && (Text.includes("DEVSENSE.phptools") || Text.includes("redhat.java") || Text.includes("redhat.vscode-yaml") || Text.includes("GitHub.copilot") || Text.includes("Anthropic.claude-code") || Text.includes("RooVeterinaryInc.roo-cline") || Text.includes("eamodio.gitlens") || Text.includes("vscodevim.vim") || Text.includes("Dart-Code.dart-code"));
+          const HasExtensionFrame = Text.includes("/.fiddee/extensions/") || Text.includes("/.land/extensions/") || Text.includes("/extensions/") && (Text.includes("DEVSENSE.phptools") || Text.includes("redhat.java") || Text.includes("redhat.vscode-yaml") || Text.includes("GitHub.copilot") || Text.includes("Anthropic.claude-code") || Text.includes("RooVeterinaryInc.roo-cline") || Text.includes("eamodio.gitlens") || Text.includes("vscodevim.vim") || Text.includes("Dart-Code.dart-code"));
           const IsBenignExtensionTypeError = HasExtensionFrame && (Text.includes("TypeError: Cannot read properties of null") || Text.includes(
             "TypeError: Cannot read properties of undefined"
           ) || Text.includes("TypeError: Cannot set properties of null") || Text.includes(
