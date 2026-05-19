@@ -596,6 +596,84 @@ const HandleSpecificNotification = (
 			}
 			break;
 		}
+		case "window.didChangeActiveTextEditor": {
+			// Mountain fires this when a document is opened or focused.
+			// Payload: { uri, languageId, version? } or just a URI string.
+			// Build a minimal TextEditor stub and emit so extensions that
+			// subscribe to `vscode.window.onDidChangeActiveTextEditor` fire.
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const UriRaw: string | undefined =
+				typeof Payload === "string"
+					? Payload
+					: (Payload?.uri ??
+						Payload?.document?.uri ??
+						Payload?.document);
+			const LanguageId: string =
+				Payload?.languageId ?? Payload?.language ?? "plaintext";
+			const HydratedUri = UriRaw ? HydrateUri(UriRaw) : null;
+			// Update `vscode.window.activeTextEditor` reference. Extensions read
+			// this synchronously; mutating the shim object's `activeTextEditor`
+			// property on the already-constructed Concrete makes it observable
+			// without a restart.
+			const TextEditorStub = HydratedUri
+				? {
+						document: {
+							uri: HydratedUri,
+							fileName: HydratedUri.fsPath,
+							languageId: LanguageId,
+							version: Payload?.version ?? 1,
+							isDirty: false,
+							isClosed: false,
+							eol: 1,
+							lineCount: 0,
+							getText: () => "",
+							lineAt: () => ({
+								text: "",
+								lineNumber: 0,
+								range: {},
+								firstNonWhitespaceCharacterIndex: 0,
+								isEmptyOrWhitespace: true,
+							}),
+							save: async () => false,
+							getWordRangeAtPosition: () => undefined,
+							validateRange: (R: unknown) => R,
+							validatePosition: (P: unknown) => P,
+							offsetAt: () => 0,
+							positionAt: () => ({ line: 0, character: 0 }),
+						},
+						selection: {
+							start: { line: 0, character: 0 },
+							end: { line: 0, character: 0 },
+							active: { line: 0, character: 0 },
+							anchor: { line: 0, character: 0 },
+							isEmpty: true,
+							isReversed: false,
+							isSingleLine: true,
+						},
+						selections: [],
+						visibleRanges: [],
+						viewColumn: 1,
+						options: { tabSize: 4, insertSpaces: true },
+						revealRange: () => {},
+						show: () => {},
+						hide: () => {},
+					}
+				: undefined;
+			if (Context) {
+				// Patch the live `activeTextEditor` on the Concrete that the
+				// extension's `vscode.window` proxy reads through.
+				(Context as any).__activeTextEditor = TextEditorStub;
+			}
+			SafeEmit(
+				Emitter,
+				"window.didChangeActiveTextEditor",
+				TextEditorStub,
+			);
+			break;
+		}
+
 		case "$acceptTerminalProcessData": {
 			// Mountain fires this whenever a PTY emits stdout/stderr. The
 			// payload is `[terminalId, data]`. Emit on Context.Emitter under

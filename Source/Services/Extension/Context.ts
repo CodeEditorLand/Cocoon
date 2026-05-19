@@ -275,13 +275,12 @@ export class ExtensionSecretStorage {
 	 * @returns The secret value or undefined
 	 */
 	async get(key: string): Promise<string | undefined> {
-		// HIGH: Implement secure storage integration with Mountain
 		if (this.MountainClient) {
 			try {
 				const result = await this.MountainClient.sendRequest(
-					"getSecret",
+					"secrets.get",
 
-					{ key },
+					{ key, extensionId: this.ExtensionId },
 				);
 
 				return result as string | undefined;
@@ -309,12 +308,12 @@ export class ExtensionSecretStorage {
 	 * @param value The secret value
 	 */
 	async store(key: string, value: string): Promise<void> {
-		// HIGH: Implement secure storage integration with Mountain
 		if (this.MountainClient) {
 			try {
-				await this.MountainClient.sendNotification("storeSecret", {
+				await this.MountainClient.sendRequest("secrets.store", {
 					key,
 					value,
+					extensionId: this.ExtensionId,
 				});
 
 				this.Logger.Debug(
@@ -343,11 +342,11 @@ export class ExtensionSecretStorage {
 	 * @param key The key to delete
 	 */
 	async delete(key: string): Promise<void> {
-		// HIGH: Implement secure storage integration with Mountain
 		if (this.MountainClient) {
 			try {
-				await this.MountainClient.sendNotification("deleteSecret", {
+				await this.MountainClient.sendRequest("secrets.delete", {
 					key,
+					extensionId: this.ExtensionId,
 				});
 
 				this.Logger.Debug(

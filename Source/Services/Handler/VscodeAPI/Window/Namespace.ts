@@ -630,12 +630,32 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			_PreserveFocus?: boolean,
 		) => {
-			Context.SendToMountain("window.showTextDocument", {
+			// Round-trip via `showTextDocument` Track handler so Mountain can
+			// drive Sky to open the editor and return a `TextEditor` stub.
+			// Extensions frequently `await` this and then chain `.selection`,
+			// `.revealRange`, etc. - returning undefined crashes those chains.
+			// Fall back to a disposable stub on failure so the call never
+			// throws outright.
+			try {
+				const Result = await Context.MountainClient?.sendRequest(
+					"showTextDocument",
+					[_Document, _Column, _PreserveFocus],
+				);
+				if (Result && typeof Result === "object")
+					return Result as unknown;
+			} catch {
+				// Mountain not yet connected or Sky rejected - no-op.
+			}
+			return {
 				document: _Document,
-				column: _Column,
-				preserveFocus: _PreserveFocus,
-			}).catch(() => {});
-			return undefined;
+				selection: null,
+				viewColumn: _Column ?? 1,
+				visibleRanges: [],
+				options: {},
+				revealRange: () => {},
+				show: () => {},
+				hide: () => {},
+			};
 		},
 
 		showNotebookDocument: async (_Document: unknown, _Options?: unknown) =>
@@ -1257,7 +1277,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			"window.didExecuteTerminalCommand",
 		),
 
-		activeTextEditor: undefined,
+		// Live getter: reflects the last `window.didChangeActiveTextEditor`
+		// notification stored on Context by NotificationHandler. Extensions
+		// that read `vscode.window.activeTextEditor` synchronously in
+		// `activate()` see the current value rather than always `undefined`.
+		get activeTextEditor() {
+			return (Context as any).__activeTextEditor ?? undefined;
+		},
 
 		// `activeColorTheme` and `tabGroups` already defined earlier in
 		// this object literal (lines ~614 and ~581) - leaving the
