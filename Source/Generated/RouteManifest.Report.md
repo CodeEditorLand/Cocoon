@@ -1,12 +1,12 @@
 # Route Manifest - coverage report
 
-_Generated 2026-05-19T04:25:35Z_
+_Generated 2026-05-19T21:31:01Z_
 
 ## Totals
 
 | Tier | Count | Source |
 |---|---:|---|
-| 1 - Mountain (Rust) | 120 | `Track/Effect/CreateEffectForRequest/*.rs` |
+| 1 - Mountain (Rust) | 130 | `Track/Effect/CreateEffectForRequest/*.rs` |
 | 2 - Stock VS Code | 0 | `StockLift.ts` |
 | 3 - Cocoon bespoke | 1 | `*Fallback.ts` |
 
@@ -25,8 +25,10 @@ _Generated 2026-05-19T04:25:35Z_
 - `$statusBar:set`
 - `$terminal:create`
 - `$terminal:dispose`
+- `$terminal:hide`
 - `$terminal:resize`
 - `$terminal:sendText`
+- `$terminal:show`
 - `$tree:register`
 - `$updateWorkspaceFolders`
 - `applyEdit`
@@ -76,9 +78,11 @@ _Generated 2026-05-19T04:25:35Z_
 - `register_completion_item_provider`
 - `register_declaration_provider`
 - `register_definition_provider`
+- `register_document_drop_edit_provider`
 - `register_document_formatting_provider`
 - `register_document_highlight_provider`
 - `register_document_link_provider`
+- `register_document_paste_edit_provider`
 - `register_document_range_formatting_provider`
 - `register_document_symbol_provider`
 - `register_evaluatable_expression_provider`
@@ -86,8 +90,12 @@ _Generated 2026-05-19T04:25:35Z_
 - `register_hover_provider`
 - `register_implementation_provider`
 - `register_inlay_hints_provider`
+- `register_inline_completion_item_provider`
+- `register_inline_edit_provider`
 - `register_inline_values_provider`
 - `register_linked_editing_range_provider`
+- `register_mapped_edits_provider`
+- `register_multi_document_highlight_provider`
 - `register_on_type_formatting_provider`
 - `register_reference_provider`
 - `register_rename_provider`
@@ -109,7 +117,9 @@ _Generated 2026-05-19T04:25:35Z_
 - `Task.Execute`
 - `Task.Fetch`
 - `Terminal.GetProcessId`
+- `Terminal.Hide`
 - `Terminal.Resize`
+- `Terminal.Show`
 - `tree.dispose`
 - `tree.register`
 - `tree.unregister`

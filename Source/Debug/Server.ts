@@ -1,7 +1,7 @@
 /**
  * @module Cocoon/Debug/Server
  * @description
- * Cocoon-layer DebugServer — the Node/extension-host half of the dual-layer
+ * Cocoon-layer DebugServer - the Node/extension-host half of the dual-layer
  * inspection HTTP surface. Provides the same wire protocol as the Mountain
  * Rust DebugServer (`Element/Mountain/Source/Binary/Debug/WebkitServer.rs`)
  * so an external tool can speak one protocol and hit either layer.
@@ -26,10 +26,10 @@
  * |--------|------------------|----------------------------------------------------|
  * | GET    | `/health`        | Layer identity + capability advertisement          |
  * | GET    | `/layers`        | Discoverability                                    |
- * | POST   | `/execute`       | `{js,target?}` — eval in EH (`global` scope)       |
+ * | POST   | `/execute`       | `{js,target?}` - eval in EH (`global` scope)       |
  * | GET    | `/extensions`    | List activated extension IDs (best-effort)         |
  * | GET    | `/commands`      | List EH-registered commands                        |
- * | POST   | `/command`       | `{id,args?}` — invoke an EH command                |
+ * | POST   | `/command`       | `{id,args?}` - invoke an EH command                |
  * | GET    | `/processes`     | PID/uptime/memory of the EH process                |
  *
  * All requests are loopback-only (`127.0.0.1`) and respond with JSON.
@@ -114,7 +114,7 @@ export function RegisterHooks(Next: CommandHooks): void {
 
 /**
  * Starts the Cocoon DebugServer if the env explicitly enables the Cocoon
- * layer. Safe to call unconditionally — it no-ops otherwise. Returns the
+ * layer. Safe to call unconditionally - it no-ops otherwise. Returns the
  * resolved port (or `null` if the server did not start).
  */
 export function Start(): number | null {

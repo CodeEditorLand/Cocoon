@@ -2794,14 +2794,14 @@ var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummar
 var init_RouteManifest = __esm({
   "Source/Generated/RouteManifest.ts"() {
     "use strict";
-    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:openDiff", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:resize", "$terminal:sendText", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Resize", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "vscode.diff", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
+    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:openDiff", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:hide", "$terminal:resize", "$terminal:sendText", "$terminal:show", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_drop_edit_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_paste_edit_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_completion_item_provider", "register_inline_edit_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_mapped_edits_provider", "register_multi_document_highlight_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "showTextDocument", "stat", "Storage.Get", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Hide", "Terminal.Resize", "Terminal.Show", "tree.dispose", "tree.register", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "vscode.diff", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust"]);
     StockLiftExports = /* @__PURE__ */ new Set();
     BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
     RouteManifestSummary = {
-      mountain: 120,
+      mountain: 130,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-19T04:25:35Z"
+      generatedAt: "2026-05-19T21:31:01Z"
     };
   }
 });
@@ -16261,7 +16261,29 @@ var init_codiconsLibrary = __esm({
       terminalSecure: register("terminal-secure", 60549),
       chatImport: register("chat-import", 60550),
       chatExport: register("chat-export", 60551),
-      shareWindow: register("share-window", 60552)
+      shareWindow: register("share-window", 60552),
+      circleSlashCompact: register("circle-slash-compact", 60553),
+      copilotCompact: register("copilot-compact", 60554),
+      folderOpenedCompact: register("folder-opened-compact", 60555),
+      folderCompact: register("folder-compact", 60556),
+      gearCompact: register("gear-compact", 60557),
+      gitBranchCompact: register("git-branch-compact", 60558),
+      libraryCompact: register("library-compact", 60559),
+      recordKeysCompact: register("record-keys-compact", 60560),
+      remoteCompact: register("remote-compact", 60561),
+      repoForkedCompact: register("repo-forked-compact", 60562),
+      repoCompact: register("repo-compact", 60563),
+      shieldCompact: register("shield-compact", 60564),
+      sparkleCompact: register("sparkle-compact", 60565),
+      symbolColorCompact: register("symbol-color-compact", 60566),
+      windowCompact: register("window-compact", 60567),
+      errorCompact: register("error-compact", 60568),
+      warningCompact: register("warning-compact", 60569),
+      passCompact: register("pass-compact", 60570),
+      important: register("important", 60571),
+      importantCompact: register("important-compact", 60572),
+      rocketCompact: register("rocket-compact", 60573),
+      unpin: register("unpin", 60574)
     };
   }
 });

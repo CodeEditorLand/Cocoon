@@ -12960,7 +12960,29 @@ var init_codiconsLibrary = __esm({
       terminalSecure: register("terminal-secure", 60549),
       chatImport: register("chat-import", 60550),
       chatExport: register("chat-export", 60551),
-      shareWindow: register("share-window", 60552)
+      shareWindow: register("share-window", 60552),
+      circleSlashCompact: register("circle-slash-compact", 60553),
+      copilotCompact: register("copilot-compact", 60554),
+      folderOpenedCompact: register("folder-opened-compact", 60555),
+      folderCompact: register("folder-compact", 60556),
+      gearCompact: register("gear-compact", 60557),
+      gitBranchCompact: register("git-branch-compact", 60558),
+      libraryCompact: register("library-compact", 60559),
+      recordKeysCompact: register("record-keys-compact", 60560),
+      remoteCompact: register("remote-compact", 60561),
+      repoForkedCompact: register("repo-forked-compact", 60562),
+      repoCompact: register("repo-compact", 60563),
+      shieldCompact: register("shield-compact", 60564),
+      sparkleCompact: register("sparkle-compact", 60565),
+      symbolColorCompact: register("symbol-color-compact", 60566),
+      windowCompact: register("window-compact", 60567),
+      errorCompact: register("error-compact", 60568),
+      warningCompact: register("warning-compact", 60569),
+      passCompact: register("pass-compact", 60570),
+      important: register("important", 60571),
+      importantCompact: register("important-compact", 60572),
+      rocketCompact: register("rocket-compact", 60573),
+      unpin: register("unpin", 60574)
     };
   }
 });
