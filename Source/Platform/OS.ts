@@ -339,23 +339,13 @@ function DetectArchitecture(arch: string): OSArchitecture {
  * Detect architecture from web navigator
  */
 function DetectWebArchitecture(): OSArchitecture {
-	if (typeof navigator === "object" && "userAgentData" in navigator) {
-		const userAgentData = (navigator as any).userAgentData;
-
-		if (
-			userAgentData &&
-			typeof userAgentData.getHighEntropyValues === "function"
-		) {
-			try {
-				// TODO: Implement high entropy values for architecture detection
-				// const { architecture } = await userAgentData.getHighEntropyValues(['architecture']);
-				return OSArchitecture.Unknown;
-			} catch {
-				return OSArchitecture.Unknown;
-			}
-		}
+	// In Cocoon (Node.js) use process.arch directly - fastest, no API call.
+	if (typeof process !== "undefined" && process.arch) {
+		return DetectArchitecture(process.arch);
 	}
 
+	// Browser fallback: navigator.userAgentData is async-only; return
+	// Unknown synchronously and let the caller deal with it.
 	return OSArchitecture.Unknown;
 }
 
