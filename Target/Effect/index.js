@@ -5289,7 +5289,7 @@ var init_RouteManifest = __esm({
       mountain: 134,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-19T22:34:18Z"
+      generatedAt: "2026-05-19T22:50:39Z"
     };
   }
 });
@@ -31583,9 +31583,9 @@ var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent,
 var init_Handler3 = __esm({
   "Source/Services/Handler/Extension/Host/Handler.ts"() {
     "use strict";
+    init_FiddeeRoot();
     init_Log();
     init_Registry();
-    init_FiddeeRoot();
     HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context13, Parameters) => {
       const Extensions = Parameters?.extensions ?? [];
       console.log(
