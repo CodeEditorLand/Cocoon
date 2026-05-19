@@ -108,26 +108,43 @@ export class Memento {
 
 		this._MountainClient = MountainClient;
 
-		// MOUNTAIN-INTEGRATION: Load persisted state from Mountain on construction (MEDIUM)
+		// Load persisted state from Mountain's storage on construction.
+		// Keys are namespaced by ExtensionId so extensions don't collide.
 		Effect.runFork(
 			Effect.gen(function* () {
-				try {
-					// TODO: MEDIUM: Load state from Mountain
-					// const persistedState = yield* Effect.tryPromise({
-					//     try: () => MountainClient?.sendRequest('extension.loadState', {
-					//         extensionId: ExtensionId
-					//     }),
-					//     catch: () => undefined
-					// });
-					// if (persistedState) {
-					//     const entries = Object.entries(persistedState);
-					//     for (const [key, value] of entries) {
-					//         yield* Ref.update(Storage, map => map.set(key, value));
-					//     }
-					// }
-				} catch (error) {
-					// Ignore load errors, start with empty state
-				}
+				if (!MountainClient) return;
+				yield* Effect.tryPromise({
+					try: async () => {
+						// `storage:getItems` returns `[key, value][]` tuples.
+						// Filter by the extension namespace prefix.
+						const AllItems = await MountainClient.sendRequest(
+							"storage:getItems",
+							[],
+						);
+						const Prefix = `${ExtensionId}:`;
+						if (Array.isArray(AllItems)) {
+							const Entries = (
+								AllItems as [string, unknown][]
+							).filter(
+								([K]) =>
+									typeof K === "string" &&
+									K.startsWith(Prefix),
+							);
+							if (Entries.length > 0) {
+								Effect.runSync(
+									Ref.update(Storage, (Map) => {
+										const Next = new Map(Map);
+										for (const [K, V] of Entries) {
+											Next.set(K.slice(Prefix.length), V);
+										}
+										return Next;
+									}),
+								);
+							}
+						}
+					},
+					catch: () => undefined,
+				});
 			}),
 		);
 	}
@@ -171,19 +188,15 @@ export class Memento {
 			}),
 		);
 
-		// TODO: MEDIUM: Persist state to Mountain
-		// await Effect.runPromise(
-		//     Effect.tryPromise({
-		//         try: () => this.MountainClient?.sendRequest('extension.saveState', {
-		//             extensionId: this.ExtensionId,
-		//             key,
-		//             value
-		//         }),
-		//         catch: (error) => {
-		//             this.Logger.Error('[ExtensionContext] Failed to persist state to Mountain', error as Error);
-		//         }
-		//     })
-		// );
+		// Persist to Mountain's storage, namespaced by extension ID.
+		if (this._MountainClient) {
+			void this._MountainClient
+				.sendRequest("storage:set", [
+					`${this.ExtensionId}:${key}`,
+					value,
+				])
+				.catch(() => undefined);
+		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Memento updated: ${this.ExtensionId}.${key}`,
@@ -196,15 +209,30 @@ export class Memento {
 	clear(): void {
 		Effect.runSync(Ref.set(this.Storage, new Map()));
 
-		// TODO: MEDIUM: Clear persisted state from Mountain
-		// Effect.runFork(
-		//     Effect.tryPromise({
-		//         try: () => this.MountainClient?.sendRequest('extension.clearState', {
-		//             extensionId: this.ExtensionId
-		//         }),
-		//         catch: () => undefined
-		//     })
-		// );
+		// Remove all namespaced keys from Mountain's storage.
+		if (this._MountainClient) {
+			const Prefix = `${this.ExtensionId}:`;
+			void this._MountainClient
+				.sendRequest("storage:getItems", [])
+				.then((All: unknown) => {
+					if (Array.isArray(All)) {
+						const Keys = (All as [string, unknown][])
+							.map(([K]) => K)
+							.filter(
+								(K) =>
+									typeof K === "string" &&
+									K.startsWith(Prefix),
+							);
+						for (const K of Keys) {
+							void this._MountainClient!.sendRequest(
+								"storage:set",
+								[K, null],
+							).catch(() => undefined);
+						}
+					}
+				})
+				.catch(() => undefined);
+		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Memento cleared: ${this.ExtensionId}`,

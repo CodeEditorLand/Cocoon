@@ -118,18 +118,27 @@ const CreateCommandsNamespace = (
 			}
 		},
 
-		// `onDidExecuteCommand` - stock VS Code event that fires post-dispatch
-		// for any `executeCommand` call. Extensions (vim, gitlens, telemetry
-		// collectors) subscribe to observe user-invoked commands. Land doesn't
-		// surface a post-dispatch stream yet; stub with a no-op disposable so
-		// the subscription doesn't crash. Emitting real events requires a hook
-		// in the Mountain Command.Execute effect to broadcast back - deferred.
+		// `onDidExecuteCommand` - Mountain emits `sky://commands/executed`
+		// after every `commands:execute` call with `{ command, arguments }`.
+		// Subscribe to that Tauri event and fan out to each registered listener.
 		onDidExecuteCommand: (
-			_Listener: (Event: {
+			Listener: (Event: {
 				command: string;
 				arguments: unknown[];
 			}) => unknown,
-		) => ({ dispose: () => {} }),
+		) => {
+			let Active = true;
+			void import("@tauri-apps/api/event").then(({ listen }) => {
+				void listen("sky://commands/executed", (TauriEvent: any) => {
+					if (Active) Listener(TauriEvent.payload ?? {});
+				});
+			});
+			return {
+				dispose: () => {
+					Active = false;
+				},
+			};
+		},
 
 		// Proposed API (`vscode.proposed.diffCommand.d.ts`). Extensions can
 		// register a command that receives `LineChange[]` alongside the usual

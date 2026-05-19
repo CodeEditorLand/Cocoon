@@ -301,7 +301,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
-			yield* IMountainClientService;
+			const MountainClient = yield* IMountainClientService;
 			const Configuration = yield* Context.Tag<Configuration>(
 				"Service/Configuration",
 			);
@@ -454,17 +454,88 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						}
 					}
 
-					// TODO: MEDIUM: Load extensions from Mountain via gRPC
-					// const mountainExtensions = yield* Effect.tryPromise({
-					//     try: () => MountainClient.sendRequest('extensions.getInstalled', {}) as Promise<IExtensionDescription[]>,
-					//     catch: (error) => {
-					//         Logger.Warn('[ExtensionService] Failed to load extensions from Mountain', error as Error);
-					//         return [];
-					//     }
-					// });
-					// for (const ext of mountainExtensions) {
-					//     NewRegistry.set(ext.identifier, ext);
-					// }
+					// Merge Mountain's scanner results so Cocoon's ExtensionService
+					// reflects the same set that the workbench sidebar sees.
+					// `extensions:getInstalled` returns the `ILocalExtension[]`
+					// envelope Mountain builds from its scan; we pull the manifest
+					// from each entry and register it under `identifier.id`.
+					const mountainExtensions = yield* Effect.tryPromise({
+						try: async () => {
+							const raw = await MountainClient?.sendRequest(
+								"extensions:getInstalled",
+								[],
+							);
+							return Array.isArray(raw) ? raw : [];
+						},
+						catch: () => [] as unknown[],
+					});
+					for (const entry of mountainExtensions as Record<
+						string,
+						unknown
+					>[]) {
+						const id =
+							(
+								entry["identifier"] as
+									| Record<string, unknown>
+									| undefined
+							)?.["id"] ?? entry["id"];
+						const manifest = entry["manifest"] as
+							| Record<string, unknown>
+							| undefined;
+						if (
+							typeof id === "string" &&
+							manifest &&
+							!NewRegistry.has(id)
+						) {
+							NewRegistry.set(id, {
+								identifier: id,
+								version:
+									typeof manifest["version"] === "string"
+										? manifest["version"]
+										: "0.0.0",
+								name:
+									typeof manifest["name"] === "string"
+										? manifest["name"]
+										: id,
+								displayName:
+									typeof manifest["displayName"] === "string"
+										? manifest["displayName"]
+										: undefined,
+								description:
+									typeof manifest["description"] === "string"
+										? manifest["description"]
+										: undefined,
+								publisher:
+									typeof manifest["publisher"] === "string"
+										? manifest["publisher"]
+										: "unknown",
+								engines:
+									typeof manifest["engines"] === "object"
+										? (manifest["engines"] as Record<
+												string,
+												string
+											>)
+										: { vscode: "^1.0.0" },
+								isBuiltin:
+									typeof entry["isBuiltin"] === "boolean"
+										? entry["isBuiltin"]
+										: true,
+								activationEvents: Array.isArray(
+									manifest["activationEvents"],
+								)
+									? (manifest["activationEvents"] as string[])
+									: undefined,
+								main:
+									typeof manifest["main"] === "string"
+										? manifest["main"]
+										: undefined,
+								contributes:
+									typeof manifest["contributes"] === "object"
+										? manifest["contributes"]
+										: undefined,
+							});
+						}
+					}
 
 					// Check for changes
 					const OldRegistry = yield* Ref.get(ExtensionRegistryRef);
