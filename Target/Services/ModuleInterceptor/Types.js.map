@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Services/ModuleInterceptor/Types.ts"],
-  "sourcesContent": ["/**\n * @module ModuleInterceptor/Types\n * @description\n * Type definitions and configuration interfaces for the ModuleInterceptor service.\n */\n\nimport type { SecurityLevel } from \"../../Interfaces/I/Module/Interceptor.js\";\n\n// Module interception configuration\nexport interface ModuleInterceptorConfig {\n\tallowNodeBuiltins: boolean;\n\n\tallowFileSystemAccess: boolean;\n\n\tallowNetworkAccess: boolean;\n\n\tallowedModules: string[];\n\n\tblockedModules: string[];\n\n\tsecurityPolicy: SecurityLevel;\n}\n\n// Module cache entry with security metadata\nexport interface ModuleCacheEntry {\n\tmodule: any;\n\n\tsecurityLevel: SecurityLevel;\n\n\tvalidationTime: number;\n\n\tpath: string;\n}\n\n// AST node types for module analysis\nexport type ASTNode = any;\n\n// Module loading telemetry\nexport interface ModuleTelemetry {\n\ttotalModulesLoaded: number;\n\n\tblockedModules: number;\n\n\tsandboxedModules: number;\n\n\taverageAnalysisTime: number;\n\n\tsecurityViolations: number;\n}\n\nexport default {};\n"],
-  "mappings": ";AAkDA,IAAO,gBAAQ,CAAC;",
-  "names": []
-}
