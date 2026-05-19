@@ -1,12 +1,12 @@
 # Route Manifest - coverage report
 
-_Generated 2026-05-18T00:19:31Z_
+_Generated 2026-05-19T00:43:45Z_
 
 ## Totals
 
 | Tier | Count | Source |
 |---|---:|---|
-| 1 - Mountain (Rust) | 118 | `Track/Effect/CreateEffectForRequest/*.rs` |
+| 1 - Mountain (Rust) | 120 | `Track/Effect/CreateEffectForRequest/*.rs` |
 | 2 - Stock VS Code | 0 | `StockLift.ts` |
 | 3 - Cocoon bespoke | 1 | `*Fallback.ts` |
 
@@ -16,6 +16,7 @@ _Generated 2026-05-18T00:19:31Z_
 - `$gitExec`
 - `$resolveCustomEditor`
 - `$scm:createSourceControl`
+- `$scm:openDiff`
 - `$scm:registerInputBox`
 - `$scm:updateGroup`
 - `$scm:updateSourceControl`
@@ -118,6 +119,7 @@ _Generated 2026-05-18T00:19:31Z_
 - `UserInterface.ShowQuickPick`
 - `UserInterface.ShowSaveDialog`
 - `viewId`
+- `vscode.diff`
 - `warning`
 - `webview.postMessage`
 - `webview.registerView`
