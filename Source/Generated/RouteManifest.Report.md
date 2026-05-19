@@ -1,12 +1,12 @@
 # Route Manifest - coverage report
 
-_Generated 2026-05-19T21:31:01Z_
+_Generated 2026-05-19T22:15:03Z_
 
 ## Totals
 
 | Tier | Count | Source |
 |---|---:|---|
-| 1 - Mountain (Rust) | 130 | `Track/Effect/CreateEffectForRequest/*.rs` |
+| 1 - Mountain (Rust) | 134 | `Track/Effect/CreateEffectForRequest/*.rs` |
 | 2 - Stock VS Code | 0 | `StockLift.ts` |
 | 3 - Cocoon bespoke | 1 | `*Fallback.ts` |
 
@@ -105,6 +105,7 @@ _Generated 2026-05-19T21:31:01Z_
 - `register_type_definition_provider`
 - `register_type_hierarchy_provider`
 - `register_workspace_symbol_provider`
+- `saveAll`
 - `Search.TextSearch`
 - `secrets.delete`
 - `secrets.get`
@@ -142,6 +143,9 @@ _Generated 2026-05-19T21:31:01Z_
 - `Window.ShowSaveDialog`
 - `Workspace.IsResourceTrusted`
 - `Workspace.RequestResourceTrust`
+- `Workspace.Save`
+- `Workspace.SaveAll`
+- `Workspace.SaveAs`
 
 ## Tier 2 exports (stock VS Code lifted)
 

@@ -150,8 +150,8 @@ var ExtensionSecretStorage = class {
     if (this.MountainClient) {
       try {
         const result = await this.MountainClient.sendRequest(
-          "getSecret",
-          { key }
+          "secrets.get",
+          { key, extensionId: this.ExtensionId }
         );
         return result;
       } catch (error) {
@@ -175,9 +175,10 @@ var ExtensionSecretStorage = class {
   async store(key, value) {
     if (this.MountainClient) {
       try {
-        await this.MountainClient.sendNotification("storeSecret", {
+        await this.MountainClient.sendRequest("secrets.store", {
           key,
-          value
+          value,
+          extensionId: this.ExtensionId
         });
         this.Logger.Debug(
           `[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`
@@ -202,8 +203,9 @@ var ExtensionSecretStorage = class {
   async delete(key) {
     if (this.MountainClient) {
       try {
-        await this.MountainClient.sendNotification("deleteSecret", {
-          key
+        await this.MountainClient.sendRequest("secrets.delete", {
+          key,
+          extensionId: this.ExtensionId
         });
         this.Logger.Debug(
           `[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`

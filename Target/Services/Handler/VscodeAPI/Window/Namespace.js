@@ -1637,13 +1637,28 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return Panel;
     }, "createWebviewPanel"),
     showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-      Context.SendToMountain("window.showTextDocument", {
+      try {
+        const Result = await Context.MountainClient?.sendRequest(
+          "showTextDocument",
+          [_Document, _Column, _PreserveFocus]
+        );
+        if (Result && typeof Result === "object")
+          return Result;
+      } catch {
+      }
+      return {
         document: _Document,
-        column: _Column,
-        preserveFocus: _PreserveFocus
-      }).catch(() => {
-      });
-      return void 0;
+        selection: null,
+        viewColumn: _Column ?? 1,
+        visibleRanges: [],
+        options: {},
+        revealRange: /* @__PURE__ */ __name(() => {
+        }, "revealRange"),
+        show: /* @__PURE__ */ __name(() => {
+        }, "show"),
+        hide: /* @__PURE__ */ __name(() => {
+        }, "hide")
+      };
     }, "showTextDocument"),
     showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
     tabGroups: {
@@ -2078,7 +2093,13 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       Context,
       "window.didExecuteTerminalCommand"
     ),
-    activeTextEditor: void 0,
+    // Live getter: reflects the last `window.didChangeActiveTextEditor`
+    // notification stored on Context by NotificationHandler. Extensions
+    // that read `vscode.window.activeTextEditor` synchronously in
+    // `activate()` see the current value rather than always `undefined`.
+    get activeTextEditor() {
+      return Context.__activeTextEditor ?? void 0;
+    },
     // `activeColorTheme` and `tabGroups` already defined earlier in
     // this object literal (lines ~614 and ~581) - leaving the
     // fuller event-aware definitions intact and only mirroring the

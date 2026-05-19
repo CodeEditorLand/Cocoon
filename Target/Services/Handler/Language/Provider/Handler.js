@@ -19787,6 +19787,78 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
         const Result = await Provider.provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken);
         return Result ?? null;
       }
+      // VS Code ≥1.87 provider types - registered via the new
+      // LanguageFeatures.rs arms; Mountain forwards $provideX with the
+      // Debug name of ProviderType (e.g. InlineCompletion → $provideInlineCompletion).
+      case "$provideInlineCompletion":
+      case "$provideInlineCompletionItems": {
+        const Context2 = Args[2];
+        const Result = await Provider.provideInlineCompletionItems?.(
+          VsDocument,
+          VsPosition,
+          Context2,
+          VsToken
+        );
+        return Result ?? null;
+      }
+      case "$provideInlineEdit":
+      case "$provideInlineEdits": {
+        const Context2 = Args[2];
+        const Result = await Provider.provideInlineEdits?.(
+          VsDocument,
+          VsPosition,
+          Context2,
+          VsToken
+        );
+        return Result ?? null;
+      }
+      case "$provideMultiDocumentHighlight":
+      case "$provideMultiDocumentHighlights": {
+        const OtherDocs = Args[2];
+        const Result = await Provider.provideMultiDocumentHighlights?.(
+          VsDocument,
+          VsPosition,
+          OtherDocs,
+          VsToken
+        );
+        return Result ?? null;
+      }
+      case "$provideMappedEdits": {
+        const CodeBlocks = Args[2];
+        const Context2 = Args[3];
+        const Result = await Provider.provideMappedEdits?.(
+          VsDocument,
+          CodeBlocks,
+          Context2,
+          VsToken
+        );
+        return Result ?? null;
+      }
+      case "$provideDocumentPasteEdit":
+      case "$provideDocumentPasteEdits": {
+        const Ranges = Args[2];
+        const DataTransfer3 = Args[3];
+        const Context2 = Args[4];
+        const Result = await Provider.provideDocumentPasteEdits?.(
+          VsDocument,
+          Ranges,
+          DataTransfer3,
+          Context2,
+          VsToken
+        );
+        return Result ?? null;
+      }
+      case "$provideDocumentDropEdit":
+      case "$provideDocumentDropEdits": {
+        const DataTransfer3 = Args[2];
+        const Result = await Provider.provideDocumentDropEdits?.(
+          VsDocument,
+          VsPosition,
+          DataTransfer3,
+          VsToken
+        );
+        return Result ?? null;
+      }
       default:
         console.warn(
           `[LanguageProviderHandler] Unhandled $provide method: ${Method}`
