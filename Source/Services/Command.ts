@@ -448,26 +448,13 @@ export class CommandService extends Effect.Service<CommandService>()(
 										`[CommandService] Command '${Id}' unregistered`,
 									);
 
-									// Notify Mountain so its CommandRegistry removes the
-									// Proxied entry. Failure is non-fatal - the command
-									// simply becomes a dead route rather than crashing.
+									// Notify Mountain via the already-yielded mountainClient.
 									yield* Effect.tryPromise({
-										try: async () => {
-											const Client =
-												await import("../gRPC/Client.js");
-											const Svc =
-												await Client.MountainGRPCClientService;
-											if (
-												Svc &&
-												typeof (Svc as any)
-													.unregisterCommand ===
-													"function"
-											) {
-												await (
-													Svc as any
-												).unregisterCommand(Id);
-											}
-										},
+										try: () =>
+											mountainClient.sendNotification(
+												"unregisterCommand",
+												{ commandId: Id },
+											),
 										catch: () => undefined,
 									});
 								}),

@@ -206,52 +206,66 @@ graph LR
     classDef cocoon   fill:#d0d8ff,stroke:#4a6fa5,stroke-width:2px,color:#001050;
     classDef effectts fill:#d4f5d4,stroke:#27ae60,stroke-width:1px,color:#0a3a0a;
     classDef vscode   fill:#ebebeb,stroke:#888,stroke-width:1px,stroke-dasharray:5 5,color:#333;
+    classDef ipc      fill:#fff3c0,stroke:#f39c12,stroke-width:1px,stroke-dasharray:5 5,color:#5a3e00;
 
-    subgraph "Cocoon - Node.js SideCar&#x2001;🦋"
+    subgraph COCOON["Cocoon 🦋 - Node.js Extension Host Sidecar"]
         direction TB
-        Bootstrap["Bootstrap/Implementation/CocoonMain.ts&#x2001;🚀"]:::effectts
-        AppLayer["Cocoon AppLayer&#x2001;🧩"]:::effectts
-        EffectModules["Effect/ Modules - Bootstrap, Telemetry, Extension&#x2001;⚡"]:::effectts
-        PatchProcess["PatchProcess/ - Process Hardening&#x2001;🔒"]:::cocoon
-        APIServices["Services/ - APIFactory, ExtensionHost, Window, Workspace…&#x2001;📚"]:::cocoon
-        IPCProtocol["IPC/Channel.ts + IPC/ Protocol&#x2001;📡"]:::cocoon
-        GRPCClient["Services/Mountain/gRPC/Client.ts&#x2001;🌿"]:::cocoon
-        GRPCServer["Services/gRPC/Server/Service.ts&#x2001;🔌"]:::cocoon
-        TypeConverter["TypeConverter/ - DTO Serialization&#x2001;🔄"]:::cocoon
-        CodegenModule["Codegen/ - ExtHost Schema Generation&#x2001;🔨"]:::cocoon
-        PlatformModule["Platform/ - OS, Env, Process Abstraction&#x2001;💻"]:::cocoon
-        WebviewPanel["WebviewPanel/ - Panel Factory & Lifecycle&#x2001;🌐"]:::cocoon
-        TelemetryModule["Telemetry/ - PostHog & OTLP Bridges&#x2001;📊"]:::cocoon
-        GeneratedRoute["Generated/RouteManifest.ts&#x2001;🗺️"]:::cocoon
+        subgraph BOOT["Bootstrap/ - Startup"]
+            PatchProcess["PatchProcess/ - Process Hardening 🔒"]:::cocoon
+            MainEntry["Bootstrap/Implementation/Cocoon/Main.ts 🚀"]:::effectts
+            AppLayer["Service/Mapping.ts - AppLayer 🧩"]:::effectts
+        end
+        subgraph EFFECTS["Effect/ - Lifecycle Orchestration"]
+            BootstrapEff["Effect/Bootstrap.ts ⚡"]:::effectts
+            ExtEff["Effect/Extension.ts"]:::effectts
+            ModInterceptor["Effect/Module/Interceptor.ts\n(require/import patch)"]:::effectts
+        end
+        subgraph SERVICES["Services/ - vscode API Shims"]
+            APIFactory["Services/API/Factory - vscode object 🏭"]:::cocoon
+            ExtHostSvc["Services/Extension/Host"]:::cocoon
+            WindowSvc["Services/Window · Workspace · Command · Terminal"]:::cocoon
+            WebviewSvc["WebviewPanel/ - Panel lifecycle 🌐"]:::cocoon
+        end
+        subgraph TRANSPORT["IPC/ + gRPC Transport"]
+            IPCChannel["IPC/Channel.ts - multi-channel RPC 📡"]:::ipc
+            GRPCClient["Services/Mountain/gRPC/Client.ts 🌿"]:::ipc
+            GRPCServer["Services/gRPC/Server/ - Vine impl 🔌"]:::ipc
+        end
+        subgraph SUPPORT["Support Modules"]
+            TypeConverter["TypeConverter/ - DTO serialization 🔄"]:::cocoon
+            Platform["Platform/ - OS/env abstraction 💻"]:::cocoon
+            Telemetry["Telemetry/ - PostHog + OTLP 📊"]:::cocoon
+            Generated["Generated/RouteManifest.ts 🗺️"]:::cocoon
+        end
 
-        Bootstrap --> AppLayer
-        AppLayer --> EffectModules
-        AppLayer --> APIServices
-        AppLayer --> IPCProtocol
-        APIServices --> GRPCClient
-        APIServices --> GRPCServer
-        APIServices --> TypeConverter
-        GRPCClient --> IPCProtocol
-        PatchProcess --> Bootstrap
-
-        AppLayer -.-> CodegenModule
-        AppLayer -.-> PlatformModule
-        AppLayer -.-> WebviewPanel
-        AppLayer -.-> TelemetryModule
+        PatchProcess --> MainEntry
+        MainEntry --> AppLayer
+        AppLayer --> BootstrapEff
+        BootstrapEff --> ExtEff
+        BootstrapEff --> ModInterceptor
+        AppLayer --> SERVICES
+        SERVICES --> TypeConverter
+        APIFactory --> ExtHostSvc
+        ExtHostSvc --> GRPCClient
+        GRPCClient --> IPCChannel
+        GRPCServer --> IPCChannel
+        AppLayer -.-> Platform
+        AppLayer -.-> Telemetry
+        AppLayer -.-> Generated
     end
 
-    subgraph "Mountain - Rust/Tauri Backend&#x2001;⛰️"
-        VineGRPC["Vine - gRPC Server&#x2001;🌿"]:::mountain
+    subgraph MOUNTAIN["Mountain ⛰️ - Rust/Tauri Backend"]
+        VineGRPC["Vine gRPC Server 🌿"]:::mountain
     end
 
-    subgraph "VS Code Extension&#x2001;📦"
-        ExtensionCode["Extension Code&#x2001;📜"]:::vscode
+    subgraph EXT["VS Code Extensions 📦"]
+        ExtCode["Extension Code 📜"]:::vscode
     end
 
-    APIServices -- provides `vscode` object to --> ExtensionCode
-    ExtensionCode -- makes API calls --> APIServices
-    GRPCClient <-- gRPC --> VineGRPC
-    GRPCServer <-- gRPC --> VineGRPC
+    APIFactory -- injects vscode API --> ExtCode
+    ExtCode -- API calls --> SERVICES
+    GRPCClient <-- gRPC :50052 --> VineGRPC
+    GRPCServer <-- notifications --> VineGRPC
 ```
 
 ---

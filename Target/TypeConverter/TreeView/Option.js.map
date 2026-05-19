@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/TreeView/Option.ts"],
+  "sourcesContent": ["/**\n * @module Option\n * @description Implements the type converter for `vscode.TreeViewOptions`.\n */\n\nimport type { TreeViewOptions } from \"vscode\";\n\n/**\n * @description Converts `vscode.TreeViewOptions` to a plain DTO for IPC.\n * @param option The `TreeViewOptions` to convert.\n * @returns The serializable DTO.\n */\nexport const FromAPI = (option: TreeViewOptions<any>): any => {\n\treturn {\n\t\tshowCollapseAll: !!option.showCollapseAll,\n\n\t\tcanSelectMany: !!option.canSelectMany,\n\n\t\thasHandleDrag: !!option.dragAndDropController?.handleDrag,\n\n\t\thasHandleDrop: !!option.dragAndDropController?.handleDrop,\n\t};\n};\n"],
+  "mappings": ";;;;AAYO,IAAM,UAAU,wBAAC,WAAsC;AAC7D,SAAO;AAAA,IACN,iBAAiB,CAAC,CAAC,OAAO;AAAA,IAE1B,eAAe,CAAC,CAAC,OAAO;AAAA,IAExB,eAAe,CAAC,CAAC,OAAO,uBAAuB;AAAA,IAE/C,eAAe,CAAC,CAAC,OAAO,uBAAuB;AAAA,EAChD;AACD,GAVuB;",
+  "names": []
+}

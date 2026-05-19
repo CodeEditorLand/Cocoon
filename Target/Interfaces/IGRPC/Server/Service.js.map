@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Interfaces/IGRPC/Server/Service.ts"],
+  "sourcesContent": ["/**\n * @module IGRPCServerService\n * @description\n * Interface for Cocoon's gRPC server service.\n * Responsible for handling Mountain gRPC requests and notifications.\n *\n * Based on Mountain's Vine protocol specification.\n */\n\nimport { Context } from \"effect\";\n\nexport interface IGRPCServerService {\n\treadonly _serviceBrand: undefined;\n\n\t/**\n\t * Start the gRPC server\n\t */\n\tstart(): Promise<void>;\n\n\t/**\n\t * Stop the gRPC server\n\t */\n\tstop(): Promise<void>;\n\n\t/**\n\t * Get server status\n\t */\n\tgetStatus(): {\n\t\trunning: boolean;\n\n\t\tport: number;\n\n\t\tuptime?: number;\n\n\t\terrorCount: number;\n\t};\n}\n\nexport const IGRPCServerService =\n\tContext.GenericTag<IGRPCServerService>(\"IGRPCServerService\");\n"],
+  "mappings": ";AASA,SAAS,eAAe;AA6BjB,IAAM,qBACZ,QAAQ,WAA+B,oBAAoB;",
+  "names": []
+}
