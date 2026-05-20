@@ -76,6 +76,9 @@ export type TierModuleCacheValue = "Off" | "Simple" | "Shared";
 // Telemetry tiers ------------------------------------------------------------
 export type TierTelemetryValue = "Synchronous" | "Batched" | "Off";
 
+// IPC routing tiers ----------------------------------------------------------
+export type TierIPCValue = "Mountain" | "NodeDeferred" | "Node";
+
 // Resolution -----------------------------------------------------------------
 const Injected =
 	(globalThis as { __LandTiers?: Record<string, unknown> }).__LandTiers ?? {};
@@ -145,6 +148,9 @@ const Tier = {
 	ModuleCache: Pick<TierModuleCacheValue>("ModuleCache", "Simple"),
 
 	Telemetry: Pick<TierTelemetryValue>("Telemetry", "Synchronous"),
+
+	// IPC routing: Mountain (default) → NodeDeferred → Node
+	IPC: Pick<TierIPCValue>("IPC", "Mountain"),
 } as const;
 
 // One-shot boot banner -------------------------------------------------------
