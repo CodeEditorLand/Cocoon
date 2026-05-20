@@ -209,7 +209,12 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		rootPath: undefined,
 
-		textDocuments: [] as unknown[],
+		// Live getter: returns the array populated by $acceptModelAdded
+		// notifications so extensions reading `workspace.textDocuments` see
+		// all currently-open files rather than an always-empty array.
+		get textDocuments(): unknown[] {
+			return (Context as any).__textDocuments ?? [];
+		},
 
 		notebookDocuments: [] as unknown[],
 
@@ -574,6 +579,55 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		...BuildDocumentEventMembers(Context),
 
 		onDidChangeConfiguration: BuildOnDidChangeConfiguration(ConfigState),
+
+		// `onWillSaveTextDocument` - fires before a document is persisted.
+		// Mountain sends `document.willSave` just before `Document.Save` writes
+		// to disk. Extensions subscribe here to apply last-minute edits
+		// (format-on-save, organize-imports-on-save, etc.).
+		// Implementation: store listeners on `Context.__willSaveListeners`.
+		// NotificationHandler fires them and collects any returned TextEdits.
+		onWillSaveTextDocument: (
+			Listener: (Event: {
+				document: unknown;
+				reason: number;
+				waitUntil: (Thenable: Promise<unknown>) => void;
+			}) => void,
+		) => {
+			const List: ((...A: any[]) => any)[] = ((
+				Context as any
+			).__willSaveListeners ??= []);
+			List.push(Listener);
+			// Also subscribe to the WorkspaceEventEmitter so the event emitter
+			// pattern used by extensions like TypeScript's `onWillSave` works.
+			Context.WorkspaceEventEmitter.on("willSaveTextDocument", Listener);
+			return {
+				dispose: () => {
+					const Idx = List.indexOf(Listener);
+					if (Idx !== -1) List.splice(Idx, 1);
+					Context.WorkspaceEventEmitter.removeListener(
+						"willSaveTextDocument",
+						Listener,
+					);
+				},
+			};
+		},
+
+		// `onWillCreateFiles`, `onWillDeleteFiles`, `onWillRenameFiles` -
+		// stub subscriptions that return no-op disposables. Land's file
+		// mutation path doesn't yet thread will-do events through the
+		// participant chain. Extensions that subscribe expect a non-crash
+		// disposable; the stub prevents TypeError on `.dispose()`.
+		onWillCreateFiles: (_Listener: unknown) => ({ dispose: () => {} }),
+
+		onWillDeleteFiles: (_Listener: unknown) => ({ dispose: () => {} }),
+
+		onWillRenameFiles: (_Listener: unknown) => ({ dispose: () => {} }),
+
+		onDidCreateFiles: (_Listener: unknown) => ({ dispose: () => {} }),
+
+		onDidDeleteFiles: (_Listener: unknown) => ({ dispose: () => {} }),
+
+		onDidRenameFiles: (_Listener: unknown) => ({ dispose: () => {} }),
 
 		onDidChangeWorkspaceFolders: (
 			Listener: (Event: {

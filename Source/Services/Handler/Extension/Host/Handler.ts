@@ -1532,7 +1532,19 @@ const ActivateExtension = async (
 			if (InstrumentedExtensions.includes(ExtensionId)) {
 				SnapshotInitState("PRE-ACTIVATE");
 			}
-			await ActivateFn(ExtContext);
+			const ExtActivateResult = await ActivateFn(ExtContext);
+			// CRITICAL: backfill the activate() return value into the
+			// extension's registry entry so `vscode.extensions.getExtension(id).exports`
+			// resolves correctly. Extensions that expose an API (e.g. Roo-Code
+			// exposing its agent, Claude extension exposing its client, test runners
+			// exposing their controller) rely on consumers being able to read
+			// `.exports` on the `Extension<T>` object returned by `getExtension()`.
+			// Previously always `undefined`; now set to the real return value.
+			const RegEntry = Context.ExtensionRegistry.get(ExtensionId);
+			if (RegEntry && ExtActivateResult !== undefined) {
+				(RegEntry as any).__exports = ExtActivateResult;
+				(RegEntry as any).exports = ExtActivateResult;
+			}
 			process.stdout.write(
 				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})\n`,
 			);

@@ -788,6 +788,23 @@ const InvokeLanguageProvider = async (
 				return Result ?? null;
 			}
 
+			// `prepareCallHierarchy(document, position, token)` - the entry point.
+			// Mountain calls this first to establish the `CallHierarchyItem` root
+			// before requesting incoming/outgoing calls. Without this, call
+			// hierarchy UI trees are always empty even with a registered provider.
+			case "$prepareCallHierarchy":
+			case "$prepareCallHierarchyItems": {
+				const Result = await (Provider as any).prepareCallHierarchy?.(
+					VsDocument,
+					VsPosition,
+					VsToken,
+				);
+
+				// Normalise to array (VS Code API returns item | item[] | undefined)
+				if (!Result) return null;
+				return Array.isArray(Result) ? Result : [Result];
+			}
+
 			case "$provideCallHierarchy":
 			case "$provideCallHierarchyIncomingCalls": {
 				const Item = Args[1];
@@ -807,6 +824,20 @@ const InvokeLanguageProvider = async (
 				).provideCallHierarchyOutgoingCalls?.(Item, VsToken);
 
 				return Result ?? null;
+			}
+
+			// `prepareTypeHierarchy(document, position, token)` - entry point.
+			// Establishes the root `TypeHierarchyItem` before sub/supertypes.
+			case "$prepareTypeHierarchy":
+			case "$prepareTypeHierarchyItems": {
+				const Result = await (Provider as any).prepareTypeHierarchy?.(
+					VsDocument,
+					VsPosition,
+					VsToken,
+				);
+
+				if (!Result) return null;
+				return Array.isArray(Result) ? Result : [Result];
 			}
 
 			case "$provideTypeHierarchy":

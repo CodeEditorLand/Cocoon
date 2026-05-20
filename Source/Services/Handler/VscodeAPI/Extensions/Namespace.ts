@@ -289,7 +289,15 @@ const NormalizeLocation = (
 };
 
 const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
-	const Exports = MakePermissiveExports();
+	// Use the real exports if the extension has already been activated and
+	// its `activate()` return value was backfilled onto the registry entry.
+	// This makes `vscode.extensions.getExtension('foo').exports` return the
+	// actual public API instead of the permissive multi-stub.
+	const RealExports = Raw?.__exports ?? Raw?.exports;
+	const Exports =
+		RealExports !== undefined && RealExports !== null
+			? RealExports
+			: MakePermissiveExports();
 
 	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
 		Raw?.extensionLocation,

@@ -384,6 +384,65 @@ const HandleSpecificNotification = (
 				Parameters,
 				WorkspaceEventEmitter,
 			);
+			// Populate `workspace.textDocuments` - the global flat list of all
+			// open documents that extensions iterate with `workspace.textDocuments`.
+			// Previously always an empty array; now reflects the real open set.
+			if (Context) {
+				const OpenModels = Array.isArray(Parameters)
+					? Parameters
+					: [Parameters];
+				const TextDocs = (Context as any).__textDocuments ?? [];
+				for (const Model of OpenModels) {
+					const Uri =
+						Model?.Uri ?? Model?.uri ?? Model?.fileName ?? "";
+					if (!Uri) continue;
+					const LangId =
+						Model?.LanguageIdentifier ??
+						Model?.languageId ??
+						"plaintext";
+					const Existing = TextDocs.find(
+						(D: any) =>
+							D?.uri?.toString?.() === Uri || D?.fileName === Uri,
+					);
+					if (!Existing) {
+						TextDocs.push({
+							uri: {
+								toString: () => Uri,
+								fsPath: Uri.replace(/^file:\/\//, ""),
+								scheme: "file",
+								path: Uri.replace(/^file:\/\//, ""),
+							},
+							fileName: Uri.replace(/^file:\/\//, ""),
+							languageId: LangId,
+							version: Model?.VersionId ?? Model?.version ?? 1,
+							isDirty: false,
+							isClosed: false,
+							isUntitled: false,
+							eol: 1,
+							get lineCount() {
+								return (
+									DocumentContentCache.get(Uri) ?? ""
+								).split(/\r?\n/).length;
+							},
+							getText: () => DocumentContentCache.get(Uri) ?? "",
+							lineAt: (N: number) => {
+								const L =
+									(DocumentContentCache.get(Uri) ?? "").split(
+										/\r?\n/,
+									)[N] ?? "";
+								return { text: L, lineNumber: N };
+							},
+							save: async () => false,
+							getWordRangeAtPosition: () => undefined,
+							validateRange: (R: any) => R,
+							validatePosition: (P: any) => P,
+							offsetAt: () => 0,
+							positionAt: () => ({ line: 0, character: 0 }),
+						});
+					}
+				}
+				(Context as any).__textDocuments = TextDocs;
+			}
 			// BATCH-15 step 5: fire `onLanguage:<id>` activation for any
 			// extension that declares interest in the freshly-opened file's
 			// language. Lazy-load the activator so NotificationHandler
@@ -433,7 +492,88 @@ const HandleSpecificNotification = (
 				Parameters,
 				WorkspaceEventEmitter,
 			);
+			// Remove from workspace.textDocuments
+			if (Context) {
+				const CloseModels = Array.isArray(Parameters)
+					? Parameters
+					: [Parameters];
+				const ClosedUris = new Set(
+					CloseModels.map(
+						(M: any) => M?.uri ?? M?.Uri ?? M?.fileName ?? "",
+					).filter(Boolean),
+				);
+				const Docs = (Context as any).__textDocuments ?? [];
+				(Context as any).__textDocuments = Docs.filter((D: any) => {
+					const DUri = D?.uri?.toString?.() ?? D?.fileName ?? "";
+					return !ClosedUris.has(DUri);
+				});
+			}
 			break;
+		// `document.willSave` - Mountain fires this BEFORE the file is persisted
+		// (from `Workspace.Save` Track effect). Extensions subscribe via
+		// `workspace.onWillSaveTextDocument` to apply last-minute edits.
+		// We run all registered save listeners and collect any TextEdits they
+		// return, then forward the collected edits back to Mountain as
+		// `window.applyTextEdits` so they are applied before disk-write.
+		case "document.willSave":
+		case "$acceptWillSaveDocument": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Uri = Payload?.uri ?? Payload?.Uri ?? "";
+			const Reason = Payload?.reason ?? Payload?.Reason ?? 1; // 1=Manual
+			const Listeners: ((...A: any[]) => any)[] =
+				(Context as any).__willSaveListeners ?? [];
+			if (Listeners.length > 0 && Uri) {
+				const Doc = {
+					uri: {
+						toString: () => Uri,
+						fsPath: Uri.replace(/^file:\/\//, ""),
+						scheme: "file",
+					},
+					fileName: Uri.replace(/^file:\/\//, ""),
+					languageId: "plaintext",
+					version: 1,
+					isDirty: true,
+					isClosed: false,
+					isUntitled: false,
+					getText: () => DocumentContentCache.get(Uri) ?? "",
+					save: async () => true,
+				};
+				const Event = {
+					document: Doc,
+					reason: Reason,
+					waitUntil: (Thenable: Promise<any>) => {
+						// Collect any returned edits
+						Thenable.then((Edits: any) => {
+							if (
+								Array.isArray(Edits) &&
+								Edits.length > 0 &&
+								Uri
+							) {
+								Context?.SendToMountain(
+									"window.applyTextEdits",
+									{ uri: Uri, edits: Edits },
+								).catch(() => {});
+							}
+						}).catch(() => {});
+					},
+				};
+				for (const Listener of Listeners) {
+					try {
+						Listener(Event);
+					} catch {
+						/* never block save */
+					}
+				}
+			}
+			SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
+				uri: Uri,
+				reason: Reason,
+			});
+			break;
+		}
+
 		case "$acceptModelSaved":
 		case "document.didSave":
 			HandleDocumentSave(
@@ -614,64 +754,325 @@ const HandleSpecificNotification = (
 			const LanguageId: string =
 				Payload?.languageId ?? Payload?.language ?? "plaintext";
 			const HydratedUri = UriRaw ? HydrateUri(UriRaw) : null;
-			// Update `vscode.window.activeTextEditor` reference. Extensions read
-			// this synchronously; mutating the shim object's `activeTextEditor`
-			// property on the already-constructed Concrete makes it observable
-			// without a restart.
+			// Update `vscode.window.activeTextEditor`. Extensions read this
+			// synchronously; mutating the shim's `__activeTextEditor` makes
+			// it observable without a restart. The stub now includes a real
+			// `setDecorations`, `edit`, and `selection` so language extensions
+			// (Error Lens, GitLens, formatters) can call them immediately.
+			const DocCached = UriRaw
+				? Context?.DocumentContentCache?.get(UriRaw)
+				: undefined;
+			const DocText = DocCached ?? "";
+			const DocLines = DocText.split(/\r?\n/);
+			const MakeDoc = (RealText: string) => {
+				const Lines = RealText.split(/\r?\n/);
+				return {
+					uri: HydratedUri,
+					fileName: HydratedUri?.fsPath ?? UriRaw ?? "",
+					languageId: LanguageId,
+					version: Payload?.version ?? 1,
+					isDirty: false,
+					isClosed: false,
+					eol: 1,
+					get lineCount() {
+						return Lines.length;
+					},
+					getText: (Range?: any) => {
+						if (!Range) return RealText;
+						const SL = Range?.start?.line ?? 0;
+						const SC = Range?.start?.character ?? 0;
+						const EL = Range?.end?.line ?? Lines.length - 1;
+						const EC =
+							Range?.end?.character ?? Lines[EL]?.length ?? 0;
+						if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+						const Parts = [(Lines[SL] ?? "").slice(SC)];
+						for (let I = SL + 1; I < EL; I++)
+							Parts.push(Lines[I] ?? "");
+						Parts.push((Lines[EL] ?? "").slice(0, EC));
+						return Parts.join("\n");
+					},
+					lineAt: (LineOrPos: number | { line: number }) => {
+						const N =
+							typeof LineOrPos === "number"
+								? LineOrPos
+								: LineOrPos.line;
+						const T = Lines[N] ?? "";
+						const FNW = T.search(/\S/);
+						return {
+							text: T,
+							lineNumber: N,
+							range: {
+								start: { line: N, character: 0 },
+								end: { line: N, character: T.length },
+							},
+							firstNonWhitespaceCharacterIndex:
+								FNW === -1 ? T.length : FNW,
+							isEmptyOrWhitespace: T.trim().length === 0,
+						};
+					},
+					save: async () => false,
+					getWordRangeAtPosition: (Pos: any, Pat?: RegExp) => {
+						const L = Lines[Pos?.line ?? 0] ?? "";
+						const R = Pat ?? /\w+/g;
+						R.lastIndex = 0;
+						const C = Pos?.character ?? 0;
+						let M: RegExpExecArray | null;
+						while ((M = R.exec(L)) !== null) {
+							if (M.index <= C && M.index + M[0].length >= C)
+								return {
+									start: {
+										line: Pos.line,
+										character: M.index,
+									},
+									end: {
+										line: Pos.line,
+										character: M.index + M[0].length,
+									},
+								};
+						}
+						return undefined;
+					},
+					validateRange: (Rng: any) => Rng,
+					validatePosition: (P: any) => P,
+					offsetAt: (P: any) => {
+						let O = 0;
+						for (
+							let I = 0;
+							I < (P?.line ?? 0) && I < Lines.length;
+							I++
+						)
+							O += (Lines[I]?.length ?? 0) + 1;
+						return O + (P?.character ?? 0);
+					},
+					positionAt: (Off: number) => {
+						let R = Off;
+						for (let I = 0; I < Lines.length; I++) {
+							const L = (Lines[I]?.length ?? 0) + 1;
+							if (R < L) return { line: I, character: R };
+							R -= L;
+						}
+						return {
+							line: Lines.length - 1,
+							character: Lines[Lines.length - 1]?.length ?? 0,
+						};
+					},
+				};
+			};
+			// Build a live selection reference that Sky can update via sky:editor:selectionChanged
+			const LiveSelection: any = {
+				start: { line: 0, character: 0 },
+				end: { line: 0, character: 0 },
+				active: { line: 0, character: 0 },
+				anchor: { line: 0, character: 0 },
+				isEmpty: true,
+				isReversed: false,
+				isSingleLine: true,
+			};
 			const TextEditorStub = HydratedUri
 				? {
-						document: {
-							uri: HydratedUri,
-							fileName: HydratedUri.fsPath,
-							languageId: LanguageId,
-							version: Payload?.version ?? 1,
-							isDirty: false,
-							isClosed: false,
-							eol: 1,
-							lineCount: 0,
-							getText: () => "",
-							lineAt: () => ({
-								text: "",
-								lineNumber: 0,
-								range: {},
-								firstNonWhitespaceCharacterIndex: 0,
-								isEmptyOrWhitespace: true,
-							}),
-							save: async () => false,
-							getWordRangeAtPosition: () => undefined,
-							validateRange: (R: unknown) => R,
-							validatePosition: (P: unknown) => P,
-							offsetAt: () => 0,
-							positionAt: () => ({ line: 0, character: 0 }),
+						document: MakeDoc(DocText),
+						get selection() {
+							return LiveSelection;
 						},
-						selection: {
-							start: { line: 0, character: 0 },
-							end: { line: 0, character: 0 },
-							active: { line: 0, character: 0 },
-							anchor: { line: 0, character: 0 },
-							isEmpty: true,
-							isReversed: false,
-							isSingleLine: true,
+						set selection(S: any) {
+							Object.assign(LiveSelection, S);
 						},
-						selections: [],
+						selections: [LiveSelection],
 						visibleRanges: [],
-						viewColumn: 1,
-						options: { tabSize: 4, insertSpaces: true },
-						revealRange: () => {},
-						show: () => {},
+						viewColumn: Payload?.viewColumn ?? 1,
+						options: {
+							tabSize: 4,
+							insertSpaces: true,
+							cursorStyle: 1,
+							lineNumbers: 1,
+						},
+						// `editor.setDecorations(type, ranges)` - send to Mountain for Sky relay
+						setDecorations: (
+							DecorationType: any,
+							RangesOrOptions: any[],
+						) => {
+							const Key =
+								typeof DecorationType === "string"
+									? DecorationType
+									: (DecorationType?.key ??
+										DecorationType?.id ??
+										String(DecorationType));
+							Context.SendToMountain(
+								"window.setTextEditorDecorations",
+								{
+									decorationTypeKey: Key,
+									uri: UriRaw,
+									rangesOrOptions: RangesOrOptions,
+								},
+							).catch(() => {});
+						},
+						// `editor.edit(editBuilder => {...})` - collect edits and send to Mountain
+						edit: (
+							Callback: (Builder: any) => void,
+							_Options?: any,
+						): Promise<boolean> => {
+							const Collected: any[] = [];
+							const Builder = {
+								replace: (Range: any, Value: string) =>
+									Collected.push({
+										range: Range,
+										text: Value,
+									}),
+								insert: (Position: any, Value: string) =>
+									Collected.push({
+										range: {
+											startLineNumber:
+												(Position?.line ?? 0) + 1,
+											startColumn:
+												(Position?.character ?? 0) + 1,
+											endLineNumber:
+												(Position?.line ?? 0) + 1,
+											endColumn:
+												(Position?.character ?? 0) + 1,
+										},
+										text: Value,
+									}),
+								delete: (Range: any) =>
+									Collected.push({ range: Range, text: "" }),
+								setEndOfLine: () => {},
+							};
+							try {
+								Callback(Builder);
+							} catch {
+								return Promise.resolve(false);
+							}
+							if (!Collected.length) return Promise.resolve(true);
+							return Context.SendToMountain(
+								"window.applyTextEdits",
+								{ uri: UriRaw, edits: Collected },
+							)
+								.then(() => true)
+								.catch(() => false);
+						},
+						// `editor.insertSnippet` - convert to plain-text edit for now
+						insertSnippet: async (
+							Snippet: any,
+							Location?: any,
+						): Promise<boolean> => {
+							const Text =
+								typeof Snippet === "string"
+									? Snippet
+									: typeof Snippet?.value === "string"
+										? Snippet.value
+										: String(Snippet);
+							const Range = Location ?? LiveSelection;
+							await Context.SendToMountain(
+								"window.applyTextEdits",
+								{
+									uri: UriRaw,
+									edits: [{ range: Range, text: Text }],
+								},
+							).catch(() => {});
+							return true;
+						},
+						revealRange: (Range: any, RevealType?: number) => {
+							Context.SendToMountain("window.revealRange", {
+								uri: UriRaw,
+								range: Range,
+								revealType: RevealType ?? 0,
+							}).catch(() => {});
+						},
+						show: (ViewColumn?: number) => {
+							Context.SendToMountain("window.showTextDocument", {
+								uri: UriRaw,
+								viewColumn: ViewColumn ?? 1,
+							}).catch(() => {});
+						},
 						hide: () => {},
 					}
 				: undefined;
 			if (Context) {
-				// Patch the live `activeTextEditor` on the Concrete that the
-				// extension's `vscode.window` proxy reads through.
+				// Patch live activeTextEditor + keep the LiveSelection mutable
+				// so `window.didChangeTextEditorSelection` can update it in-place.
 				(Context as any).__activeTextEditor = TextEditorStub;
+				(Context as any).__activeTextEditorSelection = LiveSelection;
 			}
 			SafeEmit(
 				Emitter,
 				"window.didChangeActiveTextEditor",
 				TextEditorStub,
 			);
+			break;
+		}
+
+		case "window.didChangeTextEditorSelection": {
+			// Sky → Mountain → Cocoon: selection changed in Monaco.
+			// Payload: { uri, selections: [{startLineNumber, startColumn, endLineNumber, endColumn}] }
+			// Update the live `__activeTextEditorSelection` so extensions reading
+			// `activeTextEditor.selection` see the current cursor position.
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Sels: any[] = Array.isArray(Payload?.selections)
+				? Payload.selections
+				: [];
+			const LiveSel = (Context as any)?.__activeTextEditorSelection;
+			if (LiveSel && Sels.length > 0) {
+				const S = Sels[0];
+				// Monaco uses 1-based; vscode.Position is 0-based
+				const StartLine = Math.max(
+					0,
+					(S?.startLineNumber ?? S?.start?.line ?? 1) - 1,
+				);
+				const StartChar = Math.max(
+					0,
+					(S?.startColumn ?? S?.start?.character ?? 1) - 1,
+				);
+				const EndLine = Math.max(
+					0,
+					(S?.endLineNumber ?? S?.end?.line ?? 1) - 1,
+				);
+				const EndChar = Math.max(
+					0,
+					(S?.endColumn ?? S?.end?.character ?? 1) - 1,
+				);
+				LiveSel.start = { line: StartLine, character: StartChar };
+				LiveSel.end = { line: EndLine, character: EndChar };
+				LiveSel.active = { line: EndLine, character: EndChar };
+				LiveSel.anchor = { line: StartLine, character: StartChar };
+				LiveSel.isEmpty =
+					StartLine === EndLine && StartChar === EndChar;
+				LiveSel.isReversed = false;
+				LiveSel.isSingleLine = StartLine === EndLine;
+			}
+			const StubSels = Sels.map((S: any) => ({
+				start: {
+					line: Math.max(0, (S?.startLineNumber ?? 1) - 1),
+					character: Math.max(0, (S?.startColumn ?? 1) - 1),
+				},
+				end: {
+					line: Math.max(0, (S?.endLineNumber ?? 1) - 1),
+					character: Math.max(0, (S?.endColumn ?? 1) - 1),
+				},
+				active: {
+					line: Math.max(0, (S?.endLineNumber ?? 1) - 1),
+					character: Math.max(0, (S?.endColumn ?? 1) - 1),
+				},
+				anchor: {
+					line: Math.max(0, (S?.startLineNumber ?? 1) - 1),
+					character: Math.max(0, (S?.startColumn ?? 1) - 1),
+				},
+				isEmpty:
+					S?.startLineNumber === S?.endLineNumber &&
+					S?.startColumn === S?.endColumn,
+				isReversed: false,
+				isSingleLine: S?.startLineNumber === S?.endLineNumber,
+			}));
+			const Editor = (Context as any)?.__activeTextEditor;
+			if (Editor && StubSels.length > 0) {
+				Object.assign(Editor.selection ?? {}, StubSels[0]);
+				(Editor as any).selections = StubSels;
+			}
+			SafeEmit(Emitter, "window.didChangeTextEditorSelection", {
+				textEditor: Editor,
+				selections: StubSels,
+				kind: undefined,
+			});
 			break;
 		}
 

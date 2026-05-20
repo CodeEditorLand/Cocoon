@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../../../../Source/TypeConverter/Webview/Convert/Panel/Option/To/DTO.ts"],
-  "sourcesContent": ["/**\n * @module ConvertPanelOptionToDTO\n * @description Converts `vscode.WebviewPanelOptions` into a serializable DTO.\n */\n\nimport type { WebviewPanelOptions } from \"vscode\";\nimport type * as VSCode from \"vscode\";\n\n/**\n * @description Converts the `vscode.WebviewPanelOptions` object into a plain DTO suitable\n * for RPC transport.\n * @param Options The `vscode.WebviewPanelOptions` provided by the extension.\n * @returns A serializable `IWebviewPanelOptions` DTO.\n */\nexport const ConvertPanelOptionToDTO = (\n\tOptions: VSCode.WebviewPanelOptions,\n): WebviewPanelOptions => {\n\t// FIX: Create a mutable intermediate object and then return it.\n\t// This is necessary because `WebviewPanelOptions` has readonly properties,\n\t// so we cannot declare an empty object of that type and then assign to it.\n\tconst dto: {\n\t\tenableFindWidget?: boolean;\n\n\t\tretainContextWhenHidden?: boolean;\n\t} = {};\n\n\tif (Options.enableFindWidget !== undefined) {\n\t\tdto.enableFindWidget = Options.enableFindWidget;\n\t}\n\n\tif (Options.retainContextWhenHidden !== undefined) {\n\t\tdto.retainContextWhenHidden = Options.retainContextWhenHidden;\n\t}\n\n\treturn dto;\n};\n"],
-  "mappings": ";;;;AAcO,IAAM,0BAA0B,wBACtC,YACyB;AAIzB,QAAM,MAIF,CAAC;AAEL,MAAI,QAAQ,qBAAqB,QAAW;AAC3C,QAAI,mBAAmB,QAAQ;AAAA,EAChC;AAEA,MAAI,QAAQ,4BAA4B,QAAW;AAClD,QAAI,0BAA0B,QAAQ;AAAA,EACvC;AAEA,SAAO;AACR,GArBuC;",
-  "names": []
-}
