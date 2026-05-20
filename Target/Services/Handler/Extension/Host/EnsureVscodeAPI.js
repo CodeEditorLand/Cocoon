@@ -21562,7 +21562,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-20T06:10:17Z"
+      generatedAt: "2026-05-20T06:18:01Z"
     };
   }
 });
