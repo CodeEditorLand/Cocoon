@@ -51,6 +51,11 @@ const UriKey = (Value: unknown): string => {
 	return Rendered;
 };
 
+// Module-level diagnostics store: owner → (uriKey → vscode.Diagnostic[]).
+// Each DiagnosticCollection.set() mirrors into this store so getDiagnostics()
+// can return real data without an async Mountain round-trip (T2.6 / C5).
+const _AllDiagnostics = new Map<string, Map<string, unknown[]>>();
+
 /**
  * Helper: register a language provider with auto-handle,
  * notify Mountain, and return a disposable.
@@ -701,6 +706,13 @@ const CreateLanguagesNamespace = (
 						Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
 					}
 
+					// Mirror into the module-level cache so getDiagnostics()
+					// returns real data without an async Mountain round-trip.
+					_AllDiagnostics.set(Owner, new Map(Store));
+					Context.Emitter.emit("diagnostics.didChange", {
+						uris: [...Store.keys()],
+					});
+
 					// Single-shot Diagnostic.Set over the whole collection.
 					// Wire shape MUST be a 2-tuple `[uri, markers]` (NOT
 					// `{uri, diagnostics}`) - Mountain's
@@ -724,6 +736,10 @@ const CreateLanguagesNamespace = (
 
 				delete: (Uri: unknown) => {
 					Store.delete(UriKey(Uri));
+					_AllDiagnostics.set(Owner, new Map(Store));
+					Context.Emitter.emit("diagnostics.didChange", {
+						uris: [UriKey(Uri)],
+					});
 
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
@@ -740,6 +756,8 @@ const CreateLanguagesNamespace = (
 					if (Store.size === 0) return;
 
 					Store.clear();
+					_AllDiagnostics.delete(Owner);
+					Context.Emitter.emit("diagnostics.didChange", { uris: [] });
 
 					Context.MountainClient?.sendRequest("Diagnostic.Clear", [
 						Owner,
@@ -940,7 +958,34 @@ const CreateLanguagesNamespace = (
 			};
 		},
 
-		getDiagnostics: (_Resource?: unknown): unknown[] => [],
+		getDiagnostics: (Resource?: unknown): unknown => {
+			// Aggregate diagnostics from all owners stored in _AllDiagnostics.
+			// Two call signatures (matching vscode.languages.getDiagnostics):
+			//   getDiagnostics(uri)  → Diagnostic[]
+			//   getDiagnostics()     → [Uri, Diagnostic[]][]
+			if (Resource !== undefined) {
+				const Key = UriKey(Resource);
+				const Merged: unknown[] = [];
+				for (const OwnerStore of _AllDiagnostics.values()) {
+					const Diags = OwnerStore.get(Key);
+					if (Diags) Merged.push(...Diags);
+				}
+				return Merged;
+			}
+			// No resource - return all [uri, diagnostics] pairs.
+			const All = new Map<string, unknown[]>();
+			for (const OwnerStore of _AllDiagnostics.values()) {
+				for (const [Uri, Diags] of OwnerStore.entries()) {
+					const Existing = All.get(Uri);
+					if (Existing) {
+						Existing.push(...Diags);
+					} else {
+						All.set(Uri, [...Diags]);
+					}
+				}
+			}
+			return [...All.entries()];
+		},
 
 		registerDocumentPasteEditProvider: (
 			Selector: any,

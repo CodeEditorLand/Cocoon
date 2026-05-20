@@ -483,8 +483,25 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 		},
 
-		createTerminal: (Options?: { name?: string; [k: string]: unknown }) =>
-			CreateTerminal(Context, NextProviderHandle(), Options),
+		createTerminal: (Options?: { name?: string; [k: string]: unknown }) => {
+			const Stub = CreateTerminal(Context, NextProviderHandle(), Options);
+			if (!Array.isArray((Context as any).__terminals)) {
+				(Context as any).__terminals = [];
+			}
+			(Context as any).__terminals.push(Stub);
+			(Context as any).__activeTerminal = Stub;
+			const OrigDispose = Stub.dispose.bind(Stub);
+			Stub.dispose = () => {
+				(Context as any).__terminals = (
+					(Context as any).__terminals ?? []
+				).filter((T: unknown) => T !== Stub);
+				if ((Context as any).__activeTerminal === Stub) {
+					(Context as any).__activeTerminal = undefined;
+				}
+				OrigDispose();
+			};
+			return Stub;
+		},
 
 		createStatusBarItem: (
 			AlignmentOrId?: unknown,
@@ -1289,7 +1306,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// this object literal (lines ~614 and ~581) - leaving the
 		// fuller event-aware definitions intact and only mirroring the
 		// remaining state placeholders here.
-		visibleTextEditors: [] as unknown[],
+		get visibleTextEditors() {
+			return (Context as any).__visibleTextEditors ?? [];
+		},
 
 		visibleNotebookEditors: [] as unknown[],
 
@@ -1297,9 +1316,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		notebookEditors: [] as unknown[],
 
-		terminals: [] as unknown[],
+		get terminals() {
+			return (Context as any).__terminals ?? [];
+		},
 
-		activeTerminal: undefined,
+		get activeTerminal() {
+			return (Context as any).__activeTerminal ?? undefined;
+		},
 
 		state: { focused: true, active: true },
 	};

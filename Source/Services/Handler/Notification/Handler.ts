@@ -80,6 +80,21 @@ type UriObject = {
 	fsPath: string;
 	toString(): string;
 };
+// Minimal stub for when LazyURI.parse is unavailable (import failed or not
+// yet resolved). Enough shape for extensions to call fsPath / toString().
+const MakeUriStub = (Raw: string): UriObject => {
+	const Path = Raw.replace(/^file:\/\//, "");
+	return {
+		scheme: Raw.startsWith("file://") ? "file" : "unknown",
+		authority: "",
+		path: Path,
+		query: "",
+		fragment: "",
+		fsPath: Path,
+		toString: () => Raw,
+	};
+};
+
 const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 	if (!Raw) return null;
 	if (typeof Raw === "string") {
@@ -88,7 +103,9 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 				LazyURI as unknown as { parse: (s: string) => UriObject }
 			).parse(Raw);
 		} catch {
-			return null;
+			// LazyURI unavailable or parse error - fall back to a stub so
+			// the folder is not silently dropped from the workspace list.
+			return MakeUriStub(Raw);
 		}
 	}
 	// Already a URI-shaped object - check for the critical getters extensions
@@ -104,7 +121,9 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 			LazyURI as unknown as { parse: (s: string) => UriObject }
 		).parse(Raw.toString());
 	} catch {
-		return null;
+		return typeof Raw.toString === "function"
+			? MakeUriStub(Raw.toString())
+			: null;
 	}
 };
 
@@ -507,6 +526,17 @@ const HandleSpecificNotification = (
 					const DUri = D?.uri?.toString?.() ?? D?.fileName ?? "";
 					return !ClosedUris.has(DUri);
 				});
+				// Also remove from visibleTextEditors so the array stays
+				// in sync with what's actually open in the workbench.
+				const Visible: unknown[] =
+					(Context as any).__visibleTextEditors ?? [];
+				(Context as any).__visibleTextEditors = Visible.filter(
+					(E: unknown) => {
+						const EUri =
+							(E as any)?.document?.uri?.toString?.() ?? "";
+						return !ClosedUris.has(EUri);
+					},
+				);
 			}
 			break;
 		// `document.willSave` - Mountain fires this BEFORE the file is persisted
@@ -991,6 +1021,28 @@ const HandleSpecificNotification = (
 				// so `window.didChangeTextEditorSelection` can update it in-place.
 				(Context as any).__activeTextEditor = TextEditorStub;
 				(Context as any).__activeTextEditorSelection = LiveSelection;
+				// Upsert into visibleTextEditors so extensions iterating all
+				// open editors (GitLens, Error Lens, formatters) see current state.
+				const Visible: unknown[] = Array.isArray(
+					(Context as any).__visibleTextEditors,
+				)
+					? (Context as any).__visibleTextEditors
+					: [];
+				const UriKey =
+					TextEditorStub?.document?.uri?.toString?.() ?? "";
+				const Idx = UriKey
+					? Visible.findIndex(
+							(E: unknown) =>
+								(E as any)?.document?.uri?.toString?.() ===
+								UriKey,
+						)
+					: -1;
+				if (Idx >= 0) {
+					Visible[Idx] = TextEditorStub;
+				} else if (TextEditorStub) {
+					Visible.push(TextEditorStub);
+				}
+				(Context as any).__visibleTextEditors = Visible;
 			}
 			SafeEmit(
 				Emitter,
