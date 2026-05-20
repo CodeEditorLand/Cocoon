@@ -60,7 +60,7 @@
 		"esbuild": "0.28.0",
 		"ts-patch": "4.0.1",
 		"ulid": "3.0.2",
-		"vitest": "4.1.6"
+		"vitest": "4.1.7"
 	},
 	"publishConfig": {
 		"access": "public",
