@@ -1294,20 +1294,7 @@ var CreateWebviewViewBuilder_default = /* @__PURE__ */ __name((Context, Handle, 
   return View;
 }, "default");
 
-// Source/Services/Handler/VscodeAPI/Window/Namespace.ts
-var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
-  const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
-  Context.Emitter.on(EventName, Bound);
-  const Subscription = {
-    dispose: /* @__PURE__ */ __name(() => {
-      Context.Emitter.off(EventName, Bound);
-    }, "dispose")
-  };
-  if (Disposables && typeof Disposables.push === "function") {
-    Disposables.push(Subscription);
-  }
-  return Subscription;
-}, "MakeEventSubscriber");
+// Source/Services/Handler/VscodeAPI/Window/Registry.ts
 var TreeDataProviders = /* @__PURE__ */ new Map();
 var TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
 var WebviewViewProviders = /* @__PURE__ */ new Map();
@@ -1315,6 +1302,8 @@ var WebviewViewBuilders = /* @__PURE__ */ new Map();
 var CustomEditorProviders = /* @__PURE__ */ new Map();
 var CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
 var WebviewPanels = /* @__PURE__ */ new Map();
+
+// Source/Services/Handler/VscodeAPI/Window/RegisterCustomEditor.ts
 var RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, Options, IsReadonly) => {
   const Handle = NextProviderHandle();
   CustomEditorProviders.set(String(Handle), Provider);
@@ -1400,6 +1389,22 @@ var RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, 
     }, "dispose")
   };
 }, "RegisterCustomEditor");
+var RegisterCustomEditor_default = RegisterCustomEditor;
+
+// Source/Services/Handler/VscodeAPI/Window/Namespace.ts
+var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
+  const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
+  Context.Emitter.on(EventName, Bound);
+  const Subscription = {
+    dispose: /* @__PURE__ */ __name(() => {
+      Context.Emitter.off(EventName, Bound);
+    }, "dispose")
+  };
+  if (Disposables && typeof Disposables.push === "function") {
+    Disposables.push(Subscription);
+  }
+  return Subscription;
+}, "MakeEventSubscriber");
 var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
   const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
     let Options = void 0;
@@ -1524,7 +1529,23 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         return void 0;
       }
     }, "showSaveDialog"),
-    createTerminal: /* @__PURE__ */ __name((Options) => CreateTerminal_default(Context, NextProviderHandle(), Options), "createTerminal"),
+    createTerminal: /* @__PURE__ */ __name((Options) => {
+      const Stub = CreateTerminal_default(Context, NextProviderHandle(), Options);
+      if (!Array.isArray(Context.__terminals)) {
+        Context.__terminals = [];
+      }
+      Context.__terminals.push(Stub);
+      Context.__activeTerminal = Stub;
+      const OrigDispose = Stub.dispose.bind(Stub);
+      Stub.dispose = () => {
+        Context.__terminals = (Context.__terminals ?? []).filter((T) => T !== Stub);
+        if (Context.__activeTerminal === Stub) {
+          Context.__activeTerminal = void 0;
+        }
+        OrigDispose();
+      };
+      return Stub;
+    }, "createTerminal"),
     createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => CreateStatusBarItem_default(
       Context,
       NextProviderHandle(),
@@ -1800,7 +1821,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         }, "dispose")
       };
     }, "registerWebviewViewProvider"),
-    registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+    registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor_default(
       Context,
       ViewType,
       Provider,
@@ -1815,7 +1836,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     // distinguishes them. We set the same `customEditor.*` listener
     // registrations so the workbench-side lifecycle still runs the
     // resolveCustomTextEditor / resolveCustomEditor path correctly.
-    registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+    registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor_default(
       Context,
       ViewType,
       Provider,
@@ -2105,12 +2126,18 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     // this object literal (lines ~614 and ~581) - leaving the
     // fuller event-aware definitions intact and only mirroring the
     // remaining state placeholders here.
-    visibleTextEditors: [],
+    get visibleTextEditors() {
+      return Context.__visibleTextEditors ?? [];
+    },
     visibleNotebookEditors: [],
     activeNotebookEditor: void 0,
     notebookEditors: [],
-    terminals: [],
-    activeTerminal: void 0,
+    get terminals() {
+      return Context.__terminals ?? [];
+    },
+    get activeTerminal() {
+      return Context.__activeTerminal ?? void 0;
+    },
     state: { focused: true, active: true }
   };
   return Namespace_default(Concrete);

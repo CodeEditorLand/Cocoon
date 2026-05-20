@@ -438,7 +438,7 @@ var RouteManifestSummary = {
   mountain: 135,
   stockLift: 0,
   bespoke: 1,
-  generatedAt: "2026-05-20T04:19:17Z"
+  generatedAt: "2026-05-20T06:10:17Z"
 };
 
 // Source/Services/Dual/Track.ts
@@ -12075,6 +12075,14 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
     const Shape = Payload ?? {};
     const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
     if (Keys.length === 0) {
+      return;
+    }
+    if (Keys.length === 1 && Keys[0] === "*") {
+      const CachedKeys = [...ConfigCache.keys()];
+      ConfigCache.clear();
+      for (const Key of CachedKeys) {
+        PrimeConfig(Key);
+      }
       return;
     }
     for (const Key of Keys) {

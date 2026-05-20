@@ -2030,6 +2030,399 @@ var init_uri = __esm({
   }
 });
 
+// Source/Services/Dev/Log.ts
+var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog2, Log_default;
+var init_Log = __esm({
+  "Source/Services/Dev/Log.ts"() {
+    "use strict";
+    Raw = process.env["Trace"] ?? "";
+    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+    TagSet = new Set(ParsedTags);
+    IsShort = TagSet.has("short");
+    HasAll = TagSet.has("all");
+    IsEnabled = /* @__PURE__ */ __name((Tag) => {
+      if (TagSet.size === 0) return false;
+      if (HasAll || IsShort) return true;
+      return TagSet.has(Tag.toLowerCase());
+    }, "IsEnabled");
+    CocoonDevLog2 = /* @__PURE__ */ __name((Tag, Message) => {
+      if (!IsEnabled(Tag)) return;
+      const TagUpper = Tag.toUpperCase();
+      process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+    }, "CocoonDevLog");
+    Log_default = CocoonDevLog2;
+  }
+});
+
+// Source/Platform/FiddeeRoot.ts
+function FiddeeRoot() {
+  const Home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? null;
+  if (typeof Home === "string" && Home.length > 0) {
+    return `${Home}/${DotfileName}`;
+  }
+  return DotfileName;
+}
+var DotfileName;
+var init_FiddeeRoot = __esm({
+  "Source/Platform/FiddeeRoot.ts"() {
+    "use strict";
+    DotfileName = ".fiddee";
+    __name(FiddeeRoot, "FiddeeRoot");
+  }
+});
+
+// Source/Services/Handler/Extension/Host/ActivateExtension.ts
+import * as NodeFS from "node:fs";
+var CreateExtensionContext, ActivateExtension, ActivateExtension_default;
+var init_ActivateExtension = __esm({
+  "Source/Services/Handler/Extension/Host/ActivateExtension.ts"() {
+    "use strict";
+    init_FiddeeRoot();
+    init_Log();
+    CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, ExtensionPath) => {
+      const ExtId = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "";
+      const FiddeeRootPath = FiddeeRoot();
+      const StorageBase = `${FiddeeRootPath}/extensionStorage`;
+      const GlobalStorageBase = `${FiddeeRootPath}/globalStorage`;
+      const LogBase = `${FiddeeRootPath}/logs`;
+      const ExtStoragePath = `${StorageBase}/${ExtId}`;
+      const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
+      const LogPath = `${LogBase}/${ExtId}`;
+      try {
+        NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
+        NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
+        NodeFS.mkdirSync(LogPath, { recursive: true });
+      } catch {
+      }
+      let FullPackageJSON = Extension;
+      try {
+        const Contents = NodeFS.readFileSync(
+          `${ExtensionPath}/package.json`,
+          "utf8"
+        );
+        const Parsed = JSON.parse(Contents);
+        FullPackageJSON = {
+          ...Parsed,
+          ...Extension
+        };
+      } catch {
+      }
+      const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
+      const MakeUri = /* @__PURE__ */ __name((Path) => {
+        if (VsCodeUri && typeof VsCodeUri.file === "function") {
+          return VsCodeUri.file(Path);
+        }
+        return {
+          scheme: "file",
+          path: Path,
+          fsPath: Path,
+          authority: "",
+          query: "",
+          fragment: "",
+          with: /* @__PURE__ */ __name(function(Change) {
+            return { ...this, ...Change };
+          }, "with"),
+          toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
+        };
+      }, "MakeUri");
+      return {
+        subscriptions: [],
+        extensionPath: ExtensionPath,
+        extensionUri: MakeUri(ExtensionPath),
+        // VS Code API: `context.asAbsolutePath(relative)` returns the
+        // extension path joined with a relative path. The 4 language-
+        // features extensions all call this immediately in their activate
+        // function to resolve server bundle locations; without it, they
+        // fail before vscode-languageclient even constructs.
+        asAbsolutePath: /* @__PURE__ */ __name((RelativePath2) => {
+          const Trimmed = RelativePath2.replace(/^\.?\//, "");
+          return `${ExtensionPath}/${Trimmed}`;
+        }, "asAbsolutePath"),
+        storagePath: ExtStoragePath,
+        globalStoragePath: GlobalStoragePath,
+        logPath: LogPath,
+        storageUri: MakeUri(ExtStoragePath),
+        globalStorageUri: MakeUri(GlobalStoragePath),
+        logUri: MakeUri(LogPath),
+        environmentVariableCollection: {
+          persistent: false,
+          description: void 0,
+          replace: /* @__PURE__ */ __name(() => {
+          }, "replace"),
+          append: /* @__PURE__ */ __name(() => {
+          }, "append"),
+          prepend: /* @__PURE__ */ __name(() => {
+          }, "prepend"),
+          get: /* @__PURE__ */ __name(() => void 0, "get"),
+          forEach: /* @__PURE__ */ __name(() => {
+          }, "forEach"),
+          delete: /* @__PURE__ */ __name(() => {
+          }, "delete"),
+          clear: /* @__PURE__ */ __name(() => {
+          }, "clear"),
+          getScoped: /* @__PURE__ */ __name(() => ({
+            persistent: false,
+            description: void 0,
+            replace: /* @__PURE__ */ __name(() => {
+            }, "replace"),
+            append: /* @__PURE__ */ __name(() => {
+            }, "append"),
+            prepend: /* @__PURE__ */ __name(() => {
+            }, "prepend"),
+            get: /* @__PURE__ */ __name(() => void 0, "get"),
+            forEach: /* @__PURE__ */ __name(() => {
+            }, "forEach"),
+            delete: /* @__PURE__ */ __name(() => {
+            }, "delete"),
+            clear: /* @__PURE__ */ __name(() => {
+            }, "clear"),
+            getScoped: /* @__PURE__ */ __name(() => ({}), "getScoped"),
+            [Symbol.iterator]: function* () {
+            }
+          }), "getScoped"),
+          [Symbol.iterator]: function* () {
+          }
+        },
+        secrets: {
+          get: /* @__PURE__ */ __name(async (_Key) => void 0, "get"),
+          store: /* @__PURE__ */ __name(async (_Key, _Value) => {
+          }, "store"),
+          delete: /* @__PURE__ */ __name(async (_Key) => {
+          }, "delete"),
+          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange")
+        },
+        workspaceState: {
+          get: /* @__PURE__ */ __name((_Key, _DefaultValue) => void 0, "get"),
+          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
+          }, "update"),
+          keys: /* @__PURE__ */ __name(() => [], "keys")
+        },
+        globalState: {
+          get: /* @__PURE__ */ __name((_Key, _DefaultValue) => void 0, "get"),
+          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
+          }, "update"),
+          keys: /* @__PURE__ */ __name(() => [], "keys"),
+          setKeysForSync: /* @__PURE__ */ __name((_Keys) => {
+          }, "setKeysForSync")
+        },
+        extensionMode: 1,
+        extension: {
+          id: ExtId,
+          extensionUri: {
+            scheme: "file",
+            path: ExtensionPath,
+            fsPath: ExtensionPath
+          },
+          extensionPath: ExtensionPath,
+          isActive: true,
+          packageJSON: FullPackageJSON,
+          extensionKind: 1,
+          exports: void 0,
+          activate: /* @__PURE__ */ __name(async () => {
+          }, "activate")
+        },
+        languageModelAccessInformation: {
+          canSendRequest: /* @__PURE__ */ __name((_Model) => false, "canSendRequest"),
+          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange")
+        }
+      };
+    }, "CreateExtensionContext");
+    ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, ActivationEvent) => {
+      if (Context.ActivatedExtensions.has(ExtensionId)) return;
+      Context.ActivatedExtensions.add(ExtensionId);
+      const StartMs = Date.now();
+      CocoonDevLog2(
+        "ext-activate",
+        `[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`
+      );
+      const Extension = Context.ExtensionRegistry.get(ExtensionId);
+      if (!Extension) {
+        CocoonDevLog2(
+          "ext-activate",
+          `[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`
+        );
+        return;
+      }
+      const LocationRaw = Extension?.ExtensionLocation ?? Extension?.extensionLocation ?? Extension?.location?.path ?? Extension?.location;
+      const MainFile = Extension?.main ?? Extension?.Main;
+      if (!LocationRaw || !MainFile) {
+        return;
+      }
+      let ExtensionPath;
+      try {
+        ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
+          /\/$/,
+          ""
+        );
+      } catch {
+        ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
+      }
+      const ModulePath = `${ExtensionPath}/${MainFile}`;
+      try {
+        const { access } = await import("node:fs/promises");
+        let Exists = false;
+        let Resolved = ModulePath;
+        for (const Candidate of [ModulePath, `${ModulePath}.js`]) {
+          try {
+            await access(Candidate);
+            Exists = true;
+            Resolved = Candidate;
+            break;
+          } catch {
+          }
+        }
+        if (!Exists) {
+          process.stdout.write(
+            `[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})
+`
+          );
+          return;
+        }
+        if (process.env["Trace"]?.includes("preflight")) {
+          process.stdout.write(
+            `[LandFix:Preflight] ${ExtensionId}: resolved to ${Resolved}
+`
+          );
+        }
+      } catch (Err) {
+        process.stdout.write(
+          `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}
+`
+        );
+      }
+      const ModuleType = Extension?.type ?? Extension?.Type;
+      const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
+      CocoonDevLog2(
+        "ext-activate",
+        `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
+      );
+      try {
+        const Manifest = await (async () => {
+          try {
+            const { readFile } = await import("node:fs/promises");
+            const Raw2 = await readFile(
+              `${ExtensionPath}/package.json`,
+              "utf8"
+            );
+            return JSON.parse(Raw2);
+          } catch {
+            return Extension;
+          }
+        })();
+        const ConfigState = globalThis.__cocoonConfigState;
+        ConfigState?.PrePopulateFromManifest(Manifest);
+      } catch {
+      }
+      try {
+        let ExtModule;
+        if (IsESM) {
+          const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
+          ExtModule = await import(ImportURL);
+        } else {
+          const { createRequire } = await import("module");
+          const Require = createRequire(import.meta.url);
+          try {
+            ExtModule = Require(ModulePath);
+          } catch (RequireErr) {
+            const Msg = RequireErr instanceof Error ? RequireErr.message : String(RequireErr);
+            if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
+              const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
+              ExtModule = await import(ImportURL);
+            } else {
+              throw RequireErr;
+            }
+          }
+        }
+        const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
+        if (typeof ActivateFn === "function") {
+          const ExtContext = CreateExtensionContext(
+            Context,
+            Extension,
+            ExtensionPath
+          );
+          const InstrumentedExtensions = [
+            "vscode.git",
+            "vscode.git-base",
+            "vscode.npm",
+            "vscode.gulp",
+            "vscode.grunt",
+            "vscode.jake",
+            "vscode.merge-conflict"
+          ];
+          const SnapshotInitState = /* @__PURE__ */ __name((Phase) => {
+            try {
+              const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+              const InitFolders = Array.isArray(InitWorkspace.folders) ? InitWorkspace.folders : [];
+              const FolderShape = InitFolders.map((F, I) => {
+                const UriField = F?.uri;
+                const UriShape = typeof UriField === "string" ? `string("${UriField.slice(0, 80)}")` : typeof UriField === "object" && UriField !== null ? `object(scheme=${UriField.scheme ?? "<missing>"} fsPath=${typeof UriField.fsPath === "string" ? UriField.fsPath.slice(0, 80) : "<not-a-string>"})` : typeof UriField;
+                return `[${I}] name=${F?.name ?? "?"} uri=${UriShape}`;
+              }).join(" | ");
+              const ConfigState = globalThis.__cocoonConfigState;
+              const AutoDetect = ConfigState?.ConfigCache?.get?.(
+                "git.autoRepositoryDetection"
+              );
+              const Enabled2 = ConfigState?.ConfigCache?.get?.("git.enabled");
+              const AutoDetectShape = `${typeof AutoDetect}=${typeof AutoDetect === "object" ? JSON.stringify(AutoDetect).slice(0, 80) : String(AutoDetect)}`;
+              CocoonDevLog2(
+                "ext-preactivate",
+                `[ExtensionHostHandler] ${Phase} ${ExtensionId} folders.length=${InitFolders.length} | git.enabled=${Enabled2} | git.autoRepositoryDetection=${AutoDetectShape} | ${FolderShape}`
+              );
+            } catch (Err) {
+              CocoonDevLog2(
+                "ext-preactivate",
+                `[ExtensionHostHandler] ${Phase} ${ExtensionId} snapshot failed: ${Err?.message ?? String(Err)}`
+              );
+            }
+          }, "SnapshotInitState");
+          if (InstrumentedExtensions.includes(ExtensionId)) {
+            SnapshotInitState("PRE-ACTIVATE");
+          }
+          const ExtActivateResult = await ActivateFn(ExtContext);
+          const RegEntry = Context.ExtensionRegistry.get(ExtensionId);
+          if (RegEntry && ExtActivateResult !== void 0) {
+            RegEntry.__exports = ExtActivateResult;
+            RegEntry.exports = ExtActivateResult;
+          }
+          process.stdout.write(
+            `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})
+`
+          );
+          if (InstrumentedExtensions.includes(ExtensionId)) {
+            SnapshotInitState("POST-ACTIVATE");
+            setTimeout(() => SnapshotInitState("DEFERRED-1S"), 1e3);
+          }
+          CocoonDevLog2(
+            "ext-activate",
+            `[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
+          );
+        } else {
+          CocoonDevLog2(
+            "ext-activate",
+            `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
+          );
+          CocoonDevLog2(
+            "ext-activate",
+            `[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
+          );
+        }
+      } catch (Err) {
+        Context.ActivatedExtensions.delete(ExtensionId);
+        const Message = Err instanceof Error ? Err.message : String(Err);
+        CocoonDevLog2(
+          "ext-activate",
+          `[ExtActivate] fail ext=${ExtensionId} duration_ms=${Date.now() - StartMs} error=${Message.replace(/\n/g, " | ")}`
+        );
+        throw Err;
+      }
+    }, "ActivateExtension");
+    ActivateExtension_default = ActivateExtension;
+  }
+});
+
 // ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
 function findLast(array, predicate, fromIndex = array.length - 1) {
   const idx = findLastIdx(array, predicate, fromIndex);
@@ -19807,8 +20200,8 @@ var init_Bridge = __esm({
 });
 
 // Source/Utility/Land/Fix/Log.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, Log_default;
-var init_Log = __esm({
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, Log_default2;
+var init_Log2 = __esm({
   "Source/Utility/Land/Fix/Log.ts"() {
     "use strict";
     Mode = process.env["Mend"] ?? "short";
@@ -19903,7 +20296,7 @@ var init_Log = __esm({
       IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
       Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
     };
-    Log_default = LandFixLog;
+    Log_default2 = LandFixLog;
   }
 });
 
@@ -19913,7 +20306,7 @@ var LazyCaptureEvent, NoopDisposable, IsTrustFamily, ClassifyProperty, RecordGap
 var init_Heuristics = __esm({
   "Source/Services/Handler/VscodeAPI/Wrap/Namespace/With/Heuristics.ts"() {
     "use strict";
-    init_Log();
+    init_Log2();
     if (process.env["NODE_ENV"] !== "production") {
       void Promise.resolve().then(() => (init_Bridge(), Bridge_exports)).then((Module) => {
         LazyCaptureEvent = Module.CaptureEvent;
@@ -19967,7 +20360,7 @@ var init_Heuristics = __esm({
     }, "ClassifyProperty");
     RecordGap = /* @__PURE__ */ __name((NamespaceName, Property, Kind) => {
       const Key = `${NamespaceName}.${Property}`;
-      Log_default.InfoOnce(
+      Log_default2.InfoOnce(
         "VSCODE-API-GAP",
         Key,
         `${NamespaceName}.${Property} \u2192 ${Kind}`
@@ -20659,42 +21052,11 @@ var init_CreateWebviewViewBuilder = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/Window/Namespace.ts
-var Namespace_exports = {};
-__export(Namespace_exports, {
-  CustomEditorProviders: () => CustomEditorProviders,
-  CustomEditorProvidersByViewType: () => CustomEditorProvidersByViewType,
-  TreeDataProviders: () => TreeDataProviders,
-  TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
-  WebviewPanels: () => WebviewPanels,
-  WebviewViewBuilders: () => WebviewViewBuilders,
-  WebviewViewProviders: () => WebviewViewProviders,
-  default: () => Namespace_default2
-});
-var MakeEventSubscriber, TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, WebviewViewBuilders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels, RegisterCustomEditor, CreateWindowNamespace, Namespace_default2;
-var init_Namespace2 = __esm({
-  "Source/Services/Handler/VscodeAPI/Window/Namespace.ts"() {
+// Source/Services/Handler/VscodeAPI/Window/Registry.ts
+var TreeDataProviders, TreeDataProvidersByViewId, WebviewViewProviders, WebviewViewBuilders, CustomEditorProviders, CustomEditorProvidersByViewType, WebviewPanels;
+var init_Registry2 = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/Registry.ts"() {
     "use strict";
-    init_Registry();
-    init_Namespace();
-    init_CreateOutputChannel();
-    init_CreateStatusBarItem();
-    init_CreateTerminal();
-    init_CreateWebviewPanel();
-    init_CreateWebviewViewBuilder();
-    MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
-      const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
-      Context.Emitter.on(EventName, Bound);
-      const Subscription = {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.off(EventName, Bound);
-        }, "dispose")
-      };
-      if (Disposables && typeof Disposables.push === "function") {
-        Disposables.push(Subscription);
-      }
-      return Subscription;
-    }, "MakeEventSubscriber");
     TreeDataProviders = /* @__PURE__ */ new Map();
     TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
     WebviewViewProviders = /* @__PURE__ */ new Map();
@@ -20702,6 +21064,16 @@ var init_Namespace2 = __esm({
     CustomEditorProviders = /* @__PURE__ */ new Map();
     CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
     WebviewPanels = /* @__PURE__ */ new Map();
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Window/RegisterCustomEditor.ts
+var RegisterCustomEditor, RegisterCustomEditor_default;
+var init_RegisterCustomEditor = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/RegisterCustomEditor.ts"() {
+    "use strict";
+    init_Registry();
+    init_Registry2();
     RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, Options, IsReadonly) => {
       const Handle = NextProviderHandle();
       CustomEditorProviders.set(String(Handle), Provider);
@@ -20787,6 +21159,49 @@ var init_Namespace2 = __esm({
         }, "dispose")
       };
     }, "RegisterCustomEditor");
+    RegisterCustomEditor_default = RegisterCustomEditor;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Window/Namespace.ts
+var Namespace_exports = {};
+__export(Namespace_exports, {
+  CustomEditorProviders: () => CustomEditorProviders,
+  CustomEditorProvidersByViewType: () => CustomEditorProvidersByViewType,
+  TreeDataProviders: () => TreeDataProviders,
+  TreeDataProvidersByViewId: () => TreeDataProvidersByViewId,
+  WebviewPanels: () => WebviewPanels,
+  WebviewViewBuilders: () => WebviewViewBuilders,
+  WebviewViewProviders: () => WebviewViewProviders,
+  default: () => Namespace_default2
+});
+var MakeEventSubscriber, CreateWindowNamespace, Namespace_default2;
+var init_Namespace2 = __esm({
+  "Source/Services/Handler/VscodeAPI/Window/Namespace.ts"() {
+    "use strict";
+    init_Registry();
+    init_Namespace();
+    init_CreateOutputChannel();
+    init_CreateStatusBarItem();
+    init_CreateTerminal();
+    init_CreateWebviewPanel();
+    init_CreateWebviewViewBuilder();
+    init_RegisterCustomEditor();
+    init_Registry2();
+    init_Registry2();
+    MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback, ThisArg, Disposables) => {
+      const Bound = ThisArg === void 0 ? Callback : Callback.bind(ThisArg);
+      Context.Emitter.on(EventName, Bound);
+      const Subscription = {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.Emitter.off(EventName, Bound);
+        }, "dispose")
+      };
+      if (Disposables && typeof Disposables.push === "function") {
+        Disposables.push(Subscription);
+      }
+      return Subscription;
+    }, "MakeEventSubscriber");
     CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
         let Options = void 0;
@@ -20911,7 +21326,23 @@ var init_Namespace2 = __esm({
             return void 0;
           }
         }, "showSaveDialog"),
-        createTerminal: /* @__PURE__ */ __name((Options) => CreateTerminal_default(Context, NextProviderHandle(), Options), "createTerminal"),
+        createTerminal: /* @__PURE__ */ __name((Options) => {
+          const Stub2 = CreateTerminal_default(Context, NextProviderHandle(), Options);
+          if (!Array.isArray(Context.__terminals)) {
+            Context.__terminals = [];
+          }
+          Context.__terminals.push(Stub2);
+          Context.__activeTerminal = Stub2;
+          const OrigDispose = Stub2.dispose.bind(Stub2);
+          Stub2.dispose = () => {
+            Context.__terminals = (Context.__terminals ?? []).filter((T) => T !== Stub2);
+            if (Context.__activeTerminal === Stub2) {
+              Context.__activeTerminal = void 0;
+            }
+            OrigDispose();
+          };
+          return Stub2;
+        }, "createTerminal"),
         createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => CreateStatusBarItem_default(
           Context,
           NextProviderHandle(),
@@ -21187,7 +21618,7 @@ var init_Namespace2 = __esm({
             }, "dispose")
           };
         }, "registerWebviewViewProvider"),
-        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor_default(
           Context,
           ViewType,
           Provider,
@@ -21202,7 +21633,7 @@ var init_Namespace2 = __esm({
         // distinguishes them. We set the same `customEditor.*` listener
         // registrations so the workbench-side lifecycle still runs the
         // resolveCustomTextEditor / resolveCustomEditor path correctly.
-        registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor(
+        registerCustomReadonlyEditorProvider: /* @__PURE__ */ __name((ViewType, Provider, Options) => RegisterCustomEditor_default(
           Context,
           ViewType,
           Provider,
@@ -21492,12 +21923,18 @@ var init_Namespace2 = __esm({
         // this object literal (lines ~614 and ~581) - leaving the
         // fuller event-aware definitions intact and only mirroring the
         // remaining state placeholders here.
-        visibleTextEditors: [],
+        get visibleTextEditors() {
+          return Context.__visibleTextEditors ?? [];
+        },
         visibleNotebookEditors: [],
         activeNotebookEditor: void 0,
         notebookEditors: [],
-        terminals: [],
-        activeTerminal: void 0,
+        get terminals() {
+          return Context.__terminals ?? [];
+        },
+        get activeTerminal() {
+          return Context.__activeTerminal ?? void 0;
+        },
         state: { focused: true, active: true }
       };
       return Namespace_default(Concrete);
@@ -21518,7 +21955,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-20T04:19:17Z"
+      generatedAt: "2026-05-20T06:10:17Z"
     };
   }
 });
@@ -24317,31 +24754,6 @@ var init_Lift = __esm({
   }
 });
 
-// Source/Services/Dev/Log.ts
-var Raw, ParsedTags, TagSet, IsShort, HasAll, IsEnabled, CocoonDevLog2, Log_default2;
-var init_Log2 = __esm({
-  "Source/Services/Dev/Log.ts"() {
-    "use strict";
-    Raw = process.env["Trace"] ?? "";
-    ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
-    TagSet = new Set(ParsedTags);
-    IsShort = TagSet.has("short");
-    HasAll = TagSet.has("all");
-    IsEnabled = /* @__PURE__ */ __name((Tag) => {
-      if (TagSet.size === 0) return false;
-      if (HasAll || IsShort) return true;
-      return TagSet.has(Tag.toLowerCase());
-    }, "IsEnabled");
-    CocoonDevLog2 = /* @__PURE__ */ __name((Tag, Message) => {
-      if (!IsEnabled(Tag)) return;
-      const TagUpper = Tag.toUpperCase();
-      process.stdout.write(`[DEV:${TagUpper}] ${Message}
-`);
-    }, "CocoonDevLog");
-    Log_default2 = CocoonDevLog2;
-  }
-});
-
 // Source/Services/Handler/VscodeAPI/Workspace/Namespace/Helpers.ts
 var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, ResolveWorkspaceFolders;
 var init_Helpers = __esm({
@@ -24424,7 +24836,7 @@ var CreateConfigurationState, SynthesiseSubtree, BuildGetConfiguration, BuildOnD
 var init_Configuration2 = __esm({
   "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Configuration.ts"() {
     "use strict";
-    init_Log2();
+    init_Log();
     init_Helpers();
     CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
       const ConfigCache = /* @__PURE__ */ new Map();
@@ -24494,6 +24906,14 @@ var init_Configuration2 = __esm({
         const Shape = Payload ?? {};
         const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
         if (Keys.length === 0) {
+          return;
+        }
+        if (Keys.length === 1 && Keys[0] === "*") {
+          const CachedKeys = [...ConfigCache.keys()];
+          ConfigCache.clear();
+          for (const Key of CachedKeys) {
+            PrimeConfig(Key);
+          }
           return;
         }
         for (const Key of Keys) {
@@ -24630,7 +25050,7 @@ var Injected, Pick, Tier, Tier_default;
 var init_Tier = __esm({
   "Source/Utility/Tier.ts"() {
     "use strict";
-    init_Log();
+    init_Log2();
     Injected = globalThis.__LandTiers ?? {};
     Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
       const FromInjected = Injected[Capability];
@@ -24677,7 +25097,7 @@ var init_Tier = __esm({
       // IPC routing: Mountain (default) → NodeDeferred → Node
       IPC: Pick("IPC", "Mountain")
     };
-    Log_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
+    Log_default2.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
     Tier_default = Tier;
   }
 });
@@ -25693,7 +26113,7 @@ var STATIC_EXTENSION_TO_LANGUAGE, FiredLanguages;
 var init_Activation = __esm({
   "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Language/Activation.ts"() {
     "use strict";
-    init_Log2();
+    init_Log();
     STATIC_EXTENSION_TO_LANGUAGE = {
       // Web / script
       ts: "typescript",
@@ -26692,7 +27112,7 @@ var Namespace_exports4 = {};
 __export(Namespace_exports4, {
   default: () => Namespace_default7
 });
-var UriKey, RegisterProvider, CreateLanguagesNamespace, Namespace_default7;
+var UriKey, _AllDiagnostics, RegisterProvider, CreateLanguagesNamespace, Namespace_default7;
 var init_Namespace9 = __esm({
   "Source/Services/Handler/VscodeAPI/Languages/Namespace.ts"() {
     "use strict";
@@ -26714,6 +27134,7 @@ var init_Namespace9 = __esm({
         return `file://${WithParts.fsPath}`;
       return Rendered;
     }, "UriKey");
+    _AllDiagnostics = /* @__PURE__ */ new Map();
     RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
       if (Provider == null || typeof Provider !== "object") {
         return { dispose: /* @__PURE__ */ __name(() => {
@@ -27052,6 +27473,10 @@ var init_Namespace9 = __esm({
             } else {
               Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
             }
+            _AllDiagnostics.set(Owner, new Map(Store));
+            Context.Emitter.emit("diagnostics.didChange", {
+              uris: [...Store.keys()]
+            });
             Context.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
               [...Store.entries()].map(([U, D]) => [
@@ -27063,6 +27488,10 @@ var init_Namespace9 = __esm({
           }, "set"),
           delete: /* @__PURE__ */ __name((Uri2) => {
             Store.delete(UriKey(Uri2));
+            _AllDiagnostics.set(Owner, new Map(Store));
+            Context.Emitter.emit("diagnostics.didChange", {
+              uris: [UriKey(Uri2)]
+            });
             Context.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
               [...Store.entries()].map(([U, D]) => [
@@ -27075,6 +27504,8 @@ var init_Namespace9 = __esm({
           clear: /* @__PURE__ */ __name(() => {
             if (Store.size === 0) return;
             Store.clear();
+            _AllDiagnostics.delete(Owner);
+            Context.Emitter.emit("diagnostics.didChange", { uris: [] });
             Context.MountainClient?.sendRequest("Diagnostic.Clear", [
               Owner
             ]).catch(() => {
@@ -27189,7 +27620,29 @@ var init_Namespace9 = __esm({
           }, "dispose")
         };
       }, "onDidChangeDiagnostics"),
-      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
+      getDiagnostics: /* @__PURE__ */ __name((Resource) => {
+        if (Resource !== void 0) {
+          const Key = UriKey(Resource);
+          const Merged = [];
+          for (const OwnerStore of _AllDiagnostics.values()) {
+            const Diags = OwnerStore.get(Key);
+            if (Diags) Merged.push(...Diags);
+          }
+          return Merged;
+        }
+        const All = /* @__PURE__ */ new Map();
+        for (const OwnerStore of _AllDiagnostics.values()) {
+          for (const [Uri2, Diags] of OwnerStore.entries()) {
+            const Existing = All.get(Uri2);
+            if (Existing) {
+              Existing.push(...Diags);
+            } else {
+              All.set(Uri2, [...Diags]);
+            }
+          }
+        }
+        return [...All.entries()];
+      }, "getDiagnostics"),
       registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
         Context,
         LanguageProviderRegistry,
@@ -27283,7 +27736,7 @@ var NoopDisposable2, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocati
 var init_Namespace11 = __esm({
   "Source/Services/Handler/VscodeAPI/Extensions/Namespace.ts"() {
     "use strict";
-    init_Log();
+    init_Log2();
     init_Namespace10();
     NoopDisposable2 = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
@@ -27395,7 +27848,7 @@ var init_Namespace11 = __esm({
           try {
             Path = decodeURIComponent(new URL(Raw2).pathname);
           } catch (Error2) {
-            Log_default.Warn(
+            Log_default2.Warn(
               "ExtNs",
               `URL parse failed for ${Raw2}: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}; using fallback strip`
             );
@@ -27404,13 +27857,13 @@ var init_Namespace11 = __esm({
         }
         Path = Path.replace(/\/$/, "");
         if (UriFactoryAvailable) {
-          Log_default.DebugOnce(
+          Log_default2.DebugOnce(
             "ExtNs",
             `string:${Path}`,
             `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=real)`
           );
         } else {
-          Log_default.InfoOnce(
+          Log_default2.InfoOnce(
             "ExtNs",
             `string-fallback:${Path}`,
             `string extensionLocation ${Raw2} \u2192 path=${Path} (factory=FALLBACK)`
@@ -27422,13 +27875,13 @@ var init_Namespace11 = __esm({
         const Obj = Raw2;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
         if (UriFactoryAvailable) {
-          Log_default.DebugOnce(
+          Log_default2.DebugOnce(
             "ExtNs",
             `object:${Path}`,
             `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=real)`
           );
         } else {
-          Log_default.InfoOnce(
+          Log_default2.InfoOnce(
             "ExtNs",
             `object-fallback:${Path}`,
             `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=FALLBACK)`
@@ -27436,7 +27889,7 @@ var init_Namespace11 = __esm({
         }
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      Log_default.Warn(
+      Log_default2.Warn(
         "ExtNs",
         `extensionLocation missing or unsupported type: ${typeof Raw2}; using empty path`
       );
@@ -27546,34 +27999,34 @@ var CreateEnvNamespace, Namespace_default11;
 var init_Namespace13 = __esm({
   "Source/Services/Handler/VscodeAPI/Env/Namespace.ts"() {
     "use strict";
-    init_Log();
+    init_Log2();
     init_Namespace12();
     CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
       const Env = Context.ExtensionHostInitData?.environment ?? {};
       const NormalizeAppRoot = /* @__PURE__ */ __name((Raw2) => {
         if (typeof Raw2 !== "string" || Raw2.length === 0) {
-          Log_default.Warn(
+          Log_default2.Warn(
             "EnvNs",
             "appRoot empty or non-string, returning ''"
           );
           return "";
         }
         if (!Raw2.startsWith("file:")) {
-          Log_default.Info("EnvNs", `appRoot already plain path: ${Raw2}`);
+          Log_default2.Info("EnvNs", `appRoot already plain path: ${Raw2}`);
           return Raw2;
         }
         try {
           const Normalised = decodeURIComponent(
             new URL(Raw2).pathname
           ).replace(/\/$/, "");
-          Log_default.Info(
+          Log_default2.Info(
             "EnvNs",
             `appRoot normalised file-URL ${Raw2} \u2192 ${Normalised}`
           );
           return Normalised;
         } catch (Error2) {
           const Fallback = Raw2.replace(/^file:\/\//, "").replace(/\/$/, "");
-          Log_default.Warn(
+          Log_default2.Warn(
             "EnvNs",
             `appRoot URL parse failed; fallback ${Raw2} \u2192 ${Fallback}`,
             {
@@ -28286,192 +28739,12 @@ var init_Namespace21 = __esm({
   }
 });
 
-// Source/Platform/FiddeeRoot.ts
-function FiddeeRoot() {
-  const Home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? null;
-  if (typeof Home === "string" && Home.length > 0) {
-    return `${Home}/${DotfileName}`;
-  }
-  return DotfileName;
-}
-var DotfileName;
-var init_FiddeeRoot = __esm({
-  "Source/Platform/FiddeeRoot.ts"() {
+// Source/Services/Handler/Extension/Host/VscodeModuleHooks.ts
+var InstallVscodeModuleHooks, VscodeModuleHooks_default;
+var init_VscodeModuleHooks = __esm({
+  "Source/Services/Handler/Extension/Host/VscodeModuleHooks.ts"() {
     "use strict";
-    DotfileName = ".fiddee";
-    __name(FiddeeRoot, "FiddeeRoot");
-  }
-});
-
-// Source/Services/Handler/Extension/Host/Handler.ts
-var Handler_exports = {};
-__export(Handler_exports, {
-  default: () => Handler_default
-});
-import * as NodeFS from "node:fs";
-var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, Handler_default;
-var init_Handler = __esm({
-  "Source/Services/Handler/Extension/Host/Handler.ts"() {
-    "use strict";
-    init_FiddeeRoot();
-    init_Log2();
-    init_Registry();
-    HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context, Parameters) => {
-      const Extensions = Parameters?.extensions ?? [];
-      CocoonDevLog2(
-        "ext-host",
-        `[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`
-      );
-      Context.ExtensionHostInitData = Parameters;
-      Context.ExtensionRegistry.clear();
-      Context.ActivationEventIndex.clear();
-      for (const Extension of Extensions) {
-        const Identifier = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown";
-        Context.ExtensionRegistry.set(Identifier, Extension);
-        const ActivationEvents = Extension?.activationEvents ?? [];
-        for (const Event2 of ActivationEvents) {
-          const Existing = Context.ActivationEventIndex.get(Event2) ?? [];
-          Existing.push(Identifier);
-          Context.ActivationEventIndex.set(Event2, Existing);
-        }
-      }
-      Context.ExtensionHostReady = true;
-      CocoonDevLog2(
-        "ext-host",
-        `[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`
-      );
-      Context.Emitter.emit("extensionHostInitialized", {
-        extensionCount: Context.ExtensionRegistry.size,
-        autoStart: Parameters?.autoStart ?? false
-      });
-      Context.ConnectToMountain().catch((Error2) => {
-        CocoonDevLog2(
-          "ext-host",
-          `[ExtensionHostHandler] Background Mountain reconnect failed: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
-        );
-      });
-      return "initialized";
-    }, "HandleInitializeExtensionHost");
-    HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context, Parameters) => {
-      const DeltaStart = performance.now();
-      const Added = Parameters?.toAdd ?? [];
-      const Removed = Parameters?.toRemove ?? [];
-      const IdentifierOf = /* @__PURE__ */ __name((Extension) => Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown", "IdentifierOf");
-      let AddedActivationEvents = 0;
-      for (const Extension of Added) {
-        const Identifier = IdentifierOf(Extension);
-        Context.ExtensionRegistry.set(Identifier, Extension);
-        const ActivationEvents = Extension?.activationEvents ?? [];
-        for (const Event2 of ActivationEvents) {
-          const Existing = Context.ActivationEventIndex.get(Event2) ?? [];
-          if (!Existing.includes(Identifier)) {
-            Existing.push(Identifier);
-            Context.ActivationEventIndex.set(Event2, Existing);
-            AddedActivationEvents++;
-          }
-        }
-      }
-      for (const Extension of Removed) {
-        const Identifier = IdentifierOf(Extension);
-        Context.ExtensionRegistry.delete(Identifier);
-      }
-      const DurationMs = Math.round(performance.now() - DeltaStart);
-      CocoonDevLog2(
-        "ext-host",
-        `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`
-      );
-      Context.Emitter.emit("deltaExtensions", {
-        added: Added.length,
-        removed: Removed.length,
-        registrySize: Context.ExtensionRegistry.size,
-        durationMs: DurationMs
-      });
-      return {
-        success: true,
-        registrySize: Context.ExtensionRegistry.size,
-        durationMs: DurationMs
-      };
-    }, "HandleDeltaExtensions");
-    HandleActivateByEvent = /* @__PURE__ */ __name(async (Context, Parameters) => {
-      await EnsureVscodeAPIRegistered(Context);
-      const ActivationEvent = typeof Parameters === "string" ? Parameters : Parameters?.activationEvent ?? Parameters?.event ?? "*";
-      let MatchingExtensions;
-      if (ActivationEvent === "*") {
-        const All = /* @__PURE__ */ new Set();
-        for (const Ids of Context.ActivationEventIndex.values()) {
-          for (const Id of Ids) All.add(Id);
-        }
-        MatchingExtensions = [...All];
-      } else {
-        const Specific = Context.ActivationEventIndex.get(ActivationEvent) ?? [];
-        const Star = Context.ActivationEventIndex.get("*") ?? [];
-        MatchingExtensions = [.../* @__PURE__ */ new Set([...Specific, ...Star])];
-      }
-      CocoonDevLog2(
-        "ext-host",
-        `[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} \u2192 ${MatchingExtensions.length} extensions`
-      );
-      if (MatchingExtensions.length > 0) {
-        CocoonDevLog2(
-          "ext-activate",
-          `[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`
-        );
-      } else {
-        CocoonDevLog2(
-          "ext-activate",
-          `[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`
-        );
-      }
-      const ToActivate = MatchingExtensions.filter(
-        (Id) => !Context.ActivatedExtensions.has(Id)
-      );
-      CocoonDevLog2(
-        "ext-activate",
-        `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
-      );
-      for (const ExtId of ToActivate) {
-        ActivateExtension(Context, ExtId, ActivationEvent).catch(
-          (Err) => {
-            const Msg = Err instanceof Error ? Err.message : String(Err);
-            CocoonDevLog2(
-              "ext-activate",
-              `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
-            );
-            if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
-              const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
-              CocoonDevLog2(
-                "ext-activate",
-                `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
-${Stack}`
-              );
-            }
-          }
-        );
-      }
-      Context.Emitter.emit("activateByEvent", {
-        event: ActivationEvent,
-        extensions: MatchingExtensions
-      });
-      return {
-        success: true,
-        activated: ToActivate.length
-      };
-    }, "HandleActivateByEvent");
-    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context, _Parameters) => {
-      CocoonDevLog2(
-        "ext-host",
-        `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`
-      );
-      Context.Emitter.emit("startExtensionHost", {
-        extensionCount: Context.ExtensionRegistry.size,
-        ready: Context.ExtensionHostReady
-      });
-      return {
-        success: true,
-        ready: Context.ExtensionHostReady,
-        extensionCount: Context.ExtensionRegistry.size
-      };
-    }, "HandleStartExtensionHost");
+    init_Log();
     InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
       if (globalThis.__cocoonModuleHooksInstalled) return;
       globalThis.__cocoonModuleHooksInstalled = true;
@@ -28715,8 +28988,20 @@ ${Stack}`
         );
       }
     }, "InstallVscodeModuleHooks");
+    VscodeModuleHooks_default = InstallVscodeModuleHooks;
+  }
+});
+
+// Source/Services/Handler/Extension/Host/EnsureVscodeAPI.ts
+var EnsureVscodeAPIRegistered, EnsureVscodeAPI_default;
+var init_EnsureVscodeAPI = __esm({
+  "Source/Services/Handler/Extension/Host/EnsureVscodeAPI.ts"() {
+    "use strict";
+    init_Log();
+    init_Registry();
+    init_VscodeModuleHooks();
     EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
-      await InstallVscodeModuleHooks();
+      await VscodeModuleHooks_default();
       if (globalThis.__cocoonVscodeAPI) return;
       try {
         const VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
@@ -29141,349 +29426,178 @@ ${Stack}`
         );
       }
     }, "EnsureVscodeAPIRegistered");
-    ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, ActivationEvent) => {
-      if (Context.ActivatedExtensions.has(ExtensionId)) return;
-      Context.ActivatedExtensions.add(ExtensionId);
-      const StartMs = Date.now();
+    EnsureVscodeAPI_default = EnsureVscodeAPIRegistered;
+  }
+});
+
+// Source/Services/Handler/Extension/Host/Handler.ts
+var Handler_exports = {};
+__export(Handler_exports, {
+  default: () => Handler_default
+});
+var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, Handler_default;
+var init_Handler = __esm({
+  "Source/Services/Handler/Extension/Host/Handler.ts"() {
+    "use strict";
+    init_Log();
+    init_ActivateExtension();
+    init_EnsureVscodeAPI();
+    HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context, Parameters) => {
+      const Extensions = Parameters?.extensions ?? [];
       CocoonDevLog2(
-        "ext-activate",
-        `[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`
+        "ext-host",
+        `[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`
       );
-      const Extension = Context.ExtensionRegistry.get(ExtensionId);
-      if (!Extension) {
-        CocoonDevLog2(
-          "ext-activate",
-          `[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`
-        );
-        return;
-      }
-      const LocationRaw = Extension?.ExtensionLocation ?? Extension?.extensionLocation ?? Extension?.location?.path ?? Extension?.location;
-      const MainFile = Extension?.main ?? Extension?.Main;
-      if (!LocationRaw || !MainFile) {
-        return;
-      }
-      let ExtensionPath;
-      try {
-        ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
-          /\/$/,
-          ""
-        );
-      } catch {
-        ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
-      }
-      const ModulePath = `${ExtensionPath}/${MainFile}`;
-      try {
-        const { access } = await import("node:fs/promises");
-        let Exists = false;
-        let Resolved = ModulePath;
-        for (const Candidate of [ModulePath, `${ModulePath}.js`]) {
-          try {
-            await access(Candidate);
-            Exists = true;
-            Resolved = Candidate;
-            break;
-          } catch {
-          }
+      Context.ExtensionHostInitData = Parameters;
+      Context.ExtensionRegistry.clear();
+      Context.ActivationEventIndex.clear();
+      for (const Extension of Extensions) {
+        const Identifier = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown";
+        Context.ExtensionRegistry.set(Identifier, Extension);
+        const ActivationEvents = Extension?.activationEvents ?? [];
+        for (const Event2 of ActivationEvents) {
+          const Existing = Context.ActivationEventIndex.get(Event2) ?? [];
+          Existing.push(Identifier);
+          Context.ActivationEventIndex.set(Event2, Existing);
         }
-        if (!Exists) {
-          process.stdout.write(
-            `[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})
-`
-          );
-          return;
-        }
-        if (process.env["Trace"]?.includes("preflight")) {
-          process.stdout.write(
-            `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
-`
-          );
-        }
-      } catch (Err) {
-        process.stdout.write(
-          `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}
-`
-        );
       }
-      const ModuleType = Extension?.type ?? Extension?.Type;
-      const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
+      Context.ExtensionHostReady = true;
       CocoonDevLog2(
-        "ext-activate",
-        `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
+        "ext-host",
+        `[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`
       );
-      try {
-        const Manifest = await (async () => {
-          try {
-            const { readFile } = await import("node:fs/promises");
-            const Raw2 = await readFile(
-              `${ExtensionPath}/package.json`,
-              "utf8"
-            );
-            return JSON.parse(Raw2);
-          } catch {
-            return Extension;
-          }
-        })();
-        const ConfigState = globalThis.__cocoonConfigState;
-        ConfigState?.PrePopulateFromManifest(Manifest);
-      } catch {
-      }
-      try {
-        let ExtModule;
-        if (IsESM) {
-          const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
-          ExtModule = await import(ImportURL);
-        } else {
-          const { createRequire } = await import("module");
-          const Require = createRequire(import.meta.url);
-          try {
-            ExtModule = Require(ModulePath);
-          } catch (RequireErr) {
-            const Msg = RequireErr instanceof Error ? RequireErr.message : String(RequireErr);
-            if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
-              const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
-              ExtModule = await import(ImportURL);
-            } else {
-              throw RequireErr;
-            }
-          }
-        }
-        const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
-        if (typeof ActivateFn === "function") {
-          const ExtContext = CreateExtensionContext(
-            Context,
-            Extension,
-            ExtensionPath
-          );
-          const InstrumentedExtensions = [
-            "vscode.git",
-            "vscode.git-base",
-            "vscode.npm",
-            "vscode.gulp",
-            "vscode.grunt",
-            "vscode.jake",
-            "vscode.merge-conflict"
-          ];
-          const SnapshotInitState = /* @__PURE__ */ __name((Phase) => {
-            try {
-              const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-              const InitFolders = Array.isArray(InitWorkspace.folders) ? InitWorkspace.folders : [];
-              const FolderShape = InitFolders.map((F, I) => {
-                const UriField = F?.uri;
-                const UriShape = typeof UriField === "string" ? `string("${UriField.slice(0, 80)}")` : typeof UriField === "object" && UriField !== null ? `object(scheme=${UriField.scheme ?? "<missing>"} fsPath=${typeof UriField.fsPath === "string" ? UriField.fsPath.slice(0, 80) : "<not-a-string>"})` : typeof UriField;
-                return `[${I}] name=${F?.name ?? "?"} uri=${UriShape}`;
-              }).join(" | ");
-              const ConfigState = globalThis.__cocoonConfigState;
-              const AutoDetect = ConfigState?.ConfigCache?.get?.(
-                "git.autoRepositoryDetection"
-              );
-              const Enabled2 = ConfigState?.ConfigCache?.get?.("git.enabled");
-              const AutoDetectShape = `${typeof AutoDetect}=${typeof AutoDetect === "object" ? JSON.stringify(AutoDetect).slice(0, 80) : String(AutoDetect)}`;
-              CocoonDevLog2(
-                "ext-preactivate",
-                `[ExtensionHostHandler] ${Phase} ${ExtensionId} folders.length=${InitFolders.length} | git.enabled=${Enabled2} | git.autoRepositoryDetection=${AutoDetectShape} | ${FolderShape}`
-              );
-            } catch (Err) {
-              CocoonDevLog2(
-                "ext-preactivate",
-                `[ExtensionHostHandler] ${Phase} ${ExtensionId} snapshot failed: ${Err?.message ?? String(Err)}`
-              );
-            }
-          }, "SnapshotInitState");
-          if (InstrumentedExtensions.includes(ExtensionId)) {
-            SnapshotInitState("PRE-ACTIVATE");
-          }
-          const ExtActivateResult = await ActivateFn(ExtContext);
-          const RegEntry = Context.ExtensionRegistry.get(ExtensionId);
-          if (RegEntry && ExtActivateResult !== void 0) {
-            RegEntry.__exports = ExtActivateResult;
-            RegEntry.exports = ExtActivateResult;
-          }
-          process.stdout.write(
-            `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})
-`
-          );
-          if (InstrumentedExtensions.includes(ExtensionId)) {
-            SnapshotInitState("POST-ACTIVATE");
-            setTimeout(() => SnapshotInitState("DEFERRED-1S"), 1e3);
-          }
-          CocoonDevLog2(
-            "ext-activate",
-            `[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
-          );
-        } else {
-          CocoonDevLog2(
-            "ext-activate",
-            `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
-          );
-          CocoonDevLog2(
-            "ext-activate",
-            `[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`
-          );
-        }
-      } catch (Err) {
-        Context.ActivatedExtensions.delete(ExtensionId);
-        const Message = Err instanceof Error ? Err.message : String(Err);
+      Context.Emitter.emit("extensionHostInitialized", {
+        extensionCount: Context.ExtensionRegistry.size,
+        autoStart: Parameters?.autoStart ?? false
+      });
+      Context.ConnectToMountain().catch((Error2) => {
         CocoonDevLog2(
-          "ext-activate",
-          `[ExtActivate] fail ext=${ExtensionId} duration_ms=${Date.now() - StartMs} error=${Message.replace(/\n/g, " | ")}`
+          "ext-host",
+          `[ExtensionHostHandler] Background Mountain reconnect failed: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}`
         );
-        throw Err;
-      }
-    }, "ActivateExtension");
-    CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, ExtensionPath) => {
-      const ExtId = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "";
-      const FiddeeRootPath = FiddeeRoot();
-      const StorageBase = `${FiddeeRootPath}/extensionStorage`;
-      const GlobalStorageBase = `${FiddeeRootPath}/globalStorage`;
-      const LogBase = `${FiddeeRootPath}/logs`;
-      const ExtStoragePath = `${StorageBase}/${ExtId}`;
-      const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
-      const LogPath = `${LogBase}/${ExtId}`;
-      try {
-        NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
-        NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
-        NodeFS.mkdirSync(LogPath, { recursive: true });
-      } catch {
-      }
-      let FullPackageJSON = Extension;
-      try {
-        const Contents = NodeFS.readFileSync(
-          `${ExtensionPath}/package.json`,
-          "utf8"
-        );
-        const Parsed = JSON.parse(Contents);
-        FullPackageJSON = {
-          ...Parsed,
-          ...Extension
-        };
-      } catch {
-      }
-      const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
-      const MakeUri = /* @__PURE__ */ __name((Path) => {
-        if (VsCodeUri && typeof VsCodeUri.file === "function") {
-          return VsCodeUri.file(Path);
+      });
+      return "initialized";
+    }, "HandleInitializeExtensionHost");
+    HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context, Parameters) => {
+      const DeltaStart = performance.now();
+      const Added = Parameters?.toAdd ?? [];
+      const Removed = Parameters?.toRemove ?? [];
+      const IdentifierOf = /* @__PURE__ */ __name((Extension) => Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown", "IdentifierOf");
+      let AddedActivationEvents = 0;
+      for (const Extension of Added) {
+        const Identifier = IdentifierOf(Extension);
+        Context.ExtensionRegistry.set(Identifier, Extension);
+        const ActivationEvents = Extension?.activationEvents ?? [];
+        for (const Event2 of ActivationEvents) {
+          const Existing = Context.ActivationEventIndex.get(Event2) ?? [];
+          if (!Existing.includes(Identifier)) {
+            Existing.push(Identifier);
+            Context.ActivationEventIndex.set(Event2, Existing);
+            AddedActivationEvents++;
+          }
         }
-        return {
-          scheme: "file",
-          path: Path,
-          fsPath: Path,
-          authority: "",
-          query: "",
-          fragment: "",
-          with: /* @__PURE__ */ __name(function(Change) {
-            return { ...this, ...Change };
-          }, "with"),
-          toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
-        };
-      }, "MakeUri");
+      }
+      for (const Extension of Removed) {
+        const Identifier = IdentifierOf(Extension);
+        Context.ExtensionRegistry.delete(Identifier);
+      }
+      const DurationMs = Math.round(performance.now() - DeltaStart);
+      CocoonDevLog2(
+        "ext-host",
+        `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`
+      );
+      Context.Emitter.emit("deltaExtensions", {
+        added: Added.length,
+        removed: Removed.length,
+        registrySize: Context.ExtensionRegistry.size,
+        durationMs: DurationMs
+      });
       return {
-        subscriptions: [],
-        extensionPath: ExtensionPath,
-        extensionUri: MakeUri(ExtensionPath),
-        // VS Code API: `context.asAbsolutePath(relative)` returns the
-        // extension path joined with a relative path. The 4 language-
-        // features extensions all call this immediately in their activate
-        // function to resolve server bundle locations; without it, they
-        // fail before vscode-languageclient even constructs.
-        asAbsolutePath: /* @__PURE__ */ __name((RelativePath2) => {
-          const Trimmed = RelativePath2.replace(/^\.?\//, "");
-          return `${ExtensionPath}/${Trimmed}`;
-        }, "asAbsolutePath"),
-        globalState: {
-          get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
-          }, "update"),
-          keys: /* @__PURE__ */ __name(() => [], "keys"),
-          setKeysForSync: /* @__PURE__ */ __name((_Keys) => {
-          }, "setKeysForSync")
-        },
-        workspaceState: {
-          get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
-          }, "update"),
-          keys: /* @__PURE__ */ __name(() => [], "keys")
-        },
-        secrets: {
-          get: /* @__PURE__ */ __name(async (Key) => {
-            try {
-              return await Context.MountainClient?.sendRequest(
-                "secrets.get",
-                { key: Key }
-              );
-            } catch {
-              return void 0;
-            }
-          }, "get"),
-          store: /* @__PURE__ */ __name(async (Key, Value) => {
-            try {
-              await Context.MountainClient?.sendRequest("secrets.store", {
-                key: Key,
-                value: Value
-              });
-            } catch {
-            }
-          }, "store"),
-          delete: /* @__PURE__ */ __name(async (Key) => {
-            try {
-              await Context.MountainClient?.sendRequest(
-                "secrets.delete",
-                { key: Key }
-              );
-            } catch {
-            }
-          }, "delete"),
-          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
-        },
-        environmentVariableCollection: {
-          persistent: true,
-          description: void 0,
-          append: /* @__PURE__ */ __name(() => {
-          }, "append"),
-          prepend: /* @__PURE__ */ __name(() => {
-          }, "prepend"),
-          replace: /* @__PURE__ */ __name(() => {
-          }, "replace"),
-          get: /* @__PURE__ */ __name(() => void 0, "get"),
-          forEach: /* @__PURE__ */ __name(() => {
-          }, "forEach"),
-          delete: /* @__PURE__ */ __name(() => {
-          }, "delete"),
-          clear: /* @__PURE__ */ __name(() => {
-          }, "clear"),
-          getScoped: /* @__PURE__ */ __name(() => ({}), "getScoped"),
-          [Symbol.iterator]: () => [].values()
-        },
-        storagePath: ExtStoragePath,
-        globalStoragePath: GlobalStoragePath,
-        logPath: LogPath,
-        storageUri: MakeUri(ExtStoragePath),
-        globalStorageUri: MakeUri(GlobalStoragePath),
-        logUri: MakeUri(LogPath),
-        extensionMode: 1,
-        // ExtensionMode.Production
-        extension: {
-          id: ExtId,
-          extensionUri: {
-            scheme: "file",
-            path: ExtensionPath,
-            fsPath: ExtensionPath
-          },
-          extensionPath: ExtensionPath,
-          isActive: true,
-          packageJSON: FullPackageJSON,
-          extensionKind: 1,
-          exports: void 0,
-          activate: /* @__PURE__ */ __name(async () => {
-          }, "activate")
-        },
-        languageModelAccessInformation: {
-          canSendRequest: /* @__PURE__ */ __name((_Model) => false, "canSendRequest"),
-          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
-        }
+        success: true,
+        registrySize: Context.ExtensionRegistry.size,
+        durationMs: DurationMs
       };
-    }, "CreateExtensionContext");
+    }, "HandleDeltaExtensions");
+    HandleActivateByEvent = /* @__PURE__ */ __name(async (Context, Parameters) => {
+      await EnsureVscodeAPI_default(Context);
+      const ActivationEvent = typeof Parameters === "string" ? Parameters : Parameters?.activationEvent ?? Parameters?.event ?? "*";
+      let MatchingExtensions;
+      if (ActivationEvent === "*") {
+        const All = /* @__PURE__ */ new Set();
+        for (const Ids of Context.ActivationEventIndex.values()) {
+          for (const Id of Ids) All.add(Id);
+        }
+        MatchingExtensions = [...All];
+      } else {
+        const Specific = Context.ActivationEventIndex.get(ActivationEvent) ?? [];
+        const Star = Context.ActivationEventIndex.get("*") ?? [];
+        MatchingExtensions = [.../* @__PURE__ */ new Set([...Specific, ...Star])];
+      }
+      CocoonDevLog2(
+        "ext-host",
+        `[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} \u2192 ${MatchingExtensions.length} extensions`
+      );
+      if (MatchingExtensions.length > 0) {
+        CocoonDevLog2(
+          "ext-activate",
+          `[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`
+        );
+      } else {
+        CocoonDevLog2(
+          "ext-activate",
+          `[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`
+        );
+      }
+      const ToActivate = MatchingExtensions.filter(
+        (Id) => !Context.ActivatedExtensions.has(Id)
+      );
+      CocoonDevLog2(
+        "ext-activate",
+        `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
+      );
+      for (const ExtId of ToActivate) {
+        ActivateExtension_default(Context, ExtId, ActivationEvent).catch(
+          (Err) => {
+            const Msg = Err instanceof Error ? Err.message : String(Err);
+            CocoonDevLog2(
+              "ext-activate",
+              `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
+            );
+            if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
+              const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+              CocoonDevLog2(
+                "ext-activate",
+                `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
+${Stack}`
+              );
+            }
+          }
+        );
+      }
+      Context.Emitter.emit("activateByEvent", {
+        event: ActivationEvent,
+        extensions: MatchingExtensions
+      });
+      return {
+        success: true,
+        activated: ToActivate.length
+      };
+    }, "HandleActivateByEvent");
+    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context, _Parameters) => {
+      CocoonDevLog2(
+        "ext-host",
+        `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`
+      );
+      Context.Emitter.emit("startExtensionHost", {
+        extensionCount: Context.ExtensionRegistry.size,
+        ready: Context.ExtensionHostReady
+      });
+      return {
+        success: true,
+        ready: Context.ExtensionHostReady,
+        extensionCount: Context.ExtensionRegistry.size
+      };
+    }, "HandleStartExtensionHost");
     Handler_default = {
       HandleInitializeExtensionHost,
       HandleDeltaExtensions,
@@ -29692,13 +29806,25 @@ var init_Activator = __esm({
 // Source/Services/Handler/Notification/Handler.ts
 init_Namespace2();
 var { URI: LazyURI } = await Promise.resolve().then(() => (init_uri(), uri_exports));
+var MakeUriStub = /* @__PURE__ */ __name((Raw2) => {
+  const Path = Raw2.replace(/^file:\/\//, "");
+  return {
+    scheme: Raw2.startsWith("file://") ? "file" : "unknown",
+    authority: "",
+    path: Path,
+    query: "",
+    fragment: "",
+    fsPath: Path,
+    toString: /* @__PURE__ */ __name(() => Raw2, "toString")
+  };
+}, "MakeUriStub");
 var HydrateUri = /* @__PURE__ */ __name((Raw2) => {
   if (!Raw2) return null;
   if (typeof Raw2 === "string") {
     try {
       return LazyURI.parse(Raw2);
     } catch {
-      return null;
+      return MakeUriStub(Raw2);
     }
   }
   if (typeof Raw2.toString === "function" && typeof Raw2.fsPath === "string")
@@ -29706,7 +29832,7 @@ var HydrateUri = /* @__PURE__ */ __name((Raw2) => {
   try {
     return LazyURI.parse(Raw2.toString());
   } catch {
-    return null;
+    return typeof Raw2.toString === "function" ? MakeUriStub(Raw2.toString()) : null;
   }
 }, "HydrateUri");
 if (!process._landUncaughtHandlerInstalled) {
@@ -29935,6 +30061,13 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
           const DUri = D?.uri?.toString?.() ?? D?.fileName ?? "";
           return !ClosedUris.has(DUri);
         });
+        const Visible = Context.__visibleTextEditors ?? [];
+        Context.__visibleTextEditors = Visible.filter(
+          (E) => {
+            const EUri = E?.document?.uri?.toString?.() ?? "";
+            return !ClosedUris.has(EUri);
+          }
+        );
       }
       break;
     // `document.willSave` - Mountain fires this BEFORE the file is persisted
@@ -29965,20 +30098,19 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
           getText: /* @__PURE__ */ __name(() => DocumentContentCache.get(Uri2) ?? "", "getText"),
           save: /* @__PURE__ */ __name(async () => true, "save")
         };
+        const WillSaveThenables = [];
         const Event2 = {
           document: Doc,
           reason: Reason,
+          // Collect thenables so we can await them all before
+          // forwarding edits to Mountain. This ensures all
+          // `waitUntil(promise)` calls in the same save cycle
+          // complete before any edit is applied, matching VS Code's
+          // `ExtHostDocuments.$acceptWillSaveDocument` ordering.
           waitUntil: /* @__PURE__ */ __name((Thenable) => {
-            Thenable.then((Edits) => {
-              if (Array.isArray(Edits) && Edits.length > 0 && Uri2) {
-                Context?.SendToMountain(
-                  "window.applyTextEdits",
-                  { uri: Uri2, edits: Edits }
-                ).catch(() => {
-                });
-              }
-            }).catch(() => {
-            });
+            WillSaveThenables.push(
+              Promise.resolve(Thenable).catch(() => void 0)
+            );
           }, "waitUntil")
         };
         for (const Listener of Listeners) {
@@ -29986,6 +30118,23 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
             Listener(Event2);
           } catch {
           }
+        }
+        if (WillSaveThenables.length > 0 && Uri2) {
+          Promise.allSettled(WillSaveThenables).then((Results) => {
+            const AllEdits = [];
+            for (const R of Results) {
+              if (R.status === "fulfilled" && Array.isArray(R.value) && R.value.length > 0) {
+                AllEdits.push(...R.value);
+              }
+            }
+            if (AllEdits.length > 0) {
+              Context?.SendToMountain("window.applyTextEdits", {
+                uri: Uri2,
+                edits: AllEdits
+              }).catch(() => {
+              });
+            }
+          });
         }
       }
       SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
@@ -30305,6 +30454,19 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
       if (Context) {
         Context.__activeTextEditor = TextEditorStub;
         Context.__activeTextEditorSelection = LiveSelection;
+        const Visible = Array.isArray(
+          Context.__visibleTextEditors
+        ) ? Context.__visibleTextEditors : [];
+        const UriKey2 = TextEditorStub?.document?.uri?.toString?.() ?? "";
+        const Idx = UriKey2 ? Visible.findIndex(
+          (E) => E?.document?.uri?.toString?.() === UriKey2
+        ) : -1;
+        if (Idx >= 0) {
+          Visible[Idx] = TextEditorStub;
+        } else if (TextEditorStub) {
+          Visible.push(TextEditorStub);
+        }
+        Context.__visibleTextEditors = Visible;
       }
       SafeEmit(
         Emitter2,

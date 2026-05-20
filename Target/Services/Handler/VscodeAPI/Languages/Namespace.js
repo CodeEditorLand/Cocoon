@@ -12128,6 +12128,7 @@ var UriKey = /* @__PURE__ */ __name((Value) => {
     return `file://${WithParts.fsPath}`;
   return Rendered;
 }, "UriKey");
+var _AllDiagnostics = /* @__PURE__ */ new Map();
 var RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
   if (Provider == null || typeof Provider !== "object") {
     return { dispose: /* @__PURE__ */ __name(() => {
@@ -12466,6 +12467,10 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
         } else {
           Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
         }
+        _AllDiagnostics.set(Owner, new Map(Store));
+        Context.Emitter.emit("diagnostics.didChange", {
+          uris: [...Store.keys()]
+        });
         Context.MountainClient?.sendRequest("Diagnostic.Set", [
           Owner,
           [...Store.entries()].map(([U, D]) => [
@@ -12477,6 +12482,10 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       }, "set"),
       delete: /* @__PURE__ */ __name((Uri2) => {
         Store.delete(UriKey(Uri2));
+        _AllDiagnostics.set(Owner, new Map(Store));
+        Context.Emitter.emit("diagnostics.didChange", {
+          uris: [UriKey(Uri2)]
+        });
         Context.MountainClient?.sendRequest("Diagnostic.Set", [
           Owner,
           [...Store.entries()].map(([U, D]) => [
@@ -12489,6 +12498,8 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       clear: /* @__PURE__ */ __name(() => {
         if (Store.size === 0) return;
         Store.clear();
+        _AllDiagnostics.delete(Owner);
+        Context.Emitter.emit("diagnostics.didChange", { uris: [] });
         Context.MountainClient?.sendRequest("Diagnostic.Clear", [
           Owner
         ]).catch(() => {
@@ -12603,7 +12614,29 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       }, "dispose")
     };
   }, "onDidChangeDiagnostics"),
-  getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
+  getDiagnostics: /* @__PURE__ */ __name((Resource) => {
+    if (Resource !== void 0) {
+      const Key = UriKey(Resource);
+      const Merged = [];
+      for (const OwnerStore of _AllDiagnostics.values()) {
+        const Diags = OwnerStore.get(Key);
+        if (Diags) Merged.push(...Diags);
+      }
+      return Merged;
+    }
+    const All = /* @__PURE__ */ new Map();
+    for (const OwnerStore of _AllDiagnostics.values()) {
+      for (const [Uri2, Diags] of OwnerStore.entries()) {
+        const Existing = All.get(Uri2);
+        if (Existing) {
+          Existing.push(...Diags);
+        } else {
+          All.set(Uri2, [...Diags]);
+        }
+      }
+    }
+    return [...All.entries()];
+  }, "getDiagnostics"),
   registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
     Context,
     LanguageProviderRegistry,

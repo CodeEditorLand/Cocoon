@@ -15,6 +15,26 @@ import CreateStatusBarItem from "./CreateStatusBarItem.js";
 import CreateTerminal from "./CreateTerminal.js";
 import CreateWebviewPanel from "./CreateWebviewPanel.js";
 import CreateWebviewViewBuilder from "./CreateWebviewViewBuilder.js";
+import RegisterCustomEditor from "./RegisterCustomEditor.js";
+import {
+	CustomEditorProviders,
+	CustomEditorProvidersByViewType,
+	TreeDataProviders,
+	TreeDataProvidersByViewId,
+	WebviewPanels,
+	WebviewViewBuilders,
+	WebviewViewProviders,
+} from "./Registry.js";
+
+export {
+	CustomEditorProviders,
+	CustomEditorProvidersByViewType,
+	TreeDataProviders,
+	TreeDataProvidersByViewId,
+	WebviewPanels,
+	WebviewViewBuilders,
+	WebviewViewProviders,
+} from "./Registry.js";
 
 type Listener<T> = (Event: T) => unknown;
 
@@ -52,234 +72,8 @@ const MakeEventSubscriber =
 		return Subscription;
 	};
 
-// Legacy `*Counter` locals replaced by the shared `NextProviderHandle()`
-// from LanguageProviderRegistry. The handle MUST be a plain numeric value
-// because Mountain's notification parser reads it as `u64`; a stringified
-// `"terminal:1"` etc. previously fell back to `handle=0` and every new
-// provider of the same type collided on the same Mountain registry key.
-
-/**
- * Registry of locally-registered tree-data providers, keyed by the handle
- * we hand back to Mountain. Mountain calls back with `tree.getChildren`
- * or `tree.getTreeItem` and we look the provider up here. Exported so
- * `Handler/RequestRoutingHandler` can route incoming requests.
- */
-export const TreeDataProviders = new Map<string, any>();
-
-/**
- * Parallel index keyed by the viewId the extension passed to
- * `createTreeView` / `registerTreeDataProvider`. Mountain's
- * `$provideTreeChildren` lookup keys on viewId (not the ephemeral
- * `treeDataProvider:N` handle) because the u32 Mountain-side handle is
- * derived from viewId, not from the Cocoon-side counter. Kept in lockstep
- * with `TreeDataProviders` in both the register and dispose paths.
- */
-export const TreeDataProvidersByViewId = new Map<string, any>();
-
-/**
- * Per-extension-ViewType webview providers. Same lookup pattern as the
- * tree registry.
- */
-export const WebviewViewProviders = new Map<string, any>();
-
-/**
- * Per-handle factory that returns a fresh `WebviewView` proxy for the
- * extension's `resolveWebviewView(view, ctx)` callback. The proxy
- * captures `Context` (scoped at `registerWebviewViewProvider` time) so
- * `view.webview.html = X` and `view.webview.postMessage(msg)` from the
- * extension fire `webview.setHtml` / `webview.postMessage` notifications
- * back through Mountain → Sky → the parked workbench `WebviewView` in
- * `globalThis.__CEL_WEBVIEW_VIEWS__.get(viewId)`.
- *
- * Indexed by the same handle string as `WebviewViewProviders` so the
- * `webview.resolveView` request handler can look up both maps in one
- * step.
- */
-export const WebviewViewBuilders = new Map<string, () => any>();
-
-/**
- * Custom editor provider registry. Indexed by both the numeric handle
- * (for `webview.{register,unregister}CustomEditor` round-trips) and by
- * the public `viewType` string so that workbench-side reverse-RPCs
- * (`$onSaveCustomDocument`, `$onRevertCustomDocument`,
- * `$onBackupCustomDocument`, `$onWillSaveCustomDocument`,
- * `$onDidChangeCustomDocument`) can resolve the provider without
- * threading the handle through every NotificationHandler payload.
- *
- * Each entry stores both the raw provider object and a `readonly`
- * flag - readonly providers (`registerCustomReadonlyEditorProvider`)
- * never receive save participants, so the lifecycle dispatcher
- * silently no-ops save events for them rather than calling a missing
- * method on the provider.
- */
-export const CustomEditorProviders = new Map<string, any>();
-
-export const CustomEditorProvidersByViewType = new Map<
-	string,
-	{ Provider: any; Readonly: boolean; Handle: number }
->();
-
-export const WebviewPanels = new Map<string, any>();
-
-/**
- * Shared registration body for `registerCustomEditorProvider` and
- * `registerCustomReadonlyEditorProvider`. Subscribes to the
- * `customEditor.*` channels emitted by `NotificationHandler.ts` and
- * dispatches the corresponding provider method when the workbench
- * issues a reverse-RPC. The subscription lives on `Context.Emitter`
- * scoped per-handle so dispose() cleans it up without affecting
- * other registrations of the same `viewType`.
- *
- * Provider method shapes (per `vscode.d.ts`):
- *
- *   resolveCustomEditor(document, webviewPanel, token) - mandatory.
- *   resolveCustomTextEditor(document, webviewPanel, token) - text variant.
- *   saveCustomDocument(document, cancellation) - returns Thenable<void>.
- *   saveCustomDocumentAs(document, destination, cancellation).
- *   revertCustomDocument(document, cancellation).
- *   backupCustomDocument(document, context, cancellation).
- *
- * Each method receives the document object the workbench sends in the
- * reverse-RPC payload; we forward verbatim. The handler returns the
- * provider's promise so the workbench-side awaiter resolves with the
- * extension's result. Errors are caught and reported via `process.stdout`
- * so a buggy provider never crashes the host - readonly providers
- * silently skip the save participants.
- */
-const RegisterCustomEditor = (
-	Context: HandlerContext,
-
-	ViewType: string,
-
-	Provider: any,
-
-	Options: {
-		supportsMultipleEditorsPerDocument?: boolean;
-		webviewOptions?: unknown;
-	},
-
-	IsReadonly: boolean,
-) => {
-	const Handle = NextProviderHandle();
-
-	CustomEditorProviders.set(String(Handle), Provider);
-
-	CustomEditorProvidersByViewType.set(ViewType, {
-		Provider,
-		Readonly: IsReadonly,
-		Handle,
-	});
-
-	// Named-key payload so SkyBridge's `sky://webview/registerCustomEditor`
-	// listener reads `Payload.viewType` / `Payload.options` directly,
-	// matching the new Cocoon convention. Positional `args` is still
-	// preserved by Mountain's canonicalisation for any consumer reading
-	// `Args[1]` / `Args[2]`.
-	Context.MountainClient?.sendRequest("webview.registerCustomEditor", {
-		handle: Handle,
-		viewType: ViewType,
-		options: {
-			readonly: IsReadonly,
-			supportsMultipleEditorsPerDocument:
-				Options.supportsMultipleEditorsPerDocument ?? false,
-			webviewOptions: Options.webviewOptions ?? {},
-		},
-	}).catch(() => {});
-
-	const SafeAwait = async (
-		Channel: string,
-
-		MethodName: string,
-
-		Payload: any,
-	): Promise<unknown> => {
-		const Entry = CustomEditorProvidersByViewType.get(
-			Payload?.viewType ?? ViewType,
-		);
-
-		if (!Entry || Entry.Handle !== Handle) return undefined;
-
-		if (Entry.Readonly && MethodName !== "resolveCustomEditor")
-			return undefined;
-
-		const Method = (Entry.Provider as Record<string, unknown>)?.[
-			MethodName
-		];
-
-		if (typeof Method !== "function") return undefined;
-
-		try {
-			const Result = await (Method as (...A: unknown[]) => unknown).call(
-				Entry.Provider,
-
-				Payload?.document,
-
-				Payload?.context ?? Payload?.destination,
-
-				Payload?.token,
-			);
-
-			return Result;
-		} catch (Error) {
-			try {
-				process.stdout.write(
-					`[CustomEditor:${Channel}] provider for "${ViewType}" threw: ${
-						Error instanceof globalThis.Error
-							? Error.message
-							: String(Error)
-					}\n`,
-				);
-			} catch {}
-			return undefined;
-		}
-	};
-
-	const Listeners: Array<{
-		Channel: string;
-		Listener: (P: unknown) => void;
-	}> = [];
-	const Subscribe = (Channel: string, MethodName: string) => {
-		const Listener = (Payload: unknown) => {
-			void SafeAwait(Channel, MethodName, Payload);
-		};
-		Context.Emitter.on(Channel, Listener);
-		Listeners.push({ Channel, Listener });
-	};
-
-	Subscribe("customEditor.saveDocument", "saveCustomDocument");
-	Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
-	Subscribe("customEditor.revertCustomDocument", "revertCustomDocument");
-	Subscribe("customEditor.backupCustomDocument", "backupCustomDocument");
-	Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
-	Subscribe(
-		"customEditor.didChangeCustomDocument",
-
-		"didChangeCustomDocument",
-	);
-
-	return {
-		dispose: () => {
-			for (const { Channel, Listener } of Listeners) {
-				Context.Emitter.off(
-					Channel,
-
-					Listener as (..._A: unknown[]) => void,
-				);
-			}
-			Listeners.length = 0;
-			CustomEditorProviders.delete(String(Handle));
-			const ByViewType = CustomEditorProvidersByViewType.get(ViewType);
-			if (ByViewType && ByViewType.Handle === Handle) {
-				CustomEditorProvidersByViewType.delete(ViewType);
-			}
-			Context.MountainClient?.sendRequest(
-				"webview.unregisterCustomEditor",
-
-				{ handle: Handle, viewType: ViewType },
-			).catch(() => {});
-		},
-	};
-};
+// Registry maps are canonical in Registry.ts and re-exported from this
+// module so existing imports (e.g. Notification/Handler.ts) remain unchanged.
 
 const CreateWindowNamespace = (Context: HandlerContext) => {
 	// User-interaction prompts need a *round-trip* (sendRequest) not a
