@@ -38,7 +38,8 @@ export const UriKey = (Value: unknown): string => {
 		return `${WithParts.scheme}://${WithParts.path}`;
 	}
 
-	if (typeof WithParts.fsPath === "string") return `file://${WithParts.fsPath}`;
+	if (typeof WithParts.fsPath === "string")
+		return `file://${WithParts.fsPath}`;
 
 	return Rendered;
 };
