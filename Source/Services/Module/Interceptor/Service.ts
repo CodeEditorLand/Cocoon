@@ -13,6 +13,7 @@ import * as walk from "acorn-walk";
 import { Context, Effect, Layer } from "effect";
 
 import {
+import { CocoonDevLog } from "../../Dev/Log.js";
 	IModuleInterceptorService,
 	ModuleInterceptionRequest,
 	ModuleInterceptionResult,
@@ -49,7 +50,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private securitySandbox: Map<string, Function>;
 
 	constructor() {
-		console.log(
+		CocoonDevLog("service", 
 			"[ModuleInterceptorService] Initializing module interceptor",
 		);
 
@@ -59,7 +60,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		this.securitySandbox = this.createSecuritySandbox();
 
-		console.log(
+		CocoonDevLog("service", 
 			"[ModuleInterceptorService] Module interceptor initialized",
 		);
 	}
@@ -140,7 +141,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 * Intercept module require calls
 	 */
 	interceptRequire(modulePath: string, parentPath: string): any {
-		console.log(
+		CocoonDevLog("service", 
 			`[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`,
 		);
 
@@ -169,7 +170,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		// Cache the module
 		this.moduleCache.set(modulePath, interceptedModule);
 
-		console.log(
+		CocoonDevLog("service", 
 			`[ModuleInterceptorService] Module ${modulePath} intercepted successfully`,
 		);
 
@@ -186,7 +187,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	): boolean {
 		// Check blocked modules
 		if (this.config.blockedModules.includes(modulePath)) {
-			console.warn(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Blocked module access: ${modulePath}`,
 			);
 
@@ -200,7 +201,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		// Check built-in modules
 		if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
-			console.warn(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`,
 			);
 
@@ -256,7 +257,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		reason: string;
 	} {
 		try {
-			console.log(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`,
 			);
 
@@ -438,7 +439,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 					? `Security analysis: ${allIssues.join(", ")}`
 					: "Advanced AST security analysis passed all checks";
 
-			console.log(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`,
 			);
 
@@ -448,7 +449,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				reason,
 			};
 		} catch (error) {
-			console.error(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
 
 				error,
@@ -722,7 +723,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 			return interceptedModule;
 		} catch (error) {
-			console.error(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Failed to load module ${modulePath}:`,
 
 				error,
@@ -772,7 +773,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		functionName: string,
 	): Function {
 		return (...args: any[]) => {
-			console.log(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Calling ${modulePath}.${functionName}`,
 			);
 
@@ -790,7 +791,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 * Resolve module path
 	 */
 	resolveModule(modulePath: string, parentPath: string): string {
-		console.log(
+		CocoonDevLog("service", 
 			`[ModuleInterceptorService] Resolving module: ${modulePath} from ${parentPath}`,
 		);
 
@@ -800,13 +801,13 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				paths: [parentPath],
 			});
 
-			console.log(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Resolved ${modulePath} to ${resolvedPath}`,
 			);
 
 			return resolvedPath;
 		} catch (error) {
-			console.error(
+			CocoonDevLog("service", 
 				`[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
 
 				error,
@@ -819,7 +820,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 * Create extension context with isolated environment
 	 */
 	createExtensionContext(extensionId: string): any {
-		console.log(
+		CocoonDevLog("service", 
 			`[ModuleInterceptorService] Creating extension context for ${extensionId}`,
 		);
 
@@ -839,7 +840,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			},
 		};
 
-		console.log(
+		CocoonDevLog("service", 
 			`[ModuleInterceptorService] Extension context created for ${extensionId}`,
 		);
 
@@ -850,14 +851,14 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 * Update configuration
 	 */
 	updateConfig(newConfig: Partial<ModuleInterceptorConfig>): void {
-		console.log("[ModuleInterceptorService] Updating configuration");
+		CocoonDevLog("service", "[ModuleInterceptorService] Updating configuration");
 
 		this.config = { ...this.config, ...newConfig };
 
 		// Clear cache on config change
 		this.moduleCache.clear();
 
-		console.log("[ModuleInterceptorService] Configuration updated");
+		CocoonDevLog("service", "[ModuleInterceptorService] Configuration updated");
 	}
 
 	/**

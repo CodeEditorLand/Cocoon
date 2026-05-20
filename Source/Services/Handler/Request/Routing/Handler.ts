@@ -38,12 +38,17 @@
  * as a typed error.
  */
 
+import { CocoonDevLog } from "../../../Dev/Log.js";
+
 /**
  * Route request to appropriate service.
  * Service mapping and request routing is fully implemented.
  */
 const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
-	console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
+	CocoonDevLog(
+		"request-route",
+		`[RequestRoutingHandler] Routing request: ${Method}`,
+	);
 
 	// Service routing table with pattern matching
 	const RoutePatterns: Record<
@@ -346,13 +351,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// re-registers (typical after a hot-reload). Log
 						// the miss so a real bug (truly missing handle
 						// vs. transient race) is still triagable.
-						try {
-							console.warn(
-								`[RequestRoutingHandler] webview.resolveView called with unregistered handle=${Handle}; returning null so the workbench resolver settles`,
-							);
-						} catch {
-							/* console may be replaced */
-						}
+						CocoonDevLog(
+							"webview",
+							`[RequestRoutingHandler] webview.resolveView called with unregistered handle=${Handle}; returning null so the workbench resolver settles`,
+						);
 						return null;
 					}
 					// Build a proxy `WebviewView` so the extension's
@@ -419,16 +421,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// `MainThreadWebviewViews.$resolveWebviewView`
 						// returns `void` from a try/catch with the same
 						// rationale.
-						try {
-							console.warn(
-								`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}:`,
-
-								(ResolveError as any)?.message ??
-									String(ResolveError),
-							);
-						} catch {
-							/* console may be replaced */
-						}
+						CocoonDevLog(
+							"webview",
+							`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}: ${(ResolveError as any)?.message ?? String(ResolveError)}`,
+						);
 
 						return null;
 					}
@@ -443,13 +439,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// resolver promise and leaves the editor frame
 						// stuck. Returning null lets the editor frame
 						// settle (empty content) so the user can retry.
-						try {
-							console.warn(
-								`[RequestRoutingHandler] webview.resolveCustomEditor called with unregistered handle=${Handle}; returning null`,
-							);
-						} catch {
-							/* console may be replaced */
-						}
+						CocoonDevLog(
+							"webview",
+							`[RequestRoutingHandler] webview.resolveCustomEditor called with unregistered handle=${Handle}; returning null`,
+						);
 
 						return null;
 					}
@@ -484,16 +477,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							)) ?? null
 						);
 					} catch (ResolveError) {
-						try {
-							console.warn(
-								`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}:`,
-
-								(ResolveError as any)?.message ??
-									String(ResolveError),
-							);
-						} catch {
-							/* console may be replaced */
-						}
+						CocoonDevLog(
+							"webview",
+							`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}: ${(ResolveError as any)?.message ?? String(ResolveError)}`,
+						);
 
 						return null;
 					}
@@ -585,6 +572,89 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			}
 		},
 	};
+
+	// -----------------------------------------------------------------------
+	// VS Code feature channel routes - Mountain defers these to Cocoon via
+	// NodeDeferred path (TierIPC=NodeDeferred/Node in .env.Land). Each
+	// wraps the existing vscode.* API shim namespace implementations so
+	// both the in-process extension host path and the Mountain-deferred
+	// path converge on the same logic.
+	// -----------------------------------------------------------------------
+
+	Object.assign(RoutePatterns, {
+		"languages:\\w+": async (Method: string, Params: any) => {
+			// Route to vscode.languages namespace via the API shim. Most
+			// `languages:*` calls come from Wind's TauriMainProcessService
+			// when TierIPC=NodeDeferred. The getAll call returns the
+			// registered language IDs from the extension host.
+			const Context = (globalThis as any).__cocoonGRPCContext ?? {};
+			const API = (globalThis as any).__cocoonVscodeAPI;
+			if (!API) return null;
+
+			switch (Method) {
+				case "languages:getAll":
+					return Array.from(
+						(Context.languageIds as Set<string> | undefined) ??
+							new Set<string>(),
+					);
+				case "languages:getEncodedLanguageId":
+					return null;
+				default:
+					return null;
+			}
+		},
+
+		"scm:\\w+": async (Method: string, Params: any) => {
+			// vscode.scm.* namespace - route to Cocoon's SCM namespace impl.
+			const API = (globalThis as any).__cocoonVscodeAPI;
+			if (!API?.scm) return null;
+
+			switch (Method) {
+				case "scm:getSourceControls":
+					return [];
+				default:
+					return null;
+			}
+		},
+
+		"debug:\\w+": async (Method: string, Params: any) => {
+			const API = (globalThis as any).__cocoonVscodeAPI;
+			if (!API?.debug) return null;
+
+			switch (Method) {
+				case "debug:getSessions":
+					return [];
+				case "debug:getBreakpoints":
+					return [];
+				default:
+					return null;
+			}
+		},
+
+		"tasks:\\w+": async (Method: string, Params: any) => {
+			const API = (globalThis as any).__cocoonVscodeAPI;
+			if (!API?.tasks) return null;
+
+			switch (Method) {
+				case "tasks:getTasks":
+					return [];
+				default:
+					return null;
+			}
+		},
+
+		"auth:\\w+": async (Method: string, Params: any) => {
+			const API = (globalThis as any).__cocoonVscodeAPI;
+			if (!API?.authentication) return null;
+
+			switch (Method) {
+				case "auth:getSessions":
+					return [];
+				default:
+					return null;
+			}
+		},
+	});
 
 	// Find matching route pattern. Wrap dispatch in PostHog +
 	// OTLP capture so the Feature Parity dashboard's

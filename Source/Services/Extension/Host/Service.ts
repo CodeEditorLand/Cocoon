@@ -10,6 +10,7 @@ import { Effect, Layer } from "effect";
 import { IExtensionHostService } from "../../../Interfaces/I/Extension/Host/Service.js";
 import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
 import { IAPIFactoryService } from "../../API/Factory/Service.js";
+import { CocoonDevLog } from "../../Dev/Log.js";
 
 // Types matching VSCode patterns
 interface IExtensionDescription {
@@ -61,7 +62,8 @@ export class ExtensionHostService implements IExtensionHostService {
 			return;
 		}
 
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`,
 		);
 
@@ -115,11 +117,13 @@ export class ExtensionHostService implements IExtensionHostService {
 				exports,
 			});
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
 			);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"service",
 				`[ExtensionHost] Failed to activate ${extensionId}:`,
 
 				error,
@@ -142,7 +146,10 @@ export class ExtensionHostService implements IExtensionHostService {
 
 		const modulePath = `${extension.extensionLocation}/${extension.main}`;
 
-		console.log(`[ExtensionHost] Loading module: ${modulePath}`);
+		CocoonDevLog(
+			"service",
+			`[ExtensionHost] Loading module: ${modulePath}`,
+		);
 
 		// Advanced module loading with security interception
 		try {
@@ -163,7 +170,8 @@ export class ExtensionHostService implements IExtensionHostService {
 
 			return extensionModule;
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"service",
 				`[ExtensionHost] Failed to load module ${modulePath}:`,
 
 				error,
@@ -171,13 +179,17 @@ export class ExtensionHostService implements IExtensionHostService {
 
 			// Fallback: If module interceptor fails (e.g. file not found in real FS),
 			// we simulate a dummy module for development continuity
-			console.warn(
+			CocoonDevLog(
+				"service",
 				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
 			);
 
 			return {
 				activate: (_context: any) => {
-					console.log(`[${extension.identifier}] activate() called`);
+					CocoonDevLog(
+						"service",
+						`[${extension.identifier}] activate() called`,
+					);
 				},
 
 				deactivate: () => {},
@@ -224,7 +236,10 @@ export class ExtensionHostService implements IExtensionHostService {
 			return;
 		}
 
-		console.log(`[ExtensionHost] Deactivating extension: ${extensionId}`);
+		CocoonDevLog(
+			"service",
+			`[ExtensionHost] Deactivating extension: ${extensionId}`,
+		);
 
 		this.activatedExtensions.delete(extensionId);
 	}

@@ -1,4 +1,5 @@
 /**
+import { CocoonDevLog } from "../../Dev/Log.js";
  * @module Services/LanguageProviderRegistry
  * @description
  * Singleton registry mapping numeric provider handles to VS Code extension
@@ -48,7 +49,8 @@ export function Get(Handle: number): ProviderObject | undefined {
 	const Provider = Callbacks.get(Handle);
 
 	if (process.env.Trace) {
-		console.warn(
+		CocoonDevLog(
+			"registry",
 			`[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`,
 		);
 	}

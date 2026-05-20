@@ -31,7 +31,8 @@ const HandleInitializeExtensionHost = async (
 ): Promise<string> => {
 	const Extensions: any[] = Parameters?.extensions ?? [];
 
-	console.log(
+	CocoonDevLog(
+		"ext-host",
 		`[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`,
 	);
 
@@ -65,7 +66,8 @@ const HandleInitializeExtensionHost = async (
 
 	Context.ExtensionHostReady = true;
 
-	console.log(
+	CocoonDevLog(
+		"ext-host",
 		`[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`,
 	);
 
@@ -80,10 +82,9 @@ const HandleInitializeExtensionHost = async (
 	// send notifications back (provider registrations, extension host
 	// messages, etc.). Fire-and-forget - don't block the response.
 	Context.ConnectToMountain().catch((Error) => {
-		console.warn(
-			"[ExtensionHostHandler] Background Mountain reconnect failed:",
-
-			Error instanceof globalThis.Error ? Error.message : String(Error),
+		CocoonDevLog(
+			"ext-host",
+			`[ExtensionHostHandler] Background Mountain reconnect failed: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 		);
 	});
 
@@ -149,7 +150,8 @@ const HandleDeltaExtensions = async (
 
 	const DurationMs = Math.round(performance.now() - DeltaStart);
 
-	console.log(
+	CocoonDevLog(
+		"ext-host",
 		`[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`,
 	);
 
@@ -208,16 +210,19 @@ const HandleActivateByEvent = async (
 		MatchingExtensions = [...new Set([...Specific, ...Star])];
 	}
 
-	console.log(
+	CocoonDevLog(
+		"ext-host",
 		`[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} → ${MatchingExtensions.length} extensions`,
 	);
 
 	if (MatchingExtensions.length > 0) {
-		console.log(
+		CocoonDevLog(
+			"ext-activate",
 			`[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`,
 		);
 	} else {
-		console.log(
+		CocoonDevLog(
+			"ext-activate",
 			`[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`,
 		);
 	}
@@ -228,7 +233,8 @@ const HandleActivateByEvent = async (
 		(Id) => !Context.ActivatedExtensions.has(Id),
 	);
 
-	console.log(
+	CocoonDevLog(
+		"ext-activate",
 		`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`,
 	);
 
@@ -248,7 +254,8 @@ const HandleActivateByEvent = async (
 				// broken. Same downgrade pattern as
 				// `GRPCServerService` already uses for `$provide*`
 				// handler rejections.
-				console.log(
+				CocoonDevLog(
+					"ext-activate",
 					`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
 				);
 
@@ -267,7 +274,8 @@ const HandleActivateByEvent = async (
 						.slice(0, 6)
 						.join("\n");
 
-					console.log(
+					CocoonDevLog(
+						"ext-activate",
 						`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
 					);
 				}
@@ -297,7 +305,8 @@ const HandleStartExtensionHost = async (
 
 	_Parameters: any,
 ): Promise<any> => {
-	console.log(
+	CocoonDevLog(
+		"ext-host",
 		`[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`,
 	);
 
@@ -365,7 +374,8 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 				if (API) return API;
 
-				console.warn(
+				CocoonDevLog(
+					"ext-host",
 					"[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace",
 				);
 
@@ -375,14 +385,14 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			return OriginalLoad.call(this, Request, Parent, IsMain);
 		};
 
-		console.log(
+		CocoonDevLog(
+			"ext-host",
 			"[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted",
 		);
 	} catch (Err: unknown) {
-		console.warn(
-			"[ExtensionHostHandler] Failed to patch Module._load:",
-
-			Err instanceof Error ? Err.message : String(Err),
+		CocoonDevLog(
+			"ext-host",
+			`[ExtensionHostHandler] Failed to patch Module._load: ${Err instanceof Error ? Err.message : String(Err)}`,
 		);
 	}
 
@@ -758,24 +768,21 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			try {
 				NodeModule.register(LoaderURL, import.meta.url);
 
-				console.log(
+				CocoonDevLog(
+					"ext-host",
 					"[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted",
 				);
 			} catch (RegisterErr: unknown) {
-				console.warn(
-					"[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail):",
-
-					RegisterErr instanceof Error
-						? RegisterErr.message
-						: String(RegisterErr),
+				CocoonDevLog(
+					"ext-host",
+					`[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail): ${RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)}`,
 				);
 			}
 		}
 	} catch (Err: unknown) {
-		console.warn(
-			"[ExtensionHostHandler] ESM loader setup skipped:",
-
-			Err instanceof Error ? Err.message : String(Err),
+		CocoonDevLog(
+			"ext-host",
+			`[ExtensionHostHandler] ESM loader setup skipped: ${Err instanceof Error ? Err.message : String(Err)}`,
 		);
 	}
 };
@@ -1204,8 +1211,8 @@ const EnsureVscodeAPIRegistered = async (
 		};
 
 		(globalThis as any).__cocoonVscodeAPI = API;
-		console.log(
-			"[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI",
+		process.stdout.write(
+			"[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI\n",
 		);
 		// Diagnostic: log which critical base classes are resolved at shim
 		// registration time. vscode-languageclient does
@@ -1236,18 +1243,18 @@ const EnsureVscodeAPIRegistered = async (
 		];
 		const Missing = CriticalNames.filter((Name) => API[Name] === undefined);
 		if (Missing.length) {
-			console.warn(
-				`[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}`,
+			process.stderr.write(
+				`[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}\n`,
 			);
 		} else {
-			console.log(
+			CocoonDevLog(
+				"ext-host",
 				"[ExtensionHostHandler] vscode API shim critical symbols OK",
 			);
 		}
 	} catch (Err: unknown) {
-		console.warn(
-			"[ExtensionHostHandler] Failed to create vscode API shim:",
-			Err instanceof Error ? Err.message : String(Err),
+		process.stderr.write(
+			`[ExtensionHostHandler] Failed to create vscode API shim: ${Err instanceof Error ? Err.message : String(Err)}\n`,
 		);
 	}
 };
@@ -1356,7 +1363,8 @@ const ActivateExtension = async (
 		/\.mjs$/i.test(MainFile) ||
 		/\.mts$/i.test(MainFile);
 
-	console.log(
+	CocoonDevLog(
+		"ext-activate",
 		`[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`,
 	);
 
@@ -1507,11 +1515,13 @@ const ActivateExtension = async (
 							? JSON.stringify(AutoDetect).slice(0, 80)
 							: String(AutoDetect)
 					}`;
-					console.log(
+					CocoonDevLog(
+						"ext-preactivate",
 						`[ExtensionHostHandler] ${Phase} ${ExtensionId} folders.length=${InitFolders.length} | git.enabled=${Enabled} | git.autoRepositoryDetection=${AutoDetectShape} | ${FolderShape}`,
 					);
 				} catch (Err) {
-					console.log(
+					CocoonDevLog(
+						"ext-preactivate",
 						`[ExtensionHostHandler] ${Phase} ${ExtensionId} snapshot failed: ${
 							(Err as { message?: string })?.message ??
 							String(Err)
@@ -1523,8 +1533,8 @@ const ActivateExtension = async (
 				SnapshotInitState("PRE-ACTIVATE");
 			}
 			await ActivateFn(ExtContext);
-			console.log(
-				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`,
+			process.stdout.write(
+				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})\n`,
 			);
 			if (InstrumentedExtensions.includes(ExtensionId)) {
 				// Post-activate snapshot - vscode.git's `Model.doInitialScan`
@@ -1543,7 +1553,8 @@ const ActivateExtension = async (
 				`[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,
 			);
 		} else {
-			console.warn(
+			CocoonDevLog(
+				"ext-activate",
 				`[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`,
 			);
 			CocoonDevLog(

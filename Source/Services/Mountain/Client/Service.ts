@@ -153,13 +153,15 @@ export class MountainClientService implements IMountainClientService {
 	constructor() {
 		this._serviceBrand = undefined;
 
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			`[MountainClientService] Initializing Mountain gRPC client (ID: ${this.clientId})`,
 		);
 
 		this.parseEnvironment();
 
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			`[MountainClientService] Configured for ${this.mountainHost}:${this.mountainPort}, Session: ${this.sessionId}`,
 		);
 
@@ -197,7 +199,8 @@ export class MountainClientService implements IMountainClientService {
 			this.healthCheckPeriod = parseInt(healthCheckPeriod, 10);
 		}
 
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			`[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}, MAX_RETRIES=${this.maxRetries}`,
 		);
 
@@ -211,7 +214,8 @@ export class MountainClientService implements IMountainClientService {
 		}
 
 		if (this.maxRetries < 0 || this.maxRetries > 10) {
-			console.warn(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Invalid max retries: ${this.maxRetries}, using default: 3`,
 			);
 
@@ -219,7 +223,8 @@ export class MountainClientService implements IMountainClientService {
 		}
 
 		if (this.healthCheckPeriod < 5000 || this.healthCheckPeriod > 120000) {
-			console.warn(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Invalid health check period: ${this.healthCheckPeriod}ms, using default: 30000ms`,
 			);
 
@@ -253,11 +258,13 @@ export class MountainClientService implements IMountainClientService {
 	 */
 	private registerShutdownHandlers(): void {
 		process.on("SIGTERM", () => {
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Received SIGTERM, shutting down gracefully",
 			);
 			this.disconnect().catch((error) => {
-				console.error(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Graceful shutdown failed:",
 
 					error,
@@ -266,11 +273,13 @@ export class MountainClientService implements IMountainClientService {
 		});
 
 		process.on("SIGINT", () => {
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Received SIGINT, shutting down gracefully",
 			);
 			this.disconnect().catch((error) => {
-				console.error(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Graceful shutdown failed:",
 
 					error,
@@ -284,7 +293,8 @@ export class MountainClientService implements IMountainClientService {
 			process.env &&
 			process.env.VSCODE_PID
 		) {
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Running in VS Code extension context",
 			);
 		}
@@ -300,14 +310,16 @@ export class MountainClientService implements IMountainClientService {
 			this.connectionState === ConnectionState.Connected ||
 			this.connectionState === ConnectionState.Connecting
 		) {
-			console.warn(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Already ${this.connectionState.toLowerCase()} to Mountain`,
 			);
 
 			return;
 		}
 
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			`[MountainClientService] Connecting to Mountain at ${this.mountainHost}:${this.mountainPort} (Session: ${this.sessionId})`,
 		);
 
@@ -368,7 +380,8 @@ export class MountainClientService implements IMountainClientService {
 			// Start comprehensive health monitoring
 			this.startHealthMonitoring();
 
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Successfully connected to Mountain (Session: ${this.sessionId})`,
 			);
 
@@ -381,7 +394,8 @@ export class MountainClientService implements IMountainClientService {
 
 			this.circuitBreakerFailureCount++;
 
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Failed to connect to Mountain:`,
 
 				error,
@@ -400,7 +414,8 @@ export class MountainClientService implements IMountainClientService {
 	 * Load protocol definition with fallback strategies
 	 */
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			"[MountainClientService] Loading Vine.proto protocol definition",
 		);
 
@@ -443,7 +458,8 @@ export class MountainClientService implements IMountainClientService {
 			}
 
 			if (vineProtoPath) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Found Vine.proto at: ${vineProtoPath}`,
 				);
 
@@ -460,7 +476,8 @@ export class MountainClientService implements IMountainClientService {
 					bytes: Buffer, // Use Buffer for bytes fields
 				});
 			} else {
-				console.warn(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Vine.proto not found at:",
 
 					vineProtoPath,
@@ -542,7 +559,8 @@ message RPCDataPayload {
 
 				fs.writeFileSync(tempProtoPath, fallbackProtoContent);
 
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Using fallback protocol at: ${tempProtoPath}`,
 				);
 
@@ -558,7 +576,8 @@ message RPCDataPayload {
 				});
 			}
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Failed to load protocol definition:",
 
 				error,
@@ -591,7 +610,8 @@ message RPCDataPayload {
 					const state = channel.getConnectivityState(true);
 
 					if (state === grpc.connectivityState.READY) {
-						console.log(
+						CocoonDevLog(
+							"mountain-client",
 							"[MountainClientService] Connection established and ready",
 						);
 						resolve();
@@ -663,7 +683,8 @@ message RPCDataPayload {
 			typeof process.env["Trace"] === "string" &&
 			process.env["Trace"].includes("grpc-verbose")
 		) {
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`,
 			);
 		}
@@ -796,7 +817,8 @@ message RPCDataPayload {
 				typeof process.env["Trace"] === "string" &&
 				process.env["Trace"].includes("grpc-verbose")
 			) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Request ${method} completed successfully in ${duration}ms`,
 				);
 			}
@@ -891,7 +913,8 @@ message RPCDataPayload {
 
 				this.UpdateCircuitBreaker(false, error);
 
-				console.error(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Request ${method} failed after ${duration}ms:`,
 
 					error,
@@ -900,7 +923,8 @@ message RPCDataPayload {
 
 			// Handle cancellation specifically
 			if (cancellationToken?.isCancellationRequested) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Request ${requestIdentifier} was cancelled`,
 				);
 
@@ -909,14 +933,16 @@ message RPCDataPayload {
 
 			// Auto-reconnect on connection errors with exponential backoff
 			if (this.isConnectionError(error)) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Connection error detected, attempting auto-reconnect",
 				);
 
 				try {
 					await this.reconnect();
 
-					console.log(
+					CocoonDevLog(
+						"mountain-client",
 						"[MountainClientService] Auto-reconnect successful, retrying request",
 					);
 
@@ -928,7 +954,8 @@ message RPCDataPayload {
 						cancellationToken,
 					);
 				} catch (reconnectError) {
-					console.error(
+					CocoonDevLog(
+						"mountain-client",
 						"[MountainClientService] Auto-reconnect failed:",
 
 						reconnectError,
@@ -980,7 +1007,8 @@ message RPCDataPayload {
 			typeof process.env["Trace"] === "string" &&
 			process.env["Trace"].includes("grpc-verbose")
 		) {
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`,
 			);
 		}
@@ -1095,7 +1123,8 @@ message RPCDataPayload {
 				if (attempt < this.maxRetries - 1) {
 					const delay = this.CalculateRetryDelay(attempt);
 
-					console.warn(
+					CocoonDevLog(
+						"mountain-client",
 						`[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
 
 						error,
@@ -1156,7 +1185,8 @@ message RPCDataPayload {
 
 			return Buffer.from(serialized, "utf8");
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Failed to serialize parameters:",
 
 				error,
@@ -1181,7 +1211,8 @@ message RPCDataPayload {
 
 			return JSON.parse(serialized);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Failed to deserialize response:",
 
 				error,
@@ -1201,7 +1232,8 @@ message RPCDataPayload {
 
 			// If in half-openstate, transition to closed
 			if (this.circuitBreakerState === CircuitBreakerState.HalfOpen) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)",
 				);
 
@@ -1226,7 +1258,8 @@ message RPCDataPayload {
 
 				this.circuitBreakerOpenTime = Date.now();
 
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`,
 				);
 
@@ -1251,7 +1284,8 @@ message RPCDataPayload {
 				// Transition to half-openstate to attempt recovery
 				this.circuitBreakerState = CircuitBreakerState.HalfOpen;
 
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery",
 				);
 
@@ -1282,7 +1316,8 @@ message RPCDataPayload {
 			this.performHealthCheck();
 		}, this.healthCheckPeriod);
 
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			`[MountainClientService] Health monitoring started (interval: ${this.healthCheckPeriod}ms)`,
 		);
 	}
@@ -1296,7 +1331,10 @@ message RPCDataPayload {
 
 			this.healthCheckInterval = null;
 
-			console.log("[MountainClientService] Health monitoring stopped");
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClientService] Health monitoring stopped",
+			);
 		}
 	}
 
@@ -1348,7 +1386,8 @@ message RPCDataPayload {
 			}
 			this.consecutiveSuccessfulHealthChecks++;
 
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Health check passed (consecutive successes: ${this.consecutiveSuccessfulHealthChecks})`,
 			);
 
@@ -1365,7 +1404,8 @@ message RPCDataPayload {
 			this.circuitBreakerFailureCount++;
 			this.UpdateCircuitBreaker(false);
 
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Health check failed:",
 
 				error,
@@ -1373,11 +1413,13 @@ message RPCDataPayload {
 
 			// Trigger reconnection if not connected
 			if (this.connectionState !== ConnectionState.Connected) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					"[MountainClientService] Connection lost, attempting reconnect",
 				);
 				this.reconnect().catch((err) => {
-					console.error(
+					CocoonDevLog(
+						"mountain-client",
 						"[MountainClientService] Auto-reconnect failed:",
 
 						err,
@@ -1410,7 +1452,8 @@ message RPCDataPayload {
 			typeof process.env["Trace"] === "string" &&
 			process.env["Trace"].includes("grpc-verbose");
 		if (TraceGrpcVerbose) {
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Sending notification to Mountain: ${method}`,
 			);
 		}
@@ -1424,20 +1467,23 @@ message RPCDataPayload {
 			await this.makeNotification(notification);
 
 			if (TraceGrpcVerbose) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClientService] Notification ${method} sent successfully`,
 				);
 			}
 		} catch (error) {
 			this.errorCount++;
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Notification ${method} failed:`,
 
 				error,
 			);
 
 			// Don't throw for notifications (they're fire-and-forget)
-			console.warn(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Notification ${method} failed, but continuing (fire-and-forget)`,
 			);
 		}
@@ -1485,7 +1531,8 @@ message RPCDataPayload {
 			throw new Error("Not connected to Mountain");
 		}
 
-		console.log(
+		CocoonDevLog(
+			"mountain-client",
 			`[MountainClientService] Canceling operation: ${requestIdentifier}, reason: ${reason}`,
 		);
 
@@ -1496,20 +1543,23 @@ message RPCDataPayload {
 
 			await this.makeCancelRequest(cancelRequest);
 
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Operation ${requestIdentifier} canceled`,
 			);
 		} catch (error) {
 			this.errorCount++;
 
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Cancel operation ${requestIdentifier} failed:`,
 
 				error,
 			);
 
 			// Don't throw for cancellation failures (best effort)
-			console.warn(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClientService] Cancel operation ${requestIdentifier} failed, but continuing`,
 			);
 		}
@@ -1553,14 +1603,18 @@ message RPCDataPayload {
 			this.connectionState !== ConnectionState.Connected ||
 			!this.client
 		) {
-			console.warn(
+			CocoonDevLog(
+				"mountain-client",
 				"[MountainClientService] Not connected to Mountain (already disconnected)",
 			);
 
 			return;
 		}
 
-		console.log("[MountainClientService] Disconnecting from Mountain");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClientService] Disconnecting from Mountain",
+		);
 
 		// Stop health monitoring
 		this.stopHealthMonitoring();
@@ -1569,20 +1623,29 @@ message RPCDataPayload {
 
 		this.connectionState = ConnectionState.Disconnected;
 
-		console.log("[MountainClientService] Disconnected from Mountain");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClientService] Disconnected from Mountain",
+		);
 	}
 
 	/**
 	 * Reconnect to Mountain
 	 */
 	async reconnect(): Promise<void> {
-		console.log("[MountainClientService] Reconnecting to Mountain");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClientService] Reconnecting to Mountain",
+		);
 
 		await this.disconnect();
 
 		await this.connect();
 
-		console.log("[MountainClientService] Reconnected to Mountain");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClientService] Reconnected to Mountain",
+		);
 	}
 
 	/**

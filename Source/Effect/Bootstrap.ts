@@ -401,7 +401,8 @@ const stage5_RPCServer = withSpan(
 
 			10,
 		);
-		console.log(
+		CocoonDevLog(
+			"bootstrap",
 			`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`,
 		);
 		yield* rpcServer.start({

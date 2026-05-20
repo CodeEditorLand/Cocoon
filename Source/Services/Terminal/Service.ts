@@ -8,6 +8,7 @@
 import { Context, Effect, Layer } from "effect";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+import { CocoonDevLog } from "../Dev/Log.js";
 
 // --- Interfaces ---
 
@@ -44,7 +45,7 @@ export class TerminalService implements ITerminalService {
 
 		cwd?: string,
 	): Promise<number> {
-		console.log(`[Terminal] Creating terminal: ${name}`);
+		CocoonDevLog("service", `[Terminal] Creating terminal: ${name}`);
 
 		// Call Spine (v0.5 Terminal Batch)
 		const terminalId = await this.mountainClient.sendRequest(
@@ -77,13 +78,16 @@ export class TerminalService implements ITerminalService {
 	): Promise<void> {
 		// Call Spine (Method pending in backend wiring, but we can stub it or implement)
 		// Let's assume we add terminal.resize to backend if missing, or use a generic call
-		console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
+		CocoonDevLog(
+			"service",
+			`[Terminal] Resize ${terminalId} to ${cols}x${rows}`,
+		);
 
 		// await this.mountainClient.sendRequest("terminal.resize", { id: terminalId, cols, rows });
 	}
 
 	async kill(terminalId: number): Promise<void> {
-		console.log(`[Terminal] Kill ${terminalId}`);
+		CocoonDevLog("service", `[Terminal] Kill ${terminalId}`);
 
 		// await this.mountainClient.sendRequest("terminal.kill", { id: terminalId });
 	}

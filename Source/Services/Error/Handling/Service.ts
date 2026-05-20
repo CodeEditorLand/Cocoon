@@ -9,6 +9,8 @@
 
 import { Effect, Layer } from "effect";
 
+import { CocoonDevLog } from "../../Dev/Log.js";
+
 // Circuit breaker state
 export interface CircuitBreakerState {
 	serviceName: string;
@@ -69,7 +71,8 @@ export class ErrorHandlingService {
 
 		this.config = this.loadDefaultConfig();
 
-		console.log(
+		CocoonDevLog(
+			"service",
 			"[ErrorHandlingService] Initializing error handling service",
 		);
 	}
@@ -103,7 +106,8 @@ export class ErrorHandlingService {
 
 		const config = { ...this.config, ...customConfig };
 
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[ErrorHandlingService] Executing operation: ${operationName}`,
 		);
 
@@ -115,7 +119,8 @@ export class ErrorHandlingService {
 				`Circuit breaker is OPEN for ${operationName} (failures: ${circuitState.failureCount})`,
 			);
 
-			console.warn(
+			CocoonDevLog(
+				"service",
 				`[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`,
 			);
 
@@ -166,7 +171,8 @@ export class ErrorHandlingService {
 					attempt,
 				);
 
-				console.log(
+				CocoonDevLog(
+					"service",
 					`[ErrorHandlingService] Operation ${operationName} succeeded on attempt ${attempt + 1} in ${operationDuration}ms`,
 				);
 
@@ -198,7 +204,8 @@ export class ErrorHandlingService {
 
 				totalRetries = attempt;
 
-				console.warn(
+				CocoonDevLog(
+					"service",
 					`[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
 
 					error,
@@ -213,7 +220,8 @@ export class ErrorHandlingService {
 				if (attempt < config.maxRetries && this.shouldRetry(error)) {
 					const delay = this.calculateRetryDelay(attempt, config);
 
-					console.log(
+					CocoonDevLog(
+						"service",
 						`[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`,
 					);
 
@@ -225,7 +233,8 @@ export class ErrorHandlingService {
 			}
 		}
 
-		console.error(
+		CocoonDevLog(
+			"service",
 			`[ErrorHandlingService] Operation ${operationName} failed after ${totalRetries} retries`,
 		);
 
@@ -277,7 +286,8 @@ export class ErrorHandlingService {
 		) {
 			state.state = "HALF_OPEN";
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`,
 			);
 		}
@@ -297,7 +307,8 @@ export class ErrorHandlingService {
 
 			state.failureCount = 0;
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`,
 			);
 		} else if (state.state === "CLOSED") {
@@ -320,7 +331,8 @@ export class ErrorHandlingService {
 			// Failure in HALF_OPEN state - reopen the circuit
 			state.state = "OPEN";
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`,
 			);
 		} else if (
@@ -330,7 +342,8 @@ export class ErrorHandlingService {
 			// Too many failures - open the circuit
 			state.state = "OPEN";
 
-			console.warn(
+			CocoonDevLog(
+				"service",
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`,
 			);
 		}
@@ -486,7 +499,8 @@ export class ErrorHandlingService {
 		};
 
 		// TODO: Send to Mountain for aggregation
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`,
 		);
 
@@ -548,7 +562,8 @@ export class ErrorHandlingService {
 		};
 
 		// TODO: Send to Mountain for aggregation
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`,
 		);
 	}
@@ -598,7 +613,8 @@ export class ErrorHandlingService {
 		eventType: string,
 	): void {
 		// TODO: Integrate with PerformanceMonitoringService
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[ErrorHandlingService] Circuit breaker event: ${operationName}, ${eventType}`,
 		);
 	}
@@ -633,7 +649,8 @@ export class ErrorHandlingService {
 		if (this.circuitBreakers.has(serviceName)) {
 			this.circuitBreakers.delete(serviceName);
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[ErrorHandlingService] Circuit breaker reset for ${serviceName}`,
 			);
 		}
@@ -645,7 +662,7 @@ export class ErrorHandlingService {
 	updateConfiguration(newConfig: Partial<ErrorHandlingConfig>): void {
 		this.config = { ...this.config, ...newConfig };
 
-		console.log("[ErrorHandlingService] Configuration updated");
+		CocoonDevLog("service", "[ErrorHandlingService] Configuration updated");
 	}
 
 	/**

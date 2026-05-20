@@ -17,6 +17,8 @@
 
 import type { EventEmitter } from "events";
 
+import { CocoonDevLog } from "../../../Dev/Log.js";
+
 /**
  * Infer the languageId from a URI string based on file extension.
  */
@@ -453,7 +455,8 @@ const HandleDocumentOpen = (
 
 			DocumentVersionMap.set(Uri, 1);
 
-			console.log(
+			CocoonDevLog(
+				"document",
 				`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`,
 			);
 

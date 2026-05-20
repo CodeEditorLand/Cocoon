@@ -9,6 +9,7 @@
  */
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+import { CocoonDevLog } from "../../Services/Dev/Log.js";
 import { MountainClientService } from "../../Services/Mountain/Client/Service.js";
 
 /**
@@ -28,21 +29,34 @@ export class MountainClient {
 	 */
 	async initialize(): Promise<void> {
 		if (this.isInitialized) {
-			console.warn("[MountainClient] Already initialized");
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Already initialized",
+			);
 
 			return;
 		}
 
-		console.log("[MountainClient] Initializing Mountain client");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClient] Initializing Mountain client",
+		);
 
 		try {
 			await this.clientService.connect();
 
 			this.isInitialized = true;
 
-			console.log("[MountainClient] Successfully initialized");
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Successfully initialized",
+			);
 		} catch (error) {
-			console.error("[MountainClient] Failed to initialize:", error);
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Failed to initialize:",
+				error,
+			);
 
 			throw error;
 		}
@@ -58,7 +72,10 @@ export class MountainClient {
 			);
 		}
 
-		console.log(`[MountainClient] Sending request: ${method}`);
+		CocoonDevLog(
+			"mountain-client",
+			`[MountainClient] Sending request: ${method}`,
+		);
 
 		try {
 			const response = await this.clientService.sendRequest(
@@ -67,13 +84,18 @@ export class MountainClient {
 				data || {},
 			);
 
-			console.log(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClient] Request ${method} completed successfully`,
 			);
 
 			return response;
 		} catch (error) {
-			console.error(`[MountainClient] Request ${method} failed:`, error);
+			CocoonDevLog(
+				"mountain-client",
+				`[MountainClient] Request ${method} failed:`,
+				error,
+			);
 
 			throw error;
 		}
@@ -99,19 +121,24 @@ export class MountainClient {
 			process.env["Trace"].includes("grpc-verbose");
 
 		if (TraceGrpcVerbose) {
-			console.log(`[MountainClient] Sending notification: ${method}`);
+			CocoonDevLog(
+				"mountain-client",
+				`[MountainClient] Sending notification: ${method}`,
+			);
 		}
 
 		try {
 			await this.clientService.sendNotification(method, data || {});
 
 			if (TraceGrpcVerbose) {
-				console.log(
+				CocoonDevLog(
+					"mountain-client",
 					`[MountainClient] Notification ${method} sent successfully`,
 				);
 			}
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"mountain-client",
 				`[MountainClient] Notification ${method} failed:`,
 
 				error,
@@ -142,21 +169,31 @@ export class MountainClient {
 	 */
 	async disconnect(): Promise<void> {
 		if (!this.isInitialized) {
-			console.warn("[MountainClient] Not initialized");
+			CocoonDevLog("mountain-client", "[MountainClient] Not initialized");
 
 			return;
 		}
 
-		console.log("[MountainClient] Disconnecting from Mountain");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClient] Disconnecting from Mountain",
+		);
 
 		try {
 			await this.clientService.disconnect();
 
 			this.isInitialized = false;
 
-			console.log("[MountainClient] Disconnected successfully");
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Disconnected successfully",
+			);
 		} catch (error) {
-			console.error("[MountainClient] Disconnect failed:", error);
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Disconnect failed:",
+				error,
+			);
 
 			throw error;
 		}
@@ -166,16 +203,26 @@ export class MountainClient {
 	 * Reconnect to Mountain
 	 */
 	async reconnect(): Promise<void> {
-		console.log("[MountainClient] Reconnecting to Mountain");
+		CocoonDevLog(
+			"mountain-client",
+			"[MountainClient] Reconnecting to Mountain",
+		);
 
 		try {
 			await this.disconnect();
 
 			await this.initialize();
 
-			console.log("[MountainClient] Reconnected successfully");
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Reconnected successfully",
+			);
 		} catch (error) {
-			console.error("[MountainClient] Reconnect failed:", error);
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Reconnect failed:",
+				error,
+			);
 
 			throw error;
 		}
@@ -194,7 +241,11 @@ export class MountainClient {
 
 			return status.connected && status.errorCount === 0;
 		} catch (error) {
-			console.error("[MountainClient] Health check failed:", error);
+			CocoonDevLog(
+				"mountain-client",
+				"[MountainClient] Health check failed:",
+				error,
+			);
 
 			return false;
 		}
@@ -214,6 +265,6 @@ export class MountainClient {
 	 */
 	resetErrorCount(): void {
 		// Error count is managed internally by MountainClientService
-		console.log("[MountainClient] Error count reset");
+		CocoonDevLog("mountain-client", "[MountainClient] Error count reset");
 	}
 }

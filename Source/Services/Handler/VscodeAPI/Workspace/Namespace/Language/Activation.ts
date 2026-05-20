@@ -9,6 +9,7 @@
  * extension bootstrap.
  */
 
+import { CocoonDevLog } from "../../../../../Dev/Log.js";
 import type { HandlerContext } from "../../../../Handler/Context.js";
 
 // The map is kept tight around the languages VS Code ships with +
@@ -294,7 +295,8 @@ export function FireOnLanguageActivation(
 				Error instanceof globalThis.Error
 					? Error.message
 					: String(Error);
-			console.warn(
+			CocoonDevLog(
+				"language-activation",
 				`[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`,
 			);
 		});
@@ -304,12 +306,12 @@ export function FireOnLanguageActivation(
 
 	// Fallback: walk the ActivationEventIndex directly. `HandleActivateByEvent`
 	// does this under the hood; if the context didn't expose the
-	// router, do a minimal index lookup so at least `console.log`
-	// records that the event was recognised.
+	// router, do a minimal index lookup and gate on CocoonDevLog.
 	const Matching = Context.ActivationEventIndex?.get(Event) ?? [];
 
 	if (Matching.length > 0) {
-		console.log(
+		CocoonDevLog(
+			"language-activation",
 			`[LanguageActivation] ${Event} matches ${Matching.length} extension(s); activate router is absent - extensions will activate on their next event instead`,
 		);
 	}

@@ -8,6 +8,7 @@
 
 import { Context, Effect, HashMap, Layer, Ref, SubscriptionRef } from "effect";
 
+import { CocoonDevLog } from "../../Services/Dev/Log.js";
 import { TelemetryTag } from "../Telemetry.js";
 
 // ============================================================================
@@ -336,7 +337,8 @@ export const ModuleInterceptorLive = Layer.effect(
 					}
 
 					// No API registered yet - return empty namespace
-					console.warn(
+					CocoonDevLog(
+						"ext-host",
 						`[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`,
 					);
 					return {};

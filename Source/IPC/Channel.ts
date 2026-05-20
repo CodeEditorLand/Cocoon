@@ -1047,7 +1047,9 @@ export class ChannelManager {
 		} catch (error) {
 			channel.metrics.errorCount++;
 
-			console.error(`Error processing message:`, error);
+			process.stderr.write(
+				`[IPC:Channel] Error processing message: ${error instanceof Error ? error.message : String(error)}\n`,
+			);
 
 			return false;
 		}

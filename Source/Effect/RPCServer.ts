@@ -7,6 +7,7 @@
 
 import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
 
+import { CocoonDevLog } from "../Services/Dev/Log.js";
 import { GRPCServerService } from "../Services/gRPC/Server/Service.js";
 import { TelemetryTag } from "./Telemetry.js";
 
@@ -231,7 +232,8 @@ export const RPCServerLive = Layer.effect(
 					startTime: startTimeMs,
 				});
 
-				console.log(
+				CocoonDevLog(
+					"grpc",
 					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
 				);
 				telemetry.log(

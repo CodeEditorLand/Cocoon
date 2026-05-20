@@ -13,6 +13,7 @@
  * - Support multiple configuration scopes (APPLICATION, WORKSPACE, PROFILE)
  */
 
+import { CocoonDevLog } from "Dev/Log.js";
 import { Effect, Layer } from "effect";
 
 import {
@@ -60,7 +61,8 @@ export class Configuration implements IConfigurationService {
 
 		this.listeners = new Map();
 
-		console.log(
+		CocoonDevLog(
+			"configuration",
 			"[ConfigurationService] Initializing configuration service with Universal Spine",
 		);
 	}
@@ -69,7 +71,8 @@ export class Configuration implements IConfigurationService {
 	 * Initialize the configuration service by fetching from Mountain
 	 */
 	async initialize(): Promise<void> {
-		console.log(
+		CocoonDevLog(
+			"configuration",
 			"[ConfigurationService] Loading initial configuration from Spine...",
 		);
 
@@ -108,13 +111,15 @@ export class Configuration implements IConfigurationService {
 				);
 			}
 
-			console.log(
+			CocoonDevLog(
+				"configuration",
 				"[ConfigurationService] Configuration loaded from Spine",
 
 				configData,
 			);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"configuration",
 				"[ConfigurationService] Failed to load initial configuration from Spine:",
 
 				error,
@@ -221,14 +226,16 @@ export class Configuration implements IConfigurationService {
 					scope: spineScope,
 				});
 
-				console.log(
+				CocoonDevLog(
+					"configuration",
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
 				);
 
 				// Notify listeners
 				this.notifyConfigurationChange([key], scope);
 			} catch (error) {
-				console.error(
+				CocoonDevLog(
+					"configuration",
 					`[ConfigurationService] Failed to update configuration: ${key}`,
 
 					error,
@@ -450,7 +457,8 @@ export class Configuration implements IConfigurationService {
 	onDidChangeConfiguration(
 		callback: (event: ConfigurationChangeEvent) => void,
 	): void {
-		console.log(
+		CocoonDevLog(
+			"configuration",
 			"[ConfigurationService] Registering configuration change listener",
 		);
 
@@ -469,7 +477,8 @@ export class Configuration implements IConfigurationService {
 
 		globalListeners.push(callback);
 
-		console.log(
+		CocoonDevLog(
+			"configuration",
 			`[ConfigurationService] Configuration change listener registered: ${listenerId}`,
 		);
 	}
@@ -478,7 +487,8 @@ export class Configuration implements IConfigurationService {
 	 * Reload configuration from Mountain
 	 */
 	async reloadConfiguration(): Promise<void> {
-		console.log(
+		CocoonDevLog(
+			"configuration",
 			"[ConfigurationService] Reloading configuration from Mountain",
 		);
 
@@ -489,11 +499,13 @@ export class Configuration implements IConfigurationService {
 			// Reload configuration
 			await this.initialize();
 
-			console.log(
+			CocoonDevLog(
+				"configuration",
 				"[ConfigurationService] Configuration reloaded successfully",
 			);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"configuration",
 				"[ConfigurationService] Failed to reload configuration:",
 
 				error,
@@ -515,7 +527,8 @@ export class Configuration implements IConfigurationService {
 
 		scope: ConfigurationScope,
 	): Promise<void> {
-		console.warn(
+		CocoonDevLog(
+			"configuration",
 			"[ConfigurationService] Configuration conflict detected, implementing retry logic",
 		);
 
@@ -526,7 +539,8 @@ export class Configuration implements IConfigurationService {
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			const delay = baseDelay * Math.pow(2, attempt - 1);
 
-			console.log(
+			CocoonDevLog(
+				"configuration",
 				`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`,
 			);
 
@@ -565,20 +579,23 @@ export class Configuration implements IConfigurationService {
 					scope: spineScope,
 				});
 
-				console.log(
+				CocoonDevLog(
+					"configuration",
 					"[ConfigurationService] Configuration saved successfully after retry",
 				);
 
 				return;
 			} catch (retryError) {
-				console.error(
+				CocoonDevLog(
+					"configuration",
 					`[ConfigurationService] Retry attempt ${attempt} failed:`,
 
 					retryError,
 				);
 
 				if (attempt === maxRetries) {
-					console.error(
+					CocoonDevLog(
+						"configuration",
 						"[ConfigurationService] All retry attempts failed, configuration may be out of sync",
 					);
 
@@ -594,13 +611,19 @@ export class Configuration implements IConfigurationService {
 	 * Cleanup configuration service
 	 */
 	async cleanup(): Promise<void> {
-		console.log("[ConfigurationService] Cleaning up configuration service");
+		CocoonDevLog(
+			"configuration",
+			"[ConfigurationService] Cleaning up configuration service",
+		);
 
 		this.listeners.clear();
 
 		this.configuration.clear();
 
-		console.log("[ConfigurationService] Configuration service cleaned up");
+		CocoonDevLog(
+			"configuration",
+			"[ConfigurationService] Configuration service cleaned up",
+		);
 	}
 
 	/**
@@ -692,7 +715,8 @@ export class Configuration implements IConfigurationService {
 					try {
 						listener([{ key, scope }]);
 					} catch (error) {
-						console.error(
+						CocoonDevLog(
+							"configuration",
 							`[ConfigurationService] Error in listener for ${eventKey}:`,
 
 							error,

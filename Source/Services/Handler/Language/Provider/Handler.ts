@@ -12,6 +12,7 @@
  *   params[3] = Context / Options (completion, code actions, etc.)
  */
 
+import { CocoonDevLog } from "../../../Dev/Log.js";
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
 
 /**
@@ -332,7 +333,8 @@ const InvokeLanguageProvider = async (
 	const Provider = LanguageProviderRegistry.Get(Handle);
 
 	if (!Provider) {
-		console.warn(
+		CocoonDevLog(
+			"language-provider",
 			`[LanguageProviderHandler] Provider handle ${Handle} not found for ${Method}`,
 		);
 
@@ -417,7 +419,8 @@ const InvokeLanguageProvider = async (
 		switch (Method) {
 			case "$provideHover": {
 				if (process.env.Trace) {
-					console.warn(
+					CocoonDevLog(
+						"exthost",
 						`[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof (Provider as any).provideHover === "function"}`,
 					);
 				}
@@ -431,7 +434,8 @@ const InvokeLanguageProvider = async (
 				);
 
 				if (process.env.Trace) {
-					console.warn(
+					CocoonDevLog(
+						"exthost",
 						`[DEV:EXTHOST] provideHover result kind=${Result ? (Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents) : "null"}`,
 					);
 				}
@@ -937,17 +941,17 @@ const InvokeLanguageProvider = async (
 			}
 
 			default:
-				console.warn(
+				CocoonDevLog(
+					"language-provider",
 					`[LanguageProviderHandler] Unhandled $provide method: ${Method}`,
 				);
 
 				return null;
 		}
 	} catch (Error) {
-		console.error(
-			`[LanguageProviderHandler] Provider ${Handle} threw for ${Method}:`,
-
-			Error,
+		CocoonDevLog(
+			"language-provider",
+			`[LanguageProviderHandler] Provider ${Handle} threw for ${Method}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 		);
 
 		return null;

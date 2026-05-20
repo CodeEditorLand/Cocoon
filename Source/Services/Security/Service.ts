@@ -10,6 +10,8 @@
 
 import { Effect, Layer } from "effect";
 
+import { CocoonDevLog } from "../Dev/Log.js";
+
 // Security policy interface
 export interface SecurityPolicy {
 	extensionId: string;
@@ -99,7 +101,10 @@ export class SecurityService {
 	private incidents: IncidentResponse[] = [];
 
 	constructor() {
-		console.log("[SecurityService] Initializing security service");
+		CocoonDevLog(
+			"service",
+			"[SecurityService] Initializing security service",
+		);
 
 		// Load default security policies
 		this.loadDefaultPolicies();
@@ -109,7 +114,7 @@ export class SecurityService {
 	 * Initialize security service
 	 */
 	async initialize(): Promise<void> {
-		console.log("[SecurityService] Starting security service");
+		CocoonDevLog("service", "[SecurityService] Starting security service");
 
 		try {
 			// Load security policies from Mountain
@@ -123,9 +128,16 @@ export class SecurityService {
 
 			this.securityActive = true;
 
-			console.log("[SecurityService] Security service started");
+			CocoonDevLog(
+				"service",
+				"[SecurityService] Security service started",
+			);
 		} catch (error) {
-			console.error("[SecurityService] Failed to initialize:", error);
+			CocoonDevLog(
+				"service",
+				"[SecurityService] Failed to initialize:",
+				error,
+			);
 
 			throw error;
 		}
@@ -172,7 +184,10 @@ export class SecurityService {
 
 		this.policies.set("default", defaultPolicy);
 
-		console.log("[SecurityService] Default security policy loaded");
+		CocoonDevLog(
+			"service",
+			"[SecurityService] Default security policy loaded",
+		);
 	}
 
 	/**
@@ -213,22 +228,26 @@ export class SecurityService {
 					});
 				}
 
-				console.log(
+				CocoonDevLog(
+					"service",
 					`[SecurityService] Loaded ${policiesResponse.policies.length} security policies from Mountain`,
 				);
 			} else {
-				console.warn(
+				CocoonDevLog(
+					"service",
 					"[SecurityService] No security policies received from Mountain, using defaults",
 				);
 			}
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"service",
 				"[SecurityService] Failed to load security policies from Mountain:",
 
 				error,
 			);
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				"[SecurityService] Continuing with default security policies",
 			);
 		}
@@ -247,11 +266,13 @@ export class SecurityService {
 				this.rotateAuditLog();
 			}, 3600000); // Rotate every hour
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				"[SecurityService] Advanced audit logging initialized with hourly rotation",
 			);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"service",
 				"[SecurityService] Failed to initialize audit logging:",
 
 				error,
@@ -269,7 +290,8 @@ export class SecurityService {
 		if (this.auditLog.length > maxLogSize) {
 			this.auditLog = this.auditLog.slice(-maxLogSize);
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`,
 			);
 		}
@@ -287,11 +309,13 @@ export class SecurityService {
 				this.escalateCriticalIncidents();
 			}, 300000); // Check every 5 minutes
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				"[SecurityService] Advanced incident response system initialized",
 			);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"service",
 				"[SecurityService] Failed to initialize incident response:",
 
 				error,
@@ -313,7 +337,8 @@ export class SecurityService {
 		);
 
 		if (criticalIncidents.length > 0) {
-			console.warn(
+			CocoonDevLog(
+				"service",
 				`[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`,
 			);
 
@@ -344,11 +369,13 @@ export class SecurityService {
 				actions: incident.actions,
 			});
 
-			console.log(
+			CocoonDevLog(
+				"service",
 				`[SecurityService] Incident ${incident.id} sent to Mountain`,
 			);
 		} catch (error) {
-			console.warn(
+			CocoonDevLog(
+				"service",
 				`[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
 
 				error,
@@ -577,7 +604,8 @@ export class SecurityService {
 			await this.escalateIncident(event);
 		}
 
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`,
 		);
 	}
@@ -624,7 +652,8 @@ export class SecurityService {
 
 			await this.escalateIncident(threatEvent);
 
-			console.warn(
+			CocoonDevLog(
+				"service",
 				`[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`,
 			);
 		}
@@ -656,7 +685,8 @@ export class SecurityService {
 
 		this.incidents.push(incident);
 
-		console.warn(
+		CocoonDevLog(
+			"service",
 			`[SecurityService] Security incident escalated: ${incident.description}`,
 		);
 
@@ -689,7 +719,8 @@ export class SecurityService {
 			details: { policy },
 		});
 
-		console.log(
+		CocoonDevLog(
+			"service",
 			`[SecurityService] Security policy updated for extension: ${extensionId}`,
 		);
 	}
@@ -777,7 +808,10 @@ export class SecurityService {
 				details: { resolution },
 			});
 
-			console.log(`[SecurityService] Incident resolved: ${incidentId}`);
+			CocoonDevLog(
+				"service",
+				`[SecurityService] Incident resolved: ${incidentId}`,
+			);
 		}
 	}
 
@@ -827,14 +861,14 @@ export class SecurityService {
 	 * Stop security service
 	 */
 	async stop(): Promise<void> {
-		console.log("[SecurityService] Stopping security service");
+		CocoonDevLog("service", "[SecurityService] Stopping security service");
 
 		this.securityActive = false;
 
 		// Save audit log and incidents
 		await this.saveSecurityState();
 
-		console.log("[SecurityService] Security service stopped");
+		CocoonDevLog("service", "[SecurityService] Security service stopped");
 	}
 
 	/**
@@ -847,7 +881,7 @@ export class SecurityService {
 		// Dependencies: MountainClientService
 		// Validation: Test state persistence
 
-		console.log("[SecurityService] Security state saved");
+		CocoonDevLog("service", "[SecurityService] Security state saved");
 	}
 }
 

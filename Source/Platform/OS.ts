@@ -267,7 +267,7 @@ function InitializeDetection(): void {
 
 		_architecture = DetectWebArchitecture();
 	} else {
-		console.error("[OS] Unable to resolve platform");
+		process.stderr.write("[OS] Unable to resolve platform\n");
 	}
 }
 

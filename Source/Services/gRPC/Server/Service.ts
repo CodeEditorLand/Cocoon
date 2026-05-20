@@ -36,6 +36,7 @@ import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../../../Interfaces/IGRPC/Server/Service.js";
+import { CocoonDevLog } from "../../Dev/Log.js";
 import DocumentContentHandler from "../../Handler/Document/Content/Handler.js";
 import ExtensionHostHandler from "../../Handler/Extension/Host/Handler.js";
 // Import handler modules
@@ -146,7 +147,7 @@ export class GRPCServerService
 
 		this._serviceBrand = undefined;
 
-		console.log("[GRPCServerService] Initializing gRPC server");
+		CocoonDevLog("grpc", "[GRPCServerService] Initializing gRPC server");
 
 		// Extensions register many listeners (one per language client, webview,
 		// tree view, etc.). The default Node cap of 10 produces noisy
@@ -165,7 +166,10 @@ export class GRPCServerService
 		// Create service implementation
 		this.serviceImplementation = this.createServiceImplementation();
 
-		console.log(`[GRPCServerService] Configured for port ${this.port}`);
+		CocoonDevLog(
+			"grpc",
+			`[GRPCServerService] Configured for port ${this.port}`,
+		);
 	}
 
 	// ==================================================================
@@ -261,10 +265,11 @@ export class GRPCServerService
 
 			this.authEnabled = true;
 
-			console.log("[GRPCServerService] Authentication enabled");
+			CocoonDevLog("grpc", "[GRPCServerService] Authentication enabled");
 		}
 
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			`[GRPCServerService] Environment parsed: COCOON_GRPC_PORT=${this.port}, AUTH_ENABLED=${this.authEnabled}`,
 		);
 	}
@@ -374,7 +379,8 @@ export class GRPCServerService
 	public startBidirectionalStreaming(
 		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
 	): void {
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			"[GRPCServerService] Starting bidirectional streaming connection",
 		);
 
@@ -383,7 +389,8 @@ export class GRPCServerService
 
 		// Handle incoming data
 		stream.on("data", (request: GenericRequest) => {
-			console.log(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Received streaming request: ${request.Method}`,
 			);
 			this.handleStreamingRequest(request, stream);
@@ -391,7 +398,8 @@ export class GRPCServerService
 
 		// Handle connection close
 		stream.on("close", () => {
-			console.log(
+			CocoonDevLog(
+				"grpc",
 				"[GRPCServerService] Bidirectional streaming connection closed",
 			);
 			this.streamingHandlers.delete(stream);
@@ -400,7 +408,10 @@ export class GRPCServerService
 		// Handle errors
 		stream.on("error", (error) => {
 			this.errorCount++;
-			console.error("[GRPCServerService] Streaming error:", error);
+			CocoonDevLog(
+				"grpc",
+				`[GRPCServerService] Streaming error: ${error}`,
+			);
 		});
 
 		// Send keepalive pings
@@ -432,7 +443,8 @@ export class GRPCServerService
 
 			stream.write(response);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Streaming request failed for ${request.Method}:`,
 
 				error,
@@ -519,7 +531,8 @@ export class GRPCServerService
 
 		this.requestCount++;
 
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			`[GRPCServerService] Processing Mountain request: ${request.Method}`,
 		);
 
@@ -553,7 +566,8 @@ export class GRPCServerService
 
 			const processingTime = Date.now() - startTime;
 
-			console.log(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Request ${request.Method} processed in ${processingTime}ms`,
 			);
 
@@ -583,13 +597,15 @@ export class GRPCServerService
 				request.Method.startsWith("$get");
 
 			if (IsExtensionProvidedHandler) {
-				console.log(
+				CocoonDevLog(
+					"grpc",
 					`[GRPCServerService] Extension handler ${request.Method} rejected (extension-side): ${
 						error instanceof Error ? error.message : String(error)
 					}`,
 				);
 			} else {
-				console.error(
+				CocoonDevLog(
+					"grpc",
 					`[GRPCServerService] Error processing request ${request.Method}:`,
 
 					error,
@@ -659,7 +675,8 @@ export class GRPCServerService
 			const serialized = JSON.stringify(Normalised);
 			return Buffer.from(serialized ?? "null", "utf8");
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				"[GRPCServerService] Failed to serialize response:",
 
 				error,
@@ -682,7 +699,8 @@ export class GRPCServerService
 
 			return JSON.parse(parameterString);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				"[GRPCServerService] Failed to parse parameters:",
 
 				error,
@@ -825,7 +843,8 @@ export class GRPCServerService
 	private handleMountainNotification(
 		notification: GenericNotification,
 	): void {
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			`[GRPCServerService] Handling Mountain notification: ${notification.Method}`,
 		);
 
@@ -861,14 +880,16 @@ export class GRPCServerService
 				this.GetHandlerContext(),
 			);
 
-			console.log(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Notification ${notification.Method} handled`,
 
 				parameters,
 			);
 		} catch (error) {
 			this.errorCount++;
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Error handling notification ${notification.Method}:`,
 
 				error,
@@ -898,7 +919,10 @@ export class GRPCServerService
 	private handleCancelOperation(cancelRequest: CancelOperationRequest): void {
 		const requestId = cancelRequest.RequestIdentifierToCancel;
 
-		console.log(`[GRPCServerService] Canceling operation: ${requestId}`);
+		CocoonDevLog(
+			"grpc",
+			`[GRPCServerService] Canceling operation: ${requestId}`,
+		);
 
 		try {
 			// Look up the active request
@@ -909,12 +933,14 @@ export class GRPCServerService
 				if (requestEntry.cancelHandler) {
 					try {
 						requestEntry.cancelHandler();
-						console.log(
+						CocoonDevLog(
+							"grpc",
 							`[GRPCServerService] Cancel handler executed for request ${requestId}`,
 						);
 					} catch (error) {
 						this.errorCount++;
-						console.error(
+						CocoonDevLog(
+							"grpc",
 							`[GRPCServerService] Cancel handler failed for request ${requestId}:`,
 
 							error,
@@ -925,17 +951,20 @@ export class GRPCServerService
 				// Remove from active requests
 				this.activeRequests.delete(requestId);
 
-				console.log(
+				CocoonDevLog(
+					"grpc",
 					`[GRPCServerService] Request ${requestId} canceled successfully`,
 				);
 			} else {
-				console.warn(
+				CocoonDevLog(
+					"grpc",
 					`[GRPCServerService] Request ${requestId} not found in active requests (may have already completed)`,
 				);
 			}
 		} catch (error) {
 			this.errorCount++;
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Error canceling operation ${requestId}:`,
 
 				error,
@@ -969,7 +998,10 @@ export class GRPCServerService
 	 */
 	private async ConnectToMountain(): Promise<void> {
 		if (this.mountainClient) {
-			console.log("[GRPCServerService] Already connected to Mountain");
+			CocoonDevLog(
+				"grpc",
+				"[GRPCServerService] Already connected to Mountain",
+			);
 			return;
 		}
 
@@ -979,7 +1011,8 @@ export class GRPCServerService
 			10,
 		);
 
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			`[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort}...`,
 		);
 
@@ -990,7 +1023,8 @@ export class GRPCServerService
 
 		this.mountainClient = Client;
 
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			`[GRPCServerService] Connected to Mountain gRPC - return path active`,
 		);
 
@@ -1017,7 +1051,8 @@ export class GRPCServerService
 			return;
 		}
 		if (!this.mountainClient) {
-			console.warn(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] Cannot send ${Method} to Mountain - not connected`,
 			);
 			return;
@@ -1035,11 +1070,12 @@ export class GRPCServerService
 	 */
 	async start(): Promise<void> {
 		if (this.isRunning) {
-			console.warn("[GRPCServerService] Server already running");
+			CocoonDevLog("grpc", "[GRPCServerService] Server already running");
 			return;
 		}
 
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			`[GRPCServerService] Starting gRPC server on port ${this.port}`,
 		);
 
@@ -1070,11 +1106,13 @@ export class GRPCServerService
 			await this.startServer();
 
 			this.isRunning = true;
-			console.log(
+			CocoonDevLog(
+				"grpc",
 				`[GRPCServerService] gRPC server started successfully on port ${this.port}`,
 			);
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				"[GRPCServerService] Failed to start gRPC server:",
 
 				error,
@@ -1088,7 +1126,8 @@ export class GRPCServerService
 	 * Protocol loading is fully implemented with multiple search paths and fallback
 	 */
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
-		console.log(
+		CocoonDevLog(
+			"grpc",
 			"[GRPCServerService] Loading Vine.proto protocol definition",
 		);
 
@@ -1127,7 +1166,8 @@ export class GRPCServerService
 			}
 
 			if (mountainProtoPath) {
-				console.log(
+				CocoonDevLog(
+					"grpc",
 					`[GRPCServerService] Found Vine.proto at: ${mountainProtoPath}`,
 				);
 
@@ -1140,10 +1180,12 @@ export class GRPCServerService
 					includeDirs: [path.dirname(mountainProtoPath)],
 				});
 			} else {
-				console.error(
+				CocoonDevLog(
+					"grpc",
 					"[GRPCServerService] Vine.proto not found in any search path",
 				);
-				console.log(
+				CocoonDevLog(
+					"grpc",
 					"[GRPCServerService] Search paths attempted:",
 
 					protoSearchPaths,
@@ -1192,7 +1234,8 @@ export class GRPCServerService
 				const tempProtoPath = path.join(tempDir, "vine_fallback.proto");
 				fs.writeFileSync(tempProtoPath, fallbackProtoContent);
 
-				console.log(
+				CocoonDevLog(
+					"grpc",
 					`[GRPCServerService] Using enhanced fallback protocol at: ${tempProtoPath}`,
 				);
 
@@ -1205,7 +1248,8 @@ export class GRPCServerService
 				});
 			}
 		} catch (error) {
-			console.error(
+			CocoonDevLog(
+				"grpc",
 				"[GRPCServerService] Failed to load protocol definition:",
 
 				error,
@@ -1231,7 +1275,8 @@ export class GRPCServerService
 					if (error) {
 						reject(error);
 					} else {
-						console.log(
+						CocoonDevLog(
+							"grpc",
 							`[GRPCServerService] Server bound to port ${port}`,
 						);
 						// server.start() removed - no longer needed in @grpc/grpc-js v1.12+
@@ -1247,17 +1292,17 @@ export class GRPCServerService
 	 */
 	async stop(): Promise<void> {
 		if (!this.isRunning || !this.server) {
-			console.warn("[GRPCServerService] Server not running");
+			CocoonDevLog("grpc", "[GRPCServerService] Server not running");
 			return;
 		}
 
-		console.log("[GRPCServerService] Stopping gRPC server");
+		CocoonDevLog("grpc", "[GRPCServerService] Stopping gRPC server");
 
 		return new Promise((resolve) => {
 			this.server!.tryShutdown(() => {
 				this.isRunning = false;
 				this.server = null;
-				console.log("[GRPCServerService] gRPC server stopped");
+				CocoonDevLog("grpc", "[GRPCServerService] gRPC server stopped");
 				resolve();
 			});
 		});
