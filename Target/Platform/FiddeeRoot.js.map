@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/Platform/FiddeeRoot.ts"],
+  "sourcesContent": ["/**\n * @file FIDDEE user dotfile root (`$HOME/.fiddee`).\n * @description\n * Mirrors the Rust atom at\n * `Element/Mountain/Source/IPC/WindServiceHandlers/Utilities/FiddeeRoot.rs`.\n *\n * Holds VS Code-style extensions (`~/.fiddee/extensions`), recently-opened\n * workspaces (`~/.fiddee/workspaces/RecentlyOpened.json`), per-extension\n * storage (`~/.fiddee/extensionStorage`, `~/.fiddee/globalStorage`), and the\n * background-daemon log/data trees (`~/.fiddee/logs`, `~/.fiddee/data`).\n *\n * Renamed from `~/.land` when the product shipped as FIDDEE; centralised\n * here so a future rename touches a single file per language.\n */\n\n/** Leaf directory name. */\nexport const DotfileName: string = \".fiddee\";\n\n/**\n * Returns `$HOME/.fiddee` (or `$USERPROFILE\\.fiddee` on Windows).\n * Falls back to the relative `.fiddee` path so callers always receive a\n * string - matches the previous `$HOME/.land` resolution semantics.\n */\nexport default function FiddeeRoot(): string {\n\tconst Home = process.env[\"HOME\"] ?? process.env[\"USERPROFILE\"] ?? null;\n\n\tif (typeof Home === \"string\" && Home.length > 0) {\n\t\treturn `${Home}/${DotfileName}`;\n\t}\n\n\treturn DotfileName;\n}\n"],
+  "mappings": ";;;;AAgBO,IAAM,cAAsB;AAOpB,SAAR,aAAsC;AAC5C,QAAM,OAAO,QAAQ,IAAI,MAAM,KAAK,QAAQ,IAAI,aAAa,KAAK;AAElE,MAAI,OAAO,SAAS,YAAY,KAAK,SAAS,GAAG;AAChD,WAAO,GAAG,IAAI,IAAI,WAAW;AAAA,EAC9B;AAEA,SAAO;AACR;AARwB;",
+  "names": []
+}
