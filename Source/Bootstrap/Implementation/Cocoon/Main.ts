@@ -60,6 +60,8 @@ declare const __LandTier_ModuleCache__: string;
 
 declare const __LandTier_Telemetry__: string;
 
+declare const __LandTier_IPC__: string;
+
 (globalThis as { __LandTiers?: Record<string, string> }).__LandTiers = {
 	RemoteProcedureCall:
 		typeof __LandTier_RemoteProcedureCall__ === "string"
@@ -145,6 +147,11 @@ declare const __LandTier_Telemetry__: string;
 		typeof __LandTier_Telemetry__ === "string"
 			? __LandTier_Telemetry__
 			: (process.env["TierTelemetry"] ?? "Synchronous"),
+
+	IPC:
+		typeof __LandTier_IPC__ === "string"
+			? __LandTier_IPC__
+			: (process.env["TierIPC"] ?? "Mountain"),
 };
 
 // Telemetry init gated by esbuild's define - in prod builds the branch
