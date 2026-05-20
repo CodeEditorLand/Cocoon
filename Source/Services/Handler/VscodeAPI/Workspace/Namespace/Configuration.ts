@@ -207,7 +207,20 @@ export const CreateConfigurationState = (
 			// listeners can drive their own re-read on the next access.
 			//
 			// If a real wipe is ever required, the producer must send the
-			// affected keys explicitly.
+			// affected keys explicitly, or use `"*"` as a sentinel.
+			return;
+		}
+		// `"*"` sentinel: producer signals a full model rebuild (e.g. after a
+		// settings.json write that changes many keys at once). Wipe and re-prime
+		// only the keys already in the cache - manifest defaults are preserved
+		// because they are not in `ConfigCache` (they're always re-read from
+		// Mountain on first access), so we don't destroy them here.
+		if (Keys.length === 1 && Keys[0] === "*") {
+			const CachedKeys = [...ConfigCache.keys()];
+			ConfigCache.clear();
+			for (const Key of CachedKeys) {
+				PrimeConfig(Key);
+			}
 			return;
 		}
 		for (const Key of Keys) {

@@ -570,23 +570,19 @@ const HandleSpecificNotification = (
 					getText: () => DocumentContentCache.get(Uri) ?? "",
 					save: async () => true,
 				};
+				const WillSaveThenables: Promise<any>[] = [];
 				const Event = {
 					document: Doc,
 					reason: Reason,
+					// Collect thenables so we can await them all before
+					// forwarding edits to Mountain. This ensures all
+					// `waitUntil(promise)` calls in the same save cycle
+					// complete before any edit is applied, matching VS Code's
+					// `ExtHostDocuments.$acceptWillSaveDocument` ordering.
 					waitUntil: (Thenable: Promise<any>) => {
-						// Collect any returned edits
-						Thenable.then((Edits: any) => {
-							if (
-								Array.isArray(Edits) &&
-								Edits.length > 0 &&
-								Uri
-							) {
-								Context?.SendToMountain(
-									"window.applyTextEdits",
-									{ uri: Uri, edits: Edits },
-								).catch(() => {});
-							}
-						}).catch(() => {});
+						WillSaveThenables.push(
+							Promise.resolve(Thenable).catch(() => undefined),
+						);
 					},
 				};
 				for (const Listener of Listeners) {
@@ -595,6 +591,28 @@ const HandleSpecificNotification = (
 					} catch {
 						/* never block save */
 					}
+				}
+				// Await all thenables, then batch any returned TextEdits back
+				// to Mountain in one `window.applyTextEdits` call per URI.
+				if (WillSaveThenables.length > 0 && Uri) {
+					Promise.allSettled(WillSaveThenables).then((Results) => {
+						const AllEdits: unknown[] = [];
+						for (const R of Results) {
+							if (
+								R.status === "fulfilled" &&
+								Array.isArray(R.value) &&
+								R.value.length > 0
+							) {
+								AllEdits.push(...R.value);
+							}
+						}
+						if (AllEdits.length > 0) {
+							Context?.SendToMountain("window.applyTextEdits", {
+								uri: Uri,
+								edits: AllEdits,
+							}).catch(() => {});
+						}
+					});
 				}
 			}
 			SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
