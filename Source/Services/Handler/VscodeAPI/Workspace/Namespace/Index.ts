@@ -612,22 +612,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			};
 		},
 
-		// `onWillCreateFiles`, `onWillDeleteFiles`, `onWillRenameFiles` -
-		// stub subscriptions that return no-op disposables. Land's file
-		// mutation path doesn't yet thread will-do events through the
-		// participant chain. Extensions that subscribe expect a non-crash
-		// disposable; the stub prevents TypeError on `.dispose()`.
-		onWillCreateFiles: (_Listener: unknown) => ({ dispose: () => {} }),
-
-		onWillDeleteFiles: (_Listener: unknown) => ({ dispose: () => {} }),
-
-		onWillRenameFiles: (_Listener: unknown) => ({ dispose: () => {} }),
-
-		onDidCreateFiles: (_Listener: unknown) => ({ dispose: () => {} }),
-
-		onDidDeleteFiles: (_Listener: unknown) => ({ dispose: () => {} }),
-
-		onDidRenameFiles: (_Listener: unknown) => ({ dispose: () => {} }),
+		// File lifecycle events forwarded from BuildDocumentEventMembers (spread at
+		// line above). The spread already provides real EventSubscriber versions; no
+		// stub override needed here. Mountain fires willCreate/willDelete/willRename
+		// notifications to Cocoon via Vine before the VFS mutation lands on disk, so
+		// GitLens and other watchers receive the events correctly.
 
 		onDidChangeWorkspaceFolders: (
 			Listener: (Event: {
