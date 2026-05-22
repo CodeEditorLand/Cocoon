@@ -32,7 +32,7 @@
 		"@codeeditorland/output": "0.0.1",
 		"@effect/platform": "0.96.1",
 		"@effect/platform-node": "0.106.0",
-		"@grpc/grpc-js": "1.14.3",
+		"@grpc/grpc-js": "1.14.4",
 		"@grpc/proto-loader": "0.8.1",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.2",
 		"@tauri-apps/plugin-fs": "2.5.1",
@@ -43,7 +43,7 @@
 	},
 	"devDependencies": {
 		"@effect/experimental": "0.60.0",
-		"@effect/language-service": "0.86.1",
+		"@effect/language-service": "0.86.2",
 		"@effect/opentelemetry": "0.63.0",
 		"@opentelemetry/exporter-trace-otlp-http": "0.218.0",
 		"@opentelemetry/sdk-logs": "0.218.0",
@@ -60,7 +60,7 @@
 		"esbuild": "0.28.0",
 		"ts-patch": "4.0.1",
 		"ulid": "3.0.2",
-		"vitest": "4.1.6"
+		"vitest": "4.1.7"
 	},
 	"publishConfig": {
 		"access": "public",
