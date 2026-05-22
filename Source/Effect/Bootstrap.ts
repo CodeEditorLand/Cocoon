@@ -219,20 +219,23 @@ const stage2_Configuration = withSpan(
 );
 
 /**
- * Stage 3 tuning constants. Exponential backoff TCP probe: 200ms→400ms→800ms→1s max.
- * ~10 probes × (500ms timeout + variable gap) worst-case ~15s, typical 2-4s.
+ * MountainConnection stage tuning.
+ * Now runs AFTER RPCServer (Stage 3), so it no longer blocks Mountain's
+ * 20-second gRPC budget. Reduced retry caps to keep bootstrap fast.
+ * TCP probe: 3 probes × 300ms timeout, 100ms gap → worst-case ~1.2s.
+ * gRPC connect: 5 attempts, 500ms initial backoff → worst-case ~7.5s.
  */
-const MountainProbeTimeoutMs = 500;
+const MountainProbeTimeoutMs = 300;
 
-const MountainProbeMaxAttempts = 10;
+const MountainProbeMaxAttempts = 3;
 
-const MountainProbeDelayMs = 200;
+const MountainProbeDelayMs = 100;
 
 const MountainProbeBackoffFactor = 2;
 
-const MountainProbeMaxDelayMs = 1_000;
+const MountainProbeMaxDelayMs = 500;
 
-const MountainConnectMaxAttempts = 15;
+const MountainConnectMaxAttempts = 5;
 
 const stage3_MountainConnection = withSpan(
 	"stage3_mountain_connection",
@@ -567,9 +570,13 @@ const makeBootstrap = (): BootstrapService => ({
 			const stages: Array<[string, unknown]> = [
 				["Environment", stage1_Environment],
 				["Configuration", stage2_Configuration],
+				// RPCServer must bind port 50052 BEFORE MountainConnection so
+				// Mountain's 20-second gRPC retry budget sees the server in time.
+				// MountainConnection retries for up to 45s; running it first meant
+				// Stage 5 (RPCServer) never started within Mountain's window.
+				["RPCServer", stage5_RPCServer],
 				["MountainConnection", stage3_MountainConnection],
 				["ModuleInterceptor", stage4_ModuleInterceptor],
-				["RPCServer", stage5_RPCServer],
 				["Extensions", stage6_Extensions],
 				...(skipHealthCheck
 					? []
