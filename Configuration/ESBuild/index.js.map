@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Configuration/ESBuild/index.ts"],
-  "sourcesContent": ["export * from \"./Constant/Environment/Constant.js\";\n\nexport { sep, posix } from \"node:path\";\n\nexport { default as BaseConfig } from \"./Config/Base/Config.js\";\n\nexport { default as TargetConfig } from \"./Config/Target/Config.js\";\n\nexport { default as CompileConfig } from \"./Config/Compile/Config.js\";\n"],
-  "mappings": "AAAA,cAAc;AAEd,SAAS,KAAK,aAAa;AAE3B,SAAoB,WAAXA,gBAA6B;AAEtC,SAAoB,WAAXA,gBAA+B;AAExC,SAAoB,WAAXA,gBAAgC;",
+  "sourcesContent": ["export * from \"./Constant/Environment/Constant.js\";\n\nexport { sep, posix } from \"node:path\";\n\nexport { default as BaseConfig } from \"./Config/Base/Config.js\";\n\nexport { default as TargetConfig } from \"./Config/Target/Config.js\";\n\nexport { default as CompileConfig } from \"./Config/Compile/Config.js\";\n\nexport { default as BootstrapConfig } from \"./Config/Bootstrap/Config.js\";\n"],
+  "mappings": "AAAA,cAAc;AAEd,SAAS,KAAK,aAAa;AAE3B,SAAoB,WAAXA,gBAA6B;AAEtC,SAAoB,WAAXA,gBAA+B;AAExC,SAAoB,WAAXA,gBAAgC;AAEzC,SAAoB,WAAXA,gBAAkC;",
   "names": ["default"]
 }

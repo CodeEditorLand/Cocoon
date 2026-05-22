@@ -1,26 +1,2 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-
-// Source/Services/Dev/Log.ts
-var Raw = process.env["Trace"] ?? "";
-var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
-var TagSet = new Set(ParsedTags);
-var IsShort = TagSet.has("short");
-var HasAll = TagSet.has("all");
-var IsEnabled = /* @__PURE__ */ __name((Tag) => {
-  if (TagSet.size === 0) return false;
-  if (HasAll || IsShort) return true;
-  return TagSet.has(Tag.toLowerCase());
-}, "IsEnabled");
-var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
-  if (!IsEnabled(Tag)) return;
-  const TagUpper = Tag.toUpperCase();
-  process.stdout.write(`[DEV:${TagUpper}] ${Message}
-`);
-}, "CocoonDevLog");
-var Log_default = CocoonDevLog;
-export {
-  CocoonDevLog,
-  Log_default as default
-};
-//# sourceMappingURL=Log.js.map
+const r=process.env.Trace??"",n=r.split(",").map(t=>t.trim().toLowerCase()).filter(t=>t.length>0),e=new Set(n),a=e.has("short"),c=e.has("all"),i=t=>e.size===0?!1:c||a?!0:e.has(t.toLowerCase()),l=(t,s)=>{if(!i(t))return;const o=t.toUpperCase();process.stdout.write(`[DEV:${o}] ${s}
+`)};var p=l;export{l as CocoonDevLog,p as default};

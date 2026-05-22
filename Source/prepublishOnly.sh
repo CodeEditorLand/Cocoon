@@ -16,3 +16,9 @@ Build "Source/Configuration/**/*.{ts,json}" \
 # The || true ensures the build pipeline continues - runtime JS is correct.
 Build "Source/**/*.ts" \
 	--ESBuild Configuration/ESBuild/Target.js
+
+# Bootstrap: self-contained single-file bundle for .app distribution.
+# Inlines all npm deps (effect, @grpc/grpc-js, …) - no node_modules needed
+# at runtime. Required by Contents/Resources/Cocoon/… in the shipped .app.
+Build "Source/Bootstrap/Implementation/Cocoon/Main.ts" \
+	--ESBuild Configuration/ESBuild/Bootstrap.js

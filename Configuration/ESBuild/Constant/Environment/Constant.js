@@ -1,8 +1,1 @@
-const On =
-	process.env["NODE_ENV"] === "development" ||
-	process.env["TAURI_ENV_DEBUG"] === "true";
-const Clean = process.env["Clean"] === "true";
-const Bundle = process.env["Bundle"] === "true";
-const Compile = process.env["Compile"] === "true";
-export { Bundle, Clean, Compile, On };
-//# sourceMappingURL=Constant.js.map
+const e=process.env.NODE_ENV==="development"||process.env.TAURI_ENV_DEBUG==="true",o=process.env.Clean==="true",n=process.env.Bundle==="true",s=process.env.Compile==="true";export{n as Bundle,o as Clean,s as Compile,e as On};
