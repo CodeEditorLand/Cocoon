@@ -236,6 +236,64 @@ var BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) 
       `__textDocumentContentProvider:${Scheme}`,
       Provider
     );
+    if (Provider && typeof Provider.onDidChange === "function") {
+      try {
+        Provider.onDidChange((Uri) => {
+          const UriStr = typeof Uri === "string" ? Uri : Uri?.toString?.() ?? "";
+          if (!UriStr) return;
+          const CancellationToken = {
+            isCancellationRequested: false,
+            onCancellationRequested: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onCancellationRequested")
+          };
+          void Promise.resolve(
+            Provider.provideTextDocumentContent?.(
+              Uri,
+              CancellationToken
+            )
+          ).then((Content) => {
+            if (typeof Content === "string") {
+              Context.DocumentContentCache?.set(
+                UriStr,
+                Content
+              );
+              Context.WorkspaceEventEmitter?.emit(
+                "didChangeTextDocument",
+                {
+                  document: {
+                    uri: {
+                      toString: /* @__PURE__ */ __name(() => UriStr, "toString"),
+                      scheme: Scheme,
+                      path: UriStr.slice(
+                        Scheme.length + 1
+                      )
+                    },
+                    fileName: UriStr,
+                    languageId: "plaintext",
+                    version: Date.now(),
+                    isDirty: false,
+                    getText: /* @__PURE__ */ __name(() => Content, "getText")
+                  },
+                  contentChanges: [
+                    {
+                      text: Content,
+                      range: null,
+                      rangeOffset: 0,
+                      rangeLength: 0
+                    }
+                  ],
+                  reason: void 0
+                }
+              );
+            }
+          }).catch(() => {
+          });
+        });
+      } catch {
+      }
+    }
   },
   (_Handle, Scheme) => {
     Context.ExtensionRegistry.delete(
@@ -270,7 +328,13 @@ var BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider
   "register_task_provider",
   "unregister_task_provider",
   "taskProvider",
-  (TaskType) => ({ taskType: TaskType, extensionId: "" })
+  (TaskType) => ({ taskType: TaskType, extensionId: "" }),
+  (Handle, _TaskType, Provider) => {
+    Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider);
+  },
+  (Handle, _TaskType) => {
+    Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`);
+  }
 ), "BuildRegisterTaskProvider");
 var BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
   Context,
@@ -612,7 +676,140 @@ __name(FireOnLanguageActivation, "FireOnLanguageActivation");
 // Source/Services/Handler/VscodeAPI/Workspace/Namespace/Text/Document.ts
 import { promises as FsPromises } from "node:fs";
 var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath) => {
+  if (UriOrPath && typeof UriOrPath === "object" && !UriOrPath.scheme && !UriOrPath.path && !UriOrPath.fsPath && (typeof UriOrPath.language === "string" || typeof UriOrPath.content === "string")) {
+    const InlineContent = typeof UriOrPath.content === "string" ? UriOrPath.content : "";
+    const InlineLang = typeof UriOrPath.language === "string" ? UriOrPath.language : "plaintext";
+    const UntitledKey = `untitled:Untitled-${Date.now()}`;
+    Context.DocumentContentCache.set(UntitledKey, InlineContent);
+    if (!Array.isArray(Context.__textDocuments))
+      Context.__textDocuments = [];
+    const UriShape = {
+      toString: /* @__PURE__ */ __name(() => UntitledKey, "toString"),
+      fsPath: "",
+      scheme: "untitled",
+      path: UntitledKey.slice("untitled:".length),
+      external: UntitledKey
+    };
+    const Lines2 = InlineContent.split("\n");
+    const LineStarts2 = [0];
+    for (let I = 0; I < InlineContent.length; I++) {
+      if (InlineContent.charCodeAt(I) === 10) LineStarts2.push(I + 1);
+    }
+    const PositionAt2 = /* @__PURE__ */ __name((Off) => {
+      let Lo = 0, Hi = LineStarts2.length - 1;
+      while (Lo < Hi) {
+        const Mid = Lo + Hi + 1 >>> 1;
+        if (LineStarts2[Mid] <= Off) Lo = Mid;
+        else Hi = Mid - 1;
+      }
+      return { line: Lo, character: Off - LineStarts2[Lo] };
+    }, "PositionAt");
+    const OffsetAt2 = /* @__PURE__ */ __name((P) => {
+      const L = Math.max(0, Math.min(P?.line ?? 0, Lines2.length - 1));
+      return Math.max(0, (LineStarts2[L] ?? 0) + (P?.character ?? 0));
+    }, "OffsetAt");
+    const Doc = {
+      uri: UriShape,
+      fileName: UntitledKey,
+      languageId: InlineLang,
+      isDirty: false,
+      isClosed: false,
+      isUntitled: true,
+      version: 1,
+      eol: 1,
+      lineCount: Lines2.length,
+      getText: /* @__PURE__ */ __name(() => InlineContent, "getText"),
+      positionAt: PositionAt2,
+      offsetAt: OffsetAt2,
+      lineAt: /* @__PURE__ */ __name((N) => {
+        const Ln = typeof N === "number" ? N : N?.line ?? 0;
+        const T = Lines2[Ln] ?? "";
+        return {
+          lineNumber: Ln,
+          text: T,
+          range: {
+            start: { line: Ln, character: 0 },
+            end: { line: Ln, character: T.length }
+          },
+          firstNonWhitespaceCharacterIndex: T.search(/\S/) < 0 ? T.length : T.search(/\S/),
+          isEmptyOrWhitespace: T.trim().length === 0
+        };
+      }, "lineAt"),
+      getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+      validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
+      validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
+      save: /* @__PURE__ */ __name(async () => false, "save")
+    };
+    Context.__textDocuments.push(Doc);
+    setImmediate(() => {
+      try {
+        Context.WorkspaceEventEmitter?.emit(
+          "didOpenTextDocument",
+          Doc
+        );
+      } catch {
+      }
+    });
+    return Doc;
+  }
   const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
+  if (UriString.startsWith("untitled:") || UriString === "") {
+    const Content = Context.DocumentContentCache.get(UriString) ?? "";
+    const ULines = Content.split("\n");
+    const UntitledLang = DeriveLanguageIdFromUri(UriString);
+    return {
+      uri: UriOrPath ?? {
+        toString: /* @__PURE__ */ __name(() => UriString, "toString"),
+        scheme: "untitled",
+        path: UriString.slice("untitled:".length)
+      },
+      fileName: UriString,
+      languageId: UntitledLang,
+      isDirty: false,
+      isClosed: false,
+      isUntitled: true,
+      version: 1,
+      eol: 1,
+      lineCount: ULines.length,
+      getText: /* @__PURE__ */ __name(() => Content, "getText"),
+      positionAt: /* @__PURE__ */ __name((Off) => {
+        let Rem = Off;
+        for (let I = 0; I < ULines.length; I++) {
+          const L = ULines[I].length + 1;
+          if (Rem < L) return { line: I, character: Rem };
+          Rem -= L;
+        }
+        return {
+          line: ULines.length - 1,
+          character: ULines[ULines.length - 1]?.length ?? 0
+        };
+      }, "positionAt"),
+      offsetAt: /* @__PURE__ */ __name((P) => {
+        let O = 0;
+        for (let I = 0; I < (P?.line ?? 0); I++)
+          O += (ULines[I]?.length ?? 0) + 1;
+        return O + (P?.character ?? 0);
+      }, "offsetAt"),
+      lineAt: /* @__PURE__ */ __name((N) => {
+        const Ln = typeof N === "number" ? N : N?.line ?? 0;
+        const T = ULines[Ln] ?? "";
+        return {
+          lineNumber: Ln,
+          text: T,
+          range: {
+            start: { line: Ln, character: 0 },
+            end: { line: Ln, character: T.length }
+          },
+          firstNonWhitespaceCharacterIndex: T.search(/\S/) < 0 ? T.length : T.search(/\S/),
+          isEmptyOrWhitespace: T.trim().length === 0
+        };
+      }, "lineAt"),
+      getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+      validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
+      validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
+      save: /* @__PURE__ */ __name(async () => false, "save")
+    };
+  }
   const Cached = Context.DocumentContentCache.get(UriString);
   let Text;
   if (Cached !== void 0) {
@@ -638,40 +835,86 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
       }
       return Raw2 == null ? "" : String(Raw2);
     }, "DecodeRaw");
-    const Decision = Route(UriOrPath);
-    if (Decision === "native") {
-      const Path = ExtractFsPath(UriOrPath);
-      if (Path !== void 0) {
-        if (process.env["Trace"]) {
-          process.stdout.write(
-            `[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}
-`
-          );
+    const Scheme = (() => {
+      if (typeof UriOrPath === "object" && UriOrPath?.scheme)
+        return String(UriOrPath.scheme);
+      if (typeof UriString === "string") {
+        const C = UriString.indexOf(":");
+        if (C > 0 && C < 32) return UriString.slice(0, C);
+      }
+      return "file";
+    })();
+    if (Scheme !== "file") {
+      const Provider = Context.ExtensionRegistry?.get(
+        `__textDocumentContentProvider:${Scheme}`
+      );
+      if (Provider && typeof Provider.provideTextDocumentContent === "function") {
+        const CancellationToken = {
+          isCancellationRequested: false,
+          onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onCancellationRequested")
+        };
+        let ProviderUri = UriOrPath;
+        try {
+          const API = globalThis.__cocoonVscodeAPI;
+          if (API?.Uri && UriString)
+            ProviderUri = API.Uri.parse(UriString);
+        } catch {
         }
         try {
-          Text = await FsPromises.readFile(Path, "utf8");
+          const Content = await Provider.provideTextDocumentContent(
+            ProviderUri,
+            CancellationToken
+          );
+          Text = typeof Content === "string" ? Content : Content ?? "";
         } catch {
           Text = "";
         }
+        if (Text !== void 0) {
+          Context.DocumentContentCache.set(UriString, Text);
+        } else {
+          Text = "";
+        }
+      }
+    }
+    const Decision = Route(UriOrPath);
+    if (Text === void 0) {
+      if (Decision === "native") {
+        const Path = ExtractFsPath(UriOrPath);
+        if (Path !== void 0) {
+          if (process.env["Trace"]) {
+            process.stdout.write(
+              `[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}
+`
+            );
+          }
+          try {
+            Text = await FsPromises.readFile(Path, "utf8");
+          } catch {
+            Text = "";
+          }
+        } else {
+          Text = DecodeRaw(
+            await Call(
+              Context,
+              "FileSystem.ReadFile",
+              [UriString]
+            )
+          );
+        }
       } else {
+        if (process.env["Trace"]) {
+          process.stdout.write(
+            `[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}
+`
+          );
+        }
         Text = DecodeRaw(
           await Call(Context, "FileSystem.ReadFile", [
             UriString
           ])
         );
       }
-    } else {
-      if (process.env["Trace"]) {
-        process.stdout.write(
-          `[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}
-`
-        );
-      }
-      Text = DecodeRaw(
-        await Call(Context, "FileSystem.ReadFile", [
-          UriString
-        ])
-      );
     }
   }
   const LanguageId = DeriveLanguageIdFromUri(UriString);
@@ -783,12 +1026,27 @@ var BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath
   };
 }, "BuildOpenTextDocument");
 var BuildSaveAll = /* @__PURE__ */ __name((Context) => async (_IncludeUntitled) => {
-  await Call(Context, "Document.Save", []);
+  try {
+    await Call(Context, "Workspace.SaveAll", [
+      _IncludeUntitled ?? false
+    ]);
+  } catch {
+    Context.SendToMountain("saveAll", {
+      includeUntitled: _IncludeUntitled ?? false
+    }).catch(() => {
+    });
+  }
   return true;
 }, "BuildSaveAll");
 var BuildApplyEdit = /* @__PURE__ */ __name((Context) => async (_Edit) => {
-  Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
-  });
+  try {
+    await Call(Context, "applyEdit", [_Edit]);
+  } catch {
+    Context.SendToMountain("workspace.applyEdit", _Edit).catch(
+      () => {
+      }
+    );
+  }
   return true;
 }, "BuildApplyEdit");
 var BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
@@ -826,7 +1084,36 @@ var BuildDocumentEventMembers = /* @__PURE__ */ __name((Context) => ({
   onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
   onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
   onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
-  onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
+  // `onWillSaveTextDocument` must add the listener to `__willSaveListeners`
+  // (the array the notification handler iterates for `waitUntil` support)
+  // AND also emit the event on WorkspaceEventEmitter so plain subscribers
+  // still fire. Without the `__willSaveListeners` path, format-on-save
+  // extensions that call `event.waitUntil(Promise<TextEdit[]>)` inside
+  // their listener never deliver their edits before the disk write.
+  onWillSaveTextDocument: /* @__PURE__ */ __name((Listener, ThisArg, Disposables) => {
+    const Bound = ThisArg === void 0 ? Listener : Listener.bind(ThisArg);
+    if (!Array.isArray(Context.__willSaveListeners)) {
+      Context.__willSaveListeners = [];
+    }
+    Context.__willSaveListeners.push(Bound);
+    const Subscription = {
+      dispose: /* @__PURE__ */ __name(() => {
+        const All = Context.__willSaveListeners;
+        if (Array.isArray(All)) {
+          const Idx = All.indexOf(Bound);
+          if (Idx !== -1) All.splice(Idx, 1);
+        }
+        Context.WorkspaceEventEmitter.removeListener(
+          "willSaveTextDocument",
+          Bound
+        );
+      }, "dispose")
+    };
+    if (Disposables && typeof Disposables.push === "function") {
+      Disposables.push(Subscription);
+    }
+    return Subscription;
+  }, "onWillSaveTextDocument"),
   onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
   onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
   onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),

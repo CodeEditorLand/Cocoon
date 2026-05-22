@@ -821,24 +821,78 @@ var CreateOutputChannel_default = /* @__PURE__ */ __name((Context, Handle, Name,
 
 // Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts
 var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, AlignmentOrId, Priority) => {
+  let _text = "";
+  let _tooltip = "";
+  let _command = void 0;
+  let _backgroundColor = void 0;
+  let _color = void 0;
+  let _visible = false;
+  let _name = void 0;
+  const Push = /* @__PURE__ */ __name(() => {
+    if (!_visible) return;
+    Context.SendToMountain("statusBar.update", {
+      handle: Handle,
+      text: _text,
+      tooltip: _tooltip,
+      command: typeof _command === "string" ? _command : _command?.command,
+      backgroundColor: _backgroundColor,
+      color: _color,
+      visible: true,
+      name: _name
+    }).catch(() => {
+    });
+  }, "Push");
   const Item = {
     id: Handle,
-    alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+    alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : typeof AlignmentOrId === "object" ? 1 : 1,
     priority: Priority,
-    text: "",
-    tooltip: "",
-    command: void 0,
+    name: _name,
+    get text() {
+      return _text;
+    },
+    set text(V) {
+      _text = String(V ?? "");
+      Push();
+    },
+    get tooltip() {
+      return _tooltip;
+    },
+    set tooltip(V) {
+      _tooltip = V;
+      Push();
+    },
+    get command() {
+      return _command;
+    },
+    set command(V) {
+      _command = V;
+      Push();
+    },
+    get backgroundColor() {
+      return _backgroundColor;
+    },
+    set backgroundColor(V) {
+      _backgroundColor = V;
+      Push();
+    },
+    get color() {
+      return _color;
+    },
+    set color(V) {
+      _color = V;
+      Push();
+    },
+    get accessibilityInformation() {
+      return void 0;
+    },
+    set accessibilityInformation(_V) {
+    },
     show: /* @__PURE__ */ __name(() => {
-      Context.SendToMountain("statusBar.update", {
-        handle: Handle,
-        text: Item.text,
-        tooltip: Item.tooltip,
-        command: Item.command,
-        visible: true
-      }).catch(() => {
-      });
+      _visible = true;
+      Push();
     }, "show"),
     hide: /* @__PURE__ */ __name(() => {
+      _visible = false;
       Context.SendToMountain("statusBar.update", {
         handle: Handle,
         visible: false
@@ -846,6 +900,7 @@ var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, Align
       });
     }, "hide"),
     dispose: /* @__PURE__ */ __name(() => {
+      _visible = false;
       Context.SendToMountain("statusBar.dispose", {
         handle: Handle
       }).catch(() => {
@@ -1413,8 +1468,33 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       Options = Items[0];
       Actions = Items.slice(1);
     }
+    if (Actions.length > 0) {
+      try {
+        const QuickItems = Actions.map((A) => ({
+          label: typeof A === "string" ? A : A?.title ?? String(A)
+        }));
+        const Picked = await Context.MountainClient?.sendRequest(
+          "Window.ShowQuickPick",
+          [
+            QuickItems,
+            {
+              placeHolder: Message,
+              title: `[${Level.toUpperCase()}] ${Message}`
+            }
+          ]
+        );
+        if (Picked == null) return void 0;
+        const PickedLabel = typeof Picked === "string" ? Picked : Picked?.label ?? String(Picked);
+        return Actions.find((A) => {
+          const Label = typeof A === "string" ? A : A?.title ?? String(A);
+          return Label === PickedLabel;
+        }) ?? PickedLabel ?? void 0;
+      } catch {
+        return void 0;
+      }
+    }
     try {
-      const Selection = await Context.MountainClient?.sendRequest(
+      await Context.MountainClient?.sendRequest(
         "Window.ShowMessage",
         [
           {
@@ -1425,7 +1505,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           }
         ]
       );
-      return Selection ?? void 0;
+      return void 0;
     } catch {
       return void 0;
     }
@@ -1536,12 +1616,21 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       }
       Context.__terminals.push(Stub);
       Context.__activeTerminal = Stub;
+      setImmediate(() => {
+        Context.Emitter.emit("window.didOpenTerminal", Stub);
+        Context.Emitter.emit("window.didChangeActiveTerminal", Stub);
+      });
       const OrigDispose = Stub.dispose.bind(Stub);
       Stub.dispose = () => {
         Context.__terminals = (Context.__terminals ?? []).filter((T) => T !== Stub);
         if (Context.__activeTerminal === Stub) {
           Context.__activeTerminal = void 0;
+          Context.Emitter.emit(
+            "window.didChangeActiveTerminal",
+            void 0
+          );
         }
+        Context.Emitter.emit("window.didCloseTerminal", Stub);
         OrigDispose();
       };
       return Stub;
@@ -1577,72 +1666,235 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     }, "dispose") }), "registerTerminalQuickFixProvider"),
     registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerTerminalCompletionProvider"),
-    createQuickPick: /* @__PURE__ */ __name(() => ({
-      value: "",
-      placeholder: void 0,
-      items: [],
-      activeItems: [],
-      selectedItems: [],
-      canSelectMany: false,
-      matchOnDescription: false,
-      matchOnDetail: false,
-      busy: false,
-      enabled: true,
-      ignoreFocusOut: false,
-      step: void 0,
-      totalSteps: void 0,
-      title: void 0,
-      buttons: [],
-      show: /* @__PURE__ */ __name(() => {
-      }, "show"),
-      hide: /* @__PURE__ */ __name(() => {
-      }, "hide"),
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose"),
-      onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidAccept"),
-      onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeValue"),
-      onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeActive"),
-      onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeSelection"),
-      onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidTriggerButton"),
-      onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidTriggerItemButton"),
-      onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidHide")
-    }), "createQuickPick"),
-    createInputBox: /* @__PURE__ */ __name(() => ({
-      value: "",
-      valueSelection: void 0,
-      placeholder: void 0,
-      password: false,
-      busy: false,
-      enabled: true,
-      ignoreFocusOut: false,
-      prompt: void 0,
-      validationMessage: void 0,
-      step: void 0,
-      totalSteps: void 0,
-      title: void 0,
-      buttons: [],
-      show: /* @__PURE__ */ __name(() => {
-      }, "show"),
-      hide: /* @__PURE__ */ __name(() => {
-      }, "hide"),
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose"),
-      onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidAccept"),
-      onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeValue"),
-      onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidTriggerButton"),
-      onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidHide")
-    }), "createInputBox"),
+    createQuickPick: /* @__PURE__ */ __name(() => {
+      const AcceptListeners = [];
+      const SelectionListeners = [];
+      const HideListeners = [];
+      const ValueListeners = [];
+      const State = {
+        value: "",
+        placeholder: void 0,
+        items: [],
+        activeItems: [],
+        selectedItems: [],
+        canSelectMany: false,
+        matchOnDescription: false,
+        matchOnDetail: false,
+        busy: false,
+        enabled: true,
+        ignoreFocusOut: false,
+        step: void 0,
+        totalSteps: void 0,
+        title: void 0,
+        buttons: []
+      };
+      let IsShown = false;
+      const Show = /* @__PURE__ */ __name(() => {
+        if (IsShown) return;
+        IsShown = true;
+        void (async () => {
+          try {
+            const Picked = await Context.MountainClient?.sendRequest(
+              "Window.ShowQuickPick",
+              [
+                State.items,
+                {
+                  placeHolder: State.placeholder,
+                  title: State.title,
+                  canPickMany: State.canSelectMany,
+                  matchOnDescription: State.matchOnDescription,
+                  matchOnDetail: State.matchOnDetail,
+                  ignoreFocusOut: State.ignoreFocusOut,
+                  step: State.step,
+                  totalSteps: State.totalSteps
+                }
+              ]
+            );
+            if (Picked != null) {
+              const PickedArr = Array.isArray(Picked) ? Picked : [Picked];
+              State.selectedItems = PickedArr;
+              for (const L of SelectionListeners) {
+                try {
+                  L(PickedArr);
+                } catch {
+                }
+              }
+              for (const L of AcceptListeners) {
+                try {
+                  L();
+                } catch {
+                }
+              }
+            }
+          } finally {
+            IsShown = false;
+            for (const L of HideListeners) {
+              try {
+                L();
+              } catch {
+              }
+            }
+          }
+        })();
+      }, "Show");
+      const MakeEvent = /* @__PURE__ */ __name((Listeners) => (Listener, _ThisArg, Disposables) => {
+        const Bound = _ThisArg ? Listener.bind(_ThisArg) : Listener;
+        Listeners.push(Bound);
+        const Sub = {
+          dispose: /* @__PURE__ */ __name(() => {
+            const I = Listeners.indexOf(
+              Bound
+            );
+            if (I !== -1) Listeners.splice(I, 1);
+          }, "dispose")
+        };
+        Disposables?.push(Sub);
+        return Sub;
+      }, "MakeEvent");
+      const MakeEventNoArg = /* @__PURE__ */ __name((Listeners) => (Listener, _ThisArg, Disposables) => {
+        const Bound = _ThisArg ? Listener.bind(_ThisArg) : Listener;
+        Listeners.push(Bound);
+        const Sub = {
+          dispose: /* @__PURE__ */ __name(() => {
+            const I = Listeners.indexOf(Bound);
+            if (I !== -1) Listeners.splice(I, 1);
+          }, "dispose")
+        };
+        Disposables?.push(Sub);
+        return Sub;
+      }, "MakeEventNoArg");
+      return Object.assign(State, {
+        show: Show,
+        hide: /* @__PURE__ */ __name(() => {
+          for (const L of HideListeners) {
+            try {
+              L();
+            } catch {
+            }
+          }
+        }, "hide"),
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose"),
+        onDidAccept: MakeEventNoArg(AcceptListeners),
+        onDidChangeValue: MakeEvent(ValueListeners),
+        onDidChangeActive: MakeEvent(SelectionListeners),
+        onDidChangeSelection: MakeEvent(SelectionListeners),
+        onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidTriggerButton"),
+        onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidTriggerItemButton"),
+        onDidHide: MakeEventNoArg(HideListeners)
+      });
+    }, "createQuickPick"),
+    createInputBox: /* @__PURE__ */ __name(() => {
+      const AcceptListeners = [];
+      const HideListeners = [];
+      const ValueListeners = [];
+      const State = {
+        value: "",
+        valueSelection: void 0,
+        placeholder: void 0,
+        password: false,
+        busy: false,
+        enabled: true,
+        ignoreFocusOut: false,
+        prompt: void 0,
+        validationMessage: void 0,
+        step: void 0,
+        totalSteps: void 0,
+        title: void 0,
+        buttons: []
+      };
+      let IsShown = false;
+      const Show = /* @__PURE__ */ __name(() => {
+        if (IsShown) return;
+        IsShown = true;
+        void (async () => {
+          try {
+            const Result = await Context.MountainClient?.sendRequest(
+              "Window.ShowInputBox",
+              [
+                {
+                  prompt: State.prompt,
+                  placeHolder: State.placeholder,
+                  value: State.value,
+                  password: State.password,
+                  title: State.title,
+                  step: State.step,
+                  totalSteps: State.totalSteps,
+                  ignoreFocusOut: State.ignoreFocusOut
+                }
+              ]
+            );
+            if (typeof Result === "string") {
+              State.value = Result;
+              for (const L of ValueListeners) {
+                try {
+                  L(Result);
+                } catch {
+                }
+              }
+              for (const L of AcceptListeners) {
+                try {
+                  L();
+                } catch {
+                }
+              }
+            }
+          } finally {
+            IsShown = false;
+            for (const L of HideListeners) {
+              try {
+                L();
+              } catch {
+              }
+            }
+          }
+        })();
+      }, "Show");
+      const MakeEventNoArg = /* @__PURE__ */ __name((Listeners) => (Listener, _ThisArg, Disposables) => {
+        const Bound = _ThisArg ? Listener.bind(_ThisArg) : Listener;
+        Listeners.push(Bound);
+        const Sub = {
+          dispose: /* @__PURE__ */ __name(() => {
+            const I = Listeners.indexOf(Bound);
+            if (I !== -1) Listeners.splice(I, 1);
+          }, "dispose")
+        };
+        Disposables?.push(Sub);
+        return Sub;
+      }, "MakeEventNoArg");
+      const MakeEventStr = /* @__PURE__ */ __name((Listeners) => (Listener, _ThisArg, Disposables) => {
+        const Bound = _ThisArg ? Listener.bind(_ThisArg) : Listener;
+        Listeners.push(Bound);
+        const Sub = {
+          dispose: /* @__PURE__ */ __name(() => {
+            const I = Listeners.indexOf(Bound);
+            if (I !== -1) Listeners.splice(I, 1);
+          }, "dispose")
+        };
+        Disposables?.push(Sub);
+        return Sub;
+      }, "MakeEventStr");
+      return Object.assign(State, {
+        show: Show,
+        hide: /* @__PURE__ */ __name(() => {
+          for (const L of HideListeners) {
+            try {
+              L();
+            } catch {
+            }
+          }
+        }, "hide"),
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose"),
+        onDidAccept: MakeEventNoArg(AcceptListeners),
+        onDidChangeValue: MakeEventStr(ValueListeners),
+        onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidTriggerButton"),
+        onDidHide: MakeEventNoArg(HideListeners)
+      });
+    }, "createInputBox"),
     createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
       const Handle = NextProviderHandle();
       const Panel = CreateWebviewPanel_default(
@@ -1659,24 +1911,163 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return Panel;
     }, "createWebviewPanel"),
     showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
+      const UriRaw = _Document?.uri?.toString?.() ?? _Document?.toString?.() ?? "";
       try {
-        const Result = await Context.MountainClient?.sendRequest(
-          "showTextDocument",
-          [_Document, _Column, _PreserveFocus]
-        );
-        if (Result && typeof Result === "object")
-          return Result;
+        await Context.MountainClient?.sendRequest("showTextDocument", [
+          _Document,
+          _Column,
+          _PreserveFocus
+        ]);
       } catch {
       }
+      const Active = Context.__activeTextEditor;
+      const ActiveUri = Active?.document?.uri?.toString?.() ?? "";
+      if (Active && (ActiveUri === UriRaw || !UriRaw)) {
+        return Active;
+      }
+      const DocText = Context.DocumentContentCache?.get(UriRaw) ?? "";
+      const DocLines = DocText.split(/\r?\n/);
+      const LiveSel = {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+        active: { line: 0, character: 0 },
+        anchor: { line: 0, character: 0 },
+        isEmpty: true,
+        isReversed: false,
+        isSingleLine: true
+      };
       return {
-        document: _Document,
-        selection: null,
-        viewColumn: _Column ?? 1,
+        document: {
+          uri: {
+            toString: /* @__PURE__ */ __name(() => UriRaw, "toString"),
+            fsPath: UriRaw.replace(/^file:\/\//, ""),
+            scheme: "file"
+          },
+          fileName: UriRaw.replace(/^file:\/\//, ""),
+          languageId: "plaintext",
+          version: 1,
+          isDirty: false,
+          isClosed: false,
+          isUntitled: false,
+          eol: 1,
+          lineCount: DocLines.length,
+          getText: /* @__PURE__ */ __name(() => DocText, "getText"),
+          lineAt: /* @__PURE__ */ __name((N) => {
+            const Ln = typeof N === "number" ? N : N?.line ?? 0;
+            const T = DocLines[Ln] ?? "";
+            return {
+              text: T,
+              lineNumber: Ln,
+              range: {
+                start: { line: Ln, character: 0 },
+                end: { line: Ln, character: T.length }
+              },
+              firstNonWhitespaceCharacterIndex: Math.max(
+                0,
+                T.search(/\S/)
+              ),
+              isEmptyOrWhitespace: T.trim().length === 0
+            };
+          }, "lineAt"),
+          positionAt: /* @__PURE__ */ __name((Off) => {
+            let R = Off;
+            for (let I = 0; I < DocLines.length; I++) {
+              const L = (DocLines[I]?.length ?? 0) + 1;
+              if (R < L) return { line: I, character: R };
+              R -= L;
+            }
+            return {
+              line: DocLines.length - 1,
+              character: DocLines[DocLines.length - 1]?.length ?? 0
+            };
+          }, "positionAt"),
+          offsetAt: /* @__PURE__ */ __name((P) => {
+            let O = 0;
+            for (let I = 0; I < (P?.line ?? 0); I++)
+              O += (DocLines[I]?.length ?? 0) + 1;
+            return O + (P?.character ?? 0);
+          }, "offsetAt"),
+          save: /* @__PURE__ */ __name(async () => true, "save"),
+          getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+          validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
+          validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition")
+        },
+        get selection() {
+          return LiveSel;
+        },
+        set selection(S) {
+          Object.assign(LiveSel, S);
+        },
+        selections: [LiveSel],
         visibleRanges: [],
-        options: {},
-        revealRange: /* @__PURE__ */ __name(() => {
+        viewColumn: (typeof _Column === "number" ? _Column : _Column?.viewColumn) ?? 1,
+        options: { tabSize: 4, insertSpaces: true },
+        setDecorations: /* @__PURE__ */ __name((Type, Ranges) => {
+          const Key = typeof Type === "string" ? Type : Type?.key ?? Type?.id ?? String(Type);
+          Context.SendToMountain("window.setTextEditorDecorations", {
+            decorationTypeKey: Key,
+            uri: UriRaw,
+            rangesOrOptions: Ranges
+          }).catch(() => {
+          });
+        }, "setDecorations"),
+        edit: /* @__PURE__ */ __name((Callback) => {
+          const Collected = [];
+          const Builder = {
+            replace: /* @__PURE__ */ __name((Range, Value) => Collected.push({ range: Range, text: Value }), "replace"),
+            insert: /* @__PURE__ */ __name((Position, Value) => Collected.push({
+              range: {
+                startLineNumber: (Position?.line ?? 0) + 1,
+                startColumn: (Position?.character ?? 0) + 1,
+                endLineNumber: (Position?.line ?? 0) + 1,
+                endColumn: (Position?.character ?? 0) + 1
+              },
+              text: Value
+            }), "insert"),
+            delete: /* @__PURE__ */ __name((Range) => Collected.push({ range: Range, text: "" }), "delete"),
+            setEndOfLine: /* @__PURE__ */ __name(() => {
+            }, "setEndOfLine")
+          };
+          try {
+            Callback(Builder);
+          } catch {
+            return Promise.resolve(false);
+          }
+          if (!Collected.length) return Promise.resolve(true);
+          return Context.SendToMountain("window.applyTextEdits", {
+            uri: UriRaw,
+            edits: Collected
+          }).then(() => true).catch(() => false);
+        }, "edit"),
+        insertSnippet: /* @__PURE__ */ __name(async (Snippet, Location) => {
+          const Text = typeof Snippet === "string" ? Snippet : Snippet?.value ?? "";
+          await Context.SendToMountain("window.applyTextEdits", {
+            uri: UriRaw,
+            edits: [{ range: Location ?? LiveSel, text: Text }]
+          }).catch(() => {
+          });
+          return true;
+        }, "insertSnippet"),
+        revealRange: /* @__PURE__ */ __name((Range, RevealType) => {
+          void Context.MountainClient?.sendRequest(
+            "window.revealRange",
+            {
+              uri: UriRaw,
+              range: Range,
+              revealType: RevealType ?? 0
+            }
+          ).catch(() => {
+          });
         }, "revealRange"),
-        show: /* @__PURE__ */ __name(() => {
+        show: /* @__PURE__ */ __name((ViewColumn) => {
+          void Context.MountainClient?.sendRequest(
+            "showTextDocument",
+            [
+              { uri: UriRaw, viewColumn: ViewColumn ?? 1 },
+              ViewColumn ?? 1
+            ]
+          ).catch(() => {
+          });
         }, "show"),
         hide: /* @__PURE__ */ __name(() => {
         }, "hide")
@@ -1689,7 +2080,22 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         tabs: [],
         isActive: true,
         viewColumn: 1,
-        activeTab: void 0
+        // Live getter: return a minimal Tab shape for the active editor.
+        get activeTab() {
+          const Active = Context.__activeTextEditor;
+          if (!Active) return void 0;
+          const Uri = Active?.document?.uri;
+          const FileName = typeof Uri?.toString === "function" ? Uri.toString() : String(Uri ?? "");
+          return {
+            label: FileName.split("/").pop() ?? "",
+            isActive: true,
+            isPinned: false,
+            isDirty: false,
+            isPreview: false,
+            group: void 0,
+            input: { uri: Uri, fileName: FileName }
+          };
+        }
       },
       onDidChangeTabs: MakeEventSubscriber(
         Context,
@@ -2138,7 +2544,12 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     get activeTerminal() {
       return Context.__activeTerminal ?? void 0;
     },
-    state: { focused: true, active: true }
+    get state() {
+      return Context.__windowState ?? {
+        focused: true,
+        active: true
+      };
+    }
   };
   return Namespace_default(Concrete);
 }, "CreateWindowNamespace");

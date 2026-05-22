@@ -25,15 +25,19 @@ const EventSubscriber =
 
 const CreateTasksNamespace = (Context: HandlerContext) =>
 	WrapTasksNamespace({
-		registerTaskProvider: (TaskType: string, _Provider: unknown) => {
+		registerTaskProvider: (TaskType: string, Provider: unknown) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_task_provider", {
 				handle: Handle,
 				taskType: TaskType,
 				extensionId: "",
 			}).catch(() => {});
+			// Stash so ExtHostTaskService$fetchTasks can call back.
+			const ProviderKey = `__taskProvider:${Handle}`;
+			Context.ExtensionRegistry.set(ProviderKey, Provider);
 			return {
 				dispose: () => {
+					Context.ExtensionRegistry.delete(ProviderKey);
 					Context.SendToMountain("unregister_task_provider", {
 						handle: Handle,
 					}).catch(() => {});

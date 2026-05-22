@@ -971,6 +971,99 @@ const InvokeLanguageProvider = async (
 				return Result ?? null;
 			}
 
+			// File decoration provider: called for each URI in the explorer.
+			// Args: [handle, uri]
+			case "$provideFileDecoration": {
+				const UriArg = Args[1] ?? VsDocument?.uri ?? Args[0];
+				let UriValue: unknown = UriArg;
+				try {
+					const API = (globalThis as any).__cocoonVscodeAPI;
+					if (API?.Uri) {
+						const UriStr =
+							typeof UriArg === "string"
+								? UriArg
+								: ((UriArg as any)?.external ??
+									(UriArg as any)?.toString?.() ??
+									"");
+						if (UriStr) UriValue = API.Uri.parse(UriStr);
+					}
+				} catch {}
+				const Result = await (Provider as any).provideFileDecoration?.(
+					UriValue,
+					VsToken,
+				);
+				return Result ?? null;
+			}
+
+			// Two-phase resolution: extensions provide a lightweight list of items,
+			// then VS Code calls resolve* for the selected item to load details.
+			// Without these handlers the workbench only shows the stub item.
+			case "$resolveCodeAction":
+			case "$resolveCodeActions": {
+				const Item = Args[1];
+				const Result = await (Provider as any).resolveCodeAction?.(
+					Item,
+					VsToken,
+				);
+				return Result ?? Item ?? null;
+			}
+
+			case "$resolveCodeLens": {
+				const Lens = Args[1];
+				const Result = await (Provider as any).resolveCodeLens?.(
+					Lens,
+					VsToken,
+				);
+				return Result ?? Lens ?? null;
+			}
+
+			case "$resolveCompletionItem": {
+				const Item = Args[1];
+				const Result = await (Provider as any).resolveCompletionItem?.(
+					Item,
+					VsToken,
+				);
+				return Result ?? Item ?? null;
+			}
+
+			case "$resolveHover": {
+				const Item = Args[1];
+				const Result = await (Provider as any).resolveHover?.(
+					VsDocument,
+					VsPosition,
+					VsToken,
+				);
+				return Result ?? Item ?? null;
+			}
+
+			case "$resolveInlayHint":
+			case "$resolveInlayHints": {
+				const Hint = Args[1];
+				const Result = await (Provider as any).resolveInlayHint?.(
+					Hint,
+					VsToken,
+				);
+				return Result ?? Hint ?? null;
+			}
+
+			case "$resolveDocumentLink": {
+				const Link = Args[1];
+				const Result = await (Provider as any).resolveDocumentLink?.(
+					Link,
+					VsToken,
+				);
+				return Result ?? Link ?? null;
+			}
+
+			case "$resolveWorkspaceSymbol": {
+				const Symbol = Args[1];
+				const Result = await (Provider as any).resolveWorkspaceSymbol?.(
+					Symbol,
+					VsToken,
+				);
+				return Result ?? Symbol ?? null;
+			}
+
 			default:
 				CocoonDevLog(
 					"language-provider",

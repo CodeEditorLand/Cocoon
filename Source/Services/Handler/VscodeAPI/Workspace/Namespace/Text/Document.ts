@@ -18,10 +18,165 @@ import {
 
 export const BuildOpenTextDocument =
 	(Context: HandlerContext) => async (UriOrPath: any) => {
+		// Handle `openTextDocument({ language, content })` - creates an untitled
+		// document with pre-populated content and the specified language.
+		// VS Code's overload: `openTextDocument(options: { language?: string, content?: string })`.
+		if (
+			UriOrPath &&
+			typeof UriOrPath === "object" &&
+			!UriOrPath.scheme &&
+			!UriOrPath.path &&
+			!UriOrPath.fsPath &&
+			(typeof UriOrPath.language === "string" ||
+				typeof UriOrPath.content === "string")
+		) {
+			const InlineContent =
+				typeof UriOrPath.content === "string" ? UriOrPath.content : "";
+			const InlineLang =
+				typeof UriOrPath.language === "string"
+					? UriOrPath.language
+					: "plaintext";
+			const UntitledKey = `untitled:Untitled-${Date.now()}`;
+			Context.DocumentContentCache.set(UntitledKey, InlineContent);
+			// Add to workspace.textDocuments so extensions iterating all open docs see it.
+			if (!Array.isArray((Context as any).__textDocuments))
+				(Context as any).__textDocuments = [];
+			const UriShape = {
+				toString: () => UntitledKey,
+				fsPath: "",
+				scheme: "untitled",
+				path: UntitledKey.slice("untitled:".length),
+				external: UntitledKey,
+			};
+			const Lines = InlineContent.split("\n");
+			const LineStarts: number[] = [0];
+			for (let I = 0; I < InlineContent.length; I++) {
+				if (InlineContent.charCodeAt(I) === 10) LineStarts.push(I + 1);
+			}
+			const PositionAt = (Off: number) => {
+				let Lo = 0,
+					Hi = LineStarts.length - 1;
+				while (Lo < Hi) {
+					const Mid = (Lo + Hi + 1) >>> 1;
+					if (LineStarts[Mid]! <= Off) Lo = Mid;
+					else Hi = Mid - 1;
+				}
+				return { line: Lo, character: Off - LineStarts[Lo]! };
+			};
+			const OffsetAt = (P: any) => {
+				const L = Math.max(0, Math.min(P?.line ?? 0, Lines.length - 1));
+				return Math.max(0, (LineStarts[L] ?? 0) + (P?.character ?? 0));
+			};
+			const Doc = {
+				uri: UriShape,
+				fileName: UntitledKey,
+				languageId: InlineLang,
+				isDirty: false,
+				isClosed: false,
+				isUntitled: true,
+				version: 1,
+				eol: 1,
+				lineCount: Lines.length,
+				getText: () => InlineContent,
+				positionAt: PositionAt,
+				offsetAt: OffsetAt,
+				lineAt: (N: any) => {
+					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+					const T = Lines[Ln] ?? "";
+					return {
+						lineNumber: Ln,
+						text: T,
+						range: {
+							start: { line: Ln, character: 0 },
+							end: { line: Ln, character: T.length },
+						},
+						firstNonWhitespaceCharacterIndex:
+							T.search(/\S/) < 0 ? T.length : T.search(/\S/),
+						isEmptyOrWhitespace: T.trim().length === 0,
+					};
+				},
+				getWordRangeAtPosition: () => undefined,
+				validateRange: (R: any) => R,
+				validatePosition: (P: any) => P,
+				save: async () => false,
+			};
+			(Context as any).__textDocuments.push(Doc);
+			// Fire didOpenTextDocument so extensions subscribed to onDidOpenTextDocument see it.
+			setImmediate(() => {
+				try {
+					Context.WorkspaceEventEmitter?.emit(
+						"didOpenTextDocument",
+						Doc,
+					);
+				} catch {}
+			});
+			return Doc;
+		}
+
 		const UriString =
 			typeof UriOrPath === "string"
 				? UriOrPath
 				: (UriOrPath?.toString?.() ?? "");
+
+		// `untitled:` scheme - blank document, no backend needed.
+		if (UriString.startsWith("untitled:") || UriString === "") {
+			const Content = Context.DocumentContentCache.get(UriString) ?? "";
+			const ULines = Content.split("\n");
+			const UntitledLang = DeriveLanguageIdFromUri(UriString);
+			return {
+				uri: UriOrPath ?? {
+					toString: () => UriString,
+					scheme: "untitled",
+					path: UriString.slice("untitled:".length),
+				},
+				fileName: UriString,
+				languageId: UntitledLang,
+				isDirty: false,
+				isClosed: false,
+				isUntitled: true,
+				version: 1,
+				eol: 1,
+				lineCount: ULines.length,
+				getText: () => Content,
+				positionAt: (Off: number) => {
+					let Rem = Off;
+					for (let I = 0; I < ULines.length; I++) {
+						const L = ULines[I]!.length + 1;
+						if (Rem < L) return { line: I, character: Rem };
+						Rem -= L;
+					}
+					return {
+						line: ULines.length - 1,
+						character: ULines[ULines.length - 1]?.length ?? 0,
+					};
+				},
+				offsetAt: (P: any) => {
+					let O = 0;
+					for (let I = 0; I < (P?.line ?? 0); I++)
+						O += (ULines[I]?.length ?? 0) + 1;
+					return O + (P?.character ?? 0);
+				},
+				lineAt: (N: any) => {
+					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+					const T = ULines[Ln] ?? "";
+					return {
+						lineNumber: Ln,
+						text: T,
+						range: {
+							start: { line: Ln, character: 0 },
+							end: { line: Ln, character: T.length },
+						},
+						firstNonWhitespaceCharacterIndex:
+							T.search(/\S/) < 0 ? T.length : T.search(/\S/),
+						isEmptyOrWhitespace: T.trim().length === 0,
+					};
+				},
+				getWordRangeAtPosition: () => undefined,
+				validateRange: (R: any) => R,
+				validatePosition: (P: any) => P,
+				save: async () => false,
+			};
+		}
 
 		// Cache hit short-circuits every backend - typed model registry
 		// already holds the latest contents.
@@ -66,46 +221,105 @@ export const BuildOpenTextDocument =
 				return Raw == null ? "" : String(Raw);
 			};
 
+			// Check for a registered TextDocumentContentProvider for this scheme.
+			// Extensions like vscode.git register `git:` scheme providers.
+			// Calling the provider directly is faster than a Mountain round-trip
+			// (no gRPC, no 10s timeout on miss).
+			const Scheme = (() => {
+				if (typeof UriOrPath === "object" && (UriOrPath as any)?.scheme)
+					return String((UriOrPath as any).scheme);
+				if (typeof UriString === "string") {
+					const C = UriString.indexOf(":");
+					if (C > 0 && C < 32) return UriString.slice(0, C);
+				}
+				return "file";
+			})();
+			if (Scheme !== "file") {
+				const Provider = (Context.ExtensionRegistry as any)?.get(
+					`__textDocumentContentProvider:${Scheme}`,
+				);
+				if (
+					Provider &&
+					typeof Provider.provideTextDocumentContent === "function"
+				) {
+					const CancellationToken = {
+						isCancellationRequested: false,
+						onCancellationRequested: () => ({ dispose: () => {} }),
+					};
+					let ProviderUri: unknown = UriOrPath;
+					try {
+						const API = (globalThis as any).__cocoonVscodeAPI;
+						if (API?.Uri && UriString)
+							ProviderUri = API.Uri.parse(UriString);
+					} catch {}
+					try {
+						const Content =
+							await Provider.provideTextDocumentContent(
+								ProviderUri,
+								CancellationToken,
+							);
+						Text =
+							typeof Content === "string"
+								? Content
+								: (Content ?? "");
+					} catch {
+						Text = "";
+					}
+					// Cache and build document without going to Mountain.
+					if (Text !== undefined) {
+						Context.DocumentContentCache.set(UriString, Text);
+					} else {
+						Text = "";
+					}
+				}
+			}
+
 			// Tier-split match: `file://` with no custom provider reads
 			// through Cocoon's own Node backend; everything else (Mountain-
 			// owned schemes, custom-provider schemes) routes through the
 			// FileSystem.ReadFile gRPC effect.
 			const Decision = Route(UriOrPath);
 
-			if (Decision === "native") {
-				const Path = ExtractFsPath(UriOrPath);
+			// Only go to disk/Mountain if content wasn't served by a provider.
+			// @ts-ignore - `Text` may have been set above by content provider.
+			if (Text === undefined) {
+				if (Decision === "native") {
+					const Path = ExtractFsPath(UriOrPath);
 
-				if (Path !== undefined) {
+					if (Path !== undefined) {
+						if (process.env["Trace"]) {
+							process.stdout.write(
+								`[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}\n`,
+							);
+						}
+
+						try {
+							Text = await FsPromises.readFile(Path, "utf8");
+						} catch {
+							Text = "";
+						}
+					} else {
+						Text = DecodeRaw(
+							await Call<unknown>(
+								Context,
+								"FileSystem.ReadFile",
+								[UriString],
+							),
+						);
+					}
+				} else {
 					if (process.env["Trace"]) {
 						process.stdout.write(
-							`[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}\n`,
+							`[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}\n`,
 						);
 					}
 
-					try {
-						Text = await FsPromises.readFile(Path, "utf8");
-					} catch {
-						Text = "";
-					}
-				} else {
 					Text = DecodeRaw(
 						await Call<unknown>(Context, "FileSystem.ReadFile", [
 							UriString,
 						]),
 					);
 				}
-			} else {
-				if (process.env["Trace"]) {
-					process.stdout.write(
-						`[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}\n`,
-					);
-				}
-
-				Text = DecodeRaw(
-					await Call<unknown>(Context, "FileSystem.ReadFile", [
-						UriString,
-					]),
-				);
 			}
 		}
 
@@ -316,17 +530,36 @@ export const BuildOpenTextDocument =
 
 export const BuildSaveAll =
 	(Context: HandlerContext) => async (_IncludeUntitled?: boolean) => {
-		await Call<void>(Context, "Document.Save", []);
+		// Route through Workspace.SaveAll which dispatches to Sky's
+		// `sky://workspace/saveAll` handler (round-trip via workbench command).
+		try {
+			await Call<void>(Context, "Workspace.SaveAll", [
+				_IncludeUntitled ?? false,
+			]);
+		} catch {
+			// Fallback: trigger saveAll notification to Sky
+			Context.SendToMountain("saveAll", {
+				includeUntitled: _IncludeUntitled ?? false,
+			}).catch(() => {});
+		}
 
 		return true;
 	};
 
 export const BuildApplyEdit =
 	(Context: HandlerContext) => async (_Edit: unknown) => {
-		// No dedicated dispatcher route yet - fire as notification so Wind
-		// can subscribe via the cocoon:workspace.applyEdit Tauri event.
-		Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {});
-
+		// Route through Mountain's `applyEdit` Track effect which does a
+		// round-trip to Sky so the edit is applied to the Monaco model before
+		// the extension's awaited promise resolves. Using sendRequest (not
+		// SendToMountain fire-and-forget) so the caller can `await` the result.
+		try {
+			await Call<boolean>(Context, "applyEdit", [_Edit]);
+		} catch {
+			// Mountain not connected or Sky rejected - fall back to DOM notify.
+			Context.SendToMountain("workspace.applyEdit", _Edit).catch(
+				() => {},
+			);
+		}
 		return true;
 	};
 
@@ -400,7 +633,43 @@ export const BuildDocumentEventMembers = (Context: HandlerContext) => ({
 	onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
 	onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
 	onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
-	onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
+	// `onWillSaveTextDocument` must add the listener to `__willSaveListeners`
+	// (the array the notification handler iterates for `waitUntil` support)
+	// AND also emit the event on WorkspaceEventEmitter so plain subscribers
+	// still fire. Without the `__willSaveListeners` path, format-on-save
+	// extensions that call `event.waitUntil(Promise<TextEdit[]>)` inside
+	// their listener never deliver their edits before the disk write.
+	onWillSaveTextDocument: (
+		Listener: (...Arguments: any[]) => any,
+		ThisArg?: unknown,
+		Disposables?: { push: (D: { dispose: () => void }) => unknown },
+	) => {
+		const Bound =
+			ThisArg === undefined
+				? Listener
+				: (Listener as (...A: any[]) => any).bind(ThisArg);
+		if (!Array.isArray((Context as any).__willSaveListeners)) {
+			(Context as any).__willSaveListeners = [];
+		}
+		(Context as any).__willSaveListeners.push(Bound);
+		const Subscription = {
+			dispose: () => {
+				const All = (Context as any).__willSaveListeners as any[];
+				if (Array.isArray(All)) {
+					const Idx = All.indexOf(Bound);
+					if (Idx !== -1) All.splice(Idx, 1);
+				}
+				Context.WorkspaceEventEmitter.removeListener(
+					"willSaveTextDocument",
+					Bound,
+				);
+			},
+		};
+		if (Disposables && typeof Disposables.push === "function") {
+			Disposables.push(Subscription);
+		}
+		return Subscription;
+	},
 	onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
 	onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
 	onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),

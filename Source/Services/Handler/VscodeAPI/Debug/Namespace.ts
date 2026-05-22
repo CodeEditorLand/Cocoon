@@ -48,15 +48,21 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 		registerDebugConfigurationProvider: (
 			DebugType: string,
 
-			_Provider: unknown,
+			Provider: unknown,
+
+			_TriggerKind?: unknown,
 		) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_debug_configuration_provider", {
 				handle: Handle,
 				debugType: DebugType,
 			}).catch(() => {});
+			// Stash locally so ExtHostDebug$resolveDebugConfiguration can call back.
+			const ProviderKey = `__debugConfigProvider:${Handle}`;
+			Context.ExtensionRegistry.set(ProviderKey, Provider);
 			return {
 				dispose: () => {
+					Context.ExtensionRegistry.delete(ProviderKey);
 					Context.SendToMountain(
 						"unregister_debug_configuration_provider",
 

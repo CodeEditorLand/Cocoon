@@ -380,9 +380,29 @@ const HandleSpecificNotification = (
 			break;
 		case "window.focused":
 			Emitter.emit("windowFocused", Parameters);
+			if (Context) {
+				(Context as any).__windowState = {
+					focused: true,
+					active: true,
+				};
+				Emitter.emit("window.didChangeWindowState", {
+					focused: true,
+					active: true,
+				});
+			}
 			break;
 		case "window.blurred":
 			Emitter.emit("windowBlurred", Parameters);
+			if (Context) {
+				(Context as any).__windowState = {
+					focused: false,
+					active: false,
+				};
+				Emitter.emit("window.didChangeWindowState", {
+					focused: false,
+					active: false,
+				});
+			}
 			break;
 		case "system.shutdown":
 			Emitter.emit("systemShutdown", Parameters);
@@ -424,39 +444,139 @@ const HandleSpecificNotification = (
 							D?.uri?.toString?.() === Uri || D?.fileName === Uri,
 					);
 					if (!Existing) {
+						const DocUri = {
+							toString: () => Uri,
+							fsPath: Uri.replace(/^file:\/\//, ""),
+							scheme: Uri.includes(":")
+								? Uri.split(":")[0]
+								: "file",
+							path: Uri.replace(/^file:\/\//, ""),
+							external: Uri,
+						};
 						TextDocs.push({
-							uri: {
-								toString: () => Uri,
-								fsPath: Uri.replace(/^file:\/\//, ""),
-								scheme: "file",
-								path: Uri.replace(/^file:\/\//, ""),
-							},
+							uri: DocUri,
 							fileName: Uri.replace(/^file:\/\//, ""),
 							languageId: LangId,
 							version: Model?.VersionId ?? Model?.version ?? 1,
 							isDirty: false,
 							isClosed: false,
-							isUntitled: false,
+							isUntitled: Uri.startsWith("untitled:"),
 							eol: 1,
 							get lineCount() {
 								return (
 									DocumentContentCache.get(Uri) ?? ""
 								).split(/\r?\n/).length;
 							},
-							getText: () => DocumentContentCache.get(Uri) ?? "",
-							lineAt: (N: number) => {
-								const L =
-									(DocumentContentCache.get(Uri) ?? "").split(
-										/\r?\n/,
-									)[N] ?? "";
-								return { text: L, lineNumber: N };
+							getText: (Range?: any) => {
+								const Text =
+									DocumentContentCache.get(Uri) ?? "";
+								if (!Range) return Text;
+								const Lines = Text.split(/\r?\n/);
+								const SL = Range?.start?.line ?? 0;
+								const SC = Range?.start?.character ?? 0;
+								const EL = Range?.end?.line ?? Lines.length - 1;
+								const EC =
+									Range?.end?.character ??
+									Lines[EL]?.length ??
+									0;
+								if (SL === EL)
+									return (Lines[SL] ?? "").slice(SC, EC);
+								const Parts = [(Lines[SL] ?? "").slice(SC)];
+								for (let I = SL + 1; I < EL; I++)
+									Parts.push(Lines[I] ?? "");
+								Parts.push((Lines[EL] ?? "").slice(0, EC));
+								return Parts.join("\n");
+							},
+							lineAt: (N: any) => {
+								const Text =
+									DocumentContentCache.get(Uri) ?? "";
+								const Lines = Text.split(/\r?\n/);
+								const Ln =
+									typeof N === "number" ? N : (N?.line ?? 0);
+								const Clamped = Math.max(
+									0,
+									Math.min(Ln, Lines.length - 1),
+								);
+								const T = Lines[Clamped] ?? "";
+								const FNW = T.search(/\S/);
+								return {
+									text: T,
+									lineNumber: Clamped,
+									range: {
+										start: { line: Clamped, character: 0 },
+										end: {
+											line: Clamped,
+											character: T.length,
+										},
+									},
+									firstNonWhitespaceCharacterIndex:
+										FNW < 0 ? T.length : FNW,
+									isEmptyOrWhitespace: T.trim().length === 0,
+								};
 							},
 							save: async () => false,
-							getWordRangeAtPosition: () => undefined,
+							getWordRangeAtPosition: (
+								Pos: any,
+								Pat?: RegExp,
+							) => {
+								const Text =
+									DocumentContentCache.get(Uri) ?? "";
+								const Lines = Text.split(/\r?\n/);
+								const L = Lines[Pos?.line ?? 0] ?? "";
+								const R = Pat ?? /\w+/g;
+								R.lastIndex = 0;
+								const C = Pos?.character ?? 0;
+								let M: RegExpExecArray | null;
+								while ((M = R.exec(L)) !== null) {
+									if (
+										M.index <= C &&
+										M.index + M[0].length >= C
+									)
+										return {
+											start: {
+												line: Pos?.line ?? 0,
+												character: M.index,
+											},
+											end: {
+												line: Pos?.line ?? 0,
+												character:
+													M.index + M[0].length,
+											},
+										};
+								}
+								return undefined;
+							},
 							validateRange: (R: any) => R,
 							validatePosition: (P: any) => P,
-							offsetAt: () => 0,
-							positionAt: () => ({ line: 0, character: 0 }),
+							offsetAt: (P: any) => {
+								const Text =
+									DocumentContentCache.get(Uri) ?? "";
+								const Lines = Text.split(/\r?\n/);
+								let O = 0;
+								for (
+									let I = 0;
+									I < (P?.line ?? 0) && I < Lines.length;
+									I++
+								)
+									O += (Lines[I]?.length ?? 0) + 1;
+								return O + (P?.character ?? 0);
+							},
+							positionAt: (Off: number) => {
+								const Text =
+									DocumentContentCache.get(Uri) ?? "";
+								const Lines = Text.split(/\r?\n/);
+								let R = Off;
+								for (let I = 0; I < Lines.length; I++) {
+									const L = (Lines[I]?.length ?? 0) + 1;
+									if (R < L) return { line: I, character: R };
+									R -= L;
+								}
+								return {
+									line: Lines.length - 1,
+									character:
+										Lines[Lines.length - 1]?.length ?? 0,
+								};
+							},
 						});
 					}
 				}
@@ -799,8 +919,65 @@ const HandleSpecificNotification = (
 					: (Payload?.uri ??
 						Payload?.document?.uri ??
 						Payload?.document);
+			const DeriveLang = (UriStr: string | undefined): string => {
+				if (!UriStr) return "plaintext";
+				const Ext =
+					(UriStr.split(".").pop() ?? "")
+						.toLowerCase()
+						.split("?")[0] ?? "";
+				const Map: Record<string, string> = {
+					rs: "rust",
+					ts: "typescript",
+					tsx: "typescriptreact",
+					js: "javascript",
+					jsx: "javascriptreact",
+					mjs: "javascript",
+					json: "json",
+					jsonc: "jsonc",
+					json5: "json5",
+					py: "python",
+					go: "go",
+					rb: "ruby",
+					java: "java",
+					c: "c",
+					cpp: "cpp",
+					cs: "csharp",
+					h: "c",
+					hpp: "cpp",
+					html: "html",
+					css: "css",
+					scss: "scss",
+					less: "less",
+					md: "markdown",
+					mdx: "mdx",
+					txt: "plaintext",
+					toml: "toml",
+					yaml: "yaml",
+					yml: "yaml",
+					xml: "xml",
+					sh: "shellscript",
+					bash: "shellscript",
+					zsh: "shellscript",
+					fish: "fish",
+					ps1: "powershell",
+					php: "php",
+					sql: "sql",
+					kt: "kotlin",
+					swift: "swift",
+					r: "r",
+					dart: "dart",
+					lua: "lua",
+					vim: "viml",
+					vue: "vue",
+					svelte: "svelte",
+					astro: "astro",
+					graphql: "graphql",
+					proto: "proto",
+				};
+				return Map[Ext] ?? "plaintext";
+			};
 			const LanguageId: string =
-				Payload?.languageId ?? Payload?.language ?? "plaintext";
+				Payload?.languageId ?? Payload?.language ?? DeriveLang(UriRaw);
 			const HydratedUri = UriRaw ? HydrateUri(UriRaw) : null;
 			// Update `vscode.window.activeTextEditor`. Extensions read this
 			// synchronously; mutating the shim's `__activeTextEditor` makes
@@ -1019,17 +1196,29 @@ const HandleSpecificNotification = (
 							return true;
 						},
 						revealRange: (Range: any, RevealType?: number) => {
-							Context.SendToMountain("window.revealRange", {
-								uri: UriRaw,
-								range: Range,
-								revealType: RevealType ?? 0,
-							}).catch(() => {});
+							// Use sendRequest (Track effect) not SendToMountain (notification)
+							// since Mountain routes `window.revealRange` via the request path.
+							void Context?.MountainClient?.sendRequest(
+								"window.revealRange",
+								{
+									uri: UriRaw,
+									range: Range,
+									revealType: RevealType ?? 0,
+								},
+							).catch(() => {});
 						},
 						show: (ViewColumn?: number) => {
-							Context.SendToMountain("window.showTextDocument", {
-								uri: UriRaw,
-								viewColumn: ViewColumn ?? 1,
-							}).catch(() => {});
+							// Use sendRequest for showTextDocument round-trip.
+							void Context?.MountainClient?.sendRequest(
+								"showTextDocument",
+								[
+									{
+										uri: UriRaw,
+										viewColumn: ViewColumn ?? 1,
+									},
+									ViewColumn ?? 1,
+								],
+							).catch(() => {});
 						},
 						hide: () => {},
 					}
@@ -1176,6 +1365,76 @@ const HandleSpecificNotification = (
 			Emitter.emit("terminalExit", { id: TerminalId });
 			break;
 		}
+
+		// B6: Mountain notifies Cocoon when a terminal is opened from the UI
+		// (not via the extension createTerminal() API) so vscode.window.terminals
+		// stays accurate.
+		case "$acceptTerminalOpened": {
+			const OpenPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const OpenId = OpenPayload?.id ?? OpenPayload;
+			const OpenName = OpenPayload?.name ?? `Terminal ${OpenId}`;
+			if (Context && OpenId !== undefined) {
+				if (!Array.isArray((Context as any).__terminals)) {
+					(Context as any).__terminals = [];
+				}
+				const Already = ((Context as any).__terminals as any[]).some(
+					(T: any) => T?.handle === OpenId || T?.id === OpenId,
+				);
+				if (!Already) {
+					// Push a minimal terminal stub matching the shape from
+					// Window/Namespace.ts createTerminal().
+					const Stub = {
+						name: OpenName,
+						handle: OpenId,
+						id: OpenId,
+						processId: Promise.resolve(
+							undefined as number | undefined,
+						),
+						sendText: () => {},
+						show: () => {},
+						hide: () => {},
+						dispose: () => {},
+					};
+					(Context as any).__terminals.push(Stub);
+					(Context as any).__activeTerminal = Stub;
+					Emitter.emit("window.didOpenTerminal", Stub);
+					Emitter.emit("window.didChangeActiveTerminal", Stub);
+				}
+			}
+			break;
+		}
+
+		// B6: Mountain notifies Cocoon when a terminal closes so the stale
+		// entry is removed from vscode.window.terminals.
+		case "$acceptTerminalClosed": {
+			const ClosePayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const CloseId = ClosePayload?.id ?? ClosePayload;
+			if (Context && CloseId !== undefined) {
+				const All = ((Context as any).__terminals as any[]) ?? [];
+				const Removed = All.filter(
+					(T: any) => T?.handle === CloseId || T?.id === CloseId,
+				);
+				(Context as any).__terminals = All.filter(
+					(T: any) => T?.handle !== CloseId && T?.id !== CloseId,
+				);
+				if (
+					(Context as any).__activeTerminal?.handle === CloseId ||
+					(Context as any).__activeTerminal?.id === CloseId
+				) {
+					(Context as any).__activeTerminal = undefined;
+					Emitter.emit("window.didChangeActiveTerminal", undefined);
+				}
+				for (const Term of Removed) {
+					Emitter.emit("window.didCloseTerminal", Term);
+				}
+			}
+			break;
+		}
+
 		case "$fileWatcher:event":
 			// { handle, kind: "create"|"change"|"delete", path }
 			{

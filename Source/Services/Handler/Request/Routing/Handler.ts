@@ -574,6 +574,79 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	};
 
 	// -----------------------------------------------------------------------
+	// TextDocumentContentProvider callback. Mountain sends
+	// `$provideTextDocumentContent` when it needs virtual document content
+	// for a custom scheme (git:, output:, vscode-notebook-cell:, etc.).
+	// Cocoon registered the provider via workspace.registerTextDocumentContentProvider
+	// and stashed it as `__textDocumentContentProvider:${scheme}`. Look it
+	// up, call `provideTextDocumentContent(uri, cancellationToken)`, and
+	// return the text (or null on miss).
+	// -----------------------------------------------------------------------
+
+	RoutePatterns["^\\$provideTextDocumentContent$"] = async (
+		_Method: string,
+		Params: any,
+	) => {
+		const Context = (globalThis as any).__cocoonGRPCContext;
+		if (!Context) return null;
+
+		const UriRaw = Params?.uri ?? Params?.[0];
+		const UriStr =
+			typeof UriRaw === "string"
+				? UriRaw
+				: (UriRaw?.toString?.() ?? UriRaw?.external ?? "");
+
+		// Extract scheme from URI string or object.
+		let Scheme = "file";
+		if (typeof UriRaw === "object" && UriRaw?.scheme) {
+			Scheme = String(UriRaw.scheme);
+		} else if (typeof UriStr === "string") {
+			const Colon = UriStr.indexOf(":");
+			if (Colon > 0 && Colon < 32) Scheme = UriStr.slice(0, Colon);
+		}
+
+		const Provider = Context.ExtensionRegistry?.get(
+			`__textDocumentContentProvider:${Scheme}`,
+		);
+		if (
+			!Provider ||
+			typeof Provider.provideTextDocumentContent !== "function"
+		) {
+			return null;
+		}
+
+		const CancellationToken = {
+			isCancellationRequested: false,
+			onCancellationRequested: () => ({ dispose: () => {} }),
+		};
+
+		try {
+			// Hydrate URI to a real vscode.Uri instance if possible.
+			let UriArg: unknown = UriRaw;
+			const API = (globalThis as any).__cocoonVscodeAPI;
+			if (API?.Uri && UriStr) {
+				try {
+					UriArg = API.Uri.parse(UriStr);
+				} catch {
+					UriArg = UriRaw;
+				}
+			}
+
+			const Content = await Provider.provideTextDocumentContent(
+				UriArg,
+				CancellationToken,
+			);
+			return Content ?? null;
+		} catch (ProviderErr) {
+			CocoonDevLog(
+				"model",
+				`[RequestRoutingHandler] $provideTextDocumentContent provider error for ${UriStr}: ${(ProviderErr as any)?.message ?? String(ProviderErr)}`,
+			);
+			return null;
+		}
+	};
+
+	// -----------------------------------------------------------------------
 	// VS Code feature channel routes - Mountain defers these to Cocoon via
 	// NodeDeferred path (TierIPC=NodeDeferred/Node in .env.Land). Each
 	// wraps the existing vscode.* API shim namespace implementations so

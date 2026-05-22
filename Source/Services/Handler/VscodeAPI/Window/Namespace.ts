@@ -103,8 +103,53 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				Options = Items[0];
 				Actions = Items.slice(1);
 			}
+
+			// When there are action buttons, route through Window.ShowQuickPick
+			// (a round-trip) so the user's selection propagates back.
+			// Without this, showInformationMessage("msg", "OK", "Cancel") always
+			// resolves `undefined` and extensions never see which button was clicked.
+			if (Actions.length > 0) {
+				try {
+					const QuickItems = Actions.map((A: unknown) => ({
+						label:
+							typeof A === "string"
+								? A
+								: ((A as any)?.title ?? String(A)),
+					}));
+					const Picked = await Context.MountainClient?.sendRequest(
+						"Window.ShowQuickPick",
+						[
+							QuickItems,
+							{
+								placeHolder: Message,
+								title: `[${Level.toUpperCase()}] ${Message}`,
+							},
+						],
+					);
+					if (Picked == null) return undefined;
+					const PickedLabel =
+						typeof Picked === "string"
+							? Picked
+							: ((Picked as any)?.label ?? String(Picked));
+					return (
+						Actions.find((A: unknown) => {
+							const Label =
+								typeof A === "string"
+									? A
+									: ((A as any)?.title ?? String(A));
+							return Label === PickedLabel;
+						}) ??
+						PickedLabel ??
+						undefined
+					);
+				} catch {
+					return undefined;
+				}
+			}
+
+			// No action buttons: fire-and-forget notification.
 			try {
-				const Selection = await Context.MountainClient?.sendRequest(
+				await Context.MountainClient?.sendRequest(
 					"Window.ShowMessage",
 
 					[
@@ -116,7 +161,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						},
 					],
 				);
-				return Selection ?? undefined;
+				return undefined;
 			} catch {
 				return undefined;
 			}
@@ -284,6 +329,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 			(Context as any).__terminals.push(Stub);
 			(Context as any).__activeTerminal = Stub;
+			// Fire onDidOpenTerminal and onDidChangeActiveTerminal events.
+			setImmediate(() => {
+				Context.Emitter.emit("window.didOpenTerminal", Stub);
+				Context.Emitter.emit("window.didChangeActiveTerminal", Stub);
+			});
 			const OrigDispose = Stub.dispose.bind(Stub);
 			Stub.dispose = () => {
 				(Context as any).__terminals = (
@@ -291,7 +341,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				).filter((T: unknown) => T !== Stub);
 				if ((Context as any).__activeTerminal === Stub) {
 					(Context as any).__activeTerminal = undefined;
+					Context.Emitter.emit(
+						"window.didChangeActiveTerminal",
+						undefined,
+					);
 				}
+				Context.Emitter.emit("window.didCloseTerminal", Stub);
 				OrigDispose();
 			};
 			return Stub;
@@ -352,56 +407,274 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			..._TriggerCharacters: string[]
 		) => ({ dispose: () => {} }),
 
-		createQuickPick: () => ({
-			value: "",
-			placeholder: undefined as string | undefined,
-			items: [] as unknown[],
-			activeItems: [] as unknown[],
-			selectedItems: [] as unknown[],
-			canSelectMany: false,
-			matchOnDescription: false,
-			matchOnDetail: false,
-			busy: false,
-			enabled: true,
-			ignoreFocusOut: false,
-			step: undefined,
-			totalSteps: undefined,
-			title: undefined,
-			buttons: [] as unknown[],
-			show: () => {},
-			hide: () => {},
-			dispose: () => {},
-			onDidAccept: () => ({ dispose: () => {} }),
-			onDidChangeValue: () => ({ dispose: () => {} }),
-			onDidChangeActive: () => ({ dispose: () => {} }),
-			onDidChangeSelection: () => ({ dispose: () => {} }),
-			onDidTriggerButton: () => ({ dispose: () => {} }),
-			onDidTriggerItemButton: () => ({ dispose: () => {} }),
-			onDidHide: () => ({ dispose: () => {} }),
-		}),
+		createQuickPick: () => {
+			// Live QuickPick: when `show()` is called, routes through
+			// `Window.ShowQuickPick` (round-trip Mountain→Sky) with the
+			// current items. On selection, fires `onDidAccept` /
+			// `onDidChangeSelection`. On dismiss, fires `onDidHide`.
+			const AcceptListeners: Array<() => void> = [];
+			const SelectionListeners: Array<(items: unknown[]) => void> = [];
+			const HideListeners: Array<() => void> = [];
+			const ValueListeners: Array<(value: string) => void> = [];
+			const State = {
+				value: "",
+				placeholder: undefined as string | undefined,
+				items: [] as unknown[],
+				activeItems: [] as unknown[],
+				selectedItems: [] as unknown[],
+				canSelectMany: false,
+				matchOnDescription: false,
+				matchOnDetail: false,
+				busy: false,
+				enabled: true,
+				ignoreFocusOut: false,
+				step: undefined as number | undefined,
+				totalSteps: undefined as number | undefined,
+				title: undefined as string | undefined,
+				buttons: [] as unknown[],
+			};
+			let IsShown = false;
+			const Show = () => {
+				if (IsShown) return;
+				IsShown = true;
+				void (async () => {
+					try {
+						const Picked =
+							await Context.MountainClient?.sendRequest(
+								"Window.ShowQuickPick",
+								[
+									State.items,
+									{
+										placeHolder: State.placeholder,
+										title: State.title,
+										canPickMany: State.canSelectMany,
+										matchOnDescription:
+											State.matchOnDescription,
+										matchOnDetail: State.matchOnDetail,
+										ignoreFocusOut: State.ignoreFocusOut,
+										step: State.step,
+										totalSteps: State.totalSteps,
+									},
+								],
+							);
+						if (Picked != null) {
+							const PickedArr = Array.isArray(Picked)
+								? Picked
+								: [Picked];
+							State.selectedItems = PickedArr;
+							for (const L of SelectionListeners) {
+								try {
+									L(PickedArr);
+								} catch {}
+							}
+							for (const L of AcceptListeners) {
+								try {
+									L();
+								} catch {}
+							}
+						}
+					} finally {
+						IsShown = false;
+						for (const L of HideListeners) {
+							try {
+								L();
+							} catch {}
+						}
+					}
+				})();
+			};
+			const MakeEvent =
+				<T>(Listeners: Array<(e: T) => void>) =>
+				(
+					Listener: (e: T) => void,
+					_ThisArg?: unknown,
+					Disposables?: {
+						push: (D: { dispose: () => void }) => void;
+					},
+				) => {
+					const Bound = _ThisArg
+						? (Listener as any).bind(_ThisArg)
+						: Listener;
+					Listeners.push(Bound as (e: T) => void);
+					const Sub = {
+						dispose: () => {
+							const I = Listeners.indexOf(
+								Bound as (e: T) => void,
+							);
+							if (I !== -1) Listeners.splice(I, 1);
+						},
+					};
+					Disposables?.push(Sub);
+					return Sub;
+				};
+			const MakeEventNoArg =
+				(Listeners: Array<() => void>) =>
+				(
+					Listener: () => void,
+					_ThisArg?: unknown,
+					Disposables?: {
+						push: (D: { dispose: () => void }) => void;
+					},
+				) => {
+					const Bound = _ThisArg
+						? (Listener as any).bind(_ThisArg)
+						: Listener;
+					Listeners.push(Bound);
+					const Sub = {
+						dispose: () => {
+							const I = Listeners.indexOf(Bound);
+							if (I !== -1) Listeners.splice(I, 1);
+						},
+					};
+					Disposables?.push(Sub);
+					return Sub;
+				};
+			return Object.assign(State, {
+				show: Show,
+				hide: () => {
+					for (const L of HideListeners) {
+						try {
+							L();
+						} catch {}
+					}
+				},
+				dispose: () => {},
+				onDidAccept: MakeEventNoArg(AcceptListeners),
+				onDidChangeValue: MakeEvent<string>(ValueListeners),
+				onDidChangeActive: MakeEvent<unknown[]>(SelectionListeners),
+				onDidChangeSelection: MakeEvent<unknown[]>(SelectionListeners),
+				onDidTriggerButton: () => ({ dispose: () => {} }),
+				onDidTriggerItemButton: () => ({ dispose: () => {} }),
+				onDidHide: MakeEventNoArg(HideListeners),
+			});
+		},
 
-		createInputBox: () => ({
-			value: "",
-			valueSelection: undefined,
-			placeholder: undefined,
-			password: false,
-			busy: false,
-			enabled: true,
-			ignoreFocusOut: false,
-			prompt: undefined,
-			validationMessage: undefined,
-			step: undefined,
-			totalSteps: undefined,
-			title: undefined,
-			buttons: [] as unknown[],
-			show: () => {},
-			hide: () => {},
-			dispose: () => {},
-			onDidAccept: () => ({ dispose: () => {} }),
-			onDidChangeValue: () => ({ dispose: () => {} }),
-			onDidTriggerButton: () => ({ dispose: () => {} }),
-			onDidHide: () => ({ dispose: () => {} }),
-		}),
+		createInputBox: () => {
+			// Live InputBox: when `show()` is called, routes through
+			// `Window.ShowInputBox` (round-trip Mountain→Sky).
+			const AcceptListeners: Array<() => void> = [];
+			const HideListeners: Array<() => void> = [];
+			const ValueListeners: Array<(value: string) => void> = [];
+			const State = {
+				value: "",
+				valueSelection: undefined as [number, number] | undefined,
+				placeholder: undefined as string | undefined,
+				password: false,
+				busy: false,
+				enabled: true,
+				ignoreFocusOut: false,
+				prompt: undefined as string | undefined,
+				validationMessage: undefined as string | undefined,
+				step: undefined as number | undefined,
+				totalSteps: undefined as number | undefined,
+				title: undefined as string | undefined,
+				buttons: [] as unknown[],
+			};
+			let IsShown = false;
+			const Show = () => {
+				if (IsShown) return;
+				IsShown = true;
+				void (async () => {
+					try {
+						const Result =
+							await Context.MountainClient?.sendRequest(
+								"Window.ShowInputBox",
+								[
+									{
+										prompt: State.prompt,
+										placeHolder: State.placeholder,
+										value: State.value,
+										password: State.password,
+										title: State.title,
+										step: State.step,
+										totalSteps: State.totalSteps,
+										ignoreFocusOut: State.ignoreFocusOut,
+									},
+								],
+							);
+						if (typeof Result === "string") {
+							State.value = Result;
+							for (const L of ValueListeners) {
+								try {
+									L(Result);
+								} catch {}
+							}
+							for (const L of AcceptListeners) {
+								try {
+									L();
+								} catch {}
+							}
+						}
+					} finally {
+						IsShown = false;
+						for (const L of HideListeners) {
+							try {
+								L();
+							} catch {}
+						}
+					}
+				})();
+			};
+			const MakeEventNoArg =
+				(Listeners: Array<() => void>) =>
+				(
+					Listener: () => void,
+					_ThisArg?: unknown,
+					Disposables?: {
+						push: (D: { dispose: () => void }) => void;
+					},
+				) => {
+					const Bound = _ThisArg
+						? (Listener as any).bind(_ThisArg)
+						: Listener;
+					Listeners.push(Bound);
+					const Sub = {
+						dispose: () => {
+							const I = Listeners.indexOf(Bound);
+							if (I !== -1) Listeners.splice(I, 1);
+						},
+					};
+					Disposables?.push(Sub);
+					return Sub;
+				};
+			const MakeEventStr =
+				(Listeners: Array<(v: string) => void>) =>
+				(
+					Listener: (v: string) => void,
+					_ThisArg?: unknown,
+					Disposables?: {
+						push: (D: { dispose: () => void }) => void;
+					},
+				) => {
+					const Bound = _ThisArg
+						? (Listener as any).bind(_ThisArg)
+						: Listener;
+					Listeners.push(Bound);
+					const Sub = {
+						dispose: () => {
+							const I = Listeners.indexOf(Bound);
+							if (I !== -1) Listeners.splice(I, 1);
+						},
+					};
+					Disposables?.push(Sub);
+					return Sub;
+				};
+			return Object.assign(State, {
+				show: Show,
+				hide: () => {
+					for (const L of HideListeners) {
+						try {
+							L();
+						} catch {}
+					}
+				},
+				dispose: () => {},
+				onDidAccept: MakeEventNoArg(AcceptListeners),
+				onDidChangeValue: MakeEventStr(ValueListeners),
+				onDidTriggerButton: () => ({ dispose: () => {} }),
+				onDidHide: MakeEventNoArg(HideListeners),
+			});
+		},
 
 		createWebviewPanel: (
 			ViewType: string,
@@ -441,30 +714,187 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			_PreserveFocus?: boolean,
 		) => {
-			// Round-trip via `showTextDocument` Track handler so Mountain can
-			// drive Sky to open the editor and return a `TextEditor` stub.
-			// Extensions frequently `await` this and then chain `.selection`,
-			// `.revealRange`, etc. - returning undefined crashes those chains.
-			// Fall back to a disposable stub on failure so the call never
-			// throws outright.
+			// Round-trip via Mountain so Sky opens the editor, then return a
+			// full TextEditor shim so `.edit()`, `.setDecorations()`,
+			// `.revealRange()`, etc. work immediately.
+			const UriRaw =
+				(_Document as any)?.uri?.toString?.() ??
+				(_Document as any)?.toString?.() ??
+				"";
 			try {
-				const Result = await Context.MountainClient?.sendRequest(
-					"showTextDocument",
-					[_Document, _Column, _PreserveFocus],
-				);
-				if (Result && typeof Result === "object")
-					return Result as unknown;
+				await Context.MountainClient?.sendRequest("showTextDocument", [
+					_Document,
+					_Column,
+					_PreserveFocus,
+				]);
 			} catch {
 				// Mountain not yet connected or Sky rejected - no-op.
 			}
+			// If the active editor now matches the requested URI, return it.
+			const Active = (Context as any).__activeTextEditor;
+			const ActiveUri = Active?.document?.uri?.toString?.() ?? "";
+			if (Active && (ActiveUri === UriRaw || !UriRaw)) {
+				return Active;
+			}
+			// Build a live TextEditor shim that routes mutations through Mountain.
+			const DocText =
+				(Context as any).DocumentContentCache?.get(UriRaw) ?? "";
+			const DocLines = DocText.split(/\r?\n/);
+			const LiveSel = {
+				start: { line: 0, character: 0 },
+				end: { line: 0, character: 0 },
+				active: { line: 0, character: 0 },
+				anchor: { line: 0, character: 0 },
+				isEmpty: true,
+				isReversed: false,
+				isSingleLine: true,
+			};
 			return {
-				document: _Document,
-				selection: null,
-				viewColumn: _Column ?? 1,
+				document: {
+					uri: {
+						toString: () => UriRaw,
+						fsPath: UriRaw.replace(/^file:\/\//, ""),
+						scheme: "file",
+					},
+					fileName: UriRaw.replace(/^file:\/\//, ""),
+					languageId: "plaintext",
+					version: 1,
+					isDirty: false,
+					isClosed: false,
+					isUntitled: false,
+					eol: 1,
+					lineCount: DocLines.length,
+					getText: () => DocText,
+					lineAt: (N: any) => {
+						const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+						const T = DocLines[Ln] ?? "";
+						return {
+							text: T,
+							lineNumber: Ln,
+							range: {
+								start: { line: Ln, character: 0 },
+								end: { line: Ln, character: T.length },
+							},
+							firstNonWhitespaceCharacterIndex: Math.max(
+								0,
+								T.search(/\S/),
+							),
+							isEmptyOrWhitespace: T.trim().length === 0,
+						};
+					},
+					positionAt: (Off: number) => {
+						let R = Off;
+						for (let I = 0; I < DocLines.length; I++) {
+							const L = (DocLines[I]?.length ?? 0) + 1;
+							if (R < L) return { line: I, character: R };
+							R -= L;
+						}
+						return {
+							line: DocLines.length - 1,
+							character:
+								DocLines[DocLines.length - 1]?.length ?? 0,
+						};
+					},
+					offsetAt: (P: any) => {
+						let O = 0;
+						for (let I = 0; I < (P?.line ?? 0); I++)
+							O += (DocLines[I]?.length ?? 0) + 1;
+						return O + (P?.character ?? 0);
+					},
+					save: async () => true,
+					getWordRangeAtPosition: () => undefined,
+					validateRange: (R: any) => R,
+					validatePosition: (P: any) => P,
+				},
+				get selection() {
+					return LiveSel;
+				},
+				set selection(S: any) {
+					Object.assign(LiveSel, S);
+				},
+				selections: [LiveSel],
 				visibleRanges: [],
-				options: {},
-				revealRange: () => {},
-				show: () => {},
+				viewColumn:
+					(typeof _Column === "number"
+						? _Column
+						: (_Column as any)?.viewColumn) ?? 1,
+				options: { tabSize: 4, insertSpaces: true },
+				setDecorations: (Type: any, Ranges: any[]) => {
+					const Key =
+						typeof Type === "string"
+							? Type
+							: (Type?.key ?? Type?.id ?? String(Type));
+					Context.SendToMountain("window.setTextEditorDecorations", {
+						decorationTypeKey: Key,
+						uri: UriRaw,
+						rangesOrOptions: Ranges,
+					}).catch(() => {});
+				},
+				edit: (Callback: (Builder: any) => void): Promise<boolean> => {
+					const Collected: any[] = [];
+					const Builder = {
+						replace: (Range: any, Value: string) =>
+							Collected.push({ range: Range, text: Value }),
+						insert: (Position: any, Value: string) =>
+							Collected.push({
+								range: {
+									startLineNumber: (Position?.line ?? 0) + 1,
+									startColumn: (Position?.character ?? 0) + 1,
+									endLineNumber: (Position?.line ?? 0) + 1,
+									endColumn: (Position?.character ?? 0) + 1,
+								},
+								text: Value,
+							}),
+						delete: (Range: any) =>
+							Collected.push({ range: Range, text: "" }),
+						setEndOfLine: () => {},
+					};
+					try {
+						Callback(Builder);
+					} catch {
+						return Promise.resolve(false);
+					}
+					if (!Collected.length) return Promise.resolve(true);
+					return Context.SendToMountain("window.applyTextEdits", {
+						uri: UriRaw,
+						edits: Collected,
+					})
+						.then(() => true)
+						.catch(() => false);
+				},
+				insertSnippet: async (
+					Snippet: any,
+					Location?: any,
+				): Promise<boolean> => {
+					const Text =
+						typeof Snippet === "string"
+							? Snippet
+							: (Snippet?.value ?? "");
+					await Context.SendToMountain("window.applyTextEdits", {
+						uri: UriRaw,
+						edits: [{ range: Location ?? LiveSel, text: Text }],
+					}).catch(() => {});
+					return true;
+				},
+				revealRange: (Range: any, RevealType?: number) => {
+					void Context.MountainClient?.sendRequest(
+						"window.revealRange",
+						{
+							uri: UriRaw,
+							range: Range,
+							revealType: RevealType ?? 0,
+						},
+					).catch(() => {});
+				},
+				show: (ViewColumn?: number) => {
+					void Context.MountainClient?.sendRequest(
+						"showTextDocument",
+						[
+							{ uri: UriRaw, viewColumn: ViewColumn ?? 1 },
+							ViewColumn ?? 1,
+						],
+					).catch(() => {});
+				},
 				hide: () => {},
 			};
 		},
@@ -481,7 +911,25 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 				viewColumn: 1,
 
-				activeTab: undefined,
+				// Live getter: return a minimal Tab shape for the active editor.
+				get activeTab() {
+					const Active = (Context as any).__activeTextEditor;
+					if (!Active) return undefined;
+					const Uri = Active?.document?.uri;
+					const FileName =
+						typeof Uri?.toString === "function"
+							? Uri.toString()
+							: String(Uri ?? "");
+					return {
+						label: FileName.split("/").pop() ?? "",
+						isActive: true,
+						isPinned: false,
+						isDirty: false,
+						isPreview: false,
+						group: undefined,
+						input: { uri: Uri, fileName: FileName },
+					};
+				},
 			},
 			onDidChangeTabs: MakeEventSubscriber(
 				Context,
@@ -1118,7 +1566,14 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return (Context as any).__activeTerminal ?? undefined;
 		},
 
-		state: { focused: true, active: true },
+		get state() {
+			return (
+				(Context as any).__windowState ?? {
+					focused: true,
+					active: true,
+				}
+			);
+		},
 	};
 
 	return WrapWindowNamespace(Concrete);

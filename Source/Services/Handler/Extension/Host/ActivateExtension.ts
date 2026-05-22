@@ -149,23 +149,120 @@ const CreateExtensionContext = (
 			}),
 			[Symbol.iterator]: function* () {},
 		},
-		secrets: {
-			get: async (_Key: string) => undefined,
-			store: async (_Key: string, _Value: string) => {},
-			delete: async (_Key: string) => {},
-			onDidChange: () => ({ dispose: () => {} }),
-		},
-		workspaceState: {
-			get: (_Key: string, _DefaultValue?: unknown) => undefined,
-			update: async (_Key: string, _Value: unknown) => {},
-			keys: () => [] as string[],
-		},
-		globalState: {
-			get: (_Key: string, _DefaultValue?: unknown) => undefined,
-			update: async (_Key: string, _Value: unknown) => {},
-			keys: () => [] as string[],
-			setKeysForSync: (_Keys: string[]) => {},
-		},
+		// Real secrets - routes to Mountain's AES-256-GCM encrypted storage.
+		secrets: (() => {
+			const ExtIdCached = ExtId;
+			const Listeners: Array<(Event: { key: string }) => void> = [];
+			return {
+				get: async (Key: string): Promise<string | undefined> => {
+					try {
+						const Result =
+							await Context.MountainClient?.sendRequest(
+								"secrets.get",
+								{ key: Key, extensionId: ExtIdCached },
+							);
+						return typeof Result === "string" ? Result : undefined;
+					} catch {
+						return undefined;
+					}
+				},
+				store: async (Key: string, Value: string): Promise<void> => {
+					try {
+						await Context.MountainClient?.sendRequest(
+							"secrets.store",
+							{
+								key: Key,
+								value: Value,
+								extensionId: ExtIdCached,
+							},
+						);
+						for (const L of Listeners) {
+							try {
+								L({ key: Key });
+							} catch {}
+						}
+					} catch {}
+				},
+				delete: async (Key: string): Promise<void> => {
+					try {
+						await Context.MountainClient?.sendRequest(
+							"secrets.delete",
+							{
+								key: Key,
+								extensionId: ExtIdCached,
+							},
+						);
+						for (const L of Listeners) {
+							try {
+								L({ key: Key });
+							} catch {}
+						}
+					} catch {}
+				},
+				onDidChange: (Listener: (Event: { key: string }) => void) => {
+					Listeners.push(Listener);
+					return {
+						dispose: () => {
+							const I = Listeners.indexOf(Listener);
+							if (I !== -1) Listeners.splice(I, 1);
+						},
+					};
+				},
+			};
+		})(),
+		// Real workspace/global state backed by Mountain's storage.
+		workspaceState: (() => {
+			const ExtIdCached = ExtId;
+			const Cache = new Map<string, unknown>();
+			return {
+				get: (Key: string, DefaultValue?: unknown): unknown => {
+					if (Cache.has(Key)) return Cache.get(Key);
+					// async prime - first sync read returns default
+					void Context.MountainClient?.sendRequest("Storage.Get", [
+						`${ExtIdCached}:workspace:${Key}`,
+					])
+						.then((V) => {
+							if (V !== undefined) Cache.set(Key, V);
+						})
+						.catch(() => {});
+					return DefaultValue;
+				},
+				update: async (Key: string, Value: unknown): Promise<void> => {
+					Cache.set(Key, Value);
+					await Context.MountainClient?.sendRequest("Storage.Set", [
+						`${ExtIdCached}:workspace:${Key}`,
+						Value,
+					]).catch(() => {});
+				},
+				keys: () => [...Cache.keys()],
+			};
+		})(),
+		globalState: (() => {
+			const ExtIdCached = ExtId;
+			const Cache = new Map<string, unknown>();
+			return {
+				get: (Key: string, DefaultValue?: unknown): unknown => {
+					if (Cache.has(Key)) return Cache.get(Key);
+					void Context.MountainClient?.sendRequest("Storage.Get", [
+						`${ExtIdCached}:global:${Key}`,
+					])
+						.then((V) => {
+							if (V !== undefined) Cache.set(Key, V);
+						})
+						.catch(() => {});
+					return DefaultValue;
+				},
+				update: async (Key: string, Value: unknown): Promise<void> => {
+					Cache.set(Key, Value);
+					await Context.MountainClient?.sendRequest("Storage.Set", [
+						`${ExtIdCached}:global:${Key}`,
+						Value,
+					]).catch(() => {});
+				},
+				keys: () => [...Cache.keys()],
+				setKeysForSync: (_Keys: string[]) => {},
+			};
+		})(),
 		extensionMode: 1,
 		extension: {
 			id: ExtId,
@@ -473,6 +570,15 @@ const ActivateExtension = async (
 			if (RegEntry && ExtActivateResult !== undefined) {
 				(RegEntry as any).__exports = ExtActivateResult;
 				(RegEntry as any).exports = ExtActivateResult;
+			}
+			// Also update the context's own extension.exports so
+			// `context.extension.exports` returns the activation result.
+			if (ExtActivateResult !== undefined && ExtContext) {
+				try {
+					(ExtContext as any).extension.exports = ExtActivateResult;
+				} catch {
+					/* read-only property - skip */
+				}
 			}
 			process.stdout.write(
 				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})\n`,

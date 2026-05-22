@@ -236,6 +236,64 @@ var BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) 
       `__textDocumentContentProvider:${Scheme}`,
       Provider
     );
+    if (Provider && typeof Provider.onDidChange === "function") {
+      try {
+        Provider.onDidChange((Uri) => {
+          const UriStr = typeof Uri === "string" ? Uri : Uri?.toString?.() ?? "";
+          if (!UriStr) return;
+          const CancellationToken = {
+            isCancellationRequested: false,
+            onCancellationRequested: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onCancellationRequested")
+          };
+          void Promise.resolve(
+            Provider.provideTextDocumentContent?.(
+              Uri,
+              CancellationToken
+            )
+          ).then((Content) => {
+            if (typeof Content === "string") {
+              Context.DocumentContentCache?.set(
+                UriStr,
+                Content
+              );
+              Context.WorkspaceEventEmitter?.emit(
+                "didChangeTextDocument",
+                {
+                  document: {
+                    uri: {
+                      toString: /* @__PURE__ */ __name(() => UriStr, "toString"),
+                      scheme: Scheme,
+                      path: UriStr.slice(
+                        Scheme.length + 1
+                      )
+                    },
+                    fileName: UriStr,
+                    languageId: "plaintext",
+                    version: Date.now(),
+                    isDirty: false,
+                    getText: /* @__PURE__ */ __name(() => Content, "getText")
+                  },
+                  contentChanges: [
+                    {
+                      text: Content,
+                      range: null,
+                      rangeOffset: 0,
+                      rangeLength: 0
+                    }
+                  ],
+                  reason: void 0
+                }
+              );
+            }
+          }).catch(() => {
+          });
+        });
+      } catch {
+      }
+    }
   },
   (_Handle, Scheme) => {
     Context.ExtensionRegistry.delete(
@@ -270,7 +328,13 @@ var BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider
   "register_task_provider",
   "unregister_task_provider",
   "taskProvider",
-  (TaskType) => ({ taskType: TaskType, extensionId: "" })
+  (TaskType) => ({ taskType: TaskType, extensionId: "" }),
+  (Handle, _TaskType, Provider) => {
+    Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider);
+  },
+  (Handle, _TaskType) => {
+    Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`);
+  }
 ), "BuildRegisterTaskProvider");
 var BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
   Context,

@@ -770,10 +770,11 @@ export class GRPCServerService
 			return RequestRoutingHandler(method, parameters);
 		}
 
-		// Language feature provider invocation: "$provideHover", "$provideCompletions", etc.
+		// Language feature provider invocation: "$provideHover", "$provideCompletions",
+		// "$resolveCodeAction", "$resolveCodeLens", etc.
 		// Mountain calls these when Sky's Monaco editor requests language intelligence.
 		// parameters = [handle, uriObject, position?, context?]
-		if (/^\$provide[A-Z]/.test(method)) {
+		if (/^\$provide[A-Z]/.test(method) || /^\$resolve[A-Z]/.test(method)) {
 			return InvokeLanguageProvider(
 				method,
 
@@ -817,16 +818,247 @@ export class GRPCServerService
 			return { ok: true };
 		}
 
-		// ExtHostAuthentication surface. Extensions call
-		// `authentication.getSession(providerId, scopes, options)` during
-		// activation; until we have a real provider registry wired through
-		// Mountain, the honest answer is "no session". Returning `undefined`
-		// (serialised as `null`) matches stock VS Code's behaviour when the
-		// user dismisses a sign-in prompt and keeps the extension from
-		// throwing during boot. Other `ExtHostAuthentication$*` methods
-		// (registerProvider, removeSession, ...) return `null` for the same
-		// reason - better than a hard `Unknown method` throw.
+		// ExtHostAuthentication surface. Check for registered auth providers
+		// before returning null. Extensions may register providers via
+		// vscode.authentication.registerAuthenticationProvider which stashes
+		// them with key `__authProvider:${providerId}`.
 		if (/^ExtHostAuthentication\$/.test(method)) {
+			const AuthMethod = method.slice("ExtHostAuthentication$".length);
+			if (AuthMethod === "getSession") {
+				const Context = this.GetHandlerContext();
+				const Args = Array.isArray(parameters)
+					? parameters
+					: [parameters];
+				const ProviderId = typeof Args[0] === "string" ? Args[0] : "";
+				const Scopes = Array.isArray(Args[1]) ? Args[1] : [];
+				const Options = Args[2] ?? {};
+				const ProviderKey = `__authProvider:${ProviderId}`;
+				const Provider = (Context.ExtensionRegistry as any)?.get(
+					ProviderKey,
+				);
+				if (Provider && typeof Provider.getSessions === "function") {
+					try {
+						const Sessions = await Provider.getSessions(Scopes);
+						if (Array.isArray(Sessions) && Sessions.length > 0) {
+							return Sessions[0];
+						}
+					} catch {
+						// Fall through to null
+					}
+				}
+			}
+			return null;
+		}
+
+		// ExtHostTaskService - task provider invocations from Mountain.
+		if (/^ExtHostTaskService\$/.test(method)) {
+			const TaskMethod = method.slice("ExtHostTaskService$".length);
+			const Context = this.GetHandlerContext();
+			if (TaskMethod === "fetchTasks" || TaskMethod === "provideTasks") {
+				const Filter = Array.isArray(parameters)
+					? parameters[0]
+					: parameters;
+				const AllTasks: unknown[] = [];
+				for (const [Key, Provider] of (
+					Context.ExtensionRegistry as any
+				).entries()) {
+					if (!String(Key).startsWith("__taskProvider:")) continue;
+					try {
+						const CancellationToken = {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
+						const Tasks = await (Provider as any).provideTasks?.(
+							CancellationToken,
+						);
+						if (Array.isArray(Tasks)) AllTasks.push(...Tasks);
+					} catch {
+						/* skip bad provider */
+					}
+				}
+				return AllTasks;
+			}
+			if (TaskMethod === "executeTask") {
+				return { id: String(Date.now()), task: parameters };
+			}
+			return null;
+		}
+
+		// ExtHostDebug - debug configuration and session handling.
+		if (/^ExtHostDebug\$/.test(method)) {
+			const DebugMethod = method.slice("ExtHostDebug$".length);
+			const Context = this.GetHandlerContext();
+			if (
+				DebugMethod === "resolveDebugConfiguration" ||
+				DebugMethod ===
+					"resolveDebugConfigurationWithSubstitutedVariables"
+			) {
+				const Args = Array.isArray(parameters)
+					? parameters
+					: [parameters];
+				const Config = Args[1] ?? Args[0] ?? {};
+				// Find registered debug config provider for the type.
+				const DebugType = (Config as any)?.type ?? "";
+				for (const [Key, Provider] of (
+					Context.ExtensionRegistry as any
+				).entries()) {
+					if (!String(Key).startsWith("__debugConfigProvider:"))
+						continue;
+					try {
+						const CancellationToken = {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
+						const Resolved = await (
+							Provider as any
+						).resolveDebugConfiguration?.(
+							Args[0],
+							Config,
+							CancellationToken,
+						);
+						if (Resolved != null) return Resolved;
+					} catch {
+						/* skip */
+					}
+				}
+				return Config;
+			}
+			if (DebugMethod === "provideDebugConfigurations") {
+				const Args = Array.isArray(parameters)
+					? parameters
+					: [parameters];
+				const Folder = Args[0];
+				const AllConfigs: unknown[] = [];
+				for (const [Key, Provider] of (
+					Context.ExtensionRegistry as any
+				).entries()) {
+					if (!String(Key).startsWith("__debugConfigProvider:"))
+						continue;
+					try {
+						const CancellationToken = {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
+						const Configs = await (
+							Provider as any
+						).provideDebugConfigurations?.(
+							Folder,
+							CancellationToken,
+						);
+						if (Array.isArray(Configs)) AllConfigs.push(...Configs);
+					} catch {
+						/* skip */
+					}
+				}
+				return AllConfigs;
+			}
+			return null;
+		}
+
+		// ExtHostSCM - source control method dispatching.
+		if (/^ExtHostSCM\$/.test(method)) {
+			return null; // SCM providers manage their own state via notifications.
+		}
+
+		// ExtHostTesting - test runner invocations.
+		if (/^ExtHostTesting\$/.test(method)) {
+			const TestMethod = method.slice("ExtHostTesting$".length);
+			if (TestMethod === "runTests" || TestMethod === "cancelRun") {
+				return null; // Test runner stubs - no-op until Grove WASM host.
+			}
+			return null;
+		}
+
+		// ExtHostFileSystem - custom file system provider callbacks.
+		if (/^ExtHostFileSystem\$/.test(method)) {
+			const FSMethod = method.slice("ExtHostFileSystem$".length);
+			const Context = this.GetHandlerContext();
+			const Args = Array.isArray(parameters) ? parameters : [parameters];
+			const UriArg = Args[0];
+			const UriStr =
+				typeof UriArg === "string"
+					? UriArg
+					: ((UriArg as any)?.external ??
+						(UriArg as any)?.toString?.() ??
+						"");
+			const Scheme = UriStr.split(":")[0] ?? "file";
+			const ProviderKey = `__fileSystemProvider:${Scheme}`;
+			const Provider = (Context.ExtensionRegistry as any)?.get(
+				ProviderKey,
+			);
+			if (Provider) {
+				try {
+					switch (FSMethod) {
+						case "readFile":
+							return (
+								(await (Provider as any).readFile?.(UriArg)) ??
+								new Uint8Array()
+							);
+						case "writeFile":
+							return await (Provider as any).writeFile?.(
+								UriArg,
+								Args[1],
+								Args[2],
+							);
+						case "stat":
+							return (
+								(await (Provider as any).stat?.(UriArg)) ?? {
+									type: 1,
+									size: 0,
+									ctime: 0,
+									mtime: 0,
+								}
+							);
+						case "readDirectory":
+							return (
+								(await (Provider as any).readDirectory?.(
+									UriArg,
+								)) ?? []
+							);
+						case "createDirectory":
+							return await (Provider as any).createDirectory?.(
+								UriArg,
+							);
+						case "delete":
+							return await (Provider as any).delete?.(
+								UriArg,
+								Args[1],
+							);
+						case "rename":
+							return await (Provider as any).rename?.(
+								UriArg,
+								Args[1],
+								Args[2],
+							);
+						case "copy":
+							return await (Provider as any).copy?.(
+								UriArg,
+								Args[1],
+								Args[2],
+							);
+						default:
+							return null;
+					}
+				} catch {
+					return null;
+				}
+			}
+			return null;
+		}
+
+		// Generic ExtHost* fallback - unknown methods return null gracefully
+		// rather than crashing the Mountain gRPC connection with an unhandled throw.
+		if (/^ExtHost[A-Z]/.test(method)) {
+			CocoonDevLog(
+				"grpc",
+				`[GRPCServerService] Unhandled ExtHost method: ${method}`,
+			);
 			return null;
 		}
 

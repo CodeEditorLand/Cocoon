@@ -228,8 +228,76 @@ const HandleActivateByEvent = async (
 		);
 	}
 
-	// Fire-and-forget - activate each matching extension asynchronously.
-	// We cap concurrent activations to avoid flooding the event loop.
+	// Dependency-ordered activation (T2.5). Before activating each
+	// extension, activate its declared `extensionDependencies` first.
+	// A Set tracks in-progress activations to break circular dep cycles.
+	const InProgress = new Set<string>();
+
+	const ActivateWithDeps = async (
+		ExtId: string,
+		Event: string,
+		Depth = 0,
+	): Promise<void> => {
+		// Already activated or currently being activated (cycle guard).
+		if (Context.ActivatedExtensions.has(ExtId) || InProgress.has(ExtId))
+			return;
+		// Depth guard: max 20 levels of transitive deps before bail-out.
+		if (Depth > 20) {
+			CocoonDevLog(
+				"ext-activate",
+				`[ExtensionHostHandler] Max dep depth reached at ${ExtId}; skipping`,
+			);
+			return;
+		}
+
+		InProgress.add(ExtId);
+
+		const Extension = Context.ExtensionRegistry.get(ExtId);
+		const Deps: string[] = (Extension as any)?.extensionDependencies ?? [];
+
+		// Activate each declared dependency first (sequentially so we
+		// honour transitive ordering without races).
+		for (const DepId of Deps) {
+			if (
+				!Context.ActivatedExtensions.has(DepId) &&
+				!InProgress.has(DepId)
+			) {
+				await ActivateWithDeps(DepId, Event, Depth + 1).catch(
+					(Err: unknown) => {
+						CocoonDevLog(
+							"ext-activate",
+							`[ExtensionHostHandler] Dep activation failed ${DepId} (required by ${ExtId}): ${Err instanceof Error ? Err.message : String(Err)}`,
+						);
+					},
+				);
+			}
+		}
+
+		// Now activate the extension itself.
+		await ActivateExtension(Context, ExtId, Event).catch((Err: unknown) => {
+			const Msg = Err instanceof Error ? Err.message : String(Err);
+			CocoonDevLog(
+				"ext-activate",
+				`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
+			);
+			if (
+				Err instanceof Error &&
+				/Class extends value undefined/.test(Err.message)
+			) {
+				const Stack = (Err.stack ?? "")
+					.split("\n")
+					.slice(0, 6)
+					.join("\n");
+				CocoonDevLog(
+					"ext-activate",
+					`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
+				);
+			}
+		});
+
+		InProgress.delete(ExtId);
+	};
+
 	const ToActivate = MatchingExtensions.filter(
 		(Id) => !Context.ActivatedExtensions.has(Id),
 	);
@@ -239,49 +307,10 @@ const HandleActivateByEvent = async (
 		`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`,
 	);
 
+	// Launch all top-level activations concurrently; deps within each
+	// extension are resolved serially by ActivateWithDeps.
 	for (const ExtId of ToActivate) {
-		ActivateExtension(Context, ExtId, ActivationEvent).catch(
-			(Err: unknown) => {
-				const Msg = Err instanceof Error ? Err.message : String(Err);
-				// Activation failures whose root cause is the
-				// extension's own internal logic (peer-dependency
-				// missing, semver parse on undefined, malformed
-				// schema in its bundle) are NOT Land bugs - the
-				// extension would fail on stock VS Code too if its
-				// declared dependency wasn't installed. Routing the
-				// log line to stdout keeps the diagnostic info but
-				// stops Mountain's stderr-classifier from elevating
-				// it to a `warn:` prefix that suggests Land is
-				// broken. Same downgrade pattern as
-				// `GRPCServerService` already uses for `$provide*`
-				// handler rejections.
-				CocoonDevLog(
-					"ext-activate",
-					`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
-				);
-
-				// For `Class extends value undefined` errors, surface the top
-				// of the stack so we can locate which module (and which base
-				// class) actually failed to resolve. Cascade-7's critical-
-				// symbol diagnostic confirmed the 14 most-used classes are
-				// present on the shim, so the missing symbol is somewhere
-				// deeper - only the stack can say where.
-				if (
-					Err instanceof Error &&
-					/Class extends value undefined/.test(Err.message)
-				) {
-					const Stack = (Err.stack ?? "")
-						.split("\n")
-						.slice(0, 6)
-						.join("\n");
-
-					CocoonDevLog(
-						"ext-activate",
-						`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
-					);
-				}
-			},
-		);
+		void ActivateWithDeps(ExtId, ActivationEvent);
 	}
 
 	// Keep legacy event for any listeners

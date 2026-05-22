@@ -68,6 +68,73 @@ export const BuildRegisterTextDocumentContentProvider = (
 
 				Provider,
 			);
+			// Wire provider's onDidChange: when content changes, re-fetch and
+			// notify Cocoon's document model so $acceptModelChanged fires for
+			// extensions listening to onDidChangeTextDocument for virtual docs.
+			if (Provider && typeof Provider.onDidChange === "function") {
+				try {
+					Provider.onDidChange((Uri: unknown) => {
+						const UriStr =
+							typeof Uri === "string"
+								? Uri
+								: ((Uri as any)?.toString?.() ?? "");
+						if (!UriStr) return;
+						const CancellationToken = {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
+						void Promise.resolve(
+							Provider.provideTextDocumentContent?.(
+								Uri,
+								CancellationToken,
+							),
+						)
+							.then((Content: unknown) => {
+								if (typeof Content === "string") {
+									Context.DocumentContentCache?.set(
+										UriStr,
+										Content,
+									);
+									// Emit didChangeTextDocument so extensions listening
+									// to onDidChangeTextDocument for virtual docs get the update.
+									Context.WorkspaceEventEmitter?.emit(
+										"didChangeTextDocument",
+										{
+											document: {
+												uri: {
+													toString: () => UriStr,
+													scheme: Scheme,
+													path: UriStr.slice(
+														Scheme.length + 1,
+													),
+												},
+												fileName: UriStr,
+												languageId: "plaintext",
+												version: Date.now(),
+												isDirty: false,
+												getText: () => Content,
+											},
+											contentChanges: [
+												{
+													text: Content,
+													range: null,
+													rangeOffset: 0,
+													rangeLength: 0,
+												},
+											],
+											reason: undefined,
+										},
+									);
+								}
+							})
+							.catch(() => {});
+					});
+				} catch {
+					// Provider may not have an event subscription method - skip.
+				}
+			}
 		},
 
 		(_Handle, Scheme) => {
@@ -136,6 +203,14 @@ export const BuildRegisterTaskProvider = (Context: HandlerContext) =>
 		"taskProvider",
 
 		(TaskType) => ({ taskType: TaskType, extensionId: "" }),
+
+		(Handle, _TaskType, Provider) => {
+			Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider);
+		},
+
+		(Handle, _TaskType) => {
+			Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`);
+		},
 	);
 
 export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>

@@ -30,7 +30,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 			Label: string,
 
-			_Provider: unknown,
+			Provider: unknown,
 
 			Options?: { supportsMultipleAccounts?: boolean },
 		) => {
@@ -43,8 +43,12 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					Options?.supportsMultipleAccounts ?? false,
 				extensionId: "",
 			}).catch(() => {});
+			// Stash so ExtHostAuthentication$getSession can call getSessions().
+			const ProviderKey = `__authProvider:${ProviderId}`;
+			Context.ExtensionRegistry.set(ProviderKey, Provider);
 			return {
 				dispose: () => {
+					Context.ExtensionRegistry.delete(ProviderKey);
 					Context.SendToMountain(
 						"unregister_authentication_provider",
 

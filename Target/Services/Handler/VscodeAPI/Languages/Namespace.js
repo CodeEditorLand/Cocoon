@@ -12549,12 +12549,19 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
   }, "setTextDocumentLanguage"),
   // Per-language configuration (auto-closing pairs, comments, onEnterRules,
   // wordPattern, indentation). rust-analyzer calls this at activation with
-  // its Rust-specific IndentAction rules. Land doesn't wire these through
-  // Mountain yet; return a disposable so activation completes and the
-  // contributed LSP still provides completions.
-  setLanguageConfiguration: /* @__PURE__ */ __name((_LanguageId, _Configuration) => {
-    return { dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") };
+  // its Rust-specific IndentAction rules. Forward through Mountain's
+  // `set_language_configuration` gRPC notification so Sky can relay
+  // to Monaco's `monaco.languages.setLanguageConfiguration(...)`.
+  setLanguageConfiguration: /* @__PURE__ */ __name((LanguageId, Configuration3) => {
+    Context.SendToMountain("set_language_configuration", {
+      language: LanguageId,
+      configuration: Configuration3 ?? {}
+    }).catch(() => {
+    });
+    return {
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    };
   }, "setLanguageConfiguration"),
   match: /* @__PURE__ */ __name((Selector, Document) => {
     const DocLanguage = typeof Document?.languageId === "string" ? Document.languageId : "";

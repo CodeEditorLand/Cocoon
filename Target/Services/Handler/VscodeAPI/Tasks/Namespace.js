@@ -753,7 +753,7 @@ var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) 
   };
 }, "EventSubscriber");
 var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
-  registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
+  registerTaskProvider: /* @__PURE__ */ __name((TaskType, Provider) => {
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_task_provider", {
       handle: Handle,
@@ -761,8 +761,11 @@ var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => Namespace_default
       extensionId: ""
     }).catch(() => {
     });
+    const ProviderKey = `__taskProvider:${Handle}`;
+    Context.ExtensionRegistry.set(ProviderKey, Provider);
     return {
       dispose: /* @__PURE__ */ __name(() => {
+        Context.ExtensionRegistry.delete(ProviderKey);
         Context.SendToMountain("unregister_task_provider", {
           handle: Handle
         }).catch(() => {

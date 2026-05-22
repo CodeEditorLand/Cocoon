@@ -770,15 +770,18 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => Namespace_default
       }, "dispose")
     };
   }, "registerDebugAdapterDescriptorFactory"),
-  registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
+  registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, Provider, _TriggerKind) => {
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_debug_configuration_provider", {
       handle: Handle,
       debugType: DebugType
     }).catch(() => {
     });
+    const ProviderKey = `__debugConfigProvider:${Handle}`;
+    Context.ExtensionRegistry.set(ProviderKey, Provider);
     return {
       dispose: /* @__PURE__ */ __name(() => {
+        Context.ExtensionRegistry.delete(ProviderKey);
         Context.SendToMountain(
           "unregister_debug_configuration_provider",
           {

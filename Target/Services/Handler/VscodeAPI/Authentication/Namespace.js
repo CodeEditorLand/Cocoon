@@ -753,7 +753,7 @@ var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) 
   };
 }, "EventSubscriber");
 var CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
-  registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
+  registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, Provider, Options) => {
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_authentication_provider", {
       handle: Handle,
@@ -763,8 +763,11 @@ var CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => Namespac
       extensionId: ""
     }).catch(() => {
     });
+    const ProviderKey = `__authProvider:${ProviderId}`;
+    Context.ExtensionRegistry.set(ProviderKey, Provider);
     return {
       dispose: /* @__PURE__ */ __name(() => {
+        Context.ExtensionRegistry.delete(ProviderKey);
         Context.SendToMountain(
           "unregister_authentication_provider",
           {
