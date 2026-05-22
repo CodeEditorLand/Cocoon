@@ -5509,7 +5509,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-20T08:08:59Z"
+      generatedAt: "2026-05-21T23:59:06Z"
     };
   }
 });
@@ -36754,7 +36754,7 @@ globalThis.__LandTiers = {
   FindFiles: true ? "Layer3" : process.env["TierFindFiles"] ?? "Layer3",
   Glob: true ? "JavaScript" : process.env["TierGlob"] ?? "JavaScript",
   FileWatcher: true ? "Layer4" : process.env["TierFileWatcher"] ?? "Layer4",
-  SchemeAssets: true ? "Embedded" : process.env["TierSchemeAssets"] ?? "Embedded",
+  SchemeAssets: true ? "FileSystem" : process.env["TierSchemeAssets"] ?? "Embedded",
   Configuration: true ? "Cache" : process.env["TierConfiguration"] ?? "Cache",
   Diagnostics: true ? "Full" : process.env["TierDiagnostics"] ?? "Full",
   Clipboard: true ? "Layer3" : process.env["TierClipboard"] ?? "Layer3",
