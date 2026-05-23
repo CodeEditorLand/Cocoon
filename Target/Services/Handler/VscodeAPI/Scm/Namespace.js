@@ -891,8 +891,10 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
             const SanitizedStates = Array.isArray(Value) ? Value.map((Raw) => SanitizeResourceState(Raw)) : [];
             GroupReady.then(
               () => Context.SendToMountain("update_scm_group", {
-                scmHandle: Handle,
-                groupHandle: GroupHandle,
+                // Proto UpdateScmGroupRequest field names:
+                // providerId (string scm id) + groupId (string)
+                providerId: Id,
+                groupId: GroupId,
                 resourceStates: SanitizedStates
               })
             ).catch((Error2) => {

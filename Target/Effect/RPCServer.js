@@ -6539,7 +6539,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T04:59:33Z"
+      generatedAt: "2026-05-23T05:47:08Z"
     };
   }
 });
@@ -33595,8 +33595,10 @@ var init_Namespace19 = __esm({
                 const SanitizedStates = Array.isArray(Value) ? Value.map((Raw2) => SanitizeResourceState(Raw2)) : [];
                 GroupReady.then(
                   () => Context13.SendToMountain("update_scm_group", {
-                    scmHandle: Handle,
-                    groupHandle: GroupHandle,
+                    // Proto UpdateScmGroupRequest field names:
+                    // providerId (string scm id) + groupId (string)
+                    providerId: Id,
+                    groupId: GroupId,
                     resourceStates: SanitizedStates
                   })
                 ).catch((Error2) => {
