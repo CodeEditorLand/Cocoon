@@ -162,7 +162,7 @@ var HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Paramet
   let Uri;
   let EventData;
   if (Array.isArray(Parameters) && Parameters.length >= 2) {
-    Uri = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+    Uri = Parameters[0]?.external ?? (Parameters[0]?.scheme && Parameters[0]?.path ? `${Parameters[0].scheme}://${Parameters[0].authority ?? ""}${Parameters[0].path}` : "") ?? "";
     EventData = Parameters[1];
   } else {
     Uri = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";

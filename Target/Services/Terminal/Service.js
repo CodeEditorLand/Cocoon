@@ -45,7 +45,7 @@ var TerminalService = class {
   async createTerminal(name, shellPath, cwd) {
     CocoonDevLog("service", `[Terminal] Creating terminal: ${name}`);
     const terminalId = await this.mountainClient.sendRequest(
-      "terminal.create",
+      "$terminal:create",
       {
         name,
         shell_path: shellPath,

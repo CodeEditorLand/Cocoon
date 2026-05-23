@@ -1483,33 +1483,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       Options = Items[0];
       Actions = Items.slice(1);
     }
-    if (Actions.length > 0) {
-      try {
-        const QuickItems = Actions.map((A) => ({
-          label: typeof A === "string" ? A : A?.title ?? String(A)
-        }));
-        const Picked = await Context.MountainClient?.sendRequest(
-          "Window.ShowQuickPick",
-          [
-            QuickItems,
-            {
-              placeHolder: Message,
-              title: `[${Level.toUpperCase()}] ${Message}`
-            }
-          ]
-        );
-        if (Picked == null) return void 0;
-        const PickedLabel = typeof Picked === "string" ? Picked : Picked?.label ?? String(Picked);
-        return Actions.find((A) => {
-          const Label = typeof A === "string" ? A : A?.title ?? String(A);
-          return Label === PickedLabel;
-        }) ?? PickedLabel ?? void 0;
-      } catch {
-        return void 0;
-      }
-    }
     try {
-      await Context.MountainClient?.sendRequest(
+      const Result = await Context.MountainClient?.sendRequest(
         "Window.ShowMessage",
         [
           {
@@ -1520,7 +1495,13 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           }
         ]
       );
-      return void 0;
+      if (Result == null || Actions.length === 0) return void 0;
+      const SelectedTitle = typeof Result === "string" ? Result : Result?.title ?? Result?.label ?? null;
+      if (!SelectedTitle) return void 0;
+      return Actions.find((A) => {
+        const Label = typeof A === "string" ? A : A?.title ?? String(A);
+        return Label === SelectedTitle;
+      }) ?? SelectedTitle;
     } catch {
       return void 0;
     }
@@ -1926,7 +1907,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return Panel;
     }, "createWebviewPanel"),
     showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-      const UriRaw = _Document?.uri?.toString?.() ?? _Document?.toString?.() ?? "";
+      const UriRaw = _Document?.uri?.toString?.() ?? _Document?.external ?? (_Document?.scheme && _Document?.path ? `${_Document.scheme}://${_Document.authority ?? ""}${_Document.path}` : "") ?? "";
       try {
         await Context.MountainClient?.sendRequest("showTextDocument", [
           _Document,

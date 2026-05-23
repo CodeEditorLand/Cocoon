@@ -13002,7 +13002,38 @@ var init_codiconsLibrary = __esm({
       important: register("important", 60571),
       importantCompact: register("important-compact", 60572),
       rocketCompact: register("rocket-compact", 60573),
-      unpin: register("unpin", 60574)
+      unpin: register("unpin", 60574),
+      addCompact: register("add-compact", 60575),
+      attachCompact: register("attach-compact", 60576),
+      beakerCompact: register("beaker-compact", 60577),
+      checkCompact: register("check-compact", 60578),
+      checklistCompact: register("checklist-compact", 60579),
+      chevronDownCompact: register("chevron-down-compact", 60580),
+      chevronLeftCompact: register("chevron-left-compact", 60581),
+      chevronRightCompact: register("chevron-right-compact", 60582),
+      chevronUpCompact: register("chevron-up-compact", 60583),
+      circleFilledCompact: register("circle-filled-compact", 60584),
+      circleSmallFilledCompact: register("circle-small-filled-compact", 60585),
+      closeCompact: register("close-compact", 60586),
+      collapseAllCompact: register("collapse-all-compact", 60587),
+      commentCompact: register("comment-compact", 60588),
+      commentUnresolvedCompact: register("comment-unresolved-compact", 60589),
+      debugConnectedCompact: register("debug-connected-compact", 60590),
+      debugDisconnectCompact: register("debug-disconnect-compact", 60591),
+      editCompact: register("edit-compact", 60592),
+      fileMediaCompact: register("file-media-compact", 60593),
+      gitFetch: register("git-fetch", 60594),
+      lightbulbCompact: register("lightbulb-compact", 60595),
+      loadingCompact: register("loading-compact", 60596),
+      passFilledCompact: register("pass-filled-compact", 60597),
+      projectCompact: register("project-compact", 60598),
+      refreshCompact: register("refresh-compact", 60599),
+      searchCompact: register("search-compact", 60600),
+      sessionInProgressCompact: register("session-in-progress-compact", 60601),
+      syncCompact: register("sync-compact", 60602),
+      terminalCompact: register("terminal-compact", 60603),
+      vmPending: register("vm-pending", 60604),
+      worktreeCompact: register("worktree-compact", 60605)
     };
   }
 });
@@ -20887,33 +20918,8 @@ var init_Namespace2 = __esm({
           Options = Items[0];
           Actions = Items.slice(1);
         }
-        if (Actions.length > 0) {
-          try {
-            const QuickItems = Actions.map((A) => ({
-              label: typeof A === "string" ? A : A?.title ?? String(A)
-            }));
-            const Picked = await Context.MountainClient?.sendRequest(
-              "Window.ShowQuickPick",
-              [
-                QuickItems,
-                {
-                  placeHolder: Message,
-                  title: `[${Level.toUpperCase()}] ${Message}`
-                }
-              ]
-            );
-            if (Picked == null) return void 0;
-            const PickedLabel = typeof Picked === "string" ? Picked : Picked?.label ?? String(Picked);
-            return Actions.find((A) => {
-              const Label = typeof A === "string" ? A : A?.title ?? String(A);
-              return Label === PickedLabel;
-            }) ?? PickedLabel ?? void 0;
-          } catch {
-            return void 0;
-          }
-        }
         try {
-          await Context.MountainClient?.sendRequest(
+          const Result = await Context.MountainClient?.sendRequest(
             "Window.ShowMessage",
             [
               {
@@ -20924,7 +20930,13 @@ var init_Namespace2 = __esm({
               }
             ]
           );
-          return void 0;
+          if (Result == null || Actions.length === 0) return void 0;
+          const SelectedTitle = typeof Result === "string" ? Result : Result?.title ?? Result?.label ?? null;
+          if (!SelectedTitle) return void 0;
+          return Actions.find((A) => {
+            const Label = typeof A === "string" ? A : A?.title ?? String(A);
+            return Label === SelectedTitle;
+          }) ?? SelectedTitle;
         } catch {
           return void 0;
         }
@@ -21330,7 +21342,7 @@ var init_Namespace2 = __esm({
           return Panel;
         }, "createWebviewPanel"),
         showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          const UriRaw = _Document?.uri?.toString?.() ?? _Document?.toString?.() ?? "";
+          const UriRaw = _Document?.uri?.toString?.() ?? _Document?.external ?? (_Document?.scheme && _Document?.path ? `${_Document.scheme}://${_Document.authority ?? ""}${_Document.path}` : "") ?? "";
           try {
             await Context.MountainClient?.sendRequest("showTextDocument", [
               _Document,
@@ -22083,7 +22095,7 @@ var init_RouteManifest = __esm({
       mountain: 137,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T08:59:53Z"
+      generatedAt: "2026-05-23T15:13:34Z"
     };
   }
 });

@@ -2863,7 +2863,7 @@ var init_RouteManifest = __esm({
       mountain: 137,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T08:59:53Z"
+      generatedAt: "2026-05-23T15:13:34Z"
     };
   }
 });
@@ -3243,7 +3243,7 @@ var init_Handler = __esm({
       let Uri2;
       let EventData;
       if (Array.isArray(Parameters) && Parameters.length >= 2) {
-        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+        Uri2 = Parameters[0]?.external ?? (Parameters[0]?.scheme && Parameters[0]?.path ? `${Parameters[0].scheme}://${Parameters[0].authority ?? ""}${Parameters[0].path}` : "") ?? "";
         EventData = Parameters[1];
       } else {
         Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
@@ -16815,7 +16815,38 @@ var init_codiconsLibrary = __esm({
       important: register("important", 60571),
       importantCompact: register("important-compact", 60572),
       rocketCompact: register("rocket-compact", 60573),
-      unpin: register("unpin", 60574)
+      unpin: register("unpin", 60574),
+      addCompact: register("add-compact", 60575),
+      attachCompact: register("attach-compact", 60576),
+      beakerCompact: register("beaker-compact", 60577),
+      checkCompact: register("check-compact", 60578),
+      checklistCompact: register("checklist-compact", 60579),
+      chevronDownCompact: register("chevron-down-compact", 60580),
+      chevronLeftCompact: register("chevron-left-compact", 60581),
+      chevronRightCompact: register("chevron-right-compact", 60582),
+      chevronUpCompact: register("chevron-up-compact", 60583),
+      circleFilledCompact: register("circle-filled-compact", 60584),
+      circleSmallFilledCompact: register("circle-small-filled-compact", 60585),
+      closeCompact: register("close-compact", 60586),
+      collapseAllCompact: register("collapse-all-compact", 60587),
+      commentCompact: register("comment-compact", 60588),
+      commentUnresolvedCompact: register("comment-unresolved-compact", 60589),
+      debugConnectedCompact: register("debug-connected-compact", 60590),
+      debugDisconnectCompact: register("debug-disconnect-compact", 60591),
+      editCompact: register("edit-compact", 60592),
+      fileMediaCompact: register("file-media-compact", 60593),
+      gitFetch: register("git-fetch", 60594),
+      lightbulbCompact: register("lightbulb-compact", 60595),
+      loadingCompact: register("loading-compact", 60596),
+      passFilledCompact: register("pass-filled-compact", 60597),
+      projectCompact: register("project-compact", 60598),
+      refreshCompact: register("refresh-compact", 60599),
+      searchCompact: register("search-compact", 60600),
+      sessionInProgressCompact: register("session-in-progress-compact", 60601),
+      syncCompact: register("sync-compact", 60602),
+      terminalCompact: register("terminal-compact", 60603),
+      vmPending: register("vm-pending", 60604),
+      worktreeCompact: register("worktree-compact", 60605)
     };
   }
 });
@@ -24519,33 +24550,8 @@ var init_Namespace2 = __esm({
           Options = Items[0];
           Actions = Items.slice(1);
         }
-        if (Actions.length > 0) {
-          try {
-            const QuickItems = Actions.map((A) => ({
-              label: typeof A === "string" ? A : A?.title ?? String(A)
-            }));
-            const Picked = await Context13.MountainClient?.sendRequest(
-              "Window.ShowQuickPick",
-              [
-                QuickItems,
-                {
-                  placeHolder: Message,
-                  title: `[${Level.toUpperCase()}] ${Message}`
-                }
-              ]
-            );
-            if (Picked == null) return void 0;
-            const PickedLabel = typeof Picked === "string" ? Picked : Picked?.label ?? String(Picked);
-            return Actions.find((A) => {
-              const Label = typeof A === "string" ? A : A?.title ?? String(A);
-              return Label === PickedLabel;
-            }) ?? PickedLabel ?? void 0;
-          } catch {
-            return void 0;
-          }
-        }
         try {
-          await Context13.MountainClient?.sendRequest(
+          const Result = await Context13.MountainClient?.sendRequest(
             "Window.ShowMessage",
             [
               {
@@ -24556,7 +24562,13 @@ var init_Namespace2 = __esm({
               }
             ]
           );
-          return void 0;
+          if (Result == null || Actions.length === 0) return void 0;
+          const SelectedTitle = typeof Result === "string" ? Result : Result?.title ?? Result?.label ?? null;
+          if (!SelectedTitle) return void 0;
+          return Actions.find((A) => {
+            const Label = typeof A === "string" ? A : A?.title ?? String(A);
+            return Label === SelectedTitle;
+          }) ?? SelectedTitle;
         } catch {
           return void 0;
         }
@@ -24962,7 +24974,7 @@ var init_Namespace2 = __esm({
           return Panel;
         }, "createWebviewPanel"),
         showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          const UriRaw = _Document?.uri?.toString?.() ?? _Document?.toString?.() ?? "";
+          const UriRaw = _Document?.uri?.toString?.() ?? _Document?.external ?? (_Document?.scheme && _Document?.path ? `${_Document.scheme}://${_Document.authority ?? ""}${_Document.path}` : "") ?? "";
           try {
             await Context13.MountainClient?.sendRequest("showTextDocument", [
               _Document,
@@ -34150,7 +34162,7 @@ var init_Handler3 = __esm({
             try {
               const API = globalThis.__cocoonVscodeAPI;
               if (API?.Uri) {
-                const UriStr = typeof UriArg === "string" ? UriArg : UriArg?.external ?? UriArg?.toString?.() ?? "";
+                const UriStr = typeof UriArg === "string" ? UriArg : UriArg?.external ?? (UriArg?.scheme && UriArg?.path ? `${UriArg.scheme}://${UriArg.authority ?? ""}${UriArg.path}` : "") ?? "";
                 if (UriStr) UriValue = API.Uri.parse(UriStr);
               }
             } catch {
@@ -34469,9 +34481,12 @@ var init_Handler4 = __esm({
       if (typeof Raw2.toString === "function" && typeof Raw2.fsPath === "string")
         return Raw2;
       try {
-        return LazyURI.parse(Raw2.toString());
+        const RawStr = Raw2.toString !== Object.prototype.toString ? Raw2.toString() : Raw2.scheme && Raw2.path ? `${Raw2.scheme}://${Raw2.authority ?? ""}${Raw2.path}` : null;
+        if (!RawStr) return null;
+        return LazyURI.parse(RawStr);
       } catch {
-        return typeof Raw2.toString === "function" ? MakeUriStub(Raw2.toString()) : null;
+        const FallbackStr = Raw2.toString !== Object.prototype.toString ? Raw2.toString() : Raw2.scheme && Raw2.path ? `${Raw2.scheme}://${Raw2.authority ?? ""}${Raw2.path}` : null;
+        return FallbackStr ? MakeUriStub(FallbackStr) : null;
       }
     }, "HydrateUri");
     if (!process._landUncaughtHandlerInstalled) {
@@ -35530,7 +35545,7 @@ var init_Handler4 = __esm({
             break;
           }
           const Document = {
-            uri: UriComponents,
+            uri: HydrateUri(UriComponents) ?? UriComponents,
             dispose: /* @__PURE__ */ __name(() => {
             }, "dispose")
           };
@@ -36400,7 +36415,7 @@ var init_Service4 = __esm({
           const Context14 = this.GetHandlerContext();
           const Args = Array.isArray(parameters) ? parameters : [parameters];
           const UriArg = Args[0];
-          const UriStr = typeof UriArg === "string" ? UriArg : UriArg?.external ?? UriArg?.toString?.() ?? "";
+          const UriStr = typeof UriArg === "string" ? UriArg : UriArg?.external ?? (UriArg?.scheme && UriArg?.path ? `${UriArg.scheme}://${UriArg.authority ?? ""}${UriArg.path}` : "") ?? "";
           const Scheme = UriStr.split(":")[0] ?? "file";
           const ProviderKey = `__fileSystemProvider:${Scheme}`;
           const Provider = Context14.ExtensionRegistry?.get(
@@ -37912,7 +37927,7 @@ var init_Handler5 = __esm({
                 const Raw2 = Item;
                 const Label = typeof Raw2.label === "string" ? Raw2.label : Raw2.label?.label ?? "";
                 const IconValue = Raw2.iconPath ?? Raw2.icon ?? "";
-                const Icon = typeof IconValue === "string" ? IconValue : IconValue?.id ?? "";
+                const Icon = typeof IconValue === "string" ? IconValue : typeof IconValue?.id === "string" ? IconValue.id : IconValue?.external ?? (IconValue?.scheme && IconValue?.path ? `${IconValue.scheme}://${IconValue.authority ?? ""}${IconValue.path}` : IconValue?.light?.external ?? (IconValue?.light?.scheme && IconValue?.light?.path ? `${IconValue.light.scheme}://${IconValue.light.authority ?? ""}${IconValue.light.path}` : "")) ?? "";
                 const CollapsibleState = Raw2.collapsibleState ?? 0;
                 const Description = typeof Raw2.description === "string" ? Raw2.description : void 0;
                 const Tooltip = typeof Raw2.tooltip === "string" ? Raw2.tooltip : Raw2.tooltip?.value;
@@ -38121,7 +38136,7 @@ var init_Handler5 = __esm({
         const Context13 = globalThis.__cocoonGRPCContext;
         if (!Context13) return null;
         const UriRaw = Params?.uri ?? Params?.[0];
-        const UriStr = typeof UriRaw === "string" ? UriRaw : UriRaw?.toString?.() ?? UriRaw?.external ?? "";
+        const UriStr = typeof UriRaw === "string" ? UriRaw : UriRaw?.external ?? (UriRaw?.scheme && UriRaw?.path ? `${UriRaw.scheme}://${UriRaw.authority ?? ""}${UriRaw.path}` : "") ?? "";
         let Scheme = "file";
         if (typeof UriRaw === "object" && UriRaw?.scheme) {
           Scheme = String(UriRaw.scheme);

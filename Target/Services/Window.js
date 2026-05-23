@@ -12969,7 +12969,38 @@ var init_codiconsLibrary = __esm({
       important: register("important", 60571),
       importantCompact: register("important-compact", 60572),
       rocketCompact: register("rocket-compact", 60573),
-      unpin: register("unpin", 60574)
+      unpin: register("unpin", 60574),
+      addCompact: register("add-compact", 60575),
+      attachCompact: register("attach-compact", 60576),
+      beakerCompact: register("beaker-compact", 60577),
+      checkCompact: register("check-compact", 60578),
+      checklistCompact: register("checklist-compact", 60579),
+      chevronDownCompact: register("chevron-down-compact", 60580),
+      chevronLeftCompact: register("chevron-left-compact", 60581),
+      chevronRightCompact: register("chevron-right-compact", 60582),
+      chevronUpCompact: register("chevron-up-compact", 60583),
+      circleFilledCompact: register("circle-filled-compact", 60584),
+      circleSmallFilledCompact: register("circle-small-filled-compact", 60585),
+      closeCompact: register("close-compact", 60586),
+      collapseAllCompact: register("collapse-all-compact", 60587),
+      commentCompact: register("comment-compact", 60588),
+      commentUnresolvedCompact: register("comment-unresolved-compact", 60589),
+      debugConnectedCompact: register("debug-connected-compact", 60590),
+      debugDisconnectCompact: register("debug-disconnect-compact", 60591),
+      editCompact: register("edit-compact", 60592),
+      fileMediaCompact: register("file-media-compact", 60593),
+      gitFetch: register("git-fetch", 60594),
+      lightbulbCompact: register("lightbulb-compact", 60595),
+      loadingCompact: register("loading-compact", 60596),
+      passFilledCompact: register("pass-filled-compact", 60597),
+      projectCompact: register("project-compact", 60598),
+      refreshCompact: register("refresh-compact", 60599),
+      searchCompact: register("search-compact", 60600),
+      sessionInProgressCompact: register("session-in-progress-compact", 60601),
+      syncCompact: register("sync-compact", 60602),
+      terminalCompact: register("terminal-compact", 60603),
+      vmPending: register("vm-pending", 60604),
+      worktreeCompact: register("worktree-compact", 60605)
     };
   }
 });
@@ -20585,45 +20616,53 @@ var ShowInformationMessage = /* @__PURE__ */ __name((GRPCClient, Logger3, Messag
     `[WindowService] Showing information message: ${Message}`
   );
   const InfoResponse = yield* Effect10.tryPromise({
-    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showInformation", {
-      message: Message,
-      items: Items.length > 0 ? Items : void 0
-    }), "try"),
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("Window.ShowMessage", [
+      {
+        message: Message,
+        level: "info",
+        items: Items.map((I) => ({ title: I })),
+        options: {}
+      }
+    ]), "try"),
     catch: /* @__PURE__ */ __name(() => null, "catch")
   });
-  const InfoSelected = InfoResponse?.selectedItem;
-  return InfoSelected ? Items.find(
-    (I) => (typeof I === "string" ? I : I.title) === InfoSelected
-  ) ?? void 0 : void 0;
+  const InfoSelected = typeof InfoResponse === "string" ? InfoResponse : InfoResponse?.title ?? null;
+  return InfoSelected ? Items.find((I) => I === InfoSelected) ?? InfoSelected : void 0;
 }), "ShowInformationMessage");
 var ShowWarningMessage = /* @__PURE__ */ __name((GRPCClient, Logger3, Message, ...Items) => Effect10.gen(function* () {
   yield* Logger3.Debug(
     `[WindowService] Showing warning message: ${Message}`
   );
   const WarnResponse = yield* Effect10.tryPromise({
-    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showWarning", {
-      message: Message,
-      items: Items.length > 0 ? Items : void 0
-    }), "try"),
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("Window.ShowMessage", [
+      {
+        message: Message,
+        level: "warn",
+        items: Items.map((I) => ({ title: I })),
+        options: {}
+      }
+    ]), "try"),
     catch: /* @__PURE__ */ __name(() => null, "catch")
   });
-  const WarnSelected = WarnResponse?.selectedItem;
-  return WarnSelected ? Items.find(
-    (I) => (typeof I === "string" ? I : I.title) === WarnSelected
-  ) ?? void 0 : void 0;
+  const WarnSelected = typeof WarnResponse === "string" ? WarnResponse : WarnResponse?.title ?? null;
+  return WarnSelected ? Items.find((I) => I === WarnSelected) ?? WarnSelected : void 0;
 }), "ShowWarningMessage");
 var ShowErrorMessage = /* @__PURE__ */ __name((GRPCClient, Logger3, Message, ...Items) => Effect10.gen(function* () {
   yield* Logger3.Debug(
     `[WindowService] Showing error message: ${Message}`
   );
   const ErrorResponse = yield* Effect10.tryPromise({
-    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showError", {
-      message: Message,
-      items: Items.length > 0 ? Items : void 0
-    }), "try"),
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("Window.ShowMessage", [
+      {
+        message: Message,
+        level: "error",
+        items: Items.map((I) => ({ title: I })),
+        options: {}
+      }
+    ]), "try"),
     catch: /* @__PURE__ */ __name(() => null, "catch")
   });
-  const ErrorSelected = ErrorResponse?.selectedItem;
+  const ErrorSelected = typeof ErrorResponse === "string" ? ErrorResponse : ErrorResponse?.title ?? null;
   return ErrorSelected ? Items.find(
     (I) => (typeof I === "string" ? I : I.title) === ErrorSelected
   ) ?? void 0 : void 0;
@@ -20986,19 +21025,19 @@ var WindowService = class extends Effect14.Service()(
           PreserveFocus
         ), "ShowTextDocument"),
         ShowInformationMessage: /* @__PURE__ */ __name((Message, ...Items) => ShowInformationMessage(
-          MountainGRPC,
+          MountainClient,
           Logger_,
           Message,
           ...Items
         ), "ShowInformationMessage"),
         ShowWarningMessage: /* @__PURE__ */ __name((Message, ...Items) => ShowWarningMessage(
-          MountainGRPC,
+          MountainClient,
           Logger_,
           Message,
           ...Items
         ), "ShowWarningMessage"),
         ShowErrorMessage: /* @__PURE__ */ __name((Message, ...Items) => ShowErrorMessage(
-          MountainGRPC,
+          MountainClient,
           Logger_,
           Message,
           ...Items
