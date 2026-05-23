@@ -48,7 +48,19 @@ const CreateCommandsNamespace = (
 
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
-			LanguageProviderRegistry.RegisterCommand(Command, Callback);
+			// VS Code contract: callback receives (textEditor, edit, ...args).
+			// Wrap to inject the active text editor and a minimal EditBuilder.
+			const WrappedCallback = (...Arguments: unknown[]) => {
+				const TextEditor = (Context as any).__activeTextEditor;
+				const EditBuilder = {
+					replace: (_Range: unknown, _Value: string) => {},
+					insert: (_Position: unknown, _Value: string) => {},
+					delete: (_Range: unknown) => {},
+					setEndOfLine: () => {},
+				};
+				return Callback(TextEditor, EditBuilder, ...Arguments);
+			};
+			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "textEditor",

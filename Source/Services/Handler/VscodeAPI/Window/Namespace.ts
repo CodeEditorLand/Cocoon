@@ -993,15 +993,31 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 				"window.didChangeTabGroups",
 			),
-			close: async (_Tab: unknown, _PreserveFocus?: boolean) => {
-				// Extensions call `tabGroups.close(tab)` to dismiss an editor.
-				// Forward through Mountain's existing command dispatcher -
-				// the workbench command `workbench.action.closeActiveEditor`
-				// covers the default case and is a registered native command.
+			close: async (Tab: unknown, _PreserveFocus?: boolean) => {
+				// Try workbench IEditorGroupsService.closeEditor() for the specific
+				// tab's URI, then fall back to closeActiveEditor.
+				try {
+					const EditorGroups = (globalThis as any).__CEL_SERVICES__
+						?.EditorGroups;
+					const TabUri = (Tab as any)?.input?.uri;
+					if (EditorGroups && TabUri) {
+						const Group = EditorGroups.activeGroup;
+						if (Group?.closeEditor) {
+							const Editor = Group.findEditor?.(TabUri);
+							if (Editor) {
+								await Group.closeEditor(Editor, {
+									preserveFocus: _PreserveFocus ?? false,
+								});
+								return true;
+							}
+						}
+					}
+				} catch {
+					/* fall through to workbench command */
+				}
 				try {
 					await Context.MountainClient?.sendRequest(
 						"Command.Execute",
-
 						["workbench.action.closeActiveEditor", []],
 					);
 					return true;
@@ -1011,13 +1027,33 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			},
 		},
 
-		activeColorTheme: {
-			kind: 2, // ColorThemeKind.Dark
-			onDidChange: MakeEventSubscriber(
-				Context,
-
-				"window.didChangeActiveColorTheme",
-			),
+		get activeColorTheme() {
+			// Dynamically read from the workbench's IThemeService so extensions
+			// that check `window.activeColorTheme.kind === ColorThemeKind.Light`
+			// get the real theme rather than always-dark.
+			// ColorThemeKind: 1=Light, 2=Dark, 3=HighContrast, 4=HighContrastLight
+			let Kind = 2; // Dark default
+			try {
+				const ThemeService = (globalThis as any).__CEL_SERVICES__
+					?.Theme;
+				const ColorTheme = ThemeService?.getColorTheme?.();
+				if (ColorTheme?.type) {
+					const T = ColorTheme.type;
+					if (T === "light") Kind = 1;
+					else if (T === "hc-light") Kind = 4;
+					else if (T === "hc-black" || T === "hc") Kind = 3;
+					else Kind = 2;
+				}
+			} catch {
+				/* workbench not ready */
+			}
+			return {
+				kind: Kind,
+				onDidChange: MakeEventSubscriber(
+					Context,
+					"window.didChangeActiveColorTheme",
+				),
+			};
 		},
 		onDidChangeActiveColorTheme: MakeEventSubscriber(
 			Context,

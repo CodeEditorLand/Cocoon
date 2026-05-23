@@ -886,7 +886,61 @@ export class GRPCServerService
 				return AllTasks;
 			}
 			if (TaskMethod === "executeTask") {
-				return { id: String(Date.now()), task: parameters };
+				const TaskId = String(Date.now());
+				const TaskDef = Array.isArray(parameters)
+					? parameters[0]
+					: parameters;
+				// Find the registered task provider for this task's type and call runHandler
+				for (const [Key, Provider] of (
+					Context.ExtensionRegistry as any
+				).entries()) {
+					if (!String(Key).startsWith("__taskProvider:")) continue;
+					try {
+						const CancellationToken = {
+							isCancellationRequested: false,
+							onCancellationRequested: () => ({
+								dispose: () => {},
+							}),
+						};
+						// Emit task start event
+						Context.Emitter.emit("task.didStart", {
+							execution: { task: TaskDef, terminate: () => {} },
+							id: TaskId,
+						});
+						// Call runHandler if available (for custom task providers)
+						if (
+							typeof (Provider as any).runHandler === "function"
+						) {
+							void Promise.resolve(
+								(Provider as any).runHandler(
+									TaskDef,
+									CancellationToken,
+								),
+							)
+								.then(() =>
+									Context.Emitter.emit("task.didEnd", {
+										execution: {
+											task: TaskDef,
+											terminate: () => {},
+										},
+										id: TaskId,
+									}),
+								)
+								.catch(() =>
+									Context.Emitter.emit("task.didEnd", {
+										execution: {
+											task: TaskDef,
+											terminate: () => {},
+										},
+										id: TaskId,
+									}),
+								);
+						}
+					} catch {
+						/* skip bad provider */
+					}
+				}
+				return { id: TaskId, task: TaskDef };
 			}
 			return null;
 		}
