@@ -136,7 +136,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				ShowInformationMessage: (Message: string, ...Items: string[]) =>
 					ShowInformationMessage(
-						MountainGRPC as any,
+						MountainClient as any,
 
 						Logger_,
 
@@ -146,7 +146,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				ShowWarningMessage: (Message: string, ...Items: string[]) =>
 					ShowWarningMessage(
-						MountainGRPC as any,
+						MountainClient as any,
 
 						Logger_,
 
@@ -156,7 +156,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 				ShowErrorMessage: (Message: string, ...Items: string[]) =>
 					ShowErrorMessage(
-						MountainGRPC as any,
+						MountainClient as any,
 
 						Logger_,
 

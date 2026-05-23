@@ -106,54 +106,14 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				Actions = Items.slice(1);
 			}
 
-			// When there are action buttons, route through Window.ShowQuickPick
-			// (a round-trip) so the user's selection propagates back.
-			// Without this, showInformationMessage("msg", "OK", "Cancel") always
-			// resolves `undefined` and extensions never see which button was clicked.
-			if (Actions.length > 0) {
-				try {
-					const QuickItems = Actions.map((A: unknown) => ({
-						label:
-							typeof A === "string"
-								? A
-								: ((A as any)?.title ?? String(A)),
-					}));
-					const Picked = await Context.MountainClient?.sendRequest(
-						"Window.ShowQuickPick",
-						[
-							QuickItems,
-							{
-								placeHolder: Message,
-								title: `[${Level.toUpperCase()}] ${Message}`,
-							},
-						],
-					);
-					if (Picked == null) return undefined;
-					const PickedLabel =
-						typeof Picked === "string"
-							? Picked
-							: ((Picked as any)?.label ?? String(Picked));
-					return (
-						Actions.find((A: unknown) => {
-							const Label =
-								typeof A === "string"
-									? A
-									: ((A as any)?.title ?? String(A));
-							return Label === PickedLabel;
-						}) ??
-						PickedLabel ??
-						undefined
-					);
-				} catch {
-					return undefined;
-				}
-			}
-
-			// No action buttons: fire-and-forget notification.
+			// Route all variants through Window.ShowMessage. Mountain handles
+			// both cases: empty items → fire-and-forget toast; non-empty →
+			// round-trip via sky://ui/show-message-request so the workbench's
+			// INotificationService shows real action buttons and the selected
+			// label is returned.
 			try {
-				await Context.MountainClient?.sendRequest(
+				const Result = await Context.MountainClient?.sendRequest(
 					"Window.ShowMessage",
-
 					[
 						{
 							message: Message,
@@ -163,7 +123,23 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						},
 					],
 				);
-				return undefined;
+				if (Result == null || Actions.length === 0) return undefined;
+				const SelectedTitle =
+					typeof Result === "string"
+						? Result
+						: ((Result as any)?.title ??
+							(Result as any)?.label ??
+							null);
+				if (!SelectedTitle) return undefined;
+				return (
+					Actions.find((A: unknown) => {
+						const Label =
+							typeof A === "string"
+								? A
+								: ((A as any)?.title ?? String(A));
+						return Label === SelectedTitle;
+					}) ?? SelectedTitle
+				);
 			} catch {
 				return undefined;
 			}

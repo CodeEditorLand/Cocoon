@@ -142,20 +142,24 @@ export const ShowInformationMessage = (
 
 		const InfoResponse = yield* Effect.tryPromise({
 			try: () =>
-				GRPCClient.sendRequest("showInformation", {
-					message: Message,
-					items: Items.length > 0 ? Items : undefined,
-				}),
+				GRPCClient.sendRequest("Window.ShowMessage", [
+					{
+						message: Message,
+						level: "info",
+						items: Items.map((I) => ({ title: I })),
+						options: {},
+					},
+				]),
 			catch: () => null,
 		});
 
-		const InfoSelected = (InfoResponse as any)?.selectedItem;
+		// Mountain returns the selected action title string or null.
+		const InfoSelected =
+			typeof InfoResponse === "string"
+				? InfoResponse
+				: ((InfoResponse as any)?.title ?? null);
 		return InfoSelected
-			? (Items.find(
-					(I) =>
-						(typeof I === "string" ? I : (I as any).title) ===
-						InfoSelected,
-				) ?? undefined)
+			? (Items.find((I) => I === InfoSelected) ?? InfoSelected)
 			: undefined;
 	});
 
@@ -187,20 +191,23 @@ export const ShowWarningMessage = (
 
 		const WarnResponse = yield* Effect.tryPromise({
 			try: () =>
-				GRPCClient.sendRequest("showWarning", {
-					message: Message,
-					items: Items.length > 0 ? Items : undefined,
-				}),
+				GRPCClient.sendRequest("Window.ShowMessage", [
+					{
+						message: Message,
+						level: "warn",
+						items: Items.map((I) => ({ title: I })),
+						options: {},
+					},
+				]),
 			catch: () => null,
 		});
 
-		const WarnSelected = (WarnResponse as any)?.selectedItem;
+		const WarnSelected =
+			typeof WarnResponse === "string"
+				? WarnResponse
+				: ((WarnResponse as any)?.title ?? null);
 		return WarnSelected
-			? (Items.find(
-					(I) =>
-						(typeof I === "string" ? I : (I as any).title) ===
-						WarnSelected,
-				) ?? undefined)
+			? (Items.find((I) => I === WarnSelected) ?? WarnSelected)
 			: undefined;
 	});
 
@@ -232,14 +239,21 @@ export const ShowErrorMessage = (
 
 		const ErrorResponse = yield* Effect.tryPromise({
 			try: () =>
-				GRPCClient.sendRequest("showError", {
-					message: Message,
-					items: Items.length > 0 ? Items : undefined,
-				}),
+				GRPCClient.sendRequest("Window.ShowMessage", [
+					{
+						message: Message,
+						level: "error",
+						items: Items.map((I) => ({ title: I })),
+						options: {},
+					},
+				]),
 			catch: () => null,
 		});
 
-		const ErrorSelected = (ErrorResponse as any)?.selectedItem;
+		const ErrorSelected =
+			typeof ErrorResponse === "string"
+				? ErrorResponse
+				: ((ErrorResponse as any)?.title ?? null);
 		return ErrorSelected
 			? (Items.find(
 					(I) =>

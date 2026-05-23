@@ -221,8 +221,20 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						const Icon =
 							typeof IconValue === "string"
 								? IconValue
-								: ((IconValue as { id?: string } | undefined)
-										?.id ?? "");
+								: typeof (IconValue as any)?.id === "string"
+									? (IconValue as any).id
+									: ((IconValue as any)?.external ??
+										((IconValue as any)?.scheme &&
+										(IconValue as any)?.path
+											? `${(IconValue as any).scheme}://${(IconValue as any).authority ?? ""}${(IconValue as any).path}`
+											: ((IconValue as any)?.light
+													?.external ??
+												((IconValue as any)?.light
+													?.scheme &&
+												(IconValue as any)?.light?.path
+													? `${(IconValue as any).light.scheme}://${(IconValue as any).light.authority ?? ""}${(IconValue as any).light.path}`
+													: ""))) ??
+										"");
 						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded.
 						// Pass the raw enum numeric through so Sky can
 						// faithfully tell "Expanded" from "Collapsed" -
