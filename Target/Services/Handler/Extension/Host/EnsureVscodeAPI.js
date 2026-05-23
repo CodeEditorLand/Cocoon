@@ -21469,7 +21469,7 @@ var init_Namespace2 = __esm({
             }, "insertSnippet"),
             revealRange: /* @__PURE__ */ __name((Range3, RevealType) => {
               void Context.MountainClient?.sendRequest(
-                "window.revealRange",
+                "window:revealRange",
                 {
                   uri: UriRaw,
                   range: Range3,
@@ -22083,7 +22083,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T07:00:26Z"
+      generatedAt: "2026-05-23T07:39:12Z"
     };
   }
 });
@@ -28929,7 +28929,7 @@ var init_Namespace17 = __esm({
         const Handle = NextProviderHandle();
         Context.SendToMountain("register_task_provider", {
           handle: Handle,
-          taskType: TaskType,
+          type: TaskType,
           extensionId: ""
         }).catch(() => {
         });

@@ -29,7 +29,7 @@ const CreateTasksNamespace = (Context: HandlerContext) =>
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_task_provider", {
 				handle: Handle,
-				taskType: TaskType,
+				type: TaskType,
 				extensionId: "",
 			}).catch(() => {});
 			// Stash so ExtHostTaskService$fetchTasks can call back.

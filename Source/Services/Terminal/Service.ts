@@ -63,7 +63,7 @@ export class TerminalService implements ITerminalService {
 
 	async sendText(terminalId: number, text: string): Promise<void> {
 		// Call Spine
-		await this.mountainClient.sendRequest("terminal.write", {
+		await this.mountainClient.sendRequest("$terminal:sendText", {
 			id: terminalId,
 			data: text,
 		});

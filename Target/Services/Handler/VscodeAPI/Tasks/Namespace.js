@@ -757,7 +757,7 @@ var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => Namespace_default
     const Handle = NextProviderHandle();
     Context.SendToMountain("register_task_provider", {
       handle: Handle,
-      taskType: TaskType,
+      type: TaskType,
       extensionId: ""
     }).catch(() => {
     });

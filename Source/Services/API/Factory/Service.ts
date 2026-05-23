@@ -324,7 +324,7 @@ const createVSCodeAPI = (
 				message: string,
 				..._items: string[]
 			) => {
-				await mountainClient.sendRequest("window.showMessage", {
+				await mountainClient.sendRequest("Window.ShowMessage", {
 					title: "Information",
 					message: message,
 					level: "info",
@@ -334,7 +334,7 @@ const createVSCodeAPI = (
 			},
 
 			showErrorMessage: async (message: string, ..._items: string[]) => {
-				await mountainClient.sendRequest("window.showMessage", {
+				await mountainClient.sendRequest("Window.ShowMessage", {
 					title: "Error",
 					message: message,
 					level: "error",
@@ -347,7 +347,7 @@ const createVSCodeAPI = (
 				message: string,
 				..._items: string[]
 			) => {
-				await mountainClient.sendRequest("window.showMessage", {
+				await mountainClient.sendRequest("Window.ShowMessage", {
 					title: "Warning",
 					message: message,
 					level: "warn",

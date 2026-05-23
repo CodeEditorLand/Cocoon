@@ -119,7 +119,7 @@ export class Memento {
 						// `storage:getItems` returns `[key, value][]` tuples.
 						// Filter by the extension namespace prefix.
 						const AllItems = await MountainClient.sendRequest(
-							"storage:getItems",
+							"Storage.GetItems",
 							[],
 						);
 						const Prefix = `${ExtensionId}:`;
@@ -192,7 +192,7 @@ export class Memento {
 		// Persist to Mountain's storage, namespaced by extension ID.
 		if (this._MountainClient) {
 			void this._MountainClient
-				.sendRequest("storage:set", [
+				.sendRequest("Storage.Set", [
 					`${this.ExtensionId}:${key}`,
 					value,
 				])
@@ -214,7 +214,7 @@ export class Memento {
 		if (this._MountainClient) {
 			const Prefix = `${this.ExtensionId}:`;
 			void this._MountainClient
-				.sendRequest("storage:getItems", [])
+				.sendRequest("Storage.GetItems", [])
 				.then((All: unknown) => {
 					if (Array.isArray(All)) {
 						const Keys = (All as [string, unknown][])
@@ -226,7 +226,7 @@ export class Memento {
 							);
 						for (const K of Keys) {
 							void this._MountainClient!.sendRequest(
-								"storage:set",
+								"Storage.Set",
 								[K, null],
 							).catch(() => undefined);
 						}

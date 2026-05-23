@@ -2065,7 +2065,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         }, "insertSnippet"),
         revealRange: /* @__PURE__ */ __name((Range, RevealType) => {
           void Context.MountainClient?.sendRequest(
-            "window.revealRange",
+            "window:revealRange",
             {
               uri: UriRaw,
               range: Range,

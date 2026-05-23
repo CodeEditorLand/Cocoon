@@ -44,7 +44,10 @@ export class FileSystemService implements IFileSystemService {
 		const Path =
 			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
 
-		const Response = await this.mountainClient.sendRequest("fs.stat", Path);
+		const Response = await this.mountainClient.sendRequest(
+			"FileSystem.Stat",
+			Path,
+		);
 
 		if (!Response) throw new Error(`File not found: ${Path}`);
 
@@ -68,7 +71,7 @@ export class FileSystemService implements IFileSystemService {
 
 		// Call Spine (v0.1 Filesystem Batch)
 		const response = await this.mountainClient.sendRequest(
-			"fs.readFile",
+			"FileSystem.ReadFile",
 
 			uri.fsPath,
 		);
@@ -83,7 +86,7 @@ export class FileSystemService implements IFileSystemService {
 		}
 
 		// Call Spine (v0.1 Filesystem Batch)
-		await this.mountainClient.sendRequest("fs.writeFile", {
+		await this.mountainClient.sendRequest("FileSystem.WriteFile", {
 			path: uri.fsPath,
 			content: Array.from(content), // Serialize buffer to array
 		});
@@ -99,7 +102,10 @@ export class FileSystemService implements IFileSystemService {
 
 		// Mountain now returns [{name, type}] where type 1=File 2=Directory
 		const Entries: Array<{ name: string; type: number }> =
-			await this.mountainClient.sendRequest("fs.listDir", Path);
+			await this.mountainClient.sendRequest(
+				"FileSystem.ReadDirectory",
+				Path,
+			);
 
 		return (Entries ?? []).map((E) =>
 			typeof E === "string" ? [E, 1] : [E.name, E.type],
@@ -107,11 +113,14 @@ export class FileSystemService implements IFileSystemService {
 	}
 
 	async createDirectory(uri: any): Promise<void> {
-		await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
+		await this.mountainClient.sendRequest(
+			"FileSystem.CreateDirectory",
+			uri.fsPath,
+		);
 	}
 
 	async delete(uri: any, _options: { recursive: boolean }): Promise<void> {
-		await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
+		await this.mountainClient.sendRequest("FileSystem.Delete", uri.fsPath);
 	}
 
 	async rename(
@@ -122,7 +131,7 @@ export class FileSystemService implements IFileSystemService {
 		_options: { overwrite: boolean },
 	): Promise<void> {
 		// Note: 'overwrite' flag support depends on backend logic, ignoring for now
-		await this.mountainClient.sendRequest("fs.rename", {
+		await this.mountainClient.sendRequest("FileSystem.Rename", {
 			from: source.fsPath,
 			to: target.fsPath,
 		});

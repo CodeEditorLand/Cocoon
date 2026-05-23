@@ -537,10 +537,13 @@ export const BuildSaveAll =
 				_IncludeUntitled ?? false,
 			]);
 		} catch {
-			// Fallback: trigger saveAll notification to Sky
-			Context.SendToMountain("saveAll", {
-				includeUntitled: _IncludeUntitled ?? false,
-			}).catch(() => {});
+			// Fallback via request (not SendToMountain notification).
+			// A notification fire-and-forget for saveAll falls to the catch-all
+			// Tauri re-emit and the save never executes - the handler for saveAll
+			// in CreateEffectForRequest/Workspace.rs is request-response only.
+			Context.MountainClient?.sendRequest("Workspace.SaveAll", [
+				_IncludeUntitled ?? false,
+			]).catch(() => {});
 		}
 
 		return true;
