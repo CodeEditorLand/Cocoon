@@ -1031,9 +1031,9 @@ var BuildSaveAll = /* @__PURE__ */ __name((Context) => async (_IncludeUntitled) 
       _IncludeUntitled ?? false
     ]);
   } catch {
-    Context.SendToMountain("saveAll", {
-      includeUntitled: _IncludeUntitled ?? false
-    }).catch(() => {
+    Context.MountainClient?.sendRequest("Workspace.SaveAll", [
+      _IncludeUntitled ?? false
+    ]).catch(() => {
     });
   }
   return true;

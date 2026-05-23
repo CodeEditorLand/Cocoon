@@ -55,7 +55,7 @@ var TerminalService = class {
     return terminalId;
   }
   async sendText(terminalId, text) {
-    await this.mountainClient.sendRequest("terminal.write", {
+    await this.mountainClient.sendRequest("$terminal:sendText", {
       id: terminalId,
       data: text
     });

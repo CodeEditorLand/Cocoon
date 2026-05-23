@@ -45,7 +45,7 @@ var Memento = class {
         yield* Effect2.tryPromise({
           try: /* @__PURE__ */ __name(async () => {
             const AllItems = await MountainClient.sendRequest(
-              "storage:getItems",
+              "Storage.GetItems",
               []
             );
             const Prefix = `${ExtensionId}:`;
@@ -105,7 +105,7 @@ var Memento = class {
       })
     );
     if (this._MountainClient) {
-      void this._MountainClient.sendRequest("storage:set", [
+      void this._MountainClient.sendRequest("Storage.Set", [
         `${this.ExtensionId}:${key}`,
         value
       ]).catch(() => void 0);
@@ -121,14 +121,14 @@ var Memento = class {
     Effect2.runSync(Ref.set(this.Storage, /* @__PURE__ */ new Map()));
     if (this._MountainClient) {
       const Prefix = `${this.ExtensionId}:`;
-      void this._MountainClient.sendRequest("storage:getItems", []).then((All) => {
+      void this._MountainClient.sendRequest("Storage.GetItems", []).then((All) => {
         if (Array.isArray(All)) {
           const Keys = All.map(([K]) => K).filter(
             (K) => typeof K === "string" && K.startsWith(Prefix)
           );
           for (const K of Keys) {
             void this._MountainClient.sendRequest(
-              "storage:set",
+              "Storage.Set",
               [K, null]
             ).catch(() => void 0);
           }

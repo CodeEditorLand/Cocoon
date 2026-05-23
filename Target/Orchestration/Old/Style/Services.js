@@ -20507,7 +20507,10 @@ var FileSystemService = class {
   }
   async stat(uri) {
     const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
-    const Response = await this.mountainClient.sendRequest("fs.stat", Path);
+    const Response = await this.mountainClient.sendRequest(
+      "FileSystem.Stat",
+      Path
+    );
     if (!Response) throw new Error(`File not found: ${Path}`);
     return {
       type: Response.type ?? 1,
@@ -20521,7 +20524,7 @@ var FileSystemService = class {
       throw new Error(`Unsupported scheme: ${uri.scheme}`);
     }
     const response = await this.mountainClient.sendRequest(
-      "fs.readFile",
+      "FileSystem.ReadFile",
       uri.fsPath
     );
     return response;
@@ -20530,7 +20533,7 @@ var FileSystemService = class {
     if (uri.scheme !== "file") {
       throw new Error(`Unsupported scheme: ${uri.scheme}`);
     }
-    await this.mountainClient.sendRequest("fs.writeFile", {
+    await this.mountainClient.sendRequest("FileSystem.WriteFile", {
       path: uri.fsPath,
       content: Array.from(content)
       // Serialize buffer to array
@@ -20541,19 +20544,25 @@ var FileSystemService = class {
       throw new Error(`Unsupported scheme: ${uri.scheme}`);
     }
     const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
-    const Entries = await this.mountainClient.sendRequest("fs.listDir", Path);
+    const Entries = await this.mountainClient.sendRequest(
+      "FileSystem.ReadDirectory",
+      Path
+    );
     return (Entries ?? []).map(
       (E) => typeof E === "string" ? [E, 1] : [E.name, E.type]
     );
   }
   async createDirectory(uri) {
-    await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
+    await this.mountainClient.sendRequest(
+      "FileSystem.CreateDirectory",
+      uri.fsPath
+    );
   }
   async delete(uri, _options) {
-    await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
+    await this.mountainClient.sendRequest("FileSystem.Delete", uri.fsPath);
   }
   async rename(source, target, _options) {
-    await this.mountainClient.sendRequest("fs.rename", {
+    await this.mountainClient.sendRequest("FileSystem.Rename", {
       from: source.fsPath,
       to: target.fsPath
     });
@@ -20780,7 +20789,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
     // --- Window Namespace ---
     window: {
       showInformationMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
-        await mountainClient.sendRequest("window.showMessage", {
+        await mountainClient.sendRequest("Window.ShowMessage", {
           title: "Information",
           message,
           level: "info"
@@ -20788,7 +20797,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         return void 0;
       }, "showInformationMessage"),
       showErrorMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
-        await mountainClient.sendRequest("window.showMessage", {
+        await mountainClient.sendRequest("Window.ShowMessage", {
           title: "Error",
           message,
           level: "error"
@@ -20796,7 +20805,7 @@ var createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsS
         return void 0;
       }, "showErrorMessage"),
       showWarningMessage: /* @__PURE__ */ __name(async (message, ..._items) => {
-        await mountainClient.sendRequest("window.showMessage", {
+        await mountainClient.sendRequest("Window.ShowMessage", {
           title: "Warning",
           message,
           level: "warn"
@@ -23446,7 +23455,7 @@ var TerminalService = class {
     return terminalId;
   }
   async sendText(terminalId, text) {
-    await this.mountainClient.sendRequest("terminal.write", {
+    await this.mountainClient.sendRequest("$terminal:sendText", {
       id: terminalId,
       data: text
     });

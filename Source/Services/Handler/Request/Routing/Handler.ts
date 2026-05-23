@@ -594,7 +594,11 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		const UriStr =
 			typeof UriRaw === "string"
 				? UriRaw
-				: (UriRaw?.toString?.() ?? UriRaw?.external ?? "");
+				: (UriRaw?.external ??
+					(UriRaw?.scheme && UriRaw?.path
+						? `${UriRaw.scheme}://${UriRaw.authority ?? ""}${UriRaw.path}`
+						: "") ??
+					"");
 
 		// Extract scheme from URI string or object.
 		let Scheme = "file";
