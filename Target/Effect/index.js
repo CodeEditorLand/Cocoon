@@ -1569,7 +1569,6 @@ var init_Service2 = __esm({
         } catch (error) {
           this.connectionState = "FAILED" /* Failed */;
           this.errorCount++;
-          this.circuitBreakerFailureCount++;
           CocoonDevLog2(
             "mountain-client",
             `[MountainClientService] Failed to connect to Mountain:`,
@@ -1834,7 +1833,6 @@ message RPCDataPayload {
               RpcMessage
             )) || IsFileWatcherBenign;
             if (!IsBenignNotFound) {
-              this.circuitBreakerFailureCount++;
               this.UpdateCircuitBreaker(
                 false,
                 new Error(
@@ -1892,7 +1890,6 @@ message RPCDataPayload {
               );
             }
           } else {
-            this.circuitBreakerFailureCount++;
             this.UpdateCircuitBreaker(false, error);
             CocoonDevLog2(
               "mountain-client",
@@ -2229,7 +2226,6 @@ message RPCDataPayload {
         } catch (error) {
           this.consecutiveSuccessfulHealthChecks = 0;
           this.errorCount++;
-          this.circuitBreakerFailureCount++;
           this.UpdateCircuitBreaker(false);
           CocoonDevLog2(
             "mountain-client",
@@ -6005,7 +6001,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T05:47:08Z"
+      generatedAt: "2026-05-23T06:20:34Z"
     };
   }
 });
@@ -31835,9 +31831,14 @@ var init_Namespace9 = __esm({
           const Range3 = Obj.range ?? {};
           const Start = Pos(Range3.start);
           const End = Pos(Range3.end);
+          const RawMsg = typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? "");
           const Out = {
             severity: NormaliseSeverity(Obj.severity),
-            message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
+            // VS Code's _toMarker rejects empty message with
+            // `if (!message) return undefined`, silently dropping
+            // the marker. Substitute a fallback so diagnostics
+            // without a human-readable message still appear.
+            message: RawMsg.length > 0 ? RawMsg : "(diagnostic)",
             // `+ 1` converts vscode.Position (0-based) to
             // `IMarkerData` (1-based). See block comment above.
             startLineNumber: Start.line + 1,
@@ -31854,8 +31855,28 @@ var init_Namespace9 = __esm({
           if (Array.isArray(Obj.tags)) {
             Out.tags = Obj.tags.filter((T) => typeof T === "number");
           }
-          if (Obj.relatedInformation !== void 0) {
-            Out.relatedInformation = Obj.relatedInformation;
+          if (Array.isArray(Obj.relatedInformation)) {
+            Out.relatedInformation = Obj.relatedInformation.map(
+              (RI) => {
+                const Loc = RI?.location ?? RI;
+                const RIRange = Loc?.range ?? {};
+                const RIStart = Pos(
+                  RIRange.start ?? RIRange
+                );
+                const RIEnd = Pos(
+                  RIRange.end ?? RIRange
+                );
+                const RIUri = Loc?.uri ?? RI?.resource ?? null;
+                return {
+                  resource: RIUri && typeof RIUri === "object" ? RIUri : typeof RIUri === "string" ? RIUri : null,
+                  message: String(RI?.message ?? ""),
+                  startLineNumber: RIStart.line + 1,
+                  startColumn: RIStart.character + 1,
+                  endLineNumber: RIEnd.line + 1,
+                  endColumn: RIEnd.character + 1
+                };
+              }
+            );
           }
           return Out;
         }, "NormaliseDiagnostic");
@@ -34088,9 +34109,9 @@ ${Stack}`
         "ext-activate",
         `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
       );
-      for (const ExtId of ToActivate) {
-        void ActivateWithDeps(ExtId, ActivationEvent);
-      }
+      await Promise.allSettled(
+        ToActivate.map((ExtId) => ActivateWithDeps(ExtId, ActivationEvent))
+      );
       Context13.Emitter.emit("activateByEvent", {
         event: ActivationEvent,
         extensions: MatchingExtensions
@@ -36188,7 +36209,7 @@ var init_Handler5 = __esm({
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           const Files = Array.isArray(Payload?.files) ? Payload.files : [];
           if (Files.length > 0) {
-            WorkspaceEventEmitter.emit("didCreateFiles", { files: Files });
+            WorkspaceEventEmitter?.emit("didCreateFiles", { files: Files });
           }
           break;
         }
@@ -36196,7 +36217,7 @@ var init_Handler5 = __esm({
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           const Files = Array.isArray(Payload?.files) ? Payload.files : [];
           if (Files.length > 0) {
-            WorkspaceEventEmitter.emit("didDeleteFiles", { files: Files });
+            WorkspaceEventEmitter?.emit("didDeleteFiles", { files: Files });
           }
           break;
         }
@@ -36204,7 +36225,7 @@ var init_Handler5 = __esm({
           const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           const Files = Array.isArray(Payload?.files) ? Payload.files : [];
           if (Files.length > 0) {
-            WorkspaceEventEmitter.emit("didRenameFiles", { files: Files });
+            WorkspaceEventEmitter?.emit("didRenameFiles", { files: Files });
           }
           break;
         }
@@ -36652,13 +36673,7 @@ var init_Service8 = __esm({
        *   - "$shutdown" - Mountain initiates graceful shutdown via this method.
        */
       IsValidMethod(method) {
-        const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
-        const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost|\$shutdown|\$deltaWorkspaceFolders)$/.test(
-          method
-        );
-        const ProxiedMethod = /^[A-Za-z]+\$[A-Za-z]+[A-Za-z0-9]*$/.test(method);
-        return DotMethod || ProvideMethod || ExtensionHostMethod || ProxiedMethod;
+        return typeof method === "string" && method.length > 0;
       }
       /**
        * Serialize response data to buffer. `undefined` is a valid resolved
@@ -38064,8 +38079,11 @@ var init_Bootstrap = __esm({
           // MountainConnection retries for up to 45s; running it first meant
           // Stage 5 (RPCServer) never started within Mountain's window.
           ["RPCServer", stage5_RPCServer],
-          ["MountainConnection", stage3_MountainConnection],
+          // ModuleInterceptor must run BEFORE MountainConnection so the
+          // require('vscode') shim is installed before Mountain sends
+          // InitializeExtensionHost and extensions begin activating.
           ["ModuleInterceptor", stage4_ModuleInterceptor],
+          ["MountainConnection", stage3_MountainConnection],
           ["Extensions", stage6_Extensions],
           ...skipHealthCheck ? [] : [["HealthCheck", stage7_HealthCheck]]
         ];

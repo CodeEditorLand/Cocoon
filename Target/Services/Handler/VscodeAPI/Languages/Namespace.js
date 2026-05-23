@@ -12420,9 +12420,14 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       const Range = Obj.range ?? {};
       const Start = Pos(Range.start);
       const End = Pos(Range.end);
+      const RawMsg = typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? "");
       const Out = {
         severity: NormaliseSeverity(Obj.severity),
-        message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
+        // VS Code's _toMarker rejects empty message with
+        // `if (!message) return undefined`, silently dropping
+        // the marker. Substitute a fallback so diagnostics
+        // without a human-readable message still appear.
+        message: RawMsg.length > 0 ? RawMsg : "(diagnostic)",
         // `+ 1` converts vscode.Position (0-based) to
         // `IMarkerData` (1-based). See block comment above.
         startLineNumber: Start.line + 1,
@@ -12439,8 +12444,28 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       if (Array.isArray(Obj.tags)) {
         Out.tags = Obj.tags.filter((T) => typeof T === "number");
       }
-      if (Obj.relatedInformation !== void 0) {
-        Out.relatedInformation = Obj.relatedInformation;
+      if (Array.isArray(Obj.relatedInformation)) {
+        Out.relatedInformation = Obj.relatedInformation.map(
+          (RI) => {
+            const Loc = RI?.location ?? RI;
+            const RIRange = Loc?.range ?? {};
+            const RIStart = Pos(
+              RIRange.start ?? RIRange
+            );
+            const RIEnd = Pos(
+              RIRange.end ?? RIRange
+            );
+            const RIUri = Loc?.uri ?? RI?.resource ?? null;
+            return {
+              resource: RIUri && typeof RIUri === "object" ? RIUri : typeof RIUri === "string" ? RIUri : null,
+              message: String(RI?.message ?? ""),
+              startLineNumber: RIStart.line + 1,
+              startColumn: RIStart.character + 1,
+              endLineNumber: RIEnd.line + 1,
+              endColumn: RIEnd.character + 1
+            };
+          }
+        );
       }
       return Out;
     }, "NormaliseDiagnostic");

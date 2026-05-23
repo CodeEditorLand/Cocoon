@@ -19626,7 +19626,6 @@ var init_Service2 = __esm({
         } catch (error) {
           this.connectionState = "FAILED" /* Failed */;
           this.errorCount++;
-          this.circuitBreakerFailureCount++;
           CocoonDevLog3(
             "mountain-client",
             `[MountainClientService] Failed to connect to Mountain:`,
@@ -19891,7 +19890,6 @@ message RPCDataPayload {
               RpcMessage
             )) || IsFileWatcherBenign;
             if (!IsBenignNotFound) {
-              this.circuitBreakerFailureCount++;
               this.UpdateCircuitBreaker(
                 false,
                 new Error(
@@ -19949,7 +19947,6 @@ message RPCDataPayload {
               );
             }
           } else {
-            this.circuitBreakerFailureCount++;
             this.UpdateCircuitBreaker(false, error);
             CocoonDevLog3(
               "mountain-client",
@@ -20286,7 +20283,6 @@ message RPCDataPayload {
         } catch (error) {
           this.consecutiveSuccessfulHealthChecks = 0;
           this.errorCount++;
-          this.circuitBreakerFailureCount++;
           this.UpdateCircuitBreaker(false);
           CocoonDevLog3(
             "mountain-client",

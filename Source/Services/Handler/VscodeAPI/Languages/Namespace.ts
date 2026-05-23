@@ -613,13 +613,19 @@ const CreateLanguagesNamespace = (
 
 				const End = Pos((Range as { end?: unknown }).end);
 
+				const RawMsg =
+					typeof Obj.message === "string"
+						? Obj.message
+						: String(Obj.message ?? "");
+
 				const Out: Record<string, unknown> = {
 					severity: NormaliseSeverity(Obj.severity),
 
-					message:
-						typeof Obj.message === "string"
-							? Obj.message
-							: String(Obj.message ?? ""),
+					// VS Code's _toMarker rejects empty message with
+					// `if (!message) return undefined`, silently dropping
+					// the marker. Substitute a fallback so diagnostics
+					// without a human-readable message still appear.
+					message: RawMsg.length > 0 ? RawMsg : "(diagnostic)",
 
 					// `+ 1` converts vscode.Position (0-based) to
 					// `IMarkerData` (1-based). See block comment above.
@@ -644,8 +650,42 @@ const CreateLanguagesNamespace = (
 					Out.tags = Obj.tags.filter((T) => typeof T === "number");
 				}
 
-				if (Obj.relatedInformation !== undefined) {
-					Out.relatedInformation = Obj.relatedInformation;
+				// Normalize vscode.DiagnosticRelatedInformation[] to the
+				// flat IRelatedInformation[] shape that IMarkerService and
+				// MarkersView expect. vscode shape: { location: { uri,
+				// range: { start, end } }, message }. IRelatedInformation
+				// shape: { resource (URI string), startLineNumber,
+				// startColumn, endLineNumber, endColumn, message }.
+				// The resource URI is revived to a real URI object in
+				// Sky's InstallDiagnostics.ts before passing to changeOne.
+				if (Array.isArray(Obj.relatedInformation)) {
+					Out.relatedInformation = Obj.relatedInformation.map(
+						(RI: any) => {
+							const Loc = RI?.location ?? RI;
+							const RIRange = Loc?.range ?? {};
+							const RIStart = Pos(
+								(RIRange as { start?: unknown }).start ??
+									RIRange,
+							);
+							const RIEnd = Pos(
+								(RIRange as { end?: unknown }).end ?? RIRange,
+							);
+							const RIUri = Loc?.uri ?? RI?.resource ?? null;
+							return {
+								resource:
+									RIUri && typeof RIUri === "object"
+										? RIUri
+										: typeof RIUri === "string"
+											? RIUri
+											: null,
+								message: String(RI?.message ?? ""),
+								startLineNumber: RIStart.line + 1,
+								startColumn: RIStart.character + 1,
+								endLineNumber: RIEnd.line + 1,
+								endColumn: RIEnd.character + 1,
+							};
+						},
+					);
 				}
 
 				return Out;

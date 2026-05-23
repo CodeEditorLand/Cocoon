@@ -392,8 +392,6 @@ export class MountainClientService implements IMountainClientService {
 
 			this.errorCount++;
 
-			this.circuitBreakerFailureCount++;
-
 			CocoonDevLog(
 				"mountain-client",
 				`[MountainClientService] Failed to connect to Mountain:`,
@@ -780,8 +778,6 @@ message RPCDataPayload {
 					IsFileWatcherBenign;
 
 				if (!IsBenignNotFound) {
-					this.circuitBreakerFailureCount++;
-
 					this.UpdateCircuitBreaker(
 						false,
 
@@ -909,8 +905,6 @@ message RPCDataPayload {
 					);
 				}
 			} else {
-				this.circuitBreakerFailureCount++;
-
 				this.UpdateCircuitBreaker(false, error);
 
 				CocoonDevLog(
@@ -1401,7 +1395,6 @@ message RPCDataPayload {
 		} catch (error) {
 			this.consecutiveSuccessfulHealthChecks = 0;
 			this.errorCount++;
-			this.circuitBreakerFailureCount++;
 			this.UpdateCircuitBreaker(false);
 
 			CocoonDevLog(

@@ -575,8 +575,11 @@ const makeBootstrap = (): BootstrapService => ({
 				// MountainConnection retries for up to 45s; running it first meant
 				// Stage 5 (RPCServer) never started within Mountain's window.
 				["RPCServer", stage5_RPCServer],
-				["MountainConnection", stage3_MountainConnection],
+				// ModuleInterceptor must run BEFORE MountainConnection so the
+				// require('vscode') shim is installed before Mountain sends
+				// InitializeExtensionHost and extensions begin activating.
 				["ModuleInterceptor", stage4_ModuleInterceptor],
+				["MountainConnection", stage3_MountainConnection],
 				["Extensions", stage6_Extensions],
 				...(skipHealthCheck
 					? []

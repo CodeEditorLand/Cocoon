@@ -22562,7 +22562,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T05:47:08Z"
+      generatedAt: "2026-05-23T06:20:34Z"
     };
   }
 });
@@ -28349,9 +28349,14 @@ var init_Namespace9 = __esm({
           const Range3 = Obj.range ?? {};
           const Start = Pos(Range3.start);
           const End = Pos(Range3.end);
+          const RawMsg = typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? "");
           const Out = {
             severity: NormaliseSeverity(Obj.severity),
-            message: typeof Obj.message === "string" ? Obj.message : String(Obj.message ?? ""),
+            // VS Code's _toMarker rejects empty message with
+            // `if (!message) return undefined`, silently dropping
+            // the marker. Substitute a fallback so diagnostics
+            // without a human-readable message still appear.
+            message: RawMsg.length > 0 ? RawMsg : "(diagnostic)",
             // `+ 1` converts vscode.Position (0-based) to
             // `IMarkerData` (1-based). See block comment above.
             startLineNumber: Start.line + 1,
@@ -28368,8 +28373,28 @@ var init_Namespace9 = __esm({
           if (Array.isArray(Obj.tags)) {
             Out.tags = Obj.tags.filter((T) => typeof T === "number");
           }
-          if (Obj.relatedInformation !== void 0) {
-            Out.relatedInformation = Obj.relatedInformation;
+          if (Array.isArray(Obj.relatedInformation)) {
+            Out.relatedInformation = Obj.relatedInformation.map(
+              (RI) => {
+                const Loc = RI?.location ?? RI;
+                const RIRange = Loc?.range ?? {};
+                const RIStart = Pos(
+                  RIRange.start ?? RIRange
+                );
+                const RIEnd = Pos(
+                  RIRange.end ?? RIRange
+                );
+                const RIUri = Loc?.uri ?? RI?.resource ?? null;
+                return {
+                  resource: RIUri && typeof RIUri === "object" ? RIUri : typeof RIUri === "string" ? RIUri : null,
+                  message: String(RI?.message ?? ""),
+                  startLineNumber: RIStart.line + 1,
+                  startColumn: RIStart.character + 1,
+                  endLineNumber: RIEnd.line + 1,
+                  endColumn: RIEnd.character + 1
+                };
+              }
+            );
           }
           return Out;
         }, "NormaliseDiagnostic");
@@ -30602,9 +30627,9 @@ ${Stack}`
         "ext-activate",
         `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
       );
-      for (const ExtId of ToActivate) {
-        void ActivateWithDeps(ExtId, ActivationEvent);
-      }
+      await Promise.allSettled(
+        ToActivate.map((ExtId) => ActivateWithDeps(ExtId, ActivationEvent))
+      );
       Context.Emitter.emit("activateByEvent", {
         event: ActivationEvent,
         extensions: MatchingExtensions

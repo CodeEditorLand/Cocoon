@@ -307,11 +307,13 @@ const HandleActivateByEvent = async (
 		`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`,
 	);
 
-	// Launch all top-level activations concurrently; deps within each
-	// extension are resolved serially by ActivateWithDeps.
-	for (const ExtId of ToActivate) {
-		void ActivateWithDeps(ExtId, ActivationEvent);
-	}
+	// Await all top-level activations so the $activateByEvent response
+	// is sent only after extensions have actually activated. Returning
+	// early (fire-and-forget) means Mountain may dispatch language
+	// provider requests before extensions are ready, causing races.
+	await Promise.allSettled(
+		ToActivate.map((ExtId) => ActivateWithDeps(ExtId, ActivationEvent)),
+	);
 
 	// Keep legacy event for any listeners
 	Context.Emitter.emit("activateByEvent", {

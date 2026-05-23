@@ -649,16 +649,13 @@ export class GRPCServerService
 	 *   - "$shutdown" - Mountain initiates graceful shutdown via this method.
 	 */
 	private IsValidMethod(method: string): boolean {
-		const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
-		const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-		const ExtensionHostMethod =
-			/^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost|\$shutdown|\$deltaWorkspaceFolders)$/.test(
-				method,
-			);
-		const ProxiedMethod = /^[A-Za-z]+\$[A-Za-z]+[A-Za-z0-9]*$/.test(method);
-		return (
-			DotMethod || ProvideMethod || ExtensionHostMethod || ProxiedMethod
-		);
+		// Accept any non-empty method string. The original allowlist was too
+		// narrow: it blocked $resolve*, $delta*, $acceptModel*, $treeView:*,
+		// $onDid* and other valid gRPC methods before the router ever saw them,
+		// silently dropping all LSP resolve calls (code actions, hover, etc.).
+		// routeRequest already rejects unknown methods with a proper error;
+		// this gate adds no safety while suppressing legitimate traffic.
+		return typeof method === "string" && method.length > 0;
 	}
 
 	/**

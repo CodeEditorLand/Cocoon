@@ -1719,7 +1719,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
 			if (Files.length > 0) {
-				WorkspaceEventEmitter.emit("didCreateFiles", { files: Files });
+				WorkspaceEventEmitter?.emit("didCreateFiles", { files: Files });
 			}
 			break;
 		}
@@ -1729,7 +1729,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
 			if (Files.length > 0) {
-				WorkspaceEventEmitter.emit("didDeleteFiles", { files: Files });
+				WorkspaceEventEmitter?.emit("didDeleteFiles", { files: Files });
 			}
 			break;
 		}
@@ -1739,7 +1739,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
 			if (Files.length > 0) {
-				WorkspaceEventEmitter.emit("didRenameFiles", { files: Files });
+				WorkspaceEventEmitter?.emit("didRenameFiles", { files: Files });
 			}
 			break;
 		}
