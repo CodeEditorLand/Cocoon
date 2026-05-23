@@ -303,8 +303,10 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 							// `createResourceGroup`).
 							GroupReady.then(() =>
 								Context.SendToMountain("update_scm_group", {
-									scmHandle: Handle,
-									groupHandle: GroupHandle,
+									// Proto UpdateScmGroupRequest field names:
+									// providerId (string scm id) + groupId (string)
+									providerId: Id,
+									groupId: GroupId,
 									resourceStates: SanitizedStates,
 								}),
 							).catch((Error: unknown) => {
