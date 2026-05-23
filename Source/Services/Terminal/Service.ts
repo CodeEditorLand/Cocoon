@@ -49,7 +49,7 @@ export class TerminalService implements ITerminalService {
 
 		// Call Spine (v0.5 Terminal Batch)
 		const terminalId = await this.mountainClient.sendRequest(
-			"terminal.create",
+			"$terminal:create",
 
 			{
 				name,
