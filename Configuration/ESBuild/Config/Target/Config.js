@@ -1,1 +1,72 @@
-import{deepmerge as r}from"deepmerge-ts";import*as o from"../../Constant/Environment/Constant.js";import u from"../Base/Config.js";const a=(()=>{const e=process.env.CocoonEsbuildDefine;if(!e)return{};try{return JSON.parse(e)}catch{return{}}})();async function p(e){return r(u,{outdir:"Target",bundle:o.Bundle,drop:o.On?[]:["debugger","console"],define:{__DEV__:o.On?"true":"false",__INCREMENT__:`"${`${o.On?"DEVELOPMENT":"PRODUCTION"}-${(await import("ulid")).ulid()}`}"`,...a},treeShaking:!o.On,entryPoints:(await import("@playform/build/Target/Function/Entry.js")).default(e,["Source/Configuration/*"]),platform:"node",outbase:"Source",...o.Bundle?{packages:"external",external:["@playform/build","vscode","electron","@effect/*","@grpc/grpc-js","@grpc/proto-loader","google-protobuf","protobufjs","node:*"]}:{},plugins:o.Compile?r(e.plugins||[],[{name:"Compile",setup({onEnd:i}){i(async({metafile:s})=>{const n=s?.outputs;for(const t in n)Object.prototype.hasOwnProperty.call(n,t)&&t.endsWith(".js")&&(await import("@playform/build/Target/Function/Exec.js")).default(`Build '${t}' 											--ESBuild Configuration/ESBuild/Config/CompileConfig.js 											--TypeScript Configuration/tsconfig/Target/Compile.json`)})}}]):[]})}export{p as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { deepmerge } from "deepmerge-ts";
+import * as Environment from "../../Constant/Environment/Constant.js";
+import BaseConfig from "../Base/Config.js";
+const TierDefines = (() => {
+  const Raw = process.env["CocoonEsbuildDefine"];
+  if (!Raw) return {};
+  try {
+    return JSON.parse(Raw);
+  } catch {
+    return {};
+  }
+})();
+async function TargetConfig(Current) {
+  const Merged = deepmerge(BaseConfig, {
+    outdir: "Target",
+    bundle: Environment.Bundle,
+    drop: Environment.On ? [] : ["debugger", "console"],
+    define: {
+      __DEV__: Environment.On ? "true" : "false",
+      __INCREMENT__: `"${`${Environment.On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`,
+      ...TierDefines
+    },
+    treeShaking: !Environment.On,
+    entryPoints: (await import("@playform/build/Target/Function/Entry.js")).default(Current, ["Source/Configuration/*"]),
+    platform: "node",
+    outbase: "Source",
+    ...Environment.Bundle ? {
+      packages: "external",
+      external: [
+        "@playform/build",
+        "vscode",
+        "electron",
+        "@effect/*",
+        "@grpc/grpc-js",
+        "@grpc/proto-loader",
+        "google-protobuf",
+        "protobufjs",
+        "node:*"
+      ]
+    } : {},
+    plugins: Environment.Compile ? deepmerge(Current.plugins || [], [
+      {
+        name: "Compile",
+        setup({ onEnd }) {
+          onEnd(async ({ metafile }) => {
+            const _Output = metafile?.outputs;
+            for (const Output in _Output) {
+              if (Object.prototype.hasOwnProperty.call(
+                _Output,
+                Output
+              )) {
+                if (Output.endsWith(".js")) {
+                  (await import("@playform/build/Target/Function/Exec.js")).default(
+                    `Build '${Output}' 											--ESBuild Configuration/ESBuild/Config/CompileConfig.js 											--TypeScript Configuration/tsconfig/Target/Compile.json`
+                  );
+                }
+              }
+            }
+          });
+        }
+      }
+    ]) : []
+  });
+  return Merged;
+}
+__name(TargetConfig, "TargetConfig");
+export {
+  TargetConfig as default
+};
+//# sourceMappingURL=Config.js.map

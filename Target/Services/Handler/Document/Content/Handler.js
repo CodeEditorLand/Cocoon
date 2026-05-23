@@ -1,3 +1,276 @@
-import{CocoonDevLog as p}from"../../../Dev/Log.js";const y=a=>{const e=a.match(/\.([^./?#]+)(?:\?|#|$)/);if(!e?.[1])return"plaintext";const l=e[1].toLowerCase();return{ts:"typescript",tsx:"typescriptreact",js:"javascript",jsx:"javascriptreact",json:"json",jsonc:"jsonc",md:"markdown",html:"html",htm:"html",css:"css",scss:"scss",less:"less",xml:"xml",yaml:"yaml",yml:"yaml",toml:"toml",rs:"rust",py:"python",rb:"ruby",go:"go",java:"java",c:"c",cpp:"cpp",h:"c",hpp:"cpp",cs:"csharp",swift:"swift",sh:"shellscript",bash:"shellscript",zsh:"shellscript",ps1:"powershell",sql:"sql",graphql:"graphql",proto:"proto3",dockerfile:"dockerfile",vue:"vue",svelte:"svelte",astro:"astro",txt:"plaintext"}[l]??"plaintext"},m=(a,e,l=1,r)=>{const n=e.split(/\r?\n/),i=a.replace(/^file:\/\//,""),g=r??y(a);return{uri:{scheme:"file",path:i,fsPath:i,authority:"",query:"",fragment:"",with:()=>({}),toString:()=>a,toJSON:()=>({scheme:"file",path:i,fsPath:i})},fileName:i,languageId:g,version:l,lineCount:n.length,getText:t=>{if(!t)return e;const s=t?.start?.line??0,o=t?.start?.character??0,c=t?.end?.line??n.length-1,u=t?.end?.character??n[c]?.length??0;if(s===c)return(n[s]??"").substring(o,u);const d=[];d.push((n[s]??"").substring(o));for(let f=s+1;f<c;f++)d.push(n[f]??"");return d.push((n[c]??"").substring(0,u)),d.join(`
-`)},lineAt:t=>{const s=typeof t=="number"?t:t.line,o=n[s]??"";return{text:o,lineNumber:s,range:{start:{line:s,character:0},end:{line:s,character:o.length}},isEmptyOrWhitespace:o.trim().length===0}},isUntitled:!1,isDirty:!1,isClosed:!1,eol:1,offsetAt:t=>{let s=0;for(let o=0;o<t.line&&o<n.length;o++)s+=(n[o]?.length??0)+1;return s+t.character},positionAt:t=>{let s=t;for(let o=0;o<n.length;o++){const c=(n[o]?.length??0)+1;if(s<c)return{line:o,character:s};s-=c}return{line:n.length-1,character:n[n.length-1]?.length??0}},validateRange:t=>t,validatePosition:t=>t,getWordRangeAtPosition:()=>{},save:async()=>!1}},h=new Map,b=(a,e,l)=>{let r,n;Array.isArray(e)&&e.length>=2?(r=e[0]?.external??e[0]?.toString?.()??"",n=e[1]):(r=e?.uri?.external??e?.uri??e?.Uri??"",n=e);const i=n?.content??n?.Content??n?.text;if(r&&i!==void 0)a.set(r,i);else if(r&&(n?.changes||e?.changes)){let t=a.get(r)??"";const o=[...Array.isArray(n?.changes)?n.changes:Array.isArray(e?.changes)?e.changes:[]].sort((c,u)=>(u.rangeOffset??0)-(c.rangeOffset??0));for(const c of o){const u=c.rangeOffset??0,d=c.rangeLength??0,f=c.text??"";t=t.substring(0,u)+f+t.substring(u+d)}a.set(r,t)}if(r&&l){const g=(h.get(r)??1)+1;h.set(r,g);const t=a.get(r)??"",s=m(r,t,g);l.emit("didChangeTextDocument",{document:s,contentChanges:n?.changes??e?.changes??[],reason:void 0})}},x=(a,e,l)=>{const r=Array.isArray(e)?e:[e];for(const n of r){const i=n?.URI?.toString?.()??n?.URI??n?.uri?.external??n?.uri??n?.Uri??"",g=n?.Lines??n?.lines,t=n?.EOL??n?.eol??`
-`;let s;Array.isArray(g)?s=g.join(t):s=n?.content??n?.Content??n?.text;const o=n?.LanguageIdentifier??n?.languageId??n?.language;if(i&&s!==void 0&&(a.set(i,s),h.set(i,1),p("document",`[DocumentContentHandler] Document opened: ${i.slice(-60)} (${s.length} chars)`),l)){const c=m(i,s,1,o);l.emit("didOpenTextDocument",c)}}},v=(a,e,l)=>{const r=Array.isArray(e)?e:[e];for(const n of r){const i=n?.external??n?.uri?.external??n?.uri??n?.Uri??"";if(i){if(l){const g=a.get(i)??"",t=h.get(i)??1,s=m(i,g,t);l.emit("didCloseTextDocument",s)}a.delete(i),h.delete(i)}}},A=(a,e,l)=>{if(!l)return;const r=Array.isArray(e)?e:[e];for(const n of r){const i=typeof n=="string"?n:n?.external??n?.uri?.external??n?.uri??n?.Uri??"";if(i){const g=a.get(i)??"",t=h.get(i)??1,s=m(i,g,t);l.emit("didSaveTextDocument",s)}}},C=(a,e)=>a.get(e)??null;var L={HandleDocumentChange:b,HandleDocumentOpen:x,HandleDocumentClose:v,HandleDocumentSave:A,GetDocumentContent:C,BuildTextDocument:m};export{L as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/Dev/Log.ts
+var Raw = process.env["Trace"] ?? "";
+var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+var TagSet = new Set(ParsedTags);
+var IsShort = TagSet.has("short");
+var HasAll = TagSet.has("all");
+var IsEnabled = /* @__PURE__ */ __name((Tag) => {
+  if (TagSet.size === 0) return false;
+  if (HasAll || IsShort) return true;
+  return TagSet.has(Tag.toLowerCase());
+}, "IsEnabled");
+var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+  if (!IsEnabled(Tag)) return;
+  const TagUpper = Tag.toUpperCase();
+  process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+}, "CocoonDevLog");
+var Log_default = CocoonDevLog;
+
+// Source/Services/Handler/Document/Content/Handler.ts
+var InferLanguageIdentifier = /* @__PURE__ */ __name((Uri) => {
+  const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/);
+  if (!ExtensionMatch?.[1]) return "plaintext";
+  const Extension = ExtensionMatch[1].toLowerCase();
+  const LanguageMap = {
+    ts: "typescript",
+    tsx: "typescriptreact",
+    js: "javascript",
+    jsx: "javascriptreact",
+    json: "json",
+    jsonc: "jsonc",
+    md: "markdown",
+    html: "html",
+    htm: "html",
+    css: "css",
+    scss: "scss",
+    less: "less",
+    xml: "xml",
+    yaml: "yaml",
+    yml: "yaml",
+    toml: "toml",
+    rs: "rust",
+    py: "python",
+    rb: "ruby",
+    go: "go",
+    java: "java",
+    c: "c",
+    cpp: "cpp",
+    h: "c",
+    hpp: "cpp",
+    cs: "csharp",
+    swift: "swift",
+    sh: "shellscript",
+    bash: "shellscript",
+    zsh: "shellscript",
+    ps1: "powershell",
+    sql: "sql",
+    graphql: "graphql",
+    proto: "proto3",
+    dockerfile: "dockerfile",
+    vue: "vue",
+    svelte: "svelte",
+    astro: "astro",
+    txt: "plaintext"
+  };
+  return LanguageMap[Extension] ?? "plaintext";
+}, "InferLanguageIdentifier");
+var BuildTextDocument = /* @__PURE__ */ __name((Uri, Content, Version = 1, LanguageIdentifier) => {
+  const Lines = Content.split(/\r?\n/);
+  const FileName = Uri.replace(/^file:\/\//, "");
+  const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri);
+  return {
+    uri: {
+      scheme: "file",
+      path: FileName,
+      fsPath: FileName,
+      authority: "",
+      query: "",
+      fragment: "",
+      with: /* @__PURE__ */ __name(() => ({}), "with"),
+      toString: /* @__PURE__ */ __name(() => Uri, "toString"),
+      toJSON: /* @__PURE__ */ __name(() => ({
+        scheme: "file",
+        path: FileName,
+        fsPath: FileName
+      }), "toJSON")
+    },
+    fileName: FileName,
+    languageId: ResolvedLanguage,
+    version: Version,
+    lineCount: Lines.length,
+    getText: /* @__PURE__ */ __name((Range) => {
+      if (!Range) return Content;
+      const StartLine = Range?.start?.line ?? 0;
+      const StartCharacter = Range?.start?.character ?? 0;
+      const EndLine = Range?.end?.line ?? Lines.length - 1;
+      const EndCharacter = Range?.end?.character ?? Lines[EndLine]?.length ?? 0;
+      if (StartLine === EndLine) {
+        return (Lines[StartLine] ?? "").substring(
+          StartCharacter,
+          EndCharacter
+        );
+      }
+      const Result = [];
+      Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
+      for (let Index = StartLine + 1; Index < EndLine; Index++) {
+        Result.push(Lines[Index] ?? "");
+      }
+      Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
+      return Result.join("\n");
+    }, "getText"),
+    lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
+      const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
+      const Text = Lines[LineNumber] ?? "";
+      return {
+        text: Text,
+        lineNumber: LineNumber,
+        range: {
+          start: { line: LineNumber, character: 0 },
+          end: { line: LineNumber, character: Text.length }
+        },
+        isEmptyOrWhitespace: Text.trim().length === 0
+      };
+    }, "lineAt"),
+    isUntitled: false,
+    isDirty: false,
+    isClosed: false,
+    eol: 1,
+    // EndOfLine.LF
+    offsetAt: /* @__PURE__ */ __name((Position) => {
+      let Offset = 0;
+      for (let Index = 0; Index < Position.line && Index < Lines.length; Index++) {
+        Offset += (Lines[Index]?.length ?? 0) + 1;
+      }
+      return Offset + Position.character;
+    }, "offsetAt"),
+    positionAt: /* @__PURE__ */ __name((Offset) => {
+      let Remaining = Offset;
+      for (let Index = 0; Index < Lines.length; Index++) {
+        const LineLength = (Lines[Index]?.length ?? 0) + 1;
+        if (Remaining < LineLength) {
+          return { line: Index, character: Remaining };
+        }
+        Remaining -= LineLength;
+      }
+      return {
+        line: Lines.length - 1,
+        character: Lines[Lines.length - 1]?.length ?? 0
+      };
+    }, "positionAt"),
+    validateRange: /* @__PURE__ */ __name((Range) => Range, "validateRange"),
+    validatePosition: /* @__PURE__ */ __name((Position) => Position, "validatePosition"),
+    getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+    save: /* @__PURE__ */ __name(async () => false, "save")
+  };
+}, "BuildTextDocument");
+var DocumentVersionMap = /* @__PURE__ */ new Map();
+var HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+  let Uri;
+  let EventData;
+  if (Array.isArray(Parameters) && Parameters.length >= 2) {
+    Uri = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+    EventData = Parameters[1];
+  } else {
+    Uri = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+    EventData = Parameters;
+  }
+  const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
+  if (Uri && Content !== void 0) {
+    DocumentContentCache.set(Uri, Content);
+  } else if (Uri && (EventData?.changes || Parameters?.changes)) {
+    const Existing = DocumentContentCache.get(Uri) ?? "";
+    let Updated = Existing;
+    const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
+    const Sorted = [...Changes].sort(
+      (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
+    );
+    for (const Change of Sorted) {
+      const Offset = Change.rangeOffset ?? 0;
+      const Length = Change.rangeLength ?? 0;
+      const Text = Change.text ?? "";
+      Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+    }
+    DocumentContentCache.set(Uri, Updated);
+  }
+  if (Uri && WorkspaceEventEmitter) {
+    const CurrentVersion = (DocumentVersionMap.get(Uri) ?? 1) + 1;
+    DocumentVersionMap.set(Uri, CurrentVersion);
+    const CachedContent = DocumentContentCache.get(Uri) ?? "";
+    const Document = BuildTextDocument(Uri, CachedContent, CurrentVersion);
+    WorkspaceEventEmitter.emit("didChangeTextDocument", {
+      document: Document,
+      contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
+      reason: void 0
+    });
+  }
+}, "HandleDocumentChange");
+var HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+  const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+  for (const Model of Models) {
+    const Uri = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
+    const Lines = Model?.Lines ?? Model?.lines;
+    const EOL = Model?.EOL ?? Model?.eol ?? "\n";
+    let Content;
+    if (Array.isArray(Lines)) {
+      Content = Lines.join(EOL);
+    } else {
+      Content = Model?.content ?? Model?.Content ?? Model?.text;
+    }
+    const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
+    if (Uri && Content !== void 0) {
+      DocumentContentCache.set(Uri, Content);
+      DocumentVersionMap.set(Uri, 1);
+      CocoonDevLog(
+        "document",
+        `[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`
+      );
+      if (WorkspaceEventEmitter) {
+        const Document = BuildTextDocument(
+          Uri,
+          Content,
+          1,
+          LanguageIdentifier
+        );
+        WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
+      }
+    }
+  }
+}, "HandleDocumentOpen");
+var HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+  const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+  for (const Item of Items) {
+    const Uri = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+    if (Uri) {
+      if (WorkspaceEventEmitter) {
+        const CachedContent = DocumentContentCache.get(Uri) ?? "";
+        const Version = DocumentVersionMap.get(Uri) ?? 1;
+        const Document = BuildTextDocument(Uri, CachedContent, Version);
+        WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
+      }
+      DocumentContentCache.delete(Uri);
+      DocumentVersionMap.delete(Uri);
+    }
+  }
+}, "HandleDocumentClose");
+var HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+  if (!WorkspaceEventEmitter) return;
+  const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+  for (const Item of Items) {
+    const Uri = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+    if (Uri) {
+      const CachedContent = DocumentContentCache.get(Uri) ?? "";
+      const Version = DocumentVersionMap.get(Uri) ?? 1;
+      const Document = BuildTextDocument(Uri, CachedContent, Version);
+      WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
+    }
+  }
+}, "HandleDocumentSave");
+var GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri) => {
+  return DocumentContentCache.get(Uri) ?? null;
+}, "GetDocumentContent");
+var Handler_default = {
+  HandleDocumentChange,
+  HandleDocumentOpen,
+  HandleDocumentClose,
+  HandleDocumentSave,
+  GetDocumentContent,
+  BuildTextDocument
+};
+export {
+  Handler_default as default
+};
+//# sourceMappingURL=Handler.js.map

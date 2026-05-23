@@ -128,12 +128,19 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 		},
 
 		addBreakpoints: (Breakpoints: unknown[]) => {
+			const All: unknown[] = ((Context as any).__breakpoints ??= []);
+			All.push(...Breakpoints);
 			Context.SendToMountain("debug.addBreakpoints", {
 				breakpoints: Breakpoints,
 			}).catch(() => {});
 		},
 
 		removeBreakpoints: (Breakpoints: unknown[]) => {
+			const All: unknown[] = ((Context as any).__breakpoints ??= []);
+			const Ids = new Set((Breakpoints as any[]).map((B) => B?.id));
+			(Context as any).__breakpoints = All.filter(
+				(B: unknown) => !Ids.has((B as any)?.id),
+			);
 			Context.SendToMountain("debug.removeBreakpoints", {
 				breakpoints: Breakpoints,
 			}).catch(() => {});
@@ -171,7 +178,9 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 			"debug.didChangeBreakpoints",
 		),
 
-		activeDebugSession: undefined as unknown,
+		get activeDebugSession() {
+			return (Context as any).__activeDebugSession ?? undefined;
+		},
 
 		activeDebugConsole: {
 			append: (Value: string) => {
@@ -186,7 +195,9 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 			},
 		},
 
-		breakpoints: [] as unknown[],
+		get breakpoints() {
+			return (Context as any).__breakpoints ?? [];
+		},
 
 		// Stable 1.88+ surface: current selected debug stack item. Land's
 		// debug service doesn't track per-frame selection yet, so this reads

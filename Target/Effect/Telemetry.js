@@ -1,3 +1,272 @@
-import{Context as D,Effect as e,HashMap as a,Layer as w,Option as E,Ref as d,Stream as _,SubscriptionRef as M}from"effect";const m=1e3,A=100,k=100;class P extends Error{constructor(t,T){super(`Telemetry collection failed for '${t}': ${String(T)}`);this.operation=t;this.cause=T}operation;cause;_tag="TelemetryCollectionError"}class H extends D.Tag("Cocoon/Telemetry")(){}const b=H,X=w.effect(b,e.gen(function*(){const i=yield*M.make(a.empty()),l=yield*M.make(a.empty()),t=yield*M.make([]),T=(r,o,n)=>e.gen(function*(){const y={name:r,value:o,timestamp:Date.now(),labels:n},s=yield*t.get;s.push({type:"metric",timestamp:y.timestamp,data:y}),s.length>m&&s.splice(0,s.length-m),yield*d.set(t,s);const c=yield*i.get,g=a.get(c,r).pipe(E.getOrElse(()=>[]));g.push(y),g.length>A&&g.splice(0,g.length-A),yield*d.set(i,a.set(c,r,g))}),p=(r,o)=>e.gen(function*(){const n=Date.now(),y={name:r,startTime:n,success:!1,labels:o??{}},s=yield*t.get;return s.push({type:"span",timestamp:n,data:y}),s.length>m&&s.splice(0,s.length-m),yield*d.set(t,s),{end:(c,g)=>e.gen(function*(){const f=Date.now(),R={...y,endTime:f,duration:f-n,success:c,error:g},u=yield*t.get;u.push({type:"span",timestamp:f,data:R}),u.length>m&&u.splice(0,u.length-m),yield*d.set(t,u);const x=yield*l.get,h=a.get(x,r).pipe(E.getOrElse(()=>[]));h.push(R),h.length>k&&h.splice(0,h.length-k),yield*d.set(l,a.set(x,r,h))})}}),S=(r,o,n)=>e.gen(function*(){const y={level:r,message:o,context:n},s=Date.now(),c=yield*t.get;c.push({type:"log",timestamp:s,data:y}),c.length>m&&c.splice(0,c.length-m),yield*d.set(t,c);const g=`[Cocoon Telemetry] [${r.toUpperCase()}]`;let f="";if(n&&Object.keys(n).length>0)try{f=` ${JSON.stringify(n)}`}catch{f=" [unserializable-context]"}const R=`${g} ${o}${f}
-`,u=r==="error"?process.stderr:process.stdout;try{u.write(R)}catch{}}),v=r=>e.gen(function*(){const o=yield*i.get;return a.get(o,r).pipe(E.getOrElse(()=>[]))}),C=r=>e.gen(function*(){const o=yield*l.get,n=a.get(o,r).pipe(E.getOrElse(()=>[]));return n.length===0?0:n.reduce((s,c)=>s+(c.duration??0),0)/n.length}),$=r=>e.gen(function*(){const o=yield*l.get,n=a.get(o,r).pipe(E.getOrElse(()=>[]));return n.length===0?1:n.filter(s=>s.success).length/n.length}),O=e.gen(function*(){yield*d.set(i,a.empty()),yield*d.set(l,a.empty()),yield*d.set(t,[])});return{recordMetric:T,startSpan:p,log:S,events:t.changes,getMetrics:v,getAverageDuration:C,getSuccessRate:$,flush:O}})),L=()=>({recordMetric:()=>e.void,startSpan:()=>e.succeed({end:()=>e.void}),log:(i,l,t)=>e.sync(()=>{const T=`[Cocoon Telemetry Mock] [${i.toUpperCase()}]`;let p="";if(t&&Object.keys(t).length>0)try{p=` ${JSON.stringify(t)}`}catch{p=" [unserializable-context]"}const S=i==="error"?process.stderr:process.stdout;try{S.write(`${T} ${l}${p}
-`)}catch{}}),events:_.empty,getMetrics:()=>e.succeed([]),getAverageDuration:()=>e.succeed(0),getSuccessRate:()=>e.succeed(1),flush:e.void}),j=w.effect(b,e.succeed(L())),z=(i,l,t)=>e.gen(function*(){const p=yield*(yield*b).startSpan(i,t),S=yield*l.pipe(e.catchAll(v=>e.gen(function*(){return yield*p.end(!1,String(v)),yield*e.fail(v)})));return yield*p.end(!0),S});export{b as Telemetry,P as TelemetryCollectionError,X as TelemetryLive,j as TelemetryMock,H as TelemetryTag,L as makeMockTelemetry,z as withSpan};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Effect/Telemetry.ts
+import {
+  Context,
+  Effect,
+  HashMap,
+  Layer,
+  Option,
+  Ref,
+  Stream,
+  SubscriptionRef
+} from "effect";
+var MAX_EVENTS = 1e3;
+var MAX_METRICS_PER_NAME = 100;
+var MAX_SPANS_PER_NAME = 100;
+var TelemetryCollectionError = class extends Error {
+  constructor(operation, cause) {
+    super(
+      `Telemetry collection failed for '${operation}': ${String(cause)}`
+    );
+    this.operation = operation;
+    this.cause = cause;
+  }
+  operation;
+  cause;
+  static {
+    __name(this, "TelemetryCollectionError");
+  }
+  _tag = "TelemetryCollectionError";
+};
+var TelemetryTag = class extends Context.Tag("Cocoon/Telemetry")() {
+  static {
+    __name(this, "TelemetryTag");
+  }
+};
+var Telemetry = TelemetryTag;
+var TelemetryLive = Layer.effect(
+  Telemetry,
+  Effect.gen(function* () {
+    const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
+    const spansRef = yield* SubscriptionRef.make(HashMap.empty());
+    const eventsRef = yield* SubscriptionRef.make([]);
+    const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect.gen(function* () {
+      const metric = {
+        name,
+        value,
+        timestamp: Date.now(),
+        labels
+      };
+      const events = yield* eventsRef.get;
+      events.push({
+        type: "metric",
+        timestamp: metric.timestamp,
+        data: metric
+      });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
+      const currentMetrics = yield* metricsRef.get;
+      const nameMetrics = HashMap.get(currentMetrics, name).pipe(
+        Option.getOrElse(() => [])
+      );
+      nameMetrics.push(metric);
+      if (nameMetrics.length > MAX_METRICS_PER_NAME) {
+        nameMetrics.splice(
+          0,
+          nameMetrics.length - MAX_METRICS_PER_NAME
+        );
+      }
+      yield* Ref.set(
+        metricsRef,
+        HashMap.set(currentMetrics, name, nameMetrics)
+      );
+    }), "recordMetric");
+    const startSpan = /* @__PURE__ */ __name((name, labels) => Effect.gen(function* () {
+      const startTime = Date.now();
+      const span = {
+        name,
+        startTime,
+        success: false,
+        labels: labels ?? {}
+      };
+      const events = yield* eventsRef.get;
+      events.push({
+        type: "span",
+        timestamp: startTime,
+        data: span
+      });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
+      return {
+        end: /* @__PURE__ */ __name((success, error) => Effect.gen(function* () {
+          const endTime = Date.now();
+          const completedSpan = {
+            ...span,
+            endTime,
+            duration: endTime - startTime,
+            success,
+            error
+          };
+          const events2 = yield* eventsRef.get;
+          events2.push({
+            type: "span",
+            timestamp: endTime,
+            data: completedSpan
+          });
+          if (events2.length > MAX_EVENTS) {
+            events2.splice(0, events2.length - MAX_EVENTS);
+          }
+          yield* Ref.set(eventsRef, events2);
+          const currentSpans = yield* spansRef.get;
+          const nameSpans = HashMap.get(
+            currentSpans,
+            name
+          ).pipe(Option.getOrElse(() => []));
+          nameSpans.push(completedSpan);
+          if (nameSpans.length > MAX_SPANS_PER_NAME) {
+            nameSpans.splice(
+              0,
+              nameSpans.length - MAX_SPANS_PER_NAME
+            );
+          }
+          yield* Ref.set(
+            spansRef,
+            HashMap.set(currentSpans, name, nameSpans)
+          );
+        }), "end")
+      };
+    }), "startSpan");
+    const log = /* @__PURE__ */ __name((level, message, context) => Effect.gen(function* () {
+      const logEntry = {
+        level,
+        message,
+        context
+      };
+      const timestamp = Date.now();
+      const events = yield* eventsRef.get;
+      events.push({ type: "log", timestamp, data: logEntry });
+      if (events.length > MAX_EVENTS) {
+        events.splice(0, events.length - MAX_EVENTS);
+      }
+      yield* Ref.set(eventsRef, events);
+      const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+      let ContextText = "";
+      if (context && Object.keys(context).length > 0) {
+        try {
+          ContextText = ` ${JSON.stringify(context)}`;
+        } catch {
+          ContextText = " [unserializable-context]";
+        }
+      }
+      const Line = `${Prefix} ${message}${ContextText}
+`;
+      const Stream2 = level === "error" ? process.stderr : process.stdout;
+      try {
+        Stream2.write(Line);
+      } catch {
+      }
+    }), "log");
+    const getMetrics = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
+      const metrics = yield* metricsRef.get;
+      return HashMap.get(metrics, name).pipe(
+        Option.getOrElse(() => [])
+      );
+    }), "getMetrics");
+    const getAverageDuration = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
+      const spans = yield* spansRef.get;
+      const nameSpans = HashMap.get(spans, name).pipe(
+        Option.getOrElse(() => [])
+      );
+      if (nameSpans.length === 0) {
+        return 0;
+      }
+      const totalDuration = nameSpans.reduce(
+        (sum, span) => {
+          return sum + (span.duration ?? 0);
+        },
+        0
+      );
+      return totalDuration / nameSpans.length;
+    }), "getAverageDuration");
+    const getSuccessRate = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
+      const spans = yield* spansRef.get;
+      const nameSpans = HashMap.get(spans, name).pipe(
+        Option.getOrElse(() => [])
+      );
+      if (nameSpans.length === 0) {
+        return 1;
+      }
+      const successCount = nameSpans.filter(
+        (span) => span.success
+      ).length;
+      return successCount / nameSpans.length;
+    }), "getSuccessRate");
+    const flush = Effect.gen(function* () {
+      yield* Ref.set(metricsRef, HashMap.empty());
+      yield* Ref.set(spansRef, HashMap.empty());
+      yield* Ref.set(eventsRef, []);
+    });
+    return {
+      recordMetric,
+      startSpan,
+      log,
+      events: eventsRef.changes,
+      getMetrics,
+      getAverageDuration,
+      getSuccessRate,
+      flush
+    };
+  })
+);
+var makeMockTelemetry = /* @__PURE__ */ __name(() => ({
+  recordMetric: /* @__PURE__ */ __name(() => Effect.void, "recordMetric"),
+  startSpan: /* @__PURE__ */ __name(() => Effect.succeed({
+    end: /* @__PURE__ */ __name(() => Effect.void, "end")
+  }), "startSpan"),
+  log: /* @__PURE__ */ __name((level, message, context) => Effect.sync(() => {
+    const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+    let ContextText = "";
+    if (context && Object.keys(context).length > 0) {
+      try {
+        ContextText = ` ${JSON.stringify(context)}`;
+      } catch {
+        ContextText = " [unserializable-context]";
+      }
+    }
+    const Stream2 = level === "error" ? process.stderr : process.stdout;
+    try {
+      Stream2.write(`${Prefix} ${message}${ContextText}
+`);
+    } catch {
+    }
+  }), "log"),
+  events: Stream.empty,
+  getMetrics: /* @__PURE__ */ __name(() => Effect.succeed([]), "getMetrics"),
+  getAverageDuration: /* @__PURE__ */ __name(() => Effect.succeed(0), "getAverageDuration"),
+  getSuccessRate: /* @__PURE__ */ __name(() => Effect.succeed(1), "getSuccessRate"),
+  flush: Effect.void
+}), "makeMockTelemetry");
+var TelemetryMock = Layer.effect(
+  Telemetry,
+  Effect.succeed(makeMockTelemetry())
+);
+var withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect.gen(function* () {
+  const telemetry = yield* Telemetry;
+  const span = yield* telemetry.startSpan(name, labels);
+  const result = yield* effect.pipe(
+    Effect.catchAll(
+      (error) => Effect.gen(function* () {
+        yield* span.end(false, String(error));
+        return yield* Effect.fail(error);
+      })
+    )
+  );
+  yield* span.end(true);
+  return result;
+}), "withSpan");
+export {
+  Telemetry,
+  TelemetryCollectionError,
+  TelemetryLive,
+  TelemetryMock,
+  TelemetryTag,
+  makeMockTelemetry,
+  withSpan
+};
+//# sourceMappingURL=Telemetry.js.map

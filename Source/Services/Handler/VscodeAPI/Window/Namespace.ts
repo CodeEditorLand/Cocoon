@@ -7,6 +7,8 @@
  * Mountain pushes down via gRPC notifications.
  */
 
+import { EventEmitter as NodeEventEmitter } from "node:events";
+
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
 import type { HandlerContext } from "../../Handler/Context.js";
 import WrapWindowNamespace from "../Wrap/Window/Namespace.js";
@@ -903,9 +905,59 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			undefined,
 
 		tabGroups: {
-			all: [] as unknown[],
+			get all() {
+				// Return a single active tab group reflecting the current visible editors.
+				const Visible: unknown[] =
+					(Context as any).__visibleTextEditors ?? [];
+				const Tabs = Visible.map((Ed: unknown) => {
+					const Uri = (Ed as any)?.document?.uri;
+					const FileName =
+						typeof Uri?.toString === "function"
+							? Uri.toString()
+							: String(Uri ?? "");
+					return {
+						label: FileName.split("/").pop() ?? "",
+						isActive:
+							(Ed as any) === (Context as any).__activeTextEditor,
+						isPinned: false,
+						isDirty: false,
+						isPreview: false,
+						group: undefined,
+						input: { uri: Uri, fileName: FileName },
+					};
+				});
+				return [
+					{
+						tabs: Tabs,
+						isActive: true,
+						viewColumn: 1,
+						activeTab: Tabs.find((T: any) => T.isActive),
+					},
+				];
+			},
 			activeTabGroup: {
-				tabs: [] as unknown[],
+				get tabs() {
+					const Visible: unknown[] =
+						(Context as any).__visibleTextEditors ?? [];
+					return Visible.map((Ed: unknown) => {
+						const Uri = (Ed as any)?.document?.uri;
+						const FileName =
+							typeof Uri?.toString === "function"
+								? Uri.toString()
+								: String(Uri ?? "");
+						return {
+							label: FileName.split("/").pop() ?? "",
+							isActive:
+								(Ed as any) ===
+								(Context as any).__activeTextEditor,
+							isPinned: false,
+							isDirty: false,
+							isPreview: false,
+							group: undefined,
+							input: { uri: Uri, fileName: FileName },
+						};
+					});
+				},
 
 				isActive: true,
 
@@ -1004,11 +1056,60 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					SerializableOptions,
 				]).catch(() => {});
 			}
+			// Per-view event emitter so each TreeView instance gets its own
+			// event streams for selection/visibility/collapse/expand.
+			const ViewEmitter = new NodeEventEmitter();
+			ViewEmitter.setMaxListeners(0);
+			const MakeViewEvent =
+				(EventName: string) => (Listener: (...A: any[]) => any) => {
+					ViewEmitter.on(EventName, Listener);
+					return {
+						dispose: () =>
+							void ViewEmitter.removeListener(
+								EventName,
+								Listener,
+							),
+					};
+				};
+			// Register this view's emitter on Context so Mountain notifications
+			// (treeView.selectionChanged, collapseElement, expandElement) can fire it.
+			const ViewEmitters: Map<string, typeof ViewEmitter> = ((
+				Context as any
+			).__treeViewEmitters ??= new Map());
+			ViewEmitters.set(Id, ViewEmitter);
+
 			return {
-				reveal: async () => {},
+				reveal: async (
+					Element: unknown,
+					Options?: {
+						select?: boolean;
+						focus?: boolean;
+						expand?: boolean | number;
+					},
+				) => {
+					// Tell Mountain (→ Sky) to reveal this element in the tree view.
+					// Sky's Bridge fires the workbench's `IViewsService.openView(Id)` +
+					// scrolls to the element if it's visible in the rendered tree.
+					const Handle =
+						typeof (Element as any)?.handle === "string"
+							? (Element as any).handle
+							: typeof Element === "string"
+								? Element
+								: "";
+					Context.MountainClient?.sendRequest("tree.reveal", [
+						Id,
+						Handle,
+						{
+							select: Options?.select ?? true,
+							focus: Options?.focus ?? false,
+							expand: Options?.expand ?? false,
+						},
+					]).catch(() => {});
+				},
 
 				dispose: () => {
 					TreeDataProvidersByViewId.delete(Id);
+					ViewEmitters.delete(Id);
 					Context.MountainClient?.sendRequest("tree.dispose", [
 						Id,
 					]).catch(() => {});
@@ -1026,15 +1127,21 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 				badge: undefined,
 
-				onDidChangeSelection: () => ({ dispose: () => {} }),
+				onDidChangeSelection: MakeViewEvent(
+					"treeView.selectionChanged",
+				),
 
-				onDidChangeVisibility: () => ({ dispose: () => {} }),
+				onDidChangeVisibility: MakeViewEvent(
+					"treeView.visibilityChanged",
+				),
 
-				onDidCollapseElement: () => ({ dispose: () => {} }),
+				onDidCollapseElement: MakeViewEvent("treeView.collapseElement"),
 
-				onDidExpandElement: () => ({ dispose: () => {} }),
+				onDidExpandElement: MakeViewEvent("treeView.expandElement"),
 
-				onDidChangeCheckboxState: () => ({ dispose: () => {} }),
+				onDidChangeCheckboxState: MakeViewEvent(
+					"treeView.checkboxChanged",
+				),
 			};
 		},
 

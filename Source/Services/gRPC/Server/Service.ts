@@ -818,6 +818,11 @@ export class GRPCServerService
 			return { ok: true };
 		}
 
+		// Note: `ProvideInlineCompletions` is handled via Mountain's
+		// `LanguageFeatureProviderRegistry.ProvideInlineCompletionItems` trait
+		// method which calls `$provideInlineCompletionItems` on Cocoon's existing
+		// gRPC handler. No separate Cocoon-side route needed.
+
 		// ExtHostAuthentication surface. Check for registered auth providers
 		// before returning null. Extensions may register providers via
 		// vscode.authentication.registerAuthenticationProvider which stashes

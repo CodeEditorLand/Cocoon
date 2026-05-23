@@ -214,8 +214,28 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 					`scm.sourceControl[${Id}].inputBox`,
 
 					{
-						value: "",
-						placeholder: "",
+						get value() {
+							return (this as any).__value ?? "";
+						},
+						set value(V: string) {
+							(this as any).__value = V;
+							// Update Mountain's SCM state so the workbench commit
+							// input box reflects the extension-set value.
+							Context.MountainClient?.sendRequest(
+								"$scm:updateSourceControl",
+								[Handle, { inputBoxValue: V }],
+							).catch(() => {});
+						},
+						get placeholder() {
+							return (this as any).__placeholder ?? "";
+						},
+						set placeholder(V: string) {
+							(this as any).__placeholder = V;
+							Context.MountainClient?.sendRequest(
+								"$scm:updateSourceControl",
+								[Handle, { inputBoxPlaceholder: V }],
+							).catch(() => {});
+						},
 						enabled: true,
 						visible: true,
 					},
@@ -314,8 +334,28 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				},
 				statusBarCommands: [] as unknown[],
 				count: 0,
-				commitTemplate: "",
-				acceptInputCommand: undefined,
+				get commitTemplate() {
+					return (
+						(ConcreteSourceControl as any).__commitTemplate ?? ""
+					);
+				},
+				set commitTemplate(V: string) {
+					(ConcreteSourceControl as any).__commitTemplate = V;
+					Context.MountainClient?.sendRequest(
+						"$scm:updateSourceControl",
+						[Handle, { commitTemplate: V }],
+					).catch(() => {});
+				},
+				get acceptInputCommand() {
+					return (ConcreteSourceControl as any).__acceptInputCommand;
+				},
+				set acceptInputCommand(V: unknown) {
+					(ConcreteSourceControl as any).__acceptInputCommand = V;
+					Context.MountainClient?.sendRequest(
+						"$scm:updateSourceControl",
+						[Handle, { acceptInputCommand: V }],
+					).catch(() => {});
+				},
 				quickDiffProvider: undefined,
 				dispose: () => {
 					ProviderReady.then(() =>
@@ -333,7 +373,21 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 			);
 		},
 
-		inputBox: { value: "" },
+		// vscode.scm.inputBox - global input box reference; proxies the active
+		// SourceControl's inputBox so GitLens and other SCM extensions that write
+		// to the global can still set the commit message.
+		get inputBox() {
+			const Providers = (Context as any).__scmProviders ?? [];
+			const Active = Providers[0];
+			return (
+				Active?.inputBox ?? {
+					value: "",
+					placeholder: "",
+					enabled: true,
+					visible: true,
+				}
+			);
+		},
 	});
 
 export default CreateScmNamespace;

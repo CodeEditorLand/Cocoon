@@ -1462,6 +1462,9 @@ const HandleSpecificNotification = (
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
+			if (Context && Payload) {
+				(Context as any).__activeDebugSession = Payload;
+			}
 			Emitter.emit("debug.didStartSession", Payload);
 			break;
 		}
@@ -1469,6 +1472,12 @@ const HandleSpecificNotification = (
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
+			if (Context) {
+				const Current = (Context as any).__activeDebugSession;
+				if (Current?.id && Payload?.id && Current.id === Payload.id) {
+					(Context as any).__activeDebugSession = undefined;
+				}
+			}
 			Emitter.emit("debug.didTerminateSession", Payload);
 			break;
 		}
@@ -1476,6 +1485,9 @@ const HandleSpecificNotification = (
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
+			if (Context) {
+				(Context as any).__activeDebugSession = Payload ?? undefined;
+			}
 			Emitter.emit("debug.didChangeActiveSession", Payload);
 			break;
 		}
@@ -1642,6 +1654,96 @@ const HandleSpecificNotification = (
 			Emitter.emit(`customEditor.${Suffix}`, Payload);
 			break;
 		}
+
+		// Tree view selection/visibility/collapse/expand forwarded from Sky → Mountain
+		case "$treeView:selectionChanged": {
+			const P = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+			const ViewId = P?.viewId ?? P?.id ?? "";
+			const ViewEmitters: Map<string, unknown> = (Context as any)
+				?.__treeViewEmitters;
+			if (ViewId && ViewEmitters) {
+				const Emitter2 = ViewEmitters.get(ViewId) as any;
+				Emitter2?.emit("treeView.selectionChanged", {
+					selection: P?.selection ?? [],
+				});
+			}
+			break;
+		}
+		case "$treeView:visibilityChanged": {
+			const P = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+			const ViewId = P?.viewId ?? P?.id ?? "";
+			const ViewEmitters: Map<string, unknown> = (Context as any)
+				?.__treeViewEmitters;
+			if (ViewId && ViewEmitters) {
+				const Emitter2 = ViewEmitters.get(ViewId) as any;
+				Emitter2?.emit("treeView.visibilityChanged", {
+					visible: P?.visible ?? false,
+				});
+			}
+			break;
+		}
+		case "$treeView:collapseElement": {
+			const P = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+			const ViewId = P?.viewId ?? "";
+			const ViewEmitters: Map<string, unknown> = (Context as any)
+				?.__treeViewEmitters;
+			if (ViewId && ViewEmitters) {
+				const Emitter2 = ViewEmitters.get(ViewId) as any;
+				Emitter2?.emit("treeView.collapseElement", {
+					element: P?.element,
+				});
+			}
+			break;
+		}
+		case "$treeView:expandElement": {
+			const P = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+			const ViewId = P?.viewId ?? "";
+			const ViewEmitters: Map<string, unknown> = (Context as any)
+				?.__treeViewEmitters;
+			if (ViewId && ViewEmitters) {
+				const Emitter2 = ViewEmitters.get(ViewId) as any;
+				Emitter2?.emit("treeView.expandElement", {
+					element: P?.element,
+				});
+			}
+			break;
+		}
+
+		// File lifecycle events fired by Mountain's VFS handlers after disk
+		// mutations. These populate `onDidCreateFiles`, `onDidDeleteFiles`,
+		// `onDidRenameFiles` for extensions like GitLens that track workspace
+		// file changes outside of the editor's open-document flow.
+		case "$acceptDidCreateFiles": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
+			if (Files.length > 0) {
+				WorkspaceEventEmitter.emit("didCreateFiles", { files: Files });
+			}
+			break;
+		}
+		case "$acceptDidDeleteFiles": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
+			if (Files.length > 0) {
+				WorkspaceEventEmitter.emit("didDeleteFiles", { files: Files });
+			}
+			break;
+		}
+		case "$acceptDidRenameFiles": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
+			if (Files.length > 0) {
+				WorkspaceEventEmitter.emit("didRenameFiles", { files: Files });
+			}
+			break;
+		}
+
 		default:
 			// Generic handler for unknown notification types - survive
 			// esbuild's production `drop: ["console"]` so unknown routes are

@@ -284,9 +284,47 @@ const SynthesiseSubtree = (
 
 export const BuildGetConfiguration =
 	(Context: HandlerContext, State: ConfigurationState) =>
-	(Section?: string, _Scope?: unknown) => ({
+	(Section?: string, Scope?: unknown) => ({
 		get: <T>(Key: string, DefaultValue?: T): T | undefined => {
 			const Full = Section ? `${Section}.${Key}` : Key;
+			// Check language-scoped override first when a scope with languageId is provided.
+			// VS Code stores language overrides as `[rust]`, `[typescript]` top-level keys
+			// in settings.json. When the extension accesses a scoped configuration, we
+			// check the `[<language>].<section>.<key>` path in the cache first.
+			const LangId: string | undefined =
+				typeof (Scope as any)?.languageId === "string"
+					? (Scope as any).languageId
+					: typeof (Scope as any)?.language === "string"
+						? (Scope as any).language
+						: undefined;
+			if (LangId) {
+				const LangFull = `[${LangId}].${Full}`;
+				if (State.ConfigCache.has(LangFull)) {
+					return State.ConfigCache.get(LangFull) as T;
+				}
+				// Also check the scope directly in the `[language]` block if Section matches
+				const LangSection = `[${LangId}].${Section ?? ""}`;
+				const LangSubtree = SynthesiseSubtree(
+					State.ConfigCache,
+					LangSection,
+				);
+				if (LangSubtree !== undefined) {
+					const Parts = Key.split(".");
+					let Cur: unknown = LangSubtree;
+					for (const Part of Parts) {
+						Cur = (Cur as Record<string, unknown>)?.[Part];
+						if (Cur === undefined) {
+							Cur = undefined;
+							break;
+						}
+					}
+					if (Cur !== undefined) return Cur as T;
+				}
+				// Trigger a background prime for the language-scoped key
+				if (!State.ConfigCache.has(Full)) {
+					State.PrimeConfig(Full);
+				}
+			}
 			if (State.ConfigCache.has(Full)) {
 				const Cached = State.ConfigCache.get(Full);
 				// When Mountain's inspector reports a branch key as
