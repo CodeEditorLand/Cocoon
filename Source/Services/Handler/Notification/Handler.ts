@@ -117,13 +117,24 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 	)
 		return Raw;
 	try {
+		const RawStr =
+			Raw.toString !== Object.prototype.toString
+				? Raw.toString()
+				: (Raw as any).scheme && (Raw as any).path
+					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
+					: null;
+		if (!RawStr) return null;
 		return (
 			LazyURI as unknown as { parse: (s: string) => UriObject }
-		).parse(Raw.toString());
+		).parse(RawStr);
 	} catch {
-		return typeof Raw.toString === "function"
-			? MakeUriStub(Raw.toString())
-			: null;
+		const FallbackStr =
+			Raw.toString !== Object.prototype.toString
+				? Raw.toString()
+				: (Raw as any).scheme && (Raw as any).path
+					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
+					: null;
+		return FallbackStr ? MakeUriStub(FallbackStr) : null;
 	}
 };
 
@@ -1572,7 +1583,7 @@ const HandleSpecificNotification = (
 			// wire payload; rich save / backup state flows through the
 			// `customEditor.*` reverse-RPCs handled below.
 			const Document = {
-				uri: UriComponents,
+				uri: HydrateUri(UriComponents) ?? UriComponents,
 				dispose: () => {},
 			};
 			const WebviewPanel = {

@@ -983,7 +983,10 @@ const InvokeLanguageProvider = async (
 							typeof UriArg === "string"
 								? UriArg
 								: ((UriArg as any)?.external ??
-									(UriArg as any)?.toString?.() ??
+									((UriArg as any)?.scheme &&
+									(UriArg as any)?.path
+										? `${(UriArg as any).scheme}://${(UriArg as any).authority ?? ""}${(UriArg as any).path}`
+										: "") ??
 									"");
 						if (UriStr) UriValue = API.Uri.parse(UriStr);
 					}

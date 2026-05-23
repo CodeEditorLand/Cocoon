@@ -1041,7 +1041,9 @@ export class GRPCServerService
 				typeof UriArg === "string"
 					? UriArg
 					: ((UriArg as any)?.external ??
-						(UriArg as any)?.toString?.() ??
+						((UriArg as any)?.scheme && (UriArg as any)?.path
+							? `${(UriArg as any).scheme}://${(UriArg as any).authority ?? ""}${(UriArg as any).path}`
+							: "") ??
 						"");
 			const Scheme = UriStr.split(":")[0] ?? "file";
 			const ProviderKey = `__fileSystemProvider:${Scheme}`;

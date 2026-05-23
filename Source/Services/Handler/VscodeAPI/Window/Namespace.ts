@@ -721,7 +721,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// `.revealRange()`, etc. work immediately.
 			const UriRaw =
 				(_Document as any)?.uri?.toString?.() ??
-				(_Document as any)?.toString?.() ??
+				(_Document as any)?.external ??
+				((_Document as any)?.scheme && (_Document as any)?.path
+					? `${(_Document as any).scheme}://${(_Document as any).authority ?? ""}${(_Document as any).path}`
+					: "") ??
 				"";
 			try {
 				await Context.MountainClient?.sendRequest("showTextDocument", [
