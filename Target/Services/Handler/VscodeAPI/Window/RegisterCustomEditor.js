@@ -79,9 +79,23 @@ var RegisterCustomEditor = /* @__PURE__ */ __name((Context, ViewType, Provider, 
     Readonly: IsReadonly,
     Handle
   });
+  let Selector = [];
+  for (const [, Ext] of Context.ExtensionRegistry) {
+    const Contributions = Ext?.contributes?.customEditors;
+    if (Array.isArray(Contributions)) {
+      const Match = Contributions.find(
+        (CE) => CE?.viewType === ViewType
+      );
+      if (Match?.selector) {
+        Selector = Array.isArray(Match.selector) ? Match.selector : [Match.selector];
+        break;
+      }
+    }
+  }
   Context.MountainClient?.sendRequest("webview.registerCustomEditor", {
     handle: Handle,
     viewType: ViewType,
+    selector: Selector,
     options: {
       readonly: IsReadonly,
       supportsMultipleEditorsPerDocument: Options.supportsMultipleEditorsPerDocument ?? false,

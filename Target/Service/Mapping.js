@@ -4148,9 +4148,23 @@ var init_RegisterCustomEditor = __esm({
         Readonly: IsReadonly,
         Handle
       });
+      let Selector = [];
+      for (const [, Ext] of Context13.ExtensionRegistry) {
+        const Contributions = Ext?.contributes?.customEditors;
+        if (Array.isArray(Contributions)) {
+          const Match = Contributions.find(
+            (CE) => CE?.viewType === ViewType
+          );
+          if (Match?.selector) {
+            Selector = Array.isArray(Match.selector) ? Match.selector : [Match.selector];
+            break;
+          }
+        }
+      }
       Context13.MountainClient?.sendRequest("webview.registerCustomEditor", {
         handle: Handle,
         viewType: ViewType,
+        selector: Selector,
         options: {
           readonly: IsReadonly,
           supportsMultipleEditorsPerDocument: Options.supportsMultipleEditorsPerDocument ?? false,
@@ -5955,7 +5969,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T06:20:34Z"
+      generatedAt: "2026-05-23T07:00:26Z"
     };
   }
 });

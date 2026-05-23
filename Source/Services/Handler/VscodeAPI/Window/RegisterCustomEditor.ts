@@ -59,14 +59,30 @@ const RegisterCustomEditor = (
 		Handle,
 	});
 
-	// Named-key payload so SkyBridge's `sky://webview/registerCustomEditor`
-	// listener reads `Payload.viewType` / `Payload.options` directly,
-	// matching the new Cocoon convention. Positional `args` is still
-	// preserved by Mountain's canonicalisation for any consumer reading
-	// `Args[1]` / `Args[2]`.
+	// Scan the extension registry for the selector (glob patterns like
+	// "*.{png,jpg}") matching this viewType. Sky uses the selector to
+	// register with IEditorResolverService so VS Code routes file opens to
+	// the custom editor instead of the text editor.
+	let Selector: unknown[] = [];
+	for (const [, Ext] of Context.ExtensionRegistry) {
+		const Contributions = Ext?.contributes?.customEditors;
+		if (Array.isArray(Contributions)) {
+			const Match = Contributions.find(
+				(CE: any) => CE?.viewType === ViewType,
+			);
+			if (Match?.selector) {
+				Selector = Array.isArray(Match.selector)
+					? Match.selector
+					: [Match.selector];
+				break;
+			}
+		}
+	}
+
 	Context.MountainClient?.sendRequest("webview.registerCustomEditor", {
 		handle: Handle,
 		viewType: ViewType,
+		selector: Selector,
 		options: {
 			readonly: IsReadonly,
 			supportsMultipleEditorsPerDocument:
