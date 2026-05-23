@@ -2144,7 +2144,24 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         Context,
         "window.didChangeTabGroups"
       ),
-      close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+      close: /* @__PURE__ */ __name(async (Tab, _PreserveFocus) => {
+        try {
+          const EditorGroups = globalThis.__CEL_SERVICES__?.EditorGroups;
+          const TabUri = Tab?.input?.uri;
+          if (EditorGroups && TabUri) {
+            const Group = EditorGroups.activeGroup;
+            if (Group?.closeEditor) {
+              const Editor = Group.findEditor?.(TabUri);
+              if (Editor) {
+                await Group.closeEditor(Editor, {
+                  preserveFocus: _PreserveFocus ?? false
+                });
+                return true;
+              }
+            }
+          }
+        } catch {
+        }
         try {
           await Context.MountainClient?.sendRequest(
             "Command.Execute",
@@ -2156,13 +2173,27 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         }
       }, "close")
     },
-    activeColorTheme: {
-      kind: 2,
-      // ColorThemeKind.Dark
-      onDidChange: MakeEventSubscriber(
-        Context,
-        "window.didChangeActiveColorTheme"
-      )
+    get activeColorTheme() {
+      let Kind = 2;
+      try {
+        const ThemeService = globalThis.__CEL_SERVICES__?.Theme;
+        const ColorTheme = ThemeService?.getColorTheme?.();
+        if (ColorTheme?.type) {
+          const T = ColorTheme.type;
+          if (T === "light") Kind = 1;
+          else if (T === "hc-light") Kind = 4;
+          else if (T === "hc-black" || T === "hc") Kind = 3;
+          else Kind = 2;
+        }
+      } catch {
+      }
+      return {
+        kind: Kind,
+        onDidChange: MakeEventSubscriber(
+          Context,
+          "window.didChangeActiveColorTheme"
+        )
+      };
     },
     onDidChangeActiveColorTheme: MakeEventSubscriber(
       Context,
@@ -2200,7 +2231,18 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const ViewEmitters = Context.__treeViewEmitters ??= /* @__PURE__ */ new Map();
       ViewEmitters.set(Id, ViewEmitter);
       return {
-        reveal: /* @__PURE__ */ __name(async () => {
+        reveal: /* @__PURE__ */ __name(async (Element, Options2) => {
+          const Handle = typeof Element?.handle === "string" ? Element.handle : typeof Element === "string" ? Element : "";
+          Context.MountainClient?.sendRequest("tree.reveal", [
+            Id,
+            Handle,
+            {
+              select: Options2?.select ?? true,
+              focus: Options2?.focus ?? false,
+              expand: Options2?.expand ?? false
+            }
+          ]).catch(() => {
+          });
         }, "reveal"),
         dispose: /* @__PURE__ */ __name(() => {
           TreeDataProvidersByViewId.delete(Id);

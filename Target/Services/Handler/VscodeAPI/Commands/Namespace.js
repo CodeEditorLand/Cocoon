@@ -715,7 +715,21 @@ var CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderR
     };
   }, "registerCommand"),
   registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
-    LanguageProviderRegistry.RegisterCommand(Command, Callback);
+    const WrappedCallback = /* @__PURE__ */ __name((...Arguments) => {
+      const TextEditor = Context.__activeTextEditor;
+      const EditBuilder = {
+        replace: /* @__PURE__ */ __name((_Range, _Value) => {
+        }, "replace"),
+        insert: /* @__PURE__ */ __name((_Position, _Value) => {
+        }, "insert"),
+        delete: /* @__PURE__ */ __name((_Range) => {
+        }, "delete"),
+        setEndOfLine: /* @__PURE__ */ __name(() => {
+        }, "setEndOfLine")
+      };
+      return Callback(TextEditor, EditBuilder, ...Arguments);
+    }, "WrappedCallback");
+    LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
     Context.SendToMountain("registerCommand", {
       commandId: Command,
       kind: "textEditor"

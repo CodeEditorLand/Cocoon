@@ -21548,7 +21548,24 @@ var init_Namespace2 = __esm({
             Context,
             "window.didChangeTabGroups"
           ),
-          close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+          close: /* @__PURE__ */ __name(async (Tab, _PreserveFocus) => {
+            try {
+              const EditorGroups = globalThis.__CEL_SERVICES__?.EditorGroups;
+              const TabUri = Tab?.input?.uri;
+              if (EditorGroups && TabUri) {
+                const Group = EditorGroups.activeGroup;
+                if (Group?.closeEditor) {
+                  const Editor = Group.findEditor?.(TabUri);
+                  if (Editor) {
+                    await Group.closeEditor(Editor, {
+                      preserveFocus: _PreserveFocus ?? false
+                    });
+                    return true;
+                  }
+                }
+              }
+            } catch {
+            }
             try {
               await Context.MountainClient?.sendRequest(
                 "Command.Execute",
@@ -21560,13 +21577,27 @@ var init_Namespace2 = __esm({
             }
           }, "close")
         },
-        activeColorTheme: {
-          kind: 2,
-          // ColorThemeKind.Dark
-          onDidChange: MakeEventSubscriber(
-            Context,
-            "window.didChangeActiveColorTheme"
-          )
+        get activeColorTheme() {
+          let Kind = 2;
+          try {
+            const ThemeService = globalThis.__CEL_SERVICES__?.Theme;
+            const ColorTheme3 = ThemeService?.getColorTheme?.();
+            if (ColorTheme3?.type) {
+              const T = ColorTheme3.type;
+              if (T === "light") Kind = 1;
+              else if (T === "hc-light") Kind = 4;
+              else if (T === "hc-black" || T === "hc") Kind = 3;
+              else Kind = 2;
+            }
+          } catch {
+          }
+          return {
+            kind: Kind,
+            onDidChange: MakeEventSubscriber(
+              Context,
+              "window.didChangeActiveColorTheme"
+            )
+          };
         },
         onDidChangeActiveColorTheme: MakeEventSubscriber(
           Context,
@@ -21604,7 +21635,18 @@ var init_Namespace2 = __esm({
           const ViewEmitters = Context.__treeViewEmitters ??= /* @__PURE__ */ new Map();
           ViewEmitters.set(Id, ViewEmitter);
           return {
-            reveal: /* @__PURE__ */ __name(async () => {
+            reveal: /* @__PURE__ */ __name(async (Element, Options2) => {
+              const Handle = typeof Element?.handle === "string" ? Element.handle : typeof Element === "string" ? Element : "";
+              Context.MountainClient?.sendRequest("tree.reveal", [
+                Id,
+                Handle,
+                {
+                  select: Options2?.select ?? true,
+                  focus: Options2?.focus ?? false,
+                  expand: Options2?.expand ?? false
+                }
+              ]).catch(() => {
+              });
             }, "reveal"),
             dispose: /* @__PURE__ */ __name(() => {
               TreeDataProvidersByViewId.delete(Id);
@@ -22027,7 +22069,7 @@ var init_RouteManifest = __esm({
       mountain: 135,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-23T00:17:23Z"
+      generatedAt: "2026-05-23T02:12:16Z"
     };
   }
 });
@@ -27402,7 +27444,21 @@ var init_Namespace7 = __esm({
         };
       }, "registerCommand"),
       registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
-        LanguageProviderRegistry.RegisterCommand(Command, Callback);
+        const WrappedCallback = /* @__PURE__ */ __name((...Arguments) => {
+          const TextEditor = Context.__activeTextEditor;
+          const EditBuilder = {
+            replace: /* @__PURE__ */ __name((_Range, _Value) => {
+            }, "replace"),
+            insert: /* @__PURE__ */ __name((_Position, _Value) => {
+            }, "insert"),
+            delete: /* @__PURE__ */ __name((_Range) => {
+            }, "delete"),
+            setEndOfLine: /* @__PURE__ */ __name(() => {
+            }, "setEndOfLine")
+          };
+          return Callback(TextEditor, EditBuilder, ...Arguments);
+        }, "WrappedCallback");
+        LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
         Context.SendToMountain("registerCommand", {
           commandId: Command,
           kind: "textEditor"
