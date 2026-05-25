@@ -752,148 +752,211 @@ var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) 
     }, "dispose")
   };
 }, "EventSubscriber");
-var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
-  registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
-    const Handle = NextProviderHandle();
-    Context.SendToMountain("register_debug_adapter", {
-      handle: Handle,
-      debugType: DebugType,
-      extensionId: ""
-    }).catch(() => {
-    });
-    return {
-      dispose: /* @__PURE__ */ __name(() => {
-        Context.SendToMountain("unregister_debug_adapter", {
-          handle: Handle
+var InitialiseDAPSessionTracker = /* @__PURE__ */ __name((Context) => {
+  const Anchor = Context;
+  if (Anchor.__dapTrackerInstalled) {
+    return;
+  }
+  Anchor.__dapTrackerInstalled = true;
+  Anchor.__dapAdapters ??= /* @__PURE__ */ new Map();
+  const ResolveFactory = /* @__PURE__ */ __name((DebugType) => {
+    const FactoryKey = `__debugAdapterFactory:${DebugType}`;
+    return Context.ExtensionRegistry?.get(FactoryKey);
+  }, "ResolveFactory");
+  Context.Emitter.on("debug.didStartSession", (Session) => {
+    const SessionId = Session?.id ?? Session?.sessionId;
+    const DebugType = Session?.type ?? Session?.configuration?.type;
+    if (!SessionId || !DebugType) return;
+    const Factory = ResolveFactory(String(DebugType));
+    if (!Factory) return;
+    try {
+      const Descriptor = Factory.createDebugAdapterDescriptor?.(
+        Session,
+        void 0
+      );
+      const Resolve = /* @__PURE__ */ __name((Value) => {
+        const Impl = Value?.implementation ?? Value;
+        if (!Impl || typeof Impl.handleMessage !== "function") return;
+        try {
+          Impl.onDidSendMessage?.((Message) => {
+            Context.SendToMountain("debug.dap-response", {
+              sessionId: SessionId,
+              message: Message
+            }).catch(() => {
+            });
+          });
+        } catch {
+        }
+        Anchor.__dapAdapters.set(String(SessionId), Impl);
+      }, "Resolve");
+      if (Descriptor && typeof Descriptor.then === "function") {
+        Descriptor.then(Resolve, () => {
+        });
+      } else {
+        Resolve(Descriptor);
+      }
+    } catch {
+    }
+  });
+  Context.Emitter.on("debug.didTerminateSession", (Session) => {
+    const SessionId = Session?.id ?? Session?.sessionId;
+    if (!SessionId) return;
+    const Adapter = Anchor.__dapAdapters.get(String(SessionId));
+    try {
+      Adapter?.dispose?.();
+    } catch {
+    }
+    Anchor.__dapAdapters.delete(String(SessionId));
+  });
+}, "InitialiseDAPSessionTracker");
+var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => {
+  InitialiseDAPSessionTracker(Context);
+  return Namespace_default({
+    registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, Factory) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_debug_adapter", {
+        handle: Handle,
+        debugType: DebugType,
+        extensionId: ""
+      }).catch(() => {
+      });
+      const FactoryKey = `__debugAdapterFactory:${DebugType}`;
+      Context.ExtensionRegistry.set(FactoryKey, Factory);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(FactoryKey);
+          Context.SendToMountain("unregister_debug_adapter", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerDebugAdapterDescriptorFactory"),
+    registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, Provider, _TriggerKind) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_debug_configuration_provider", {
+        handle: Handle,
+        debugType: DebugType
+      }).catch(() => {
+      });
+      const ProviderKey = `__debugConfigProvider:${Handle}`;
+      Context.ExtensionRegistry.set(ProviderKey, Provider);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(ProviderKey);
+          Context.SendToMountain(
+            "unregister_debug_configuration_provider",
+            {
+              handle: Handle
+            }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerDebugConfigurationProvider"),
+    registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerDebugAdapterTrackerFactory"),
+    // Proposed API (`vscode.proposed.debugVisualization.d.ts`). Custom
+    // debug-variable renderers (e.g. Microsoft's JS debugger providing
+    // rich object views) opt in via `enabledApiProposals`. Stub until a
+    // renderer consumer lands - real wiring routes through Mountain's
+    // DebugService.
+    registerDebugVisualizationProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerDebugVisualizationProvider"),
+    registerDebugVisualizationTreeProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") }), "registerDebugVisualizationTreeProvider"),
+    startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
+      try {
+        const Response = await Context.MountainClient?.sendRequest(
+          "Debug.Start",
+          [Folder, NameOrConfig, ParentSession]
+        );
+        return Boolean(Response?.success);
+      } catch {
+        return false;
+      }
+    }, "startDebugging"),
+    stopDebugging: /* @__PURE__ */ __name(async (Session) => {
+      try {
+        const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
+        await Context.MountainClient?.sendRequest("Debug.Stop", [
+          SessionId
+        ]);
+      } catch {
+      }
+    }, "stopDebugging"),
+    addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+      const All = Context.__breakpoints ??= [];
+      All.push(...Breakpoints);
+      Context.SendToMountain("debug.addBreakpoints", {
+        breakpoints: Breakpoints
+      }).catch(() => {
+      });
+    }, "addBreakpoints"),
+    removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+      const All = Context.__breakpoints ??= [];
+      const Ids = new Set(Breakpoints.map((B) => B?.id));
+      Context.__breakpoints = All.filter(
+        (B) => !Ids.has(B?.id)
+      );
+      Context.SendToMountain("debug.removeBreakpoints", {
+        breakpoints: Breakpoints
+      }).catch(() => {
+      });
+    }, "removeBreakpoints"),
+    asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
+    onDidStartDebugSession: EventSubscriber(
+      Context,
+      "debug.didStartSession"
+    ),
+    onDidTerminateDebugSession: EventSubscriber(
+      Context,
+      "debug.didTerminateSession"
+    ),
+    onDidChangeActiveDebugSession: EventSubscriber(
+      Context,
+      "debug.didChangeActiveSession"
+    ),
+    onDidReceiveDebugSessionCustomEvent: EventSubscriber(
+      Context,
+      "debug.didReceiveCustomEvent"
+    ),
+    onDidChangeBreakpoints: EventSubscriber(
+      Context,
+      "debug.didChangeBreakpoints"
+    ),
+    get activeDebugSession() {
+      return Context.__activeDebugSession ?? void 0;
+    },
+    activeDebugConsole: {
+      append: /* @__PURE__ */ __name((Value) => {
+        Context.SendToMountain("debug.consoleAppend", {
+          value: Value
         }).catch(() => {
         });
-      }, "dispose")
-    };
-  }, "registerDebugAdapterDescriptorFactory"),
-  registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, Provider, _TriggerKind) => {
-    const Handle = NextProviderHandle();
-    Context.SendToMountain("register_debug_configuration_provider", {
-      handle: Handle,
-      debugType: DebugType
-    }).catch(() => {
-    });
-    const ProviderKey = `__debugConfigProvider:${Handle}`;
-    Context.ExtensionRegistry.set(ProviderKey, Provider);
-    return {
-      dispose: /* @__PURE__ */ __name(() => {
-        Context.ExtensionRegistry.delete(ProviderKey);
-        Context.SendToMountain(
-          "unregister_debug_configuration_provider",
-          {
-            handle: Handle
-          }
-        ).catch(() => {
-        });
-      }, "dispose")
-    };
-  }, "registerDebugConfigurationProvider"),
-  registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerDebugAdapterTrackerFactory"),
-  // Proposed API (`vscode.proposed.debugVisualization.d.ts`). Custom
-  // debug-variable renderers (e.g. Microsoft's JS debugger providing
-  // rich object views) opt in via `enabledApiProposals`. Stub until a
-  // renderer consumer lands - real wiring routes through Mountain's
-  // DebugService.
-  registerDebugVisualizationProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerDebugVisualizationProvider"),
-  registerDebugVisualizationTreeProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerDebugVisualizationTreeProvider"),
-  startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
-    try {
-      const Response = await Context.MountainClient?.sendRequest(
-        "Debug.Start",
-        [Folder, NameOrConfig, ParentSession]
-      );
-      return Boolean(Response?.success);
-    } catch {
-      return false;
-    }
-  }, "startDebugging"),
-  stopDebugging: /* @__PURE__ */ __name(async (Session) => {
-    try {
-      const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
-      await Context.MountainClient?.sendRequest("Debug.Stop", [
-        SessionId
-      ]);
-    } catch {
-    }
-  }, "stopDebugging"),
-  addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-    const All = Context.__breakpoints ??= [];
-    All.push(...Breakpoints);
-    Context.SendToMountain("debug.addBreakpoints", {
-      breakpoints: Breakpoints
-    }).catch(() => {
-    });
-  }, "addBreakpoints"),
-  removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-    const All = Context.__breakpoints ??= [];
-    const Ids = new Set(Breakpoints.map((B) => B?.id));
-    Context.__breakpoints = All.filter(
-      (B) => !Ids.has(B?.id)
-    );
-    Context.SendToMountain("debug.removeBreakpoints", {
-      breakpoints: Breakpoints
-    }).catch(() => {
-    });
-  }, "removeBreakpoints"),
-  asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
-  onDidStartDebugSession: EventSubscriber(
-    Context,
-    "debug.didStartSession"
-  ),
-  onDidTerminateDebugSession: EventSubscriber(
-    Context,
-    "debug.didTerminateSession"
-  ),
-  onDidChangeActiveDebugSession: EventSubscriber(
-    Context,
-    "debug.didChangeActiveSession"
-  ),
-  onDidReceiveDebugSessionCustomEvent: EventSubscriber(
-    Context,
-    "debug.didReceiveCustomEvent"
-  ),
-  onDidChangeBreakpoints: EventSubscriber(
-    Context,
-    "debug.didChangeBreakpoints"
-  ),
-  get activeDebugSession() {
-    return Context.__activeDebugSession ?? void 0;
-  },
-  activeDebugConsole: {
-    append: /* @__PURE__ */ __name((Value) => {
-      Context.SendToMountain("debug.consoleAppend", {
-        value: Value
-      }).catch(() => {
-      });
-    }, "append"),
-    appendLine: /* @__PURE__ */ __name((Value) => {
-      Context.SendToMountain("debug.consoleAppend", {
-        value: `${Value}
+      }, "append"),
+      appendLine: /* @__PURE__ */ __name((Value) => {
+        Context.SendToMountain("debug.consoleAppend", {
+          value: `${Value}
 `
-      }).catch(() => {
-      });
-    }, "appendLine")
-  },
-  get breakpoints() {
-    return Context.__breakpoints ?? [];
-  },
-  // Stable 1.88+ surface: current selected debug stack item. Land's
-  // debug service doesn't track per-frame selection yet, so this reads
-  // as undefined and the associated event never fires. Real subscribe
-  // path is still a proper disposable so the extension teardown works.
-  activeStackItem: void 0,
-  onDidChangeActiveStackItem: EventSubscriber(
-    Context,
-    "debug.didChangeActiveStackItem"
-  )
-}), "CreateDebugNamespace");
+        }).catch(() => {
+        });
+      }, "appendLine")
+    },
+    get breakpoints() {
+      return Context.__breakpoints ?? [];
+    },
+    // Stable 1.88+ surface: current selected debug stack item. Land's
+    // debug service doesn't track per-frame selection yet, so this reads
+    // as undefined and the associated event never fires. Real subscribe
+    // path is still a proper disposable so the extension teardown works.
+    activeStackItem: void 0,
+    onDidChangeActiveStackItem: EventSubscriber(
+      Context,
+      "debug.didChangeActiveStackItem"
+    )
+  });
+}, "CreateDebugNamespace");
 var Namespace_default2 = CreateDebugNamespace;
 export {
   Namespace_default2 as default

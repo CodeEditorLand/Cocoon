@@ -23,8 +23,33 @@ const EventSubscriber =
 		};
 	};
 
-const CreateTasksNamespace = (Context: HandlerContext) =>
-	WrapTasksNamespace({
+const CreateTasksNamespace = (Context: HandlerContext) => {
+	// Track active task executions. VS Code's `vscode.tasks.taskExecutions`
+	// is a live array reflecting every running TaskExecution. Extensions
+	// (Mocha, Jest, Cargo runners) read this to skip launching duplicate
+	// tasks. Mountain fires `task.didStart` / `task.didEnd` notifications
+	// so we keep the array in sync.
+	const Executions = new Map<string, unknown>();
+	Context.Emitter.on(
+		"task.didStart",
+		(Event: { execution?: { id?: string }; id?: string }) => {
+			const Id = String(Event?.execution?.id ?? Event?.id ?? "");
+			if (Id && Event?.execution) {
+				Executions.set(Id, Event.execution);
+			}
+		},
+	);
+	Context.Emitter.on(
+		"task.didEnd",
+		(Event: { execution?: { id?: string }; id?: string }) => {
+			const Id = String(Event?.execution?.id ?? Event?.id ?? "");
+			if (Id) {
+				Executions.delete(Id);
+			}
+		},
+	);
+
+	return WrapTasksNamespace({
 		registerTaskProvider: (TaskType: string, Provider: unknown) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_task_provider", {
@@ -32,7 +57,6 @@ const CreateTasksNamespace = (Context: HandlerContext) =>
 				type: TaskType,
 				extensionId: "",
 			}).catch(() => {});
-			// Stash so ExtHostTaskService$fetchTasks can call back.
 			const ProviderKey = `__taskProvider:${Handle}`;
 			Context.ExtensionRegistry.set(ProviderKey, Provider);
 			return {
@@ -58,13 +82,33 @@ const CreateTasksNamespace = (Context: HandlerContext) =>
 			}
 		},
 
+		// Return a real TaskExecution object: `{ task, terminate() }`.
+		// Extensions chain `.terminate()` on the returned value when they
+		// need to kill a long-running task (test runners cancelling a
+		// previous run before launching a new one). A bare null silently
+		// breaks this pattern.
 		executeTask: async (Task: unknown): Promise<unknown> => {
 			try {
-				return await Context.MountainClient?.sendRequest(
+				const Response = await Context.MountainClient?.sendRequest(
 					"Task.Execute",
 
 					[Task],
 				);
+				const Resolved = Response as
+					| { id?: string; task?: unknown }
+					| undefined;
+				const TaskId = String(Resolved?.id ?? "");
+				const Execution = {
+					task: Resolved?.task ?? Task,
+					terminate: () => {
+						Context.SendToMountain("terminate_task", {
+							id: TaskId,
+						}).catch(() => {});
+						Executions.delete(TaskId);
+					},
+				};
+				if (TaskId) Executions.set(TaskId, Execution);
+				return Execution;
 			} catch {
 				return undefined;
 			}
@@ -75,7 +119,12 @@ const CreateTasksNamespace = (Context: HandlerContext) =>
 		onDidStartTaskProcess: EventSubscriber(Context, "task.didStartProcess"),
 		onDidEndTaskProcess: EventSubscriber(Context, "task.didEndProcess"),
 
-		taskExecutions: [] as unknown[],
+		// Live getter so iteration sees current executions, not the
+		// snapshot at module-construction time.
+		get taskExecutions() {
+			return Array.from(Executions.values());
+		},
 	});
+};
 
 export default CreateTasksNamespace;

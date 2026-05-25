@@ -98,45 +98,103 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
     storageUri: MakeUri(ExtStoragePath),
     globalStorageUri: MakeUri(GlobalStoragePath),
     logUri: MakeUri(LogPath),
-    environmentVariableCollection: {
-      persistent: false,
-      description: void 0,
-      replace: /* @__PURE__ */ __name(() => {
-      }, "replace"),
-      append: /* @__PURE__ */ __name(() => {
-      }, "append"),
-      prepend: /* @__PURE__ */ __name(() => {
-      }, "prepend"),
-      get: /* @__PURE__ */ __name(() => void 0, "get"),
-      forEach: /* @__PURE__ */ __name(() => {
-      }, "forEach"),
-      delete: /* @__PURE__ */ __name(() => {
-      }, "delete"),
-      clear: /* @__PURE__ */ __name(() => {
-      }, "clear"),
-      getScoped: /* @__PURE__ */ __name(() => ({
-        persistent: false,
-        description: void 0,
-        replace: /* @__PURE__ */ __name(() => {
+    environmentVariableCollection: /* @__PURE__ */ (() => {
+      const ExtIdCached = ExtId;
+      const Entries = /* @__PURE__ */ new Map();
+      const Forward = /* @__PURE__ */ __name((Op, Extra) => {
+        Context.SendToMountain("terminal.envCollection." + Op, {
+          extensionId: ExtIdCached,
+          persistent: Persistent,
+          description: Description,
+          ...Extra
+        }).catch(() => {
+        });
+      }, "Forward");
+      let Persistent = false;
+      let Description = void 0;
+      const Collection = {
+        get persistent() {
+          return Persistent;
+        },
+        set persistent(Value) {
+          Persistent = !!Value;
+          Forward("setPersistent", { persistent: Persistent });
+        },
+        get description() {
+          return Description;
+        },
+        set description(Value) {
+          Description = Value;
+          Forward("setDescription", { description: Value });
+        },
+        replace: /* @__PURE__ */ __name((Variable, Value, Options) => {
+          Entries.set(Variable, {
+            value: Value,
+            type: 1,
+            options: Options
+          });
+          Forward("replace", {
+            variable: Variable,
+            value: Value,
+            options: Options
+          });
         }, "replace"),
-        append: /* @__PURE__ */ __name(() => {
+        append: /* @__PURE__ */ __name((Variable, Value, Options) => {
+          Entries.set(Variable, {
+            value: Value,
+            type: 2,
+            options: Options
+          });
+          Forward("append", {
+            variable: Variable,
+            value: Value,
+            options: Options
+          });
         }, "append"),
-        prepend: /* @__PURE__ */ __name(() => {
+        prepend: /* @__PURE__ */ __name((Variable, Value, Options) => {
+          Entries.set(Variable, {
+            value: Value,
+            type: 3,
+            options: Options
+          });
+          Forward("prepend", {
+            variable: Variable,
+            value: Value,
+            options: Options
+          });
         }, "prepend"),
-        get: /* @__PURE__ */ __name(() => void 0, "get"),
-        forEach: /* @__PURE__ */ __name(() => {
+        get: /* @__PURE__ */ __name((Variable) => {
+          return Entries.get(Variable);
+        }, "get"),
+        forEach: /* @__PURE__ */ __name((Callback, _ThisArg) => {
+          for (const [Key, Value] of Entries) {
+            try {
+              Callback(Key, Value, Collection);
+            } catch {
+            }
+          }
         }, "forEach"),
-        delete: /* @__PURE__ */ __name(() => {
+        delete: /* @__PURE__ */ __name((Variable) => {
+          Entries.delete(Variable);
+          Forward("delete", { variable: Variable });
         }, "delete"),
         clear: /* @__PURE__ */ __name(() => {
+          Entries.clear();
+          Forward("clear", {});
         }, "clear"),
-        getScoped: /* @__PURE__ */ __name(() => ({}), "getScoped"),
+        // `getScoped({ workspaceFolder })` returns a scoped sub-collection.
+        // Currently we don't track per-scope mutations server-side, so
+        // scoped operations behave identically to the global collection.
+        // Extensions that depend on strict per-folder scoping will see
+        // global behaviour - acceptable degradation for v1; flag in
+        // the followup if any extension is observed broken by this.
+        getScoped: /* @__PURE__ */ __name((_Scope) => Collection, "getScoped"),
         [Symbol.iterator]: function* () {
+          for (const Entry of Entries) yield Entry;
         }
-      }), "getScoped"),
-      [Symbol.iterator]: function* () {
-      }
-    },
+      };
+      return Collection;
+    })(),
     // Real secrets - routes to Mountain's AES-256-GCM encrypted storage.
     secrets: /* @__PURE__ */ (() => {
       const ExtIdCached = ExtId;
@@ -202,12 +260,24 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
       };
     })(),
     // Real workspace/global state backed by Mountain's storage.
+    // Caches must be pre-populated by `PrimeStorageCaches` BEFORE the
+    // extension's `activate()` runs (see ActivateExtension below).
+    // VS Code's `ExtensionContext.workspaceState.get(key, default)`
+    // is a SYNCHRONOUS API - extensions read it during activate to
+    // drive control flow (Roo Code reads `taskHistory`, GitHub
+    // Copilot reads `signInDismissed`, GitLens reads
+    // `views.welcome.dismissed`). Without prime, the first sync
+    // read returns the default, the cache fills later, and the
+    // extension's UI ends up in the wrong state.
     workspaceState: /* @__PURE__ */ (() => {
       const ExtIdCached = ExtId;
       const Cache = /* @__PURE__ */ new Map();
-      return {
+      const State = {
         get: /* @__PURE__ */ __name((Key, DefaultValue) => {
-          if (Cache.has(Key)) return Cache.get(Key);
+          if (Cache.has(Key)) {
+            const Cached = Cache.get(Key);
+            return Cached === void 0 ? DefaultValue : Cached;
+          }
           void Context.MountainClient?.sendRequest("Storage.Get", [
             `${ExtIdCached}:workspace:${Key}`
           ]).then((V) => {
@@ -224,15 +294,26 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
           ]).catch(() => {
           });
         }, "update"),
-        keys: /* @__PURE__ */ __name(() => [...Cache.keys()], "keys")
+        keys: /* @__PURE__ */ __name(() => [...Cache.keys()], "keys"),
+        // Exposed for `PrimeStorageCaches` below so the boot path
+        // can bulk-load every existing key before activate runs.
+        __primeCache: /* @__PURE__ */ __name((Entries) => {
+          for (const [K, V] of Entries) {
+            if (V !== void 0) Cache.set(K, V);
+          }
+        }, "__primeCache")
       };
+      return State;
     })(),
     globalState: /* @__PURE__ */ (() => {
       const ExtIdCached = ExtId;
       const Cache = /* @__PURE__ */ new Map();
-      return {
+      const State = {
         get: /* @__PURE__ */ __name((Key, DefaultValue) => {
-          if (Cache.has(Key)) return Cache.get(Key);
+          if (Cache.has(Key)) {
+            const Cached = Cache.get(Key);
+            return Cached === void 0 ? DefaultValue : Cached;
+          }
           void Context.MountainClient?.sendRequest("Storage.Get", [
             `${ExtIdCached}:global:${Key}`
           ]).then((V) => {
@@ -251,23 +332,51 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
         }, "update"),
         keys: /* @__PURE__ */ __name(() => [...Cache.keys()], "keys"),
         setKeysForSync: /* @__PURE__ */ __name((_Keys) => {
-        }, "setKeysForSync")
+        }, "setKeysForSync"),
+        __primeCache: /* @__PURE__ */ __name((Entries) => {
+          for (const [K, V] of Entries) {
+            if (V !== void 0) Cache.set(K, V);
+          }
+        }, "__primeCache")
       };
+      return State;
     })(),
     extensionMode: 1,
     extension: {
       id: ExtId,
-      extensionUri: {
-        scheme: "file",
-        path: ExtensionPath,
-        fsPath: ExtensionPath
-      },
+      // Use the SAME `MakeUri()` helper as `context.extensionUri`
+      // above. Plain-object URI stubs without `.with()` / `.toString()`
+      // crash any extension that does:
+      //   const scriptUri = context.extension.extensionUri.with({
+      //       path: '/dist/extension.js'
+      //   })
+      // which is the standard pattern for resolving bundled assets
+      // (Roo Code, Continue, Claude, every webview-based extension
+      // does this on activate or first command invocation).
+      extensionUri: MakeUri(ExtensionPath),
       extensionPath: ExtensionPath,
       isActive: true,
       packageJSON: FullPackageJSON,
+      // 1 = UI, 2 = Workspace. Most desktop extensions ship as UI
+      // kind so `vscode.extensions.getExtension(id).extensionKind`
+      // returns the right value when extensions branch on it.
       extensionKind: 1,
+      // `exports` is mutated by the host after `activate()` resolves
+      // (see VS Code's `ExtensionHostManager`); set to `undefined`
+      // now and the activation post-processing updates it once the
+      // extension's `activate` function returns a value.
       exports: void 0,
+      // Real `Extension.activate()` returns a Promise<T> that
+      // resolves once the extension's main module has been loaded
+      // and its `activate()` has been called. Code that checks
+      // `extension.isActive` and then calls `extension.activate()`
+      // (vscode-languageclient does this when re-launching a
+      // language server after a config change) must observe the
+      // promise settling. We're already active by construction at
+      // the point this descriptor is built, so resolve immediately
+      // with the current `exports` value.
       activate: /* @__PURE__ */ __name(async () => {
+        return void 0;
       }, "activate")
     },
     languageModelAccessInformation: {
@@ -390,6 +499,58 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
         Extension,
         ExtensionPath
       );
+      try {
+        const PrimeStart = Date.now();
+        const AllRaw = await Context.MountainClient?.sendRequest(
+          "storage:getItems",
+          {}
+        );
+        const AllArray = Array.isArray(AllRaw) ? AllRaw : [];
+        const WorkspacePrefix = `${ExtensionId}:workspace:`;
+        const GlobalPrefix = `${ExtensionId}:global:`;
+        const WorkspaceEntries = [];
+        const GlobalEntries = [];
+        for (const Pair of AllArray) {
+          if (!Array.isArray(Pair) || Pair.length < 2) continue;
+          const RawKey = String(Pair[0] ?? "");
+          const RawValue = Pair[1];
+          let Value = RawValue;
+          if (typeof RawValue === "string") {
+            try {
+              Value = JSON.parse(RawValue);
+            } catch {
+            }
+          }
+          if (RawKey.startsWith(WorkspacePrefix)) {
+            WorkspaceEntries.push([
+              RawKey.slice(WorkspacePrefix.length),
+              Value
+            ]);
+          } else if (RawKey.startsWith(GlobalPrefix)) {
+            GlobalEntries.push([
+              RawKey.slice(GlobalPrefix.length),
+              Value
+            ]);
+          }
+        }
+        const WorkspaceState = ExtContext?.workspaceState;
+        const GlobalState = ExtContext?.globalState;
+        WorkspaceState?.__primeCache?.(WorkspaceEntries);
+        GlobalState?.__primeCache?.(GlobalEntries);
+        if (process.env["Trace"]?.includes("ext-prime")) {
+          process.stdout.write(
+            `[LandFix:StoragePrime] ${ExtensionId} workspace=${WorkspaceEntries.length} global=${GlobalEntries.length} elapsed=${Date.now() - PrimeStart}ms
+`
+          );
+        }
+      } catch (PrimeErr) {
+        if (process.env["Trace"]?.includes("ext-prime")) {
+          process.stdout.write(
+            `[LandFix:StoragePrime] ${ExtensionId} prime failed: ${PrimeErr instanceof Error ? PrimeErr.message : String(PrimeErr)}
+`
+          );
+        }
+      }
       const InstrumentedExtensions = [
         "vscode.git",
         "vscode.git-base",

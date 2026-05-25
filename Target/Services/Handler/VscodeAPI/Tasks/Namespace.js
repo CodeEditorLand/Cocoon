@@ -752,54 +752,98 @@ var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) 
     }, "dispose")
   };
 }, "EventSubscriber");
-var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
-  registerTaskProvider: /* @__PURE__ */ __name((TaskType, Provider) => {
-    const Handle = NextProviderHandle();
-    Context.SendToMountain("register_task_provider", {
-      handle: Handle,
-      type: TaskType,
-      extensionId: ""
-    }).catch(() => {
-    });
-    const ProviderKey = `__taskProvider:${Handle}`;
-    Context.ExtensionRegistry.set(ProviderKey, Provider);
-    return {
-      dispose: /* @__PURE__ */ __name(() => {
-        Context.ExtensionRegistry.delete(ProviderKey);
-        Context.SendToMountain("unregister_task_provider", {
-          handle: Handle
-        }).catch(() => {
-        });
-      }, "dispose")
-    };
-  }, "registerTaskProvider"),
-  fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
-    try {
-      const Response = await Context.MountainClient?.sendRequest(
-        "Task.Fetch",
-        [Filter]
-      );
-      return Array.isArray(Response) ? Response : [];
-    } catch {
-      return [];
+var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => {
+  const Executions = /* @__PURE__ */ new Map();
+  Context.Emitter.on(
+    "task.didStart",
+    (Event) => {
+      const Id = String(Event?.execution?.id ?? Event?.id ?? "");
+      if (Id && Event?.execution) {
+        Executions.set(Id, Event.execution);
+      }
     }
-  }, "fetchTasks"),
-  executeTask: /* @__PURE__ */ __name(async (Task) => {
-    try {
-      return await Context.MountainClient?.sendRequest(
-        "Task.Execute",
-        [Task]
-      );
-    } catch {
-      return void 0;
+  );
+  Context.Emitter.on(
+    "task.didEnd",
+    (Event) => {
+      const Id = String(Event?.execution?.id ?? Event?.id ?? "");
+      if (Id) {
+        Executions.delete(Id);
+      }
     }
-  }, "executeTask"),
-  onDidStartTask: EventSubscriber(Context, "task.didStart"),
-  onDidEndTask: EventSubscriber(Context, "task.didEnd"),
-  onDidStartTaskProcess: EventSubscriber(Context, "task.didStartProcess"),
-  onDidEndTaskProcess: EventSubscriber(Context, "task.didEndProcess"),
-  taskExecutions: []
-}), "CreateTasksNamespace");
+  );
+  return Namespace_default({
+    registerTaskProvider: /* @__PURE__ */ __name((TaskType, Provider) => {
+      const Handle = NextProviderHandle();
+      Context.SendToMountain("register_task_provider", {
+        handle: Handle,
+        type: TaskType,
+        extensionId: ""
+      }).catch(() => {
+      });
+      const ProviderKey = `__taskProvider:${Handle}`;
+      Context.ExtensionRegistry.set(ProviderKey, Provider);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(ProviderKey);
+          Context.SendToMountain("unregister_task_provider", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTaskProvider"),
+    fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
+      try {
+        const Response = await Context.MountainClient?.sendRequest(
+          "Task.Fetch",
+          [Filter]
+        );
+        return Array.isArray(Response) ? Response : [];
+      } catch {
+        return [];
+      }
+    }, "fetchTasks"),
+    // Return a real TaskExecution object: `{ task, terminate() }`.
+    // Extensions chain `.terminate()` on the returned value when they
+    // need to kill a long-running task (test runners cancelling a
+    // previous run before launching a new one). A bare null silently
+    // breaks this pattern.
+    executeTask: /* @__PURE__ */ __name(async (Task) => {
+      try {
+        const Response = await Context.MountainClient?.sendRequest(
+          "Task.Execute",
+          [Task]
+        );
+        const Resolved = Response;
+        const TaskId = String(Resolved?.id ?? "");
+        const Execution = {
+          task: Resolved?.task ?? Task,
+          terminate: /* @__PURE__ */ __name(() => {
+            Context.SendToMountain("terminate_task", {
+              id: TaskId
+            }).catch(() => {
+            });
+            Executions.delete(TaskId);
+          }, "terminate")
+        };
+        if (TaskId) Executions.set(TaskId, Execution);
+        return Execution;
+      } catch {
+        return void 0;
+      }
+    }, "executeTask"),
+    onDidStartTask: EventSubscriber(Context, "task.didStart"),
+    onDidEndTask: EventSubscriber(Context, "task.didEnd"),
+    onDidStartTaskProcess: EventSubscriber(Context, "task.didStartProcess"),
+    onDidEndTaskProcess: EventSubscriber(Context, "task.didEndProcess"),
+    // Live getter so iteration sees current executions, not the
+    // snapshot at module-construction time.
+    get taskExecutions() {
+      return Array.from(Executions.values());
+    }
+  });
+}, "CreateTasksNamespace");
 var Namespace_default2 = CreateTasksNamespace;
 export {
   Namespace_default2 as default

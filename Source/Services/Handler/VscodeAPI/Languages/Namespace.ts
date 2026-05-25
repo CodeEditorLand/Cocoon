@@ -59,6 +59,20 @@ const _AllDiagnostics = new Map<string, Map<string, unknown[]>>();
 /**
  * Helper: register a language provider with auto-handle,
  * notify Mountain, and return a disposable.
+ *
+ * `Extra` carries provider-specific metadata that Mountain needs to
+ * forward to Monaco's `ILanguageFeaturesService.<feature>Provider`:
+ *   - `triggerCharacters: string[]` for completion + signature-help
+ *   - `firstTriggerCharacter` + `moreTriggerCharacter` for on-type
+ *     formatting providers
+ *   - `documentSelector` (full DocumentSelector array shape) for
+ *     selectors that can't be flattened to a single language id
+ *   - `metadata` arbitrary metadata for code-actions / inlay hints
+ *
+ * Without forwarding these, Monaco still receives the registration
+ * but invokes the provider at the wrong moments: completion providers
+ * don't fire on `.`, signature-help doesn't pop on `(`. Most extensions
+ * appear to "work" until the user actually tries to invoke a feature.
  */
 const RegisterProvider = (
 	Context: HandlerContext,
@@ -70,6 +84,8 @@ const RegisterProvider = (
 	Selector: any,
 
 	Provider: any,
+
+	Extra?: Record<string, unknown>,
 ) => {
 	// Defensive: if the extension passes `null`/`undefined` as a
 	// provider (some extensions do this defensively when their feature
@@ -92,17 +108,30 @@ const RegisterProvider = (
 		return { dispose: () => {} };
 	}
 
+	// Normalise the selector to BOTH a flat language id (for callers
+	// that only inspect a single field) AND the full selector array
+	// (for the workbench's DocumentSelector matcher). Most providers
+	// receive a single { language, scheme } object; vscode-languageclient
+	// passes an array of those. Preserve both shapes when present.
+	const NormaliseOne = (S: any) => {
+		if (typeof S === "string") return { language: S };
+		if (S && typeof S === "object") return S;
+		return { language: "*" };
+	};
+	const SelectorArray = Array.isArray(Selector)
+		? Selector.map(NormaliseOne)
+		: [NormaliseOne(Selector)];
 	const Language =
 		typeof Selector === "string"
 			? Selector
-			: typeof Selector?.language === "string"
-				? Selector.language
-				: "*";
+			: (SelectorArray[0]?.language ?? "*");
 
 	Context.SendToMountain(MethodName, {
 		handle: Handle,
 		languageSelector: Language,
+		documentSelector: SelectorArray,
 		extensionId: "",
+		...(Extra ?? {}),
 	}).catch(() => {});
 
 	return {
@@ -138,7 +167,7 @@ const CreateLanguagesNamespace = (
 			Selector: any,
 
 			Provider: any,
-			..._TriggerCharacters: string[]
+			...TriggerCharacters: string[]
 		) =>
 			RegisterProvider(
 				Context,
@@ -150,6 +179,19 @@ const CreateLanguagesNamespace = (
 				Selector,
 
 				Provider,
+
+				{
+					// VS Code's CompletionRegistry keys providers by their
+					// trigger character set so the workbench's editor
+					// contribution `SuggestController` knows when to fire
+					// auto-suggest. Without forwarding these, completions
+					// only ever fire on the universal Ctrl+Space, never on
+					// the language-specific triggers (`.` for TS/JS, `:` for
+					// CSS, `<` for HTML, ` ` for Tailwind, etc.) - which
+					// makes the workbench feel completely broken even when
+					// every other path is wired correctly.
+					triggerCharacters: TriggerCharacters,
+				},
 			),
 		registerDefinitionProvider: (Selector: any, Provider: any) =>
 			RegisterProvider(
@@ -175,7 +217,14 @@ const CreateLanguagesNamespace = (
 
 				Provider,
 			),
-		registerCodeActionsProvider: (Selector: any, Provider: any) =>
+		registerCodeActionsProvider: (
+			Selector: any,
+			Provider: any,
+			Metadata?: {
+				providedCodeActionKinds?: unknown[];
+				documentation?: unknown[];
+			},
+		) =>
 			RegisterProvider(
 				Context,
 
@@ -186,6 +235,18 @@ const CreateLanguagesNamespace = (
 				Selector,
 
 				Provider,
+
+				{
+					// VS Code's CodeAction registry uses `providedCodeActionKinds`
+					// to filter which code-action providers run for which
+					// requested kinds. Without this forwarding, ESLint's
+					// `quickfix.eslint` provider is invoked for the `refactor`
+					// menu (and vice versa), wasting CPU and producing wrong
+					// menus.
+					providedCodeActionKinds:
+						Metadata?.providedCodeActionKinds ?? [],
+					documentation: Metadata?.documentation ?? [],
+				},
 			),
 		registerDocumentSymbolProvider: (Selector: any, Provider: any) =>
 			RegisterProvider(
@@ -236,8 +297,8 @@ const CreateLanguagesNamespace = (
 
 			Provider: any,
 
-			_FirstTrigger: string,
-			..._MoreTriggers: string[]
+			FirstTrigger: string,
+			...MoreTriggers: string[]
 		) =>
 			RegisterProvider(
 				Context,
@@ -249,6 +310,16 @@ const CreateLanguagesNamespace = (
 				Selector,
 
 				Provider,
+
+				{
+					// On-type formatting is invoked by Monaco when the user
+					// types one of these chars. Without forwarding, JS/TS
+					// auto-formatting on `;` and `}` (built-in) never fires,
+					// and language-server-provided formatting (CSS `;`,
+					// HTML `>`) silently misses.
+					firstTriggerCharacter: FirstTrigger,
+					moreTriggerCharacter: MoreTriggers,
+				},
 			),
 		registerTypeDefinitionProvider: (Selector: any, Provider: any) =>
 			RegisterProvider(
@@ -370,8 +441,40 @@ const CreateLanguagesNamespace = (
 
 				Provider,
 			),
-		registerSignatureHelpProvider: (Selector: any, Provider: any) =>
-			RegisterProvider(
+		registerSignatureHelpProvider: (
+			Selector: any,
+			Provider: any,
+			...Metadata: unknown[]
+		) => {
+			// Stock VS Code's signature support has two registration shapes:
+			//   registerSignatureHelpProvider(selector, provider, ...triggerChars)
+			//   registerSignatureHelpProvider(selector, provider, metadata)
+			// where `metadata` is `{ triggerCharacters, retriggerCharacters }`.
+			// Both forms appear in the wild (older extensions still call the
+			// varargs form). Detect and normalise.
+			let TriggerCharacters: string[] = [];
+			let RetriggerCharacters: string[] = [];
+			if (
+				Metadata.length === 1 &&
+				typeof Metadata[0] === "object" &&
+				Metadata[0] !== null
+			) {
+				const Meta = Metadata[0] as {
+					triggerCharacters?: string[];
+					retriggerCharacters?: string[];
+				};
+				TriggerCharacters = Array.isArray(Meta.triggerCharacters)
+					? Meta.triggerCharacters
+					: [];
+				RetriggerCharacters = Array.isArray(Meta.retriggerCharacters)
+					? Meta.retriggerCharacters
+					: [];
+			} else {
+				TriggerCharacters = Metadata.filter(
+					(M): M is string => typeof M === "string",
+				);
+			}
+			return RegisterProvider(
 				Context,
 
 				LanguageProviderRegistry,
@@ -381,7 +484,13 @@ const CreateLanguagesNamespace = (
 				Selector,
 
 				Provider,
-			),
+
+				{
+					triggerCharacters: TriggerCharacters,
+					retriggerCharacters: RetriggerCharacters,
+				},
+			);
+		},
 		registerDocumentHighlightProvider: (Selector: any, Provider: any) =>
 			RegisterProvider(
 				Context,
@@ -866,10 +975,41 @@ const CreateLanguagesNamespace = (
 		},
 
 		setTextDocumentLanguage: async (Document: any, LanguageId: string) => {
+			// Stock VS Code's `languages.setTextDocumentLanguage` returns
+			// the SAME document object with `.languageId` updated, AND
+			// fires `onDidOpenTextDocument` for the new language (so
+			// language-server extensions register listeners for the new
+			// language). Our local document cache must be updated in-line
+			// or the extension reads stale state on the very next call.
+			const Uri = Document?.uri?.toString?.() ?? "";
 			Context.SendToMountain("languages.setDocumentLanguage", {
-				uri: Document?.uri?.toString?.() ?? "",
+				uri: Uri,
 				languageId: LanguageId,
 			}).catch(() => {});
+
+			// Mutate `Document.languageId` in place so the extension's
+			// reference sees the new value, AND update the cached entry
+			// in `__textDocuments`. The notification handler will fire
+			// `onDidChangeTextDocument` from Mountain's side too, but
+			// the in-memory update is what unblocks synchronous reads.
+			try {
+				if (Document && typeof Document === "object") {
+					(Document as any).languageId = LanguageId;
+				}
+				const TextDocs = (Context as any).__textDocuments as
+					| Array<{ uri?: any; languageId?: string }>
+					| undefined;
+				if (Array.isArray(TextDocs)) {
+					const Match = TextDocs.find(
+						(D) =>
+							D?.uri?.toString?.() === Uri ||
+							(D as any)?.fileName === Uri,
+					);
+					if (Match) (Match as any).languageId = LanguageId;
+				}
+			} catch {
+				/* swallow - lookup failures don't poison the round-trip */
+			}
 
 			return Document;
 		},

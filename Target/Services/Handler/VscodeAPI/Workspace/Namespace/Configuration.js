@@ -248,6 +248,7 @@ var BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section,
           );
           return Subtree2;
         }
+        return DefaultValue;
       }
       return Cached;
     }

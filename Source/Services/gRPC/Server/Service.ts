@@ -995,7 +995,8 @@ export class GRPCServerService
 					);
 					if (!Serializer?.serializeWebviewPanel) continue;
 					try {
-						const State = await Serializer.serializeWebviewPanel(Panel);
+						const State =
+							await Serializer.serializeWebviewPanel(Panel);
 						Result.push({
 							viewType: ViewType,
 							state: State ?? null,
@@ -1115,7 +1116,9 @@ export class GRPCServerService
 					return {
 						success: false,
 						sessionId: SessionId,
-						error: String((Error as { message?: unknown })?.message ?? Error),
+						error: String(
+							(Error as { message?: unknown })?.message ?? Error,
+						),
 					};
 				}
 			}

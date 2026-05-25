@@ -71,6 +71,36 @@ export default (
 		return ProcessIdPromise;
 	};
 
+	// Track terminal state. VS Code 1.81+: `Terminal.state` is
+	// `{ isInteractedWith, shell }`. GitLens, Continue, and Copilot
+	// branch on `terminal.state.isInteractedWith` to decide whether
+	// they can re-use an existing terminal or must spawn a new one.
+	// Mountain emits `window.terminal.stateChanged` notifications that
+	// the notification handler routes through Context.Emitter; here we
+	// listen and update the cached snapshot.
+	let CurrentState = {
+		isInteractedWith: false,
+		shell: undefined as string | undefined,
+	};
+	try {
+		Context.Emitter?.on?.(
+			`window.terminal.stateChanged:${Handle}`,
+			(Update: { isInteractedWith?: boolean; shell?: string }) => {
+				if (typeof Update?.isInteractedWith === "boolean") {
+					CurrentState = {
+						...CurrentState,
+						isInteractedWith: Update.isInteractedWith,
+					};
+				}
+				if (typeof Update?.shell === "string") {
+					CurrentState = { ...CurrentState, shell: Update.shell };
+				}
+			},
+		);
+	} catch {
+		/* swallow - emitter may not be ready yet */
+	}
+
 	return {
 		name: Name,
 
@@ -78,10 +108,32 @@ export default (
 			return ResolveProcessId();
 		},
 
-		sendText: async (Text: string, _AddNewLine?: boolean) => {
+		get state() {
+			return CurrentState;
+		},
+
+		// `exitStatus` reflects the shell's exit code once the PTY has
+		// terminated. Stays `undefined` while the terminal is alive.
+		// Mountain emits `window.terminal.exitStatus:<handle>` when the
+		// child reports its exit.
+		get exitStatus(): { code: number | undefined } | undefined {
+			return (Context as any)?.[`__terminalExitStatus:${Handle}`];
+		},
+
+		sendText: async (Text: string, AddNewLine?: boolean) => {
+			// Per `vscode.d.ts`: `addNewLine` defaults to `true`. Test
+			// runners (Mocha, Jest), npm scripts, build runners and the
+			// terminal-suggest feature all rely on this default to
+			// auto-execute the typed command. Previously we silently
+			// dropped the boolean and Mountain received text without a
+			// trailing CR, so the user saw the command typed but never
+			// run until they pressed Enter manually. Mirror upstream by
+			// appending `\r` when AddNewLine is `true` or absent.
+			const ShouldAppendNewLine = AddNewLine !== false;
+			const Payload = ShouldAppendNewLine ? `${Text}\r` : Text;
 			Context.SendToMountain("terminal.sendText", {
 				handle: Handle,
-				text: Text,
+				text: Payload,
 			}).catch(() => {});
 		},
 

@@ -62,6 +62,42 @@ declare const __LandTier_Telemetry__: string;
 
 declare const __LandTier_IPC__: string;
 
+// Per-subsystem routing tiers (added 2026-05-25). Each names where a
+// given IPC subsystem's dispatch arms execute: `Mountain` runs the
+// native Rust handler; `Node` forwards every call to Cocoon's own
+// runtime via gRPC; `Disabled` (TierWebSocket only) turns the boot-time
+// listener off; `Process` / `WebWorker` (TierExtensionHost only) pick
+// the extension host shape.
+declare const __LandTier_Terminal__: string;
+
+declare const __LandTier_SCM__: string;
+
+declare const __LandTier_Debug__: string;
+
+declare const __LandTier_LanguageFeatures__: string;
+
+declare const __LandTier_Search__: string;
+
+declare const __LandTier_OutputChannel__: string;
+
+declare const __LandTier_NativeHost__: string;
+
+declare const __LandTier_TreeView__: string;
+
+declare const __LandTier_Storage__: string;
+
+declare const __LandTier_Model__: string;
+
+declare const __LandTier_Tasks__: string;
+
+declare const __LandTier_Auth__: string;
+
+declare const __LandTier_Encryption__: string;
+
+declare const __LandTier_ExtensionHost__: string;
+
+declare const __LandTier_WebSocket__: string;
+
 (globalThis as { __LandTiers?: Record<string, string> }).__LandTiers = {
 	RemoteProcedureCall:
 		typeof __LandTier_RemoteProcedureCall__ === "string"
@@ -152,6 +188,81 @@ declare const __LandTier_IPC__: string;
 		typeof __LandTier_IPC__ === "string"
 			? __LandTier_IPC__
 			: (process.env["TierIPC"] ?? "Mountain"),
+
+	Terminal:
+		typeof __LandTier_Terminal__ === "string"
+			? __LandTier_Terminal__
+			: (process.env["TierTerminal"] ?? "Mountain"),
+
+	SCM:
+		typeof __LandTier_SCM__ === "string"
+			? __LandTier_SCM__
+			: (process.env["TierSCM"] ?? "Mountain"),
+
+	Debug:
+		typeof __LandTier_Debug__ === "string"
+			? __LandTier_Debug__
+			: (process.env["TierDebug"] ?? "Mountain"),
+
+	LanguageFeatures:
+		typeof __LandTier_LanguageFeatures__ === "string"
+			? __LandTier_LanguageFeatures__
+			: (process.env["TierLanguageFeatures"] ?? "Mountain"),
+
+	Search:
+		typeof __LandTier_Search__ === "string"
+			? __LandTier_Search__
+			: (process.env["TierSearch"] ?? "Mountain"),
+
+	OutputChannel:
+		typeof __LandTier_OutputChannel__ === "string"
+			? __LandTier_OutputChannel__
+			: (process.env["TierOutputChannel"] ?? "Mountain"),
+
+	NativeHost:
+		typeof __LandTier_NativeHost__ === "string"
+			? __LandTier_NativeHost__
+			: (process.env["TierNativeHost"] ?? "Mountain"),
+
+	TreeView:
+		typeof __LandTier_TreeView__ === "string"
+			? __LandTier_TreeView__
+			: (process.env["TierTreeView"] ?? "Mountain"),
+
+	Storage:
+		typeof __LandTier_Storage__ === "string"
+			? __LandTier_Storage__
+			: (process.env["TierStorage"] ?? "Mountain"),
+
+	Model:
+		typeof __LandTier_Model__ === "string"
+			? __LandTier_Model__
+			: (process.env["TierModel"] ?? "Mountain"),
+
+	Tasks:
+		typeof __LandTier_Tasks__ === "string"
+			? __LandTier_Tasks__
+			: (process.env["TierTasks"] ?? "Node"),
+
+	Auth:
+		typeof __LandTier_Auth__ === "string"
+			? __LandTier_Auth__
+			: (process.env["TierAuth"] ?? "Node"),
+
+	Encryption:
+		typeof __LandTier_Encryption__ === "string"
+			? __LandTier_Encryption__
+			: (process.env["TierEncryption"] ?? "Mountain"),
+
+	ExtensionHost:
+		typeof __LandTier_ExtensionHost__ === "string"
+			? __LandTier_ExtensionHost__
+			: (process.env["TierExtensionHost"] ?? "Process"),
+
+	WebSocket:
+		typeof __LandTier_WebSocket__ === "string"
+			? __LandTier_WebSocket__
+			: (process.env["TierWebSocket"] ?? "Disabled"),
 };
 
 // Telemetry init gated by esbuild's define - in prod builds the branch

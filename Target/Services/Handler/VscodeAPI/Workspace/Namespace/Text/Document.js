@@ -141,7 +141,27 @@ var Tier = {
   ModuleCache: Pick("ModuleCache", "Simple"),
   Telemetry: Pick("Telemetry", "Synchronous"),
   // IPC routing: Mountain (default) → NodeDeferred → Node
-  IPC: Pick("IPC", "Mountain")
+  IPC: Pick("IPC", "Mountain"),
+  // Per-subsystem routing (added 2026-05-25). Defaults match .env.Land
+  // and `Mountain/build.rs::EmitTierDefaults`.
+  Terminal: Pick("Terminal", "Mountain"),
+  SCM: Pick("SCM", "Mountain"),
+  Debug: Pick("Debug", "Mountain"),
+  LanguageFeatures: Pick(
+    "LanguageFeatures",
+    "Mountain"
+  ),
+  Search: Pick("Search", "Mountain"),
+  OutputChannel: Pick("OutputChannel", "Mountain"),
+  NativeHost: Pick("NativeHost", "Mountain"),
+  TreeView: Pick("TreeView", "Mountain"),
+  Storage: Pick("Storage", "Mountain"),
+  Model: Pick("Model", "Mountain"),
+  Tasks: Pick("Tasks", "Node"),
+  Auth: Pick("Auth", "Node"),
+  Encryption: Pick("Encryption", "Mountain"),
+  ExtensionHost: Pick("ExtensionHost", "Process"),
+  WebSocket: Pick("WebSocket", "Disabled")
 };
 Log_default.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
 var Tier_default = Tier;
@@ -1038,16 +1058,16 @@ var BuildSaveAll = /* @__PURE__ */ __name((Context) => async (_IncludeUntitled) 
   }
   return true;
 }, "BuildSaveAll");
-var BuildApplyEdit = /* @__PURE__ */ __name((Context) => async (_Edit) => {
+var BuildApplyEdit = /* @__PURE__ */ __name((Context) => async (Edit, _Metadata) => {
   try {
-    await Call(Context, "applyEdit", [_Edit]);
+    const Result = await Call(Context, "applyEdit", [Edit]);
+    if (typeof Result === "boolean") return Result;
+    return true;
   } catch {
-    Context.SendToMountain("workspace.applyEdit", _Edit).catch(
-      () => {
-      }
-    );
+    Context.SendToMountain("workspace.applyEdit", Edit).catch(() => {
+    });
+    return false;
   }
-  return true;
 }, "BuildApplyEdit");
 var BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
   const Current = ReadFolders();

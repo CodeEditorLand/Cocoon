@@ -305,11 +305,17 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			await FsPromises.writeFile(Path, Content);
 			return;
 		}
-		const Text = new TextDecoder().decode(Content);
+		// Mountain path: previously decoded Content as UTF-8 text. That
+		// silently corrupted any binary write (image-processing extensions
+		// saving PNGs, archive extensions writing zips, formatters that
+		// emit BOM-prefixed UTF-16). Forward as a number array so Mountain
+		// can write the exact bytes the extension produced. Mountain's
+		// `FileSystem.WriteFile` accepts both shapes.
+		const Bytes: number[] = Array.from(Content);
 		await Call<void>(Context, "FileSystem.WriteFile", [
 			UriToString(Uri),
 
-			Text,
+			Bytes,
 		]);
 	},
 

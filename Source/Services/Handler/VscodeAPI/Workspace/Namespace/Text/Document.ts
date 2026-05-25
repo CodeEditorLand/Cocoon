@@ -550,20 +550,40 @@ export const BuildSaveAll =
 	};
 
 export const BuildApplyEdit =
-	(Context: HandlerContext) => async (_Edit: unknown) => {
+	(Context: HandlerContext) =>
+	async (
+		Edit: unknown,
+		_Metadata?: { isRefactoring?: boolean; label?: string },
+	): Promise<boolean> => {
 		// Route through Mountain's `applyEdit` Track effect which does a
-		// round-trip to Sky so the edit is applied to the Monaco model before
-		// the extension's awaited promise resolves. Using sendRequest (not
-		// SendToMountain fire-and-forget) so the caller can `await` the result.
+		// round-trip to Sky so the edit is applied to the Monaco model
+		// before the extension's awaited promise resolves. Using
+		// sendRequest (not SendToMountain fire-and-forget) so the caller
+		// can `await` the actual success boolean.
+		//
+		// Stock VS Code's `vscode.workspace.applyEdit` returns
+		// `Thenable<boolean>` reflecting whether ALL edits applied
+		// successfully (or `false` when a conflict raced). Previously this
+		// always returned `true`, even when Mountain rejected - extensions
+		// (format-on-save, organize-imports, rename refactor) trusted the
+		// false return path to retry / surface error UI and silently
+		// applied stale edits when the workbench had already mutated the
+		// model.
 		try {
-			await Call<boolean>(Context, "applyEdit", [_Edit]);
+			const Result = await Call<boolean>(Context, "applyEdit", [Edit]);
+			// Mountain may return `null` if the round-trip succeeded but
+			// the Sky-side BulkEditService returned undefined. Treat
+			// missing as success (upstream's MainThreadBulkEdits does
+			// the same - undefined → true).
+			if (typeof Result === "boolean") return Result;
+			return true;
 		} catch {
-			// Mountain not connected or Sky rejected - fall back to DOM notify.
-			Context.SendToMountain("workspace.applyEdit", _Edit).catch(
-				() => {},
-			);
+			// Mountain not connected or Sky rejected. Fall back to a
+			// notification (best-effort, no return path) so simple edits
+			// still apply even when the sendRequest path is unavailable.
+			Context.SendToMountain("workspace.applyEdit", Edit).catch(() => {});
+			return false;
 		}
-		return true;
 	};
 
 export const BuildUpdateWorkspaceFolders =

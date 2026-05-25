@@ -715,19 +715,33 @@ var CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderR
     };
   }, "registerCommand"),
   registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
-    const WrappedCallback = /* @__PURE__ */ __name((...Arguments) => {
+    const WrappedCallback = /* @__PURE__ */ __name(async (...Arguments) => {
       const TextEditor = Context.__activeTextEditor;
-      const EditBuilder = {
-        replace: /* @__PURE__ */ __name((_Range, _Value) => {
-        }, "replace"),
-        insert: /* @__PURE__ */ __name((_Position, _Value) => {
-        }, "insert"),
-        delete: /* @__PURE__ */ __name((_Range) => {
-        }, "delete"),
-        setEndOfLine: /* @__PURE__ */ __name(() => {
-        }, "setEndOfLine")
-      };
-      return Callback(TextEditor, EditBuilder, ...Arguments);
+      if (!TextEditor || typeof TextEditor.edit !== "function") {
+        const NoopBuilder = {
+          replace: /* @__PURE__ */ __name(() => {
+          }, "replace"),
+          insert: /* @__PURE__ */ __name(() => {
+          }, "insert"),
+          delete: /* @__PURE__ */ __name(() => {
+          }, "delete"),
+          setEndOfLine: /* @__PURE__ */ __name(() => {
+          }, "setEndOfLine")
+        };
+        return Callback(void 0, NoopBuilder, ...Arguments);
+      }
+      let ExtensionResult = void 0;
+      await TextEditor.edit((Builder) => {
+        ExtensionResult = Callback(
+          TextEditor,
+          Builder,
+          ...Arguments
+        );
+      });
+      if (ExtensionResult && typeof ExtensionResult.then === "function") {
+        return await ExtensionResult;
+      }
+      return ExtensionResult;
     }, "WrappedCallback");
     LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
     Context.SendToMountain("registerCommand", {

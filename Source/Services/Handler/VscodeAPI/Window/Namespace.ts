@@ -333,6 +333,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		createStatusBarItem: (
 			AlignmentOrId?: unknown,
 
+			PriorityOrAlignment?: unknown,
+
 			Priority?: number,
 		): Record<string, unknown> =>
 			CreateStatusBarItem(
@@ -341,6 +343,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				NextProviderHandle(),
 
 				AlignmentOrId,
+
+				PriorityOrAlignment,
 
 				Priority,
 			),
@@ -1046,8 +1050,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Options: { treeDataProvider?: any } & Record<string, unknown>,
 		) => {
 			const Provider = Options?.treeDataProvider;
+			let TreeRefreshSubscription: { dispose?: () => void } | undefined;
+			let RegisteredHandle: number | undefined;
 			if (Provider) {
 				const Handle = NextProviderHandle();
+				RegisteredHandle = Handle;
 				TreeDataProviders.set(String(Handle), Provider);
 				TreeDataProvidersByViewId.set(Id, Provider);
 				// Send ONLY the serialisable primitive options to Mountain.
@@ -1070,6 +1077,32 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 					SerializableOptions,
 				]).catch(() => {});
+
+				// Subscribe to provider's `onDidChangeTreeData` event so
+				// the workbench's tree refreshes when the extension fires
+				// it. Same pattern as `registerTreeDataProvider` above.
+				try {
+					if (typeof Provider?.onDidChangeTreeData === "function") {
+						const Subscription = Provider.onDidChangeTreeData(
+							(Element: unknown) => {
+								Context.SendToMountain("tree.refresh", {
+									handle: Handle,
+									viewId: Id,
+									element: Element ?? null,
+								}).catch(() => {});
+							},
+						);
+						if (
+							Subscription &&
+							typeof (Subscription as any).dispose === "function"
+						) {
+							TreeRefreshSubscription = Subscription;
+						}
+					}
+				} catch {
+					/* provider has no event emitter or threw - tree stays
+					 * static until manual refresh() RPC */
+				}
 			}
 			// Per-view event emitter so each TreeView instance gets its own
 			// event streams for selection/visibility/collapse/expand.
@@ -1123,6 +1156,14 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				},
 
 				dispose: () => {
+					try {
+						TreeRefreshSubscription?.dispose?.();
+					} catch {
+						/* swallow */
+					}
+					if (RegisteredHandle !== undefined) {
+						TreeDataProviders.delete(String(RegisteredHandle));
+					}
 					TreeDataProvidersByViewId.delete(Id);
 					ViewEmitters.delete(Id);
 					Context.MountainClient?.sendRequest("tree.dispose", [
@@ -1171,8 +1212,50 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 				{},
 			]).catch(() => {});
+
+			// Subscribe to the provider's `onDidChangeTreeData` event.
+			// Extensions fire this through their own `EventEmitter` when
+			// the tree's content changes (file watcher seeing new files,
+			// test discoverer adding test items, GitLens detecting a
+			// new branch). Without our subscription, Mountain and Sky
+			// never learn the tree is stale and the UI stays frozen at
+			// the initial getChildren() snapshot.
+			//
+			// `tree.refresh` carries the element-to-refresh; when the
+			// emit fires with `undefined`, the entire tree is rebuilt.
+			// Mountain forwards to Sky which then calls back via
+			// `tree.getChildren` to repopulate.
+			let TreeEventDispose: { dispose?: () => void } | undefined;
+			try {
+				if (typeof Provider?.onDidChangeTreeData === "function") {
+					const Subscription = Provider.onDidChangeTreeData(
+						(Element: unknown) => {
+							Context.SendToMountain("tree.refresh", {
+								handle: Handle,
+								viewId: ViewId,
+								element: Element ?? null,
+							}).catch(() => {});
+						},
+					);
+					if (
+						Subscription &&
+						typeof (Subscription as any).dispose === "function"
+					) {
+						TreeEventDispose = Subscription;
+					}
+				}
+			} catch {
+				/* provider has no event emitter or threw on subscribe -
+				 * tree will only refresh manually via tree.refresh() RPC */
+			}
+
 			return {
 				dispose: () => {
+					try {
+						TreeEventDispose?.dispose?.();
+					} catch {
+						/* swallow */
+					}
 					TreeDataProviders.delete(String(Handle));
 					TreeDataProvidersByViewId.delete(ViewId);
 					Context.MountainClient?.sendRequest("tree.unregister", [
@@ -1202,9 +1285,25 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				},
 			};
 		},
-		registerWebviewViewProvider: (ViewId: string, Provider: any) => {
+		registerWebviewViewProvider: (
+			ViewId: string,
+			Provider: any,
+			Options?: {
+				webviewOptions?: {
+					retainContextWhenHidden?: boolean;
+				};
+			},
+		) => {
 			const Handle = NextProviderHandle();
 			WebviewViewProviders.set(String(Handle), Provider);
+			// VS Code's `WebviewViewService.register` accepts a third
+			// `options` arg with `webviewOptions.retainContextWhenHidden`.
+			// Roo, Continue, Claude all pass `{ retainContextWhenHidden:
+			// true }` so their React state isn't torn down whenever the
+			// sidebar collapses. Forward it to Mountain so the workbench
+			// applies it to the IOverlayWebview.
+			const RetainContext =
+				!!Options?.webviewOptions?.retainContextWhenHidden;
 			// Builder factory for the extension-facing `WebviewView`
 			// proxy. The proxy bridges Cocoon-side `view.webview.html =
 			// X` / `view.webview.postMessage(msg)` calls into Mountain
@@ -1237,6 +1336,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Context.MountainClient?.sendRequest("webview.registerView", {
 				handle: Handle,
 				viewId: ViewId,
+				retainContextWhenHidden: RetainContext,
 			}).catch(() => {});
 
 			return {
@@ -1503,13 +1603,40 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			HideAfter?: number | PromiseLike<unknown>,
 		) => {
+			// `setStatusBarMessage` posts a transient message to the
+			// status bar. Three overloads in upstream VS Code:
+			//   setStatusBarMessage(text) - persists until disposed
+			//   setStatusBarMessage(text, milliseconds) - auto-hides
+			//   setStatusBarMessage(text, thenable) - hides on resolve
+			// Previously every overload was a no-op aside from the
+			// initial send; the hide never fired and the message stuck
+			// to the status bar forever. Now we drive the clear-side
+			// explicitly so all three modes match upstream.
+			const HandleId = `transient:${Math.random().toString(36).slice(2)}`;
+			let Disposed = false;
+			const Clear = () => {
+				if (Disposed) return;
+				Disposed = true;
+				Context.SendToMountain("statusBar.clearMessage", {
+					id: HandleId,
+				}).catch(() => {});
+			};
+
 			Context.SendToMountain("statusBar.message", {
+				id: HandleId,
 				text: Text,
-				hideAfter:
-					typeof HideAfter === "number" ? HideAfter : undefined,
 			}).catch(() => {});
 
-			return { dispose: () => {} };
+			if (typeof HideAfter === "number" && HideAfter > 0) {
+				setTimeout(Clear, HideAfter);
+			} else if (
+				HideAfter &&
+				typeof (HideAfter as PromiseLike<unknown>).then === "function"
+			) {
+				(HideAfter as PromiseLike<unknown>).then(Clear, Clear);
+			}
+
+			return { dispose: Clear };
 		},
 
 		// `showWorkspaceFolderPick` - stable API. Stock routes through

@@ -79,6 +79,48 @@ export type TierTelemetryValue = "Synchronous" | "Batched" | "Off";
 // IPC routing tiers ----------------------------------------------------------
 export type TierIPCValue = "Mountain" | "NodeDeferred" | "Node";
 
+// Per-subsystem routing tiers (added 2026-05-25). Each tier names where the
+// dispatch arms for a given VS Code API subsystem run. The flavor overlays
+// at `.env.Land.{RustOnly,NodeFirst,Full}` set all of them at once.
+//
+//   Mountain - native Rust handler in Mountain's IPC dispatcher
+//   Node     - forward every call to Cocoon via gRPC (extension-host path)
+export type TierTerminalValue = "Mountain" | "Node";
+
+export type TierSCMValue = "Mountain" | "Node";
+
+export type TierDebugValue = "Mountain" | "Node";
+
+export type TierLanguageFeaturesValue = "Mountain" | "Node";
+
+export type TierSearchValue = "Mountain" | "Node";
+
+export type TierOutputChannelValue = "Mountain" | "Node";
+
+export type TierNativeHostValue = "Mountain" | "Node";
+
+export type TierTreeViewValue = "Mountain" | "Node";
+
+export type TierStorageValue = "Mountain" | "Node";
+
+export type TierModelValue = "Mountain" | "Node";
+
+export type TierTasksValue = "Mountain" | "Node";
+
+export type TierAuthValue = "Mountain" | "Node";
+
+export type TierEncryptionValue = "Mountain" | "Node";
+
+//   Process   - Cocoon is spawned as a Node.js subprocess (default)
+//   WebWorker - Extension host runs in a worker thread inside Sky (no Cocoon)
+//   Disabled  - Skip Cocoon spawn entirely (kernel build)
+export type TierExtensionHostValue = "Process" | "WebWorker" | "Disabled";
+
+//   Disabled - Boot-time WS listener off (default)
+//   Mountain - Listener on, served by Mist::WebSocket::ServeLocal
+//   Mist     - Same as Mountain; reserved for future routing splits
+export type TierWebSocketValue = "Disabled" | "Mountain" | "Mist";
+
 // Resolution -----------------------------------------------------------------
 const Injected =
 	(globalThis as { __LandTiers?: Record<string, unknown> }).__LandTiers ?? {};
@@ -151,6 +193,41 @@ const Tier = {
 
 	// IPC routing: Mountain (default) → NodeDeferred → Node
 	IPC: Pick<TierIPCValue>("IPC", "Mountain"),
+
+	// Per-subsystem routing (added 2026-05-25). Defaults match .env.Land
+	// and `Mountain/build.rs::EmitTierDefaults`.
+	Terminal: Pick<TierTerminalValue>("Terminal", "Mountain"),
+
+	SCM: Pick<TierSCMValue>("SCM", "Mountain"),
+
+	Debug: Pick<TierDebugValue>("Debug", "Mountain"),
+
+	LanguageFeatures: Pick<TierLanguageFeaturesValue>(
+		"LanguageFeatures",
+		"Mountain",
+	),
+
+	Search: Pick<TierSearchValue>("Search", "Mountain"),
+
+	OutputChannel: Pick<TierOutputChannelValue>("OutputChannel", "Mountain"),
+
+	NativeHost: Pick<TierNativeHostValue>("NativeHost", "Mountain"),
+
+	TreeView: Pick<TierTreeViewValue>("TreeView", "Mountain"),
+
+	Storage: Pick<TierStorageValue>("Storage", "Mountain"),
+
+	Model: Pick<TierModelValue>("Model", "Mountain"),
+
+	Tasks: Pick<TierTasksValue>("Tasks", "Node"),
+
+	Auth: Pick<TierAuthValue>("Auth", "Node"),
+
+	Encryption: Pick<TierEncryptionValue>("Encryption", "Mountain"),
+
+	ExtensionHost: Pick<TierExtensionHostValue>("ExtensionHost", "Process"),
+
+	WebSocket: Pick<TierWebSocketValue>("WebSocket", "Disabled"),
 } as const;
 
 // One-shot boot banner -------------------------------------------------------

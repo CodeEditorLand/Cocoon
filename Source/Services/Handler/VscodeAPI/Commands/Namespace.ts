@@ -48,17 +48,51 @@ const CreateCommandsNamespace = (
 
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
-			// VS Code contract: callback receives (textEditor, edit, ...args).
-			// Wrap to inject the active text editor and a minimal EditBuilder.
-			const WrappedCallback = (...Arguments: unknown[]) => {
+			// VS Code contract: callback receives `(textEditor, edit, ...args)`
+			// where `edit` is a TextEditorEdit that buffers `replace` / `insert`
+			// / `delete` / `setEndOfLine` calls and applies them atomically when
+			// the callback returns. Previously the builder was a no-op stub, so
+			// every Cmd+I / refactor / sort-lines registered through this API
+			// silently did nothing. Wrap the active editor's real `edit()`
+			// method so collected edits actually apply.
+			const WrappedCallback = async (...Arguments: unknown[]) => {
 				const TextEditor = (Context as any).__activeTextEditor;
-				const EditBuilder = {
-					replace: (_Range: unknown, _Value: string) => {},
-					insert: (_Position: unknown, _Value: string) => {},
-					delete: (_Range: unknown) => {},
-					setEndOfLine: () => {},
-				};
-				return Callback(TextEditor, EditBuilder, ...Arguments);
+				if (!TextEditor || typeof TextEditor.edit !== "function") {
+					// No active editor - upstream raises an error notification.
+					// Fall back to invoking the callback with a no-op builder
+					// so the extension's pre-edit setup still runs (it may
+					// surface its own user-facing error).
+					const NoopBuilder = {
+						replace: () => {},
+						insert: () => {},
+						delete: () => {},
+						setEndOfLine: () => {},
+					};
+					return Callback(undefined, NoopBuilder, ...Arguments);
+				}
+				// Drive the callback INSIDE `editor.edit()` so the buffered
+				// builder is the real one tied to the active model. The
+				// extension's return value bubbles through the outer promise
+				// so command consumers can `await commands.executeCommand(...)`.
+				let ExtensionResult: unknown = undefined;
+				await TextEditor.edit((Builder: unknown) => {
+					ExtensionResult = Callback(
+						TextEditor,
+						Builder,
+						...Arguments,
+					);
+				});
+				// If the callback returned a promise (e.g. async refactor that
+				// awaits an LSP response BEFORE issuing edits), await it so
+				// caller observes completion.
+				if (
+					ExtensionResult &&
+					typeof (ExtensionResult as PromiseLike<unknown>).then ===
+						"function"
+				) {
+					return await (ExtensionResult as Promise<unknown>);
+				}
+				return ExtensionResult;
 			};
 			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
 			Context.SendToMountain("registerCommand", {

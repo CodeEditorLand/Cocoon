@@ -30,15 +30,48 @@ var CreateTerminal_default = /* @__PURE__ */ __name((Context, Handle, Options) =
     })();
     return ProcessIdPromise;
   }, "ResolveProcessId");
+  let CurrentState = {
+    isInteractedWith: false,
+    shell: void 0
+  };
+  try {
+    Context.Emitter?.on?.(
+      `window.terminal.stateChanged:${Handle}`,
+      (Update) => {
+        if (typeof Update?.isInteractedWith === "boolean") {
+          CurrentState = {
+            ...CurrentState,
+            isInteractedWith: Update.isInteractedWith
+          };
+        }
+        if (typeof Update?.shell === "string") {
+          CurrentState = { ...CurrentState, shell: Update.shell };
+        }
+      }
+    );
+  } catch {
+  }
   return {
     name: Name,
     get processId() {
       return ResolveProcessId();
     },
-    sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+    get state() {
+      return CurrentState;
+    },
+    // `exitStatus` reflects the shell's exit code once the PTY has
+    // terminated. Stays `undefined` while the terminal is alive.
+    // Mountain emits `window.terminal.exitStatus:<handle>` when the
+    // child reports its exit.
+    get exitStatus() {
+      return Context?.[`__terminalExitStatus:${Handle}`];
+    },
+    sendText: /* @__PURE__ */ __name(async (Text, AddNewLine) => {
+      const ShouldAppendNewLine = AddNewLine !== false;
+      const Payload = ShouldAppendNewLine ? `${Text}\r` : Text;
       Context.SendToMountain("terminal.sendText", {
         handle: Handle,
-        text: Text
+        text: Payload
       }).catch(() => {
       });
     }, "sendText"),

@@ -744,8 +744,26 @@ var WrapWindowNamespace = /* @__PURE__ */ __name((Concrete) => Heuristics_defaul
 var Namespace_default = WrapWindowNamespace;
 
 // Source/Services/Handler/VscodeAPI/Window/CreateOutputChannel.ts
+var LogLevel = /* @__PURE__ */ ((LogLevel2) => {
+  LogLevel2[LogLevel2["Off"] = 0] = "Off";
+  LogLevel2[LogLevel2["Trace"] = 1] = "Trace";
+  LogLevel2[LogLevel2["Debug"] = 2] = "Debug";
+  LogLevel2[LogLevel2["Info"] = 3] = "Info";
+  LogLevel2[LogLevel2["Warning"] = 4] = "Warning";
+  LogLevel2[LogLevel2["Error"] = 5] = "Error";
+  return LogLevel2;
+})(LogLevel || {});
+var FormatTimestamp2 = /* @__PURE__ */ __name(() => {
+  const Now = /* @__PURE__ */ new Date();
+  const Pad = /* @__PURE__ */ __name((N, Width = 2) => String(N).padStart(Width, "0"), "Pad");
+  return Now.getFullYear() + "-" + Pad(Now.getMonth() + 1) + "-" + Pad(Now.getDate()) + " " + Pad(Now.getHours()) + ":" + Pad(Now.getMinutes()) + ":" + Pad(Now.getSeconds()) + "." + Pad(Now.getMilliseconds(), 3);
+}, "FormatTimestamp");
+var FormatLog = /* @__PURE__ */ __name((Level, Message) => `${FormatTimestamp2()} [${Level}] ${Message}
+`, "FormatLog");
 var CreateOutputChannel_default = /* @__PURE__ */ __name((Context, Handle, Name, Options) => {
   const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
+  let CurrentLevel = 3 /* Info */;
+  const LevelListeners = [];
   Context.SendToMountain("outputChannel.create", {
     handle: Handle,
     name: Name,
@@ -760,6 +778,20 @@ var CreateOutputChannel_default = /* @__PURE__ */ __name((Context, Handle, Name,
     }).catch(() => {
     });
   }, "Append");
+  const ShouldLog = /* @__PURE__ */ __name((Level) => IsLog && CurrentLevel !== 0 /* Off */ && Level >= CurrentLevel, "ShouldLog");
+  const LevelChannel = `outputChannel.logLevel:${Handle}`;
+  const LevelListener = /* @__PURE__ */ __name((NextLevel) => {
+    const Resolved = typeof NextLevel === "number" ? NextLevel : typeof NextLevel === "string" ? LogLevel[NextLevel] ?? CurrentLevel : CurrentLevel;
+    if (Resolved === CurrentLevel) return;
+    CurrentLevel = Resolved;
+    for (const L of LevelListeners.slice()) {
+      try {
+        L(Resolved);
+      } catch {
+      }
+    }
+  }, "LevelListener");
+  Context.Emitter?.on?.(LevelChannel, LevelListener);
   const Channel = {
     name: Name,
     append: Append,
@@ -771,9 +803,14 @@ var CreateOutputChannel_default = /* @__PURE__ */ __name((Context, Handle, Name,
       }).catch(() => {
       });
     }, "clear"),
-    show: /* @__PURE__ */ __name(() => {
+    // `show(preserveFocus?)` is the modern signature; the historic
+    // `show(column, preserveFocus?)` overload still exists for
+    // pre-1.16 extensions. Forward both forms so the panel reveals.
+    show: /* @__PURE__ */ __name((ColumnOrPreserveFocus, PreserveFocus) => {
+      const Preserve = typeof ColumnOrPreserveFocus === "boolean" ? ColumnOrPreserveFocus : !!PreserveFocus;
       Context.SendToMountain("outputChannel.show", {
-        handle: Handle
+        handle: Handle,
+        preserveFocus: Preserve
       }).catch(() => {
       });
     }, "show"),
@@ -783,126 +820,247 @@ var CreateOutputChannel_default = /* @__PURE__ */ __name((Context, Handle, Name,
       }).catch(() => {
       });
     }, "hide"),
+    // Stock VS Code's `replace(value)` does NOT prepend a newline;
+    // it replaces the entire channel buffer atomically. Use a
+    // dedicated Mountain method so the workbench can batch the
+    // clear+write as one render rather than a flash of empty.
     replace: /* @__PURE__ */ __name((Value) => {
-      Context.SendToMountain("outputChannel.clear", {
-        handle: Handle
+      Context.SendToMountain("outputChannel.replace", {
+        handle: Handle,
+        value: Value
       }).catch(() => {
       });
-      Append(Value);
     }, "replace"),
     dispose: /* @__PURE__ */ __name(() => {
+      try {
+        Context.Emitter?.off?.(LevelChannel, LevelListener);
+      } catch {
+      }
       Context.SendToMountain("outputChannel.dispose", {
         handle: Handle
       }).catch(() => {
       });
     }, "dispose"),
-    logLevel: 2,
-    // VS Code's LogLevel.Info
-    onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose")
-    }), "onDidChangeLogLevel"),
-    trace: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[trace] ${Message}
-`), "trace"),
-    debug: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[debug] ${Message}
-`), "debug"),
-    info: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[info] ${Message}
-`), "info"),
-    warn: /* @__PURE__ */ __name((Message, ..._Arguments) => Append(`[warn] ${Message}
-`), "warn"),
+    get logLevel() {
+      return CurrentLevel;
+    },
+    onDidChangeLogLevel: /* @__PURE__ */ __name((Listener) => {
+      LevelListeners.push(Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          const Index = LevelListeners.indexOf(Listener);
+          if (Index >= 0) LevelListeners.splice(Index, 1);
+        }, "dispose")
+      };
+    }, "onDidChangeLogLevel"),
+    // For LogOutputChannel: format with timestamp + level tag + filter.
+    // For plain channels: drop everything through appendLine as a
+    // best-effort alias so older extensions that always call these
+    // don't break.
+    trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+      if (IsLog) {
+        if (ShouldLog(1 /* Trace */))
+          Append(FormatLog("trace", Message));
+      } else {
+        Append(`${Message}
+`);
+      }
+    }, "trace"),
+    debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+      if (IsLog) {
+        if (ShouldLog(2 /* Debug */))
+          Append(FormatLog("debug", Message));
+      } else {
+        Append(`${Message}
+`);
+      }
+    }, "debug"),
+    info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+      if (IsLog) {
+        if (ShouldLog(3 /* Info */))
+          Append(FormatLog("info", Message));
+      } else {
+        Append(`${Message}
+`);
+      }
+    }, "info"),
+    warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+      if (IsLog) {
+        if (ShouldLog(4 /* Warning */))
+          Append(FormatLog("warning", Message));
+      } else {
+        Append(`${Message}
+`);
+      }
+    }, "warn"),
     error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
       const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
-      Append(`[error] ${Text}
+      if (IsLog) {
+        if (ShouldLog(5 /* Error */)) Append(FormatLog("error", Text));
+      } else {
+        Append(`${Text}
 `);
+      }
     }, "error")
   };
   return Channel;
 }, "default");
 
 // Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts
-var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, AlignmentOrId, Priority) => {
-  let _text = "";
-  let _tooltip = "";
-  let _command = void 0;
-  let _backgroundColor = void 0;
-  let _color = void 0;
-  let _visible = false;
-  let _name = void 0;
+var StatusBarAlignment = /* @__PURE__ */ ((StatusBarAlignment2) => {
+  StatusBarAlignment2[StatusBarAlignment2["Left"] = 1] = "Left";
+  StatusBarAlignment2[StatusBarAlignment2["Right"] = 2] = "Right";
+  return StatusBarAlignment2;
+})(StatusBarAlignment || {});
+var ResolveOverload = /* @__PURE__ */ __name((FirstArg, SecondArg, ThirdArg) => {
+  if (typeof FirstArg === "string") {
+    return {
+      Id: FirstArg,
+      Alignment: typeof SecondArg === "number" ? SecondArg : 1 /* Left */,
+      Priority: typeof ThirdArg === "number" ? ThirdArg : void 0
+    };
+  }
+  return {
+    Id: void 0,
+    Alignment: typeof FirstArg === "number" ? FirstArg : 1 /* Left */,
+    Priority: typeof SecondArg === "number" ? SecondArg : void 0
+  };
+}, "ResolveOverload");
+var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, AlignmentOrId, PriorityOrAlignment, Priority) => {
+  const {
+    Id,
+    Alignment,
+    Priority: ResolvedPriority
+  } = ResolveOverload(AlignmentOrId, PriorityOrAlignment, Priority);
+  let CurrentText = "";
+  let CurrentTooltip = "";
+  let CurrentCommand = void 0;
+  let CurrentBackgroundColor = void 0;
+  let CurrentColor = void 0;
+  let CurrentVisible = false;
+  let CurrentName = void 0;
+  let CurrentAccessibility = void 0;
+  let Disposed = false;
   const Push = /* @__PURE__ */ __name(() => {
-    if (!_visible) return;
+    if (Disposed) return;
+    if (!CurrentVisible) return;
+    const NormalisedCommand = typeof CurrentCommand === "string" ? CurrentCommand : typeof CurrentCommand === "object" && CurrentCommand !== null ? {
+      command: CurrentCommand.command,
+      arguments: CurrentCommand.arguments,
+      title: CurrentCommand.title,
+      tooltip: CurrentCommand.tooltip
+    } : void 0;
     Context.SendToMountain("statusBar.update", {
       handle: Handle,
-      text: _text,
-      tooltip: _tooltip,
-      command: typeof _command === "string" ? _command : _command?.command,
-      backgroundColor: _backgroundColor,
-      color: _color,
+      id: Id,
+      alignment: Alignment,
+      priority: ResolvedPriority,
+      text: CurrentText,
+      tooltip: CurrentTooltip,
+      command: NormalisedCommand,
+      backgroundColor: CurrentBackgroundColor,
+      color: CurrentColor,
       visible: true,
-      name: _name
+      name: CurrentName,
+      accessibilityInformation: CurrentAccessibility
     }).catch(() => {
     });
   }, "Push");
   const Item = {
-    id: Handle,
-    alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : typeof AlignmentOrId === "object" ? 1 : 1,
-    priority: Priority,
-    name: _name,
+    // `item.id` is read by extensions to disambiguate which item
+    // fired their command. Upstream returns the `id` from the
+    // `createStatusBarItem(id, ...)` overload, falling back to a
+    // stable generated string. Use the explicit id when present;
+    // otherwise the handle is the stable fallback.
+    id: Id ?? String(Handle),
+    alignment: Alignment,
+    priority: ResolvedPriority,
     get text() {
-      return _text;
+      return CurrentText;
     },
-    set text(V) {
-      _text = String(V ?? "");
+    set text(Value) {
+      if (Disposed) return;
+      const Next = String(Value ?? "");
+      if (Next === CurrentText) return;
+      CurrentText = Next;
       Push();
     },
     get tooltip() {
-      return _tooltip;
+      return CurrentTooltip;
     },
-    set tooltip(V) {
-      _tooltip = V;
+    set tooltip(Value) {
+      if (Disposed) return;
+      CurrentTooltip = Value;
       Push();
     },
     get command() {
-      return _command;
+      return CurrentCommand;
     },
-    set command(V) {
-      _command = V;
+    set command(Value) {
+      if (Disposed) return;
+      CurrentCommand = Value;
       Push();
     },
     get backgroundColor() {
-      return _backgroundColor;
+      return CurrentBackgroundColor;
     },
-    set backgroundColor(V) {
-      _backgroundColor = V;
+    set backgroundColor(Value) {
+      if (Disposed) return;
+      CurrentBackgroundColor = Value;
       Push();
     },
     get color() {
-      return _color;
+      return CurrentColor;
     },
-    set color(V) {
-      _color = V;
+    set color(Value) {
+      if (Disposed) return;
+      CurrentColor = Value;
+      Push();
+    },
+    get name() {
+      return CurrentName;
+    },
+    set name(Value) {
+      if (Disposed) return;
+      CurrentName = typeof Value === "string" ? Value : void 0;
       Push();
     },
     get accessibilityInformation() {
-      return void 0;
+      return CurrentAccessibility;
     },
-    set accessibilityInformation(_V) {
+    set accessibilityInformation(Value) {
+      if (Disposed) return;
+      CurrentAccessibility = Value;
+      Push();
     },
     show: /* @__PURE__ */ __name(() => {
-      _visible = true;
+      if (Disposed) return;
+      if (CurrentVisible) return;
+      CurrentVisible = true;
       Push();
     }, "show"),
     hide: /* @__PURE__ */ __name(() => {
-      _visible = false;
+      if (Disposed) return;
+      if (!CurrentVisible) return;
+      CurrentVisible = false;
       Context.SendToMountain("statusBar.update", {
         handle: Handle,
+        id: Id,
         visible: false
       }).catch(() => {
       });
     }, "hide"),
+    // `dispose()` is idempotent in stock VS Code - calling it twice
+    // is a no-op on the second pass. Previously a double-dispose
+    // fired the Mountain notification twice and removed an item
+    // that didn't exist on the second emit (logged as "warn").
     dispose: /* @__PURE__ */ __name(() => {
-      _visible = false;
+      if (Disposed) return;
+      Disposed = true;
+      CurrentVisible = false;
       Context.SendToMountain("statusBar.dispose", {
-        handle: Handle
+        handle: Handle,
+        id: Id
       }).catch(() => {
       });
     }, "dispose")
@@ -939,15 +1097,48 @@ var CreateTerminal_default = /* @__PURE__ */ __name((Context, Handle, Options) =
     })();
     return ProcessIdPromise;
   }, "ResolveProcessId");
+  let CurrentState = {
+    isInteractedWith: false,
+    shell: void 0
+  };
+  try {
+    Context.Emitter?.on?.(
+      `window.terminal.stateChanged:${Handle}`,
+      (Update) => {
+        if (typeof Update?.isInteractedWith === "boolean") {
+          CurrentState = {
+            ...CurrentState,
+            isInteractedWith: Update.isInteractedWith
+          };
+        }
+        if (typeof Update?.shell === "string") {
+          CurrentState = { ...CurrentState, shell: Update.shell };
+        }
+      }
+    );
+  } catch {
+  }
   return {
     name: Name,
     get processId() {
       return ResolveProcessId();
     },
-    sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+    get state() {
+      return CurrentState;
+    },
+    // `exitStatus` reflects the shell's exit code once the PTY has
+    // terminated. Stays `undefined` while the terminal is alive.
+    // Mountain emits `window.terminal.exitStatus:<handle>` when the
+    // child reports its exit.
+    get exitStatus() {
+      return Context?.[`__terminalExitStatus:${Handle}`];
+    },
+    sendText: /* @__PURE__ */ __name(async (Text, AddNewLine) => {
+      const ShouldAppendNewLine = AddNewLine !== false;
+      const Payload = ShouldAppendNewLine ? `${Text}\r` : Text;
       Context.SendToMountain("terminal.sendText", {
         handle: Handle,
-        text: Text
+        text: Payload
       }).catch(() => {
       });
     }, "sendText"),
@@ -986,7 +1177,16 @@ var CreateTerminal_default = /* @__PURE__ */ __name((Context, Handle, Options) =
 // Source/Services/Handler/VscodeAPI/Window/CreateWebviewPanel.ts
 var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewType, Title, ShowOptions, Options, ToWebviewUri, SharedCspSource) => {
   let CurrentHtml = "";
+  let CurrentTitle = Title;
+  let CurrentIconPath = void 0;
   let CurrentOptions = Options ?? {};
+  const ShowOptionsTyped = ShowOptions ?? {};
+  let CurrentViewColumn = typeof ShowOptionsTyped.viewColumn === "number" ? ShowOptionsTyped.viewColumn : 1;
+  let CurrentActive = true;
+  let CurrentVisible = true;
+  let Disposed = false;
+  const DisposeListeners = [];
+  const ViewStateListeners = [];
   Context.MountainClient?.sendRequest("webview.create", {
     handle: Handle,
     viewType: ViewType,
@@ -995,15 +1195,96 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
     options: CurrentOptions
   }).catch(() => {
   });
+  const PanelRef = { value: void 0 };
+  const ViewStateChannel = `webview.viewState:${Handle}`;
+  const ViewStateListener = /* @__PURE__ */ __name((State) => {
+    if (Disposed) return;
+    const NextActive = State?.active != null ? !!State.active : CurrentActive;
+    const NextVisible = State?.visible != null ? !!State.visible : CurrentVisible;
+    const NextColumn = typeof State?.viewColumn === "number" ? State.viewColumn : CurrentViewColumn;
+    const Changed = NextActive !== CurrentActive || NextVisible !== CurrentVisible || NextColumn !== CurrentViewColumn;
+    CurrentActive = NextActive;
+    CurrentVisible = NextVisible;
+    CurrentViewColumn = NextColumn;
+    if (!Changed) return;
+    const Snapshot = {
+      webviewPanel: PanelRef.value
+    };
+    for (const Listener of ViewStateListeners.slice()) {
+      try {
+        Listener(Snapshot);
+      } catch {
+      }
+    }
+  }, "ViewStateListener");
+  Context.Emitter.on(ViewStateChannel, ViewStateListener);
+  const DisposeChannel = `webview.dispose:${Handle}`;
+  const DisposeListener = /* @__PURE__ */ __name(() => {
+    DisposeInternal();
+  }, "DisposeListener");
+  Context.Emitter.on(DisposeChannel, DisposeListener);
+  const DisposeInternal = /* @__PURE__ */ __name(() => {
+    if (Disposed) return;
+    Disposed = true;
+    try {
+      Context.Emitter.removeListener(ViewStateChannel, ViewStateListener);
+    } catch {
+    }
+    try {
+      Context.Emitter.removeListener(DisposeChannel, DisposeListener);
+    } catch {
+    }
+    try {
+      Context.Emitter.removeAllListeners(`webview.message:${Handle}`);
+    } catch {
+    }
+    Context.MountainClient?.sendRequest("webview.dispose", {
+      handle: Handle
+    }).catch(() => {
+    });
+    for (const Listener of DisposeListeners.slice()) {
+      try {
+        Listener();
+      } catch {
+      }
+    }
+  }, "DisposeInternal");
   const Panel = {
-    viewType: ViewType,
-    title: Title,
-    iconPath: void 0,
+    get viewType() {
+      return ViewType;
+    },
+    get title() {
+      return CurrentTitle;
+    },
+    set title(Value) {
+      if (Disposed) return;
+      const Next = String(Value ?? "");
+      if (Next === CurrentTitle) return;
+      CurrentTitle = Next;
+      Context.MountainClient?.sendRequest("webview.setTitle", {
+        handle: Handle,
+        title: Next
+      }).catch(() => {
+      });
+    },
+    get iconPath() {
+      return CurrentIconPath;
+    },
+    set iconPath(Value) {
+      if (Disposed) return;
+      CurrentIconPath = Value;
+      Context.MountainClient?.sendRequest("webview.setIconPath", {
+        handle: Handle,
+        iconPath: Value
+      }).catch(() => {
+      });
+    },
     webview: {
       get options() {
         return CurrentOptions;
       },
       set options(Value) {
+        if (Disposed) return;
         CurrentOptions = Value;
         Context.MountainClient?.sendRequest("webview.setOptions", {
           handle: Handle,
@@ -1015,47 +1296,20 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
         return CurrentHtml;
       },
       set html(Value) {
+        if (Disposed) return;
         CurrentHtml = Value;
-        try {
-          if (process.env["Trace"]) {
-            process.stdout.write(
-              `[WebviewPanel] set-html-enter handle=${Handle} htmlLen=${String(Value ?? "").length} hasMountainClient=${!!Context.MountainClient}
-`
-            );
-          }
-        } catch {
-        }
         Context.MountainClient?.sendRequest("webview.setHtml", {
           handle: Handle,
           html: Value
-        }).then(
-          () => {
-            try {
-              if (process.env["Trace"]) {
-                process.stdout.write(
-                  `[WebviewPanel] set-html-sent handle=${Handle}
-`
-                );
-              }
-            } catch {
-            }
-          },
-          (Error2) => {
-            try {
-              if (process.env["Trace"]) {
-                process.stdout.write(
-                  `[WebviewPanel] set-html-failed handle=${Handle} error=${String(Error2?.message ?? Error2).slice(0, 120)}
-`
-                );
-              }
-            } catch {
-            }
-          }
-        );
+        }).catch(() => {
+        });
       },
-      cspSource: SharedCspSource,
+      get cspSource() {
+        return SharedCspSource;
+      },
       asWebviewUri: ToWebviewUri,
       postMessage: /* @__PURE__ */ __name(async (Message) => {
+        if (Disposed) return false;
         try {
           await Context.MountainClient?.sendRequest(
             "webview.postMessage",
@@ -1071,16 +1325,31 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
         Context.Emitter.on(Event, Listener);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context.Emitter.removeListener(Event, Listener);
+            try {
+              Context.Emitter.removeListener(Event, Listener);
+            } catch {
+            }
           }, "dispose")
         };
       }, "onDidReceiveMessage")
     },
-    options: CurrentOptions,
-    viewColumn: 1,
-    active: true,
-    visible: true,
+    get options() {
+      return CurrentOptions;
+    },
+    get viewColumn() {
+      return CurrentViewColumn;
+    },
+    get active() {
+      return CurrentActive;
+    },
+    get visible() {
+      return CurrentVisible;
+    },
     reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
+      if (Disposed) return;
+      if (typeof Column === "number") {
+        CurrentViewColumn = Column;
+      }
       Context.MountainClient?.sendRequest("webview.reveal", {
         handle: Handle,
         viewColumn: Column,
@@ -1089,31 +1358,28 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
       });
     }, "reveal"),
     dispose: /* @__PURE__ */ __name(() => {
-      Context.Emitter.removeAllListeners(`webview.message:${Handle}`);
-      Context.MountainClient?.sendRequest("webview.dispose", {
-        handle: Handle
-      }).catch(() => {
-      });
+      DisposeInternal();
     }, "dispose"),
     onDidDispose: /* @__PURE__ */ __name((Listener) => {
-      const Event = `webview.dispose:${Handle}`;
-      Context.Emitter.on(Event, Listener);
+      DisposeListeners.push(Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.removeListener(Event, Listener);
+          const Index = DisposeListeners.indexOf(Listener);
+          if (Index >= 0) DisposeListeners.splice(Index, 1);
         }, "dispose")
       };
     }, "onDidDispose"),
     onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
-      const Event = `webview.viewState:${Handle}`;
-      Context.Emitter.on(Event, Listener);
+      ViewStateListeners.push(Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.removeListener(Event, Listener);
+          const Index = ViewStateListeners.indexOf(Listener);
+          if (Index >= 0) ViewStateListeners.splice(Index, 1);
         }, "dispose")
       };
     }, "onDidChangeViewState")
   };
+  PanelRef.value = Panel;
   return Panel;
 }, "default");
 
@@ -1631,10 +1897,11 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       };
       return Stub;
     }, "createTerminal"),
-    createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => CreateStatusBarItem_default(
+    createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, PriorityOrAlignment, Priority) => CreateStatusBarItem_default(
       Context,
       NextProviderHandle(),
       AlignmentOrId,
+      PriorityOrAlignment,
       Priority
     ), "createStatusBarItem"),
     createOutputChannel: /* @__PURE__ */ __name((Name, Options) => CreateOutputChannel_default(Context, NextProviderHandle(), Name, Options), "createOutputChannel"),
@@ -2196,8 +2463,11 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     ),
     createTreeView: /* @__PURE__ */ __name((Id, Options) => {
       const Provider = Options?.treeDataProvider;
+      let TreeRefreshSubscription;
+      let RegisteredHandle;
       if (Provider) {
         const Handle = NextProviderHandle();
+        RegisteredHandle = Handle;
         TreeDataProviders.set(String(Handle), Provider);
         TreeDataProvidersByViewId.set(Id, Provider);
         const SerializableOptions = {
@@ -2211,6 +2481,24 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           SerializableOptions
         ]).catch(() => {
         });
+        try {
+          if (typeof Provider?.onDidChangeTreeData === "function") {
+            const Subscription = Provider.onDidChangeTreeData(
+              (Element) => {
+                Context.SendToMountain("tree.refresh", {
+                  handle: Handle,
+                  viewId: Id,
+                  element: Element ?? null
+                }).catch(() => {
+                });
+              }
+            );
+            if (Subscription && typeof Subscription.dispose === "function") {
+              TreeRefreshSubscription = Subscription;
+            }
+          }
+        } catch {
+        }
       }
       const ViewEmitter = new NodeEventEmitter();
       ViewEmitter.setMaxListeners(0);
@@ -2240,6 +2528,13 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           });
         }, "reveal"),
         dispose: /* @__PURE__ */ __name(() => {
+          try {
+            TreeRefreshSubscription?.dispose?.();
+          } catch {
+          }
+          if (RegisteredHandle !== void 0) {
+            TreeDataProviders.delete(String(RegisteredHandle));
+          }
           TreeDataProvidersByViewId.delete(Id);
           ViewEmitters.delete(Id);
           Context.MountainClient?.sendRequest("tree.dispose", [
@@ -2276,8 +2571,31 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         {}
       ]).catch(() => {
       });
+      let TreeEventDispose;
+      try {
+        if (typeof Provider?.onDidChangeTreeData === "function") {
+          const Subscription = Provider.onDidChangeTreeData(
+            (Element) => {
+              Context.SendToMountain("tree.refresh", {
+                handle: Handle,
+                viewId: ViewId,
+                element: Element ?? null
+              }).catch(() => {
+              });
+            }
+          );
+          if (Subscription && typeof Subscription.dispose === "function") {
+            TreeEventDispose = Subscription;
+          }
+        }
+      } catch {
+      }
       return {
         dispose: /* @__PURE__ */ __name(() => {
+          try {
+            TreeEventDispose?.dispose?.();
+          } catch {
+          }
           TreeDataProviders.delete(String(Handle));
           TreeDataProvidersByViewId.delete(ViewId);
           Context.MountainClient?.sendRequest("tree.unregister", [
@@ -2287,11 +2605,19 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         }, "dispose")
       };
     }, "registerTreeDataProvider"),
-    registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerWebviewPanelSerializer"),
-    registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+    registerWebviewPanelSerializer: /* @__PURE__ */ __name((ViewType, Serializer) => {
+      const Key = `__webviewSerializer:${ViewType}`;
+      Context.ExtensionRegistry.set(Key, Serializer);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(Key);
+        }, "dispose")
+      };
+    }, "registerWebviewPanelSerializer"),
+    registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider, Options) => {
       const Handle = NextProviderHandle();
       WebviewViewProviders.set(String(Handle), Provider);
+      const RetainContext = !!Options?.webviewOptions?.retainContextWhenHidden;
       WebviewViewBuilders.set(String(Handle), () => {
         return CreateWebviewViewBuilder_default(
           Context,
@@ -2303,7 +2629,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       });
       Context.MountainClient?.sendRequest("webview.registerView", {
         handle: Handle,
-        viewId: ViewId
+        viewId: ViewId,
+        retainContextWhenHidden: RetainContext
       }).catch(() => {
       });
       return {
@@ -2497,13 +2824,27 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       }
     }, "withProgress"),
     setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
+      const HandleId = `transient:${Math.random().toString(36).slice(2)}`;
+      let Disposed = false;
+      const Clear = /* @__PURE__ */ __name(() => {
+        if (Disposed) return;
+        Disposed = true;
+        Context.SendToMountain("statusBar.clearMessage", {
+          id: HandleId
+        }).catch(() => {
+        });
+      }, "Clear");
       Context.SendToMountain("statusBar.message", {
-        text: Text,
-        hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
+        id: HandleId,
+        text: Text
       }).catch(() => {
       });
-      return { dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") };
+      if (typeof HideAfter === "number" && HideAfter > 0) {
+        setTimeout(Clear, HideAfter);
+      } else if (HideAfter && typeof HideAfter.then === "function") {
+        HideAfter.then(Clear, Clear);
+      }
+      return { dispose: Clear };
     }, "setStatusBarMessage"),
     // `showWorkspaceFolderPick` - stable API. Stock routes through
     // `MainThreadMessageService` to open a quick pick seeded with the
@@ -2574,9 +2915,8 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       "window.didChangeTerminalState"
     ),
     onDidWriteTerminalData: MakeEventSubscriber(Context, "terminalData"),
-    // Shell-integration events added for openai.chatgpt activation;
-    // Land doesn't track shell integration yet so these fire never.
-    // Must be a subscribable function, not a plain object.
+    // Fires when OSC 633 P;cwd= is parsed by Sky Bridge → Mountain
+    // → $acceptTerminalCwdChange → Cocoon NotificationHandler.
     onDidChangeTerminalShellIntegration: MakeEventSubscriber(
       Context,
       "window.didChangeTerminalShellIntegration"
