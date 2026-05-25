@@ -767,6 +767,31 @@ export class GRPCServerService
 			return RequestRoutingHandler(method, parameters);
 		}
 
+		// Call hierarchy and type hierarchy - Mountain forwards `language:prepareCallHierarchy`
+		// etc. via `forward_to_cocoon!`. Map the IPC-prefixed names to the `$prepare*`/
+		// `$provide*` names that InvokeLanguageProvider's switch expects.
+		const HierarchyMethodMap: Record<string, string> = {
+			"language:prepareCallHierarchy": "$prepareCallHierarchy",
+			"language:provideCallHierarchyIncomingCalls":
+				"$provideCallHierarchyIncomingCalls",
+			"language:provideCallHierarchyOutgoingCalls":
+				"$provideCallHierarchyOutgoingCalls",
+			"language:prepareTypeHierarchy": "$prepareTypeHierarchy",
+			"language:provideTypeHierarchySupertypes":
+				"$provideTypeHierarchySupertypes",
+			"language:provideTypeHierarchySubtypes":
+				"$provideTypeHierarchySubtypes",
+			"language:provideLinkedEditingRanges":
+				"$provideLinkedEditingRanges",
+		};
+		if (method in HierarchyMethodMap) {
+			return InvokeLanguageProvider(
+				HierarchyMethodMap[method]!,
+				parameters,
+				this.documentContentCache,
+			);
+		}
+
 		// Language feature provider invocation: "$provideHover", "$provideCompletions",
 		// "$resolveCodeAction", "$resolveCodeLens", etc.
 		// Mountain calls these when Sky's Monaco editor requests language intelligence.
