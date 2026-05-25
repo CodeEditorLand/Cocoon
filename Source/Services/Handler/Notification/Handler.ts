@@ -1478,6 +1478,137 @@ const HandleSpecificNotification = (
 
 		// B6: Mountain notifies Cocoon when a terminal closes so the stale
 		// entry is removed from vscode.window.terminals.
+		// `vscode.window.onDidStartTerminalShellExecution` - Sky's OSC 633
+		// parser fires `localPty:shellExecutionStart` when it sees the C
+		// marker (command output begins). Payload: `{ id, commandLine, cwd }`.
+		// VS Code's event shape is
+		//   { terminal, shellIntegration, execution: { commandLine, cwd } }
+		// where `commandLine` is `{ value, isTrusted }`. Subscribers attach
+		// via the `window.didStartTerminalShellExecution` Emitter channel.
+		case "$acceptTerminalShellExecutionStart": {
+			const StartPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const TermId =
+				typeof StartPayload?.id === "number" ? StartPayload.id : -1;
+			if (TermId < 0) {
+				break;
+			}
+			const Terminals = ((Context as any).__terminals as any[]) ?? [];
+			const Terminal = Terminals.find(
+				(T: any) => T?.id === TermId || T?.handle === TermId,
+			);
+			const CommandLine =
+				typeof StartPayload?.commandLine === "string"
+					? StartPayload.commandLine
+					: "";
+			const Cwd =
+				typeof StartPayload?.cwd === "string" ? StartPayload.cwd : "";
+			try {
+				Emitter.emit("window.didStartTerminalShellExecution", {
+					terminal: Terminal ?? { id: TermId },
+					shellIntegration: Terminal?.shellIntegration ?? {
+						cwd: Cwd ? { fsPath: Cwd } : undefined,
+					},
+					execution: {
+						commandLine: { value: CommandLine, isTrusted: true },
+						cwd: Cwd ? { fsPath: Cwd } : undefined,
+						read: () => {
+							/* read() returns an AsyncIterable in stock VS Code;
+							 * minimal stub - extensions that need streaming
+							 * output should hook `onDidWriteData` instead.
+							 */
+							return (async function* () {})();
+						},
+					},
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidEndTerminalShellExecution` +
+		// `onDidExecuteTerminalCommand` - both fire on OSC 633 ; D.
+		// Mountain sends two separate notifications so the Emitter
+		// channel routing stays explicit. Payload: `{ id, commandLine,
+		// cwd, exitCode }`. End-event shape:
+		//   { terminal, shellIntegration, execution, exitCode }
+		case "$acceptTerminalShellExecutionEnd": {
+			const EndPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const TermId =
+				typeof EndPayload?.id === "number" ? EndPayload.id : -1;
+			if (TermId < 0) {
+				break;
+			}
+			const Terminals = ((Context as any).__terminals as any[]) ?? [];
+			const Terminal = Terminals.find(
+				(T: any) => T?.id === TermId || T?.handle === TermId,
+			);
+			const CommandLine =
+				typeof EndPayload?.commandLine === "string"
+					? EndPayload.commandLine
+					: "";
+			const Cwd =
+				typeof EndPayload?.cwd === "string" ? EndPayload.cwd : "";
+			const ExitCode =
+				typeof EndPayload?.exitCode === "number"
+					? EndPayload.exitCode
+					: -1;
+			try {
+				Emitter.emit("window.didEndTerminalShellExecution", {
+					terminal: Terminal ?? { id: TermId },
+					shellIntegration: Terminal?.shellIntegration ?? {
+						cwd: Cwd ? { fsPath: Cwd } : undefined,
+					},
+					execution: {
+						commandLine: { value: CommandLine, isTrusted: true },
+						cwd: Cwd ? { fsPath: Cwd } : undefined,
+					},
+					exitCode: ExitCode >= 0 ? ExitCode : undefined,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidExecuteTerminalCommand` - proposed API
+		// preserved for compatibility with extensions that hook it on
+		// the legacy event surface. Same payload as End above.
+		case "$acceptExecutedTerminalCommand": {
+			const ExecPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const TermId =
+				typeof ExecPayload?.id === "number" ? ExecPayload.id : -1;
+			if (TermId < 0) {
+				break;
+			}
+			const CommandLine =
+				typeof ExecPayload?.commandLine === "string"
+					? ExecPayload.commandLine
+					: "";
+			const Cwd =
+				typeof ExecPayload?.cwd === "string" ? ExecPayload.cwd : "";
+			const ExitCode =
+				typeof ExecPayload?.exitCode === "number"
+					? ExecPayload.exitCode
+					: -1;
+			try {
+				Emitter.emit("window.didExecuteTerminalCommand", {
+					commandLine: CommandLine,
+					cwd: Cwd,
+					exitCode: ExitCode,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
 		// `vscode.languages.onDidChangeDiagnostics` - Mountain fires this
 		// after every `Diagnostic.Set` / `Diagnostic.Clear` round-trip.
 		// Payload: `{ owner, uris: string[] }`. Subscribers attach via
