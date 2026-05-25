@@ -1260,6 +1260,25 @@ message RPCDataPayload {
 				this.circuitBreakerState = CircuitBreakerState.Closed;
 			}
 		} else {
+			// Once Open, in-flight requests can still resolve with errors
+			// (their CheckCircuitBreaker happened before the breaker tripped).
+			// Don't double-count those - the counter is meant to track
+			// "consecutive failures while Closed/HalfOpen" only. Recovery
+			// happens via CheckCircuitBreaker's timeout → HalfOpen path,
+			// not via more failures piling up here. Without this guard,
+			// every in-flight request that completes after trip appends
+			// a `[Breaker] transition from=OPEN to=Open failures=N` line
+			// to the dev log (seen at N≥19 in the 2026-05-25 panel-debug
+			// run) while doing nothing useful.
+			if (this.circuitBreakerState === CircuitBreakerState.Open) {
+				CocoonDevLog(
+					"breaker",
+					`[Breaker] in-flight failure while Open - not counted (count stays at ${this.circuitBreakerFailureCount})`,
+				);
+
+				return;
+			}
+
 			this.circuitBreakerFailureCount++;
 
 			// Open circuit breaker if threshold reached
