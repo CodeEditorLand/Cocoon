@@ -1,6 +1,33 @@
 /**
  * @module MountainGRPCClientService
- * @description
+ * @deprecated 2026-05-26 - DEAD LAYER. `MountainGRPCClientLayer` (line ~1272)
+ *   is exported but no `Bootstrap.ts` or `Effect.provide(...)` site in
+ *   Cocoon imports it. Effect tags reference `MountainGRPCClientService`
+ *   (`Workspace.ts`, `Window/Index.ts`) but, without the Layer provided,
+ *   those Effect branches never resolve at runtime - the methods below
+ *   never fire.
+ *
+ *   Worse, the gRPC method names used here (`showInformation`,
+ *   `showWarning`, `showError`, `createStatusBarItem`, `setStatusBarText`,
+ *   `createWebviewPanel`, `setWebviewHtml`, `getSecret`) do not match any
+ *   Mountain handler. The real wire names live elsewhere:
+ *
+ *   - `Window.ShowMessage` - `Cocoon/Services/Window/Text/Document.ts`
+ *   - `$statusBar:set` / `setStatusBarText` (alias) -
+ *     `Cocoon/Services/Window/Status/Bar.ts`
+ *   - `webview.create` / `webview.setHtml` -
+ *     `Cocoon/Services/Handler/VscodeAPI/Window/CreateWebviewPanel.ts`
+ *   - `secrets.get` / `secrets.store` / `secrets.delete` -
+ *     `Cocoon/Services/Handler/Extension/Host/ActivateExtension.ts`
+ *
+ *   Do NOT add new code that consumes `MountainGRPCClientService`. Use
+ *   `Context.MountainClient?.sendRequest(...)` against the canonical
+ *   method names instead. Scheduled for removal once `Workspace.ts` and
+ *   `Window/Index.ts` no longer reference the tag (Track-B vertical
+ *   split work in `.hermes/plan/Mountain-Crate-Split.md` §#7).
+ *
+ *   ---
+ *
  * High-level Effect-TS wrapper service for Mountain gRPC operations.
  * Provides convenient methods for Cocoon services to call Mountain's Vine protocol methods.
  *
@@ -325,7 +352,15 @@ export interface MountainGRPCClientService {
 }
 
 /**
- * Service Tag for MountainGRPCClientService
+ * Service Tag for MountainGRPCClientService.
+ *
+ * @deprecated 2026-05-26 - referenced by `Workspace.ts` and
+ *   `Window/Index.ts` but the Layer is never provided in Bootstrap,
+ *   so any Effect that yields this tag fails at the dependency layer
+ *   before running the gRPC call. New code MUST route through
+ *   `Context.MountainClient?.sendRequest(...)` with the canonical
+ *   wire names listed in the module docstring above. Removal scheduled
+ *   when the consumer files migrate during Track-B vertical splits.
  */
 export const MountainGRPCClientService =
 	Context.GenericTag<MountainGRPCClientService>("Service/MountainGRPCClient");
@@ -1267,10 +1302,22 @@ const MountainGRPCClientMock = Layer.effect(
 );
 
 /**
- * Export layers
+ * Export layers.
+ *
+ * @deprecated 2026-05-26 - `MountainGRPCClientLayer` is never imported by
+ *   `Bootstrap.ts` or any other entry point. The Effect Layer is dead.
+ *   See the module docstring at the top of this file for the migration
+ *   path and the canonical wire-method names. Marked but not yet removed
+ *   so a search-and-rescue grep can still find historical usages while
+ *   the consumer files are migrated.
  */
 export const MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
 	Layer.provide(IMountainClientService as any),
 );
 
+/**
+ * @deprecated 2026-05-26 - see `MountainGRPCClientLayer`. Mock layer is
+ *   unused in the test suite (no consumer provides it). Retained pending
+ *   migration cleanup.
+ */
 export const MountainGRPCClientMockLayer = MountainGRPCClientMock;

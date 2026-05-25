@@ -235,8 +235,17 @@ export default (
 			set html(Value: string) {
 				if (Disposed) return;
 				CurrentHtml = Value;
+				// `viewId` aliases the panel's `viewType` for Sky's
+				// `InstallWebview.ts:300-302` resolution path - same
+				// rationale as `postMessage` below. Without it, the
+				// initial setHtml lands on a per-handle slot the
+				// renderer hasn't yet bound to a WebviewInput, and the
+				// 1.8 KB React-bootstrap shell parks in `ParkedHtml`
+				// awaiting a late resolve (the symptom captured in
+				// HANDOFF §-15 from the 2026-05-04 Pelt session).
 				Context.MountainClient?.sendRequest("webview.setHtml", {
 					handle: Handle,
+					viewId: ViewType,
 					html: Value,
 				}).catch(() => {});
 			},
@@ -250,10 +259,20 @@ export default (
 			postMessage: async (Message: unknown) => {
 				if (Disposed) return false;
 				try {
+					// `viewId` carries the panel's `viewType` so Sky's
+					// `InstallWebview.ts` resolution path can fall back to a
+					// viewType-keyed lookup when the per-handle WebviewInput
+					// is not yet bound (race during first-paint between
+					// `webview.create` ack and the workbench's
+					// `IOverlayWebview` instantiation). The bridge accepts
+					// either `handle` or `viewId` (`InstallWebview.ts:56-57,
+					// :300-302`); sending both eliminates the asymmetry
+					// against `CreateWebviewViewBuilder.ts:268`. Matches
+					// `IPC-Flow-Registry` B4.
 					await Context.MountainClient?.sendRequest(
 						"webview.postMessage",
 
-						{ handle: Handle, message: Message },
+						{ handle: Handle, viewId: ViewType, message: Message },
 					);
 
 					return true;
