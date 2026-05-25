@@ -812,10 +812,11 @@ const createVSCodeAPI = (
 				registerInlineValuesProvider: (sel: any, p: any) =>
 					RegisterProvider("inline_values_provider", sel, p),
 
-				setLanguageConfiguration: (lang: string, _config: any) => {
+				setLanguageConfiguration: (lang: string, config: any) => {
 					mountainClient
 						.sendNotification("set_language_configuration", {
 							language: lang,
+							configuration: config,
 						})
 						.catch(() => {});
 					return { dispose: () => {} };

@@ -1396,13 +1396,17 @@ const HandleSpecificNotification = (
 				if (!Already) {
 					// Push a minimal terminal stub matching the shape from
 					// Window/Namespace.ts createTerminal().
-					const Stub = {
+					const Stub: any = {
 						name: OpenName,
 						handle: OpenId,
 						id: OpenId,
 						processId: Promise.resolve(
 							undefined as number | undefined,
 						),
+						// shellIntegration is populated when OSC 633 P;cwd= is
+						// received from the shell. Initially undefined so
+						// extensions can guard with ?. before accessing .cwd.
+						shellIntegration: undefined,
 						sendText: () => {},
 						show: () => {},
 						hide: () => {},
@@ -1467,6 +1471,74 @@ const HandleSpecificNotification = (
 					(Context as any).__activeTerminal = Found;
 					Emitter.emit("window.didChangeActiveTerminal", Found);
 				}
+			}
+			break;
+		}
+
+		case "$acceptTerminalShellIntegrationActivated": {
+			// Sky fires this once when OSC 633 ; A is first seen - the shell
+			// reports that integration scripts are running. Sets a minimal
+			// `shellIntegration` stub so `terminal.shellIntegration !== undefined`
+			// and `onDidChangeTerminalShellIntegration` fires.
+			const ActivatedPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const ActivatedId =
+				ActivatedPayload?.id ??
+				(typeof ActivatedPayload === "number" ? ActivatedPayload : null);
+			if (ActivatedId !== null && ActivatedId !== undefined) {
+				const ActivatedTerm = ((Context as any).__terminals ?? []).find(
+					(T: any) => T?.handle === ActivatedId || T?.id === ActivatedId,
+				);
+				if (ActivatedTerm && !ActivatedTerm.shellIntegration) {
+					ActivatedTerm.shellIntegration = {
+						cwd: undefined,
+						executeCommand: () => ({ read: async function* () {} }),
+					};
+					Emitter.emit("window.didChangeTerminalShellIntegration", {
+						terminal: ActivatedTerm,
+						shellIntegration: ActivatedTerm.shellIntegration,
+					});
+				}
+			}
+			break;
+		}
+
+		case "$acceptTerminalCwdChange": {
+			// Sky Bridge parses OSC 633 P;cwd= sequences and Mountain relays
+			// here so extensions can read `.shellIntegration.cwd`.
+			// Payload: { id: number | null, cwd: string }
+			const CwdPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const CwdTermId = CwdPayload?.id ?? null;
+			const NewCwd: string = CwdPayload?.cwd ?? "";
+			if (NewCwd) {
+				// Build a URI-like object so extensions can call .cwd.fsPath
+				// without special-casing (VS Code's vscode.Uri shape).
+				const CwdUri = {
+					scheme: "file",
+					authority: "",
+					path: NewCwd,
+					query: "",
+					fragment: "",
+					fsPath: NewCwd,
+					toString: () => `file://${NewCwd}`,
+				};
+				const TermEntry = ((Context as any).__terminals ?? []).find(
+					(T: any) => T?.handle === CwdTermId || T?.id === CwdTermId,
+				);
+				if (TermEntry) {
+					TermEntry.shellIntegration = {
+						...(TermEntry.shellIntegration ?? {}),
+						cwd: CwdUri,
+						executeCommand: () => ({ read: async function* () {} }),
+					};
+				}
+				Emitter.emit("window.didChangeTerminalShellIntegration", {
+					terminal: TermEntry ?? null,
+					shellIntegration: { cwd: CwdUri },
+				});
 			}
 			break;
 		}

@@ -1608,9 +1608,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 		onDidWriteTerminalData: MakeEventSubscriber(Context, "terminalData"),
 
-		// Shell-integration events added for openai.chatgpt activation;
-		// Land doesn't track shell integration yet so these fire never.
-		// Must be a subscribable function, not a plain object.
+		// Fires when OSC 633 P;cwd= is parsed by Sky Bridge → Mountain
+		// → $acceptTerminalCwdChange → Cocoon NotificationHandler.
 		onDidChangeTerminalShellIntegration: MakeEventSubscriber(
 			Context,
 
