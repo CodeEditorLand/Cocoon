@@ -1446,6 +1446,31 @@ const HandleSpecificNotification = (
 			break;
 		}
 
+		case "$acceptActiveTerminalChanged": {
+			// Mountain fires this when Sky detects the user switched the
+			// active terminal tab (ITerminalService.onDidChangeActiveInstance).
+			// Payload: { id: number | null }
+			const ActivePayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const ActiveId =
+				ActivePayload?.id ??
+				(typeof ActivePayload === "number" ? ActivePayload : null);
+			if (ActiveId === null || ActiveId === undefined) {
+				(Context as any).__activeTerminal = undefined;
+				Emitter.emit("window.didChangeActiveTerminal", undefined);
+			} else {
+				const Found = ((Context as any).__terminals ?? []).find(
+					(T: any) => T?.handle === ActiveId || T?.id === ActiveId,
+				);
+				if (Found) {
+					(Context as any).__activeTerminal = Found;
+					Emitter.emit("window.didChangeActiveTerminal", Found);
+				}
+			}
+			break;
+		}
+
 		case "$fileWatcher:event":
 			// { handle, kind: "create"|"change"|"delete", path }
 			{

@@ -6010,7 +6010,7 @@ var init_RouteManifest = __esm({
       mountain: 137,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-24T18:34:18Z"
+      generatedAt: "2026-05-25T06:26:08Z"
     };
   }
 });
@@ -36010,6 +36010,23 @@ var init_Handler5 = __esm({
             }
             for (const Term of Removed) {
               Emitter2.emit("window.didCloseTerminal", Term);
+            }
+          }
+          break;
+        }
+        case "$acceptActiveTerminalChanged": {
+          const ActivePayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const ActiveId = ActivePayload?.id ?? (typeof ActivePayload === "number" ? ActivePayload : null);
+          if (ActiveId === null || ActiveId === void 0) {
+            Context13.__activeTerminal = void 0;
+            Emitter2.emit("window.didChangeActiveTerminal", void 0);
+          } else {
+            const Found = (Context13.__terminals ?? []).find(
+              (T) => T?.handle === ActiveId || T?.id === ActiveId
+            );
+            if (Found) {
+              Context13.__activeTerminal = Found;
+              Emitter2.emit("window.didChangeActiveTerminal", Found);
             }
           }
           break;
