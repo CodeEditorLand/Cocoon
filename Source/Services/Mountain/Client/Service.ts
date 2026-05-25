@@ -882,6 +882,18 @@ message RPCDataPayload {
 			const IsBenignMissingCommand =
 				method === "Command.Execute" &&
 				/Command '[^']+' not found/i.test(ErrorMessage);
+
+			// `Unknown method: <name>` is a routing-level mismatch, not a
+			// transport failure. Mountain is alive and answering; it just
+			// doesn't recognise the method name. Counting these against the
+			// breaker means a single Cocoon→Mountain name drift (e.g.
+			// `storage:getItems` vs `Storage.GetItems`) trips the breaker
+			// after 3 calls and then blocks every other extension's
+			// legitimate requests for 60s. Treat as benign so real
+			// transport failures (timeouts, connection drops) are the only
+			// thing that opens the circuit. The error still surfaces to
+			// the caller via the rejected Promise.
+			const IsBenignUnknownMethod = /Unknown method:/i.test(ErrorMessage);
 			// Benign-404 and benign-missing-command both fire per-call
 			// (65+ hits per session from extensions probing for optional
 			// files / cross-extension commands). The fact that they're
@@ -904,6 +916,14 @@ message RPCDataPayload {
 						`[LandFix:MountainClient] ${method} missing-command after ${duration}ms (benign) - ${ErrorMessage}\n`,
 					);
 				}
+			} else if (IsBenignUnknownMethod) {
+				// Surface unknown-method drift loudly (always log) but do
+				// not feed the circuit breaker - the route mismatch is a
+				// code bug, not a transport failure.
+				CocoonDevLog(
+					"mountain-client",
+					`[MountainClientService] ${method} routing miss after ${duration}ms (Mountain has no handler): ${ErrorMessage}`,
+				);
 			} else {
 				this.UpdateCircuitBreaker(false, error);
 
