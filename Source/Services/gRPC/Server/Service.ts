@@ -972,6 +972,71 @@ export class GRPCServerService
 			return null;
 		}
 
+		// ExtHostWebviewPanels - serialize/deserialize webview panels around
+		// a window reload. Extensions register serializers via
+		// `vscode.window.registerWebviewPanelSerializer(viewType, serializer)`;
+		// Mountain reverse-RPCs `$serializeAllWebviewPanels` before reload and
+		// `$deserializeWebviewPanel` once the workbench is back up.
+		if (/^ExtHostWebviewPanels\$/.test(method)) {
+			const PanelMethod = method.slice("ExtHostWebviewPanels$".length);
+			const Context = this.GetHandlerContext();
+			const Args = Array.isArray(parameters) ? parameters : [parameters];
+
+			if (PanelMethod === "serializeAllWebviewPanels") {
+				const ActivePanels = ((Context as any).__webviewPanels ??
+					new Map()) as Map<string, any>;
+				const Result: Array<{ viewType: string; state: unknown }> = [];
+				for (const [PanelHandle, Panel] of ActivePanels.entries()) {
+					const ViewType = String(Panel?.viewType ?? "");
+					if (!ViewType) continue;
+					const Key = `__webviewSerializer:${ViewType}`;
+					const Serializer = (Context.ExtensionRegistry as any)?.get(
+						Key,
+					);
+					if (!Serializer?.serializeWebviewPanel) continue;
+					try {
+						const State = await Serializer.serializeWebviewPanel(Panel);
+						Result.push({
+							viewType: ViewType,
+							state: State ?? null,
+						});
+					} catch {
+						/* serializer threw - skip this panel rather than abort */
+					}
+					void PanelHandle;
+				}
+				return Result;
+			}
+
+			if (PanelMethod === "deserializeWebviewPanel") {
+				const ViewType = String(Args[0] ?? "");
+				const Panel = Args[1];
+				const State = Args[2];
+				const Key = `__webviewSerializer:${ViewType}`;
+				const Serializer = (Context.ExtensionRegistry as any)?.get(Key);
+				if (!Serializer?.deserializeWebviewPanel) {
+					return {
+						success: false,
+						reason: "no serializer registered",
+						viewType: ViewType,
+					};
+				}
+				try {
+					await Serializer.deserializeWebviewPanel(Panel, State);
+					return { success: true, viewType: ViewType };
+				} catch (Error) {
+					return {
+						success: false,
+						viewType: ViewType,
+						error: String(
+							(Error as { message?: unknown })?.message ?? Error,
+						),
+					};
+				}
+			}
+			return null;
+		}
+
 		// ExtHostDebug - debug configuration and session handling.
 		if (/^ExtHostDebug\$/.test(method)) {
 			const DebugMethod = method.slice("ExtHostDebug$".length);
@@ -1012,6 +1077,47 @@ export class GRPCServerService
 					}
 				}
 				return Config;
+			}
+			if (DebugMethod === "sendDAPRequest") {
+				// Inline DAP adapter request: Mountain forwards DAP frames here
+				// for sessions started with `DebugAdapterInlineImplementation`
+				// (no stdin pipe). `Namespace.ts::InitialiseDAPSessionTracker`
+				// instantiated the adapter on `debug.didStartSession` and
+				// stashed it under `Context.__dapAdapters[sessionId]`.
+				const Args = Array.isArray(parameters)
+					? parameters
+					: [parameters];
+				const Payload = (Args[0] ?? {}) as {
+					sessionId?: string;
+					request?: unknown;
+				};
+				const SessionId = String(Payload?.sessionId ?? "");
+				const Request = Payload?.request;
+				const Adapters = (Context as any).__dapAdapters as
+					| Map<string, any>
+					| undefined;
+				const Adapter = Adapters?.get(SessionId);
+				if (!Adapter || typeof Adapter.handleMessage !== "function") {
+					return {
+						success: false,
+						reason: "no inline adapter registered for session",
+						sessionId: SessionId,
+					};
+				}
+				try {
+					Adapter.handleMessage(Request);
+					return {
+						success: true,
+						sessionId: SessionId,
+						transport: "inline",
+					};
+				} catch (Error) {
+					return {
+						success: false,
+						sessionId: SessionId,
+						error: String((Error as { message?: unknown })?.message ?? Error),
+					};
+				}
 			}
 			if (DebugMethod === "provideDebugConfigurations") {
 				const Args = Array.isArray(parameters)

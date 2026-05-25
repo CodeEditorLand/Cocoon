@@ -343,6 +343,11 @@ export const BuildGetConfiguration =
 						);
 						return Subtree as T;
 					}
+					// null/undefined from Mountain means "no override - use default".
+					// In VS Code's configuration model, null stored in settings.json
+					// means "reset to default". Return the caller's DefaultValue so
+					// extensions see the expected fallback rather than null.
+					return DefaultValue as T;
 				}
 				return Cached as T;
 			}

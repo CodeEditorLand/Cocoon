@@ -425,6 +425,39 @@ const HandleSpecificNotification = (
 				Parameters,
 				WorkspaceEventEmitter,
 			);
+			// Update the `version` in `__textDocuments` so extensions that
+			// compare document.version don't see stale values.
+			// Payload shape: [uriComponents, { versionId, changes, isDirty }]
+			if (Context) {
+				const UriPart = Array.isArray(Parameters)
+					? Parameters[0]
+					: Parameters;
+				const EventPart = Array.isArray(Parameters)
+					? Parameters[1]
+					: Parameters;
+				const ChangeUri =
+					UriPart?.external ??
+					UriPart?.uri ??
+					UriPart?.Uri ??
+					UriPart?.fileName;
+				const NewVersion =
+					EventPart?.versionId ??
+					EventPart?.VersionId ??
+					EventPart?.version ??
+					UriPart?.version;
+				if (ChangeUri) {
+					const TextDocs = (Context as any).__textDocuments ?? [];
+					const Doc = TextDocs.find(
+						(D: any) =>
+							D?.uri?.toString?.() === ChangeUri ||
+							D?.fileName === ChangeUri,
+					);
+					if (Doc) {
+						if (NewVersion != null) Doc.version = NewVersion;
+						Doc.isDirty = true;
+					}
+				}
+			}
 			break;
 		case "$acceptModelAdded":
 		case "$acceptModelOpen":
@@ -760,6 +793,28 @@ const HandleSpecificNotification = (
 				Parameters,
 				WorkspaceEventEmitter,
 			);
+			// Update isDirty → false in __textDocuments so extensions that
+			// check `document.isDirty` after saving see the correct state.
+			if (Context) {
+				const SavePayload = Array.isArray(Parameters)
+					? Parameters[0]
+					: Parameters;
+				const SaveUri =
+					SavePayload?.uri ??
+					SavePayload?.Uri ??
+					SavePayload?.external;
+				if (SaveUri) {
+					const TextDocs = (Context as any).__textDocuments ?? [];
+					const SaveDoc = TextDocs.find(
+						(D: any) =>
+							D?.uri?.toString?.() === SaveUri ||
+							D?.fileName === SaveUri,
+					);
+					if (SaveDoc) {
+						SaveDoc.isDirty = false;
+					}
+				}
+			}
 			break;
 		case "webview.message": {
 			// { handle, message } - the webview posted a message to the extension.
@@ -1485,10 +1540,13 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const ActivatedId =
 				ActivatedPayload?.id ??
-				(typeof ActivatedPayload === "number" ? ActivatedPayload : null);
+				(typeof ActivatedPayload === "number"
+					? ActivatedPayload
+					: null);
 			if (ActivatedId !== null && ActivatedId !== undefined) {
 				const ActivatedTerm = ((Context as any).__terminals ?? []).find(
-					(T: any) => T?.handle === ActivatedId || T?.id === ActivatedId,
+					(T: any) =>
+						T?.handle === ActivatedId || T?.id === ActivatedId,
 				);
 				if (ActivatedTerm && !ActivatedTerm.shellIntegration) {
 					ActivatedTerm.shellIntegration = {

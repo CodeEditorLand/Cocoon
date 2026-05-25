@@ -1181,7 +1181,27 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				},
 			};
 		},
-		registerWebviewPanelSerializer: () => ({ dispose: () => {} }),
+		registerWebviewPanelSerializer: (
+			ViewType: string,
+			Serializer: unknown,
+		) => {
+			// Extensions register a serializer so their panels (Live Preview,
+			// custom editors, Roo Code sidebar, AI chat panels) survive a
+			// window reload. Before `nativeHost:reload` fires, Mountain calls
+			// `$serializeAllWebviewPanels` via reverse-RPC; that handler
+			// iterates here, calls `serializer.serializeWebviewPanel(panel)`,
+			// and returns the `(viewType, state)` pairs Mountain persists to
+			// StorageProvider under `__webview_panel_state__`. After reload
+			// `$deserializeWebviewPanel(viewType, panel, state)` re-creates
+			// the panel by calling back into `serializer.deserializeWebviewPanel`.
+			const Key = `__webviewSerializer:${ViewType}`;
+			Context.ExtensionRegistry.set(Key, Serializer);
+			return {
+				dispose: () => {
+					Context.ExtensionRegistry.delete(Key);
+				},
+			};
+		},
 		registerWebviewViewProvider: (ViewId: string, Provider: any) => {
 			const Handle = NextProviderHandle();
 			WebviewViewProviders.set(String(Handle), Provider);

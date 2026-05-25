@@ -23,12 +23,84 @@ const EventSubscriber =
 		};
 	};
 
-const CreateDebugNamespace = (Context: HandlerContext) =>
-	WrapDebugNamespace({
+// Per-session inline DAP adapter tracker. Populated lazily when Mountain
+// fires `debug.didStartSession`; a matching factory entry in the
+// ExtensionRegistry is asked for an adapter, the adapter's `onDidSendMessage`
+// is wired back to Mountain via `debug.dap-response`, and `handleMessage` is
+// called from the ExtHostDebug$sendDAPRequest dispatcher (see gRPC server).
+const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
+	const Anchor = Context as unknown as {
+		__dapAdapters?: Map<string, any>;
+		__dapTrackerInstalled?: boolean;
+	};
+	if (Anchor.__dapTrackerInstalled) {
+		return;
+	}
+	Anchor.__dapTrackerInstalled = true;
+	Anchor.__dapAdapters ??= new Map();
+
+	const ResolveFactory = (DebugType: string): unknown => {
+		const FactoryKey = `__debugAdapterFactory:${DebugType}`;
+		return (Context.ExtensionRegistry as any)?.get(FactoryKey);
+	};
+
+	Context.Emitter.on("debug.didStartSession", (Session: any) => {
+		const SessionId = Session?.id ?? Session?.sessionId;
+		const DebugType = Session?.type ?? Session?.configuration?.type;
+		if (!SessionId || !DebugType) return;
+		const Factory = ResolveFactory(String(DebugType));
+		if (!Factory) return;
+		try {
+			const Descriptor = (Factory as any).createDebugAdapterDescriptor?.(
+				Session,
+				undefined,
+			);
+			const Resolve = (Value: any) => {
+				const Impl = Value?.implementation ?? Value;
+				if (!Impl || typeof Impl.handleMessage !== "function") return;
+				try {
+					Impl.onDidSendMessage?.((Message: unknown) => {
+						Context.SendToMountain("debug.dap-response", {
+							sessionId: SessionId,
+							message: Message,
+						}).catch(() => {});
+					});
+				} catch {
+					/* adapter has no event subscription support */
+				}
+				Anchor.__dapAdapters!.set(String(SessionId), Impl);
+			};
+			if (Descriptor && typeof (Descriptor as any).then === "function") {
+				(Descriptor as Promise<unknown>).then(Resolve, () => {});
+			} else {
+				Resolve(Descriptor);
+			}
+		} catch {
+			/* factory rejected - leave session adapter-less, Mountain
+			 * surfaces the error via the SendCommand return value */
+		}
+	});
+
+	Context.Emitter.on("debug.didTerminateSession", (Session: any) => {
+		const SessionId = Session?.id ?? Session?.sessionId;
+		if (!SessionId) return;
+		const Adapter = Anchor.__dapAdapters!.get(String(SessionId));
+		try {
+			Adapter?.dispose?.();
+		} catch {
+			/* ignore */
+		}
+		Anchor.__dapAdapters!.delete(String(SessionId));
+	});
+};
+
+const CreateDebugNamespace = (Context: HandlerContext) => {
+	InitialiseDAPSessionTracker(Context);
+	return WrapDebugNamespace({
 		registerDebugAdapterDescriptorFactory: (
 			DebugType: string,
 
-			_Factory: unknown,
+			Factory: unknown,
 		) => {
 			const Handle = NextProviderHandle();
 			Context.SendToMountain("register_debug_adapter", {
@@ -36,8 +108,16 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 				debugType: DebugType,
 				extensionId: "",
 			}).catch(() => {});
+			// Stash factory by type so the ExtHostDebug$sendDAPRequest gRPC
+			// dispatch can look it up. `DebugAdapterInlineImplementation`
+			// adapters live entirely inside Cocoon's process - Mountain never
+			// gets a stdin pipe to write to, so DAP frames for those sessions
+			// reverse-RPC into Cocoon and are dispatched here.
+			const FactoryKey = `__debugAdapterFactory:${DebugType}`;
+			Context.ExtensionRegistry.set(FactoryKey, Factory);
 			return {
 				dispose: () => {
+					Context.ExtensionRegistry.delete(FactoryKey);
 					Context.SendToMountain("unregister_debug_adapter", {
 						handle: Handle,
 					}).catch(() => {});
@@ -211,5 +291,6 @@ const CreateDebugNamespace = (Context: HandlerContext) =>
 			"debug.didChangeActiveStackItem",
 		),
 	});
+};
 
 export default CreateDebugNamespace;
