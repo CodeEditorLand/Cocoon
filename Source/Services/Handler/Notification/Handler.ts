@@ -1478,6 +1478,214 @@ const HandleSpecificNotification = (
 
 		// B6: Mountain notifies Cocoon when a terminal closes so the stale
 		// entry is removed from vscode.window.terminals.
+		// `vscode.languages.onDidChangeDiagnostics` - Mountain fires this
+		// after every `Diagnostic.Set` / `Diagnostic.Clear` round-trip.
+		// Payload: `{ owner, uris: string[] }`. Subscribers attach via
+		// `Languages/Namespace.ts:1140` on the `diagnostics.didChange`
+		// Emitter channel. The VS Code event shape is `{ uris: Uri[] }` -
+		// we pass URI strings; the namespace wrapper coerces.
+		case "$acceptDiagnosticsChanged": {
+			const DiagPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Uris = Array.isArray(DiagPayload?.uris)
+				? DiagPayload.uris.filter((U: unknown) => typeof U === "string")
+				: [];
+			try {
+				Emitter.emit("diagnostics.didChange", { uris: Uris });
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidChangeVisibleTextEditors` - Sky reports the
+		// current visible-editor URI set whenever `IEditorService` fires
+		// its visibility change. Payload: `{ uris: string[] }`. The
+		// matching subscriber lives in `Window/Namespace.ts:1702` via
+		// `MakeEventSubscriber(Context, "window.didChangeVisibleTextEditors")`.
+		// Build minimal TextEditor stubs so listener callbacks that
+		// dereference `.document.uri` / `.viewColumn` don't crash.
+		case "$acceptVisibleEditorsChanged": {
+			const VisPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Uris: string[] = Array.isArray(VisPayload?.uris)
+				? VisPayload.uris.filter((U: unknown) => typeof U === "string")
+				: [];
+			const Stubs = Uris.map((Uri, Index) => ({
+				document: { uri: Uri, fileName: Uri.split("/").pop() ?? "" },
+				selection: undefined,
+				selections: [],
+				visibleRanges: [],
+				viewColumn: Index + 1,
+				options: {},
+			}));
+			try {
+				Emitter.emit("window.didChangeVisibleTextEditors", Stubs);
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.tabGroups.onDidChangeTabs` / `onDidChangeTabGroups`
+		// - Sky reports a full tab-model snapshot whenever any
+		// IEditorGroupsService group mutates. Payload:
+		//   { groups: [{ id, isActive, tabs: [{ label, uri }] }] }
+		// VS Code surfaces two events for the same underlying change
+		// (tab-level + group-level). Cache the prior snapshot per Context
+		// so listeners receive proper `{ opened, closed, changed }` diffs.
+		case "$acceptTabsChanged": {
+			const TabsPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const NewGroups: Array<{
+				id: number;
+				isActive: boolean;
+				tabs: Array<{ label: string; uri: string }>;
+			}> = Array.isArray(TabsPayload?.groups) ? TabsPayload.groups : [];
+
+			// Cache the latest snapshot on the Context so
+			// `window.tabGroups.all` getters (which read synchronously)
+			// reflect the most recent workbench state. Same pattern as
+			// `__terminals` / `__activeTerminal` on the Context anchor.
+			const AnchorContext = Context as unknown as {
+				__tabGroups?: Array<(typeof NewGroups)[number]>;
+			};
+			const PriorGroups = AnchorContext.__tabGroups ?? [];
+			AnchorContext.__tabGroups = NewGroups;
+
+			// Build flat tab lists keyed by URI for cheap diffing.
+			const Flatten = (Groups: typeof NewGroups): Map<string, string> => {
+				const Map_ = new Map<string, string>();
+				for (const G of Groups) {
+					for (const T of G.tabs ?? []) {
+						if (T.uri) Map_.set(T.uri, T.label);
+					}
+				}
+				return Map_;
+			};
+			const Prior = Flatten(PriorGroups);
+			const Next = Flatten(NewGroups);
+			const Opened: Array<{ uri: string; label: string }> = [];
+			const Closed: Array<{ uri: string; label: string }> = [];
+			for (const [Uri, Label] of Next)
+				if (!Prior.has(Uri)) Opened.push({ uri: Uri, label: Label });
+			for (const [Uri, Label] of Prior)
+				if (!Next.has(Uri)) Closed.push({ uri: Uri, label: Label });
+
+			try {
+				Emitter.emit("window.didChangeTabs", {
+					opened: Opened,
+					closed: Closed,
+					changed: [],
+				});
+				Emitter.emit("window.didChangeTabGroups", {
+					opened: [],
+					closed: [],
+					changed: NewGroups,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidChangeTextEditorVisibleRanges` - Sky reports
+		// Monaco scroll changes debounced to ~60ms. Payload: `{ uri,
+		// viewColumn, visibleRanges: IRange[] }`. Subscribers attach via
+		// `Window/Namespace.ts:1714` (`MakeEventSubscriber(Context,
+		// "window.didChangeTextEditorVisibleRanges")`). Build a minimal
+		// TextEditor stub so listener callbacks that dereference
+		// `.textEditor.document.uri` don't crash.
+		case "$acceptVisibleRangesChanged": {
+			const VRPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Uri = typeof VRPayload?.uri === "string" ? VRPayload.uri : "";
+			if (!Uri) {
+				break;
+			}
+			const VisibleRanges = Array.isArray(VRPayload?.visibleRanges)
+				? VRPayload.visibleRanges
+				: [];
+			try {
+				Emitter.emit("window.didChangeTextEditorVisibleRanges", {
+					textEditor: {
+						document: {
+							uri: Uri,
+							fileName: Uri.split("/").pop() ?? "",
+						},
+						viewColumn: VRPayload.viewColumn,
+						visibleRanges: VisibleRanges,
+					},
+					visibleRanges: VisibleRanges,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidChangeTextEditorOptions` - Sky reports
+		// Monaco config changes (tab size, insert-spaces, word-wrap).
+		// Payload: `{ uri, viewColumn, options: { tabSize, insertSpaces,
+		// changedConfiguration } }`. Same TextEditor stub shape as the
+		// visible-ranges event above.
+		case "$acceptTextEditorOptionsChanged": {
+			const OptPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Uri =
+				typeof OptPayload?.uri === "string" ? OptPayload.uri : "";
+			if (!Uri) {
+				break;
+			}
+			const Options = OptPayload?.options ?? {};
+			try {
+				Emitter.emit("window.didChangeTextEditorOptions", {
+					textEditor: {
+						document: {
+							uri: Uri,
+							fileName: Uri.split("/").pop() ?? "",
+						},
+						viewColumn: OptPayload.viewColumn,
+						options: Options,
+					},
+					options: Options,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidChangeActiveColorTheme` - Mountain fires
+		// `$acceptActiveColorTheme` after `themes:set` completes. Payload:
+		// `{ id, kind }` where kind ∈ {1: Light, 2: Dark, 3: HighContrast,
+		// 4: HighContrastLight} matching VS Code's `ColorThemeKind` enum.
+		// Subscribers attach via `MakeEventSubscriber(Context,
+		// "window.didChangeActiveColorTheme")` in `Window/Namespace.ts:1041`.
+		case "$acceptActiveColorTheme": {
+			const ThemePayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const ThemeId =
+				typeof ThemePayload?.id === "string" ? ThemePayload.id : "";
+			const ThemeKind =
+				typeof ThemePayload?.kind === "number" ? ThemePayload.kind : 2;
+			try {
+				Emitter.emit("window.didChangeActiveColorTheme", {
+					kind: ThemeKind,
+					id: ThemeId,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
 		// `vscode.commands.onDidExecuteCommand` - Mountain fires this after
 		// every `commands:execute` round-trip. Payload: `{ command, arguments }`.
 		// Fan out to the per-extension subscriber loop via the shared Emitter
