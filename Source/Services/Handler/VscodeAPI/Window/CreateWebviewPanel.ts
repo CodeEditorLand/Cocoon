@@ -168,9 +168,13 @@ export default (
 		}
 		// Tell Mountain to clean up. Idempotent on the Sky side - the
 		// handle registry entry is already gone if the dispose chain
-		// originated from a tab-close.
+		// originated from a tab-close. `viewId` mirrors the same
+		// dual-key strategy as `setHtml`/`postMessage` so a dispose
+		// emitted before the per-handle WebviewInput finishes binding
+		// still finds its target via the viewType-keyed fallback.
 		Context.MountainClient?.sendRequest("webview.dispose", {
 			handle: Handle,
+			viewId: ViewType,
 		}).catch(() => {});
 		for (const Listener of DisposeListeners.slice()) {
 			try {
@@ -195,8 +199,10 @@ export default (
 			const Next = String(Value ?? "");
 			if (Next === CurrentTitle) return;
 			CurrentTitle = Next;
+			// `viewId` dual-key per the same rationale as setHtml below.
 			Context.MountainClient?.sendRequest("webview.setTitle", {
 				handle: Handle,
+				viewId: ViewType,
 				title: Next,
 			}).catch(() => {});
 		},
@@ -210,6 +216,7 @@ export default (
 			CurrentIconPath = Value;
 			Context.MountainClient?.sendRequest("webview.setIconPath", {
 				handle: Handle,
+				viewId: ViewType,
 				iconPath: Value,
 			}).catch(() => {});
 		},
@@ -224,6 +231,7 @@ export default (
 				CurrentOptions = Value;
 				Context.MountainClient?.sendRequest("webview.setOptions", {
 					handle: Handle,
+					viewId: ViewType,
 					options: Value,
 				}).catch(() => {});
 			},
@@ -319,8 +327,14 @@ export default (
 			if (typeof Column === "number") {
 				CurrentViewColumn = Column;
 			}
+			// `viewId` dual-key for Sky's resolution fallback - same
+			// rationale as setHtml/postMessage above. Reveal sometimes
+			// fires before the workbench finishes mounting the
+			// panel's IOverlayWebview, so the viewType-keyed fallback
+			// matters more here than for any other mutator.
 			Context.MountainClient?.sendRequest("webview.reveal", {
 				handle: Handle,
+				viewId: ViewType,
 				viewColumn: Column,
 				preserveFocus: PreserveFocus,
 			}).catch(() => {});

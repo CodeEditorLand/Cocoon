@@ -1,6 +1,18 @@
 /**
  * @module TerminalService
- * @description
+ * @deprecated 2026-05-26 - DEAD WRAPPER. `TerminalServiceLayer` (line ~99)
+ *   is imported only by `Orchestration/Old/Style/Services.ts:135` which
+ *   itself is not imported by any active Bootstrap path. The `resize`
+ *   and `kill` methods carry commented-out wire calls (`terminal.resize`,
+ *   `terminal.kill`) that don't match any Mountain handler either -
+ *   the real Mountain wire names are `localPty:resize` and
+ *   `localPty:freePortKillProcess` / `localPty:dispose`, exposed via
+ *   `MountainIPCInvoke` from `WindServiceHandlers/Terminal/LocalPTYResize.rs`
+ *   and friends. Any active terminal management goes through
+ *   `Cocoon/Source/Services/Handler/VscodeAPI/Window/CreateTerminal.ts`
+ *   which talks to Mountain directly. Retained pending vertical-split
+ *   cleanup (Mountain-Crate-Split.md §#7a Terminal).
+ *
  * Implements the Terminal API over the Universal Spine.
  * Manages PTY processes via Mountain.
  */

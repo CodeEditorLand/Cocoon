@@ -129,7 +129,24 @@ const CreateCommandsNamespace = (
 					Command,
 					...Arguments,
 				);
-				if (LocalResult !== undefined) return LocalResult;
+				if (LocalResult !== undefined) {
+					// Symmetric with the Mountain branch: fire the
+					// `commands.executed` event for local routes too so
+					// `vscode.commands.onDidExecuteCommand` callbacks see
+					// extension-to-extension executeCommand calls. The
+					// Mountain branch gets this via Mountain's dual-emit;
+					// the local branch never reaches Mountain so we emit
+					// here directly.
+					try {
+						Context.Emitter.emit("commands.executed", {
+							command: Command,
+							arguments: Arguments,
+						});
+					} catch {
+						/* listener threw - swallow */
+					}
+					return LocalResult;
+				}
 				// Local handler returned undefined - either the extension's
 				// command legitimately has no return value, or (rare) the
 				// handler was deregistered between `Has` probe and invoke.
@@ -165,23 +182,40 @@ const CreateCommandsNamespace = (
 		},
 
 		// `onDidExecuteCommand` - Mountain emits `sky://commands/executed`
-		// after every `commands:execute` call with `{ command, arguments }`.
-		// Subscribe to that Tauri event and fan out to each registered listener.
+		// to the renderer AND dual-emits `$acceptCommandExecuted` over
+		// Vine to Cocoon. `Services/Handler/Notification/Handler.ts`
+		// catches the latter and forwards onto the shared Emitter channel
+		// `commands.executed`. Subscribe there - the prior implementation
+		// used `import("@tauri-apps/api/event").listen(...)` which never
+		// fires in Node.js (no `window.__TAURI__`), so extensions that
+		// hooked onDidExecuteCommand never received events.
 		onDidExecuteCommand: (
 			Listener: (Event: {
 				command: string;
 				arguments: unknown[];
 			}) => unknown,
 		) => {
-			let Active = true;
-			void import("@tauri-apps/api/event").then(({ listen }) => {
-				void listen("sky://commands/executed", (TauriEvent: any) => {
-					if (Active) Listener(TauriEvent.payload ?? {});
-				});
-			});
+			const Wrapped = (Payload: unknown) => {
+				try {
+					const E = Payload as
+						| { command: string; arguments: unknown[] }
+						| undefined;
+					if (E?.command) Listener(E);
+				} catch {
+					/* swallow */
+				}
+			};
+			Context.Emitter.on("commands.executed", Wrapped);
 			return {
 				dispose: () => {
-					Active = false;
+					try {
+						Context.Emitter.removeListener(
+							"commands.executed",
+							Wrapped,
+						);
+					} catch {
+						/* swallow */
+					}
 				},
 			};
 		},

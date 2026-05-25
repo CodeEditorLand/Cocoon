@@ -1478,6 +1478,35 @@ const HandleSpecificNotification = (
 
 		// B6: Mountain notifies Cocoon when a terminal closes so the stale
 		// entry is removed from vscode.window.terminals.
+		// `vscode.commands.onDidExecuteCommand` - Mountain fires this after
+		// every `commands:execute` round-trip. Payload: `{ command, arguments }`.
+		// Fan out to the per-extension subscriber loop via the shared Emitter
+		// channel `commands.executed`. The matching subscriber lives in
+		// `Services/Handler/VscodeAPI/Commands/Namespace.ts::onDidExecuteCommand`
+		// (replaces the dead Tauri-listen path that did not work in Node).
+		case "$acceptCommandExecuted": {
+			const ExecPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const CommandId =
+				typeof ExecPayload?.command === "string"
+					? ExecPayload.command
+					: "";
+			if (CommandId) {
+				try {
+					Emitter.emit("commands.executed", {
+						command: CommandId,
+						arguments: Array.isArray(ExecPayload?.arguments)
+							? ExecPayload.arguments
+							: [],
+					});
+				} catch {
+					/* listener threw - keep dispatching */
+				}
+			}
+			break;
+		}
+
 		case "$acceptTerminalClosed": {
 			const ClosePayload = Array.isArray(Parameters)
 				? Parameters[0]
