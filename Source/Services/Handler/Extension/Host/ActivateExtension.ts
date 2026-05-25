@@ -663,8 +663,8 @@ const ActivateExtension = async (
 			try {
 				const PrimeStart = Date.now();
 				const AllRaw = await Context.MountainClient?.sendRequest(
-					"storage:getItems",
-					{},
+					"Storage.GetItems",
+					[],
 				);
 				const AllArray = Array.isArray(AllRaw) ? AllRaw : [];
 				const WorkspacePrefix = `${ExtensionId}:workspace:`;
