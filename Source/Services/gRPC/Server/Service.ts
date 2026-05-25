@@ -793,10 +793,15 @@ export class GRPCServerService
 		}
 
 		// Language feature provider invocation: "$provideHover", "$provideCompletions",
-		// "$resolveCodeAction", "$resolveCodeLens", etc.
+		// "$resolveCodeAction", "$resolveCodeLens", "$prepareCallHierarchyItems",
+		// "$prepareTypeHierarchyItems", etc.
 		// Mountain calls these when Sky's Monaco editor requests language intelligence.
 		// parameters = [handle, uriObject, position?, context?]
-		if (/^\$provide[A-Z]/.test(method) || /^\$resolve[A-Z]/.test(method)) {
+		if (
+			/^\$provide[A-Z]/.test(method) ||
+			/^\$resolve[A-Z]/.test(method) ||
+			/^\$prepare[A-Z]/.test(method)
+		) {
 			return InvokeLanguageProvider(
 				method,
 
