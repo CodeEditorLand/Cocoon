@@ -2180,10 +2180,29 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return Panel;
     }, "createWebviewPanel"),
     showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-      const UriRaw = _Document?.uri?.toString?.() ?? _Document?.external ?? (_Document?.scheme && _Document?.path ? `${_Document.scheme}://${_Document.authority ?? ""}${_Document.path}` : "") ?? "";
+      const Doc = _Document;
+      let UriRaw = "";
+      if (typeof Doc === "string") {
+        UriRaw = Doc;
+      } else if (Doc) {
+        const RawUri = Doc.uri ?? Doc;
+        if (typeof RawUri === "string") {
+          UriRaw = RawUri;
+        } else if (RawUri) {
+          if (typeof RawUri.toString === "function" && RawUri.toString !== Object.prototype.toString) {
+            UriRaw = String(RawUri);
+          } else if (typeof RawUri.external === "string") {
+            UriRaw = RawUri.external;
+          } else if (typeof RawUri.scheme === "string" && typeof RawUri.path === "string") {
+            UriRaw = `${RawUri.scheme}://${RawUri.authority ?? ""}${RawUri.path}`;
+          } else if (typeof RawUri.fsPath === "string") {
+            UriRaw = RawUri.fsPath;
+          }
+        }
+      }
       try {
         await Context.MountainClient?.sendRequest("showTextDocument", [
-          _Document,
+          UriRaw,
           _Column,
           _PreserveFocus
         ]);

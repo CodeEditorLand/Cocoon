@@ -892,8 +892,17 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => Namespace_default({
             GroupReady.then(
               () => Context.SendToMountain("update_scm_group", {
                 // Proto UpdateScmGroupRequest field names:
-                // providerId (string scm id) + groupId (string)
+                // providerId (string scm id) + groupId (string).
+                // `scmHandle` and `groupHandle` are included so
+                // multi-repo workspaces (all sharing scmId="git")
+                // route updates to the correct provider -
+                // without them Mountain logs `scm_handle=None`
+                // and Sky's `ResolveScmShim` falls back to a
+                // non-unique scmId lookup, dropping updates
+                // against the wrong workbench provider.
+                scmHandle: Handle,
                 providerId: Id,
+                groupHandle: GroupHandle,
                 groupId: GroupId,
                 resourceStates: SanitizedStates
               })

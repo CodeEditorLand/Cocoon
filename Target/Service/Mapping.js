@@ -5001,10 +5001,29 @@ var init_Namespace2 = __esm({
           return Panel;
         }, "createWebviewPanel"),
         showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          const UriRaw = _Document?.uri?.toString?.() ?? _Document?.external ?? (_Document?.scheme && _Document?.path ? `${_Document.scheme}://${_Document.authority ?? ""}${_Document.path}` : "") ?? "";
+          const Doc = _Document;
+          let UriRaw = "";
+          if (typeof Doc === "string") {
+            UriRaw = Doc;
+          } else if (Doc) {
+            const RawUri = Doc.uri ?? Doc;
+            if (typeof RawUri === "string") {
+              UriRaw = RawUri;
+            } else if (RawUri) {
+              if (typeof RawUri.toString === "function" && RawUri.toString !== Object.prototype.toString) {
+                UriRaw = String(RawUri);
+              } else if (typeof RawUri.external === "string") {
+                UriRaw = RawUri.external;
+              } else if (typeof RawUri.scheme === "string" && typeof RawUri.path === "string") {
+                UriRaw = `${RawUri.scheme}://${RawUri.authority ?? ""}${RawUri.path}`;
+              } else if (typeof RawUri.fsPath === "string") {
+                UriRaw = RawUri.fsPath;
+              }
+            }
+          }
           try {
             await Context13.MountainClient?.sendRequest("showTextDocument", [
-              _Document,
+              UriRaw,
               _Column,
               _PreserveFocus
             ]);
@@ -6309,7 +6328,7 @@ var init_RouteManifest = __esm({
       mountain: 142,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-26T17:02:24Z"
+      generatedAt: "2026-05-26T17:41:48Z"
     };
   }
 });
@@ -33818,8 +33837,17 @@ var init_Namespace19 = __esm({
                 GroupReady.then(
                   () => Context13.SendToMountain("update_scm_group", {
                     // Proto UpdateScmGroupRequest field names:
-                    // providerId (string scm id) + groupId (string)
+                    // providerId (string scm id) + groupId (string).
+                    // `scmHandle` and `groupHandle` are included so
+                    // multi-repo workspaces (all sharing scmId="git")
+                    // route updates to the correct provider -
+                    // without them Mountain logs `scm_handle=None`
+                    // and Sky's `ResolveScmShim` falls back to a
+                    // non-unique scmId lookup, dropping updates
+                    // against the wrong workbench provider.
+                    scmHandle: Handle,
                     providerId: Id,
+                    groupHandle: GroupHandle,
                     groupId: GroupId,
                     resourceStates: SanitizedStates
                   })
@@ -36066,9 +36094,7 @@ var init_Handler5 = __esm({
       }
     }, "SafeEmit");
     BuildTextDocumentShim = /* @__PURE__ */ __name((Context13, Uri2) => {
-      const ExistingDocs = Array.isArray(
-        Context13.__textDocuments
-      ) ? Context13.__textDocuments : [];
+      const ExistingDocs = Array.isArray(Context13.__textDocuments) ? Context13.__textDocuments : [];
       const Found = ExistingDocs.find((D) => {
         try {
           const DocUri = D?.uri?.toString?.() ?? "";
