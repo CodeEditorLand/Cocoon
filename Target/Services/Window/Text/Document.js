@@ -13000,7 +13000,8 @@ var init_codiconsLibrary = __esm({
       syncCompact: register("sync-compact", 60602),
       terminalCompact: register("terminal-compact", 60603),
       vmPending: register("vm-pending", 60604),
-      worktreeCompact: register("worktree-compact", 60605)
+      worktreeCompact: register("worktree-compact", 60605),
+      developerTools: register("developer-tools", 60606)
     };
   }
 });

@@ -6892,7 +6892,7 @@ var init_RouteManifest = __esm({
       mountain: 140,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-26T13:12:45Z"
+      generatedAt: "2026-05-26T14:53:08Z"
     };
   }
 });
@@ -21036,7 +21036,8 @@ var init_codiconsLibrary = __esm({
       syncCompact: register("sync-compact", 60602),
       terminalCompact: register("terminal-compact", 60603),
       vmPending: register("vm-pending", 60604),
-      worktreeCompact: register("worktree-compact", 60605)
+      worktreeCompact: register("worktree-compact", 60605),
+      developerTools: register("developer-tools", 60606)
     };
   }
 });
