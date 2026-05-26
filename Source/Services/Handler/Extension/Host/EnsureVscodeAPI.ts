@@ -351,41 +351,9 @@ const EnsureVscodeAPIRegistered = async (
 				registerChatSessionProvider: () => ({ dispose: () => {} }),
 				registerChatSessionItemProvider: () => ({ dispose: () => {} }),
 			},
-			tests: {
-				createTestController: () => ({
-					id: "",
-					label: "",
-					items: {
-						size: 0,
-						replace: () => {},
-						forEach: () => {},
-						add: () => {},
-						delete: () => {},
-						get: () => undefined,
-					},
-					createRunProfile: () => ({ dispose: () => {} }),
-					resolveHandler: undefined,
-					refreshHandler: undefined,
-					createTestItem: () => ({}),
-					createTestRun: () => ({
-						enqueued: () => {},
-						started: () => {},
-						skipped: () => {},
-						failed: () => {},
-						errored: () => {},
-						passed: () => {},
-						end: () => {},
-						appendOutput: () => {},
-						token: {
-							isCancellationRequested: false,
-							onCancellationRequested: () => ({
-								dispose: () => {},
-							}),
-						},
-					}),
-					dispose: () => {},
-				}),
-			},
+			tests: (await import("../../VscodeAPI/Tests/Namespace.js")).default(
+				Context,
+			),
 			comments: {
 				createCommentController: () => ({
 					id: "",
