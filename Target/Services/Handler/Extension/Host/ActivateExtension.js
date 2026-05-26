@@ -502,8 +502,8 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
       try {
         const PrimeStart = Date.now();
         const AllRaw = await Context.MountainClient?.sendRequest(
-          "storage:getItems",
-          {}
+          "Storage.GetItems",
+          []
         );
         const AllArray = Array.isArray(AllRaw) ? AllRaw : [];
         const WorkspacePrefix = `${ExtensionId}:workspace:`;

@@ -169,7 +169,9 @@ const MakeTestRun = (
 			Results.set(Item.id, {
 				state: State,
 				duration:
-					typeof MaybeDuration === "number" ? MaybeDuration : undefined,
+					typeof MaybeDuration === "number"
+						? MaybeDuration
+						: undefined,
 				message:
 					MaybeMessage && State !== "passed" && State !== "skipped"
 						? MaybeMessage

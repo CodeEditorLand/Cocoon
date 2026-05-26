@@ -1239,7 +1239,8 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
     } catch {
     }
     Context.MountainClient?.sendRequest("webview.dispose", {
-      handle: Handle
+      handle: Handle,
+      viewId: ViewType
     }).catch(() => {
     });
     for (const Listener of DisposeListeners.slice()) {
@@ -1263,6 +1264,7 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
       CurrentTitle = Next;
       Context.MountainClient?.sendRequest("webview.setTitle", {
         handle: Handle,
+        viewId: ViewType,
         title: Next
       }).catch(() => {
       });
@@ -1275,6 +1277,7 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
       CurrentIconPath = Value;
       Context.MountainClient?.sendRequest("webview.setIconPath", {
         handle: Handle,
+        viewId: ViewType,
         iconPath: Value
       }).catch(() => {
       });
@@ -1288,6 +1291,7 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
         CurrentOptions = Value;
         Context.MountainClient?.sendRequest("webview.setOptions", {
           handle: Handle,
+          viewId: ViewType,
           options: Value
         }).catch(() => {
         });
@@ -1300,6 +1304,7 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
         CurrentHtml = Value;
         Context.MountainClient?.sendRequest("webview.setHtml", {
           handle: Handle,
+          viewId: ViewType,
           html: Value
         }).catch(() => {
         });
@@ -1313,7 +1318,7 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
         try {
           await Context.MountainClient?.sendRequest(
             "webview.postMessage",
-            { handle: Handle, message: Message }
+            { handle: Handle, viewId: ViewType, message: Message }
           );
           return true;
         } catch {
@@ -1352,6 +1357,7 @@ var CreateWebviewPanel_default = /* @__PURE__ */ __name((Context, Handle, ViewTy
       }
       Context.MountainClient?.sendRequest("webview.reveal", {
         handle: Handle,
+        viewId: ViewType,
         viewColumn: Column,
         preserveFocus: PreserveFocus
       }).catch(() => {

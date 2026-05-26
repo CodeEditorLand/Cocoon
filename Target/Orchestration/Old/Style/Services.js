@@ -19960,6 +19960,7 @@ message RPCDataPayload {
             ErrorMessage
           )) || IsCatchBenignFileWatcher;
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
+          const IsBenignUnknownMethod = /Unknown method:/i.test(ErrorMessage);
           const TraceMountainClient = process.env["Trace"]?.includes(
             "mountain-client-verbose"
           );
@@ -19977,6 +19978,11 @@ message RPCDataPayload {
 `
               );
             }
+          } else if (IsBenignUnknownMethod) {
+            CocoonDevLog3(
+              "mountain-client",
+              `[MountainClientService] ${method} routing miss after ${duration}ms (Mountain has no handler): ${ErrorMessage}`
+            );
           } else {
             this.UpdateCircuitBreaker(false, error);
             CocoonDevLog3(
@@ -20200,6 +20206,13 @@ message RPCDataPayload {
             this.circuitBreakerState = "CLOSED" /* Closed */;
           }
         } else {
+          if (this.circuitBreakerState === "OPEN" /* Open */) {
+            CocoonDevLog3(
+              "breaker",
+              `[Breaker] in-flight failure while Open - not counted (count stays at ${this.circuitBreakerFailureCount})`
+            );
+            return;
+          }
           this.circuitBreakerFailureCount++;
           if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
             const PriorState = this.circuitBreakerState;

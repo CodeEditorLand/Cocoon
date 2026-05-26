@@ -1872,6 +1872,7 @@ message RPCDataPayload {
             ErrorMessage
           )) || IsCatchBenignFileWatcher;
           const IsBenignMissingCommand = method === "Command.Execute" && /Command '[^']+' not found/i.test(ErrorMessage);
+          const IsBenignUnknownMethod = /Unknown method:/i.test(ErrorMessage);
           const TraceMountainClient = process.env["Trace"]?.includes(
             "mountain-client-verbose"
           );
@@ -1889,6 +1890,11 @@ message RPCDataPayload {
 `
               );
             }
+          } else if (IsBenignUnknownMethod) {
+            CocoonDevLog2(
+              "mountain-client",
+              `[MountainClientService] ${method} routing miss after ${duration}ms (Mountain has no handler): ${ErrorMessage}`
+            );
           } else {
             this.UpdateCircuitBreaker(false, error);
             CocoonDevLog2(
@@ -2112,6 +2118,13 @@ message RPCDataPayload {
             this.circuitBreakerState = "CLOSED" /* Closed */;
           }
         } else {
+          if (this.circuitBreakerState === "OPEN" /* Open */) {
+            CocoonDevLog2(
+              "breaker",
+              `[Breaker] in-flight failure while Open - not counted (count stays at ${this.circuitBreakerFailureCount})`
+            );
+            return;
+          }
           this.circuitBreakerFailureCount++;
           if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
             const PriorState = this.circuitBreakerState;
@@ -4046,7 +4059,8 @@ var init_CreateWebviewPanel = __esm({
         } catch {
         }
         Context13.MountainClient?.sendRequest("webview.dispose", {
-          handle: Handle
+          handle: Handle,
+          viewId: ViewType
         }).catch(() => {
         });
         for (const Listener of DisposeListeners.slice()) {
@@ -4070,6 +4084,7 @@ var init_CreateWebviewPanel = __esm({
           CurrentTitle = Next;
           Context13.MountainClient?.sendRequest("webview.setTitle", {
             handle: Handle,
+            viewId: ViewType,
             title: Next
           }).catch(() => {
           });
@@ -4082,6 +4097,7 @@ var init_CreateWebviewPanel = __esm({
           CurrentIconPath = Value;
           Context13.MountainClient?.sendRequest("webview.setIconPath", {
             handle: Handle,
+            viewId: ViewType,
             iconPath: Value
           }).catch(() => {
           });
@@ -4095,6 +4111,7 @@ var init_CreateWebviewPanel = __esm({
             CurrentOptions = Value;
             Context13.MountainClient?.sendRequest("webview.setOptions", {
               handle: Handle,
+              viewId: ViewType,
               options: Value
             }).catch(() => {
             });
@@ -4107,6 +4124,7 @@ var init_CreateWebviewPanel = __esm({
             CurrentHtml = Value;
             Context13.MountainClient?.sendRequest("webview.setHtml", {
               handle: Handle,
+              viewId: ViewType,
               html: Value
             }).catch(() => {
             });
@@ -4120,7 +4138,7 @@ var init_CreateWebviewPanel = __esm({
             try {
               await Context13.MountainClient?.sendRequest(
                 "webview.postMessage",
-                { handle: Handle, message: Message }
+                { handle: Handle, viewId: ViewType, message: Message }
               );
               return true;
             } catch {
@@ -4159,6 +4177,7 @@ var init_CreateWebviewPanel = __esm({
           }
           Context13.MountainClient?.sendRequest("webview.reveal", {
             handle: Handle,
+            viewId: ViewType,
             viewColumn: Column,
             preserveFocus: PreserveFocus
           }).catch(() => {
@@ -6329,14 +6348,14 @@ var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummar
 var init_RouteManifest = __esm({
   "Source/Generated/RouteManifest.ts"() {
     "use strict";
-    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:openDiff", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:hide", "$terminal:resize", "$terminal:sendText", "$terminal:show", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_drop_edit_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_paste_edit_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_completion_item_provider", "register_inline_edit_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_mapped_edits_provider", "register_multi_document_highlight_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "saveAll", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "showTextDocument", "stat", "Storage.Get", "Storage.GetItems", "Storage.Set", "Task.Execute", "Task.Fetch", "Terminal.GetProcessId", "Terminal.Hide", "Terminal.Resize", "Terminal.Show", "tree.dispose", "tree.register", "tree.reveal", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "vscode.diff", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "window.revealRange", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust", "Workspace.Save", "Workspace.SaveAll", "Workspace.SaveAs"]);
+    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:openDiff", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:hide", "$terminal:resize", "$terminal:sendText", "$terminal:show", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_drop_edit_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_paste_edit_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_completion_item_provider", "register_inline_edit_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_mapped_edits_provider", "register_multi_document_highlight_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "saveAll", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "setStatusBarText", "showTextDocument", "stat", "Storage.Get", "Storage.GetItems", "Storage.Set", "Task.Execute", "Task.Fetch", "Task.Terminate", "Terminal.GetProcessId", "Terminal.Hide", "Terminal.Resize", "Terminal.Show", "terminate_task", "tree.dispose", "tree.register", "tree.reveal", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "vscode.diff", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "window.revealRange", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust", "Workspace.Save", "Workspace.SaveAll", "Workspace.SaveAs"]);
     StockLiftExports = /* @__PURE__ */ new Set();
     BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
     RouteManifestSummary = {
-      mountain: 137,
+      mountain: 140,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-25T20:14:58Z"
+      generatedAt: "2026-05-26T08:48:35Z"
     };
   }
 });
@@ -7321,8 +7340,8 @@ var init_ActivateExtension = __esm({
           try {
             const PrimeStart = Date.now();
             const AllRaw = await Context13.MountainClient?.sendRequest(
-              "storage:getItems",
-              {}
+              "Storage.GetItems",
+              []
             );
             const AllArray = Array.isArray(AllRaw) ? AllRaw : [];
             const WorkspacePrefix = `${ExtensionId}:workspace:`;
@@ -31996,7 +32015,16 @@ var init_Namespace7 = __esm({
             Command,
             ...Arguments
           );
-          if (LocalResult !== void 0) return LocalResult;
+          if (LocalResult !== void 0) {
+            try {
+              Context13.Emitter.emit("commands.executed", {
+                command: Command,
+                arguments: Arguments
+              });
+            } catch {
+            }
+            return LocalResult;
+          }
         }
         try {
           return await Context13.MountainClient?.sendRequest(
@@ -32020,18 +32048,31 @@ var init_Namespace7 = __esm({
         }
       }, "getCommands"),
       // `onDidExecuteCommand` - Mountain emits `sky://commands/executed`
-      // after every `commands:execute` call with `{ command, arguments }`.
-      // Subscribe to that Tauri event and fan out to each registered listener.
+      // to the renderer AND dual-emits `$acceptCommandExecuted` over
+      // Vine to Cocoon. `Services/Handler/Notification/Handler.ts`
+      // catches the latter and forwards onto the shared Emitter channel
+      // `commands.executed`. Subscribe there - the prior implementation
+      // used `import("@tauri-apps/api/event").listen(...)` which never
+      // fires in Node.js (no `window.__TAURI__`), so extensions that
+      // hooked onDidExecuteCommand never received events.
       onDidExecuteCommand: /* @__PURE__ */ __name((Listener) => {
-        let Active = true;
-        void import("@tauri-apps/api/event").then(({ listen }) => {
-          void listen("sky://commands/executed", (TauriEvent) => {
-            if (Active) Listener(TauriEvent.payload ?? {});
-          });
-        });
+        const Wrapped = /* @__PURE__ */ __name((Payload) => {
+          try {
+            const E = Payload;
+            if (E?.command) Listener(E);
+          } catch {
+          }
+        }, "Wrapped");
+        Context13.Emitter.on("commands.executed", Wrapped);
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Active = false;
+            try {
+              Context13.Emitter.removeListener(
+                "commands.executed",
+                Wrapped
+              );
+            } catch {
+            }
           }, "dispose")
         };
       }, "onDidExecuteCommand"),
@@ -33949,8 +33990,37 @@ var init_Namespace21 = __esm({
         });
         const ProviderKey = `__authProvider:${ProviderId}`;
         Context13.ExtensionRegistry.set(ProviderKey, Provider);
+        let SessionChangeDisposable = null;
+        try {
+          const ProviderEvent = Provider?.onDidChangeSessions;
+          if (typeof ProviderEvent === "function") {
+            const Sub = ProviderEvent((Event2) => {
+              try {
+                Context13.Emitter.emit("auth.didChangeSessions", {
+                  provider: { id: ProviderId, label: Label },
+                  added: Array.isArray(Event2?.added) ? Event2.added : [],
+                  removed: Array.isArray(Event2?.removed) ? Event2.removed : [],
+                  changed: Array.isArray(Event2?.changed) ? Event2.changed : []
+                });
+              } catch {
+              }
+            });
+            if (Sub && typeof Sub.dispose === "function") {
+              SessionChangeDisposable = Sub;
+            } else if (typeof Sub === "function") {
+              SessionChangeDisposable = {
+                dispose: Sub
+              };
+            }
+          }
+        } catch {
+        }
         return {
           dispose: /* @__PURE__ */ __name(() => {
+            try {
+              SessionChangeDisposable?.dispose?.();
+            } catch {
+            }
             Context13.ExtensionRegistry.delete(ProviderKey);
             Context13.SendToMountain(
               "unregister_authentication_provider",
@@ -33986,6 +34056,252 @@ var init_Namespace21 = __esm({
       onDidChangeSessions: EventSubscriber4(Context13, "auth.didChangeSessions")
     }), "CreateAuthenticationNamespace");
     Namespace_default19 = CreateAuthenticationNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Tests/Namespace.ts
+var Namespace_exports11 = {};
+__export(Namespace_exports11, {
+  default: () => Namespace_default20
+});
+var NoOp, MakeTestItemCollection, MakeTestItem, MakeTestRun, CreateTestsNamespace, Namespace_default20;
+var init_Namespace22 = __esm({
+  "Source/Services/Handler/VscodeAPI/Tests/Namespace.ts"() {
+    "use strict";
+    NoOp = /* @__PURE__ */ __name(() => {
+    }, "NoOp");
+    MakeTestItemCollection = /* @__PURE__ */ __name((Owner) => {
+      const Items = /* @__PURE__ */ new Map();
+      const Collection = {
+        get size() {
+          return Items.size;
+        },
+        add(Item) {
+          if (!Item?.id) return;
+          Item.parent = Owner ?? void 0;
+          Items.set(Item.id, Item);
+        },
+        delete(Id) {
+          Items.delete(Id);
+        },
+        get(Id) {
+          return Items.get(Id);
+        },
+        replace(Next) {
+          Items.clear();
+          for (const Item of Next) {
+            if (Item?.id) {
+              Item.parent = Owner ?? void 0;
+              Items.set(Item.id, Item);
+            }
+          }
+        },
+        forEach(Cb) {
+          for (const Item of Items.values()) {
+            try {
+              Cb(Item, Collection);
+            } catch {
+            }
+          }
+        }
+      };
+      return Collection;
+    }, "MakeTestItemCollection");
+    MakeTestItem = /* @__PURE__ */ __name((Id, Label, Uri2) => {
+      const Item = {
+        id: Id,
+        uri: Uri2,
+        label: Label,
+        canResolveChildren: false,
+        busy: false,
+        tags: [],
+        children: void 0
+      };
+      Item.children = MakeTestItemCollection(Item);
+      return Item;
+    }, "MakeTestItem");
+    MakeTestRun = /* @__PURE__ */ __name((Context13, ControllerId, Name, Request, Persist) => {
+      const Results = /* @__PURE__ */ new Map();
+      const OutputBuffer = [];
+      let Ended = false;
+      const SetState = /* @__PURE__ */ __name((State) => (Item, MaybeMessage, MaybeDuration) => {
+        if (Ended || !Item?.id) return;
+        Results.set(Item.id, {
+          state: State,
+          duration: typeof MaybeDuration === "number" ? MaybeDuration : void 0,
+          message: MaybeMessage && State !== "passed" && State !== "skipped" ? MaybeMessage : void 0
+        });
+      }, "SetState");
+      const Run = {
+        name: Name,
+        isPersisted: Persist,
+        token: {
+          isCancellationRequested: false,
+          onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: NoOp }), "onCancellationRequested")
+        },
+        enqueued: SetState("queued"),
+        started: SetState("started"),
+        skipped: SetState("skipped"),
+        failed: SetState("failed"),
+        errored: SetState("errored"),
+        passed: SetState("passed"),
+        appendOutput: /* @__PURE__ */ __name((Output, _Location, _Test) => {
+          if (Ended) return;
+          if (typeof Output === "string" && Output.length > 0) {
+            OutputBuffer.push(Output);
+          }
+        }, "appendOutput"),
+        end: /* @__PURE__ */ __name(() => {
+          if (Ended) return;
+          Ended = true;
+          try {
+            Context13.Emitter.emit("tests.didChangeTestResults", {
+              controllerId: ControllerId,
+              runName: Name,
+              results: Object.fromEntries(Results),
+              output: OutputBuffer.join("")
+            });
+          } catch {
+          }
+        }, "end")
+      };
+      return Run;
+    }, "MakeTestRun");
+    CreateTestsNamespace = /* @__PURE__ */ __name((Context13) => {
+      const EventSubscriber5 = /* @__PURE__ */ __name((EventName) => (Listener) => {
+        Context13.Emitter.on(EventName, Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context13.Emitter.off(EventName, Listener);
+          }, "dispose")
+        };
+      }, "EventSubscriber");
+      return {
+        createTestController: /* @__PURE__ */ __name((Id, Label) => {
+          const ControllerKey = `__testController:${Id}`;
+          const Existing = Context13.ExtensionRegistry.get(ControllerKey);
+          if (Existing) {
+            return Existing;
+          }
+          const Items = MakeTestItemCollection(null);
+          const Profiles = /* @__PURE__ */ new Map();
+          let ProfileSeq = 0;
+          const Controller = {
+            id: Id,
+            label: Label,
+            items: Items,
+            createRunProfile: /* @__PURE__ */ __name((ProfileLabel, Kind, RunHandler, IsDefault, Tag, SupportsContinuousRun) => {
+              const ProfileId = ++ProfileSeq;
+              const Profile = {
+                label: ProfileLabel,
+                kind: Kind,
+                isDefault: Boolean(IsDefault),
+                tag: Tag,
+                supportsContinuousRun: Boolean(SupportsContinuousRun),
+                runHandler: RunHandler,
+                configureHandler: void 0,
+                dispose: /* @__PURE__ */ __name(() => {
+                  Profiles.delete(ProfileId);
+                }, "dispose")
+              };
+              Profiles.set(ProfileId, Profile);
+              return Profile;
+            }, "createRunProfile"),
+            resolveHandler: void 0,
+            refreshHandler: void 0,
+            invalidateTestResults: /* @__PURE__ */ __name((_Item) => {
+            }, "invalidateTestResults"),
+            createTestItem: /* @__PURE__ */ __name((ItemId, ItemLabel, Uri2) => MakeTestItem(ItemId, ItemLabel, Uri2), "createTestItem"),
+            createTestRun: /* @__PURE__ */ __name((Request, Name, Persist) => MakeTestRun(
+              Context13,
+              Id,
+              typeof Name === "string" ? Name : "",
+              Request ?? {},
+              Persist !== false
+            ), "createTestRun"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context13.ExtensionRegistry.delete(ControllerKey);
+              Profiles.clear();
+            }, "dispose")
+          };
+          Context13.ExtensionRegistry.set(ControllerKey, Controller);
+          return Controller;
+        }, "createTestController"),
+        // `onDidChangeTestResults` - fires when any TestRun.end() lands.
+        // Payload: `{ controllerId, runName, results, output }`.
+        onDidChangeTestResults: EventSubscriber5("tests.didChangeTestResults")
+      };
+    }, "CreateTestsNamespace");
+    Namespace_default20 = CreateTestsNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/Comments/Namespace.ts
+var Namespace_exports12 = {};
+__export(Namespace_exports12, {
+  default: () => Namespace_default21
+});
+var ThreadKey, CreateCommentsNamespace, Namespace_default21;
+var init_Namespace23 = __esm({
+  "Source/Services/Handler/VscodeAPI/Comments/Namespace.ts"() {
+    "use strict";
+    ThreadKey = /* @__PURE__ */ __name((Uri2, Range3) => {
+      const UriStr = typeof Uri2 === "string" ? Uri2 : Uri2?.toString?.() ?? "";
+      const R = Range3;
+      const Line = R?.start?.line ?? 0;
+      const Char = R?.start?.character ?? 0;
+      return `${UriStr}:${Line}:${Char}`;
+    }, "ThreadKey");
+    CreateCommentsNamespace = /* @__PURE__ */ __name((Context13) => {
+      return {
+        createCommentController: /* @__PURE__ */ __name((Id, Label) => {
+          const ControllerKey = `__commentController:${Id}`;
+          const Existing = Context13.ExtensionRegistry.get(ControllerKey);
+          if (Existing) {
+            return Existing;
+          }
+          const Threads = /* @__PURE__ */ new Map();
+          const Controller = {
+            id: Id,
+            label: Label,
+            commentingRangeProvider: void 0,
+            reactionHandler: void 0,
+            options: void 0,
+            createCommentThread: /* @__PURE__ */ __name((Uri2, Range3, Comments) => {
+              const Key = ThreadKey(Uri2, Range3);
+              const Thread = {
+                uri: Uri2,
+                range: Range3,
+                comments: Array.isArray(Comments) ? Comments : [],
+                collapsibleState: 0,
+                canReply: true,
+                contextValue: void 0,
+                label: void 0,
+                state: void 0,
+                dispose: /* @__PURE__ */ __name(() => {
+                  Threads.delete(Key);
+                }, "dispose")
+              };
+              Threads.set(Key, Thread);
+              return Thread;
+            }, "createCommentThread"),
+            dispose: /* @__PURE__ */ __name(() => {
+              for (const Thread of Threads.values()) {
+                try {
+                  Thread.dispose();
+                } catch {
+                }
+              }
+              Threads.clear();
+              Context13.ExtensionRegistry.delete(ControllerKey);
+            }, "dispose")
+          };
+          Context13.ExtensionRegistry.set(ControllerKey, Controller);
+          return Controller;
+        }, "createCommentController")
+      };
+    }, "CreateCommentsNamespace");
+    Namespace_default21 = CreateCommentsNamespace;
   }
 });
 
@@ -34527,79 +34843,10 @@ var init_EnsureVscodeAPI = __esm({
             registerChatSessionItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
             }, "dispose") }), "registerChatSessionItemProvider")
           },
-          tests: {
-            createTestController: /* @__PURE__ */ __name(() => ({
-              id: "",
-              label: "",
-              items: {
-                size: 0,
-                replace: /* @__PURE__ */ __name(() => {
-                }, "replace"),
-                forEach: /* @__PURE__ */ __name(() => {
-                }, "forEach"),
-                add: /* @__PURE__ */ __name(() => {
-                }, "add"),
-                delete: /* @__PURE__ */ __name(() => {
-                }, "delete"),
-                get: /* @__PURE__ */ __name(() => void 0, "get")
-              },
-              createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") }), "createRunProfile"),
-              resolveHandler: void 0,
-              refreshHandler: void 0,
-              createTestItem: /* @__PURE__ */ __name(() => ({}), "createTestItem"),
-              createTestRun: /* @__PURE__ */ __name(() => ({
-                enqueued: /* @__PURE__ */ __name(() => {
-                }, "enqueued"),
-                started: /* @__PURE__ */ __name(() => {
-                }, "started"),
-                skipped: /* @__PURE__ */ __name(() => {
-                }, "skipped"),
-                failed: /* @__PURE__ */ __name(() => {
-                }, "failed"),
-                errored: /* @__PURE__ */ __name(() => {
-                }, "errored"),
-                passed: /* @__PURE__ */ __name(() => {
-                }, "passed"),
-                end: /* @__PURE__ */ __name(() => {
-                }, "end"),
-                appendOutput: /* @__PURE__ */ __name(() => {
-                }, "appendOutput"),
-                token: {
-                  isCancellationRequested: false,
-                  onCancellationRequested: /* @__PURE__ */ __name(() => ({
-                    dispose: /* @__PURE__ */ __name(() => {
-                    }, "dispose")
-                  }), "onCancellationRequested")
-                }
-              }), "createTestRun"),
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "createTestController")
-          },
-          comments: {
-            createCommentController: /* @__PURE__ */ __name(() => ({
-              id: "",
-              label: "",
-              commentingRangeProvider: void 0,
-              reactionHandler: void 0,
-              options: void 0,
-              createCommentThread: /* @__PURE__ */ __name(() => ({
-                uri: void 0,
-                range: void 0,
-                comments: [],
-                collapsibleState: 0,
-                canReply: true,
-                contextValue: void 0,
-                label: void 0,
-                state: void 0,
-                dispose: /* @__PURE__ */ __name(() => {
-                }, "dispose")
-              }), "createCommentThread"),
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "createCommentController")
-          },
+          tests: (await Promise.resolve().then(() => (init_Namespace22(), Namespace_exports11))).default(
+            Context13
+          ),
+          comments: (await Promise.resolve().then(() => (init_Namespace23(), Namespace_exports12))).default(Context13),
           interactive: {
             registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({
               dispose: /* @__PURE__ */ __name(() => {
@@ -35865,6 +36112,39 @@ var init_Handler5 = __esm({
     }, "SafeEmit");
     HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter, Context13) => {
       switch (Method) {
+        // Mountain's `extensions:activate` Wind IPC arm fires
+        // `$activateByEvent` as a *notification* (fire-and-forget) to
+        // kick off extension activation. The matching *request* path is
+        // handled by `Services/gRPC/Server/Service.ts`; this notification
+        // path didn't have a handler so Wind-triggered activations
+        // landed in the `default` arm and got tagged as unknown. Route
+        // to the same `HandleActivateByEvent` so the activation actually
+        // runs. Payload: `{ event?, extensionId?, activationEvent? }`.
+        case "$activateByEvent": {
+          const ActivationEvent = typeof Parameters?.activationEvent === "string" ? Parameters.activationEvent : typeof Parameters?.event === "string" ? Parameters.event : "";
+          if (!ActivationEvent || !Context13) {
+            break;
+          }
+          const CapturedActivationContext = Context13;
+          setImmediate(() => {
+            Promise.resolve().then(() => (init_Handler3(), Handler_exports2)).then(({ default: ExtensionHostHandler }) => {
+              void ExtensionHostHandler.HandleActivateByEvent(
+                CapturedActivationContext,
+                { activationEvent: ActivationEvent }
+              ).catch((Error2) => {
+                try {
+                  process.stdout.write(
+                    `[NotificationHandler] $activateByEvent ${ActivationEvent} failed: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}
+`
+                  );
+                } catch {
+                }
+              });
+            }).catch(() => {
+            });
+          });
+          break;
+        }
         case "extension.change":
           Emitter2.emit("extensionChanged", Parameters);
           break;
@@ -36725,6 +37005,348 @@ var init_Handler5 = __esm({
         }
         // B6: Mountain notifies Cocoon when a terminal closes so the stale
         // entry is removed from vscode.window.terminals.
+        // `vscode.window.onDidStartTerminalShellExecution` - Sky's OSC 633
+        // parser fires `localPty:shellExecutionStart` when it sees the C
+        // marker (command output begins). Payload: `{ id, commandLine, cwd }`.
+        // VS Code's event shape is
+        //   { terminal, shellIntegration, execution: { commandLine, cwd } }
+        // where `commandLine` is `{ value, isTrusted }`. Subscribers attach
+        // via the `window.didStartTerminalShellExecution` Emitter channel.
+        case "$acceptTerminalShellExecutionStart": {
+          const StartPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const TermId = typeof StartPayload?.id === "number" ? StartPayload.id : -1;
+          if (TermId < 0) {
+            break;
+          }
+          const Terminals = Context13.__terminals ?? [];
+          const Terminal = Terminals.find(
+            (T) => T?.id === TermId || T?.handle === TermId
+          );
+          const CommandLine = typeof StartPayload?.commandLine === "string" ? StartPayload.commandLine : "";
+          const Cwd = typeof StartPayload?.cwd === "string" ? StartPayload.cwd : "";
+          try {
+            Emitter2.emit("window.didStartTerminalShellExecution", {
+              terminal: Terminal ?? { id: TermId },
+              shellIntegration: Terminal?.shellIntegration ?? {
+                cwd: Cwd ? { fsPath: Cwd } : void 0
+              },
+              execution: {
+                commandLine: { value: CommandLine, isTrusted: true },
+                cwd: Cwd ? { fsPath: Cwd } : void 0,
+                read: /* @__PURE__ */ __name(() => {
+                  return (async function* () {
+                  })();
+                }, "read")
+              }
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidEndTerminalShellExecution` +
+        // `onDidExecuteTerminalCommand` - both fire on OSC 633 ; D.
+        // Mountain sends two separate notifications so the Emitter
+        // channel routing stays explicit. Payload: `{ id, commandLine,
+        // cwd, exitCode }`. End-event shape:
+        //   { terminal, shellIntegration, execution, exitCode }
+        case "$acceptTerminalShellExecutionEnd": {
+          const EndPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const TermId = typeof EndPayload?.id === "number" ? EndPayload.id : -1;
+          if (TermId < 0) {
+            break;
+          }
+          const Terminals = Context13.__terminals ?? [];
+          const Terminal = Terminals.find(
+            (T) => T?.id === TermId || T?.handle === TermId
+          );
+          const CommandLine = typeof EndPayload?.commandLine === "string" ? EndPayload.commandLine : "";
+          const Cwd = typeof EndPayload?.cwd === "string" ? EndPayload.cwd : "";
+          const ExitCode = typeof EndPayload?.exitCode === "number" ? EndPayload.exitCode : -1;
+          try {
+            Emitter2.emit("window.didEndTerminalShellExecution", {
+              terminal: Terminal ?? { id: TermId },
+              shellIntegration: Terminal?.shellIntegration ?? {
+                cwd: Cwd ? { fsPath: Cwd } : void 0
+              },
+              execution: {
+                commandLine: { value: CommandLine, isTrusted: true },
+                cwd: Cwd ? { fsPath: Cwd } : void 0
+              },
+              exitCode: ExitCode >= 0 ? ExitCode : void 0
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidExecuteTerminalCommand` - proposed API
+        // preserved for compatibility with extensions that hook it on
+        // the legacy event surface. Same payload as End above.
+        case "$acceptExecutedTerminalCommand": {
+          const ExecPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const TermId = typeof ExecPayload?.id === "number" ? ExecPayload.id : -1;
+          if (TermId < 0) {
+            break;
+          }
+          const CommandLine = typeof ExecPayload?.commandLine === "string" ? ExecPayload.commandLine : "";
+          const Cwd = typeof ExecPayload?.cwd === "string" ? ExecPayload.cwd : "";
+          const ExitCode = typeof ExecPayload?.exitCode === "number" ? ExecPayload.exitCode : -1;
+          try {
+            Emitter2.emit("window.didExecuteTerminalCommand", {
+              commandLine: CommandLine,
+              cwd: Cwd,
+              exitCode: ExitCode
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.languages.onDidChangeDiagnostics` - Mountain fires this
+        // after every `Diagnostic.Set` / `Diagnostic.Clear` round-trip.
+        // Payload: `{ owner, uris: string[] }`. Subscribers attach via
+        // `Languages/Namespace.ts:1140` on the `diagnostics.didChange`
+        // Emitter channel. The VS Code event shape is `{ uris: Uri[] }` -
+        // we pass URI strings; the namespace wrapper coerces.
+        case "$acceptDiagnosticsChanged": {
+          const DiagPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const Uris = Array.isArray(DiagPayload?.uris) ? DiagPayload.uris.filter((U) => typeof U === "string") : [];
+          try {
+            Emitter2.emit("diagnostics.didChange", { uris: Uris });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidChangeVisibleTextEditors` - Sky reports the
+        // current visible-editor URI set whenever `IEditorService` fires
+        // its visibility change. Payload: `{ uris: string[] }`. The
+        // matching subscriber lives in `Window/Namespace.ts:1702` via
+        // `MakeEventSubscriber(Context, "window.didChangeVisibleTextEditors")`.
+        // Build minimal TextEditor stubs so listener callbacks that
+        // dereference `.document.uri` / `.viewColumn` don't crash.
+        case "$acceptVisibleEditorsChanged": {
+          const VisPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const Uris = Array.isArray(VisPayload?.uris) ? VisPayload.uris.filter((U) => typeof U === "string") : [];
+          const Stubs = Uris.map((Uri2, Index) => ({
+            document: { uri: Uri2, fileName: Uri2.split("/").pop() ?? "" },
+            selection: void 0,
+            selections: [],
+            visibleRanges: [],
+            viewColumn: Index + 1,
+            options: {}
+          }));
+          try {
+            Emitter2.emit("window.didChangeVisibleTextEditors", Stubs);
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.tabGroups.onDidChangeTabs` / `onDidChangeTabGroups`
+        // - Sky reports a full tab-model snapshot whenever any
+        // IEditorGroupsService group mutates. Payload:
+        //   { groups: [{ id, isActive, tabs: [{ label, uri }] }] }
+        // VS Code surfaces two events for the same underlying change
+        // (tab-level + group-level). Cache the prior snapshot per Context
+        // so listeners receive proper `{ opened, closed, changed }` diffs.
+        case "$acceptTabsChanged": {
+          const TabsPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const NewGroups = Array.isArray(TabsPayload?.groups) ? TabsPayload.groups : [];
+          const AnchorContext = Context13;
+          const PriorGroups = AnchorContext.__tabGroups ?? [];
+          AnchorContext.__tabGroups = NewGroups;
+          const Flatten = /* @__PURE__ */ __name((Groups) => {
+            const Map_ = /* @__PURE__ */ new Map();
+            for (const G of Groups) {
+              for (const T of G.tabs ?? []) {
+                if (T.uri) Map_.set(T.uri, T.label);
+              }
+            }
+            return Map_;
+          }, "Flatten");
+          const Prior = Flatten(PriorGroups);
+          const Next = Flatten(NewGroups);
+          const Opened = [];
+          const Closed = [];
+          for (const [Uri2, Label] of Next)
+            if (!Prior.has(Uri2)) Opened.push({ uri: Uri2, label: Label });
+          for (const [Uri2, Label] of Prior)
+            if (!Next.has(Uri2)) Closed.push({ uri: Uri2, label: Label });
+          try {
+            Emitter2.emit("window.didChangeTabs", {
+              opened: Opened,
+              closed: Closed,
+              changed: []
+            });
+            Emitter2.emit("window.didChangeTabGroups", {
+              opened: [],
+              closed: [],
+              changed: NewGroups
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidChangeTextEditorVisibleRanges` - Sky reports
+        // Monaco scroll changes debounced to ~60ms. Payload: `{ uri,
+        // viewColumn, visibleRanges: IRange[] }`. Subscribers attach via
+        // `Window/Namespace.ts:1714` (`MakeEventSubscriber(Context,
+        // "window.didChangeTextEditorVisibleRanges")`). Build a minimal
+        // TextEditor stub so listener callbacks that dereference
+        // `.textEditor.document.uri` don't crash.
+        case "$acceptVisibleRangesChanged": {
+          const VRPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const Uri2 = typeof VRPayload?.uri === "string" ? VRPayload.uri : "";
+          if (!Uri2) {
+            break;
+          }
+          const VisibleRanges = Array.isArray(VRPayload?.visibleRanges) ? VRPayload.visibleRanges : [];
+          try {
+            Emitter2.emit("window.didChangeTextEditorVisibleRanges", {
+              textEditor: {
+                document: {
+                  uri: Uri2,
+                  fileName: Uri2.split("/").pop() ?? ""
+                },
+                viewColumn: VRPayload.viewColumn,
+                visibleRanges: VisibleRanges
+              },
+              visibleRanges: VisibleRanges
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidChangeTextEditorOptions` - Sky reports
+        // Monaco config changes (tab size, insert-spaces, word-wrap).
+        // Payload: `{ uri, viewColumn, options: { tabSize, insertSpaces,
+        // changedConfiguration } }`. Same TextEditor stub shape as the
+        // visible-ranges event above.
+        case "$acceptTextEditorOptionsChanged": {
+          const OptPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const Uri2 = typeof OptPayload?.uri === "string" ? OptPayload.uri : "";
+          if (!Uri2) {
+            break;
+          }
+          const Options = OptPayload?.options ?? {};
+          try {
+            Emitter2.emit("window.didChangeTextEditorOptions", {
+              textEditor: {
+                document: {
+                  uri: Uri2,
+                  fileName: Uri2.split("/").pop() ?? ""
+                },
+                viewColumn: OptPayload.viewColumn,
+                options: Options
+              },
+              options: Options
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidChangeTextEditorDiffInformation` - Sky
+        // subscribes Monaco's `onDidUpdateDiff` on the active diff
+        // editor pane and forwards the resolved hunk list. Payload:
+        // `{ modifiedUri, originalUri, changes: LineChange[] }`.
+        // Subscribers attach via
+        // `MakeEventSubscriber(Context, "window.didChangeTextEditorDiffInformation")`.
+        // Event shape mirrors VS Code's proposed-API
+        // `TextEditorDiffInformationChangeEvent`: `{ textEditor,
+        // diffInformation }` where `diffInformation` carries the diff
+        // metadata. We build a minimal TextEditor stub keyed on the
+        // modified URI so the subscriber's `.textEditor.document.uri`
+        // dereferences cleanly.
+        case "$acceptTextEditorDiffInformationChanged": {
+          const DiffPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const ModifiedUri = typeof DiffPayload?.modifiedUri === "string" ? DiffPayload.modifiedUri : "";
+          const OriginalUri = typeof DiffPayload?.originalUri === "string" ? DiffPayload.originalUri : "";
+          const Changes = Array.isArray(DiffPayload?.changes) ? DiffPayload.changes : [];
+          if (!ModifiedUri) {
+            break;
+          }
+          try {
+            Emitter2.emit("window.didChangeTextEditorDiffInformation", {
+              textEditor: {
+                document: {
+                  uri: ModifiedUri,
+                  fileName: ModifiedUri.split("/").pop() ?? ""
+                }
+              },
+              diffInformation: {
+                modified: ModifiedUri,
+                original: OriginalUri,
+                changes: Changes
+              }
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidChangeTextEditorViewColumn` - Sky detects
+        // per-group `onDidMoveEditor` (split-view shuffle, drag-and-drop,
+        // `View: Move Editor to Group`) and forwards `{ uri, viewColumn }`.
+        // Subscribers attach via
+        // `MakeEventSubscriber(Context, "window.didChangeTextEditorViewColumn")`.
+        // Event shape: `{ textEditor, viewColumn }` matching VS Code.
+        case "$acceptTextEditorViewColumnChanged": {
+          const VCPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const Uri2 = typeof VCPayload?.uri === "string" ? VCPayload.uri : "";
+          const ViewColumn2 = typeof VCPayload?.viewColumn === "number" ? VCPayload.viewColumn : 1;
+          if (!Uri2) {
+            break;
+          }
+          try {
+            Emitter2.emit("window.didChangeTextEditorViewColumn", {
+              textEditor: {
+                document: {
+                  uri: Uri2,
+                  fileName: Uri2.split("/").pop() ?? ""
+                },
+                viewColumn: ViewColumn2
+              },
+              viewColumn: ViewColumn2
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.window.onDidChangeActiveColorTheme` - Mountain fires
+        // `$acceptActiveColorTheme` after `themes:set` completes. Payload:
+        // `{ id, kind }` where kind ∈ {1: Light, 2: Dark, 3: HighContrast,
+        // 4: HighContrastLight} matching VS Code's `ColorThemeKind` enum.
+        // Subscribers attach via `MakeEventSubscriber(Context,
+        // "window.didChangeActiveColorTheme")` in `Window/Namespace.ts:1041`.
+        case "$acceptActiveColorTheme": {
+          const ThemePayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const ThemeId = typeof ThemePayload?.id === "string" ? ThemePayload.id : "";
+          const ThemeKind = typeof ThemePayload?.kind === "number" ? ThemePayload.kind : 2;
+          try {
+            Emitter2.emit("window.didChangeActiveColorTheme", {
+              kind: ThemeKind,
+              id: ThemeId
+            });
+          } catch {
+          }
+          break;
+        }
+        // `vscode.commands.onDidExecuteCommand` - Mountain fires this after
+        // every `commands:execute` round-trip. Payload: `{ command, arguments }`.
+        // Fan out to the per-extension subscriber loop via the shared Emitter
+        // channel `commands.executed`. The matching subscriber lives in
+        // `Services/Handler/VscodeAPI/Commands/Namespace.ts::onDidExecuteCommand`
+        // (replaces the dead Tauri-listen path that did not work in Node).
+        case "$acceptCommandExecuted": {
+          const ExecPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const CommandId = typeof ExecPayload?.command === "string" ? ExecPayload.command : "";
+          if (CommandId) {
+            try {
+              Emitter2.emit("commands.executed", {
+                command: CommandId,
+                arguments: Array.isArray(ExecPayload?.arguments) ? ExecPayload.arguments : []
+              });
+            } catch {
+            }
+          }
+          break;
+        }
         case "$acceptTerminalClosed": {
           const ClosePayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           const CloseId = ClosePayload?.id ?? ClosePayload;
@@ -36780,6 +37402,40 @@ var init_Handler5 = __esm({
                 terminal: ActivatedTerm,
                 shellIntegration: ActivatedTerm.shellIntegration
               });
+            }
+          }
+          break;
+        }
+        case "$acceptTerminalStateChanged": {
+          const StatePayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const StateTermId = StatePayload?.id ?? null;
+          const Interacted = Boolean(StatePayload?.interactedWith);
+          if (StateTermId === null || StateTermId === void 0) {
+            break;
+          }
+          const StateTerm = (Context13.__terminals ?? []).find(
+            (T) => T?.handle === StateTermId || T?.id === StateTermId
+          );
+          if (StateTerm) {
+            const PrevState = StateTerm.state ?? {
+              isInteractedWith: false
+            };
+            const NextState = {
+              ...PrevState,
+              isInteractedWith: Interacted
+            };
+            StateTerm.state = NextState;
+            try {
+              Emitter2.emit("window.didChangeTerminalState", StateTerm);
+            } catch {
+            }
+          } else {
+            try {
+              Emitter2.emit("window.didChangeTerminalState", {
+                id: StateTermId,
+                state: { isInteractedWith: Interacted }
+              });
+            } catch {
             }
           }
           break;

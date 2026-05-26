@@ -354,27 +354,9 @@ const EnsureVscodeAPIRegistered = async (
 			tests: (await import("../../VscodeAPI/Tests/Namespace.js")).default(
 				Context,
 			),
-			comments: {
-				createCommentController: () => ({
-					id: "",
-					label: "",
-					commentingRangeProvider: undefined,
-					reactionHandler: undefined,
-					options: undefined,
-					createCommentThread: () => ({
-						uri: undefined,
-						range: undefined,
-						comments: [] as unknown[],
-						collapsibleState: 0,
-						canReply: true,
-						contextValue: undefined,
-						label: undefined,
-						state: undefined,
-						dispose: () => {},
-					}),
-					dispose: () => {},
-				}),
-			},
+			comments: (
+				await import("../../VscodeAPI/Comments/Namespace.js")
+			).default(Context),
 			interactive: {
 				registerInteractiveEditorSessionProvider: () => ({
 					dispose: () => {},

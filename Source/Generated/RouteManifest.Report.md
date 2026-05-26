@@ -1,12 +1,12 @@
 # Route Manifest - coverage report
 
-_Generated 2026-05-25T20:14:58Z_
+_Generated 2026-05-26T08:48:35Z_
 
 ## Totals
 
 | Tier | Count | Source |
 |---|---:|---|
-| 1 - Mountain (Rust) | 137 | `Track/Effect/CreateEffectForRequest/*.rs` |
+| 1 - Mountain (Rust) | 140 | `Track/Effect/CreateEffectForRequest/*.rs` |
 | 2 - Stock VS Code | 0 | `StockLift.ts` |
 | 3 - Cocoon bespoke | 1 | `*Fallback.ts` |
 
@@ -111,6 +111,7 @@ _Generated 2026-05-25T20:14:58Z_
 - `secrets.get`
 - `secrets.store`
 - `setHtml`
+- `setStatusBarText`
 - `showTextDocument`
 - `stat`
 - `Storage.Get`
@@ -118,10 +119,12 @@ _Generated 2026-05-25T20:14:58Z_
 - `Storage.Set`
 - `Task.Execute`
 - `Task.Fetch`
+- `Task.Terminate`
 - `Terminal.GetProcessId`
 - `Terminal.Hide`
 - `Terminal.Resize`
 - `Terminal.Show`
+- `terminate_task`
 - `tree.dispose`
 - `tree.register`
 - `tree.reveal`

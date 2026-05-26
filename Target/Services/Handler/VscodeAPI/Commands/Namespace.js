@@ -769,7 +769,16 @@ var CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderR
         Command,
         ...Arguments
       );
-      if (LocalResult !== void 0) return LocalResult;
+      if (LocalResult !== void 0) {
+        try {
+          Context.Emitter.emit("commands.executed", {
+            command: Command,
+            arguments: Arguments
+          });
+        } catch {
+        }
+        return LocalResult;
+      }
     }
     try {
       return await Context.MountainClient?.sendRequest(
@@ -793,18 +802,31 @@ var CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderR
     }
   }, "getCommands"),
   // `onDidExecuteCommand` - Mountain emits `sky://commands/executed`
-  // after every `commands:execute` call with `{ command, arguments }`.
-  // Subscribe to that Tauri event and fan out to each registered listener.
+  // to the renderer AND dual-emits `$acceptCommandExecuted` over
+  // Vine to Cocoon. `Services/Handler/Notification/Handler.ts`
+  // catches the latter and forwards onto the shared Emitter channel
+  // `commands.executed`. Subscribe there - the prior implementation
+  // used `import("@tauri-apps/api/event").listen(...)` which never
+  // fires in Node.js (no `window.__TAURI__`), so extensions that
+  // hooked onDidExecuteCommand never received events.
   onDidExecuteCommand: /* @__PURE__ */ __name((Listener) => {
-    let Active = true;
-    void import("@tauri-apps/api/event").then(({ listen }) => {
-      void listen("sky://commands/executed", (TauriEvent) => {
-        if (Active) Listener(TauriEvent.payload ?? {});
-      });
-    });
+    const Wrapped = /* @__PURE__ */ __name((Payload) => {
+      try {
+        const E = Payload;
+        if (E?.command) Listener(E);
+      } catch {
+      }
+    }, "Wrapped");
+    Context.Emitter.on("commands.executed", Wrapped);
     return {
       dispose: /* @__PURE__ */ __name(() => {
-        Active = false;
+        try {
+          Context.Emitter.removeListener(
+            "commands.executed",
+            Wrapped
+          );
+        } catch {
+        }
       }, "dispose")
     };
   }, "onDidExecuteCommand"),

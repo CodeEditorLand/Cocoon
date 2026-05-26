@@ -765,8 +765,37 @@ var CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => Namespac
     });
     const ProviderKey = `__authProvider:${ProviderId}`;
     Context.ExtensionRegistry.set(ProviderKey, Provider);
+    let SessionChangeDisposable = null;
+    try {
+      const ProviderEvent = Provider?.onDidChangeSessions;
+      if (typeof ProviderEvent === "function") {
+        const Sub = ProviderEvent((Event) => {
+          try {
+            Context.Emitter.emit("auth.didChangeSessions", {
+              provider: { id: ProviderId, label: Label },
+              added: Array.isArray(Event?.added) ? Event.added : [],
+              removed: Array.isArray(Event?.removed) ? Event.removed : [],
+              changed: Array.isArray(Event?.changed) ? Event.changed : []
+            });
+          } catch {
+          }
+        });
+        if (Sub && typeof Sub.dispose === "function") {
+          SessionChangeDisposable = Sub;
+        } else if (typeof Sub === "function") {
+          SessionChangeDisposable = {
+            dispose: Sub
+          };
+        }
+      }
+    } catch {
+    }
     return {
       dispose: /* @__PURE__ */ __name(() => {
+        try {
+          SessionChangeDisposable?.dispose?.();
+        } catch {
+        }
         Context.ExtensionRegistry.delete(ProviderKey);
         Context.SendToMountain(
           "unregister_authentication_provider",
