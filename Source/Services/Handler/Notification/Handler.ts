@@ -383,6 +383,48 @@ const HandleSpecificNotification = (
 	Context?: HandlerContext,
 ): void => {
 	switch (Method) {
+		// Mountain's `extensions:activate` Wind IPC arm fires
+		// `$activateByEvent` as a *notification* (fire-and-forget) to
+		// kick off extension activation. The matching *request* path is
+		// handled by `Services/gRPC/Server/Service.ts`; this notification
+		// path didn't have a handler so Wind-triggered activations
+		// landed in the `default` arm and got tagged as unknown. Route
+		// to the same `HandleActivateByEvent` so the activation actually
+		// runs. Payload: `{ event?, extensionId?, activationEvent? }`.
+		case "$activateByEvent": {
+			const ActivationEvent: string =
+				typeof Parameters?.activationEvent === "string"
+					? Parameters.activationEvent
+					: typeof Parameters?.event === "string"
+						? Parameters.event
+						: "";
+			if (!ActivationEvent || !Context) {
+				break;
+			}
+			const CapturedActivationContext = Context;
+			setImmediate(() => {
+				import("../Extension/Host/Handler.js")
+					.then(({ default: ExtensionHostHandler }) => {
+						void ExtensionHostHandler.HandleActivateByEvent(
+							CapturedActivationContext,
+							{ activationEvent: ActivationEvent },
+						).catch((Error: unknown) => {
+							try {
+								process.stdout.write(
+									`[NotificationHandler] $activateByEvent ${ActivationEvent} failed: ${
+										Error instanceof globalThis.Error
+											? Error.message
+											: String(Error)
+									}\n`,
+								);
+							} catch {}
+						});
+					})
+					.catch(() => {});
+			});
+			break;
+		}
+
 		case "extension.change":
 			Emitter.emit("extensionChanged", Parameters);
 			break;
@@ -1792,6 +1834,91 @@ const HandleSpecificNotification = (
 			break;
 		}
 
+		// `vscode.window.onDidChangeTextEditorDiffInformation` - Sky
+		// subscribes Monaco's `onDidUpdateDiff` on the active diff
+		// editor pane and forwards the resolved hunk list. Payload:
+		// `{ modifiedUri, originalUri, changes: LineChange[] }`.
+		// Subscribers attach via
+		// `MakeEventSubscriber(Context, "window.didChangeTextEditorDiffInformation")`.
+		// Event shape mirrors VS Code's proposed-API
+		// `TextEditorDiffInformationChangeEvent`: `{ textEditor,
+		// diffInformation }` where `diffInformation` carries the diff
+		// metadata. We build a minimal TextEditor stub keyed on the
+		// modified URI so the subscriber's `.textEditor.document.uri`
+		// dereferences cleanly.
+		case "$acceptTextEditorDiffInformationChanged": {
+			const DiffPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const ModifiedUri =
+				typeof DiffPayload?.modifiedUri === "string"
+					? DiffPayload.modifiedUri
+					: "";
+			const OriginalUri =
+				typeof DiffPayload?.originalUri === "string"
+					? DiffPayload.originalUri
+					: "";
+			const Changes = Array.isArray(DiffPayload?.changes)
+				? DiffPayload.changes
+				: [];
+			if (!ModifiedUri) {
+				break;
+			}
+			try {
+				Emitter.emit("window.didChangeTextEditorDiffInformation", {
+					textEditor: {
+						document: {
+							uri: ModifiedUri,
+							fileName: ModifiedUri.split("/").pop() ?? "",
+						},
+					},
+					diffInformation: {
+						modified: ModifiedUri,
+						original: OriginalUri,
+						changes: Changes,
+					},
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
+		// `vscode.window.onDidChangeTextEditorViewColumn` - Sky detects
+		// per-group `onDidMoveEditor` (split-view shuffle, drag-and-drop,
+		// `View: Move Editor to Group`) and forwards `{ uri, viewColumn }`.
+		// Subscribers attach via
+		// `MakeEventSubscriber(Context, "window.didChangeTextEditorViewColumn")`.
+		// Event shape: `{ textEditor, viewColumn }` matching VS Code.
+		case "$acceptTextEditorViewColumnChanged": {
+			const VCPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const Uri = typeof VCPayload?.uri === "string" ? VCPayload.uri : "";
+			const ViewColumn =
+				typeof VCPayload?.viewColumn === "number"
+					? VCPayload.viewColumn
+					: 1;
+			if (!Uri) {
+				break;
+			}
+			try {
+				Emitter.emit("window.didChangeTextEditorViewColumn", {
+					textEditor: {
+						document: {
+							uri: Uri,
+							fileName: Uri.split("/").pop() ?? "",
+						},
+						viewColumn: ViewColumn,
+					},
+					viewColumn: ViewColumn,
+				});
+			} catch {
+				/* listener threw */
+			}
+			break;
+		}
+
 		// `vscode.window.onDidChangeActiveColorTheme` - Mountain fires
 		// `$acceptActiveColorTheme` after `themes:set` completes. Payload:
 		// `{ id, kind }` where kind ∈ {1: Light, 2: Dark, 3: HighContrast,
@@ -1925,6 +2052,54 @@ const HandleSpecificNotification = (
 						terminal: ActivatedTerm,
 						shellIntegration: ActivatedTerm.shellIntegration,
 					});
+				}
+			}
+			break;
+		}
+
+		case "$acceptTerminalStateChanged": {
+			// Sky fires OSC 633 ; B (command-input-begins) → Mountain →
+			// here. Carries `{ id, interactedWith }`. Updates the cached
+			// terminal entry's `state.isInteractedWith` flag and emits the
+			// `window.didChangeTerminalState` event matching VS Code's
+			// `TerminalState` shape: `{ isInteractedWith, shell? }`.
+			const StatePayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			const StateTermId = StatePayload?.id ?? null;
+			const Interacted = Boolean(StatePayload?.interactedWith);
+			if (StateTermId === null || StateTermId === undefined) {
+				break;
+			}
+			const StateTerm = ((Context as any).__terminals ?? []).find(
+				(T: any) => T?.handle === StateTermId || T?.id === StateTermId,
+			);
+			if (StateTerm) {
+				const PrevState = StateTerm.state ?? {
+					isInteractedWith: false,
+				};
+				const NextState = {
+					...PrevState,
+					isInteractedWith: Interacted,
+				};
+				StateTerm.state = NextState;
+				try {
+					Emitter.emit("window.didChangeTerminalState", StateTerm);
+				} catch {
+					/* listener threw */
+				}
+			} else {
+				// Terminal not yet in the cache (race between creation
+				// and first OSC sequence). Emit a minimal stub so any
+				// subscriber registered against the bare id still sees
+				// the state-change signal.
+				try {
+					Emitter.emit("window.didChangeTerminalState", {
+						id: StateTermId,
+						state: { isInteractedWith: Interacted },
+					});
+				} catch {
+					/* listener threw */
 				}
 			}
 			break;
