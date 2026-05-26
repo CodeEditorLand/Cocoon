@@ -62,16 +62,68 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 	if (Command && typeof Command === "object") {
 		const C = Command as Record<string, unknown>;
 
-		// Strip Command.arguments - that's the most common cycle root
-		// (extension stuffs the Repository instance there). Title/id
-		// pass through; the workbench resolves arguments by command id
-		// at execution time anyway.
+		// Project `arguments[]` to a JSON-safe shape. The previous version
+		// dropped `arguments` outright "because the workbench resolves
+		// arguments by command id at execution time" - but for
+		// `git.openChange` / `git.openFile` / etc, vscode.git's handler
+		// reads `args[0].resourceUri` to know which file to diff. Without
+		// the projected resource handle, clicking a file in the SCM list
+		// silently opens the wrong thing (or nothing at all).
+		//
+		// vscode.git stuffs a back-reference to the Repository on
+		// `args[0]` which forms a JSON-stringify cycle, so we shallow-
+		// copy each argument and project just the safe primitive fields
+		// the diff handler actually consults.
+		const RawArgs = Array.isArray(C["arguments"])
+			? (C["arguments"] as unknown[])
+			: undefined;
+		const ProjectArg = (Arg: unknown): unknown => {
+			if (Arg == null) return Arg;
+			if (typeof Arg !== "object") return Arg;
+			const Holder = Arg as Record<string, unknown>;
+			const Projected: Record<string, unknown> = {};
+			// `resourceUri` is the canonical "what file did the user
+			// click" field; preserve as-is so vscode.git's handler can
+			// reconstruct the diff inputs.
+			if (Holder["resourceUri"] !== undefined)
+				Projected["resourceUri"] = Holder["resourceUri"];
+			// URI POJOs may travel as the arg itself.
+			if (typeof Holder["scheme"] === "string") {
+				Projected["scheme"] = Holder["scheme"];
+				if (Holder["authority"] !== undefined)
+					Projected["authority"] = Holder["authority"];
+				if (Holder["path"] !== undefined)
+					Projected["path"] = Holder["path"];
+				if (Holder["query"] !== undefined)
+					Projected["query"] = Holder["query"];
+				if (Holder["fragment"] !== undefined)
+					Projected["fragment"] = Holder["fragment"];
+			}
+			if (typeof Holder["fsPath"] === "string")
+				Projected["fsPath"] = Holder["fsPath"];
+			if (typeof Holder["external"] === "string")
+				Projected["external"] = Holder["external"];
+			// Pass through known-safe scalar metadata so handlers that
+			// inspect `type`/`originalUri`/`renameUri` still see them.
+			for (const Key of [
+				"type",
+				"originalUri",
+				"renameUri",
+				"contextValue",
+				"id",
+			] as const) {
+				if (Holder[Key] !== undefined) Projected[Key] = Holder[Key];
+			}
+			return Projected;
+		};
 		Out["command"] = {
 			title: C["title"] ?? "",
 
 			command: C["command"] ?? "",
 
 			tooltip: C["tooltip"] ?? "",
+
+			arguments: RawArgs ? RawArgs.map(ProjectArg) : undefined,
 		};
 	}
 
