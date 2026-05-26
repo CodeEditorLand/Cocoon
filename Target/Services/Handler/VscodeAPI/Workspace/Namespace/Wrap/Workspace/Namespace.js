@@ -43,8 +43,8 @@ var init_Configuration = __esm({
       ),
       BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
       DistinctIdentifierSeed: process.env["Brand"] ?? "",
-      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
-      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+      Pipe: ReadString("Pipe", "http://127.0.0.1:4318"),
+      Emit: ReadBoolean("Emit", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
     }), "default");
   }
 });

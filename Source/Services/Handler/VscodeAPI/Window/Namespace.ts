@@ -699,16 +699,49 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// Round-trip via Mountain so Sky opens the editor, then return a
 			// full TextEditor shim so `.edit()`, `.setDecorations()`,
 			// `.revealRange()`, etc. work immediately.
-			const UriRaw =
-				(_Document as any)?.uri?.toString?.() ??
-				(_Document as any)?.external ??
-				((_Document as any)?.scheme && (_Document as any)?.path
-					? `${(_Document as any).scheme}://${(_Document as any).authority ?? ""}${(_Document as any).path}`
-					: "") ??
-				"";
+			//
+			// `_Document` can be a `vscode.Uri` (string under the hood),
+			// a `TextDocument` shim, a POJO URI, or a bare path string. The
+			// derive-URI cascade walks every shape we have ever produced so
+			// the final wire payload is ALWAYS a plain URI string - passing
+			// the raw doc object over IPC strips its prototype methods
+			// (including `toString`), and the workbench then renders the
+			// editor tab as `String({})` → "[object Object]". Sending the
+			// pre-resolved string keeps Sky's `sky://window/showTextDocument`
+			// handler on the happy path.
+			const Doc = _Document as any;
+			let UriRaw = "";
+			if (typeof Doc === "string") {
+				UriRaw = Doc;
+			} else if (Doc) {
+				const RawUri = Doc.uri ?? Doc;
+				if (typeof RawUri === "string") {
+					UriRaw = RawUri;
+				} else if (RawUri) {
+					if (
+						typeof RawUri.toString === "function" &&
+						RawUri.toString !== Object.prototype.toString
+					) {
+						UriRaw = String(RawUri);
+					} else if (typeof RawUri.external === "string") {
+						UriRaw = RawUri.external;
+					} else if (
+						typeof RawUri.scheme === "string" &&
+						typeof RawUri.path === "string"
+					) {
+						UriRaw = `${RawUri.scheme}://${RawUri.authority ?? ""}${RawUri.path}`;
+					} else if (typeof RawUri.fsPath === "string") {
+						UriRaw = RawUri.fsPath;
+					}
+				}
+			}
 			try {
+				// Send the resolved URI STRING as the first arg (not the raw
+				// doc object). Mountain's sky://window/showTextDocument handler
+				// reads `Payload[0]?.uri ?? Payload[0]`, so a string in slot 0
+				// resolves to itself.
 				await Context.MountainClient?.sendRequest("showTextDocument", [
-					_Document,
+					UriRaw,
 					_Column,
 					_PreserveFocus,
 				]);

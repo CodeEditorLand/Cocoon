@@ -19,9 +19,9 @@ export type Configuration = {
 
 	readonly DistinctIdentifierSeed: string;
 
-	readonly OTLPEndpoint: string;
+	readonly Pipe: string;
 
-	readonly OTLPEnabled: boolean;
+	readonly Emit: boolean;
 };
 
 const DefaultKey = "";
@@ -56,7 +56,7 @@ const ReadNumber = (Key: string, Fallback: number): number => {
 
 // `Capture=false` is the master telemetry kill switch shared with
 // Mountain / Sky / Build.sh. Honored regardless of `Report` /
-// `OTLPEnabled` so a single env flip stops both pipes when running an
+// `Emit` so a single env flip stops both pipes when running an
 // airgapped session. Distinct from `.env.Land.Diagnostics`'s `Disable`
 // which kills polyfills/shims (not telemetry).
 const TelemetryCaptureEnabled = ReadBoolean("Capture", true);
@@ -75,9 +75,9 @@ export default (): Configuration => ({
 	),
 	BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
 	DistinctIdentifierSeed: process.env["Brand"] ?? "",
-	OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
-	OTLPEnabled:
-		ReadBoolean("OTLPEnabled", true) &&
+	Pipe: ReadString("Pipe", "http://127.0.0.1:4318"),
+	Emit:
+		ReadBoolean("Emit", true) &&
 		TelemetryCaptureEnabled &&
 		process.env["NODE_ENV"] !== "production",
 });

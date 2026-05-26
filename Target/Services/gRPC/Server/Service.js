@@ -3781,8 +3781,8 @@ var init_Configuration = __esm({
       ),
       BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
       DistinctIdentifierSeed: process.env["Brand"] ?? "",
-      OTLPEndpoint: ReadString("OTLPEndpoint", "http://127.0.0.1:4318"),
-      OTLPEnabled: ReadBoolean("OTLPEnabled", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+      Pipe: ReadString("Pipe", "http://127.0.0.1:4318"),
+      Emit: ReadBoolean("Emit", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
     }), "default");
   }
 });
@@ -7146,14 +7146,14 @@ var MountainMethods, StockLiftExports, BespokeCocoonMethods, RouteManifestSummar
 var init_RouteManifest = __esm({
   "Source/Generated/RouteManifest.ts"() {
     "use strict";
-    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:openDiff", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:hide", "$terminal:resize", "$terminal:sendText", "$terminal:show", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_drop_edit_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_paste_edit_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_completion_item_provider", "register_inline_edit_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_mapped_edits_provider", "register_multi_document_highlight_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "saveAll", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "setStatusBarText", "showTextDocument", "stat", "Storage.Get", "Storage.GetItems", "Storage.Set", "Task.Execute", "Task.Fetch", "Task.Terminate", "Terminal.GetProcessId", "Terminal.Hide", "Terminal.Resize", "Terminal.Show", "terminate_task", "tree.dispose", "tree.register", "tree.reveal", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "vscode.diff", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "window.revealRange", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust", "Workspace.Save", "Workspace.SaveAll", "Workspace.SaveAs"]);
+    MountainMethods = /* @__PURE__ */ new Set(["$disposeStatusBarMessage", "$gitExec", "$resolveCustomEditor", "$scm:createSourceControl", "$scm:openDiff", "$scm:registerInputBox", "$scm:updateGroup", "$scm:updateSourceControl", "$setStatusBarMessage", "$statusBar:dispose", "$statusBar:set", "$terminal:create", "$terminal:dispose", "$terminal:hide", "$terminal:resize", "$terminal:sendText", "$terminal:show", "$tree:register", "$updateWorkspaceFolders", "applyEdit", "Authentication.GetAccounts", "Authentication.GetSession", "Clipboard.Read", "Clipboard.Write", "Command.Execute", "Command.GetAll", "config.get", "config.update", "Configuration.Inspect", "Configuration.Update", "Debug.RegisterConfigurationProvider", "Debug.Start", "Debug.Stop", "Diagnostic.Clear", "Diagnostic.Set", "Document.Save", "Document.SaveAs", "error", "executeCommand", "FileSystem.Copy", "FileSystem.CreateDirectory", "FileSystem.Delete", "FileSystem.ReadDirectory", "FileSystem.ReadFile", "FileSystem.Rename", "FileSystem.Stat", "FileSystem.WriteFile", "FileWatcher.Register", "FileWatcher.Unregister", "findFiles", "findTextInFiles", "git.openChange", "git.openFile", "html", "Keybinding.GetResolved", "Languages.GetAll", "message", "NativeHost.OpenExternal", "openDocument", "postMessage", "readFile", "register_call_hierarchy_provider", "register_code_actions_provider", "register_code_lens_provider", "register_color_provider", "register_completion_item_provider", "register_declaration_provider", "register_definition_provider", "register_document_drop_edit_provider", "register_document_formatting_provider", "register_document_highlight_provider", "register_document_link_provider", "register_document_paste_edit_provider", "register_document_range_formatting_provider", "register_document_symbol_provider", "register_evaluatable_expression_provider", "register_folding_range_provider", "register_hover_provider", "register_implementation_provider", "register_inlay_hints_provider", "register_inline_completion_item_provider", "register_inline_edit_provider", "register_inline_values_provider", "register_linked_editing_range_provider", "register_mapped_edits_provider", "register_multi_document_highlight_provider", "register_on_type_formatting_provider", "register_reference_provider", "register_rename_provider", "register_selection_range_provider", "register_semantic_tokens_provider", "register_signature_help_provider", "register_type_definition_provider", "register_type_hierarchy_provider", "register_workspace_symbol_provider", "saveAll", "Search.TextSearch", "secrets.delete", "secrets.get", "secrets.store", "setHtml", "setStatusBarText", "showTextDocument", "stat", "Storage.Get", "Storage.GetItems", "Storage.Set", "Task.Execute", "Task.Fetch", "Task.Terminate", "Terminal.GetProcessId", "Terminal.Hide", "Terminal.Resize", "Terminal.Show", "terminate_task", "tree.dispose", "tree.register", "tree.reveal", "tree.unregister", "UserInterface.ShowInputBox", "UserInterface.ShowMessage", "UserInterface.ShowOpenDialog", "UserInterface.ShowQuickPick", "UserInterface.ShowSaveDialog", "viewId", "vscode.diff", "warning", "webview.postMessage", "webview.registerView", "webview.setHtml", "webview.unregisterView", "window.revealRange", "Window.ShowInputBox", "Window.ShowMessage", "Window.ShowOpenDialog", "Window.ShowQuickPick", "Window.ShowSaveDialog", "Workspace.IsResourceTrusted", "Workspace.RequestResourceTrust", "Workspace.Save", "Workspace.SaveAll", "Workspace.SaveAs"]);
     StockLiftExports = /* @__PURE__ */ new Set();
     BespokeCocoonMethods = /* @__PURE__ */ new Set(["FindTextInFilesNodeFallback"]);
     RouteManifestSummary = {
-      mountain: 140,
+      mountain: 142,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-26T14:53:08Z"
+      generatedAt: "2026-05-26T17:02:24Z"
     };
   }
 });
@@ -36777,7 +36777,7 @@ var init_Activator = __esm({
 });
 
 // Source/Services/Handler/Notification/Handler.ts
-var LazyURI, MakeUriStub, HydrateUri, ApplyWorkspaceDelta, SafeEmit, HandleSpecificNotification, Handler_default5;
+var LazyURI, MakeUriStub, HydrateUri, ApplyWorkspaceDelta, SafeEmit, BuildTextDocumentShim, HandleSpecificNotification, Handler_default5;
 var init_Handler5 = __esm({
   async "Source/Services/Handler/Notification/Handler.ts"() {
     "use strict";
@@ -36909,6 +36909,112 @@ var init_Handler5 = __esm({
         }
       }
     }, "SafeEmit");
+    BuildTextDocumentShim = /* @__PURE__ */ __name((Context13, Uri2) => {
+      const ExistingDocs = Array.isArray(
+        Context13.__textDocuments
+      ) ? Context13.__textDocuments : [];
+      const Found = ExistingDocs.find((D) => {
+        try {
+          const DocUri = D?.uri?.toString?.() ?? "";
+          return DocUri === Uri2 || D?.fileName === Uri2;
+        } catch {
+          return false;
+        }
+      });
+      if (Found) return Found;
+      const Text = Context13?.DocumentContentCache?.get(Uri2) ?? "";
+      const Lines = Text.split(/\r?\n/);
+      const FsPath = Uri2.replace(/^file:\/\//, "");
+      return {
+        uri: {
+          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
+          fsPath: FsPath,
+          path: FsPath,
+          scheme: Uri2.split(":")[0] || "file",
+          authority: "",
+          query: "",
+          fragment: "",
+          external: Uri2
+        },
+        fileName: FsPath,
+        languageId: "plaintext",
+        version: 1,
+        isDirty: false,
+        isClosed: false,
+        isUntitled: Uri2.startsWith("untitled:"),
+        eol: 1,
+        get lineCount() {
+          return Lines.length;
+        },
+        getText: /* @__PURE__ */ __name((Range3) => {
+          if (!Range3) return Text;
+          const SL = Range3?.start?.line ?? 0;
+          const SC = Range3?.start?.character ?? 0;
+          const EL = Range3?.end?.line ?? Lines.length - 1;
+          const EC = Range3?.end?.character ?? Lines[EL]?.length ?? 0;
+          if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+          const Parts = [(Lines[SL] ?? "").slice(SC)];
+          for (let I = SL + 1; I < EL; I++) Parts.push(Lines[I] ?? "");
+          Parts.push((Lines[EL] ?? "").slice(0, EC));
+          return Parts.join("\n");
+        }, "getText"),
+        lineAt: /* @__PURE__ */ __name((N) => {
+          const Ln = typeof N === "number" ? N : N?.line ?? 0;
+          const Clamped = Math.max(0, Math.min(Ln, Lines.length - 1));
+          const T = Lines[Clamped] ?? "";
+          const FNW = T.search(/\S/);
+          return {
+            text: T,
+            lineNumber: Clamped,
+            range: {
+              start: { line: Clamped, character: 0 },
+              end: { line: Clamped, character: T.length }
+            },
+            firstNonWhitespaceCharacterIndex: FNW < 0 ? T.length : FNW,
+            isEmptyOrWhitespace: T.trim().length === 0
+          };
+        }, "lineAt"),
+        save: /* @__PURE__ */ __name(async () => false, "save"),
+        getWordRangeAtPosition: /* @__PURE__ */ __name((Pos, Pat) => {
+          const L = Lines[Pos?.line ?? 0] ?? "";
+          const R = Pat ?? /\w+/g;
+          R.lastIndex = 0;
+          const C = Pos?.character ?? 0;
+          let M;
+          while ((M = R.exec(L)) !== null) {
+            if (M.index <= C && M.index + M[0].length >= C)
+              return {
+                start: { line: Pos?.line ?? 0, character: M.index },
+                end: {
+                  line: Pos?.line ?? 0,
+                  character: M.index + M[0].length
+                }
+              };
+          }
+          return void 0;
+        }, "getWordRangeAtPosition"),
+        validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
+        validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
+        offsetAt: /* @__PURE__ */ __name((P) => {
+          let O = 0;
+          for (let I = 0; I < (P?.line ?? 0) && I < Lines.length; I++)
+            O += (Lines[I]?.length ?? 0) + 1;
+          return O + (P?.character ?? 0);
+        }, "offsetAt"),
+        positionAt: /* @__PURE__ */ __name((Off) => {
+          let R = Off;
+          for (let I = 0; I < Lines.length; I++) {
+            const L = (Lines[I]?.length ?? 0) + 1;
+            if (R < L) return { line: I, character: R };
+            R -= L;
+          }
+          return {
+            line: Lines.length - 1,
+            character: Lines[Lines.length - 1]?.length ?? 0
+          };
+        }, "positionAt")
+      };
+    }, "BuildTextDocumentShim");
     HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter, Context13) => {
       switch (Method) {
         // Mountain's `extensions:activate` Wind IPC arm fires
@@ -37919,13 +38025,21 @@ var init_Handler5 = __esm({
         // its visibility change. Payload: `{ uris: string[] }`. The
         // matching subscriber lives in `Window/Namespace.ts:1702` via
         // `MakeEventSubscriber(Context, "window.didChangeVisibleTextEditors")`.
-        // Build minimal TextEditor stubs so listener callbacks that
-        // dereference `.document.uri` / `.viewColumn` don't crash.
+        //
+        // Built-in extensions (vscode.merge-conflict, vscode.git's diff
+        // decorations) iterate the resulting array and call
+        // `editor.document.getText()` / `.lineAt()` / `.positionAt()` on each
+        // entry inside their `applyDecorations` task. A bare
+        // `{ uri, fileName }` document crashes with `TypeError: r.getText is
+        // not a function`. Reuse the existing live entry from
+        // `__textDocuments` when present (it carries `getText`, `lineAt`, the
+        // full `TextDocument` shape) and otherwise fall back to a thin
+        // content-cache-backed shim so listeners stay non-crashing.
         case "$acceptVisibleEditorsChanged": {
           const VisPayload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
           const Uris = Array.isArray(VisPayload?.uris) ? VisPayload.uris.filter((U) => typeof U === "string") : [];
           const Stubs = Uris.map((Uri2, Index) => ({
-            document: { uri: Uri2, fileName: Uri2.split("/").pop() ?? "" },
+            document: BuildTextDocumentShim(Context13, Uri2),
             selection: void 0,
             selections: [],
             visibleRanges: [],
@@ -38000,10 +38114,7 @@ var init_Handler5 = __esm({
           try {
             Emitter2.emit("window.didChangeTextEditorVisibleRanges", {
               textEditor: {
-                document: {
-                  uri: Uri2,
-                  fileName: Uri2.split("/").pop() ?? ""
-                },
+                document: BuildTextDocumentShim(Context13, Uri2),
                 viewColumn: VRPayload.viewColumn,
                 visibleRanges: VisibleRanges
               },
@@ -38028,10 +38139,7 @@ var init_Handler5 = __esm({
           try {
             Emitter2.emit("window.didChangeTextEditorOptions", {
               textEditor: {
-                document: {
-                  uri: Uri2,
-                  fileName: Uri2.split("/").pop() ?? ""
-                },
+                document: BuildTextDocumentShim(Context13, Uri2),
                 viewColumn: OptPayload.viewColumn,
                 options: Options
               },
@@ -38064,10 +38172,7 @@ var init_Handler5 = __esm({
           try {
             Emitter2.emit("window.didChangeTextEditorDiffInformation", {
               textEditor: {
-                document: {
-                  uri: ModifiedUri,
-                  fileName: ModifiedUri.split("/").pop() ?? ""
-                }
+                document: BuildTextDocumentShim(Context13, ModifiedUri)
               },
               diffInformation: {
                 modified: ModifiedUri,
@@ -38095,10 +38200,7 @@ var init_Handler5 = __esm({
           try {
             Emitter2.emit("window.didChangeTextEditorViewColumn", {
               textEditor: {
-                document: {
-                  uri: Uri2,
-                  fileName: Uri2.split("/").pop() ?? ""
-                },
+                document: BuildTextDocumentShim(Context13, Uri2),
                 viewColumn: ViewColumn2
               },
               viewColumn: ViewColumn2

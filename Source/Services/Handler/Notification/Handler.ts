@@ -350,6 +350,132 @@ const SafeEmit = (
 };
 
 /**
+ * Build a `vscode.TextDocument`-shaped shim backed by `DocumentContentCache`.
+ *
+ * Used by every notification path that needs to fabricate a document on
+ * demand because Mountain only sent URIs (e.g. `$acceptVisibleEditorsChanged`,
+ * `$acceptVisibleRangesChanged`, `$acceptTextEditorOptionsChanged`). The
+ * shim implements every method built-in extensions reach for inside
+ * `applyDecorations` / `onDidChangeVisibleTextEditors` callbacks - notably
+ * `getText`, `lineAt`, `positionAt`, `offsetAt`, `getWordRangeAtPosition`.
+ *
+ * Calls first prefer a live entry from `Context.__textDocuments` (the
+ * full-fidelity doc that `$acceptModelChanged` keeps in sync) when one
+ * exists for the URI; otherwise they fall back to a content-cache-backed
+ * shim so listener crashes don't propagate (empty string is the safe
+ * "no conflicts / no decorations" answer for every extension that asks).
+ */
+const BuildTextDocumentShim = (
+	Context: HandlerContext | undefined,
+	Uri: string,
+): any => {
+	const ExistingDocs: any[] = Array.isArray((Context as any).__textDocuments)
+		? (Context as any).__textDocuments
+		: [];
+	const Found = ExistingDocs.find((D: any) => {
+		try {
+			const DocUri = D?.uri?.toString?.() ?? "";
+			return DocUri === Uri || D?.fileName === Uri;
+		} catch {
+			return false;
+		}
+	});
+	if (Found) return Found;
+	const Text = Context?.DocumentContentCache?.get(Uri) ?? "";
+	const Lines = Text.split(/\r?\n/);
+	const FsPath = Uri.replace(/^file:\/\//, "");
+	return {
+		uri: {
+			toString: () => Uri,
+			fsPath: FsPath,
+			path: FsPath,
+			scheme: Uri.split(":")[0] || "file",
+			authority: "",
+			query: "",
+			fragment: "",
+			external: Uri,
+		},
+		fileName: FsPath,
+		languageId: "plaintext",
+		version: 1,
+		isDirty: false,
+		isClosed: false,
+		isUntitled: Uri.startsWith("untitled:"),
+		eol: 1,
+		get lineCount() {
+			return Lines.length;
+		},
+		getText: (Range?: any) => {
+			if (!Range) return Text;
+			const SL = Range?.start?.line ?? 0;
+			const SC = Range?.start?.character ?? 0;
+			const EL = Range?.end?.line ?? Lines.length - 1;
+			const EC = Range?.end?.character ?? Lines[EL]?.length ?? 0;
+			if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+			const Parts = [(Lines[SL] ?? "").slice(SC)];
+			for (let I = SL + 1; I < EL; I++) Parts.push(Lines[I] ?? "");
+			Parts.push((Lines[EL] ?? "").slice(0, EC));
+			return Parts.join("\n");
+		},
+		lineAt: (N: any) => {
+			const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+			const Clamped = Math.max(0, Math.min(Ln, Lines.length - 1));
+			const T = Lines[Clamped] ?? "";
+			const FNW = T.search(/\S/);
+			return {
+				text: T,
+				lineNumber: Clamped,
+				range: {
+					start: { line: Clamped, character: 0 },
+					end: { line: Clamped, character: T.length },
+				},
+				firstNonWhitespaceCharacterIndex: FNW < 0 ? T.length : FNW,
+				isEmptyOrWhitespace: T.trim().length === 0,
+			};
+		},
+		save: async () => false,
+		getWordRangeAtPosition: (Pos: any, Pat?: RegExp) => {
+			const L = Lines[Pos?.line ?? 0] ?? "";
+			const R = Pat ?? /\w+/g;
+			R.lastIndex = 0;
+			const C = Pos?.character ?? 0;
+			let M: RegExpExecArray | null;
+			while ((M = R.exec(L)) !== null) {
+				if (M.index <= C && M.index + M[0].length >= C)
+					return {
+						start: { line: Pos?.line ?? 0, character: M.index },
+						end: {
+							line: Pos?.line ?? 0,
+							character: M.index + M[0].length,
+						},
+					};
+			}
+			return undefined;
+		},
+		validateRange: (R: any) => R,
+		validatePosition: (P: any) => P,
+		offsetAt: (P: any) => {
+			let O = 0;
+			for (let I = 0; I < (P?.line ?? 0) && I < Lines.length; I++)
+				O += (Lines[I]?.length ?? 0) + 1;
+			return O + (P?.character ?? 0);
+		},
+		positionAt: (Off: number) => {
+			let R = Off;
+			for (let I = 0; I < Lines.length; I++) {
+				const L = (Lines[I]?.length ?? 0) + 1;
+				if (R < L) return { line: I, character: R };
+				R -= L;
+			}
+			return {
+				line: Lines.length - 1,
+				character: Lines[Lines.length - 1]?.length ?? 0,
+			};
+		},
+	};
+};
+
+/**
  * Handle specific notification types by routing to domain handlers.
  * DocumentContentHandler methods are passed directly to avoid circular imports.
  * WorkspaceEventEmitter is forwarded to document handlers for event emission.
@@ -1677,8 +1803,16 @@ const HandleSpecificNotification = (
 		// its visibility change. Payload: `{ uris: string[] }`. The
 		// matching subscriber lives in `Window/Namespace.ts:1702` via
 		// `MakeEventSubscriber(Context, "window.didChangeVisibleTextEditors")`.
-		// Build minimal TextEditor stubs so listener callbacks that
-		// dereference `.document.uri` / `.viewColumn` don't crash.
+		//
+		// Built-in extensions (vscode.merge-conflict, vscode.git's diff
+		// decorations) iterate the resulting array and call
+		// `editor.document.getText()` / `.lineAt()` / `.positionAt()` on each
+		// entry inside their `applyDecorations` task. A bare
+		// `{ uri, fileName }` document crashes with `TypeError: r.getText is
+		// not a function`. Reuse the existing live entry from
+		// `__textDocuments` when present (it carries `getText`, `lineAt`, the
+		// full `TextDocument` shape) and otherwise fall back to a thin
+		// content-cache-backed shim so listeners stay non-crashing.
 		case "$acceptVisibleEditorsChanged": {
 			const VisPayload = Array.isArray(Parameters)
 				? Parameters[0]
@@ -1687,7 +1821,7 @@ const HandleSpecificNotification = (
 				? VisPayload.uris.filter((U: unknown) => typeof U === "string")
 				: [];
 			const Stubs = Uris.map((Uri, Index) => ({
-				document: { uri: Uri, fileName: Uri.split("/").pop() ?? "" },
+				document: BuildTextDocumentShim(Context, Uri),
 				selection: undefined,
 				selections: [],
 				visibleRanges: [],
@@ -1786,10 +1920,7 @@ const HandleSpecificNotification = (
 			try {
 				Emitter.emit("window.didChangeTextEditorVisibleRanges", {
 					textEditor: {
-						document: {
-							uri: Uri,
-							fileName: Uri.split("/").pop() ?? "",
-						},
+						document: BuildTextDocumentShim(Context, Uri),
 						viewColumn: VRPayload.viewColumn,
 						visibleRanges: VisibleRanges,
 					},
@@ -1819,10 +1950,7 @@ const HandleSpecificNotification = (
 			try {
 				Emitter.emit("window.didChangeTextEditorOptions", {
 					textEditor: {
-						document: {
-							uri: Uri,
-							fileName: Uri.split("/").pop() ?? "",
-						},
+						document: BuildTextDocumentShim(Context, Uri),
 						viewColumn: OptPayload.viewColumn,
 						options: Options,
 					},
@@ -1867,10 +1995,7 @@ const HandleSpecificNotification = (
 			try {
 				Emitter.emit("window.didChangeTextEditorDiffInformation", {
 					textEditor: {
-						document: {
-							uri: ModifiedUri,
-							fileName: ModifiedUri.split("/").pop() ?? "",
-						},
+						document: BuildTextDocumentShim(Context, ModifiedUri),
 					},
 					diffInformation: {
 						modified: ModifiedUri,
@@ -1905,10 +2030,7 @@ const HandleSpecificNotification = (
 			try {
 				Emitter.emit("window.didChangeTextEditorViewColumn", {
 					textEditor: {
-						document: {
-							uri: Uri,
-							fileName: Uri.split("/").pop() ?? "",
-						},
+						document: BuildTextDocumentShim(Context, Uri),
 						viewColumn: ViewColumn,
 					},
 					viewColumn: ViewColumn,
