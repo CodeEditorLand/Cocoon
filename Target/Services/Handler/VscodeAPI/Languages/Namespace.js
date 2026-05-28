@@ -2113,6 +2113,8 @@ var LinkedMap = class {
       [Symbol.iterator]() {
         return iterator;
       },
+      [Symbol.dispose]() {
+      },
       next() {
         if (map._state !== state) {
           throw new Error(`LinkedMap got modified during iteration.`);
@@ -2136,6 +2138,8 @@ var LinkedMap = class {
       [Symbol.iterator]() {
         return iterator;
       },
+      [Symbol.dispose]() {
+      },
       next() {
         if (map._state !== state) {
           throw new Error(`LinkedMap got modified during iteration.`);
@@ -2158,6 +2162,8 @@ var LinkedMap = class {
     const iterator = {
       [Symbol.iterator]() {
         return iterator;
+      },
+      [Symbol.dispose]() {
       },
       next() {
         if (map._state !== state) {

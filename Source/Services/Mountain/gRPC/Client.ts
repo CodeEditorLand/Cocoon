@@ -20,12 +20,6 @@
  *   - `secrets.get` / `secrets.store` / `secrets.delete` -
  *     `Cocoon/Services/Handler/Extension/Host/ActivateExtension.ts`
  *
- *   Do NOT add new code that consumes `MountainGRPCClientService`. Use
- *   `Context.MountainClient?.sendRequest(...)` against the canonical
- *   method names instead. Scheduled for removal once `Workspace.ts` and
- *   `Window/Index.ts` no longer reference the tag (Track-B vertical
- *   split work in `.hermes/plan/Mountain-Crate-Split.md` §#7).
- *
  *   ---
  *
  * High-level Effect-TS wrapper service for Mountain gRPC operations.

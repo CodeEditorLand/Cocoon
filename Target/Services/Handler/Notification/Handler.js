@@ -4292,6 +4292,8 @@ var init_map = __esm({
           [Symbol.iterator]() {
             return iterator;
           },
+          [Symbol.dispose]() {
+          },
           next() {
             if (map._state !== state) {
               throw new Error(`LinkedMap got modified during iteration.`);
@@ -4315,6 +4317,8 @@ var init_map = __esm({
           [Symbol.iterator]() {
             return iterator;
           },
+          [Symbol.dispose]() {
+          },
           next() {
             if (map._state !== state) {
               throw new Error(`LinkedMap got modified during iteration.`);
@@ -4337,6 +4341,8 @@ var init_map = __esm({
         const iterator = {
           [Symbol.iterator]() {
             return iterator;
+          },
+          [Symbol.dispose]() {
           },
           next() {
             if (map._state !== state) {
@@ -23115,7 +23121,7 @@ var init_RouteManifest = __esm({
       mountain: 142,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-26T17:41:48Z"
+      generatedAt: "2026-05-28T11:31:40Z"
     };
   }
 });
@@ -30258,10 +30264,45 @@ var init_Namespace19 = __esm({
       const Command = Source["command"];
       if (Command && typeof Command === "object") {
         const C = Command;
+        const RawArgs = Array.isArray(C["arguments"]) ? C["arguments"] : void 0;
+        const ProjectArg = /* @__PURE__ */ __name((Arg) => {
+          if (Arg == null) return Arg;
+          if (typeof Arg !== "object") return Arg;
+          const Holder = Arg;
+          const Projected = {};
+          if (Holder["resourceUri"] !== void 0)
+            Projected["resourceUri"] = Holder["resourceUri"];
+          if (typeof Holder["scheme"] === "string") {
+            Projected["scheme"] = Holder["scheme"];
+            if (Holder["authority"] !== void 0)
+              Projected["authority"] = Holder["authority"];
+            if (Holder["path"] !== void 0)
+              Projected["path"] = Holder["path"];
+            if (Holder["query"] !== void 0)
+              Projected["query"] = Holder["query"];
+            if (Holder["fragment"] !== void 0)
+              Projected["fragment"] = Holder["fragment"];
+          }
+          if (typeof Holder["fsPath"] === "string")
+            Projected["fsPath"] = Holder["fsPath"];
+          if (typeof Holder["external"] === "string")
+            Projected["external"] = Holder["external"];
+          for (const Key of [
+            "type",
+            "originalUri",
+            "renameUri",
+            "contextValue",
+            "id"
+          ]) {
+            if (Holder[Key] !== void 0) Projected[Key] = Holder[Key];
+          }
+          return Projected;
+        }, "ProjectArg");
         Out["command"] = {
           title: C["title"] ?? "",
           command: C["command"] ?? "",
-          tooltip: C["tooltip"] ?? ""
+          tooltip: C["tooltip"] ?? "",
+          arguments: RawArgs ? RawArgs.map(ProjectArg) : void 0
         };
       }
       const Decorations = Source["decorations"];

@@ -438,7 +438,7 @@ var RouteManifestSummary = {
   mountain: 142,
   stockLift: 0,
   bespoke: 1,
-  generatedAt: "2026-05-26T17:41:48Z"
+  generatedAt: "2026-05-28T11:31:40Z"
 };
 
 // Source/Services/Dual/Track.ts
@@ -2170,6 +2170,8 @@ var LinkedMap = class {
       [Symbol.iterator]() {
         return iterator;
       },
+      [Symbol.dispose]() {
+      },
       next() {
         if (map._state !== state) {
           throw new Error(`LinkedMap got modified during iteration.`);
@@ -2193,6 +2195,8 @@ var LinkedMap = class {
       [Symbol.iterator]() {
         return iterator;
       },
+      [Symbol.dispose]() {
+      },
       next() {
         if (map._state !== state) {
           throw new Error(`LinkedMap got modified during iteration.`);
@@ -2215,6 +2219,8 @@ var LinkedMap = class {
     const iterator = {
       [Symbol.iterator]() {
         return iterator;
+      },
+      [Symbol.dispose]() {
       },
       next() {
         if (map._state !== state) {

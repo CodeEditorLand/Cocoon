@@ -1617,6 +1617,8 @@ var init_map = __esm({
           [Symbol.iterator]() {
             return iterator;
           },
+          [Symbol.dispose]() {
+          },
           next() {
             if (map._state !== state) {
               throw new Error(`LinkedMap got modified during iteration.`);
@@ -1640,6 +1642,8 @@ var init_map = __esm({
           [Symbol.iterator]() {
             return iterator;
           },
+          [Symbol.dispose]() {
+          },
           next() {
             if (map._state !== state) {
               throw new Error(`LinkedMap got modified during iteration.`);
@@ -1662,6 +1666,8 @@ var init_map = __esm({
         const iterator = {
           [Symbol.iterator]() {
             return iterator;
+          },
+          [Symbol.dispose]() {
           },
           next() {
             if (map._state !== state) {
