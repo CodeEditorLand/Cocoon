@@ -42,7 +42,9 @@ const require = createRequire(import.meta.url);
  */
 enum CircuitBreakerState {
 	Closed = "CLOSED", // Normal operation
+
 	Open = "OPEN", // Reject all requests
+
 	HalfOpen = "HALF_OPEN", // Allow limited requests to test recovery
 }
 
@@ -85,6 +87,7 @@ export class MountainClientService implements IMountainClientService {
 	private mountainHost: string = "localhost";
 
 	private mountainPort: number = 50051; // Default Mountain gRPC port
+
 	private connectionState: ConnectionState = ConnectionState.Disconnected;
 
 	private connectionStartTime: number = 0;
@@ -105,8 +108,11 @@ export class MountainClientService implements IMountainClientService {
 	private circuitBreakerSuccessCount: number = 0;
 
 	private readonly circuitBreakerThreshold: number = 5;
+
 	private readonly circuitBreakerSuccessThreshold: number = 3;
+
 	private readonly circuitBreakerTimeout: number = 60000; // 60s recovery timeout
+
 	private circuitBreakerOpenTime: number = 0;
 
 	private circuitBreakerHalfOpenAttempts: number = 0;
@@ -115,13 +121,16 @@ export class MountainClientService implements IMountainClientService {
 	private readonly maxRetries: number = 3;
 
 	private readonly baseRetryDelay: number = 1000;
+
 	private readonly maxRetryDelay: number = 10000;
+
 	private readonly retryJitterFactor: number = 0.2;
 
 	// Health monitoring
 	private healthCheckInterval: NodeJS.Timeout | null = null;
 
 	private readonly healthCheckPeriod: number = 30000;
+
 	private lastHealthCheck: number = 0;
 
 	private consecutiveSuccessfulHealthChecks: number = 0;
@@ -155,6 +164,7 @@ export class MountainClientService implements IMountainClientService {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClientService] Initializing Mountain gRPC client (ID: ${this.clientId})`,
 		);
 
@@ -162,6 +172,7 @@ export class MountainClientService implements IMountainClientService {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClientService] Configured for ${this.mountainHost}:${this.mountainPort}, Session: ${this.sessionId}`,
 		);
 
@@ -201,6 +212,7 @@ export class MountainClientService implements IMountainClientService {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}, MAX_RETRIES=${this.maxRetries}`,
 		);
 
@@ -216,6 +228,7 @@ export class MountainClientService implements IMountainClientService {
 		if (this.maxRetries < 0 || this.maxRetries > 10) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Invalid max retries: ${this.maxRetries}, using default: 3`,
 			);
 
@@ -225,6 +238,7 @@ export class MountainClientService implements IMountainClientService {
 		if (this.healthCheckPeriod < 5000 || this.healthCheckPeriod > 120000) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Invalid health check period: ${this.healthCheckPeriod}ms, using default: 30000ms`,
 			);
 
@@ -242,11 +256,17 @@ export class MountainClientService implements IMountainClientService {
 
 		const validHostPatterns = [
 			/^localhost$/, // localhost
+
 			/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // IPv4
+
 			/^\[[0-9a-fA-F:]+\]$/, // IPv6 (bracketed)
+
 			/^[0-9a-fA-F:]+$/, // IPv6 (unbracketed)
+
 			/^[a-zA-Z0-9.-]+$/, // Domain name
+
 			/^[a-zA-Z0-9_-]+$/, // Simple hostname
+
 			/^unix:[\/\\].+$/, // Unix domain socket
 		];
 
@@ -260,11 +280,14 @@ export class MountainClientService implements IMountainClientService {
 		process.on("SIGTERM", () => {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Received SIGTERM, shutting down gracefully",
 			);
+
 			this.disconnect().catch((error) => {
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Graceful shutdown failed:",
 
 					error,
@@ -275,11 +298,14 @@ export class MountainClientService implements IMountainClientService {
 		process.on("SIGINT", () => {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Received SIGINT, shutting down gracefully",
 			);
+
 			this.disconnect().catch((error) => {
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Graceful shutdown failed:",
 
 					error,
@@ -295,6 +321,7 @@ export class MountainClientService implements IMountainClientService {
 		) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Running in VS Code extension context",
 			);
 		}
@@ -312,6 +339,7 @@ export class MountainClientService implements IMountainClientService {
 		) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Already ${this.connectionState.toLowerCase()} to Mountain`,
 			);
 
@@ -320,6 +348,7 @@ export class MountainClientService implements IMountainClientService {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClientService] Connecting to Mountain at ${this.mountainHost}:${this.mountainPort} (Session: ${this.sessionId})`,
 		);
 
@@ -339,17 +368,29 @@ export class MountainClientService implements IMountainClientService {
 			// Use proper gRPC channel configuration for VS Code extension compatibility
 			const channelOptions: grpc.ChannelOptions = {
 				"grpc.max_receive_message_length": 1024 * 1024 * 100, // 100MB max message size
+
 				"grpc.max_send_message_length": 1024 * 1024 * 100, // 100MB max message size
+
 				"grpc.keepalive_time_ms": 10000, // 10s keepalive ping
+
 				"grpc.keepalive_timeout_ms": 5000, // 5s keepalive timeout
+
 				"grpc.keepalive_permit_without_calls": 1, // Allow keepalive without calls
+
 				"grpc.http2.max_pings_without_data": 0, // No pings without data
+
 				"grpc.http2.min_time_between_pings_ms": 10000, // 10s min between pings
+
 				"grpc.http2.min_ping_interval_without_data_ms": 30000, // 30s min ping interval
+
 				"grpc.enable_retries": 1, // Enable gRPC built-in retries
+
 				"grpc.max_retry_attempts": 3, // Max retry attempts
+
 				"grpc.initial_reconnect_backoff_ms": 1000, // Initial reconnect backoff
+
 				"grpc.max_reconnect_backoff_ms": 30000, // Max reconnect backoff
+
 				"grpc.enable_channelz": 0, // Disable channelz for perf
 			};
 
@@ -382,6 +423,7 @@ export class MountainClientService implements IMountainClientService {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Successfully connected to Mountain (Session: ${this.sessionId})`,
 			);
 
@@ -394,6 +436,7 @@ export class MountainClientService implements IMountainClientService {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Failed to connect to Mountain:`,
 
 				error,
@@ -414,6 +457,7 @@ export class MountainClientService implements IMountainClientService {
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClientService] Loading Vine.proto protocol definition",
 		);
 
@@ -458,6 +502,7 @@ export class MountainClientService implements IMountainClientService {
 			if (vineProtoPath) {
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Found Vine.proto at: ${vineProtoPath}`,
 				);
 
@@ -476,6 +521,7 @@ export class MountainClientService implements IMountainClientService {
 			} else {
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Vine.proto not found at:",
 
 					vineProtoPath,
@@ -559,6 +605,7 @@ message RPCDataPayload {
 
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Using fallback protocol at: ${tempProtoPath}`,
 				);
 
@@ -576,6 +623,7 @@ message RPCDataPayload {
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Failed to load protocol definition:",
 
 				error,
@@ -594,15 +642,18 @@ message RPCDataPayload {
 		return new Promise((resolve, reject) => {
 			if (!this.client) {
 				reject(new Error("Client not initialized"));
+
 				return;
 			}
 
 			// Use gRPC's built-in channel state monitoring
 			const startTime = Date.now();
+
 			const timeout = 3000; // 3 second connection timeout (fast fail for bootstrap)
 
 			const checkConnection = () => {
 				const channel = (this.client as any).getChannel();
+
 				if (channel) {
 					// Pass true to trigger connection attempt (false just returns IDLE without connecting)
 					const state = channel.getConnectivityState(true);
@@ -610,9 +661,12 @@ message RPCDataPayload {
 					if (state === grpc.connectivityState.READY) {
 						CocoonDevLog(
 							"mountain-client",
+
 							"[MountainClientService] Connection established and ready",
 						);
+
 						resolve();
+
 						return;
 					} else if (
 						state === grpc.connectivityState.TRANSIENT_FAILURE ||
@@ -623,12 +677,14 @@ message RPCDataPayload {
 								`Connection failed with state: ${grpc.connectivityState[state]}`,
 							),
 						);
+
 						return;
 					}
 				}
 
 				if (Date.now() - startTime > timeout) {
 					reject(new Error("Connection timeout exceeded"));
+
 					return;
 				}
 
@@ -683,6 +739,7 @@ message RPCDataPayload {
 		) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`,
 			);
 		}
@@ -815,6 +872,7 @@ message RPCDataPayload {
 			) {
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Request ${method} completed successfully in ${duration}ms`,
 				);
 			}
@@ -894,6 +952,7 @@ message RPCDataPayload {
 			// thing that opens the circuit. The error still surfaces to
 			// the caller via the rejected Promise.
 			const IsBenignUnknownMethod = /Unknown method:/i.test(ErrorMessage);
+
 			// Benign-404 and benign-missing-command both fire per-call
 			// (65+ hits per session from extensions probing for optional
 			// files / cross-extension commands). The fact that they're
@@ -922,6 +981,7 @@ message RPCDataPayload {
 				// code bug, not a transport failure.
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] ${method} routing miss after ${duration}ms (Mountain has no handler): ${ErrorMessage}`,
 				);
 			} else {
@@ -929,6 +989,7 @@ message RPCDataPayload {
 
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Request ${method} failed after ${duration}ms:`,
 
 					error,
@@ -939,6 +1000,7 @@ message RPCDataPayload {
 			if (cancellationToken?.isCancellationRequested) {
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Request ${requestIdentifier} was cancelled`,
 				);
 
@@ -949,6 +1011,7 @@ message RPCDataPayload {
 			if (this.isConnectionError(error)) {
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Connection error detected, attempting auto-reconnect",
 				);
 
@@ -957,6 +1020,7 @@ message RPCDataPayload {
 
 					CocoonDevLog(
 						"mountain-client",
+
 						"[MountainClientService] Auto-reconnect successful, retrying request",
 					);
 
@@ -970,6 +1034,7 @@ message RPCDataPayload {
 				} catch (reconnectError) {
 					CocoonDevLog(
 						"mountain-client",
+
 						"[MountainClientService] Auto-reconnect failed:",
 
 						reconnectError,
@@ -1023,6 +1088,7 @@ message RPCDataPayload {
 		) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`,
 			);
 		}
@@ -1059,8 +1125,11 @@ message RPCDataPayload {
 
 			// Numeric gRPC error codes
 			error.code === 14, // UNAVAILABLE
+
 			error.code === 4, // DEADLINE_EXCEEDED
+
 			error.code === 1, // CANCELLED
+
 			error.code === 2, // UNKNOWN
 
 			// Error message patterns
@@ -1139,6 +1208,7 @@ message RPCDataPayload {
 
 					CocoonDevLog(
 						"mountain-client",
+
 						`[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
 
 						error,
@@ -1159,6 +1229,7 @@ message RPCDataPayload {
 		const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt);
 
 		const jitter = Math.random() * 0.1 * exponentialDelay; // Add 10% jitter
+
 		return Math.min(exponentialDelay + jitter, this.maxRetryDelay);
 	}
 
@@ -1201,6 +1272,7 @@ message RPCDataPayload {
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Failed to serialize parameters:",
 
 				error,
@@ -1227,6 +1299,7 @@ message RPCDataPayload {
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Failed to deserialize response:",
 
 				error,
@@ -1248,6 +1321,7 @@ message RPCDataPayload {
 			if (this.circuitBreakerState === CircuitBreakerState.HalfOpen) {
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)",
 				);
 
@@ -1273,6 +1347,7 @@ message RPCDataPayload {
 			if (this.circuitBreakerState === CircuitBreakerState.Open) {
 				CocoonDevLog(
 					"breaker",
+
 					`[Breaker] in-flight failure while Open - not counted (count stays at ${this.circuitBreakerFailureCount})`,
 				);
 
@@ -1293,6 +1368,7 @@ message RPCDataPayload {
 
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`,
 				);
 
@@ -1319,6 +1395,7 @@ message RPCDataPayload {
 
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery",
 				);
 
@@ -1351,6 +1428,7 @@ message RPCDataPayload {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClientService] Health monitoring started (interval: ${this.healthCheckPeriod}ms)`,
 		);
 	}
@@ -1366,6 +1444,7 @@ message RPCDataPayload {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Health monitoring stopped",
 			);
 		}
@@ -1381,16 +1460,20 @@ message RPCDataPayload {
 			// Check gRPC channel connectivity state instead of sending an RPC
 			// (Mountain doesn't implement a health.check handler)
 			const channel = (this.client as any)?.getChannel?.();
+
 			if (channel) {
 				const state = channel.getConnectivityState(true);
+
 				if (state !== grpc.connectivityState.READY) {
 					// Channel isn't ready - wait for up to 3s for it to become READY
 					// (getConnectivityState(true) triggers a connection attempt if IDLE
 					// but returns immediately; the background handshake takes time)
 					await new Promise<void>((resolve, reject) => {
 						const deadline = Date.now() + 3000;
+
 						const poll = () => {
 							const st = channel.getConnectivityState(false);
+
 							if (st === grpc.connectivityState.READY) {
 								resolve();
 							} else if (
@@ -1413,14 +1496,17 @@ message RPCDataPayload {
 								setTimeout(poll, 100);
 							}
 						};
+
 						setTimeout(poll, 100);
 					});
 				}
 			}
+
 			this.consecutiveSuccessfulHealthChecks++;
 
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Health check passed (consecutive successes: ${this.consecutiveSuccessfulHealthChecks})`,
 			);
 
@@ -1433,11 +1519,14 @@ message RPCDataPayload {
 			}
 		} catch (error) {
 			this.consecutiveSuccessfulHealthChecks = 0;
+
 			this.errorCount++;
+
 			this.UpdateCircuitBreaker(false);
 
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Health check failed:",
 
 				error,
@@ -1447,11 +1536,14 @@ message RPCDataPayload {
 			if (this.connectionState !== ConnectionState.Connected) {
 				CocoonDevLog(
 					"mountain-client",
+
 					"[MountainClientService] Connection lost, attempting reconnect",
 				);
+
 				this.reconnect().catch((err) => {
 					CocoonDevLog(
 						"mountain-client",
+
 						"[MountainClientService] Auto-reconnect failed:",
 
 						err,
@@ -1483,9 +1575,11 @@ message RPCDataPayload {
 			typeof process !== "undefined" &&
 			typeof process.env["Trace"] === "string" &&
 			process.env["Trace"].includes("grpc-verbose");
+
 		if (TraceGrpcVerbose) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Sending notification to Mountain: ${method}`,
 			);
 		}
@@ -1493,6 +1587,7 @@ message RPCDataPayload {
 		try {
 			const notification: GenericNotification = {
 				Method: method,
+
 				Parameter: Buffer.from(JSON.stringify(parameters)),
 			};
 
@@ -1501,13 +1596,16 @@ message RPCDataPayload {
 			if (TraceGrpcVerbose) {
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClientService] Notification ${method} sent successfully`,
 				);
 			}
 		} catch (error) {
 			this.errorCount++;
+
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Notification ${method} failed:`,
 
 				error,
@@ -1516,6 +1614,7 @@ message RPCDataPayload {
 			// Don't throw for notifications (they're fire-and-forget)
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Notification ${method} failed, but continuing (fire-and-forget)`,
 			);
 		}
@@ -1565,6 +1664,7 @@ message RPCDataPayload {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClientService] Canceling operation: ${requestIdentifier}, reason: ${reason}`,
 		);
 
@@ -1577,6 +1677,7 @@ message RPCDataPayload {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Operation ${requestIdentifier} canceled`,
 			);
 		} catch (error) {
@@ -1584,6 +1685,7 @@ message RPCDataPayload {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Cancel operation ${requestIdentifier} failed:`,
 
 				error,
@@ -1592,6 +1694,7 @@ message RPCDataPayload {
 			// Don't throw for cancellation failures (best effort)
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClientService] Cancel operation ${requestIdentifier} failed, but continuing`,
 			);
 		}
@@ -1637,6 +1740,7 @@ message RPCDataPayload {
 		) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClientService] Not connected to Mountain (already disconnected)",
 			);
 
@@ -1645,6 +1749,7 @@ message RPCDataPayload {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClientService] Disconnecting from Mountain",
 		);
 
@@ -1657,6 +1762,7 @@ message RPCDataPayload {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClientService] Disconnected from Mountain",
 		);
 	}
@@ -1667,6 +1773,7 @@ message RPCDataPayload {
 	async reconnect(): Promise<void> {
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClientService] Reconnecting to Mountain",
 		);
 
@@ -1676,6 +1783,7 @@ message RPCDataPayload {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClientService] Reconnected to Mountain",
 		);
 	}

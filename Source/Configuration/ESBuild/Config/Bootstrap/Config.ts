@@ -69,6 +69,7 @@ const BootstrapConfig: BuildOptions = {
 
 	define: {
 		__DEV__: Environment.On ? "true" : "false",
+
 		"process.env.NODE_ENV": JSON.stringify(
 			process.env["NODE_ENV"] ||
 				(Environment.On ? "development" : "production"),

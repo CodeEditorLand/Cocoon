@@ -192,6 +192,7 @@ export const ExtensionLive = Layer.effect(
 		// Atom: Get all extensions
 		const getAll = Effect.gen(function* () {
 			const extensions = yield* extensionsRef.get;
+
 			return Array.from(HashMap.values(extensions));
 		});
 
@@ -199,6 +200,7 @@ export const ExtensionLive = Layer.effect(
 		const getById = (id: string) =>
 			Effect.gen(function* () {
 				const extensions = yield* extensionsRef.get;
+
 				const extension = HashMap.get(extensions, id);
 
 				if (extension._tag === "None") {
@@ -212,7 +214,9 @@ export const ExtensionLive = Layer.effect(
 		const activate = (id: string) =>
 			Effect.gen(function* () {
 				const startTime = Date.now();
+
 				const extensions = yield* extensionsRef.get;
+
 				const extension = HashMap.get(extensions, id);
 
 				if (extension._tag === "None") {
@@ -254,6 +258,7 @@ export const ExtensionLive = Layer.effect(
 
 				// Update state to active
 				const updatedExtensions = yield* extensionsRef.get;
+
 				yield* Ref.set(
 					extensionsRef,
 
@@ -286,6 +291,7 @@ export const ExtensionLive = Layer.effect(
 
 						// Update state to error
 						const extensions = yield* extensionsRef.get;
+
 						yield* Ref.set(
 							extensionsRef,
 
@@ -331,6 +337,7 @@ export const ExtensionLive = Layer.effect(
 		const deactivate = (id: string) =>
 			Effect.gen(function* () {
 				const extensions = yield* extensionsRef.get;
+
 				const extension = HashMap.get(extensions, id);
 
 				if (extension._tag === "None") {
@@ -372,6 +379,7 @@ export const ExtensionLive = Layer.effect(
 
 				// Update state to deactivated
 				const updatedExtensions = yield* extensionsRef.get;
+
 				yield* Ref.set(
 					extensionsRef,
 
@@ -416,6 +424,7 @@ export const ExtensionLive = Layer.effect(
 		const isActive = (id: string) =>
 			Effect.gen(function* () {
 				const extensions = yield* extensionsRef.get;
+
 				const extension = HashMap.get(extensions, id);
 
 				if (extension._tag === "None") {
@@ -428,16 +437,20 @@ export const ExtensionLive = Layer.effect(
 		// Atom: Get active extensions count
 		const getActiveCount = Effect.gen(function* () {
 			const extensions = yield* extensionsRef.get;
+
 			const values = Array.from(HashMap.values(extensions));
+
 			return values.filter((ext) => ext.state._tag === "Active").length;
 		});
 
 		// Atom: Get state changes
 		const stateChanges = Effect.map(extensionsRef.get, (extensions) => {
 			const result: Record<string, ExtensionState> = {};
+
 			for (const [id, host] of HashMap.entries(extensions)) {
 				result[id] = host.state;
 			}
+
 			return result;
 		});
 
@@ -474,9 +487,11 @@ export const makeMockExtension = (
 		getById: (id: string) =>
 			Effect.gen(function* () {
 				const ext = mockExtensions.find((e) => e.id === id);
+
 				if (!ext) {
 					return yield* Effect.fail(new ExtensionNotFoundError(id));
 				}
+
 				return ext;
 			}),
 

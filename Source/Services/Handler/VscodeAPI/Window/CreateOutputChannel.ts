@@ -20,10 +20,15 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 const enum LogLevel {
 	Off = 0,
+
 	Trace = 1,
+
 	Debug = 2,
+
 	Info = 3,
+
 	Warning = 4,
+
 	Error = 5,
 }
 
@@ -32,8 +37,10 @@ const FormatTimestamp = (): string => {
 	// timestamp output so users see the same format they get from the
 	// built-in log channels.
 	const Now = new Date();
+
 	const Pad = (N: number, Width: number = 2) =>
 		String(N).padStart(Width, "0");
+
 	return (
 		Now.getFullYear() +
 		"-" +
@@ -69,6 +76,7 @@ export default (
 			: false;
 
 	let CurrentLevel: LogLevel = LogLevel.Info;
+
 	const LevelListeners: Array<(Level: LogLevel) => void> = [];
 
 	Context.SendToMountain("outputChannel.create", {
@@ -93,6 +101,7 @@ export default (
 	// command). The notification handler in Cocoon emits this on
 	// `outputChannel.logLevel:<handle>`.
 	const LevelChannel = `outputChannel.logLevel:${Handle}`;
+
 	const LevelListener = (NextLevel: unknown) => {
 		const Resolved =
 			typeof NextLevel === "number"
@@ -100,8 +109,11 @@ export default (
 				: typeof NextLevel === "string"
 					? ((LogLevel as any)[NextLevel] ?? CurrentLevel)
 					: CurrentLevel;
+
 		if (Resolved === CurrentLevel) return;
+
 		CurrentLevel = Resolved;
+
 		for (const L of LevelListeners.slice()) {
 			try {
 				L(Resolved);
@@ -110,6 +122,7 @@ export default (
 			}
 		}
 	};
+
 	Context.Emitter?.on?.(LevelChannel, LevelListener);
 
 	const Channel: Record<string, unknown> = {
@@ -133,6 +146,7 @@ export default (
 				typeof ColumnOrPreserveFocus === "boolean"
 					? ColumnOrPreserveFocus
 					: !!PreserveFocus;
+
 			Context.SendToMountain("outputChannel.show", {
 				handle: Handle,
 				preserveFocus: Preserve,
@@ -162,6 +176,7 @@ export default (
 			} catch {
 				/* swallow */
 			}
+
 			Context.SendToMountain("outputChannel.dispose", {
 				handle: Handle,
 			}).catch(() => {});
@@ -173,9 +188,11 @@ export default (
 
 		onDidChangeLogLevel: (Listener: (Level: LogLevel) => unknown) => {
 			LevelListeners.push(Listener);
+
 			return {
 				dispose: () => {
 					const Index = LevelListeners.indexOf(Listener);
+
 					if (Index >= 0) LevelListeners.splice(Index, 1);
 				},
 			};
@@ -226,6 +243,7 @@ export default (
 				MessageOrError instanceof Error
 					? (MessageOrError.stack ?? MessageOrError.message)
 					: String(MessageOrError);
+
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Error)) Append(FormatLog("error", Text));
 			} else {

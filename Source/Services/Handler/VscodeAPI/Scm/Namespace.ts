@@ -77,45 +77,64 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 		const RawArgs = Array.isArray(C["arguments"])
 			? (C["arguments"] as unknown[])
 			: undefined;
+
 		const ProjectArg = (Arg: unknown): unknown => {
 			if (Arg == null) return Arg;
+
 			if (typeof Arg !== "object") return Arg;
+
 			const Holder = Arg as Record<string, unknown>;
+
 			const Projected: Record<string, unknown> = {};
+
 			// `resourceUri` is the canonical "what file did the user
 			// click" field; preserve as-is so vscode.git's handler can
 			// reconstruct the diff inputs.
 			if (Holder["resourceUri"] !== undefined)
 				Projected["resourceUri"] = Holder["resourceUri"];
+
 			// URI POJOs may travel as the arg itself.
 			if (typeof Holder["scheme"] === "string") {
 				Projected["scheme"] = Holder["scheme"];
+
 				if (Holder["authority"] !== undefined)
 					Projected["authority"] = Holder["authority"];
+
 				if (Holder["path"] !== undefined)
 					Projected["path"] = Holder["path"];
+
 				if (Holder["query"] !== undefined)
 					Projected["query"] = Holder["query"];
+
 				if (Holder["fragment"] !== undefined)
 					Projected["fragment"] = Holder["fragment"];
 			}
+
 			if (typeof Holder["fsPath"] === "string")
 				Projected["fsPath"] = Holder["fsPath"];
+
 			if (typeof Holder["external"] === "string")
 				Projected["external"] = Holder["external"];
+
 			// Pass through known-safe scalar metadata so handlers that
 			// inspect `type`/`originalUri`/`renameUri` still see them.
 			for (const Key of [
 				"type",
+
 				"originalUri",
+
 				"renameUri",
+
 				"contextValue",
+
 				"id",
 			] as const) {
 				if (Holder[Key] !== undefined) Projected[Key] = Holder[Key];
 			}
+
 			return Projected;
 		};
+
 		Out["command"] = {
 			title: C["title"] ?? "",
 
@@ -163,6 +182,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 	WrapScmNamespace({
 		createSourceControl: (Id: string, Label: string, RootUri?: unknown) => {
 			const Handle = NextProviderHandle();
+
 			const RootUriDescription =
 				RootUri == null
 					? "null"
@@ -171,9 +191,11 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						: typeof RootUri === "object"
 							? `object(scheme=${(RootUri as { scheme?: unknown })?.scheme ?? "<missing>"})`
 							: typeof RootUri;
+
 			ScmTrace(
 				`createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriDescription} handle=${Handle}`,
 			);
+
 			// vscode.git's `Uri.file()` returns a Uri instance whose getters
 			// (`fsPath`, `path`) and prototype methods don't serialise cleanly
 			// across the gRPC wire. Project to the upstream UriComponents shape
@@ -234,6 +256,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						Error instanceof globalThis.Error
 							? Error.message
 							: String(Error);
+
 					ScmTrace(
 						`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`,
 					);
@@ -271,10 +294,12 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						},
 						set value(V: string) {
 							(this as any).__value = V;
+
 							// Update Mountain's SCM state so the workbench commit
 							// input box reflects the extension-set value.
 							Context.MountainClient?.sendRequest(
 								"$scm:updateSourceControl",
+
 								[Handle, { inputBoxValue: V }],
 							).catch(() => {});
 						},
@@ -283,8 +308,10 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						},
 						set placeholder(V: string) {
 							(this as any).__placeholder = V;
+
 							Context.MountainClient?.sendRequest(
 								"$scm:updateSourceControl",
+
 								[Handle, { inputBoxPlaceholder: V }],
 							).catch(() => {});
 						},
@@ -294,13 +321,16 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				),
 				createResourceGroup: (GroupId: string, GroupLabel: string) => {
 					const GroupHandle = `${Handle}/${GroupId}`;
+
 					Groups.set(GroupId, {
 						label: GroupLabel,
 						resourceStates: [],
 					});
+
 					ScmTrace(
 						`createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`,
 					);
+
 					const GroupReady = ProviderReady.then(() =>
 						Context.SendToMountain("register_scm_resource_group", {
 							scmHandle: Handle,
@@ -317,7 +347,9 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 							}`,
 						);
 					});
+
 					const State = { resourceStates: [] as unknown[] };
+
 					return {
 						id: GroupId,
 
@@ -329,11 +361,13 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 
 						set resourceStates(Value: unknown[]) {
 							State.resourceStates = Value;
+
 							ScmTrace(
 								`update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${
 									Array.isArray(Value) ? Value.length : 0
 								}`,
 							);
+
 							// Strip vscode.git's back-references before
 							// serialising. Each `SourceControlResourceState`
 							// has hidden links via `Repository.repositoryResolver
@@ -346,6 +380,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 							const SanitizedStates = Array.isArray(Value)
 								? Value.map((Raw) => SanitizeResourceState(Raw))
 								: [];
+
 							// Chain after `GroupReady` so the workbench cannot
 							// receive an `update_scm_group` for a group whose
 							// `register_scm_resource_group` notification hasn't
@@ -391,6 +426,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 									},
 								),
 							).catch(() => {});
+
 							Groups.delete(GroupId);
 						},
 					};
@@ -404,8 +440,10 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				},
 				set commitTemplate(V: string) {
 					(ConcreteSourceControl as any).__commitTemplate = V;
+
 					Context.MountainClient?.sendRequest(
 						"$scm:updateSourceControl",
+
 						[Handle, { commitTemplate: V }],
 					).catch(() => {});
 				},
@@ -414,8 +452,10 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				},
 				set acceptInputCommand(V: unknown) {
 					(ConcreteSourceControl as any).__acceptInputCommand = V;
+
 					Context.MountainClient?.sendRequest(
 						"$scm:updateSourceControl",
+
 						[Handle, { acceptInputCommand: V }],
 					).catch(() => {});
 				},
@@ -426,9 +466,11 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 							handle: Handle,
 						}),
 					).catch(() => {});
+
 					Groups.clear();
 				},
 			};
+
 			return WrapNamespaceWithHeuristics(
 				`scm.sourceControl[${Id}]`,
 
@@ -441,7 +483,9 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 		// to the global can still set the commit message.
 		get inputBox() {
 			const Providers = (Context as any).__scmProviders ?? [];
+
 			const Active = Providers[0];
+
 			return (
 				Active?.inputBox ?? {
 					value: "",

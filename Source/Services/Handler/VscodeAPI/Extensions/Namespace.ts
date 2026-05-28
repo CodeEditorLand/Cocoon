@@ -105,8 +105,11 @@ const MakeMultiStub = (): any => {
 					Property as string
 				];
 			}
+
 			if (Property === "then") return undefined;
+
 			if (typeof Property === "symbol") return undefined;
+
 			return StubProxy;
 		},
 		apply() {
@@ -133,6 +136,7 @@ const MakePermissiveExports = (): any => {
 			if (Property in Target) {
 				return (Target as Record<PropertyKey, unknown>)[Property];
 			}
+
 			if (typeof Property !== "string") {
 				// For well-known symbols (e.g. `Symbol.iterator`,
 				// `Symbol.asyncIterator`) delegate to the multi-stub so
@@ -141,22 +145,27 @@ const MakePermissiveExports = (): any => {
 					Property as PropertyKey
 				];
 			}
+
 			// Not a thenable - must not look like a promise to `await`.
 			if (Property === "then") return undefined;
+
 			// Event subscriptions: `onDidX(cb)` / `onWillX(cb)` → disposable.
 			if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
 				return (_Listener?: unknown) => NoopDisposable;
 			}
+
 			// Registration APIs: return disposable so `disposables.add(...)` works.
 			if (Property.startsWith("register")) {
 				return (..._Args: unknown[]) => NoopDisposable;
 			}
+
 			// Factory-style: `getAPI(v)`, `getGitAPI()`, etc. return another
 			// permissive proxy so chained access succeeds AND the result is
 			// also iterable/callable (covers `gitAPI.repositories` access).
 			if (Property.startsWith("get") || Property.startsWith("create")) {
 				return (..._Args: unknown[]) => MakePermissiveExports();
 			}
+
 			// Fallback - the multi-stub: callable, iterable, chainable.
 			return Stub;
 		},
@@ -409,8 +418,11 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 	WrapExtensionsNamespace({
 		getExtension: (Identifier: string) => {
 			if (!IsExtensionKey(Identifier)) return undefined;
+
 			const Raw = Context.ExtensionRegistry.get(Identifier);
+
 			if (!Raw) return undefined;
+
 			try {
 				return ToExtensionObject(Context, Identifier, Raw);
 			} catch {
@@ -444,7 +456,9 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 					 * to keep the registry's other subscribers alive */
 				}
 			};
+
 			Context.Emitter.on("deltaExtensions", SafeListener);
+
 			return {
 				dispose: () => {
 					Context.Emitter.off("deltaExtensions", SafeListener);

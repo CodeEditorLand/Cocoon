@@ -51,6 +51,7 @@ export function Get(Handle: number): ProviderObject | undefined {
 	if (process.env.Trace) {
 		CocoonDevLog(
 			"registry",
+
 			`[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`,
 		);
 	}

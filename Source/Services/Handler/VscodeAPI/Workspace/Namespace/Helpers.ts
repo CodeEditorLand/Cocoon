@@ -150,8 +150,11 @@ export const ResolveWorkspaceFolders = (
 	return (InitWorkspace.folders ?? []).map(
 		(Folder): WorkspaceFolderRecord => {
 			const FsPath = FolderToFsPath(Folder?.uri);
+
 			const Record: WorkspaceFolderRecord = { ...Folder };
+
 			if (typeof FsPath === "string") Record.FsPath = FsPath;
+
 			return Record;
 		},
 	);

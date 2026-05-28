@@ -30,9 +30,13 @@ export default (
 
 	let CurrentWebviewViewOptions: Record<string, unknown> = {
 		enableScripts: true,
+
 		enableCommandUris: true,
+
 		enableForms: true,
+
 		localResourceRoots: [],
+
 		portMapping: [],
 	};
 
@@ -217,6 +221,7 @@ export default (
 							}
 						} catch {}
 					},
+
 					(Error: unknown) => {
 						try {
 							if (process.env["Trace"]) {

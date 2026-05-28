@@ -460,6 +460,7 @@ const ValidateDocumentStateDTO = (
 
 		for (let i = 0; i < dto.Lines.length; i++) {
 			const line = dto.Lines[i]!;
+
 			if (typeof line !== "string") {
 				return yield* Effect.fail(
 					new Error(`DocumentStateDTO.Lines[${i}] must be a string`),
@@ -699,6 +700,7 @@ const ValidateTerminalStateDTO = (
 
 		for (let i = 0; i < dto.ShellArguments.length; i++) {
 			const arg = dto.ShellArguments[i]!;
+
 			if (typeof arg !== "string") {
 				return yield* Effect.fail(
 					new Error(
@@ -937,18 +939,22 @@ export const ValidateDTO = <T extends Record<string, unknown>>(
 				return yield* ValidateWindowStateDTO(
 					dto as unknown as WindowStateDTO,
 				) as unknown as Effect.Effect<T, Error>;
+
 			case "DocumentStateDTO":
 				return yield* ValidateDocumentStateDTO(
 					dto as unknown as DocumentStateDTO,
 				) as unknown as Effect.Effect<T, Error>;
+
 			case "WebviewStateDTO":
 				return yield* ValidateWebviewStateDTO(
 					dto as unknown as WebviewStateDTO,
 				) as unknown as Effect.Effect<T, Error>;
+
 			case "TerminalStateDTO":
 				return yield* ValidateTerminalStateDTO(
 					dto as unknown as TerminalStateDTO,
 				) as unknown as Effect.Effect<T, Error>;
+
 			default:
 				return yield* Effect.fail(
 					new Error(

@@ -53,18 +53,26 @@ export const CreateWebviewPanel = (
 	GRPCClient: {
 		createWebviewPanel: (params: {
 			viewType: string;
+
 			title: string;
+
 			iconPath: undefined;
+
 			viewColumn: number | undefined;
+
 			preserveFocus: boolean;
+
 			enableFindWidget: boolean;
+
 			retainContextWhenHidden: boolean;
+
 			localResourceRoots: string[] | undefined;
 		}) => Effect.Effect<unknown, Error>;
 	},
 
 	Logger: {
 		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
 
@@ -80,6 +88,7 @@ export const CreateWebviewPanel = (
 ): Effect.Effect<VSCode.WebviewPanel, Error> =>
 	Effect.gen(function* () {
 		const PanelId = `webview-${crypto.randomUUID()}`;
+
 		yield* Logger.Info(
 			`[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`,
 		);
@@ -89,6 +98,7 @@ export const CreateWebviewPanel = (
 			typeof ShowOptions === "number"
 				? ShowOptions
 				: ShowOptions.viewColumn;
+
 		const PreserveFocus =
 			typeof ShowOptions === "object"
 				? (ShowOptions.preserveFocus ?? false)
@@ -131,6 +141,7 @@ export const CreateWebviewPanel = (
 					yield* Logger.Debug(
 						`[WindowService] Webview notification: ${Method}`,
 					);
+
 					MountainClient.sendNotification("webview.postMessage", {
 						panelId: PanelId,
 						method: Method,

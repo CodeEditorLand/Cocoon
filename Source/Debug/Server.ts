@@ -48,6 +48,7 @@ type LayerMode = "off" | "mountain" | "cocoon" | "both";
 
 function ParseMode(): LayerMode {
 	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase();
+
 	if (
 		Raw === "" ||
 		Raw === "0" ||
@@ -56,8 +57,10 @@ function ParseMode(): LayerMode {
 		Raw === "no"
 	)
 		return "off";
+
 	if (Raw === "mountain" || Raw === "m" || Raw === "native" || Raw === "rust")
 		return "mountain";
+
 	if (
 		Raw === "cocoon" ||
 		Raw === "c" ||
@@ -66,9 +69,12 @@ function ParseMode(): LayerMode {
 		Raw === "node"
 	)
 		return "cocoon";
+
 	if (Raw === "both" || Raw === "all" || Raw === "dual") return "both";
+
 	if (Raw === "1" || Raw === "true" || Raw === "on" || Raw === "yes")
 		return "mountain"; // legacy: 1 = mountain-only
+
 	return "off";
 }
 
@@ -79,13 +85,17 @@ function CocoonEnabled(M: LayerMode): boolean {
 function MountainPort(): number {
 	const V =
 		process.env.DebugServerPortMountain ?? process.env.DebugServerPort;
+
 	const N = V ? Number.parseInt(V, 10) : Number.NaN;
+
 	return Number.isFinite(N) ? N : 9933;
 }
 
 function CocoonPort(): number {
 	const V = process.env.DebugServerPortCocoon;
+
 	const N = V ? Number.parseInt(V, 10) : Number.NaN;
+
 	return Number.isFinite(N) ? N : 9934;
 }
 
@@ -99,8 +109,10 @@ let ServerInstance: Http.Server | null = null;
 export interface CommandHooks {
 	/** Returns an array of registered command IDs. */
 	ListCommands?(): string[];
+
 	/** Executes a registered command and returns the result. */
 	ExecuteCommand?(Id: string, Args: readonly unknown[]): Promise<unknown>;
+
 	/** Returns activated extension identifiers, if known. */
 	ListExtensions?(): string[];
 }
@@ -121,14 +133,18 @@ export function Start(): number | null {
 	if (ServerInstance) return CocoonPort();
 
 	const Mode = ParseMode();
+
 	if (!CocoonEnabled(Mode)) return null;
 
 	const Port = CocoonPort();
+
 	const Server = Http.createServer((Req, Res) => {
 		HandleRequest(Req, Res).catch((Err) => {
 			try {
 				Res.statusCode = 500;
+
 				Res.setHeader("content-type", "application/json");
+
 				Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) }));
 			} catch {
 				/* ignore */
@@ -150,17 +166,20 @@ export function Start(): number | null {
 	});
 
 	ServerInstance = Server;
+
 	return Port;
 }
 
 /** Stops the listener. Used by tests and graceful shutdown. */
 export function Stop(): void {
 	if (!ServerInstance) return;
+
 	try {
 		ServerInstance.close();
 	} catch {
 		/* ignore */
 	}
+
 	ServerInstance = null;
 }
 
@@ -170,8 +189,11 @@ export function Stop(): void {
 
 async function ReadJsonBody(Req: Http.IncomingMessage): Promise<unknown> {
 	const Chunks: Buffer[] = [];
+
 	for await (const C of Req) Chunks.push(C as Buffer);
+
 	if (Chunks.length === 0) return {};
+
 	try {
 		return JSON.parse(Buffer.concat(Chunks).toString("utf8"));
 	} catch {
@@ -181,22 +203,31 @@ async function ReadJsonBody(Req: Http.IncomingMessage): Promise<unknown> {
 
 function SendJson(
 	Res: Http.ServerResponse,
+
 	Status: number,
+
 	Body: unknown,
 ): void {
 	const Text = JSON.stringify(Body);
+
 	Res.statusCode = Status;
+
 	Res.setHeader("content-type", "application/json");
+
 	Res.setHeader("content-length", Buffer.byteLength(Text).toString());
+
 	Res.end(Text);
 }
 
 async function HandleRequest(
 	Req: Http.IncomingMessage,
+
 	Res: Http.ServerResponse,
 ): Promise<void> {
 	const Url = new URL(Req.url ?? "/", "http://127.0.0.1");
+
 	const Path = Url.pathname;
+
 	const Method = (Req.method ?? "GET").toUpperCase();
 
 	// ---------- discovery -------------------------------------------------
@@ -234,11 +265,16 @@ async function HandleRequest(
 	if (Method === "POST" && Path === "/execute") {
 		const Body = (await ReadJsonBody(Req)) as {
 			js?: string;
+
 			target?: string;
 		};
+
 		const Js = String(Body.js ?? "");
+
 		if (!Js) return SendJson(Res, 400, { error: "missing js" });
+
 		const Target = Body.target ?? "extension-host";
+
 		if (
 			Target !== "extension-host" &&
 			Target !== "eh" &&
@@ -247,9 +283,11 @@ async function HandleRequest(
 			return SendJson(Res, 400, {
 				error: `unsupported target: ${Target}`,
 			});
+
 		try {
 			// Indirect eval so the script runs in the global scope.
 			const Result = await (0, eval)(Js);
+
 			return SendJson(Res, 200, {
 				ok: true,
 				result: SafeSerialize(Result),
@@ -266,6 +304,7 @@ async function HandleRequest(
 	if (Method === "GET" && Path === "/extensions") {
 		try {
 			const Ids = Hooks.ListExtensions?.() ?? [];
+
 			return SendJson(Res, 200, {
 				extensions: Ids,
 				source: Hooks.ListExtensions ? "hook" : "unavailable",
@@ -280,6 +319,7 @@ async function HandleRequest(
 	if (Method === "GET" && Path === "/commands") {
 		try {
 			const Ids = Hooks.ListCommands?.() ?? [];
+
 			return SendJson(Res, 200, {
 				commands: Ids,
 				source: Hooks.ListCommands ? "hook" : "unavailable",
@@ -294,17 +334,24 @@ async function HandleRequest(
 	if (Method === "POST" && Path === "/command") {
 		const Body = (await ReadJsonBody(Req)) as {
 			id?: string;
+
 			args?: unknown[];
 		};
+
 		const Id = String(Body.id ?? "");
+
 		const Args = Array.isArray(Body.args) ? Body.args : [];
+
 		if (!Id) return SendJson(Res, 400, { error: "missing id" });
+
 		if (!Hooks.ExecuteCommand)
 			return SendJson(Res, 503, {
 				error: "ExecuteCommand hook not registered",
 			});
+
 		try {
 			const Result = await Hooks.ExecuteCommand(Id, Args);
+
 			return SendJson(Res, 200, {
 				ok: true,
 				result: SafeSerialize(Result),
@@ -319,6 +366,7 @@ async function HandleRequest(
 
 	if (Method === "GET" && Path === "/processes") {
 		const Mem = process.memoryUsage();
+
 		return SendJson(Res, 200, {
 			pid: process.pid,
 			ppid: process.ppid,
@@ -340,8 +388,10 @@ async function HandleRequest(
  */
 function SafeSerialize(V: unknown): unknown {
 	if (V === undefined) return null;
+
 	try {
 		JSON.stringify(V);
+
 		return V;
 	} catch {
 		return String(V);

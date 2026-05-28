@@ -154,6 +154,7 @@ export const DEFAULT_PROTOCOL_OPTIONS: ProtocolOptions = {
 	Timeout: 30000,
 
 	MaxMessageSize: 10485760, // 10MB
+
 	EnableCompression: false,
 
 	EnableEncryption: false,

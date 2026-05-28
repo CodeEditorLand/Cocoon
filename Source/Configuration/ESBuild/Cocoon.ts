@@ -16,45 +16,71 @@ export { default as CompileConfig } from "./Config/Compile/Config.js";
  */
 export const CocoonESBuildConfig: BuildOptions = {
 	entryPoints: ["Source/**/*.ts"],
+
 	outdir: "Target",
+
 	bundle: true,
+
 	platform: "node",
+
 	target: "esnext",
+
 	format: "esm",
+
 	sourcemap: true,
+
 	external: [
 		"@playform/build",
+
 		"vscode",
+
 		"electron",
+
 		"@effect/*",
+
 		"@grpc/grpc-js",
+
 		"@grpc/proto-loader",
+
 		"google-protobuf",
+
 		"protobufjs",
+
 		"node:*",
 	],
+
 	jsx: "preserve",
+
 	loader: {
 		".ts": "ts",
+
 		".tsx": "tsx",
 	},
+
 	supported: {
 		"generator-function": true,
+
 		"async-generator": true,
 	},
+
 	define: {
 		"process.env.NODE_ENV": JSON.stringify(
 			process.env.NODE_ENV || "production",
 		),
 	},
+
 	resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+
 	tsconfig: "tsconfig.json",
 };
 
 export const CocoonESBuildDevConfig: BuildOptions = {
 	...CocoonESBuildConfig,
+
 	sourcemap: true,
+
 	minify: false,
+
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("development"),
 	},
@@ -62,9 +88,13 @@ export const CocoonESBuildDevConfig: BuildOptions = {
 
 export const CocoonESBuildProdConfig: BuildOptions = {
 	...CocoonESBuildConfig,
+
 	sourcemap: false,
+
 	minify: true,
+
 	treeShaking: true,
+
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("production"),
 	},

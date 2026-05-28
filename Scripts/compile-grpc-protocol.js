@@ -542,8 +542,10 @@ function generateMessageInterfaces(messageDefinitions) {
 	messageDefinitions.forEach((message) => {
 		tsCode += `export interface ${message.name} {
 `;
+
 		message.fields.forEach((field) => {
 			const optional = field.name === "error" ? "?" : "";
+
 			tsCode += `    ${field.name}${optional}: ${field.type};
 `;
 		});
@@ -567,6 +569,7 @@ function generateEnumInterfaces(enumDefinitions) {
 	enumDefinitions.forEach((enumDef) => {
 		tsCode += `export enum ${enumDef.name} {
 `;
+
 		enumDef.values.forEach((value) => {
 			tsCode += `    ${value.name} = ${value.value},
 `;
@@ -590,10 +593,12 @@ function generateEnhancedClientInterfaces(services) {
 
 	services.forEach((service) => {
 		const clientName = `${service.name}Client`;
+
 		const implementationName = `${service.name}Implementation`;
 
 		tsCode += `export interface ${clientName} {
 `;
+
 		service.methods.forEach((method) => {
 			tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
 `;
@@ -605,6 +610,7 @@ function generateEnhancedClientInterfaces(services) {
 
 		tsCode += `export type ${implementationName} = {
 `;
+
 		service.methods.forEach((method) => {
 			tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
 `;
@@ -624,6 +630,7 @@ function generateEnhancedClientInterfaces(services) {
 if (import.meta.url === `file://${process.argv[1]}`) {
 	compilegRPCProtocol().catch((error) => {
 		console.error("[compile-grpc-protocol] Error:", error);
+
 		process.exit(1);
 	});
 }

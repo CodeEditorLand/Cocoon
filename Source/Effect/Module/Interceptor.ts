@@ -212,6 +212,7 @@ const defaultSecurityPolicy = {
 	securityLevel: SecurityLevel.SANDBOXED,
 
 	maxMemoryUsage: 128 * 1024 * 1024, // 128MB
+
 	maxExecutionTime: 5000, // 5 seconds
 } satisfies Omit<SecurityPolicy, "extensionId">;
 
@@ -260,6 +261,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				"url",
 				"querystring",
 			];
+
 			return builtins.includes(moduleId);
 		};
 
@@ -270,8 +272,10 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				"[ModuleInterceptor] Initializing module interceptor service...",
 			);
+
 			// Initialization logic would go here
 			yield* Effect.sleep("5 millis");
+
 			telemetry.log(
 				"info",
 
@@ -325,6 +329,7 @@ export const ModuleInterceptorLive = Layer.effect(
 					// Fallback: return the last registered API (single-extension mode)
 					if (vscodeAPIRegistry.size > 0) {
 						const LastAPI = [...vscodeAPIRegistry.values()].pop();
+
 						return LastAPI;
 					}
 
@@ -332,6 +337,7 @@ export const ModuleInterceptorLive = Layer.effect(
 					// before activating extensions. Bridges imperative activation
 					// with the Effect-TS module interception layer.
 					const GlobalAPI = (globalThis as any).__cocoonVscodeAPI;
+
 					if (GlobalAPI) {
 						return GlobalAPI;
 					}
@@ -339,8 +345,10 @@ export const ModuleInterceptorLive = Layer.effect(
 					// No API registered yet - return empty namespace
 					CocoonDevLog(
 						"ext-host",
+
 						`[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`,
 					);
+
 					return {};
 				}
 
@@ -362,6 +370,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Update statistics
 				const currentStats = yield* statsRef.get;
+
 				yield* Ref.set(statsRef, {
 					...currentStats,
 					totalInterceptions: currentStats.totalInterceptions + 1,
@@ -401,6 +410,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					// Update statistics
 					const statsAfter = yield* statsRef.get;
+
 					yield* Ref.set(statsRef, {
 						...statsAfter,
 						blockedModules: statsAfter.blockedModules + 1,
@@ -428,6 +438,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					// Update statistics
 					const statsAfter = yield* statsRef.get;
+
 					yield* Ref.set(statsRef, {
 						...statsAfter,
 						blockedModules: statsAfter.blockedModules + 1,
@@ -443,6 +454,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Check cache first
 				const cacheKey = `${request.extensionId}:${request.moduleId}`;
+
 				const cachedModule = HashMap.get(
 					yield* moduleCacheRef.get,
 
@@ -451,13 +463,17 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				if (cachedModule._tag === "Some") {
 					const duration = Date.now() - startTime;
+
 					resolutionTimes.push(duration);
 
 					// Update average
 					const allTimes = [...resolutionTimes];
+
 					const avgTime =
 						allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+
 					const statsAfter = yield* statsRef.get;
+
 					yield* Ref.set(statsRef, {
 						...statsAfter,
 						averageResolutionTime: avgTime,
@@ -490,6 +506,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Cache the module
 				const currentCache = yield* moduleCacheRef.get;
+
 				yield* Ref.set(
 					moduleCacheRef,
 
@@ -497,13 +514,17 @@ export const ModuleInterceptorLive = Layer.effect(
 				);
 
 				const duration = Date.now() - startTime;
+
 				resolutionTimes.push(duration);
 
 				// Update average
 				const allTimes = [...resolutionTimes];
+
 				const avgTime =
 					allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+
 				const statsAfter = yield* statsRef.get;
+
 				yield* Ref.set(statsRef, {
 					...statsAfter,
 					averageResolutionTime: avgTime,
@@ -531,6 +552,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Return resolved path (mock)
 				const resolvedPath = `/node_modules/${modulePath}/index.js`;
+
 				return resolvedPath;
 			});
 
@@ -538,6 +560,7 @@ export const ModuleInterceptorLive = Layer.effect(
 		const setSecurityPolicy = (policy: SecurityPolicy) =>
 			Effect.gen(function* () {
 				const currentPolicies = yield* policiesRef.get;
+
 				yield* Ref.set(
 					policiesRef,
 
@@ -555,6 +578,7 @@ export const ModuleInterceptorLive = Layer.effect(
 		const getSecurityPolicy = (extensionId: string) =>
 			Effect.gen(function* () {
 				const policies = yield* policiesRef.get;
+
 				const policy = HashMap.get(policies, extensionId);
 
 				if (policy._tag === "None") {
@@ -574,11 +598,13 @@ export const ModuleInterceptorLive = Layer.effect(
 		) =>
 			Effect.gen(function* () {
 				const policies = yield* policiesRef.get;
+
 				const policyOpt = HashMap.get(policies, extensionId);
 
 				if (policyOpt._tag === "None") {
 					// Use default policy for validation
 					const policy = { ...defaultSecurityPolicy, extensionId };
+
 					return (
 						!policy.blockedModules.includes(moduleId) ||
 						policy.allowedModules.includes(moduleId) ||
@@ -587,6 +613,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				}
 
 				const policy = policyOpt.value;
+
 				return (
 					!policy.blockedModules.includes(moduleId) ||
 					policy.allowedModules.includes(moduleId) ||
@@ -603,6 +630,7 @@ export const ModuleInterceptorLive = Layer.effect(
 		const registerVscodeAPI = (extensionId: string, api: unknown) =>
 			Effect.gen(function* () {
 				vscodeAPIRegistry.set(extensionId, api);
+
 				telemetry.log(
 					"info",
 
@@ -645,6 +673,7 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 	interceptRequire: (request) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
+
 			return {
 				success: true,
 				module: { mock: true, moduleId: request.moduleId },
@@ -655,6 +684,7 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 	resolveModule: (_extensionId, modulePath) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
+
 			return `/node_modules/${modulePath}/index.js`;
 		}),
 
@@ -666,6 +696,7 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 	getSecurityPolicy: (extensionId) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
+
 			return {
 				extensionId,
 				allowedModules: ["path", "util"],
@@ -677,11 +708,13 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 	validateModuleSecurity: (_extensionId, _moduleId) =>
 		Effect.gen(function* () {
 			yield* Effect.sleep("1 millis");
+
 			return true;
 		}),
 
 	getStatistics: Effect.gen(function* () {
 		yield* Effect.sleep("1 millis");
+
 		return {
 			totalInterceptions: 100,
 			blockedModules: 5,

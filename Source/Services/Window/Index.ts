@@ -59,8 +59,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
+
 			const Workspace_ =
 				yield* Context.Tag<Workspace>("Service/Workspace");
+
 			const Logger_ = yield* Context.Tag<Logger>("Service/Logger");
 
 			// Resolve the Mountain gRPC client (used by delegated operations)
@@ -89,9 +91,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 						CurrentState.active !== State.active
 					) {
 						yield* Ref.set(WindowStateRef, State);
+
 						yield* Logger_.Debug(
 							`[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`,
 						);
+
 						yield* OnDidChangeWindowStateStream.Fire(State);
 					}
 				});
@@ -194,6 +198,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 					Task: (
 						Progress: VSCode.Progress<{
 							message?: string;
+
 							increment?: number;
 						}>,
 
@@ -235,6 +240,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						| VSCode.ViewColumn
 						| {
 								viewColumn: VSCode.ViewColumn;
+
 								preserveFocus?: boolean;
 						  },
 

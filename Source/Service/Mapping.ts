@@ -38,15 +38,20 @@ export const EffectServices = {
 		// Layer 1: Services depending only on Telemetry
 		const Layer1 = Layer.mergeAll(
 			HealthLive.pipe(Layer.provide(Telemetry)),
+
 			MountainClientLive.pipe(Layer.provide(Telemetry)),
+
 			ModuleInterceptorLive.pipe(Layer.provide(Telemetry)),
+
 			ExtensionLive.pipe(Layer.provide(Telemetry)),
+
 			RPCServerLive.pipe(Layer.provide(Telemetry)),
 		);
 
 		// Layer 2: Bootstrap depends on Layer1 + Telemetry
 		const Bootstrap = BootstrapLive.pipe(
 			Layer.provide(Telemetry),
+
 			Layer.provide(Layer1),
 		);
 

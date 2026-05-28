@@ -41,6 +41,7 @@ export const WithProgress = <T>(
 ): Effect.Effect<T, Error> =>
 	Effect.gen(function* () {
 		const ProgressId = `progress-${crypto.randomUUID()}`;
+
 		yield* Logger.Info(
 			`[WindowService] Starting progress: ${Options.location} (${ProgressId})`,
 		);
@@ -56,6 +57,7 @@ export const WithProgress = <T>(
 		// Create a progress reporter forwarding updates to Mountain
 		const ProgressReporter: VSCode.Progress<{
 			message?: string;
+
 			increment?: number;
 		}> = {
 			report(Value: { message?: string; increment?: number }): void {

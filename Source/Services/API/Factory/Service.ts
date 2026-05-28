@@ -523,6 +523,7 @@ const createVSCodeAPI = (
 					callback: (...args: any[]) => any,
 				) => {
 					LocalHandlers.set(command, callback);
+
 					// Notify Mountain so the command appears in the command palette
 					// and can be dispatched via execute_contributed_command gRPC.
 					mountainClient
@@ -532,9 +533,11 @@ const createVSCodeAPI = (
 							title: command,
 						})
 						.catch(() => {});
+
 					return {
 						dispose: () => {
 							LocalHandlers.delete(command);
+
 							mountainClient
 								.sendNotification("unregisterCommand", {
 									commandId: command,
@@ -546,9 +549,11 @@ const createVSCodeAPI = (
 				executeCommand: async (command: string, ...args: any[]) => {
 					// Check local handlers first (same-process shortcut)
 					const Local = LocalHandlers.get(command);
+
 					if (Local !== undefined) {
 						return Local(...args);
 					}
+
 					// Delegate to Mountain's CommandRegistry
 					try {
 						const Result = await mountainClient.sendRequest(
@@ -559,14 +564,18 @@ const createVSCodeAPI = (
 								arguments: args.map((Arg) => {
 									if (typeof Arg === "string")
 										return { stringValue: Arg };
+
 									if (typeof Arg === "number")
 										return { intValue: Arg };
+
 									if (typeof Arg === "boolean")
 										return { boolValue: Arg };
+
 									return { stringValue: JSON.stringify(Arg) };
 								}),
 							},
 						);
+
 						return Result?.result;
 					} catch (Error: any) {
 						// Many extensions call executeCommand on their own
@@ -580,17 +589,21 @@ const createVSCodeAPI = (
 						// commands. Real native-command typos still surface -
 						// they lack the `<extension-id>.<command>` shape.
 						const Message = String(Error?.message ?? Error);
+
 						const IsNotFound =
 							Message.includes("not found") ||
 							Message.includes("Command not found");
+
 						const IsExtensionNamespaced =
 							command.includes(".") &&
 							!command.startsWith("vscode.") &&
 							!command.startsWith("workbench.") &&
 							!command.startsWith("editor.");
+
 						if (IsNotFound && IsExtensionNamespaced) {
 							return undefined;
 						}
+
 						throw Error;
 					}
 				},
@@ -601,6 +614,7 @@ const createVSCodeAPI = (
 							arguments: [],
 						})
 						.catch(() => null);
+
 					return Array.isArray(Result?.result) ? Result.result : [];
 				},
 			};
@@ -670,9 +684,11 @@ const createVSCodeAPI = (
 				provider: any,
 			) => {
 				const Handle = NextHandle++;
+
 				// Store in the shared registry so GRPCServerService can invoke
 				// this provider when Mountain calls $provide* via gRPC.
 				LanguageProviderRegistry.Register(Handle, provider);
+
 				mountainClient
 					.sendNotification(`register_${type}`, {
 						language_selector:
@@ -682,6 +698,7 @@ const createVSCodeAPI = (
 						handle: Handle,
 					})
 					.catch(() => {}); // fire-and-forget
+
 				return {
 					dispose: () => LanguageProviderRegistry.Unregister(Handle),
 				};
@@ -694,6 +711,7 @@ const createVSCodeAPI = (
 
 				createDiagnosticCollection: (name?: string) => {
 					const Items = new Map<string, any[]>();
+
 					return {
 						name: name ?? "default",
 						set: (uri: any, diagnostics: any) =>
@@ -819,6 +837,7 @@ const createVSCodeAPI = (
 							configuration: config,
 						})
 						.catch(() => {});
+
 					return { dispose: () => {} };
 				},
 			};
@@ -891,9 +910,13 @@ export const APIFactoryLayer = Layer.effect(
 
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
+
 		const configService = yield* IConfigurationService;
+
 		const fsService = yield* IFileSystemService;
+
 		const terminalService = yield* ITerminalService;
+
 		const moduleInterceptor = yield* IModuleInterceptorService;
 
 		return new APIFactoryService(

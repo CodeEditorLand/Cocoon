@@ -17,17 +17,22 @@ import { ToUri as StockToUri } from "../Stock/Lift.js";
  */
 export const UriKey = (Value: unknown): string => {
 	if (Value == null) return "";
+
 	if (typeof Value === "string") return Value;
 
 	const Hydrated = StockToUri(Value);
+
 	if (Hydrated) return Hydrated.toString();
 
 	const Rendered = String(Value);
+
 	if (Rendered && Rendered !== "[object Object]") return Rendered;
 
 	const WithParts = Value as {
 		scheme?: unknown;
+
 		path?: unknown;
+
 		fsPath?: unknown;
 	};
 

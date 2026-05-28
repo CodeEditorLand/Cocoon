@@ -42,10 +42,13 @@ const DebugEnabled = Long;
 
 const AllowList: ReadonlySet<string> | undefined = (() => {
 	const Raw = process.env["Mend"];
+
 	if (!Raw || Raw.trim().length === 0) return undefined;
+
 	const Tags = Raw.split(",")
 		.map((Entry) => Entry.trim())
 		.filter((Entry) => Entry.length > 0);
+
 	return Tags.length === 0 ? undefined : new Set(Tags);
 })();
 
@@ -75,12 +78,17 @@ const SerializeContext = (
 			if (Value instanceof Error) {
 				return { name: Value.name, message: Value.message };
 			}
+
 			if (typeof Value === "bigint") return String(Value);
+
 			if (typeof Value === "function") return "[Function]";
+
 			if (typeof Value === "object" && Value !== null) {
 				if (Seen.has(Value)) return "[Circular]";
+
 				Seen.add(Value);
 			}
+
 			return Value;
 		});
 	} catch {

@@ -405,18 +405,21 @@ export const ValidateEnvironmentVariable = (
  */
 export const EnforceMemoryLimit = Effect.gen(function* () {
 	const Policy = DefaultSecurityPolicy;
+
 	if (Policy.MaxMemoryMB <= 0) {
 		return yield* Effect.logTrace("No memory limit configured");
 	}
 
 	// Get current memory usage
 	const MemoryUsage = process.memoryUsage();
+
 	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024);
 
 	if (UsedMemoryMB > Policy.MaxMemoryMB) {
 		yield* Effect.logError(
 			`Memory limit exceeded: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`,
 		);
+
 		return yield* Effect.fail(
 			new MemoryLimitExceededError({
 				LimitMB: Policy.MaxMemoryMB,
@@ -437,6 +440,7 @@ export const EnforceMemoryLimit = Effect.gen(function* () {
  */
 export const EnforceCpuLimit = Effect.gen(function* () {
 	const Policy = DefaultSecurityPolicy;
+
 	if (Policy.MaxCpuPercent <= 0) {
 		return yield* Effect.logTrace("No CPU limit configured");
 	}

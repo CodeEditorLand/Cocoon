@@ -22,7 +22,9 @@ import type { HandlerContext } from "../../Handler/Context.js";
  */
 const CreateExtensionContext = (
 	Context: HandlerContext,
+
 	Extension: any,
+
 	ExtensionPath: string,
 ): unknown => {
 	const ExtId: string =
@@ -37,11 +39,17 @@ const CreateExtensionContext = (
 	// `ScanPathConfigure.rs` doesn't warn on non-extension siblings like
 	// `storage/`.
 	const FiddeeRootPath = FiddeeRoot();
+
 	const StorageBase = `${FiddeeRootPath}/extensionStorage`;
+
 	const GlobalStorageBase = `${FiddeeRootPath}/globalStorage`;
+
 	const LogBase = `${FiddeeRootPath}/logs`;
+
 	const ExtStoragePath = `${StorageBase}/${ExtId}`;
+
 	const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
+
 	const LogPath = `${LogBase}/${ExtId}`;
 
 	// Ensure directories exist (fire-and-forget). Cocoon runs as an ESM
@@ -49,7 +57,9 @@ const CreateExtensionContext = (
 	// 'node:fs' is not supported" - use the static `NodeFS` import.
 	try {
 		NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
+
 		NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
+
 		NodeFS.mkdirSync(LogPath, { recursive: true });
 	} catch {}
 
@@ -65,12 +75,16 @@ const CreateExtensionContext = (
 		string,
 		unknown
 	>;
+
 	try {
 		const Contents = NodeFS.readFileSync(
 			`${ExtensionPath}/package.json`,
+
 			"utf8",
 		);
+
 		const Parsed = JSON.parse(Contents) as Record<string, unknown>;
+
 		FullPackageJSON = {
 			...Parsed,
 			...(Extension as Record<string, unknown>),
@@ -87,28 +101,40 @@ const CreateExtensionContext = (
 	// `globalThis.__cocoonVscodeAPI.Uri`; use it when available so
 	// `URI.file(Path).with(...)` behaves like the real thing.
 	const VsCodeUri = (globalThis as any).__cocoonVscodeAPI?.Uri;
+
 	const MakeUri = (Path: string): unknown => {
 		if (VsCodeUri && typeof VsCodeUri.file === "function") {
 			return VsCodeUri.file(Path);
 		}
+
 		return {
 			scheme: "file",
+
 			path: Path,
+
 			fsPath: Path,
+
 			authority: "",
+
 			query: "",
+
 			fragment: "",
+
 			with: function (this: any, Change: any) {
 				return { ...this, ...Change };
 			},
+
 			toString: () => `file://${Path}`,
 		};
 	};
 
 	return {
 		subscriptions: [] as { dispose(): unknown }[],
+
 		extensionPath: ExtensionPath,
+
 		extensionUri: MakeUri(ExtensionPath),
+
 		// VS Code API: `context.asAbsolutePath(relative)` returns the
 		// extension path joined with a relative path. The 4 language-
 		// features extensions all call this immediately in their activate
@@ -139,15 +165,21 @@ const CreateExtensionContext = (
 			// handled by Mountain (it survives across reloads via the
 			// global memento under `__envCollection:<extensionId>`).
 			const ExtIdCached = ExtId;
+
 			type EnvMutator = {
 				readonly value: string;
+
 				readonly type: 1 | 2 | 3; // Replace | Append | Prepend
+
 				readonly options?: {
 					applyAtProcessCreation?: boolean;
+
 					applyAtShellIntegration?: boolean;
 				};
 			};
+
 			const Entries = new Map<string, EnvMutator>();
+
 			const Forward = (Op: string, Extra: Record<string, unknown>) => {
 				Context.SendToMountain("terminal.envCollection." + Op, {
 					extensionId: ExtIdCached,
@@ -156,14 +188,18 @@ const CreateExtensionContext = (
 					...Extra,
 				}).catch(() => {});
 			};
+
 			let Persistent = false;
+
 			let Description: string | undefined = undefined;
+
 			const Collection = {
 				get persistent() {
 					return Persistent;
 				},
 				set persistent(Value: boolean) {
 					Persistent = !!Value;
+
 					Forward("setPersistent", { persistent: Persistent });
 				},
 				get description() {
@@ -171,11 +207,14 @@ const CreateExtensionContext = (
 				},
 				set description(Value: string | undefined) {
 					Description = Value;
+
 					Forward("setDescription", { description: Value });
 				},
 				replace: (
 					Variable: string,
+
 					Value: string,
+
 					Options?: EnvMutator["options"],
 				) => {
 					Entries.set(Variable, {
@@ -183,6 +222,7 @@ const CreateExtensionContext = (
 						type: 1,
 						options: Options,
 					});
+
 					Forward("replace", {
 						variable: Variable,
 						value: Value,
@@ -191,7 +231,9 @@ const CreateExtensionContext = (
 				},
 				append: (
 					Variable: string,
+
 					Value: string,
+
 					Options?: EnvMutator["options"],
 				) => {
 					Entries.set(Variable, {
@@ -199,6 +241,7 @@ const CreateExtensionContext = (
 						type: 2,
 						options: Options,
 					});
+
 					Forward("append", {
 						variable: Variable,
 						value: Value,
@@ -207,7 +250,9 @@ const CreateExtensionContext = (
 				},
 				prepend: (
 					Variable: string,
+
 					Value: string,
+
 					Options?: EnvMutator["options"],
 				) => {
 					Entries.set(Variable, {
@@ -215,6 +260,7 @@ const CreateExtensionContext = (
 						type: 3,
 						options: Options,
 					});
+
 					Forward("prepend", {
 						variable: Variable,
 						value: Value,
@@ -227,9 +273,12 @@ const CreateExtensionContext = (
 				forEach: (
 					Callback: (
 						variable: string,
+
 						mutator: EnvMutator,
+
 						collection: unknown,
 					) => unknown,
+
 					_ThisArg?: unknown,
 				) => {
 					for (const [Key, Value] of Entries) {
@@ -242,10 +291,12 @@ const CreateExtensionContext = (
 				},
 				delete: (Variable: string) => {
 					Entries.delete(Variable);
+
 					Forward("delete", { variable: Variable });
 				},
 				clear: () => {
 					Entries.clear();
+
 					Forward("clear", {});
 				},
 				// `getScoped({ workspaceFolder })` returns a scoped sub-collection.
@@ -259,20 +310,25 @@ const CreateExtensionContext = (
 					for (const Entry of Entries) yield Entry;
 				},
 			};
+
 			return Collection;
 		})(),
 		// Real secrets - routes to Mountain's AES-256-GCM encrypted storage.
 		secrets: (() => {
 			const ExtIdCached = ExtId;
+
 			const Listeners: Array<(Event: { key: string }) => void> = [];
+
 			return {
 				get: async (Key: string): Promise<string | undefined> => {
 					try {
 						const Result =
 							await Context.MountainClient?.sendRequest(
 								"secrets.get",
+
 								{ key: Key, extensionId: ExtIdCached },
 							);
+
 						return typeof Result === "string" ? Result : undefined;
 					} catch {
 						return undefined;
@@ -282,12 +338,14 @@ const CreateExtensionContext = (
 					try {
 						await Context.MountainClient?.sendRequest(
 							"secrets.store",
+
 							{
 								key: Key,
 								value: Value,
 								extensionId: ExtIdCached,
 							},
 						);
+
 						for (const L of Listeners) {
 							try {
 								L({ key: Key });
@@ -299,11 +357,13 @@ const CreateExtensionContext = (
 					try {
 						await Context.MountainClient?.sendRequest(
 							"secrets.delete",
+
 							{
 								key: Key,
 								extensionId: ExtIdCached,
 							},
 						);
+
 						for (const L of Listeners) {
 							try {
 								L({ key: Key });
@@ -313,9 +373,11 @@ const CreateExtensionContext = (
 				},
 				onDidChange: (Listener: (Event: { key: string }) => void) => {
 					Listeners.push(Listener);
+
 					return {
 						dispose: () => {
 							const I = Listeners.indexOf(Listener);
+
 							if (I !== -1) Listeners.splice(I, 1);
 						},
 					};
@@ -334,13 +396,17 @@ const CreateExtensionContext = (
 		// extension's UI ends up in the wrong state.
 		workspaceState: ((): unknown => {
 			const ExtIdCached = ExtId;
+
 			const Cache = new Map<string, unknown>();
+
 			const State = {
 				get: (Key: string, DefaultValue?: unknown): unknown => {
 					if (Cache.has(Key)) {
 						const Cached = Cache.get(Key);
+
 						return Cached === undefined ? DefaultValue : Cached;
 					}
+
 					// Schedule prime so the next sync read sees the real
 					// value. Stays best-effort; missing or absent keys
 					// stay at default forever (matches VS Code semantics).
@@ -351,12 +417,15 @@ const CreateExtensionContext = (
 							if (V !== undefined) Cache.set(Key, V);
 						})
 						.catch(() => {});
+
 					return DefaultValue;
 				},
 				update: async (Key: string, Value: unknown): Promise<void> => {
 					Cache.set(Key, Value);
+
 					await Context.MountainClient?.sendRequest("Storage.Set", [
 						`${ExtIdCached}:workspace:${Key}`,
+
 						Value,
 					]).catch(() => {});
 				},
@@ -371,17 +440,22 @@ const CreateExtensionContext = (
 					}
 				},
 			};
+
 			return State;
 		})(),
 		globalState: ((): unknown => {
 			const ExtIdCached = ExtId;
+
 			const Cache = new Map<string, unknown>();
+
 			const State = {
 				get: (Key: string, DefaultValue?: unknown): unknown => {
 					if (Cache.has(Key)) {
 						const Cached = Cache.get(Key);
+
 						return Cached === undefined ? DefaultValue : Cached;
 					}
+
 					void Context.MountainClient?.sendRequest("Storage.Get", [
 						`${ExtIdCached}:global:${Key}`,
 					])
@@ -389,12 +463,15 @@ const CreateExtensionContext = (
 							if (V !== undefined) Cache.set(Key, V);
 						})
 						.catch(() => {});
+
 					return DefaultValue;
 				},
 				update: async (Key: string, Value: unknown): Promise<void> => {
 					Cache.set(Key, Value);
+
 					await Context.MountainClient?.sendRequest("Storage.Set", [
 						`${ExtIdCached}:global:${Key}`,
+
 						Value,
 					]).catch(() => {});
 				},
@@ -408,11 +485,13 @@ const CreateExtensionContext = (
 					}
 				},
 			};
+
 			return State;
 		})(),
 		extensionMode: 1,
 		extension: {
 			id: ExtId,
+
 			// Use the SAME `MakeUri()` helper as `context.extensionUri`
 			// above. Plain-object URI stubs without `.with()` / `.toString()`
 			// crash any extension that does:
@@ -423,18 +502,24 @@ const CreateExtensionContext = (
 			// (Roo Code, Continue, Claude, every webview-based extension
 			// does this on activate or first command invocation).
 			extensionUri: MakeUri(ExtensionPath),
+
 			extensionPath: ExtensionPath,
+
 			isActive: true,
+
 			packageJSON: FullPackageJSON,
+
 			// 1 = UI, 2 = Workspace. Most desktop extensions ship as UI
 			// kind so `vscode.extensions.getExtension(id).extensionKind`
 			// returns the right value when extensions branch on it.
 			extensionKind: 1,
+
 			// `exports` is mutated by the host after `activate()` resolves
 			// (see VS Code's `ExtensionHostManager`); set to `undefined`
 			// now and the activation post-processing updates it once the
 			// extension's `activate` function returns a value.
 			exports: undefined,
+
 			// Real `Extension.activate()` returns a Promise<T> that
 			// resolves once the extension's main module has been loaded
 			// and its `activate()` has been called. Code that checks
@@ -450,6 +535,7 @@ const CreateExtensionContext = (
 		},
 		languageModelAccessInformation: {
 			canSendRequest: (_Model: unknown) => false,
+
 			onDidChange: (_Listener: unknown) => ({ dispose: () => {} }),
 		},
 	};
@@ -461,7 +547,9 @@ const CreateExtensionContext = (
  */
 const ActivateExtension = async (
 	Context: HandlerContext,
+
 	ExtensionId: string,
+
 	ActivationEvent: string,
 ): Promise<void> => {
 	// Guard: only activate once
@@ -471,6 +559,7 @@ const ActivateExtension = async (
 	const StartMs = Date.now();
 	CocoonDevLog(
 		"ext-activate",
+
 		`[ExtActivate] start ext=${ExtensionId} event=${ActivationEvent}`,
 	);
 
@@ -478,6 +567,7 @@ const ActivateExtension = async (
 	if (!Extension) {
 		CocoonDevLog(
 			"ext-activate",
+
 			`[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`,
 		);
 		return;
@@ -501,6 +591,7 @@ const ActivateExtension = async (
 	try {
 		ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
 			/\/$/,
+
 			"",
 		);
 	} catch {
@@ -523,8 +614,11 @@ const ActivateExtension = async (
 		for (const Candidate of [ModulePath, `${ModulePath}.js`]) {
 			try {
 				await access(Candidate);
+
 				Exists = true;
+
 				Resolved = Candidate;
+
 				break;
 			} catch {}
 		}
@@ -533,6 +627,7 @@ const ActivateExtension = async (
 			process.stdout.write(
 				`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})\n`,
 			);
+
 			return;
 		}
 		// Successful-resolve runs per extension (~40 lines per boot) and
@@ -561,6 +656,7 @@ const ActivateExtension = async (
 
 	CocoonDevLog(
 		"ext-activate",
+
 		`[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`,
 	);
 
@@ -577,10 +673,13 @@ const ActivateExtension = async (
 		const Manifest = await (async () => {
 			try {
 				const { readFile } = await import("node:fs/promises");
+
 				const Raw = await readFile(
 					`${ExtensionPath}/package.json`,
+
 					"utf8",
 				);
+
 				return JSON.parse(Raw) as unknown;
 			} catch {
 				return Extension as unknown;
@@ -607,10 +706,13 @@ const ActivateExtension = async (
 			const ImportURL = ModulePath.startsWith("/")
 				? `file://${ModulePath}`
 				: ModulePath;
+
 			ExtModule = (await import(ImportURL)) as typeof ExtModule;
 		} else {
 			const { createRequire } = await import("module");
+
 			const Require = createRequire(import.meta.url);
+
 			try {
 				// Module._load is patched above - require('vscode') returns our API shim.
 				ExtModule = Require(ModulePath) as typeof ExtModule;
@@ -621,10 +723,12 @@ const ActivateExtension = async (
 					RequireErr instanceof Error
 						? RequireErr.message
 						: String(RequireErr);
+
 				if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
 					const ImportURL = ModulePath.startsWith("/")
 						? `file://${ModulePath}`
 						: ModulePath;
+
 					ExtModule = (await import(ImportURL)) as typeof ExtModule;
 				} else {
 					throw RequireErr;
@@ -643,7 +747,9 @@ const ActivateExtension = async (
 		if (typeof ActivateFn === "function") {
 			const ExtContext = CreateExtensionContext(
 				Context,
+
 				Extension,
+
 				ExtensionPath,
 			);
 
@@ -662,20 +768,32 @@ const ActivateExtension = async (
 			// keys the extension has stored.
 			try {
 				const PrimeStart = Date.now();
+
 				const AllRaw = await Context.MountainClient?.sendRequest(
 					"Storage.GetItems",
+
 					[],
 				);
+
 				const AllArray = Array.isArray(AllRaw) ? AllRaw : [];
+
 				const WorkspacePrefix = `${ExtensionId}:workspace:`;
+
 				const GlobalPrefix = `${ExtensionId}:global:`;
+
 				const WorkspaceEntries: Array<[string, unknown]> = [];
+
 				const GlobalEntries: Array<[string, unknown]> = [];
+
 				for (const Pair of AllArray) {
 					if (!Array.isArray(Pair) || Pair.length < 2) continue;
+
 					const RawKey = String(Pair[0] ?? "");
+
 					const RawValue = Pair[1];
+
 					let Value: unknown = RawValue;
+
 					if (typeof RawValue === "string") {
 						try {
 							Value = JSON.parse(RawValue);
@@ -685,18 +803,22 @@ const ActivateExtension = async (
 							// (string-typed values flow through verbatim).
 						}
 					}
+
 					if (RawKey.startsWith(WorkspacePrefix)) {
 						WorkspaceEntries.push([
 							RawKey.slice(WorkspacePrefix.length),
+
 							Value,
 						]);
 					} else if (RawKey.startsWith(GlobalPrefix)) {
 						GlobalEntries.push([
 							RawKey.slice(GlobalPrefix.length),
+
 							Value,
 						]);
 					}
 				}
+
 				const WorkspaceState = (ExtContext as any)?.workspaceState as
 					| {
 							__primeCache?: (
@@ -704,6 +826,7 @@ const ActivateExtension = async (
 							) => void;
 					  }
 					| undefined;
+
 				const GlobalState = (ExtContext as any)?.globalState as
 					| {
 							__primeCache?: (
@@ -711,8 +834,11 @@ const ActivateExtension = async (
 							) => void;
 					  }
 					| undefined;
+
 				WorkspaceState?.__primeCache?.(WorkspaceEntries);
+
 				GlobalState?.__primeCache?.(GlobalEntries);
+
 				if (process.env["Trace"]?.includes("ext-prime")) {
 					process.stdout.write(
 						`[LandFix:StoragePrime] ${ExtensionId} workspace=${WorkspaceEntries.length} global=${GlobalEntries.length} elapsed=${Date.now() - PrimeStart}ms\n`,
@@ -729,6 +855,7 @@ const ActivateExtension = async (
 					);
 				}
 			}
+
 			// Pre-activation snapshot - surfaces what `vscode.workspace.workspaceFolders`
 			// actually exposes to the extension at the moment its `activate(context)`
 			// is invoked. The git extension's `Model.doInitialScan()` reads this list
@@ -747,17 +874,21 @@ const ActivateExtension = async (
 				"vscode.jake",
 				"vscode.merge-conflict",
 			];
+
 			const SnapshotInitState = (Phase: string): void => {
 				try {
 					const InitWorkspace =
 						(Context.ExtensionHostInitData as any)?.workspace ??
 						(Context.ExtensionHostInitData as any)?.workspaceData ??
 						{};
+
 					const InitFolders = Array.isArray(InitWorkspace.folders)
 						? InitWorkspace.folders
 						: [];
+
 					const FolderShape = InitFolders.map((F: any, I: number) => {
 						const UriField = F?.uri;
+
 						const UriShape =
 							typeof UriField === "string"
 								? `string("${UriField.slice(0, 80)}")`
@@ -769,8 +900,10 @@ const ActivateExtension = async (
 												: "<not-a-string>"
 										})`
 									: typeof UriField;
+
 						return `[${I}] name=${F?.name ?? "?"} uri=${UriShape}`;
 					}).join(" | ");
+
 					// Surface the typed value the extension will read from
 					// `config.get('git.autoRepositoryDetection')` - vscode.git's
 					// `model.js:340` bails on `!== true && !== 'subFolders'`,
@@ -784,23 +917,29 @@ const ActivateExtension = async (
 							};
 						}
 					).__cocoonConfigState;
+
 					const AutoDetect = ConfigState?.ConfigCache?.get?.(
 						"git.autoRepositoryDetection",
 					);
+
 					const Enabled =
 						ConfigState?.ConfigCache?.get?.("git.enabled");
+
 					const AutoDetectShape = `${typeof AutoDetect}=${
 						typeof AutoDetect === "object"
 							? JSON.stringify(AutoDetect).slice(0, 80)
 							: String(AutoDetect)
 					}`;
+
 					CocoonDevLog(
 						"ext-preactivate",
+
 						`[ExtensionHostHandler] ${Phase} ${ExtensionId} folders.length=${InitFolders.length} | git.enabled=${Enabled} | git.autoRepositoryDetection=${AutoDetectShape} | ${FolderShape}`,
 					);
 				} catch (Err) {
 					CocoonDevLog(
 						"ext-preactivate",
+
 						`[ExtensionHostHandler] ${Phase} ${ExtensionId} snapshot failed: ${
 							(Err as { message?: string })?.message ??
 							String(Err)
@@ -808,10 +947,13 @@ const ActivateExtension = async (
 					);
 				}
 			};
+
 			if (InstrumentedExtensions.includes(ExtensionId)) {
 				SnapshotInitState("PRE-ACTIVATE");
 			}
+
 			const ExtActivateResult = await ActivateFn(ExtContext);
+
 			// CRITICAL: backfill the activate() return value into the
 			// extension's registry entry so `vscode.extensions.getExtension(id).exports`
 			// resolves correctly. Extensions that expose an API (e.g. Roo-Code
@@ -820,10 +962,13 @@ const ActivateExtension = async (
 			// `.exports` on the `Extension<T>` object returned by `getExtension()`.
 			// Previously always `undefined`; now set to the real return value.
 			const RegEntry = Context.ExtensionRegistry.get(ExtensionId);
+
 			if (RegEntry && ExtActivateResult !== undefined) {
 				(RegEntry as any).__exports = ExtActivateResult;
+
 				(RegEntry as any).exports = ExtActivateResult;
 			}
+
 			// Also update the context's own extension.exports so
 			// `context.extension.exports` returns the activation result.
 			if (ExtActivateResult !== undefined && ExtContext) {
@@ -833,9 +978,11 @@ const ActivateExtension = async (
 					/* read-only property - skip */
 				}
 			}
+
 			process.stdout.write(
 				`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})\n`,
 			);
+
 			if (InstrumentedExtensions.includes(ExtensionId)) {
 				// Post-activate snapshot - vscode.git's `Model.doInitialScan`
 				// runs in `.finally(...)` (background) *after* `_activate`
@@ -844,21 +991,27 @@ const ActivateExtension = async (
 				// autoRepositoryDetection differ between the two ticks, the
 				// extension is reading a different snapshot than we instrumented.
 				SnapshotInitState("POST-ACTIVATE");
+
 				// Schedule one more snapshot 1s later to catch any state that
 				// landed via $deltaWorkspaceFolders during activation.
 				setTimeout(() => SnapshotInitState("DEFERRED-1S"), 1000);
 			}
+
 			CocoonDevLog(
 				"ext-activate",
+
 				`[ExtActivate] ok ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,
 			);
 		} else {
 			CocoonDevLog(
 				"ext-activate",
+
 				`[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`,
 			);
+
 			CocoonDevLog(
 				"ext-activate",
+
 				`[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,
 			);
 		}
@@ -868,6 +1021,7 @@ const ActivateExtension = async (
 		const Message = Err instanceof Error ? Err.message : String(Err);
 		CocoonDevLog(
 			"ext-activate",
+
 			`[ExtActivate] fail ext=${ExtensionId} duration_ms=${Date.now() - StartMs} error=${Message.replace(/\n/g, " | ")}`,
 		);
 		throw Err;

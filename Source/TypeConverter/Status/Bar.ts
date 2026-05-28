@@ -24,6 +24,7 @@ interface IStatusbarEntry {
 	priority: number | undefined;
 
 	alignment: number; // 0 for Left, 1 for Right
+
 	backgroundColor: string | undefined;
 
 	color: string | undefined;

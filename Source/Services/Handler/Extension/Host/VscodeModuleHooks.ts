@@ -54,6 +54,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 				CocoonDevLog(
 					"ext-host",
+
 					"[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace",
 				);
 
@@ -65,11 +66,13 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 		CocoonDevLog(
 			"ext-host",
+
 			"[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted",
 		);
 	} catch (Err: unknown) {
 		CocoonDevLog(
 			"ext-host",
+
 			`[ExtensionHostHandler] Failed to patch Module._load: ${Err instanceof Error ? Err.message : String(Err)}`,
 		);
 	}
@@ -441,6 +444,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 				}
 
 			`;
+
 			const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
 
 			try {
@@ -448,11 +452,13 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 				CocoonDevLog(
 					"ext-host",
+
 					"[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted",
 				);
 			} catch (RegisterErr: unknown) {
 				CocoonDevLog(
 					"ext-host",
+
 					`[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail): ${RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)}`,
 				);
 			}
@@ -460,6 +466,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 	} catch (Err: unknown) {
 		CocoonDevLog(
 			"ext-host",
+
 			`[ExtensionHostHandler] ESM loader setup skipped: ${Err instanceof Error ? Err.message : String(Err)}`,
 		);
 	}

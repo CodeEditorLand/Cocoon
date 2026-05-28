@@ -462,6 +462,7 @@ const HandleDocumentOpen = (
 
 			CocoonDevLog(
 				"document",
+
 				`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`,
 			);
 

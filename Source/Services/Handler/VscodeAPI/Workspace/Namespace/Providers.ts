@@ -68,6 +68,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 
 				Provider,
 			);
+
 			// Wire provider's onDidChange: when content changes, re-fetch and
 			// notify Cocoon's document model so $acceptModelChanged fires for
 			// extensions listening to onDidChangeTextDocument for virtual docs.
@@ -78,16 +79,20 @@ export const BuildRegisterTextDocumentContentProvider = (
 							typeof Uri === "string"
 								? Uri
 								: ((Uri as any)?.toString?.() ?? "");
+
 						if (!UriStr) return;
+
 						const CancellationToken = {
 							isCancellationRequested: false,
 							onCancellationRequested: () => ({
 								dispose: () => {},
 							}),
 						};
+
 						void Promise.resolve(
 							Provider.provideTextDocumentContent?.(
 								Uri,
+
 								CancellationToken,
 							),
 						)
@@ -95,12 +100,15 @@ export const BuildRegisterTextDocumentContentProvider = (
 								if (typeof Content === "string") {
 									Context.DocumentContentCache?.set(
 										UriStr,
+
 										Content,
 									);
+
 									// Emit didChangeTextDocument so extensions listening
 									// to onDidChangeTextDocument for virtual docs get the update.
 									Context.WorkspaceEventEmitter?.emit(
 										"didChangeTextDocument",
+
 										{
 											document: {
 												uri: {

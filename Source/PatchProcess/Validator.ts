@@ -239,9 +239,11 @@ export const ValidateFileSystemAccess = (
 ): Effect.Effect<ValidationResult, ValidationError> =>
 	Effect.gen(function* () {
 		const StartTime = Date.now();
+
 		const Metrics = ValidationMetricsStore.GetInstance();
 
 		const State = ProcessValidationStates.get(Process.pid);
+
 		if (!State) {
 			const Result: ValidationResult = {
 				Valid: false,
@@ -249,7 +251,9 @@ export const ValidateFileSystemAccess = (
 				Severity: "error",
 				Timestamp: Date.now(),
 			};
+
 			Metrics.RecordValidation(StartTime, false);
+
 			return Result;
 		}
 
@@ -266,6 +270,7 @@ export const ValidateFileSystemAccess = (
 			State.ViolationCount++;
 
 			const Count = (State.FileAccessCount.get(File) || 0) + 1;
+
 			State.FileAccessCount.set(File, Count);
 
 			const Result: ValidationResult = {
@@ -293,6 +298,7 @@ export const ValidateFileSystemAccess = (
 		};
 
 		Metrics.RecordValidation(StartTime, true);
+
 		return Result;
 	});
 
@@ -306,9 +312,11 @@ export const ValidateNetworkAccess = (
 ): Effect.Effect<ValidationResult, ValidationError> =>
 	Effect.gen(function* () {
 		const StartTime = Date.now();
+
 		const Metrics = ValidationMetricsStore.GetInstance();
 
 		const State = ProcessValidationStates.get(Process.pid);
+
 		if (!State) {
 			const Result: ValidationResult = {
 				Valid: false,
@@ -316,7 +324,9 @@ export const ValidateNetworkAccess = (
 				Severity: "error",
 				Timestamp: Date.now(),
 			};
+
 			Metrics.RecordValidation(StartTime, false);
+
 			return Result;
 		}
 
@@ -330,6 +340,7 @@ export const ValidateNetworkAccess = (
 			State.ViolationCount++;
 
 			const Count = (State.NetworkAccessCount.get(Endpoint) || 0) + 1;
+
 			State.NetworkAccessCount.set(Endpoint, Count);
 
 			const Result: ValidationResult = {
@@ -357,6 +368,7 @@ export const ValidateNetworkAccess = (
 		};
 
 		Metrics.RecordValidation(StartTime, true);
+
 		return Result;
 	});
 
@@ -370,9 +382,11 @@ export const ValidateChildProcessSpawn = (
 ): Effect.Effect<ValidationResult, ValidationError> =>
 	Effect.gen(function* () {
 		const StartTime = Date.now();
+
 		const Metrics = ValidationMetricsStore.GetInstance();
 
 		const State = ProcessValidationStates.get(Process.pid);
+
 		if (!State) {
 			const Result: ValidationResult = {
 				Valid: false,
@@ -380,7 +394,9 @@ export const ValidateChildProcessSpawn = (
 				Severity: "error",
 				Timestamp: Date.now(),
 			};
+
 			Metrics.RecordValidation(StartTime, false);
+
 			return Result;
 		}
 
@@ -394,6 +410,7 @@ export const ValidateChildProcessSpawn = (
 
 		if (!SpawnValid) {
 			State.ViolationCount++;
+
 			State.ChildProcessCount++;
 
 			const Result: ValidationResult = {
@@ -423,6 +440,7 @@ export const ValidateChildProcessSpawn = (
 		};
 
 		Metrics.RecordValidation(StartTime, true);
+
 		return Result;
 	});
 
@@ -431,9 +449,11 @@ export const ValidateChildProcessSpawn = (
  */
 export const ValidateMemoryUsage = Effect.gen(function* () {
 	const StartTime = Date.now();
+
 	const Metrics = ValidationMetricsStore.GetInstance();
 
 	const State = ProcessValidationStates.get(Process.pid);
+
 	if (!State) {
 		const Result: ValidationResult = {
 			Valid: false,
@@ -441,12 +461,16 @@ export const ValidateMemoryUsage = Effect.gen(function* () {
 			Severity: "error",
 			Timestamp: Date.now(),
 		};
+
 		Metrics.RecordValidation(StartTime, false);
+
 		return Result;
 	}
 
 	const MemoryUsage = Process.memoryUsage();
+
 	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024);
+
 	const MaxMemoryMB = State.SecurityPolicy.MaxMemoryMB;
 
 	if (MaxMemoryMB > 0 && UsedMemoryMB > MaxMemoryMB) {
@@ -477,6 +501,7 @@ export const ValidateMemoryUsage = Effect.gen(function* () {
 	};
 
 	Metrics.RecordValidation(StartTime, true);
+
 	return Result;
 });
 
@@ -486,6 +511,7 @@ export const ValidateMemoryUsage = Effect.gen(function* () {
  */
 export const DetectSuspiciousBehavior = Effect.gen(function* () {
 	const State = ProcessValidationStates.get(Process.pid);
+
 	if (!State) {
 		return yield* Effect.fail(
 			new ValidationError({
@@ -498,11 +524,13 @@ export const DetectSuspiciousBehavior = Effect.gen(function* () {
 	}
 
 	const UptimeMinutes = (Date.now() - State.StartTime) / 60000;
+
 	const AccessRate = Array.from(State.FileAccessCount.values()).reduce(
 		(a, b) => a + b,
 
 		0,
 	);
+
 	const NetworkRate = Array.from(State.NetworkAccessCount.values()).reduce(
 		(a, b) => a + b,
 
@@ -563,6 +591,7 @@ export const GetValidationMetrics = (): ValidationMetrics => {
  */
 export const ResetValidationMetrics = Effect.sync(() => {
 	ValidationMetricsStore.GetInstance().Reset();
+
 	return;
 });
 

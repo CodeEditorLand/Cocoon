@@ -77,18 +77,26 @@ export class PerformanceMonitoringService {
 
 	async initialize(): Promise<void> {
 		this.monitoringActive = true;
+
 		// No-op
 	}
 
 	async getMetrics(): Promise<PerformanceMetrics> {
 		return {
 			extensionLoadTime: 0,
+
 			apiCallLatency: 0,
+
 			memoryUsage: 0,
+
 			cpuUsage: 0,
+
 			concurrentExtensions: 0,
+
 			errorRate: 0,
+
 			cacheHitRate: 0,
+
 			requestThroughput: 0,
 		};
 	}

@@ -55,13 +55,16 @@ export default (
 
 					[Handle],
 				);
+
 				if (typeof Response === "number") return Response;
+
 				if (
 					Response &&
 					typeof (Response as { pid?: unknown }).pid === "number"
 				) {
 					return (Response as { pid: number }).pid;
 				}
+
 				return undefined;
 			} catch {
 				return undefined;
@@ -80,11 +83,14 @@ export default (
 	// listen and update the cached snapshot.
 	let CurrentState = {
 		isInteractedWith: false,
+
 		shell: undefined as string | undefined,
 	};
+
 	try {
 		Context.Emitter?.on?.(
 			`window.terminal.stateChanged:${Handle}`,
+
 			(Update: { isInteractedWith?: boolean; shell?: string }) => {
 				if (typeof Update?.isInteractedWith === "boolean") {
 					CurrentState = {
@@ -92,6 +98,7 @@ export default (
 						isInteractedWith: Update.isInteractedWith,
 					};
 				}
+
 				if (typeof Update?.shell === "string") {
 					CurrentState = { ...CurrentState, shell: Update.shell };
 				}
@@ -130,7 +137,9 @@ export default (
 			// run until they pressed Enter manually. Mirror upstream by
 			// appending `\r` when AddNewLine is `true` or absent.
 			const ShouldAppendNewLine = AddNewLine !== false;
+
 			const Payload = ShouldAppendNewLine ? `${Text}\r` : Text;
+
 			Context.SendToMountain("terminal.sendText", {
 				handle: Handle,
 				text: Payload,

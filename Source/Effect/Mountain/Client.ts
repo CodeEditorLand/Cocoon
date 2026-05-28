@@ -178,9 +178,13 @@ export const MountainClientLive = Layer.effect(
 		// Mutable tracking
 		let metrics: {
 			totalRequests: number;
+
 			successfulRequests: number;
+
 			failedRequests: number;
+
 			averageLatency: number;
+
 			lastRequestTime: number;
 		} = {
 			totalRequests: 0,
@@ -205,12 +209,14 @@ export const MountainClientLive = Layer.effect(
 			Effect.gen(function* () {
 				// Already connected? short-circuit
 				const currentState = yield* stateRef.get;
+
 				if (currentState._tag === "Connected") {
 					telemetry.log(
 						"warn",
 
 						"[MountainClient] Already connected to Mountain",
 					);
+
 					return;
 				}
 
@@ -240,9 +246,13 @@ export const MountainClientLive = Layer.effect(
 				// Connect real client
 				try {
 					realClient = new RealMountainClient();
+
 					(realClient as any).mountainHost = currentConfig.host;
+
 					(realClient as any).mountainPort = currentConfig.port;
+
 					yield* Effect.promise(() => realClient!.connect());
+
 					serverVersion = "1.0.0";
 				} catch (error) {
 					yield* Ref.set(stateRef, {
@@ -290,6 +300,7 @@ export const MountainClientLive = Layer.effect(
 
 					"[MountainClient] Not connected to Mountain",
 				);
+
 				return;
 			}
 
@@ -307,6 +318,7 @@ export const MountainClientLive = Layer.effect(
 			// Disconnect real client
 			if (realClient) {
 				yield* Effect.promise(() => realClient!.disconnect());
+
 				realClient = undefined;
 			}
 
@@ -323,8 +335,10 @@ export const MountainClientLive = Layer.effect(
 				averageLatency: 0,
 				lastRequestTime: 0,
 			};
+
 			// Reset EMA
 			latencyEma = 0;
+
 			latencyEmaInitialized = false;
 
 			telemetry.log(
@@ -359,6 +373,7 @@ export const MountainClientLive = Layer.effect(
 			(params?: Record<string, unknown>) =>
 				Effect.gen(function* () {
 					const requestStartTime = Date.now();
+
 					const currentState = yield* stateRef.get;
 
 					// Connected? short-circuit
@@ -392,11 +407,13 @@ export const MountainClientLive = Layer.effect(
 								),
 							);
 						}
+
 						const Result = yield* Effect.promise(() =>
 							realClient!.sendRequest(method, params),
 						);
 
 						const processingTime = Date.now() - requestStartTime;
+
 						// EMA update O(1)
 						if (latencyEmaInitialized) {
 							latencyEma =
@@ -404,10 +421,14 @@ export const MountainClientLive = Layer.effect(
 								latencyEma * (1 - LatencyEmaAlpha);
 						} else {
 							latencyEma = processingTime;
+
 							latencyEmaInitialized = true;
 						}
+
 						metrics.averageLatency = latencyEma;
+
 						metrics.lastRequestTime = Date.now();
+
 						metrics.successfulRequests++;
 
 						telemetry.log(
@@ -453,10 +474,14 @@ export const MountainClientLive = Layer.effect(
 
 		// Health check: Connected state + gRPC round-trip (stat `/`). Transport failure → Error → auto-reconnect. App errors are healthy.
 		const HealthCheckTimeoutMs = 1_000;
+
 		const healthCheck = Effect.gen(function* () {
 			const currentState = yield* stateRef.get;
+
 			if (currentState._tag !== "Connected") return false;
+
 			if (!realClient) return false;
+
 			const Outcome = yield* Effect.promise(() =>
 				Promise.race([
 					realClient!
@@ -479,37 +504,45 @@ export const MountainClientLive = Layer.effect(
 					),
 				]),
 			);
+
 			if (Outcome.Kind === "timeout") {
 				yield* Ref.set(stateRef, {
 					_tag: "Error",
 					error: `Health check timed out after ${HealthCheckTimeoutMs}ms`,
 				});
+
 				telemetry.log(
 					"warn",
 
 					`[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`,
 				);
+
 				return false;
 			}
+
 			if (Outcome.Kind === "app-error") {
 				// Transport vs app error: server replied → stay Connected
 				const LooksLikeTransport =
 					/UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
 						Outcome.Message,
 					);
+
 				if (LooksLikeTransport) {
 					yield* Ref.set(stateRef, {
 						_tag: "Error",
 						error: Outcome.Message,
 					});
+
 					telemetry.log(
 						"warn",
 
 						`[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`,
 					);
+
 					return false;
 				}
 			}
+
 			return true;
 		});
 

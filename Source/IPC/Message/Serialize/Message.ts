@@ -98,6 +98,7 @@ export default (Message: IMessage): ISerializationResult => {
 			Message.Data.length >= COMPRESSION_THRESHOLD
 		) {
 			CompressionHint.Fast; // Simplified - in real implementation would apply compression
+
 			Warnings.push("Compression support not fully implemented");
 		}
 
@@ -120,12 +121,15 @@ export default (Message: IMessage): ISerializationResult => {
 		Offset += 1;
 
 		Buffer.setByte(Offset, 0); // Reserved
+
 		Offset += 1;
 
 		Buffer.setByte(Offset, 0); // Reserved
+
 		Offset += 1;
 
 		Buffer.setByte(Offset, 0); // Reserved
+
 		Offset += 1;
 
 		// Write metadata length

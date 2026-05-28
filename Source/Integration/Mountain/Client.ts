@@ -31,6 +31,7 @@ export class MountainClient {
 		if (this.isInitialized) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Already initialized",
 			);
 
@@ -39,6 +40,7 @@ export class MountainClient {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClient] Initializing Mountain client",
 		);
 
@@ -49,12 +51,15 @@ export class MountainClient {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Successfully initialized",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Failed to initialize:",
+
 				error,
 			);
 
@@ -74,6 +79,7 @@ export class MountainClient {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			`[MountainClient] Sending request: ${method}`,
 		);
 
@@ -86,6 +92,7 @@ export class MountainClient {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClient] Request ${method} completed successfully`,
 			);
 
@@ -93,7 +100,9 @@ export class MountainClient {
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClient] Request ${method} failed:`,
+
 				error,
 			);
 
@@ -123,6 +132,7 @@ export class MountainClient {
 		if (TraceGrpcVerbose) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClient] Sending notification: ${method}`,
 			);
 		}
@@ -133,12 +143,14 @@ export class MountainClient {
 			if (TraceGrpcVerbose) {
 				CocoonDevLog(
 					"mountain-client",
+
 					`[MountainClient] Notification ${method} sent successfully`,
 				);
 			}
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				`[MountainClient] Notification ${method} failed:`,
 
 				error,
@@ -176,6 +188,7 @@ export class MountainClient {
 
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClient] Disconnecting from Mountain",
 		);
 
@@ -186,12 +199,15 @@ export class MountainClient {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Disconnected successfully",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Disconnect failed:",
+
 				error,
 			);
 
@@ -205,6 +221,7 @@ export class MountainClient {
 	async reconnect(): Promise<void> {
 		CocoonDevLog(
 			"mountain-client",
+
 			"[MountainClient] Reconnecting to Mountain",
 		);
 
@@ -215,12 +232,15 @@ export class MountainClient {
 
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Reconnected successfully",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Reconnect failed:",
+
 				error,
 			);
 
@@ -243,7 +263,9 @@ export class MountainClient {
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
+
 				"[MountainClient] Health check failed:",
+
 				error,
 			);
 

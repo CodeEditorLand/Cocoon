@@ -180,9 +180,13 @@ export const RPCServerLive = Layer.effect(
 		// Metrics - use mutable let for tracking (use plain object, not readonly interface)
 		let metrics: {
 			uptime: number;
+
 			connections: number;
+
 			requestsHandled: number;
+
 			errors: number;
+
 			averageLatency: number;
 		} = {
 			uptime: 0,
@@ -205,8 +209,10 @@ export const RPCServerLive = Layer.effect(
 
 				// Check if already running
 				const currentState = yield* stateRef.get;
+
 				if (currentState._tag === "Running") {
 					telemetry.log("warn", "[RPCServer] Server already running");
+
 					return;
 				}
 
@@ -218,6 +224,7 @@ export const RPCServerLive = Layer.effect(
 
 					10,
 				);
+
 				currentConfig = config ?? {
 					host: "0.0.0.0",
 					port: CocoonPort,
@@ -234,8 +241,10 @@ export const RPCServerLive = Layer.effect(
 
 				CocoonDevLog(
 					"grpc",
+
 					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
 				);
+
 				telemetry.log(
 					"info",
 
@@ -245,12 +254,15 @@ export const RPCServerLive = Layer.effect(
 				try {
 					// Create and start the real gRPC server
 					grpcServer = new GRPCServerService();
+
 					// Set port from config (GRPCServerService defaults to 50052)
 					(grpcServer as any).port = currentConfig.port;
+
 					yield* Effect.promise(() => grpcServer!.start());
 
 					// Initialize metrics
 					startTime = Date.now();
+
 					metrics = {
 						uptime: 0,
 						connections: 0,
@@ -301,6 +313,7 @@ export const RPCServerLive = Layer.effect(
 			// Check if running
 			if (currentState._tag !== "Running") {
 				telemetry.log("warn", "[RPCServer] Server is not running");
+
 				return yield* Effect.fail(new ServerNotRunningError());
 			}
 
@@ -314,6 +327,7 @@ export const RPCServerLive = Layer.effect(
 			// Stop the real gRPC server
 			if (grpcServer) {
 				yield* Effect.promise(() => grpcServer!.stop());
+
 				grpcServer = undefined;
 			}
 
@@ -329,6 +343,7 @@ export const RPCServerLive = Layer.effect(
 		const handleRequest = (request: RPCRequest) =>
 			Effect.gen(function* () {
 				const requestStartTime = Date.now();
+
 				const currentState = yield* stateRef.get;
 
 				// Check if server is running
@@ -358,9 +373,11 @@ export const RPCServerLive = Layer.effect(
 
 				// Update latency tracking
 				latencies.push(processingTime);
+
 				if (latencies.length > 100) {
 					latencies.shift();
 				}
+
 				metrics.averageLatency =
 					latencies.reduce((sum, lat) => sum + lat, 0) /
 					latencies.length;

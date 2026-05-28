@@ -34,6 +34,7 @@ const HandleInitializeExtensionHost = async (
 
 	CocoonDevLog(
 		"ext-host",
+
 		`[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`,
 	);
 
@@ -69,6 +70,7 @@ const HandleInitializeExtensionHost = async (
 
 	CocoonDevLog(
 		"ext-host",
+
 		`[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`,
 	);
 
@@ -85,6 +87,7 @@ const HandleInitializeExtensionHost = async (
 	Context.ConnectToMountain().catch((Error) => {
 		CocoonDevLog(
 			"ext-host",
+
 			`[ExtensionHostHandler] Background Mountain reconnect failed: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 		);
 	});
@@ -153,6 +156,7 @@ const HandleDeltaExtensions = async (
 
 	CocoonDevLog(
 		"ext-host",
+
 		`[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`,
 	);
 
@@ -213,17 +217,20 @@ const HandleActivateByEvent = async (
 
 	CocoonDevLog(
 		"ext-host",
+
 		`[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} → ${MatchingExtensions.length} extensions`,
 	);
 
 	if (MatchingExtensions.length > 0) {
 		CocoonDevLog(
 			"ext-activate",
+
 			`[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`,
 		);
 	} else {
 		CocoonDevLog(
 			"ext-activate",
+
 			`[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`,
 		);
 	}
@@ -235,24 +242,30 @@ const HandleActivateByEvent = async (
 
 	const ActivateWithDeps = async (
 		ExtId: string,
+
 		Event: string,
+
 		Depth = 0,
 	): Promise<void> => {
 		// Already activated or currently being activated (cycle guard).
 		if (Context.ActivatedExtensions.has(ExtId) || InProgress.has(ExtId))
 			return;
+
 		// Depth guard: max 20 levels of transitive deps before bail-out.
 		if (Depth > 20) {
 			CocoonDevLog(
 				"ext-activate",
+
 				`[ExtensionHostHandler] Max dep depth reached at ${ExtId}; skipping`,
 			);
+
 			return;
 		}
 
 		InProgress.add(ExtId);
 
 		const Extension = Context.ExtensionRegistry.get(ExtId);
+
 		const Deps: string[] = (Extension as any)?.extensionDependencies ?? [];
 
 		// Activate each declared dependency first (sequentially so we
@@ -266,6 +279,7 @@ const HandleActivateByEvent = async (
 					(Err: unknown) => {
 						CocoonDevLog(
 							"ext-activate",
+
 							`[ExtensionHostHandler] Dep activation failed ${DepId} (required by ${ExtId}): ${Err instanceof Error ? Err.message : String(Err)}`,
 						);
 					},
@@ -276,10 +290,13 @@ const HandleActivateByEvent = async (
 		// Now activate the extension itself.
 		await ActivateExtension(Context, ExtId, Event).catch((Err: unknown) => {
 			const Msg = Err instanceof Error ? Err.message : String(Err);
+
 			CocoonDevLog(
 				"ext-activate",
+
 				`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
 			);
+
 			if (
 				Err instanceof Error &&
 				/Class extends value undefined/.test(Err.message)
@@ -288,8 +305,10 @@ const HandleActivateByEvent = async (
 					.split("\n")
 					.slice(0, 6)
 					.join("\n");
+
 				CocoonDevLog(
 					"ext-activate",
+
 					`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
 				);
 			}
@@ -304,6 +323,7 @@ const HandleActivateByEvent = async (
 
 	CocoonDevLog(
 		"ext-activate",
+
 		`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`,
 	);
 
@@ -339,6 +359,7 @@ const HandleStartExtensionHost = async (
 ): Promise<any> => {
 	CocoonDevLog(
 		"ext-host",
+
 		`[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`,
 	);
 
@@ -358,7 +379,10 @@ const HandleStartExtensionHost = async (
 
 export default {
 	HandleInitializeExtensionHost,
+
 	HandleDeltaExtensions,
+
 	HandleActivateByEvent,
+
 	HandleStartExtensionHost,
 };

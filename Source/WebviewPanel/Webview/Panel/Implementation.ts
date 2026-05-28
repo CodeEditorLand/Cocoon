@@ -249,7 +249,9 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 	public updateViewState(NewState: {
 		readonly active: boolean;
+
 		readonly visible: boolean;
+
 		readonly viewColumn: ViewColumn;
 	}) {
 		if (this.IsDisposed) return;

@@ -164,7 +164,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			yield* IMountainClientService;
+
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
+
 			const Window = yield* Context.Tag<Window>("Service/Window");
 
 			// Command registry - maps command ID to registered command metadata
@@ -184,6 +186,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					ThisArg?: unknown,
 				) => {
 					const Disposable: IDisposable = { dispose: () => {} };
+
 					// Register command locally
 					Effect.runSync(
 						Ref.update(CommandRegistry, (Registry) =>
@@ -196,6 +199,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 							}),
 						),
 					);
+
 					return Disposable;
 				},
 
@@ -226,6 +230,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			): Effect.Effect<unknown, Error> =>
 				Effect.gen(function* () {
 					const StartTime = Date.now();
+
 					const {
 						Callback,
 						ThisArg,
@@ -256,6 +261,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					});
 
 					const Duration = Date.now() - StartTime;
+
 					yield* Logger.Debug(
 						`[CommandService] Command '${Id}' executed in ${Duration}ms`,
 					);
@@ -289,11 +295,13 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// Check if command is registered locally
 					if (Registry.has(Id)) {
 						const Command = Registry.get(Id)!;
+
 						const Result = yield* ExecuteLocalCommand(
 							Command,
 
 							Arguments,
 						);
+
 						return Result as T;
 					}
 
@@ -304,6 +312,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 					// Mountain gRPC integration for command execution
 					const mountainClient = yield* MountainGRPCClientService;
+
 					const startTime = Date.now();
 
 					try {
@@ -341,6 +350,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 							error as Error,
 						);
+
 						throw error;
 					}
 				});
@@ -367,6 +377,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 						yield* Logger.Error(
 							`[CommandService] Invalid command ID: ${Id}`,
 						);
+
 						throw new Error(`Invalid command ID: ${Id}`);
 					}
 
@@ -426,6 +437,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 							error,
 						);
+
 						// Continue with local registration even if Mountain registration fails
 					}
 
@@ -440,6 +452,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 										(Registry) => {
 											Registry.delete(Id);
+
 											return Registry;
 										},
 									);
@@ -453,6 +466,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 										try: () =>
 											mountainClient.sendNotification(
 												"unregisterCommand",
+
 												{ commandId: Id },
 											),
 										catch: () => undefined,
@@ -487,12 +501,14 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// Adapt command callback to inject active text editor
 					const AdaptedCallback = (...Args: any[]): any => {
 						const ActiveEditor = Window.activeTextEditor;
+
 						if (!ActiveEditor) {
 							Effect.runSync(
 								Logger.Warn(
 									`[CommandService] Cannot execute text editor command '${Id}' - no active text editor`,
 								),
 							);
+
 							return undefined;
 						}
 
@@ -524,6 +540,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			): Effect.Effect<string[], Error> =>
 				Effect.gen(function* () {
 					const Registry = yield* Ref.get(CommandRegistry);
+
 					const LocalCommandIds = Array.from(Registry.keys());
 
 					// Mountain gRPC integration for getting remote commands
@@ -557,14 +574,17 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 							error as Error,
 						);
+
 						if (FilterInternal) {
 							return LocalCommandIds.filter(
 								(Id) => !Id.startsWith("_"),
 							);
 						}
+
 						return LocalCommandIds;
 					}
 				});
+
 			// Return the service implementation with PascalCase method names
 			const ServiceImplementation: Command = {
 				RegisterCommand,
@@ -574,6 +594,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			};
 
 			const Registry = yield* Ref.get(CommandRegistry);
+
 			yield* Logger.Info(
 				`[CommandService] CommandService initialized with ${Registry.size} registered commands`,
 			);

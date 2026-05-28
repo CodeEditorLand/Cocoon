@@ -45,6 +45,7 @@ export const ShowQuickPick = <T extends string>(
 
 		// Serialize items using TypeConverter
 		const ItemsDTO = SerializeItems(Items);
+
 		const ButtonsDTO = Options?.buttons
 			? SerializeButtons(Options.buttons)
 			: undefined;

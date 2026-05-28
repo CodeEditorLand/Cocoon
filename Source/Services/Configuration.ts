@@ -63,6 +63,7 @@ export class Configuration implements IConfigurationService {
 
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Initializing configuration service with Universal Spine",
 		);
 	}
@@ -73,6 +74,7 @@ export class Configuration implements IConfigurationService {
 	async initialize(): Promise<void> {
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Loading initial configuration from Spine...",
 		);
 
@@ -113,6 +115,7 @@ export class Configuration implements IConfigurationService {
 
 			CocoonDevLog(
 				"configuration",
+
 				"[ConfigurationService] Configuration loaded from Spine",
 
 				configData,
@@ -120,6 +123,7 @@ export class Configuration implements IConfigurationService {
 		} catch (error) {
 			CocoonDevLog(
 				"configuration",
+
 				"[ConfigurationService] Failed to load initial configuration from Spine:",
 
 				error,
@@ -228,6 +232,7 @@ export class Configuration implements IConfigurationService {
 
 				CocoonDevLog(
 					"configuration",
+
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
 				);
 
@@ -236,6 +241,7 @@ export class Configuration implements IConfigurationService {
 			} catch (error) {
 				CocoonDevLog(
 					"configuration",
+
 					`[ConfigurationService] Failed to update configuration: ${key}`,
 
 					error,
@@ -459,6 +465,7 @@ export class Configuration implements IConfigurationService {
 	): void {
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Registering configuration change listener",
 		);
 
@@ -479,6 +486,7 @@ export class Configuration implements IConfigurationService {
 
 		CocoonDevLog(
 			"configuration",
+
 			`[ConfigurationService] Configuration change listener registered: ${listenerId}`,
 		);
 	}
@@ -489,6 +497,7 @@ export class Configuration implements IConfigurationService {
 	async reloadConfiguration(): Promise<void> {
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Reloading configuration from Mountain",
 		);
 
@@ -501,11 +510,13 @@ export class Configuration implements IConfigurationService {
 
 			CocoonDevLog(
 				"configuration",
+
 				"[ConfigurationService] Configuration reloaded successfully",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"configuration",
+
 				"[ConfigurationService] Failed to reload configuration:",
 
 				error,
@@ -529,6 +540,7 @@ export class Configuration implements IConfigurationService {
 	): Promise<void> {
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Configuration conflict detected, implementing retry logic",
 		);
 
@@ -541,6 +553,7 @@ export class Configuration implements IConfigurationService {
 
 			CocoonDevLog(
 				"configuration",
+
 				`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`,
 			);
 
@@ -581,6 +594,7 @@ export class Configuration implements IConfigurationService {
 
 				CocoonDevLog(
 					"configuration",
+
 					"[ConfigurationService] Configuration saved successfully after retry",
 				);
 
@@ -588,6 +602,7 @@ export class Configuration implements IConfigurationService {
 			} catch (retryError) {
 				CocoonDevLog(
 					"configuration",
+
 					`[ConfigurationService] Retry attempt ${attempt} failed:`,
 
 					retryError,
@@ -596,6 +611,7 @@ export class Configuration implements IConfigurationService {
 				if (attempt === maxRetries) {
 					CocoonDevLog(
 						"configuration",
+
 						"[ConfigurationService] All retry attempts failed, configuration may be out of sync",
 					);
 
@@ -613,6 +629,7 @@ export class Configuration implements IConfigurationService {
 	async cleanup(): Promise<void> {
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Cleaning up configuration service",
 		);
 
@@ -622,6 +639,7 @@ export class Configuration implements IConfigurationService {
 
 		CocoonDevLog(
 			"configuration",
+
 			"[ConfigurationService] Configuration service cleaned up",
 		);
 	}
@@ -717,6 +735,7 @@ export class Configuration implements IConfigurationService {
 					} catch (error) {
 						CocoonDevLog(
 							"configuration",
+
 							`[ConfigurationService] Error in listener for ${eventKey}:`,
 
 							error,
@@ -736,6 +755,7 @@ export const ConfigurationLayer = Layer.effect(
 
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
+
 		const configService = new Configuration(mountainClient);
 
 		// Auto-initialize

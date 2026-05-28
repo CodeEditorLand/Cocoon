@@ -30,19 +30,25 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 	// tasks. Mountain fires `task.didStart` / `task.didEnd` notifications
 	// so we keep the array in sync.
 	const Executions = new Map<string, unknown>();
+
 	Context.Emitter.on(
 		"task.didStart",
+
 		(Event: { execution?: { id?: string }; id?: string }) => {
 			const Id = String(Event?.execution?.id ?? Event?.id ?? "");
+
 			if (Id && Event?.execution) {
 				Executions.set(Id, Event.execution);
 			}
 		},
 	);
+
 	Context.Emitter.on(
 		"task.didEnd",
+
 		(Event: { execution?: { id?: string }; id?: string }) => {
 			const Id = String(Event?.execution?.id ?? Event?.id ?? "");
+
 			if (Id) {
 				Executions.delete(Id);
 			}
@@ -52,16 +58,21 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 	return WrapTasksNamespace({
 		registerTaskProvider: (TaskType: string, Provider: unknown) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_task_provider", {
 				handle: Handle,
 				type: TaskType,
 				extensionId: "",
 			}).catch(() => {});
+
 			const ProviderKey = `__taskProvider:${Handle}`;
+
 			Context.ExtensionRegistry.set(ProviderKey, Provider);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(ProviderKey);
+
 					Context.SendToMountain("unregister_task_provider", {
 						handle: Handle,
 					}).catch(() => {});
@@ -76,6 +87,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 
 					[Filter],
 				);
+
 				return Array.isArray(Response) ? Response : [];
 			} catch {
 				return [];
@@ -94,20 +106,26 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 
 					[Task],
 				);
+
 				const Resolved = Response as
 					| { id?: string; task?: unknown }
 					| undefined;
+
 				const TaskId = String(Resolved?.id ?? "");
+
 				const Execution = {
 					task: Resolved?.task ?? Task,
 					terminate: () => {
 						Context.SendToMountain("terminate_task", {
 							id: TaskId,
 						}).catch(() => {});
+
 						Executions.delete(TaskId);
 					},
 				};
+
 				if (TaskId) Executions.set(TaskId, Execution);
+
 				return Execution;
 			} catch {
 				return undefined;

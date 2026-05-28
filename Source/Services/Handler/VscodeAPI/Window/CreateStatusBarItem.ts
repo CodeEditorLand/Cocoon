@@ -20,34 +20,44 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 const enum StatusBarAlignment {
 	Left = 1,
+
 	Right = 2,
 }
 
 const ResolveOverload = (
 	FirstArg: unknown,
+
 	SecondArg: unknown,
+
 	ThirdArg: unknown,
 ): {
 	Id: string | undefined;
+
 	Alignment: number;
+
 	Priority: number | undefined;
 } => {
 	// Three-arg form: createStatusBarItem(id, alignment, priority)
 	if (typeof FirstArg === "string") {
 		return {
 			Id: FirstArg,
+
 			Alignment:
 				typeof SecondArg === "number"
 					? SecondArg
 					: StatusBarAlignment.Left,
+
 			Priority: typeof ThirdArg === "number" ? ThirdArg : undefined,
 		};
 	}
+
 	// Two-arg form: createStatusBarItem(alignment, priority)
 	return {
 		Id: undefined,
+
 		Alignment:
 			typeof FirstArg === "number" ? FirstArg : StatusBarAlignment.Left,
+
 		Priority: typeof SecondArg === "number" ? SecondArg : undefined,
 	};
 };
@@ -65,23 +75,35 @@ export default (
 ): Record<string, unknown> => {
 	const {
 		Id,
+
 		Alignment,
+
 		Priority: ResolvedPriority,
 	} = ResolveOverload(AlignmentOrId, PriorityOrAlignment, Priority);
 
 	let CurrentText = "";
+
 	let CurrentTooltip: unknown = "";
+
 	let CurrentCommand: unknown = undefined;
+
 	let CurrentBackgroundColor: unknown = undefined;
+
 	let CurrentColor: unknown = undefined;
+
 	let CurrentVisible = false;
+
 	let CurrentName: string | undefined = undefined;
+
 	let CurrentAccessibility: unknown = undefined;
+
 	let Disposed = false;
 
 	const Push = () => {
 		if (Disposed) return;
+
 		if (!CurrentVisible) return;
+
 		// Normalise `command` into the wire shape. VS Code accepts both a
 		// plain string command id and a `vscode.Command` object with
 		// `{ title, command, arguments, tooltip }`. We forward both so the
@@ -92,11 +114,15 @@ export default (
 				: typeof CurrentCommand === "object" && CurrentCommand !== null
 					? {
 							command: (CurrentCommand as any).command,
+
 							arguments: (CurrentCommand as any).arguments,
+
 							title: (CurrentCommand as any).title,
+
 							tooltip: (CurrentCommand as any).tooltip,
 						}
 					: undefined;
+
 		Context.SendToMountain("statusBar.update", {
 			handle: Handle,
 			id: Id,
@@ -120,85 +146,116 @@ export default (
 		// stable generated string. Use the explicit id when present;
 		// otherwise the handle is the stable fallback.
 		id: Id ?? String(Handle),
+
 		alignment: Alignment,
+
 		priority: ResolvedPriority,
 
 		get text() {
 			return CurrentText;
 		},
+
 		set text(Value: unknown) {
 			if (Disposed) return;
+
 			const Next = String(Value ?? "");
+
 			if (Next === CurrentText) return;
+
 			CurrentText = Next;
+
 			Push();
 		},
 
 		get tooltip() {
 			return CurrentTooltip;
 		},
+
 		set tooltip(Value: unknown) {
 			if (Disposed) return;
+
 			CurrentTooltip = Value;
+
 			Push();
 		},
 
 		get command() {
 			return CurrentCommand;
 		},
+
 		set command(Value: unknown) {
 			if (Disposed) return;
+
 			CurrentCommand = Value;
+
 			Push();
 		},
 
 		get backgroundColor() {
 			return CurrentBackgroundColor;
 		},
+
 		set backgroundColor(Value: unknown) {
 			if (Disposed) return;
+
 			CurrentBackgroundColor = Value;
+
 			Push();
 		},
 
 		get color() {
 			return CurrentColor;
 		},
+
 		set color(Value: unknown) {
 			if (Disposed) return;
+
 			CurrentColor = Value;
+
 			Push();
 		},
 
 		get name() {
 			return CurrentName;
 		},
+
 		set name(Value: string | undefined) {
 			if (Disposed) return;
+
 			CurrentName = typeof Value === "string" ? Value : undefined;
+
 			Push();
 		},
 
 		get accessibilityInformation() {
 			return CurrentAccessibility;
 		},
+
 		set accessibilityInformation(Value: unknown) {
 			if (Disposed) return;
+
 			CurrentAccessibility = Value;
+
 			Push();
 		},
 
 		show: () => {
 			if (Disposed) return;
+
 			if (CurrentVisible) return;
+
 			CurrentVisible = true;
+
 			Push();
 		},
 
 		hide: () => {
 			if (Disposed) return;
+
 			if (!CurrentVisible) return;
+
 			CurrentVisible = false;
+
 			Context.SendToMountain("statusBar.update", {
 				handle: Handle,
 				id: Id,
@@ -212,8 +269,11 @@ export default (
 		// that didn't exist on the second emit (logged as "warn").
 		dispose: () => {
 			if (Disposed) return;
+
 			Disposed = true;
+
 			CurrentVisible = false;
+
 			Context.SendToMountain("statusBar.dispose", {
 				handle: Handle,
 				id: Id,

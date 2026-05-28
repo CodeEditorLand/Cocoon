@@ -41,6 +41,7 @@ interface IWorkspaceFileEditDTO {
 	newResource?: UriComponents;
 
 	options?: any; // Simplified to `any` to match the dynamic nature of file options
+
 	metadata?: VSCode.WorkspaceEditEntryMetadata;
 }
 

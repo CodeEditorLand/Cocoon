@@ -42,6 +42,7 @@ const Buffered = (): Buffer | undefined => {
  */
 export const CaptureEvent = (
 	Name: string,
+
 	Properties: Properties = {},
 ): void => {
 	// Build-time gate. esbuild substitutes `process.env.NODE_ENV` with
@@ -50,6 +51,7 @@ export const CaptureEvent = (
 	// codes. Combined with the call-site gates this guarantees no
 	// telemetry function is reached in prod.
 	if (process.env["NODE_ENV"] === "production") return;
+
 	try {
 		Buffered()?.Enqueue(Name, Properties);
 	} catch {
@@ -63,10 +65,13 @@ export const CaptureEvent = (
  */
 export const CaptureError = (
 	Tag: string,
+
 	Message: string,
+
 	Extra: Properties = {},
 ): void => {
 	if (process.env["NODE_ENV"] === "production") return;
+
 	const Bridge = Buffered();
 
 	if (!Bridge) return;
@@ -86,6 +91,7 @@ export const CaptureError = (
  */
 export const Initialize = (): void => {
 	if (process.env["NODE_ENV"] === "production") return;
+
 	if (Initialized) return;
 
 	Initialized = true;
@@ -131,7 +137,9 @@ export const Initialize = (): void => {
  */
 export const CaptureHandler = (
 	Feature: string,
+
 	DurationMs: number,
+
 	Ok: boolean,
 ): void => {
 	CaptureEvent("land:cocoon:handler:complete", {
@@ -172,10 +180,16 @@ export const CaptureEntryLoaded = (Entry: string, DurationMs: number): void => {
 
 export default {
 	CaptureEvent,
+
 	CaptureError,
+
 	CaptureHandler,
+
 	CaptureStub,
+
 	CaptureEntryLoad,
+
 	CaptureEntryLoaded,
+
 	Initialize,
 };

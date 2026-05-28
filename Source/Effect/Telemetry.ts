@@ -189,28 +189,36 @@ export const TelemetryLive = Layer.effect(
 
 				// Push with bounded cap
 				const events = yield* eventsRef.get;
+
 				events.push({
 					type: "metric",
 					timestamp: metric.timestamp,
 					data: metric,
 				});
+
 				if (events.length > MAX_EVENTS) {
 					events.splice(0, events.length - MAX_EVENTS);
 				}
+
 				yield* Ref.set(eventsRef, events);
 
 				// Push under name key - bounded per name
 				const currentMetrics = yield* metricsRef.get;
+
 				const nameMetrics = HashMap.get(currentMetrics, name).pipe(
 					Option.getOrElse(() => []),
 				);
+
 				nameMetrics.push(metric);
+
 				if (nameMetrics.length > MAX_METRICS_PER_NAME) {
 					nameMetrics.splice(
 						0,
+
 						nameMetrics.length - MAX_METRICS_PER_NAME,
 					);
 				}
+
 				yield* Ref.set(
 					metricsRef,
 
@@ -222,6 +230,7 @@ export const TelemetryLive = Layer.effect(
 		const startSpan = (name: string, labels?: Record<string, string>) =>
 			Effect.gen(function* () {
 				const startTime = Date.now();
+
 				const span: TelemetrySpan = {
 					name,
 					startTime,
@@ -231,20 +240,24 @@ export const TelemetryLive = Layer.effect(
 
 				// Push start event
 				const events = yield* eventsRef.get;
+
 				events.push({
 					type: "span",
 					timestamp: startTime,
 					data: span,
 				});
+
 				if (events.length > MAX_EVENTS) {
 					events.splice(0, events.length - MAX_EVENTS);
 				}
+
 				yield* Ref.set(eventsRef, events);
 
 				return {
 					end: (success: boolean, error?: string) =>
 						Effect.gen(function* () {
 							const endTime = Date.now();
+
 							const completedSpan: TelemetrySpan = {
 								...span,
 								endTime,
@@ -255,17 +268,21 @@ export const TelemetryLive = Layer.effect(
 
 							// Push end event
 							const events = yield* eventsRef.get;
+
 							events.push({
 								type: "span",
 								timestamp: endTime,
 								data: completedSpan,
 							});
+
 							if (events.length > MAX_EVENTS) {
 								events.splice(0, events.length - MAX_EVENTS);
 							}
+
 							yield* Ref.set(eventsRef, events);
 
 							const currentSpans = yield* spansRef.get;
+
 							const nameSpans = HashMap.get(
 								currentSpans,
 
@@ -274,12 +291,15 @@ export const TelemetryLive = Layer.effect(
 
 							// Push under name key
 							nameSpans.push(completedSpan);
+
 							if (nameSpans.length > MAX_SPANS_PER_NAME) {
 								nameSpans.splice(
 									0,
+
 									nameSpans.length - MAX_SPANS_PER_NAME,
 								);
 							}
+
 							yield* Ref.set(
 								spansRef,
 
@@ -303,20 +323,26 @@ export const TelemetryLive = Layer.effect(
 					message,
 					context: context as Record<string, unknown> | undefined,
 				};
+
 				const timestamp = Date.now();
 
 				// Push log event
 				const events = yield* eventsRef.get;
+
 				events.push({ type: "log", timestamp, data: logEntry });
+
 				if (events.length > MAX_EVENTS) {
 					events.splice(0, events.length - MAX_EVENTS);
 				}
+
 				yield* Ref.set(eventsRef, events);
 
 				// Write directly to stdout/stderr (survives esbuild console drop).
 				// Context JSON-encoded inline for single-line parseable output.
 				const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+
 				let ContextText = "";
+
 				if (context && Object.keys(context).length > 0) {
 					try {
 						ContextText = ` ${JSON.stringify(context)}`;
@@ -324,9 +350,12 @@ export const TelemetryLive = Layer.effect(
 						ContextText = " [unserializable-context]";
 					}
 				}
+
 				const Line = `${Prefix} ${message}${ContextText}\n`;
+
 				const Stream =
 					level === "error" ? process.stderr : process.stdout;
+
 				try {
 					Stream.write(Line);
 				} catch {
@@ -338,6 +367,7 @@ export const TelemetryLive = Layer.effect(
 		const getMetrics = (name: string) =>
 			Effect.gen(function* () {
 				const metrics = yield* metricsRef.get;
+
 				return HashMap.get(metrics, name).pipe(
 					Option.getOrElse(() => []),
 				);
@@ -347,6 +377,7 @@ export const TelemetryLive = Layer.effect(
 		const getAverageDuration = (name: string) =>
 			Effect.gen(function* () {
 				const spans = yield* spansRef.get;
+
 				const nameSpans = HashMap.get(spans, name).pipe(
 					Option.getOrElse(() => []),
 				);
@@ -370,6 +401,7 @@ export const TelemetryLive = Layer.effect(
 		const getSuccessRate = (name: string) =>
 			Effect.gen(function* () {
 				const spans = yield* spansRef.get;
+
 				const nameSpans = HashMap.get(spans, name).pipe(
 					Option.getOrElse(() => []),
 				);
@@ -381,13 +413,16 @@ export const TelemetryLive = Layer.effect(
 				const successCount = nameSpans.filter(
 					(span: TelemetrySpan) => span.success,
 				).length;
+
 				return successCount / nameSpans.length;
 			});
 
 		// Flush all data
 		const flush = Effect.gen(function* () {
 			yield* Ref.set(metricsRef, HashMap.empty());
+
 			yield* Ref.set(spansRef, HashMap.empty());
+
 			yield* Ref.set(eventsRef, []);
 		});
 
@@ -417,7 +452,9 @@ export const makeMockTelemetry = (): TelemetryService => ({
 	log: (level, message, context) =>
 		Effect.sync(() => {
 			const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+
 			let ContextText = "";
+
 			if (context && Object.keys(context).length > 0) {
 				try {
 					ContextText = ` ${JSON.stringify(context)}`;
@@ -425,7 +462,9 @@ export const makeMockTelemetry = (): TelemetryService => ({
 					ContextText = " [unserializable-context]";
 				}
 			}
+
 			const Stream = level === "error" ? process.stderr : process.stdout;
+
 			try {
 				Stream.write(`${Prefix} ${message}${ContextText}\n`);
 			} catch {}
@@ -457,15 +496,20 @@ export const withSpan = <A, E, R>(
 ) =>
 	Effect.gen(function* () {
 		const telemetry = yield* Telemetry;
+
 		const span = yield* telemetry.startSpan(name, labels);
+
 		const result = yield* effect.pipe(
 			Effect.catchAll((error: unknown) =>
 				Effect.gen(function* () {
 					yield* span.end(false, String(error));
+
 					return yield* Effect.fail(error);
 				}),
 			),
 		);
+
 		yield* span.end(true);
+
 		return result;
 	});

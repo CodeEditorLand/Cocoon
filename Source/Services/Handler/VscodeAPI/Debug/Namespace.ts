@@ -31,33 +31,47 @@ const EventSubscriber =
 const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 	const Anchor = Context as unknown as {
 		__dapAdapters?: Map<string, any>;
+
 		__dapTrackerInstalled?: boolean;
 	};
+
 	if (Anchor.__dapTrackerInstalled) {
 		return;
 	}
+
 	Anchor.__dapTrackerInstalled = true;
+
 	Anchor.__dapAdapters ??= new Map();
 
 	const ResolveFactory = (DebugType: string): unknown => {
 		const FactoryKey = `__debugAdapterFactory:${DebugType}`;
+
 		return (Context.ExtensionRegistry as any)?.get(FactoryKey);
 	};
 
 	Context.Emitter.on("debug.didStartSession", (Session: any) => {
 		const SessionId = Session?.id ?? Session?.sessionId;
+
 		const DebugType = Session?.type ?? Session?.configuration?.type;
+
 		if (!SessionId || !DebugType) return;
+
 		const Factory = ResolveFactory(String(DebugType));
+
 		if (!Factory) return;
+
 		try {
 			const Descriptor = (Factory as any).createDebugAdapterDescriptor?.(
 				Session,
+
 				undefined,
 			);
+
 			const Resolve = (Value: any) => {
 				const Impl = Value?.implementation ?? Value;
+
 				if (!Impl || typeof Impl.handleMessage !== "function") return;
+
 				try {
 					Impl.onDidSendMessage?.((Message: unknown) => {
 						Context.SendToMountain("debug.dap-response", {
@@ -68,8 +82,10 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 				} catch {
 					/* adapter has no event subscription support */
 				}
+
 				Anchor.__dapAdapters!.set(String(SessionId), Impl);
 			};
+
 			if (Descriptor && typeof (Descriptor as any).then === "function") {
 				(Descriptor as Promise<unknown>).then(Resolve, () => {});
 			} else {
@@ -83,19 +99,24 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 
 	Context.Emitter.on("debug.didTerminateSession", (Session: any) => {
 		const SessionId = Session?.id ?? Session?.sessionId;
+
 		if (!SessionId) return;
+
 		const Adapter = Anchor.__dapAdapters!.get(String(SessionId));
+
 		try {
 			Adapter?.dispose?.();
 		} catch {
 			/* ignore */
 		}
+
 		Anchor.__dapAdapters!.delete(String(SessionId));
 	});
 };
 
 const CreateDebugNamespace = (Context: HandlerContext) => {
 	InitialiseDAPSessionTracker(Context);
+
 	return WrapDebugNamespace({
 		registerDebugAdapterDescriptorFactory: (
 			DebugType: string,
@@ -103,21 +124,26 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 			Factory: unknown,
 		) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_debug_adapter", {
 				handle: Handle,
 				debugType: DebugType,
 				extensionId: "",
 			}).catch(() => {});
+
 			// Stash factory by type so the ExtHostDebug$sendDAPRequest gRPC
 			// dispatch can look it up. `DebugAdapterInlineImplementation`
 			// adapters live entirely inside Cocoon's process - Mountain never
 			// gets a stdin pipe to write to, so DAP frames for those sessions
 			// reverse-RPC into Cocoon and are dispatched here.
 			const FactoryKey = `__debugAdapterFactory:${DebugType}`;
+
 			Context.ExtensionRegistry.set(FactoryKey, Factory);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(FactoryKey);
+
 					Context.SendToMountain("unregister_debug_adapter", {
 						handle: Handle,
 					}).catch(() => {});
@@ -133,16 +159,21 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 			_TriggerKind?: unknown,
 		) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_debug_configuration_provider", {
 				handle: Handle,
 				debugType: DebugType,
 			}).catch(() => {});
+
 			// Stash locally so ExtHostDebug$resolveDebugConfiguration can call back.
 			const ProviderKey = `__debugConfigProvider:${Handle}`;
+
 			Context.ExtensionRegistry.set(ProviderKey, Provider);
+
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(ProviderKey);
+
 					Context.SendToMountain(
 						"unregister_debug_configuration_provider",
 
@@ -187,6 +218,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 					[Folder, NameOrConfig, ParentSession],
 				);
+
 				return Boolean((Response as { success?: boolean })?.success);
 			} catch {
 				return false;
@@ -201,6 +233,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 					typeof Session === "string"
 						? Session
 						: ((Session as { id?: unknown })?.id ?? "");
+
 				await Context.MountainClient?.sendRequest("Debug.Stop", [
 					SessionId,
 				]);
@@ -209,7 +242,9 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 		addBreakpoints: (Breakpoints: unknown[]) => {
 			const All: unknown[] = ((Context as any).__breakpoints ??= []);
+
 			All.push(...Breakpoints);
+
 			Context.SendToMountain("debug.addBreakpoints", {
 				breakpoints: Breakpoints,
 			}).catch(() => {});
@@ -217,10 +252,13 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 		removeBreakpoints: (Breakpoints: unknown[]) => {
 			const All: unknown[] = ((Context as any).__breakpoints ??= []);
+
 			const Ids = new Set((Breakpoints as any[]).map((B) => B?.id));
+
 			(Context as any).__breakpoints = All.filter(
 				(B: unknown) => !Ids.has((B as any)?.id),
 			);
+
 			Context.SendToMountain("debug.removeBreakpoints", {
 				breakpoints: Breakpoints,
 			}).catch(() => {});

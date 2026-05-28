@@ -127,11 +127,15 @@ export class CocoonEchoClient {
 			// Test connection by making a simple call
 			// For now, we'll just mark as connected
 			this.isConnected = true;
+
 			this.connectionStartTime = new Date();
+
 			this.lastHeartbeat = new Date();
 
 			this.logger.info("Successfully connected to Mountain");
+
 			this.metrics.increment("echo_client.connect_success");
+
 			resolve();
 		});
 	}
@@ -184,6 +188,7 @@ export class CocoonEchoClient {
 			host_id: this.hostId,
 
 			host_type: 1, // Cocoon
+
 			capabilities: {
 				supports_terminals: "true",
 
@@ -222,14 +227,18 @@ export class CocoonEchoClient {
 		return new Promise((resolve, reject) => {
 			if (!this.client) {
 				reject(new Error("Client not initialized"));
+
 				return;
 			}
 
 			this.client.register_extension_host(request, (err, response) => {
 				if (err) {
 					this.logger.error(`Registration failed: ${err.message}`);
+
 					this.metrics.increment("echo_client.register_failure");
+
 					reject(new Error(`Failed to register: ${err.message}`));
+
 					return;
 				}
 
@@ -243,6 +252,7 @@ export class CocoonEchoClient {
 					this.logger.info(
 						`Cocoon host registered: ${response.host_registry_id}`,
 					);
+
 					this.metrics.increment("echo_client.register_success");
 
 					// Start heartbeat loop
@@ -251,7 +261,9 @@ export class CocoonEchoClient {
 					resolve(this.hostInfo);
 				} else {
 					this.logger.error("Registration returned false");
+
 					this.metrics.increment("echo_client.register_failure");
+
 					reject(new Error("Registration failed"));
 				}
 			});
@@ -276,6 +288,7 @@ export class CocoonEchoClient {
 		return new Promise((resolve, reject) => {
 			if (!this.client) {
 				reject(new Error("Client not initialized"));
+
 				return;
 			}
 
@@ -284,6 +297,7 @@ export class CocoonEchoClient {
 
 				if (err) {
 					this.logger.error(`EchoAction failed: ${err.message}`);
+
 					this.metrics.recordTiming(
 						"echo_action.duration_ms",
 
@@ -294,18 +308,22 @@ export class CocoonEchoClient {
 							type: action.actionType,
 						},
 					);
+
 					reject(new Error(`EchoAction failed: ${err.message}`));
+
 					return;
 				}
 
 				if (!response) {
 					reject(new Error("No response received"));
+
 					return;
 				}
 
 				this.logger.debug(
 					`EchoAction response: success=${response.success}`,
 				);
+
 				this.metrics.recordTiming("echo_action.duration_ms", duration, {
 					success: response.success.toString(),
 					type: action.actionType,
@@ -313,6 +331,7 @@ export class CocoonEchoClient {
 
 				if (!response.success) {
 					reject(new Error(`EchoAction failed: ${response.error}`));
+
 					return;
 				}
 
@@ -488,9 +507,11 @@ export class CocoonEchoClient {
 
 		this.heartbeatIntervalId = setInterval(() => {
 			this.lastHeartbeat = new Date();
+
 			// DEPENDENCY: Echo heartbeat action - needs Echo backend implementation
 			// Current: log heartbeat for debugging
 			this.logger.debug("Heartbeat sent");
+
 			this.metrics.increment("echo_client.heartbeat");
 		}, intervalMs);
 	}

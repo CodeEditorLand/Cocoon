@@ -103,6 +103,7 @@ export class SecurityService {
 	constructor() {
 		CocoonDevLog(
 			"service",
+
 			"[SecurityService] Initializing security service",
 		);
 
@@ -130,12 +131,15 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Security service started",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Failed to initialize:",
+
 				error,
 			);
 
@@ -170,7 +174,9 @@ export class SecurityService {
 			],
 
 			maxMemoryUsage: 100, // MB
+
 			maxExecutionTime: 30000, // 30 seconds
+
 			allowedAPIs: ["commands", "window", "workspace"],
 
 			blockedAPIs: ["debug", "terminal", "scm"],
@@ -186,6 +192,7 @@ export class SecurityService {
 
 		CocoonDevLog(
 			"service",
+
 			"[SecurityService] Default security policy loaded",
 		);
 	}
@@ -230,17 +237,20 @@ export class SecurityService {
 
 				CocoonDevLog(
 					"service",
+
 					`[SecurityService] Loaded ${policiesResponse.policies.length} security policies from Mountain`,
 				);
 			} else {
 				CocoonDevLog(
 					"service",
+
 					"[SecurityService] No security policies received from Mountain, using defaults",
 				);
 			}
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Failed to load security policies from Mountain:",
 
 				error,
@@ -248,6 +258,7 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Continuing with default security policies",
 			);
 		}
@@ -268,11 +279,13 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Advanced audit logging initialized with hourly rotation",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Failed to initialize audit logging:",
 
 				error,
@@ -287,11 +300,13 @@ export class SecurityService {
 	 */
 	private rotateAuditLog(): void {
 		const maxLogSize = 10000; // Keep last 10,000 events
+
 		if (this.auditLog.length > maxLogSize) {
 			this.auditLog = this.auditLog.slice(-maxLogSize);
 
 			CocoonDevLog(
 				"service",
+
 				`[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`,
 			);
 		}
@@ -311,11 +326,13 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Advanced incident response system initialized",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				"[SecurityService] Failed to initialize incident response:",
 
 				error,
@@ -339,11 +356,13 @@ export class SecurityService {
 		if (criticalIncidents.length > 0) {
 			CocoonDevLog(
 				"service",
+
 				`[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`,
 			);
 
 			criticalIncidents.forEach((incident) => {
 				incident.actions.push("Automatically escalated due to timeout");
+
 				this.sendIncidentToMountain(incident);
 			});
 		}
@@ -371,11 +390,13 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				`[SecurityService] Incident ${incident.id} sent to Mountain`,
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				`[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
 
 				error,
@@ -606,6 +627,7 @@ export class SecurityService {
 
 		CocoonDevLog(
 			"service",
+
 			`[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`,
 		);
 	}
@@ -654,6 +676,7 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				`[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`,
 			);
 		}
@@ -687,6 +710,7 @@ export class SecurityService {
 
 		CocoonDevLog(
 			"service",
+
 			`[SecurityService] Security incident escalated: ${incident.description}`,
 		);
 
@@ -721,6 +745,7 @@ export class SecurityService {
 
 		CocoonDevLog(
 			"service",
+
 			`[SecurityService] Security policy updated for extension: ${extensionId}`,
 		);
 	}
@@ -810,6 +835,7 @@ export class SecurityService {
 
 			CocoonDevLog(
 				"service",
+
 				`[SecurityService] Incident resolved: ${incidentId}`,
 			);
 		}

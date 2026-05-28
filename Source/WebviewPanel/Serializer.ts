@@ -234,6 +234,7 @@ export class SerializerService extends Effect.Service<SerializerService>()(
 					}
 
 					const Options = D.Options as Record<string, unknown>;
+
 					if (
 						typeof Options.EnableScripts !== "undefined" &&
 						typeof Options.EnableScripts !== "boolean"

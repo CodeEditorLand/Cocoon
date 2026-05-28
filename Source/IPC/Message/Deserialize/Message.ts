@@ -217,6 +217,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 
 		if (Flags & MessageFlags.Compressed) {
 			Hint = CompressionHint.Balanced; // Default for compressed messages
+
 			Warnings.push(
 				"Message is compressed but decompression not implemented",
 			);

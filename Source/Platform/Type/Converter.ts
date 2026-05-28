@@ -47,13 +47,21 @@ import { Option } from "effect";
  */
 export interface MountainPlatformInfoDTO {
 	platform_number: number; // 0=Web, 1=Mac, 2=Linux, 3=Windows
+
 	platform_name: string; // 'Web' | 'Windows' | 'Mac' | 'Linux'
+
 	operating_system: number; // 1=Windows, 2=Macintosh, 3=Linux
+
 	architecture: string; // 'x64' | 'arm64' | 'arm' | 'ia32' | 'unknown'
+
 	path_separator: string; // '/' or '\\'
+
 	line_ending: string; // '\n' or '\r\n'
+
 	locale: string; // 'en-US'
+
 	language: string; // 'en'
+
 	is_little_endian: boolean;
 
 	is_web: boolean;
@@ -76,7 +84,9 @@ export interface MountainEnvironmentVariableDTO {
 	value: string;
 
 	is_sensitive: boolean; // True for passwords, tokens
+
 	is_readonly: boolean; // True for system variables
+
 	source: string; // 'user' | 'system' | 'process' | 'config'
 }
 
@@ -124,7 +134,9 @@ export interface MountainProcessInfoDTO {
 	parent_pid?: number;
 
 	start_time: number; // Unix timestamp
+
 	end_time?: number; // Unix timestamp if stopped
+
 	status: "running" | "stopped" | "error";
 
 	exit_code: number | null;
@@ -132,6 +144,7 @@ export interface MountainProcessInfoDTO {
 	signal: string | null;
 
 	uptime: number; // milliseconds
+
 	is_detached: boolean;
 
 	timestamp: number;
@@ -580,6 +593,7 @@ export function ConvertProcessSpawnOptionsToDTO(
 		timeout: options.timeout ? Number(options.timeout) : undefined,
 
 		max_buffer: Number(options.maxBuffer ?? 1048576), // 1MB default
+
 		uid: options.uid ? Number(options.uid) : undefined,
 
 		gid: options.gid ? Number(options.gid) : undefined,

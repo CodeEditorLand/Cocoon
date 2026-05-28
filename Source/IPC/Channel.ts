@@ -1148,12 +1148,19 @@ export function GenerateCorrelationId(): string {
 export function CreateRequestMessage(
 	params: {
 		channel: string;
+
 		from: SystemComponent;
+
 		to: SystemComponent | SystemComponent[];
+
 		payload: unknown;
+
 		priority?: MessagePriority;
+
 		timeout?: number;
+
 		correlationId?: string;
+
 		headers?: Record<string, string>;
 	} & Partial<BaseMessage>,
 ): RequestMessage {
@@ -1190,17 +1197,27 @@ export function CreateRequestMessage(
 export function CreateResponseMessage(
 	params: {
 		channel: string;
+
 		from: SystemComponent;
+
 		to: SystemComponent | SystemComponent[];
+
 		correlationId: string;
+
 		success: boolean;
+
 		data?: unknown;
+
 		error?: {
 			code: string;
+
 			message: string;
+
 			details?: Record<string, unknown>;
 		};
+
 		priority?: MessagePriority;
+
 		headers?: Record<string, string>;
 	} & Partial<BaseMessage>,
 ): ResponseMessage {
@@ -1239,10 +1256,15 @@ export function CreateResponseMessage(
 export function CreateEventMessage(
 	params: {
 		channel: string;
+
 		from: SystemComponent;
+
 		to?: SystemComponent | SystemComponent[];
+
 		payload: unknown;
+
 		priority?: MessagePriority;
+
 		headers?: Record<string, string>;
 	} & Partial<BaseMessage>,
 ): EventMessage {
@@ -1256,6 +1278,7 @@ export function CreateEventMessage(
 		from: params.from,
 
 		to: params.to || [], // Empty array for broadcast
+
 		payload: params.payload,
 
 		priority: params.priority || MessagePriority.Normal,

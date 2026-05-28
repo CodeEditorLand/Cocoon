@@ -114,15 +114,19 @@ export class Memento {
 		Effect.runFork(
 			Effect.gen(function* () {
 				if (!MountainClient) return;
+
 				yield* Effect.tryPromise({
 					try: async () => {
 						// `storage:getItems` returns `[key, value][]` tuples.
 						// Filter by the extension namespace prefix.
 						const AllItems = await MountainClient.sendRequest(
 							"Storage.GetItems",
+
 							[],
 						);
+
 						const Prefix = `${ExtensionId}:`;
+
 						if (Array.isArray(AllItems)) {
 							const Entries = (
 								AllItems as [string, unknown][]
@@ -131,13 +135,16 @@ export class Memento {
 									typeof K === "string" &&
 									K.startsWith(Prefix),
 							);
+
 							if (Entries.length > 0) {
 								Effect.runSync(
 									Ref.update(Storage, (Map) => {
 										const Next = new Map(Map);
+
 										for (const [K, V] of Entries) {
 											Next.set(K.slice(Prefix.length), V);
 										}
+
 										return Next;
 									}),
 								);
@@ -184,7 +191,9 @@ export class Memento {
 		Effect.runSync(
 			Ref.update(this.Storage, (Map) => {
 				const NewMap = new Map(Map);
+
 				NewMap.set(key, value);
+
 				return NewMap;
 			}),
 		);
@@ -194,6 +203,7 @@ export class Memento {
 			void this._MountainClient
 				.sendRequest("Storage.Set", [
 					`${this.ExtensionId}:${key}`,
+
 					value,
 				])
 				.catch(() => undefined);
@@ -213,6 +223,7 @@ export class Memento {
 		// Remove all namespaced keys from Mountain's storage.
 		if (this._MountainClient) {
 			const Prefix = `${this.ExtensionId}:`;
+
 			void this._MountainClient
 				.sendRequest("Storage.GetItems", [])
 				.then((All: unknown) => {
@@ -224,9 +235,11 @@ export class Memento {
 									typeof K === "string" &&
 									K.startsWith(Prefix),
 							);
+
 						for (const K of Keys) {
 							void this._MountainClient!.sendRequest(
 								"Storage.Set",
+
 								[K, null],
 							).catch(() => undefined);
 						}
@@ -447,7 +460,9 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
+
 			yield* Context.Tag<Configuration>("Service/Configuration");
+
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
 			// Global subscription tracking for all extensions
@@ -486,13 +501,18 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					// activator setup).
 					const ExtensionPath =
 						ExtensionDescription.extensionLocation.fsPath;
+
 					const StoragePath = `${ExtensionPath}/.storage`;
+
 					const GlobalStorageRoot =
 						process.env.VSCODE_COCOON_GLOBAL_STORAGE ??
 						`${FiddeeRoot()}/globalStorage`;
+
 					const GlobalStoragePath = `${GlobalStorageRoot}/${ExtensionId}`;
+
 					try {
 						mkdirSync(GlobalStoragePath, { recursive: true });
+
 						mkdirSync(StoragePath, { recursive: true });
 					} catch {
 						// Storage dirs are best-effort - if mkdir fails
@@ -505,6 +525,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					const WorkspaceStateRef = yield* Ref.make(
 						new Map<string, unknown>(),
 					);
+
 					const GlobalStateRef = yield* Ref.make(
 						new Map<string, unknown>(),
 					);
@@ -518,6 +539,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 						MountainClient,
 					);
+
 					const GlobalState = new Memento(
 						GlobalStateRef,
 
@@ -539,11 +561,14 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 					// Create subscription list for this extension
 					const Subscriptions = new Set<VSCode.Disposable>();
+
 					yield* Ref.update(GlobalSubscriptionsRef, (GlobalMap) => {
 						const NewMap = new Map(GlobalMap);
+
 						if (!NewMap.has(ExtensionId)) {
 							NewMap.set(ExtensionId, Subscriptions);
 						}
+
 						return NewMap;
 					});
 
@@ -557,6 +582,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 							relativePath,
 						);
+
 						return Uri.fsPath;
 					};
 
@@ -626,6 +652,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					const GlobalSubscriptions = yield* Ref.get(
 						GlobalSubscriptionsRef,
 					);
+
 					const Subscriptions = GlobalSubscriptions.get(ExtensionId);
 
 					if (Subscriptions) {
@@ -644,7 +671,9 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 							(GlobalMap) => {
 								const NewMap = new Map(GlobalMap);
+
 								NewMap.delete(ExtensionId);
+
 								return NewMap;
 							},
 						);

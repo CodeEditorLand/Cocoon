@@ -187,14 +187,18 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								const Child = spawn(Cmd, Args, {
 									stdio: ["ignore", "pipe", "ignore"],
 								});
+
 								let Out = "";
+
 								Child.stdout.on(
 									"data",
 
 									(Chunk: Buffer) =>
 										(Out += Chunk.toString("utf8")),
 								);
+
 								Child.once("error", () => Resolve(undefined));
+
 								Child.once("close", (Code) =>
 									Resolve(Code === 0 ? Out : undefined),
 								);
@@ -236,8 +240,11 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 							const Child = spawn(Cmd, Args, {
 								stdio: ["pipe", "ignore", "ignore"],
 							});
+
 							Child.once("error", () => Resolve(false));
+
 							Child.once("close", (Code) => Resolve(Code === 0));
+
 							try {
 								Child.stdin.end(Value);
 							} catch {
@@ -280,20 +287,27 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 						stdio: "ignore",
 						detached: true,
 					});
+
 					const Timer = setTimeout(() => {
 						try {
 							Child.kill();
 						} catch {}
+
 						Resolve(false);
 					}, 2_000);
+
 					Child.once("error", () => {
 						clearTimeout(Timer);
+
 						Resolve(false);
 					});
+
 					Child.once("close", (Code) => {
 						clearTimeout(Timer);
+
 						Resolve(Code === 0);
 					});
+
 					Child.unref();
 				});
 

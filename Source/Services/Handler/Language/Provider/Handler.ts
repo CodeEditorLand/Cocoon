@@ -165,6 +165,7 @@ const BuildVsDocument = async (
 		isClosed: false,
 
 		eol: 1, // LF
+
 		getText: (_range?: any) => {
 			const Text = LoadContent();
 
@@ -335,6 +336,7 @@ const InvokeLanguageProvider = async (
 	if (!Provider) {
 		CocoonDevLog(
 			"language-provider",
+
 			`[LanguageProviderHandler] Provider handle ${Handle} not found for ${Method}`,
 		);
 
@@ -421,6 +423,7 @@ const InvokeLanguageProvider = async (
 				if (process.env.Trace) {
 					CocoonDevLog(
 						"exthost",
+
 						`[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof (Provider as any).provideHover === "function"}`,
 					);
 				}
@@ -436,6 +439,7 @@ const InvokeLanguageProvider = async (
 				if (process.env.Trace) {
 					CocoonDevLog(
 						"exthost",
+
 						`[DEV:EXTHOST] provideHover result kind=${Result ? (Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents) : "null"}`,
 					);
 				}
@@ -796,12 +800,15 @@ const InvokeLanguageProvider = async (
 			case "$prepareCallHierarchyItems": {
 				const Result = await (Provider as any).prepareCallHierarchy?.(
 					VsDocument,
+
 					VsPosition,
+
 					VsToken,
 				);
 
 				// Normalise to array (VS Code API returns item | item[] | undefined)
 				if (!Result) return null;
+
 				return Array.isArray(Result) ? Result : [Result];
 			}
 
@@ -832,11 +839,14 @@ const InvokeLanguageProvider = async (
 			case "$prepareTypeHierarchyItems": {
 				const Result = await (Provider as any).prepareTypeHierarchy?.(
 					VsDocument,
+
 					VsPosition,
+
 					VsToken,
 				);
 
 				if (!Result) return null;
+
 				return Array.isArray(Result) ? Result : [Result];
 			}
 
@@ -881,8 +891,11 @@ const InvokeLanguageProvider = async (
 					Provider as any
 				).provideInlineCompletionItems?.(
 					VsDocument,
+
 					VsPosition,
+
 					Context,
+
 					VsToken,
 				);
 
@@ -895,8 +908,11 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (Provider as any).provideInlineEdits?.(
 					VsDocument,
+
 					VsPosition,
+
 					Context,
+
 					VsToken,
 				);
 
@@ -911,8 +927,11 @@ const InvokeLanguageProvider = async (
 					Provider as any
 				).provideMultiDocumentHighlights?.(
 					VsDocument,
+
 					VsPosition,
+
 					OtherDocs,
+
 					VsToken,
 				);
 
@@ -926,8 +945,11 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (Provider as any).provideMappedEdits?.(
 					VsDocument,
+
 					CodeBlocks,
+
 					Context,
+
 					VsToken,
 				);
 
@@ -946,9 +968,13 @@ const InvokeLanguageProvider = async (
 					Provider as any
 				).provideDocumentPasteEdits?.(
 					VsDocument,
+
 					Ranges,
+
 					DataTransfer,
+
 					Context,
+
 					VsToken,
 				);
 
@@ -963,8 +989,11 @@ const InvokeLanguageProvider = async (
 					Provider as any
 				).provideDocumentDropEdits?.(
 					VsDocument,
+
 					VsPosition,
+
 					DataTransfer,
+
 					VsToken,
 				);
 
@@ -975,9 +1004,12 @@ const InvokeLanguageProvider = async (
 			// Args: [handle, uri]
 			case "$provideFileDecoration": {
 				const UriArg = Args[1] ?? VsDocument?.uri ?? Args[0];
+
 				let UriValue: unknown = UriArg;
+
 				try {
 					const API = (globalThis as any).__cocoonVscodeAPI;
+
 					if (API?.Uri) {
 						const UriStr =
 							typeof UriArg === "string"
@@ -988,13 +1020,17 @@ const InvokeLanguageProvider = async (
 										? `${(UriArg as any).scheme}://${(UriArg as any).authority ?? ""}${(UriArg as any).path}`
 										: "") ??
 									"");
+
 						if (UriStr) UriValue = API.Uri.parse(UriStr);
 					}
 				} catch {}
+
 				const Result = await (Provider as any).provideFileDecoration?.(
 					UriValue,
+
 					VsToken,
 				);
+
 				return Result ?? null;
 			}
 
@@ -1004,72 +1040,95 @@ const InvokeLanguageProvider = async (
 			case "$resolveCodeAction":
 			case "$resolveCodeActions": {
 				const Item = Args[1];
+
 				const Result = await (Provider as any).resolveCodeAction?.(
 					Item,
+
 					VsToken,
 				);
+
 				return Result ?? Item ?? null;
 			}
 
 			case "$resolveCodeLens": {
 				const Lens = Args[1];
+
 				const Result = await (Provider as any).resolveCodeLens?.(
 					Lens,
+
 					VsToken,
 				);
+
 				return Result ?? Lens ?? null;
 			}
 
 			case "$resolveCompletionItem": {
 				const Item = Args[1];
+
 				const Result = await (Provider as any).resolveCompletionItem?.(
 					Item,
+
 					VsToken,
 				);
+
 				return Result ?? Item ?? null;
 			}
 
 			case "$resolveHover": {
 				const Item = Args[1];
+
 				const Result = await (Provider as any).resolveHover?.(
 					VsDocument,
+
 					VsPosition,
+
 					VsToken,
 				);
+
 				return Result ?? Item ?? null;
 			}
 
 			case "$resolveInlayHint":
 			case "$resolveInlayHints": {
 				const Hint = Args[1];
+
 				const Result = await (Provider as any).resolveInlayHint?.(
 					Hint,
+
 					VsToken,
 				);
+
 				return Result ?? Hint ?? null;
 			}
 
 			case "$resolveDocumentLink": {
 				const Link = Args[1];
+
 				const Result = await (Provider as any).resolveDocumentLink?.(
 					Link,
+
 					VsToken,
 				);
+
 				return Result ?? Link ?? null;
 			}
 
 			case "$resolveWorkspaceSymbol": {
 				const Symbol = Args[1];
+
 				const Result = await (Provider as any).resolveWorkspaceSymbol?.(
 					Symbol,
+
 					VsToken,
 				);
+
 				return Result ?? Symbol ?? null;
 			}
 
 			default:
 				CocoonDevLog(
 					"language-provider",
+
 					`[LanguageProviderHandler] Unhandled $provide method: ${Method}`,
 				);
 
@@ -1078,6 +1137,7 @@ const InvokeLanguageProvider = async (
 	} catch (Error) {
 		CocoonDevLog(
 			"language-provider",
+
 			`[LanguageProviderHandler] Provider ${Handle} threw for ${Method}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 		);
 

@@ -240,6 +240,7 @@ export class StateService extends Effect.Service<StateService>()(
 					}
 
 					const Position = S.Position as Record<string, unknown>;
+
 					if (typeof Position.ViewColumn !== "number") {
 						return yield* Effect.fail(
 							new Error("Panel state has invalid ViewColumn"),
@@ -264,6 +265,7 @@ export class StateService extends Effect.Service<StateService>()(
 					}
 
 					const ViewState = S.ViewState as Record<string, unknown>;
+
 					if (
 						typeof ViewState.Active !== "boolean" ||
 						typeof ViewState.Visible !== "boolean" ||
@@ -282,15 +284,24 @@ export class StateService extends Effect.Service<StateService>()(
 			 */
 			const CreatePanelState = (Params: {
 				readonly Handle: string;
+
 				readonly ExtensionId: string;
+
 				readonly ViewType: string;
+
 				readonly Title: string;
+
 				readonly Position: PanelPosition;
+
 				readonly ViewState: PanelViewState;
+
 				readonly Options: PanelOptions;
+
 				readonly IconPath?: string;
+
 				readonly Content?: {
 					readonly Html?: string;
+
 					readonly Uris?: readonly string[];
 				};
 			}) => {
@@ -309,6 +320,7 @@ export class StateService extends Effect.Service<StateService>()(
 						CreatedAt: Date.now(),
 					},
 				};
+
 				return State;
 			};
 
@@ -399,6 +411,7 @@ export class StateService extends Effect.Service<StateService>()(
 							}
 						).current.values(),
 					);
+
 					return AllStates.filter(
 						(State) => State.ExtensionId === ExtensionId,
 					);

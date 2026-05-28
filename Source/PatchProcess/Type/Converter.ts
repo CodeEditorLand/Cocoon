@@ -408,6 +408,7 @@ export const ValidationStateToDTO = (
 		LastValidationTime: Date.now(),
 
 		AverageValidationTime: 0, // FUTURE: Track running average of validation times
+
 		FileAccessCount: FileAccessTotal,
 
 		NetworkAccessCount: NetworkAccessTotal,

@@ -52,6 +52,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	constructor() {
 		CocoonDevLog(
 			"service",
+
 			"[ModuleInterceptorService] Initializing module interceptor",
 		);
 
@@ -63,6 +64,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		CocoonDevLog(
 			"service",
+
 			"[ModuleInterceptorService] Module interceptor initialized",
 		);
 	}
@@ -145,6 +147,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	interceptRequire(modulePath: string, parentPath: string): any {
 		CocoonDevLog(
 			"service",
+
 			`[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`,
 		);
 
@@ -175,6 +178,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		CocoonDevLog(
 			"service",
+
 			`[ModuleInterceptorService] Module ${modulePath} intercepted successfully`,
 		);
 
@@ -193,6 +197,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		if (this.config.blockedModules.includes(modulePath)) {
 			CocoonDevLog(
 				"service",
+
 				`[ModuleInterceptorService] Blocked module access: ${modulePath}`,
 			);
 
@@ -208,6 +213,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
 			CocoonDevLog(
 				"service",
+
 				`[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`,
 			);
 
@@ -265,6 +271,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		try {
 			CocoonDevLog(
 				"service",
+
 				`[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`,
 			);
 
@@ -339,6 +346,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							node.property.type === "Identifier"
 						) {
 							const objectName = node.object.name;
+
 							const propertyName = node.property.name;
 
 							if (
@@ -369,11 +377,13 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 						// Detect dangerous assignments
 						if (node.left.type === "MemberExpression") {
 							const left = node.left;
+
 							if (
 								left.object.type === "Identifier" &&
 								left.property.type === "Identifier"
 							) {
 								const objectName = left.object.name;
+
 								const propertyName = left.property.name;
 
 								if (
@@ -404,6 +414,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 					ImportDeclaration(node: any) {
 						// Detect dangerous imports
 						const importSource = node.source.value;
+
 						if (this.isDangerousImport(importSource)) {
 							securityIssues.push(
 								`CRITICAL: Dangerous import: ${importSource}`,
@@ -415,6 +426,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 						// Detect dangerous constructor calls
 						if (node.callee.type === "Identifier") {
 							const constructorName = node.callee.name;
+
 							if (this.isDangerousConstructor(constructorName)) {
 								securityIssues.push(
 									`CRITICAL: Dangerous constructor: ${constructorName}`,
@@ -448,6 +460,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`,
 			);
 
@@ -459,6 +472,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				`[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
 
 				error,
@@ -686,7 +700,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	): void {
 		const dangerousPatterns = [
 			{ pattern: /eval\s*\(/, description: "Direct eval call" },
+
 			{ pattern: /Function\s*\(/, description: "Function constructor" },
+
 			{
 				pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,
 				description: "Dynamic require",

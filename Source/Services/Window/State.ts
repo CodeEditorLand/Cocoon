@@ -63,6 +63,7 @@ export const WindowStateLive = Effect.gen(function* () {
 			}
 
 			yield* Ref.set(stateRef, newState);
+
 			return newState;
 		});
 

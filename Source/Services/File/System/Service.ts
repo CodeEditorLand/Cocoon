@@ -46,6 +46,7 @@ export class FileSystemService implements IFileSystemService {
 
 		const Response = await this.mountainClient.sendRequest(
 			"FileSystem.Stat",
+
 			Path,
 		);
 
@@ -104,6 +105,7 @@ export class FileSystemService implements IFileSystemService {
 		const Entries: Array<{ name: string; type: number }> =
 			await this.mountainClient.sendRequest(
 				"FileSystem.ReadDirectory",
+
 				Path,
 			);
 
@@ -115,6 +117,7 @@ export class FileSystemService implements IFileSystemService {
 	async createDirectory(uri: any): Promise<void> {
 		await this.mountainClient.sendRequest(
 			"FileSystem.CreateDirectory",
+
 			uri.fsPath,
 		);
 	}
@@ -146,6 +149,7 @@ export const FileSystemServiceLayer = Layer.effect(
 
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
+
 		return new FileSystemService(mountainClient);
 	}),
 );

@@ -370,7 +370,9 @@ class PerformanceBenchmark {
 
 		this.results.forEach((result) => {
 			const statusIcon = result.status === "PASS" ? "✅" : "❌";
+
 			console.log(`${statusIcon} ${result.service} - ${result.test}`);
+
 			console.log(
 				`   Duration: ${result.duration}ms | Avg: ${result.avgPerRequest.toFixed(2)}ms/req`,
 			);

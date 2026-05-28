@@ -227,6 +227,7 @@ const BuildHeuristicMethod =
 					 * heuristic stub itself */
 				}
 			});
+
 			// Wrap `Produce` so a buggy override (custom heuristic
 			// that throws on certain argument shapes) degrades to the
 			// safe default rather than propagating the throw to the
@@ -239,12 +240,16 @@ const BuildHeuristicMethod =
 				switch (Heuristic.Kind) {
 					case "trust":
 						return true;
+
 					case "event":
 						return NoopDisposable;
+
 					case "register":
 						return NoopDisposable;
+
 					case "bool-check":
 						return false;
+
 					case "factory":
 					case "default":
 					default:
@@ -319,8 +324,11 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			if (Reflect.has(Target, Property)) {
 				return Reflect.get(Target, Property);
 			}
+
 			if (typeof Property !== "string") return undefined;
+
 			if (Property === "then") return undefined;
+
 			// `toJSON` is consulted by `JSON.stringify` whenever a
 			// consumer serialises the namespace (workbench state
 			// snapshots, telemetry payloads, devtools console
@@ -335,9 +343,12 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 					const Out: Record<string, unknown> = {
 						_namespace: NamespaceName,
 					};
+
 					for (const Key of Object.keys(Target)) {
 						const Value = (Target as Record<string, unknown>)[Key];
+
 						const T = typeof Value;
+
 						Out[Key] =
 							T === "function"
 								? "[Function]"
@@ -345,17 +356,21 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 									? "[Object]"
 									: Value;
 					}
+
 					return Out;
 				};
 			}
+
 			// `toString` / `valueOf` should NOT be heuristic-stubbed -
 			// JS falls back to `Object.prototype.*` which yields the
 			// stable `[object Object]` shape consumers expect.
 			if (Property === "toString" || Property === "valueOf") {
 				return undefined;
 			}
+
 			const Heuristic =
 				Overrides?.[Property] ?? ClassifyProperty(Property);
+
 			return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
 		},
 		has(Target, Property) {
@@ -364,6 +379,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			// truthy (vscode.git's defensive pre-check) and the call hits
 			// our Proxy on access.
 			if (Reflect.has(Target, Property)) return true;
+
 			return typeof Property === "string" && Property !== "then";
 		},
 	}) satisfies T;

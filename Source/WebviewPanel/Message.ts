@@ -216,6 +216,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 					// Type-specific validation
 					if (Msg.Type === "Request") {
 						const Payload = Msg.Payload as Record<string, unknown>;
+
 						if (
 							typeof Payload.Method !== "string" ||
 							!Array.isArray(payload.Parameters)
@@ -228,6 +229,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 						}
 					} else if (Msg.Type === "Response") {
 						const Payload = Msg.Payload as Record<string, unknown>;
+
 						if (typeof Payload.Success !== "boolean") {
 							return yield* Effect.fail(
 								new Error(
@@ -240,6 +242,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 							string,
 							unknown
 						>;
+
 						if (typeof EventPayload.EventName !== "string") {
 							return yield* Effect.fail(
 								new Error("Event message has invalid payload"),
@@ -317,6 +320,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 					const Handlers = (
 						HandlersRef as { current: Map<string, MessageHandler> }
 					).current;
+
 					const Handler = Handlers.get(Message.Type);
 
 					if (!Handler) {
@@ -336,6 +340,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 			const Handle = (Message: unknown): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
 					const ValidatedMessage = yield* ValidateMessage(Message);
+
 					yield* RouteMessage(ValidatedMessage);
 				});
 

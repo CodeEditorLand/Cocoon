@@ -121,7 +121,9 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 				ExtensionId?: string,
 			) => {
 				const Timestamp = new Date().toISOString();
+
 				const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+
 				return `${Timestamp} ${Prefix} ${Message}`;
 			};
 
@@ -134,6 +136,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			): Effect.Effect<void> =>
 				Effect.gen(function* () {
 					const LogLevel = yield* Ref.get(LogLevelRef);
+
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
 					if (LogLevel === "trace") {
@@ -175,6 +178,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			): Effect.Effect<void> =>
 				Effect.gen(function* () {
 					const LogLevel = yield* Ref.get(LogLevelRef);
+
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
 					if (LogLevel === "trace" || LogLevel === "debug") {
@@ -205,6 +209,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			): Effect.Effect<void> =>
 				Effect.gen(function* () {
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+
 					const FormattedMessage = FormatMessage(
 						Message,
 
@@ -293,6 +298,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const GetExtensionId = (): Effect.Effect<string> =>
 				Effect.gen(function* () {
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+
 					return ExtensionId ?? "cocoon-core";
 				});
 

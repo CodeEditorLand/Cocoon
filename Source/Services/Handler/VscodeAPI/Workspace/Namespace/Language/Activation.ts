@@ -295,8 +295,10 @@ export function FireOnLanguageActivation(
 				Error instanceof globalThis.Error
 					? Error.message
 					: String(Error);
+
 			CocoonDevLog(
 				"language-activation",
+
 				`[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`,
 			);
 		});
@@ -312,6 +314,7 @@ export function FireOnLanguageActivation(
 	if (Matching.length > 0) {
 		CocoonDevLog(
 			"language-activation",
+
 			`[LanguageActivation] ${Event} matches ${Matching.length} extension(s); activate router is absent - extensions will activate on their next event instead`,
 		);
 	}

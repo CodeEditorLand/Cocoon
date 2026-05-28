@@ -302,9 +302,11 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			yield* IMountainClientService;
+
 			const Configuration = yield* Context.Tag<Configuration>(
 				"Service/Configuration",
 			);
+
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
 			// Extension metadata registry with Ref
@@ -364,15 +366,24 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								| string
 								| {
 										path: string;
+
 										displayName?: string;
+
 										version?: string;
+
 										publisher?: string;
+
 										description?: string;
+
 										activationEvents?: string[];
+
 										main?: string;
+
 										browser?: string;
+
 										contributes?: unknown;
 								  };
+
 							const ExtensionLocation =
 								typeof ExtensionData === "string"
 									? ExtensionData
@@ -442,6 +453,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 							};
 
 							NewRegistry.set(ExtensionId, Description);
+
 							Logger.Debug(
 								`[ExtensionService] Extension discovered: ${ExtensionId}`,
 							);
@@ -463,6 +475,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 					// Check for changes
 					const OldRegistry = yield* Ref.get(ExtensionRegistryRef);
+
 					if (
 						NewRegistry.size !== OldRegistry.size ||
 						Array.from(NewRegistry.keys()).some(
@@ -498,6 +511,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					const Registry = Effect.runSync(
 						Ref.get(ExtensionRegistryRef),
 					);
+
 					const Description = Registry.get(ExtensionId);
 
 					if (!Description) {
@@ -507,6 +521,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					const ActivationMap = Effect.runSync(
 						Ref.get(ExtensionActivationRef),
 					);
+
 					const ExportsMap = Effect.runSync(
 						Ref.get(ExtensionExportsRef),
 					);
@@ -527,11 +542,14 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 							string,
 							unknown
 						>;
+
 						const Identifier = Description.identifier;
+
 						const PublisherFallback =
 							typeof Identifier === "string"
 								? (Identifier.split(".")[0] ?? "unknown")
 								: "unknown";
+
 						return {
 							...Description,
 							name:
@@ -550,6 +568,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									: PublisherFallback,
 						} as IExtensionDescription;
 					})();
+
 					const ExtensionObject: IExtension<T> = {
 						id: Description.identifier,
 						extensionUri: Description.extensionLocation,
@@ -564,6 +583,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 							Logger.Warn(
 								`[ExtensionService] activate() called on ${ExtensionId}, but activation is handled by ExtensionHostService`,
 							);
+
 							return ExportsMap.get(ExtensionId) as T;
 						},
 					};
@@ -585,9 +605,11 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					const Registry = Effect.runSync(
 						Ref.get(ExtensionRegistryRef),
 					);
+
 					const ActivationMap = Effect.runSync(
 						Ref.get(ExtensionActivationRef),
 					);
+
 					const ExportsMap = Effect.runSync(
 						Ref.get(ExtensionExportsRef),
 					);
@@ -601,10 +623,12 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								string,
 								unknown
 							>;
+
 							const PublisherFallback =
 								typeof id === "string"
 									? (id.split(".")[0] ?? "unknown")
 									: "unknown";
+
 							const SafePackageJSON = {
 								...description,
 								name:
@@ -622,6 +646,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 										? (Raw.publisher as string)
 										: PublisherFallback,
 							} as IExtensionDescription;
+
 							return {
 								id: description.identifier,
 								extensionUri: description.extensionLocation,
@@ -645,6 +670,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			): Effect.Effect<string | undefined, never> =>
 				Effect.succeed(() => {
 					const Extension = Effect.runSync(GetExtension(ExtensionId));
+
 					return Extension?.extensionPath;
 				});
 
@@ -653,11 +679,13 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 */
 			const OnDidChange = (Listener: () => any): VSCode.Disposable => {
 				OnDidChangeListeners.add(Listener);
+
 				const Disposable = {
 					dispose: () => {
 						OnDidChangeListeners.delete(Listener);
 					},
 				} as VSCode.Disposable;
+
 				return Disposable;
 			};
 
@@ -674,14 +702,20 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				Effect.gen(function* () {
 					yield* Ref.update(ExtensionActivationRef, (Map) => {
 						const NewMap = new Map(Map);
+
 						NewMap.set(ExtensionId, true);
+
 						return NewMap;
 					});
+
 					yield* Ref.update(ExtensionExportsRef, (Map) => {
 						const NewMap = new Map(Map);
+
 						NewMap.set(ExtensionId, Exports);
+
 						return NewMap;
 					});
+
 					Logger.Info(
 						`[ExtensionService] Extension activated: ${ExtensionId}`,
 					);
@@ -696,9 +730,12 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				Effect.gen(function* () {
 					yield* Ref.update(ExtensionActivationRef, (Map) => {
 						const NewMap = new Map(Map);
+
 						NewMap.set(ExtensionId, false);
+
 						return NewMap;
 					});
+
 					Logger.Debug(
 						`[ExtensionService] Extension deactivated: ${ExtensionId}`,
 					);

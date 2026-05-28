@@ -1,9 +1,13 @@
 var __defProp = Object.defineProperty;
+
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
 import TargetConfig from "../Target/Config.js";
+
 const Merge = (await import("deepmerge-ts")).deepmergeCustom({
   mergeArrays: false
 });
+
 var Config_default = /* @__PURE__ */ __name(async (Current) => Merge(await TargetConfig(Current), {
   bundle: true,
   outbase: "Target",
@@ -22,7 +26,9 @@ var Config_default = /* @__PURE__ */ __name(async (Current) => Merge(await Targe
     "node:*"
   ]
 }), "default");
+
 export {
   Config_default as default
 };
+
 //# sourceMappingURL=Config.js.map

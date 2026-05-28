@@ -64,6 +64,7 @@ export class ExtensionHostService implements IExtensionHostService {
 
 		CocoonDevLog(
 			"service",
+
 			`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`,
 		);
 
@@ -119,11 +120,13 @@ export class ExtensionHostService implements IExtensionHostService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				`[ExtensionHost] Failed to activate ${extensionId}:`,
 
 				error,
@@ -148,6 +151,7 @@ export class ExtensionHostService implements IExtensionHostService {
 
 		CocoonDevLog(
 			"service",
+
 			`[ExtensionHost] Loading module: ${modulePath}`,
 		);
 
@@ -172,6 +176,7 @@ export class ExtensionHostService implements IExtensionHostService {
 		} catch (error) {
 			CocoonDevLog(
 				"service",
+
 				`[ExtensionHost] Failed to load module ${modulePath}:`,
 
 				error,
@@ -181,6 +186,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			// we simulate a dummy module for development continuity
 			CocoonDevLog(
 				"service",
+
 				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
 			);
 
@@ -188,6 +194,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				activate: (_context: any) => {
 					CocoonDevLog(
 						"service",
+
 						`[${extension.identifier}] activate() called`,
 					);
 				},
@@ -238,6 +245,7 @@ export class ExtensionHostService implements IExtensionHostService {
 
 		CocoonDevLog(
 			"service",
+
 			`[ExtensionHost] Deactivating extension: ${extensionId}`,
 		);
 
@@ -253,7 +261,9 @@ export const ExtensionHostLayer = Layer.effect(
 
 	Effect.gen(function* () {
 		const moduleInterceptor = yield* IModuleInterceptorService;
+
 		const apiFactory = yield* IAPIFactoryService;
+
 		return new ExtensionHostService(moduleInterceptor, apiFactory);
 	}),
 );

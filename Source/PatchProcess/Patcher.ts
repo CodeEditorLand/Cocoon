@@ -102,6 +102,7 @@ class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
 
 	constructor(Properties: {
 		readonly Context: string;
+
 		readonly Cause?: unknown;
 	}) {
 		super(Properties);
@@ -177,11 +178,13 @@ const SetStackTraceLimit = Effect.sync(() => {
  */
 const PatchProcessCrash = Effect.gen(function* () {
 	const Service = yield* PatcherService;
+
 	if (Service.NativeCrash) {
 		(process as any).crash = (): void => {
 			const PreventionStack = new Error(
 				"Stack trace for prevented process.crash()",
 			).stack;
+
 			Effect.runSync(
 				Effect.logWarning(
 					`Call to 'process.crash()' intercepted and PREVENTED by host policy`,
@@ -190,6 +193,7 @@ const PatchProcessCrash = Effect.gen(function* () {
 				),
 			);
 		};
+
 		yield* Effect.logTrace("Successfully patched 'process.crash'");
 	} else {
 		yield* Effect.logTrace(
@@ -204,6 +208,7 @@ const PatchProcessCrash = Effect.gen(function* () {
  */
 const PatchProcessExit = Effect.gen(function* () {
 	const Service = yield* PatcherService;
+
 	process.exit = (Code?: number): never => {
 		if (Service.AllowExit()) {
 			Effect.runSync(
@@ -211,18 +216,24 @@ const PatchProcessExit = Effect.gen(function* () {
 					`'process.exit(${Code ?? ""})' ALLOWED by host policy`,
 				),
 			);
+
 			return Service.NativeExit(Code);
 		}
+
 		const ErrorMessage = `'process.exit(${Code ?? ""})' PREVENTED by host policy`;
+
 		const PreventionError = new ExitPreventedProblem({
 			message: ErrorMessage,
 			AttemptedCode: Code as any,
 		});
+
 		Effect.runSync(
 			Effect.logWarning("Blocked call to process.exit by host policy"),
 		);
+
 		throw PreventionError;
 	};
+
 	yield* Effect.logTrace("Successfully patched 'process.exit'");
 });
 
@@ -234,6 +245,7 @@ const BlockNativesModule = Effect.try({
 	try: () => {
 		if (typeof (Module as any)._load === "function") {
 			const OriginalLoad = (Module as any)._load;
+
 			(Module as any)._load = function (
 				Request: string,
 
@@ -244,9 +256,12 @@ const BlockNativesModule = Effect.try({
 				if (Request === "natives") {
 					const ErrorMessage =
 						"Attempt to load deprecated 'natives' module blocked. Not available in Cocoon runtime";
+
 					console.warn(`[Cocoon Patcher] ${ErrorMessage}`);
+
 					throw new Error(ErrorMessage);
 				}
+
 				return OriginalLoad.call(this, Request, Parent, IsMain);
 			};
 		} else {
@@ -280,6 +295,7 @@ const PipeLogging = Effect.gen(function* () {
 			"Console log piping disabled by environment variable",
 		);
 	}
+
 	yield* Effect.logTrace(
 		"VSCODE_PIPE_LOGGING set but Cocoon pipes console via MountainClient; no patch applied",
 	);
@@ -298,19 +314,24 @@ const HandleException = Effect.gen(function* () {
 			"Skipping global exception handler, will be handled by RPC",
 		);
 	}
+
 	const LogError = (Type: string, CaughtError: unknown) => {
 		const Message =
 			CaughtError instanceof Error
 				? CaughtError.stack || CaughtError.message
 				: String(CaughtError);
+
 		console.error(`[Patcher] ${Type}: ${Message}`);
 	};
+
 	process.on("uncaughtException", (Error) => {
 		LogError("uncaughtException", Error);
 	});
+
 	process.on("unhandledRejection", (Reason) => {
 		LogError("unhandledRejection", Reason);
 	});
+
 	yield* Effect.logTrace("Global exception handlers installed");
 });
 
@@ -319,6 +340,7 @@ const HandleException = Effect.gen(function* () {
  */
 const SetupEnvironment = Effect.gen(function* () {
 	const InitData = yield* InitDataService;
+
 	if (InitData.environment.useHostProxy) {
 		yield* Effect.logInfo(
 			"Host proxy enabled. Proxy environment variables inherited",
@@ -334,18 +356,23 @@ const SetupEnvironment = Effect.gen(function* () {
  */
 const TerminateOnParentExit = Effect.gen(function* () {
 	const ParentPidString = process.env["VSCODE_PID"];
+
 	if (!ParentPidString) {
 		return yield* Effect.logTrace(
 			"No VSCODE_PID found, skipping parent exit monitoring",
 		);
 	}
+
 	const ParentPid = Number.parseInt(ParentPidString, 10);
+
 	if (Number.isNaN(ParentPid)) {
 		return yield* Effect.logWarning(
 			`Invalid VSCODE_PID '${ParentPidString}', cannot monitor parent process`,
 		);
 	}
+
 	yield* Effect.logTrace(`Monitoring parent process ${ParentPid} for exit`);
+
 	const MonitoringLoop = Effect.gen(function* () {
 		while (true) {
 			try {
@@ -354,11 +381,14 @@ const TerminateOnParentExit = Effect.gen(function* () {
 				yield* Effect.logInfo(
 					`Parent process ${ParentPid} no longer running. Exiting gracefully`,
 				);
+
 				process.exit(0);
 			}
+
 			yield* Effect.sleep("5 seconds");
 		}
 	}).pipe(Effect.forkDaemon);
+
 	yield* MonitoringLoop;
 });
 
@@ -368,9 +398,12 @@ const TerminateOnParentExit = Effect.gen(function* () {
  */
 const EnforceMemoryLimit = Effect.gen(function* () {
 	const Service = yield* PatcherService;
+
 	const Policy = Service.GetSecurityPolicy();
+
 	if (Policy.MaxMemoryMB > 0) {
 		void (Policy.MaxMemoryMB * 1024 * 1024);
+
 		// TODO: Implement actual memory limit enforcement via v8.setFlagsFromString
 		// Current JS heap size monitoring is limited, need native integration
 		yield* Effect.logDebug(
@@ -401,11 +434,13 @@ export const RunPatchProcess = Effect.gen(function* () {
 		TerminateOnParentExit,
 		EnforceMemoryLimit,
 	];
+
 	yield* Effect.all(AllPatches, { discard: true, concurrency: "unbounded" });
 }).pipe(
 	Effect.tap(() =>
 		Effect.logDebug("All core process patches have been applied"),
 	),
+
 	Effect.catchAll((Error) =>
 		Effect.logFatal(
 			"Critical error during process patching. Environment may be unstable",
@@ -413,6 +448,7 @@ export const RunPatchProcess = Effect.gen(function* () {
 			Error,
 		),
 	),
+
 	Effect.provide(PatcherService.Default),
 );
 
@@ -467,10 +503,14 @@ function ParseSecurityPolicy(PolicyString: string): SecurityPolicy {
  */
 export const ReloadSecurityPolicy = Effect.gen(function* () {
 	yield* Effect.logInfo("Reloading security policy...");
+
 	const NewPolicyString = yield* Config.string("SecurityPolicy").pipe(
 		Effect.catchTag("MissingConfig", () => Effect.succeed("default")),
 	);
+
 	const NewPolicy = ParseSecurityPolicy(NewPolicyString);
+
 	yield* Effect.logDebug("Security policy reloaded", { NewPolicy });
+
 	return NewPolicy;
 });

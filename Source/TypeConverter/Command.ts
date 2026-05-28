@@ -102,6 +102,7 @@ export class Command {
 
 		this.RegisterCommand(
 			false, // Not a global command
+
 			this.DelegatingCommandId,
 
 			this.ExecuteDelegatedCommand.bind(this),

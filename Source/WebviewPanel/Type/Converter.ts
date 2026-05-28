@@ -111,6 +111,7 @@ export interface TypeConverter {
 
 	readonly ConvertDTOToPosition: (DTO: {
 		readonly ViewColumn: number;
+
 		readonly PreservedFocus: boolean;
 	}) => PanelPosition;
 
@@ -124,7 +125,9 @@ export interface TypeConverter {
 
 	readonly ConvertDTOToViewState: (DTO: {
 		readonly Active: boolean;
+
 		readonly Visible: boolean;
+
 		readonly ViewColumn: number;
 	}) => PanelViewState;
 }
@@ -223,6 +226,7 @@ export class TypeConverterService extends Effect.Service<TypeConverterService>()
 				Position: PanelPosition,
 			): {
 				readonly ViewColumn: number;
+
 				readonly PreservedFocus: boolean;
 			} => {
 				return {
@@ -236,6 +240,7 @@ export class TypeConverterService extends Effect.Service<TypeConverterService>()
 			 */
 			const ConvertDTOToPosition = (DTO: {
 				readonly ViewColumn: number;
+
 				readonly PreservedFocus: boolean;
 			}): PanelPosition => {
 				return {
@@ -251,7 +256,9 @@ export class TypeConverterService extends Effect.Service<TypeConverterService>()
 				ViewState: PanelViewState,
 			): {
 				readonly Active: boolean;
+
 				readonly Visible: boolean;
+
 				readonly ViewColumn: number;
 			} => {
 				return {
@@ -266,7 +273,9 @@ export class TypeConverterService extends Effect.Service<TypeConverterService>()
 			 */
 			const ConvertDTOToViewState = (DTO: {
 				readonly Active: boolean;
+
 				readonly Visible: boolean;
+
 				readonly ViewColumn: number;
 			}): PanelViewState => {
 				return {

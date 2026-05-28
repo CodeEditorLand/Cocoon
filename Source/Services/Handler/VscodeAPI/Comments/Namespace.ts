@@ -36,23 +36,37 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 type Comment = {
 	body: string | { value: string };
+
 	mode?: number;
+
 	author?: { name: string; iconPath?: unknown };
+
 	contextValue?: string;
+
 	reactions?: readonly unknown[];
+
 	label?: string;
+
 	timestamp?: Date;
 };
 
 type CommentThread = {
 	uri: unknown;
+
 	range: unknown;
+
 	comments: readonly Comment[];
+
 	collapsibleState: number;
+
 	canReply: boolean;
+
 	contextValue?: string;
+
 	label?: string;
+
 	state?: number;
+
 	dispose(): void;
 };
 
@@ -61,11 +75,15 @@ const ThreadKey = (Uri: unknown, Range: unknown): string => {
 		typeof Uri === "string"
 			? Uri
 			: ((Uri as { toString?: () => string })?.toString?.() ?? "");
+
 	const R = Range as
 		| { start?: { line?: number; character?: number } }
 		| undefined;
+
 	const Line = R?.start?.line ?? 0;
+
 	const Char = R?.start?.character ?? 0;
+
 	return `${UriStr}:${Line}:${Char}`;
 };
 
@@ -73,42 +91,65 @@ const CreateCommentsNamespace = (Context: HandlerContext) => {
 	return {
 		createCommentController: (Id: string, Label: string) => {
 			const ControllerKey = `__commentController:${Id}`;
+
 			// Idempotent re-registration: dev-reloads call createCommentController
 			// twice. Stock VS Code throws on duplicate id; we soften to a no-op
 			// returning the existing instance.
 			const Existing = Context.ExtensionRegistry.get(ControllerKey);
+
 			if (Existing) {
 				return Existing;
 			}
+
 			const Threads = new Map<string, CommentThread>();
+
 			const Controller: any = {
 				id: Id,
+
 				label: Label,
+
 				commentingRangeProvider: undefined,
+
 				reactionHandler: undefined,
+
 				options: undefined,
+
 				createCommentThread: (
 					Uri: unknown,
+
 					Range: unknown,
+
 					Comments: readonly Comment[],
 				) => {
 					const Key = ThreadKey(Uri, Range);
+
 					const Thread: CommentThread = {
 						uri: Uri,
+
 						range: Range,
+
 						comments: Array.isArray(Comments) ? Comments : [],
+
 						collapsibleState: 0,
+
 						canReply: true,
+
 						contextValue: undefined,
+
 						label: undefined,
+
 						state: undefined,
+
 						dispose: () => {
 							Threads.delete(Key);
 						},
 					};
+
 					Threads.set(Key, Thread);
+
 					return Thread;
 				},
+
 				dispose: () => {
 					for (const Thread of Threads.values()) {
 						try {
@@ -117,11 +158,15 @@ const CreateCommentsNamespace = (Context: HandlerContext) => {
 							/* swallow per-thread dispose failure */
 						}
 					}
+
 					Threads.clear();
+
 					Context.ExtensionRegistry.delete(ControllerKey);
 				},
 			};
+
 			Context.ExtensionRegistry.set(ControllerKey, Controller);
+
 			return Controller;
 		},
 	};

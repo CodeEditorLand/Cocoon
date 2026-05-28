@@ -297,6 +297,7 @@ if (process.env["NODE_ENV"] !== "production") {
  */
 const bootstrapCocoonEffect = Effect.gen(function* () {
 	const telemetry = yield* TelemetryTag;
+
 	const bootstrap = yield* BootstrapTag;
 
 	telemetry.log(
@@ -316,11 +317,13 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 
 			"[CocoonMain] Bootstrap partially failed (continuing in degraded mode)",
 		);
+
 		try {
 			process.stderr.write(
 				"[CocoonMain] Bootstrap partially failed - running in degraded mode\n",
 			);
 		} catch {}
+
 		for (const stage of result.stages) {
 			if (!stage.success) {
 				telemetry.log(
@@ -328,6 +331,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 
 					`[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`,
 				);
+
 				try {
 					process.stderr.write(
 						`[CocoonMain]   Stage failed: ${stage.stageName}: ${stage.error?.message ?? "<no message>"}\n`,
@@ -344,6 +348,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 			"[CocoonMain] [OK] Bootstrap completed successfully",
 		);
 	}
+
 	telemetry.log(
 		"info",
 
@@ -374,12 +379,15 @@ const mainEffectWithServices = bootstrapCocoonEffect.pipe(
 	Effect.tapError((error) =>
 		Effect.gen(function* () {
 			const telemetry = yield* TelemetryTag;
+
 			const mappedError = mapUnknownToError(error);
+
 			telemetry.log(
 				"error",
 
 				`[CocoonMain] Fatal error: ${mappedError.message}`,
 			);
+
 			if (mappedError.stack) {
 				telemetry.log(
 					"error",
@@ -393,6 +401,7 @@ const mainEffectWithServices = bootstrapCocoonEffect.pipe(
 	Effect.ensuring(
 		Effect.gen(function* () {
 			const telemetry = yield* TelemetryTag;
+
 			telemetry.log(
 				"info",
 
@@ -423,6 +432,7 @@ const mainEffect = mainEffectWithServices.pipe(
 // via signal-0 (single syscall, no actual signal). When kill(parent, 0)
 // returns ESRCH, the parent is gone - exit and free the port.
 const ParentPid = process.ppid;
+
 if (ParentPid && ParentPid > 1) {
 	const ParentWatchInterval = setInterval(() => {
 		try {
@@ -431,17 +441,21 @@ if (ParentPid && ParentPid > 1) {
 		} catch (Err: any) {
 			if (Err?.code === "ESRCH") {
 				clearInterval(ParentWatchInterval);
+
 				try {
 					process.stderr.write(
 						`[CocoonWatchdog] Parent PID ${ParentPid} gone; exiting to release gRPC port.\n`,
 					);
 				} catch {}
+
 				// Exit code 130 (Ctrl+C convention) to prevent retry loop
 				process.exit(130);
 			}
+
 			// EPERM: treat parent as alive, keep polling.
 		}
 	}, 5000);
+
 	// unref() so the interval doesn't keep the event loop alive on its own
 	ParentWatchInterval.unref?.();
 }

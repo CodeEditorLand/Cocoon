@@ -164,6 +164,7 @@ export class PlatformService implements IPlatformService {
 		return Effect.sync(() => {
 			if (this.initialized) {
 				console.log("[PlatformService] Already initialized");
+
 				return;
 			}
 
@@ -171,7 +172,9 @@ export class PlatformService implements IPlatformService {
 
 			// Perform initial platform detection
 			const platform = OSModule.GetPlatformNumber();
+
 			const osInfo = OSModule.GetOSInfo();
+
 			const envInfo = EnvironmentModule.GetEnvironmentInfo();
 
 			// Cache initial values
@@ -179,7 +182,9 @@ export class PlatformService implements IPlatformService {
 				value: platform,
 				timestamp: Date.now(),
 			});
+
 			this.cache.set("osInfo", { value: osInfo, timestamp: Date.now() });
+
 			this.cache.set("envInfo", {
 				value: envInfo,
 				timestamp: Date.now(),
@@ -442,6 +447,7 @@ export class PlatformService implements IPlatformService {
 	}> {
 		return Effect.sync(() => {
 			const uptime = Date.now() - this.startTime;
+
 			const lastUpdate = Math.max(
 				this.getCacheTimestamp("osInfo"),
 
@@ -666,6 +672,7 @@ export function GetHealthStatus(): Effect.Effect<
 export function InitializePlatformService(): Effect.Effect<void, never> {
 	return Effect.sync(() => {
 		const service = new PlatformService();
+
 		return Effect.runPromise(service.initialize());
 	}).pipe(Effect.flatMap(() => Effect.void));
 }

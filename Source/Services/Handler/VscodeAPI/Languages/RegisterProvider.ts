@@ -16,9 +16,13 @@ import type { HandlerContext } from "../../Handler/Context.js";
  */
 export const RegisterProvider = (
 	Context: HandlerContext,
+
 	LanguageProviderRegistry: typeof import("../../../Language/Provider/Registry.js"),
+
 	MethodName: string,
+
 	Selector: any,
+
 	Provider: any,
 ): { dispose: () => void } => {
 	if (Provider == null || typeof Provider !== "object") {
@@ -26,6 +30,7 @@ export const RegisterProvider = (
 	}
 
 	let Handle: number;
+
 	try {
 		Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
 	} catch {

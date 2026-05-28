@@ -92,6 +92,7 @@ export class TerminalService implements ITerminalService {
 		// Let's assume we add terminal.resize to backend if missing, or use a generic call
 		CocoonDevLog(
 			"service",
+
 			`[Terminal] Resize ${terminalId} to ${cols}x${rows}`,
 		);
 
@@ -113,6 +114,7 @@ export const TerminalServiceLayer = Layer.effect(
 
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
+
 		return new TerminalService(mountainClient);
 	}),
 );

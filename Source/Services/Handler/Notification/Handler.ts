@@ -46,12 +46,15 @@ import * as WindowNamespaceModule from "../VscodeAPI/Window/Namespace.js";
 
 type WorkspaceFolderWire = {
 	uri?: string;
+
 	name?: string;
+
 	index?: number;
 };
 
 type WorkspaceDeltaPayload = {
 	added?: WorkspaceFolderWire[];
+
 	removed?: WorkspaceFolderWire[];
 };
 
@@ -71,15 +74,23 @@ type WorkspaceDeltaPayload = {
  */
 const { URI: LazyURI } =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
+
 type UriObject = {
 	scheme: string;
+
 	authority: string;
+
 	path: string;
+
 	query: string;
+
 	fragment: string;
+
 	fsPath: string;
+
 	toString(): string;
 };
+
 // Minimal stub for when LazyURI.parse is unavailable (import failed or not
 // yet resolved). Enough shape for extensions to call fsPath / toString().
 const MakeUriStub = (Raw: string): UriObject => {
@@ -123,7 +134,9 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 				: (Raw as any).scheme && (Raw as any).path
 					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
 					: null;
+
 		if (!RawStr) return null;
+
 		return (
 			LazyURI as unknown as { parse: (s: string) => UriObject }
 		).parse(RawStr);
@@ -134,6 +147,7 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 				: (Raw as any).scheme && (Raw as any).path
 					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
 					: null;
+
 		return FallbackStr ? MakeUriStub(FallbackStr) : null;
 	}
 };
@@ -150,6 +164,7 @@ if (
 				Error instanceof globalThis.Error
 					? Error.stack?.split("\n").slice(0, 6).join(" | ")
 					: String(Error);
+
 			process.stdout.write(
 				`[LandFix:UncaughtException] ${Stack ?? "unknown"}\n`,
 			);
@@ -161,6 +176,7 @@ if (
 				Reason instanceof globalThis.Error
 					? Reason.stack?.split("\n").slice(0, 6).join(" | ")
 					: String(Reason);
+
 			// Benign first-boot probes: extensions read state files that
 			// don't exist on a fresh profile (vim's `.registers`, gitlens
 			// launchpad cache, copilot session state). The
@@ -170,6 +186,7 @@ if (
 			// `landfix-rejection-verbose` so `Trace=short` runs
 			// only surface unexpected rejections.
 			const Text = Stack ?? "unknown";
+
 			const IsBenignEnoent =
 				Text.includes("ENOENT") &&
 				(Text.includes("/.registers") ||
@@ -180,6 +197,7 @@ if (
 					Text.includes("/User/keybindings.json") ||
 					Text.includes("aiGeneratedWorkspaces.json") ||
 					Text.includes("languageDetectionWorkerCache.json"));
+
 			// Extension-internal bugs: an extension's own code throws a
 			// TypeError whose stack lives entirely under
 			// `~/.fiddee/extensions/<extId>/` or
@@ -208,6 +226,7 @@ if (
 						Text.includes("eamodio.gitlens") ||
 						Text.includes("vscodevim.vim") ||
 						Text.includes("Dart-Code.dart-code")));
+
 			const IsBenignExtensionTypeError =
 				HasExtensionFrame &&
 				(Text.includes("TypeError: Cannot read properties of null") ||
@@ -220,16 +239,20 @@ if (
 					) ||
 					Text.includes("is not a function") ||
 					Text.includes("is not iterable"));
+
 			const IsBenign = IsBenignEnoent || IsBenignExtensionTypeError;
+
 			const Tag = IsBenign
 				? "LandFix:UnhandledRejection:Verbose"
 				: "LandFix:UnhandledRejection";
+
 			if (
 				IsBenign &&
 				!process.env["Trace"]?.includes("landfix-rejection-verbose")
 			) {
 				return;
 			}
+
 			process.stdout.write(`[${Tag}] ${Text}\n`);
 		} catch {}
 	});
@@ -256,6 +279,7 @@ if (
  */
 const ApplyWorkspaceDelta = (
 	Context: HandlerContext,
+
 	Payload: WorkspaceDeltaPayload,
 ): WorkspaceFolderWire[] => {
 	const Added = Payload?.added ?? [];
@@ -280,8 +304,11 @@ const ApplyWorkspaceDelta = (
 	);
 	for (const Candidate of Added) {
 		const Uri = Candidate?.uri ?? "";
+
 		if (Uri.length === 0 || ExistingUris.has(Uri)) continue;
+
 		Kept.push(Candidate);
+
 		ExistingUris.add(Uri);
 	}
 	// Re-index so the exposed list stays VS Code-compatible.
@@ -296,6 +323,7 @@ const ApplyWorkspaceDelta = (
 	// not been explicitly named. Refresh it so it survives open/close cycles.
 	if (typeof Workspace.name !== "string" || Workspace.name.length === 0) {
 		const First = Kept[0];
+
 		if (First?.name) Workspace.name = First.name;
 	}
 	return Kept;
@@ -323,7 +351,9 @@ const ApplyWorkspaceDelta = (
  */
 const SafeEmit = (
 	Source: EventEmitter | undefined,
+
 	Event: string,
+
 	Payload: unknown,
 ): void => {
 	if (!Source) return;
@@ -334,12 +364,14 @@ const SafeEmit = (
 			(Listener as (..._Args: unknown[]) => void)(Payload);
 		} catch (Caught) {
 			const Err = Caught as { message?: string; stack?: string };
+
 			const Summary =
 				typeof Err?.stack === "string"
 					? Err.stack.split("\n").slice(0, 3).join(" | ")
 					: typeof Err?.message === "string"
 						? Err.message
 						: String(Caught);
+
 			try {
 				process.stdout.write(
 					`[LandFix:SafeEmit] listener for "${Event}" threw: ${Summary}\n`,
@@ -367,6 +399,7 @@ const SafeEmit = (
  */
 const BuildTextDocumentShim = (
 	Context: HandlerContext | undefined,
+
 	Uri: string,
 ): any => {
 	const ExistingDocs: any[] = Array.isArray((Context as any).__textDocuments)
@@ -375,6 +408,7 @@ const BuildTextDocumentShim = (
 	const Found = ExistingDocs.find((D: any) => {
 		try {
 			const DocUri = D?.uri?.toString?.() ?? "";
+
 			return DocUri === Uri || D?.fileName === Uri;
 		} catch {
 			return false;
@@ -407,21 +441,34 @@ const BuildTextDocumentShim = (
 		},
 		getText: (Range?: any) => {
 			if (!Range) return Text;
+
 			const SL = Range?.start?.line ?? 0;
+
 			const SC = Range?.start?.character ?? 0;
+
 			const EL = Range?.end?.line ?? Lines.length - 1;
+
 			const EC = Range?.end?.character ?? Lines[EL]?.length ?? 0;
+
 			if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+
 			const Parts = [(Lines[SL] ?? "").slice(SC)];
+
 			for (let I = SL + 1; I < EL; I++) Parts.push(Lines[I] ?? "");
+
 			Parts.push((Lines[EL] ?? "").slice(0, EC));
+
 			return Parts.join("\n");
 		},
 		lineAt: (N: any) => {
 			const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+
 			const Clamped = Math.max(0, Math.min(Ln, Lines.length - 1));
+
 			const T = Lines[Clamped] ?? "";
+
 			const FNW = T.search(/\S/);
+
 			return {
 				text: T,
 				lineNumber: Clamped,
@@ -436,10 +483,15 @@ const BuildTextDocumentShim = (
 		save: async () => false,
 		getWordRangeAtPosition: (Pos: any, Pat?: RegExp) => {
 			const L = Lines[Pos?.line ?? 0] ?? "";
+
 			const R = Pat ?? /\w+/g;
+
 			R.lastIndex = 0;
+
 			const C = Pos?.character ?? 0;
+
 			let M: RegExpExecArray | null;
+
 			while ((M = R.exec(L)) !== null) {
 				if (M.index <= C && M.index + M[0].length >= C)
 					return {
@@ -450,23 +502,30 @@ const BuildTextDocumentShim = (
 						},
 					};
 			}
+
 			return undefined;
 		},
 		validateRange: (R: any) => R,
 		validatePosition: (P: any) => P,
 		offsetAt: (P: any) => {
 			let O = 0;
+
 			for (let I = 0; I < (P?.line ?? 0) && I < Lines.length; I++)
 				O += (Lines[I]?.length ?? 0) + 1;
+
 			return O + (P?.character ?? 0);
 		},
 		positionAt: (Off: number) => {
 			let R = Off;
+
 			for (let I = 0; I < Lines.length; I++) {
 				const L = (Lines[I]?.length ?? 0) + 1;
+
 				if (R < L) return { line: I, character: R };
+
 				R -= L;
 			}
+
 			return {
 				line: Lines.length - 1,
 				character: Lines[Lines.length - 1]?.length ?? 0,
@@ -482,30 +541,47 @@ const BuildTextDocumentShim = (
  */
 const HandleSpecificNotification = (
 	Emitter: EventEmitter,
+
 	DocumentContentCache: Map<string, string>,
+
 	HandleDocumentChange: (
 		Cache: Map<string, string>,
+
 		Parameters: any,
+
 		WorkspaceEventEmitter?: EventEmitter,
 	) => void,
+
 	HandleDocumentOpen: (
 		Cache: Map<string, string>,
+
 		Parameters: any,
+
 		WorkspaceEventEmitter?: EventEmitter,
 	) => void,
+
 	HandleDocumentClose: (
 		Cache: Map<string, string>,
+
 		Parameters: any,
+
 		WorkspaceEventEmitter?: EventEmitter,
 	) => void,
+
 	HandleDocumentSave: (
 		Cache: Map<string, string>,
+
 		Parameters: any,
+
 		WorkspaceEventEmitter?: EventEmitter,
 	) => void,
+
 	Method: string,
+
 	Parameters: any,
+
 	WorkspaceEventEmitter?: EventEmitter,
+
 	Context?: HandlerContext,
 ): void => {
 	switch (Method) {
@@ -524,15 +600,19 @@ const HandleSpecificNotification = (
 					: typeof Parameters?.event === "string"
 						? Parameters.event
 						: "";
+
 			if (!ActivationEvent || !Context) {
 				break;
 			}
+
 			const CapturedActivationContext = Context;
+
 			setImmediate(() => {
 				import("../Extension/Host/Handler.js")
 					.then(({ default: ExtensionHostHandler }) => {
 						void ExtensionHostHandler.HandleActivateByEvent(
 							CapturedActivationContext,
+
 							{ activationEvent: ActivationEvent },
 						).catch((Error: unknown) => {
 							try {
@@ -548,51 +628,69 @@ const HandleSpecificNotification = (
 					})
 					.catch(() => {});
 			});
+
 			break;
 		}
 
 		case "extension.change":
 			Emitter.emit("extensionChanged", Parameters);
+
 			break;
+
 		case "configuration.change":
 			Emitter.emit("configurationChanged", Parameters);
+
 			break;
+
 		case "window.focused":
 			Emitter.emit("windowFocused", Parameters);
+
 			if (Context) {
 				(Context as any).__windowState = {
 					focused: true,
 					active: true,
 				};
+
 				Emitter.emit("window.didChangeWindowState", {
 					focused: true,
 					active: true,
 				});
 			}
+
 			break;
+
 		case "window.blurred":
 			Emitter.emit("windowBlurred", Parameters);
+
 			if (Context) {
 				(Context as any).__windowState = {
 					focused: false,
 					active: false,
 				};
+
 				Emitter.emit("window.didChangeWindowState", {
 					focused: false,
 					active: false,
 				});
 			}
+
 			break;
+
 		case "system.shutdown":
 			Emitter.emit("systemShutdown", Parameters);
+
 			break;
+
 		case "$acceptModelChanged":
 		case "document.didChange":
 			HandleDocumentChange(
 				DocumentContentCache,
+
 				Parameters,
+
 				WorkspaceEventEmitter,
 			);
+
 			// Update the `version` in `__textDocuments` so extensions that
 			// compare document.version don't see stale values.
 			// Payload shape: [uriComponents, { versionId, changes, isDirty }]
@@ -600,41 +698,53 @@ const HandleSpecificNotification = (
 				const UriPart = Array.isArray(Parameters)
 					? Parameters[0]
 					: Parameters;
+
 				const EventPart = Array.isArray(Parameters)
 					? Parameters[1]
 					: Parameters;
+
 				const ChangeUri =
 					UriPart?.external ??
 					UriPart?.uri ??
 					UriPart?.Uri ??
 					UriPart?.fileName;
+
 				const NewVersion =
 					EventPart?.versionId ??
 					EventPart?.VersionId ??
 					EventPart?.version ??
 					UriPart?.version;
+
 				if (ChangeUri) {
 					const TextDocs = (Context as any).__textDocuments ?? [];
+
 					const Doc = TextDocs.find(
 						(D: any) =>
 							D?.uri?.toString?.() === ChangeUri ||
 							D?.fileName === ChangeUri,
 					);
+
 					if (Doc) {
 						if (NewVersion != null) Doc.version = NewVersion;
+
 						Doc.isDirty = true;
 					}
 				}
 			}
+
 			break;
+
 		case "$acceptModelAdded":
 		case "$acceptModelOpen":
 		case "document.didOpen":
 			HandleDocumentOpen(
 				DocumentContentCache,
+
 				Parameters,
+
 				WorkspaceEventEmitter,
 			);
+
 			// Populate `workspace.textDocuments` - the global flat list of all
 			// open documents that extensions iterate with `workspace.textDocuments`.
 			// Previously always an empty array; now reflects the real open set.
@@ -642,19 +752,25 @@ const HandleSpecificNotification = (
 				const OpenModels = Array.isArray(Parameters)
 					? Parameters
 					: [Parameters];
+
 				const TextDocs = (Context as any).__textDocuments ?? [];
+
 				for (const Model of OpenModels) {
 					const Uri =
 						Model?.Uri ?? Model?.uri ?? Model?.fileName ?? "";
+
 					if (!Uri) continue;
+
 					const LangId =
 						Model?.LanguageIdentifier ??
 						Model?.languageId ??
 						"plaintext";
+
 					const Existing = TextDocs.find(
 						(D: any) =>
 							D?.uri?.toString?.() === Uri || D?.fileName === Uri,
 					);
+
 					if (!Existing) {
 						const DocUri = {
 							toString: () => Uri,
@@ -662,6 +778,7 @@ const HandleSpecificNotification = (
 							scheme: Uri.includes(":")
 								? Uri.split(":")[0]
 								: "file",
+
 							path: Uri.replace(/^file:\/\//, ""),
 							external: Uri,
 						};
@@ -669,48 +786,74 @@ const HandleSpecificNotification = (
 							uri: DocUri,
 							fileName: Uri.replace(/^file:\/\//, ""),
 							languageId: LangId,
+
 							version: Model?.VersionId ?? Model?.version ?? 1,
+
 							isDirty: false,
+
 							isClosed: false,
+
 							isUntitled: Uri.startsWith("untitled:"),
+
 							eol: 1,
+
 							get lineCount() {
 								return (
 									DocumentContentCache.get(Uri) ?? ""
 								).split(/\r?\n/).length;
 							},
+
 							getText: (Range?: any) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
+
 								if (!Range) return Text;
+
 								const Lines = Text.split(/\r?\n/);
+
 								const SL = Range?.start?.line ?? 0;
+
 								const SC = Range?.start?.character ?? 0;
+
 								const EL = Range?.end?.line ?? Lines.length - 1;
+
 								const EC =
 									Range?.end?.character ??
 									Lines[EL]?.length ??
 									0;
+
 								if (SL === EL)
 									return (Lines[SL] ?? "").slice(SC, EC);
+
 								const Parts = [(Lines[SL] ?? "").slice(SC)];
+
 								for (let I = SL + 1; I < EL; I++)
 									Parts.push(Lines[I] ?? "");
+
 								Parts.push((Lines[EL] ?? "").slice(0, EC));
+
 								return Parts.join("\n");
 							},
+
 							lineAt: (N: any) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
+
 								const Lines = Text.split(/\r?\n/);
+
 								const Ln =
 									typeof N === "number" ? N : (N?.line ?? 0);
+
 								const Clamped = Math.max(
 									0,
+
 									Math.min(Ln, Lines.length - 1),
 								);
+
 								const T = Lines[Clamped] ?? "";
+
 								const FNW = T.search(/\S/);
+
 								return {
 									text: T,
 									lineNumber: Clamped,
@@ -726,19 +869,29 @@ const HandleSpecificNotification = (
 									isEmptyOrWhitespace: T.trim().length === 0,
 								};
 							},
+
 							save: async () => false,
+
 							getWordRangeAtPosition: (
 								Pos: any,
+
 								Pat?: RegExp,
 							) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
+
 								const Lines = Text.split(/\r?\n/);
+
 								const L = Lines[Pos?.line ?? 0] ?? "";
+
 								const R = Pat ?? /\w+/g;
+
 								R.lastIndex = 0;
+
 								const C = Pos?.character ?? 0;
+
 								let M: RegExpExecArray | null;
+
 								while ((M = R.exec(L)) !== null) {
 									if (
 										M.index <= C &&
@@ -756,33 +909,48 @@ const HandleSpecificNotification = (
 											},
 										};
 								}
+
 								return undefined;
 							},
+
 							validateRange: (R: any) => R,
+
 							validatePosition: (P: any) => P,
+
 							offsetAt: (P: any) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
+
 								const Lines = Text.split(/\r?\n/);
+
 								let O = 0;
+
 								for (
 									let I = 0;
 									I < (P?.line ?? 0) && I < Lines.length;
 									I++
 								)
 									O += (Lines[I]?.length ?? 0) + 1;
+
 								return O + (P?.character ?? 0);
 							},
+
 							positionAt: (Off: number) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
+
 								const Lines = Text.split(/\r?\n/);
+
 								let R = Off;
+
 								for (let I = 0; I < Lines.length; I++) {
 									const L = (Lines[I]?.length ?? 0) + 1;
+
 									if (R < L) return { line: I, character: R };
+
 									R -= L;
 								}
+
 								return {
 									line: Lines.length - 1,
 									character:
@@ -820,6 +988,7 @@ const HandleSpecificNotification = (
 								for (const Id of LanguageIdentifiers) {
 									void ExtensionHostHandler.HandleActivateByEvent(
 										CapturedContext,
+
 										{ activationEvent: `onLanguage:${Id}` },
 									).catch((Error) => {
 										try {
@@ -840,7 +1009,9 @@ const HandleSpecificNotification = (
 		case "document.didClose":
 			HandleDocumentClose(
 				DocumentContentCache,
+
 				Parameters,
+
 				WorkspaceEventEmitter,
 			);
 			// Remove from workspace.textDocuments
@@ -856,6 +1027,7 @@ const HandleSpecificNotification = (
 				const Docs = (Context as any).__textDocuments ?? [];
 				(Context as any).__textDocuments = Docs.filter((D: any) => {
 					const DUri = D?.uri?.toString?.() ?? D?.fileName ?? "";
+
 					return !ClosedUris.has(DUri);
 				});
 				// Also remove from visibleTextEditors so the array stays
@@ -866,6 +1038,7 @@ const HandleSpecificNotification = (
 					(E: unknown) => {
 						const EUri =
 							(E as any)?.document?.uri?.toString?.() ?? "";
+
 						return !ClosedUris.has(EUri);
 					},
 				);
@@ -895,17 +1068,25 @@ const HandleSpecificNotification = (
 					},
 					fileName: Uri.replace(/^file:\/\//, ""),
 					languageId: "plaintext",
+
 					version: 1,
+
 					isDirty: true,
+
 					isClosed: false,
+
 					isUntitled: false,
+
 					getText: () => DocumentContentCache.get(Uri) ?? "",
+
 					save: async () => true,
 				};
 				const WillSaveThenables: Promise<any>[] = [];
 				const Event = {
 					document: Doc,
+
 					reason: Reason,
+
 					// Collect thenables so we can await them all before
 					// forwarding edits to Mountain. This ensures all
 					// `waitUntil(promise)` calls in the same save cycle
@@ -929,6 +1110,7 @@ const HandleSpecificNotification = (
 				if (WillSaveThenables.length > 0 && Uri) {
 					Promise.allSettled(WillSaveThenables).then((Results) => {
 						const AllEdits: unknown[] = [];
+
 						for (const R of Results) {
 							if (
 								R.status === "fulfilled" &&
@@ -938,6 +1120,7 @@ const HandleSpecificNotification = (
 								AllEdits.push(...R.value);
 							}
 						}
+
 						if (AllEdits.length > 0) {
 							Context?.SendToMountain("window.applyTextEdits", {
 								uri: Uri,
@@ -958,7 +1141,9 @@ const HandleSpecificNotification = (
 		case "document.didSave":
 			HandleDocumentSave(
 				DocumentContentCache,
+
 				Parameters,
+
 				WorkspaceEventEmitter,
 			);
 			// Update isDirty → false in __textDocuments so extensions that
@@ -992,6 +1177,7 @@ const HandleSpecificNotification = (
 			if (Payload?.handle) {
 				Emitter.emit(
 					`webview.message:${Payload.handle}`,
+
 					Payload.message,
 				);
 			}
@@ -1040,6 +1226,7 @@ const HandleSpecificNotification = (
 				// itself and are reaped when the next resolve runs.
 				Emitter.emit(
 					`webview.viewVisibility:${Payload.handle}`,
+
 					!!Payload.visible,
 				);
 			}
@@ -1079,6 +1266,7 @@ const HandleSpecificNotification = (
 			//   { uri: Uri, name: string, index: number }
 			const HydrateFolder = (
 				Wire: WorkspaceFolderWire,
+
 				Index: number,
 			): {
 				uri: UriObject;
@@ -1089,7 +1277,9 @@ const HandleSpecificNotification = (
 				if (!Uri) return null;
 				return {
 					uri: Uri,
+
 					name: Wire.name ?? Uri.fsPath.split("/").pop() ?? "",
+
 					index: typeof Wire.index === "number" ? Wire.index : Index,
 				};
 			};
@@ -1161,51 +1351,97 @@ const HandleSpecificNotification = (
 						.split("?")[0] ?? "";
 				const Map: Record<string, string> = {
 					rs: "rust",
+
 					ts: "typescript",
+
 					tsx: "typescriptreact",
+
 					js: "javascript",
+
 					jsx: "javascriptreact",
+
 					mjs: "javascript",
+
 					json: "json",
+
 					jsonc: "jsonc",
+
 					json5: "json5",
+
 					py: "python",
+
 					go: "go",
+
 					rb: "ruby",
+
 					java: "java",
+
 					c: "c",
+
 					cpp: "cpp",
+
 					cs: "csharp",
+
 					h: "c",
+
 					hpp: "cpp",
+
 					html: "html",
+
 					css: "css",
+
 					scss: "scss",
+
 					less: "less",
+
 					md: "markdown",
+
 					mdx: "mdx",
+
 					txt: "plaintext",
+
 					toml: "toml",
+
 					yaml: "yaml",
+
 					yml: "yaml",
+
 					xml: "xml",
+
 					sh: "shellscript",
+
 					bash: "shellscript",
+
 					zsh: "shellscript",
+
 					fish: "fish",
+
 					ps1: "powershell",
+
 					php: "php",
+
 					sql: "sql",
+
 					kt: "kotlin",
+
 					swift: "swift",
+
 					r: "r",
+
 					dart: "dart",
+
 					lua: "lua",
+
 					vim: "viml",
+
 					vue: "vue",
+
 					svelte: "svelte",
+
 					astro: "astro",
+
 					graphql: "graphql",
+
 					proto: "proto",
 				};
 				return Map[Ext] ?? "plaintext";
@@ -1227,36 +1463,57 @@ const HandleSpecificNotification = (
 				const Lines = RealText.split(/\r?\n/);
 				return {
 					uri: HydratedUri,
+
 					fileName: HydratedUri?.fsPath ?? UriRaw ?? "",
+
 					languageId: LanguageId,
+
 					version: Payload?.version ?? 1,
+
 					isDirty: false,
+
 					isClosed: false,
+
 					eol: 1,
+
 					get lineCount() {
 						return Lines.length;
 					},
+
 					getText: (Range?: any) => {
 						if (!Range) return RealText;
+
 						const SL = Range?.start?.line ?? 0;
+
 						const SC = Range?.start?.character ?? 0;
+
 						const EL = Range?.end?.line ?? Lines.length - 1;
+
 						const EC =
 							Range?.end?.character ?? Lines[EL]?.length ?? 0;
+
 						if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+
 						const Parts = [(Lines[SL] ?? "").slice(SC)];
+
 						for (let I = SL + 1; I < EL; I++)
 							Parts.push(Lines[I] ?? "");
+
 						Parts.push((Lines[EL] ?? "").slice(0, EC));
+
 						return Parts.join("\n");
 					},
+
 					lineAt: (LineOrPos: number | { line: number }) => {
 						const N =
 							typeof LineOrPos === "number"
 								? LineOrPos
 								: LineOrPos.line;
+
 						const T = Lines[N] ?? "";
+
 						const FNW = T.search(/\S/);
+
 						return {
 							text: T,
 							lineNumber: N,
@@ -1269,13 +1526,20 @@ const HandleSpecificNotification = (
 							isEmptyOrWhitespace: T.trim().length === 0,
 						};
 					},
+
 					save: async () => false,
+
 					getWordRangeAtPosition: (Pos: any, Pat?: RegExp) => {
 						const L = Lines[Pos?.line ?? 0] ?? "";
+
 						const R = Pat ?? /\w+/g;
+
 						R.lastIndex = 0;
+
 						const C = Pos?.character ?? 0;
+
 						let M: RegExpExecArray | null;
+
 						while ((M = R.exec(L)) !== null) {
 							if (M.index <= C && M.index + M[0].length >= C)
 								return {
@@ -1289,27 +1553,38 @@ const HandleSpecificNotification = (
 									},
 								};
 						}
+
 						return undefined;
 					},
+
 					validateRange: (Rng: any) => Rng,
+
 					validatePosition: (P: any) => P,
+
 					offsetAt: (P: any) => {
 						let O = 0;
+
 						for (
 							let I = 0;
 							I < (P?.line ?? 0) && I < Lines.length;
 							I++
 						)
 							O += (Lines[I]?.length ?? 0) + 1;
+
 						return O + (P?.character ?? 0);
 					},
+
 					positionAt: (Off: number) => {
 						let R = Off;
+
 						for (let I = 0; I < Lines.length; I++) {
 							const L = (Lines[I]?.length ?? 0) + 1;
+
 							if (R < L) return { line: I, character: R };
+
 							R -= L;
 						}
+
 						return {
 							line: Lines.length - 1,
 							character: Lines[Lines.length - 1]?.length ?? 0,
@@ -1341,13 +1616,17 @@ const HandleSpecificNotification = (
 						viewColumn: Payload?.viewColumn ?? 1,
 						options: {
 							tabSize: 4,
+
 							insertSpaces: true,
+
 							cursorStyle: 1,
+
 							lineNumbers: 1,
 						},
 						// `editor.setDecorations(type, ranges)` - send to Mountain for Sky relay
 						setDecorations: (
 							DecorationType: any,
+
 							RangesOrOptions: any[],
 						) => {
 							const Key =
@@ -1358,6 +1637,7 @@ const HandleSpecificNotification = (
 										String(DecorationType));
 							Context.SendToMountain(
 								"window.setTextEditorDecorations",
+
 								{
 									decorationTypeKey: Key,
 									uri: UriRaw,
@@ -1368,6 +1648,7 @@ const HandleSpecificNotification = (
 						// `editor.edit(editBuilder => {...})` - collect edits and send to Mountain
 						edit: (
 							Callback: (Builder: any) => void,
+
 							_Options?: any,
 						): Promise<boolean> => {
 							const Collected: any[] = [];
@@ -1403,6 +1684,7 @@ const HandleSpecificNotification = (
 							if (!Collected.length) return Promise.resolve(true);
 							return Context.SendToMountain(
 								"window.applyTextEdits",
+
 								{ uri: UriRaw, edits: Collected },
 							)
 								.then(() => true)
@@ -1411,6 +1693,7 @@ const HandleSpecificNotification = (
 						// `editor.insertSnippet` - convert to plain-text edit for now
 						insertSnippet: async (
 							Snippet: any,
+
 							Location?: any,
 						): Promise<boolean> => {
 							const Text =
@@ -1422,6 +1705,7 @@ const HandleSpecificNotification = (
 							const Range = Location ?? LiveSelection;
 							await Context.SendToMountain(
 								"window.applyTextEdits",
+
 								{
 									uri: UriRaw,
 									edits: [{ range: Range, text: Text }],
@@ -1434,6 +1718,7 @@ const HandleSpecificNotification = (
 							// since Mountain routes `window.revealRange` via the request path.
 							void Context?.MountainClient?.sendRequest(
 								"window.revealRange",
+
 								{
 									uri: UriRaw,
 									range: Range,
@@ -1445,11 +1730,13 @@ const HandleSpecificNotification = (
 							// Use sendRequest for showTextDocument round-trip.
 							void Context?.MountainClient?.sendRequest(
 								"showTextDocument",
+
 								[
 									{
 										uri: UriRaw,
 										viewColumn: ViewColumn ?? 1,
 									},
+
 									ViewColumn ?? 1,
 								],
 							).catch(() => {});
@@ -1487,7 +1774,9 @@ const HandleSpecificNotification = (
 			}
 			SafeEmit(
 				Emitter,
+
 				"window.didChangeActiveTextEditor",
+
 				TextEditorStub,
 			);
 			break;
@@ -1510,18 +1799,22 @@ const HandleSpecificNotification = (
 				// Monaco uses 1-based; vscode.Position is 0-based
 				const StartLine = Math.max(
 					0,
+
 					(S?.startLineNumber ?? S?.start?.line ?? 1) - 1,
 				);
 				const StartChar = Math.max(
 					0,
+
 					(S?.startColumn ?? S?.start?.character ?? 1) - 1,
 				);
 				const EndLine = Math.max(
 					0,
+
 					(S?.endLineNumber ?? S?.end?.line ?? 1) - 1,
 				);
 				const EndChar = Math.max(
 					0,
+
 					(S?.endColumn ?? S?.end?.character ?? 1) - 1,
 				);
 				LiveSel.start = { line: StartLine, character: StartChar };
@@ -2202,6 +2495,7 @@ const HandleSpecificNotification = (
 				};
 				const NextState = {
 					...PrevState,
+
 					isInteractedWith: Interacted,
 				};
 				StateTerm.state = NextState;
@@ -2241,11 +2535,17 @@ const HandleSpecificNotification = (
 				// without special-casing (VS Code's vscode.Uri shape).
 				const CwdUri = {
 					scheme: "file",
+
 					authority: "",
+
 					path: NewCwd,
+
 					query: "",
+
 					fragment: "",
+
 					fsPath: NewCwd,
+
 					toString: () => `file://${NewCwd}`,
 				};
 				const TermEntry = ((Context as any).__terminals ?? []).find(
@@ -2411,8 +2711,11 @@ const HandleSpecificNotification = (
 				viewType: ViewType,
 				webview: {
 					postMessage: () => Promise.resolve(false),
+
 					html: "",
+
 					options: {},
+
 					cspSource: "vscode-webview:",
 				},
 				dispose: () => {},
@@ -2429,6 +2732,7 @@ const HandleSpecificNotification = (
 				) {
 					(Result as PromiseLike<unknown>).then(
 						() => {},
+
 						(Error: unknown) => {
 							try {
 								process.stdout.write(

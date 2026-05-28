@@ -34,8 +34,11 @@ export const ShowTextDocument = (
 
 			Options: {
 				viewColumn: number | undefined;
+
 				preserveFocus: boolean;
+
 				preview: boolean;
+
 				selection: { line: number; character: number } | undefined;
 			},
 		) => Effect.Effect<void, Error>;
@@ -43,6 +46,7 @@ export const ShowTextDocument = (
 
 	Logger: {
 		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+
 		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	},
 
@@ -64,17 +68,24 @@ export const ShowTextDocument = (
 		);
 
 		let ViewColumnDTO: number | undefined;
+
 		let PreserveFocusValue = PreserveFocus ?? false;
+
 		let Selection: any = undefined;
+
 		let Preview: boolean | undefined;
 
 		if (typeof ColumnOrOptions === "number") {
 			ViewColumnDTO = ViewColumnFromAPI(ColumnOrOptions);
 		} else if (ColumnOrOptions) {
 			const Options = ColumnOrOptions;
+
 			ViewColumnDTO = ViewColumnFromAPI(Options.viewColumn);
+
 			PreserveFocusValue = Options.preserveFocus ?? false;
+
 			Preview = Options.preview;
+
 			if (Options.selection) {
 				Selection = Options.selection;
 			}
@@ -158,6 +169,7 @@ export const ShowInformationMessage = (
 			typeof InfoResponse === "string"
 				? InfoResponse
 				: ((InfoResponse as any)?.title ?? null);
+
 		return InfoSelected
 			? (Items.find((I) => I === InfoSelected) ?? InfoSelected)
 			: undefined;
@@ -206,6 +218,7 @@ export const ShowWarningMessage = (
 			typeof WarnResponse === "string"
 				? WarnResponse
 				: ((WarnResponse as any)?.title ?? null);
+
 		return WarnSelected
 			? (Items.find((I) => I === WarnSelected) ?? WarnSelected)
 			: undefined;
@@ -254,6 +267,7 @@ export const ShowErrorMessage = (
 			typeof ErrorResponse === "string"
 				? ErrorResponse
 				: ((ErrorResponse as any)?.title ?? null);
+
 		return ErrorSelected
 			? (Items.find(
 					(I) =>

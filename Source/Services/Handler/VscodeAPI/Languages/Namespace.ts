@@ -115,12 +115,16 @@ const RegisterProvider = (
 	// passes an array of those. Preserve both shapes when present.
 	const NormaliseOne = (S: any) => {
 		if (typeof S === "string") return { language: S };
+
 		if (S && typeof S === "object") return S;
+
 		return { language: "*" };
 	};
+
 	const SelectorArray = Array.isArray(Selector)
 		? Selector.map(NormaliseOne)
 		: [NormaliseOne(Selector)];
+
 	const Language =
 		typeof Selector === "string"
 			? Selector
@@ -219,9 +223,12 @@ const CreateLanguagesNamespace = (
 			),
 		registerCodeActionsProvider: (
 			Selector: any,
+
 			Provider: any,
+
 			Metadata?: {
 				providedCodeActionKinds?: unknown[];
+
 				documentation?: unknown[];
 			},
 		) =>
@@ -443,6 +450,7 @@ const CreateLanguagesNamespace = (
 			),
 		registerSignatureHelpProvider: (
 			Selector: any,
+
 			Provider: any,
 			...Metadata: unknown[]
 		) => {
@@ -453,7 +461,9 @@ const CreateLanguagesNamespace = (
 			// Both forms appear in the wild (older extensions still call the
 			// varargs form). Detect and normalise.
 			let TriggerCharacters: string[] = [];
+
 			let RetriggerCharacters: string[] = [];
+
 			if (
 				Metadata.length === 1 &&
 				typeof Metadata[0] === "object" &&
@@ -461,11 +471,14 @@ const CreateLanguagesNamespace = (
 			) {
 				const Meta = Metadata[0] as {
 					triggerCharacters?: string[];
+
 					retriggerCharacters?: string[];
 				};
+
 				TriggerCharacters = Array.isArray(Meta.triggerCharacters)
 					? Meta.triggerCharacters
 					: [];
+
 				RetriggerCharacters = Array.isArray(Meta.retriggerCharacters)
 					? Meta.retriggerCharacters
 					: [];
@@ -474,6 +487,7 @@ const CreateLanguagesNamespace = (
 					(M): M is string => typeof M === "string",
 				);
 			}
+
 			return RegisterProvider(
 				Context,
 
@@ -608,6 +622,7 @@ const CreateLanguagesNamespace = (
 			process.stdout.write(
 				"[LandFix:LangNs] registerWorkspaceSymbolProvider called\n",
 			);
+
 			return RegisterProvider(
 				Context,
 
@@ -622,6 +637,7 @@ const CreateLanguagesNamespace = (
 		},
 		createDiagnosticCollection: (Name?: string) => {
 			const Owner = Name ?? "default";
+
 			const Store = new Map<string, unknown[]>();
 
 			// Normalise a `vscode.Diagnostic` (or LSP-shaped diagnostic, or
@@ -653,12 +669,16 @@ const CreateLanguagesNamespace = (
 					switch (Sev) {
 						case 0:
 							return 8; // Error
+
 						case 1:
 							return 4; // Warning
+
 						case 2:
 							return 2; // Info
+
 						case 3:
 							return 1; // Hint
+
 						// LSP DiagnosticSeverity: 1=Error, 2=Warning, 3=Info, 4=Hint
 						// (only reached when caller passed pre-LSP form by mistake;
 						// Monaco bit values 4/2/1/8 already covered above for the
@@ -771,15 +791,20 @@ const CreateLanguagesNamespace = (
 					Out.relatedInformation = Obj.relatedInformation.map(
 						(RI: any) => {
 							const Loc = RI?.location ?? RI;
+
 							const RIRange = Loc?.range ?? {};
+
 							const RIStart = Pos(
 								(RIRange as { start?: unknown }).start ??
 									RIRange,
 							);
+
 							const RIEnd = Pos(
 								(RIRange as { end?: unknown }).end ?? RIRange,
 							);
+
 							const RIUri = Loc?.uri ?? RI?.resource ?? null;
+
 							return {
 								resource:
 									RIUri && typeof RIUri === "object"
@@ -858,6 +883,7 @@ const CreateLanguagesNamespace = (
 					// Mirror into the module-level cache so getDiagnostics()
 					// returns real data without an async Mountain round-trip.
 					_AllDiagnostics.set(Owner, new Map(Store));
+
 					Context.Emitter.emit("diagnostics.didChange", {
 						uris: [...Store.keys()],
 					});
@@ -885,7 +911,9 @@ const CreateLanguagesNamespace = (
 
 				delete: (Uri: unknown) => {
 					Store.delete(UriKey(Uri));
+
 					_AllDiagnostics.set(Owner, new Map(Store));
+
 					Context.Emitter.emit("diagnostics.didChange", {
 						uris: [UriKey(Uri)],
 					});
@@ -905,7 +933,9 @@ const CreateLanguagesNamespace = (
 					if (Store.size === 0) return;
 
 					Store.clear();
+
 					_AllDiagnostics.delete(Owner);
+
 					Context.Emitter.emit("diagnostics.didChange", { uris: [] });
 
 					Context.MountainClient?.sendRequest("Diagnostic.Clear", [
@@ -982,6 +1012,7 @@ const CreateLanguagesNamespace = (
 			// language). Our local document cache must be updated in-line
 			// or the extension reads stale state on the very next call.
 			const Uri = Document?.uri?.toString?.() ?? "";
+
 			Context.SendToMountain("languages.setDocumentLanguage", {
 				uri: Uri,
 				languageId: LanguageId,
@@ -996,15 +1027,18 @@ const CreateLanguagesNamespace = (
 				if (Document && typeof Document === "object") {
 					(Document as any).languageId = LanguageId;
 				}
+
 				const TextDocs = (Context as any).__textDocuments as
 					| Array<{ uri?: any; languageId?: string }>
 					| undefined;
+
 				if (Array.isArray(TextDocs)) {
 					const Match = TextDocs.find(
 						(D) =>
 							D?.uri?.toString?.() === Uri ||
 							(D as any)?.fileName === Uri,
 					);
+
 					if (Match) (Match as any).languageId = LanguageId;
 				}
 			} catch {
@@ -1028,6 +1062,7 @@ const CreateLanguagesNamespace = (
 				language: LanguageId,
 				configuration: Configuration ?? {},
 			}).catch(() => {});
+
 			return {
 				dispose: () => {
 					// No Mountain-side undo for language config; no-op.
@@ -1153,18 +1188,25 @@ const CreateLanguagesNamespace = (
 			//   getDiagnostics()     → [Uri, Diagnostic[]][]
 			if (Resource !== undefined) {
 				const Key = UriKey(Resource);
+
 				const Merged: unknown[] = [];
+
 				for (const OwnerStore of _AllDiagnostics.values()) {
 					const Diags = OwnerStore.get(Key);
+
 					if (Diags) Merged.push(...Diags);
 				}
+
 				return Merged;
 			}
+
 			// No resource - return all [uri, diagnostics] pairs.
 			const All = new Map<string, unknown[]>();
+
 			for (const OwnerStore of _AllDiagnostics.values()) {
 				for (const [Uri, Diags] of OwnerStore.entries()) {
 					const Existing = All.get(Uri);
+
 					if (Existing) {
 						Existing.push(...Diags);
 					} else {
@@ -1172,6 +1214,7 @@ const CreateLanguagesNamespace = (
 					}
 				}
 			}
+
 			return [...All.entries()];
 		},
 

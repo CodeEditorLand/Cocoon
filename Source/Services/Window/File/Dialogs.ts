@@ -54,7 +54,9 @@ export const ShowOpenDialog = (
 
 				// Response is an array of file paths - convert to VSCode URIs
 				const FilePaths = Response as string[];
+
 				const { Uri } = await import("vscode");
+
 				return FilePaths.map((Path) => Uri.file(Path));
 			},
 			catch: (Error_) => {
@@ -108,7 +110,9 @@ export const ShowSaveDialog = (
 
 				// Response is a file path string - convert to VSCode URI
 				const FilePath = Response as string;
+
 				const { Uri } = await import("vscode");
+
 				return Uri.file(FilePath);
 			},
 			catch: (Error_) => {
@@ -121,6 +125,7 @@ export const ShowSaveDialog = (
 		return ResultURI
 			? await(async () => {
 					const { Uri } = await import("vscode");
+
 					return Uri.parse(ResultURI.toString());
 				})()
 			: undefined;

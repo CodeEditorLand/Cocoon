@@ -175,6 +175,7 @@ export class HealthService implements IHealthService {
 
 		CocoonDevLog(
 			"health",
+
 			"[HealthService] Initializing health monitoring service",
 		);
 	}
@@ -195,12 +196,15 @@ export class HealthService implements IHealthService {
 
 			CocoonDevLog(
 				"health",
+
 				"[HealthService] Health monitoring service initialized",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"health",
+
 				"[HealthService] Failed to initialize:",
+
 				error,
 			);
 
@@ -290,12 +294,14 @@ export class HealthService implements IHealthService {
 
 			CocoonDevLog(
 				"health",
+
 				`[HealthService] Initialized monitoring for service: ${service.name}`,
 			);
 		}
 
 		CocoonDevLog(
 			"health",
+
 			`[HealthService] Initialized ${this.monitoredServices.size} core services`,
 		);
 	}
@@ -327,6 +333,7 @@ export class HealthService implements IHealthService {
 			if (timeSinceHeartbeat > this.config.timeoutThreshold) {
 				CocoonDevLog(
 					"health",
+
 					`[HealthService] Service ${serviceName} heartbeat timeout`,
 				);
 
@@ -375,6 +382,7 @@ export class HealthService implements IHealthService {
 			} catch (error) {
 				CocoonDevLog(
 					"health",
+
 					`[HealthService] Health check failed for ${serviceName}:`,
 
 					error,
@@ -457,11 +465,13 @@ export class HealthService implements IHealthService {
 
 			CocoonDevLog(
 				"health",
+
 				`[HealthService] Service ${serviceName} health check: ${serviceHealth.status}`,
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"health",
+
 				`[HealthService] Failed to check health for ${serviceName}:`,
 
 				error,
@@ -631,6 +641,7 @@ export class HealthService implements IHealthService {
 		if (currentAttempts >= this.config.maxRetryAttempts) {
 			CocoonDevLog(
 				"health",
+
 				`[HealthService] Max recovery attempts reached for ${serviceName}`,
 			);
 
@@ -639,6 +650,7 @@ export class HealthService implements IHealthService {
 
 		CocoonDevLog(
 			"health",
+
 			`[HealthService] Attempting recovery for ${serviceName} (attempt ${currentAttempts + 1})`,
 		);
 
@@ -670,11 +682,13 @@ export class HealthService implements IHealthService {
 
 			CocoonDevLog(
 				"health",
+
 				`[HealthService] Recovery successful for ${serviceName}`,
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"health",
+
 				`[HealthService] Recovery failed for ${serviceName}:`,
 
 				error,
@@ -696,6 +710,7 @@ export class HealthService implements IHealthService {
 		// Mock implementation - would perform actual service recovery
 		CocoonDevLog(
 			"health",
+
 			`[HealthService] Performing recovery for ${serviceName}`,
 		);
 
@@ -704,6 +719,7 @@ export class HealthService implements IHealthService {
 
 		CocoonDevLog(
 			"health",
+
 			`[HealthService] Recovery completed for ${serviceName}`,
 		);
 	}
@@ -713,7 +729,9 @@ export class HealthService implements IHealthService {
 	 */
 	private async waitForServiceRecovery(serviceName: string): Promise<void> {
 		const maxWaitTime = 30000; // 30 seconds
+
 		const checkInterval = 1000; // 1 second
+
 		const startTime = Date.now();
 
 		while (Date.now() - startTime < maxWaitTime) {
@@ -724,6 +742,7 @@ export class HealthService implements IHealthService {
 				if (isHealthy) {
 					CocoonDevLog(
 						"health",
+
 						`[HealthService] Service ${serviceName} recovered`,
 					);
 
@@ -756,6 +775,7 @@ export class HealthService implements IHealthService {
 			} catch (error) {
 				CocoonDevLog(
 					"health",
+
 					"[HealthService] Error in event listener:",
 
 					error,
@@ -869,6 +889,7 @@ export class HealthService implements IHealthService {
 
 		CocoonDevLog(
 			"health",
+
 			"[HealthService] Health monitoring service disposed",
 		);
 	}

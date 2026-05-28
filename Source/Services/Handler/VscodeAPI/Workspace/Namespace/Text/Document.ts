@@ -32,84 +32,130 @@ export const BuildOpenTextDocument =
 		) {
 			const InlineContent =
 				typeof UriOrPath.content === "string" ? UriOrPath.content : "";
+
 			const InlineLang =
 				typeof UriOrPath.language === "string"
 					? UriOrPath.language
 					: "plaintext";
+
 			const UntitledKey = `untitled:Untitled-${Date.now()}`;
+
 			Context.DocumentContentCache.set(UntitledKey, InlineContent);
+
 			// Add to workspace.textDocuments so extensions iterating all open docs see it.
 			if (!Array.isArray((Context as any).__textDocuments))
 				(Context as any).__textDocuments = [];
+
 			const UriShape = {
 				toString: () => UntitledKey,
+
 				fsPath: "",
+
 				scheme: "untitled",
+
 				path: UntitledKey.slice("untitled:".length),
+
 				external: UntitledKey,
 			};
+
 			const Lines = InlineContent.split("\n");
+
 			const LineStarts: number[] = [0];
+
 			for (let I = 0; I < InlineContent.length; I++) {
 				if (InlineContent.charCodeAt(I) === 10) LineStarts.push(I + 1);
 			}
+
 			const PositionAt = (Off: number) => {
 				let Lo = 0,
 					Hi = LineStarts.length - 1;
+
 				while (Lo < Hi) {
 					const Mid = (Lo + Hi + 1) >>> 1;
+
 					if (LineStarts[Mid]! <= Off) Lo = Mid;
 					else Hi = Mid - 1;
 				}
+
 				return { line: Lo, character: Off - LineStarts[Lo]! };
 			};
+
 			const OffsetAt = (P: any) => {
 				const L = Math.max(0, Math.min(P?.line ?? 0, Lines.length - 1));
+
 				return Math.max(0, (LineStarts[L] ?? 0) + (P?.character ?? 0));
 			};
+
 			const Doc = {
 				uri: UriShape,
+
 				fileName: UntitledKey,
+
 				languageId: InlineLang,
+
 				isDirty: false,
+
 				isClosed: false,
+
 				isUntitled: true,
+
 				version: 1,
+
 				eol: 1,
+
 				lineCount: Lines.length,
+
 				getText: () => InlineContent,
+
 				positionAt: PositionAt,
+
 				offsetAt: OffsetAt,
+
 				lineAt: (N: any) => {
 					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+
 					const T = Lines[Ln] ?? "";
+
 					return {
 						lineNumber: Ln,
+
 						text: T,
+
 						range: {
 							start: { line: Ln, character: 0 },
+
 							end: { line: Ln, character: T.length },
 						},
+
 						firstNonWhitespaceCharacterIndex:
 							T.search(/\S/) < 0 ? T.length : T.search(/\S/),
+
 						isEmptyOrWhitespace: T.trim().length === 0,
 					};
 				},
+
 				getWordRangeAtPosition: () => undefined,
+
 				validateRange: (R: any) => R,
+
 				validatePosition: (P: any) => P,
+
 				save: async () => false,
 			};
+
 			(Context as any).__textDocuments.push(Doc);
+
 			// Fire didOpenTextDocument so extensions subscribed to onDidOpenTextDocument see it.
 			setImmediate(() => {
 				try {
 					Context.WorkspaceEventEmitter?.emit(
 						"didOpenTextDocument",
+
 						Doc,
 					);
 				} catch {}
 			});
+
 			return Doc;
 		}
 
@@ -121,59 +167,94 @@ export const BuildOpenTextDocument =
 		// `untitled:` scheme - blank document, no backend needed.
 		if (UriString.startsWith("untitled:") || UriString === "") {
 			const Content = Context.DocumentContentCache.get(UriString) ?? "";
+
 			const ULines = Content.split("\n");
+
 			const UntitledLang = DeriveLanguageIdFromUri(UriString);
+
 			return {
 				uri: UriOrPath ?? {
 					toString: () => UriString,
+
 					scheme: "untitled",
+
 					path: UriString.slice("untitled:".length),
 				},
+
 				fileName: UriString,
+
 				languageId: UntitledLang,
+
 				isDirty: false,
+
 				isClosed: false,
+
 				isUntitled: true,
+
 				version: 1,
+
 				eol: 1,
+
 				lineCount: ULines.length,
+
 				getText: () => Content,
+
 				positionAt: (Off: number) => {
 					let Rem = Off;
+
 					for (let I = 0; I < ULines.length; I++) {
 						const L = ULines[I]!.length + 1;
+
 						if (Rem < L) return { line: I, character: Rem };
+
 						Rem -= L;
 					}
+
 					return {
 						line: ULines.length - 1,
+
 						character: ULines[ULines.length - 1]?.length ?? 0,
 					};
 				},
+
 				offsetAt: (P: any) => {
 					let O = 0;
+
 					for (let I = 0; I < (P?.line ?? 0); I++)
 						O += (ULines[I]?.length ?? 0) + 1;
+
 					return O + (P?.character ?? 0);
 				},
+
 				lineAt: (N: any) => {
 					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+
 					const T = ULines[Ln] ?? "";
+
 					return {
 						lineNumber: Ln,
+
 						text: T,
+
 						range: {
 							start: { line: Ln, character: 0 },
+
 							end: { line: Ln, character: T.length },
 						},
+
 						firstNonWhitespaceCharacterIndex:
 							T.search(/\S/) < 0 ? T.length : T.search(/\S/),
+
 						isEmptyOrWhitespace: T.trim().length === 0,
 					};
 				},
+
 				getWordRangeAtPosition: () => undefined,
+
 				validateRange: (R: any) => R,
+
 				validatePosition: (P: any) => P,
+
 				save: async () => false,
 			};
 		}
@@ -228,36 +309,48 @@ export const BuildOpenTextDocument =
 			const Scheme = (() => {
 				if (typeof UriOrPath === "object" && (UriOrPath as any)?.scheme)
 					return String((UriOrPath as any).scheme);
+
 				if (typeof UriString === "string") {
 					const C = UriString.indexOf(":");
+
 					if (C > 0 && C < 32) return UriString.slice(0, C);
 				}
+
 				return "file";
 			})();
+
 			if (Scheme !== "file") {
 				const Provider = (Context.ExtensionRegistry as any)?.get(
 					`__textDocumentContentProvider:${Scheme}`,
 				);
+
 				if (
 					Provider &&
 					typeof Provider.provideTextDocumentContent === "function"
 				) {
 					const CancellationToken = {
 						isCancellationRequested: false,
+
 						onCancellationRequested: () => ({ dispose: () => {} }),
 					};
+
 					let ProviderUri: unknown = UriOrPath;
+
 					try {
 						const API = (globalThis as any).__cocoonVscodeAPI;
+
 						if (API?.Uri && UriString)
 							ProviderUri = API.Uri.parse(UriString);
 					} catch {}
+
 					try {
 						const Content =
 							await Provider.provideTextDocumentContent(
 								ProviderUri,
+
 								CancellationToken,
 							);
+
 						Text =
 							typeof Content === "string"
 								? Content
@@ -265,6 +358,7 @@ export const BuildOpenTextDocument =
 					} catch {
 						Text = "";
 					}
+
 					// Cache and build document without going to Mountain.
 					if (Text !== undefined) {
 						Context.DocumentContentCache.set(UriString, Text);
@@ -302,7 +396,9 @@ export const BuildOpenTextDocument =
 						Text = DecodeRaw(
 							await Call<unknown>(
 								Context,
+
 								"FileSystem.ReadFile",
+
 								[UriString],
 							),
 						);
@@ -374,6 +470,7 @@ export const BuildOpenTextDocument =
 
 		const OffsetAt = (Position: {
 			line?: number;
+
 			character?: number;
 		}): number => {
 			const L = Math.max(
@@ -494,6 +591,7 @@ export const BuildOpenTextDocument =
 
 			getText: (Range?: {
 				start?: { line?: number; character?: number };
+
 				end?: { line?: number; character?: number };
 			}) => {
 				if (!Range) return Text;
@@ -553,6 +651,7 @@ export const BuildApplyEdit =
 	(Context: HandlerContext) =>
 	async (
 		Edit: unknown,
+
 		_Metadata?: { isRefactoring?: boolean; label?: string },
 	): Promise<boolean> => {
 		// Route through Mountain's `applyEdit` Track effect which does a
@@ -571,17 +670,20 @@ export const BuildApplyEdit =
 		// model.
 		try {
 			const Result = await Call<boolean>(Context, "applyEdit", [Edit]);
+
 			// Mountain may return `null` if the round-trip succeeded but
 			// the Sky-side BulkEditService returned undefined. Treat
 			// missing as success (upstream's MainThreadBulkEdits does
 			// the same - undefined → true).
 			if (typeof Result === "boolean") return Result;
+
 			return true;
 		} catch {
 			// Mountain not connected or Sky rejected. Fall back to a
 			// notification (best-effort, no return path) so simple edits
 			// still apply even when the sendRequest path is unavailable.
 			Context.SendToMountain("workspace.applyEdit", Edit).catch(() => {});
+
 			return false;
 		}
 	};
@@ -622,6 +724,7 @@ export const BuildUpdateWorkspaceFolders =
 
 		const Additions = ToAdd.map((Folder) => {
 			const Raw = Folder?.uri;
+
 			const Serialized =
 				typeof Raw === "string"
 					? Raw
@@ -630,6 +733,7 @@ export const BuildUpdateWorkspaceFolders =
 								| (() => string)
 								| undefined
 						)?.call(Raw) ?? String(Raw ?? ""));
+
 			return { uri: { value: Serialized }, name: Folder?.name ?? "" };
 		});
 
@@ -641,6 +745,7 @@ export const BuildUpdateWorkspaceFolders =
 				Error instanceof globalThis.Error
 					? Error.message
 					: String(Error);
+
 			try {
 				process.stdout.write(
 					`[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}\n`,
@@ -664,33 +769,44 @@ export const BuildDocumentEventMembers = (Context: HandlerContext) => ({
 	// their listener never deliver their edits before the disk write.
 	onWillSaveTextDocument: (
 		Listener: (...Arguments: any[]) => any,
+
 		ThisArg?: unknown,
+
 		Disposables?: { push: (D: { dispose: () => void }) => unknown },
 	) => {
 		const Bound =
 			ThisArg === undefined
 				? Listener
 				: (Listener as (...A: any[]) => any).bind(ThisArg);
+
 		if (!Array.isArray((Context as any).__willSaveListeners)) {
 			(Context as any).__willSaveListeners = [];
 		}
+
 		(Context as any).__willSaveListeners.push(Bound);
+
 		const Subscription = {
 			dispose: () => {
 				const All = (Context as any).__willSaveListeners as any[];
+
 				if (Array.isArray(All)) {
 					const Idx = All.indexOf(Bound);
+
 					if (Idx !== -1) All.splice(Idx, 1);
 				}
+
 				Context.WorkspaceEventEmitter.removeListener(
 					"willSaveTextDocument",
+
 					Bound,
 				);
 			},
 		};
+
 		if (Disposables && typeof Disposables.push === "function") {
 			Disposables.push(Subscription);
 		}
+
 		return Subscription;
 	},
 	onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),

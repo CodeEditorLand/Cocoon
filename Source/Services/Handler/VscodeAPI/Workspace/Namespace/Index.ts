@@ -253,9 +253,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 				async (Args) => {
 					const [I, _O] = Args;
+
 					const Opts = _O as
 						| { exclude?: unknown; maxResults?: number }
 						| undefined;
+
 					return FindFilesLocal(
 						Context,
 
@@ -306,9 +308,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 				async (Args) => {
 					const [I, _O] = Args;
+
 					const Opts = _O as
 						| { exclude?: unknown; maxResults?: number }
 						| undefined;
+
 					return FindFilesLocal(
 						Context,
 
@@ -357,6 +361,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 				async (Args) => {
 					const [Q, O] = Args;
+
 					return FindTextInFilesNodeFallback(
 						Context,
 
@@ -376,8 +381,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					// undefined and zero-match as empty so the Node
 					// fallback can shadow.
 					if (R == null) return true;
+
 					if (Array.isArray(R)) return R.length === 0;
+
 					const Matches = (R as { matches?: unknown[] }).matches;
+
 					return !Array.isArray(Matches) || Matches.length === 0;
 				},
 			),
@@ -400,6 +408,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 				async (Args) => {
 					const [Q, O] = Args;
+
 					return FindTextInFilesNodeFallback(
 						Context,
 
@@ -415,8 +424,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 				(R) => {
 					if (R == null) return true;
+
 					if (Array.isArray(R)) return R.length === 0;
+
 					const Matches = (R as { matches?: unknown[] }).matches;
+
 					return !Array.isArray(Matches) || Matches.length === 0;
 				},
 			),
@@ -589,23 +601,31 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		onWillSaveTextDocument: (
 			Listener: (Event: {
 				document: unknown;
+
 				reason: number;
+
 				waitUntil: (Thenable: Promise<unknown>) => void;
 			}) => void,
 		) => {
 			const List: ((...A: any[]) => any)[] = ((
 				Context as any
 			).__willSaveListeners ??= []);
+
 			List.push(Listener);
+
 			// Also subscribe to the WorkspaceEventEmitter so the event emitter
 			// pattern used by extensions like TypeScript's `onWillSave` works.
 			Context.WorkspaceEventEmitter.on("willSaveTextDocument", Listener);
+
 			return {
 				dispose: () => {
 					const Idx = List.indexOf(Listener);
+
 					if (Idx !== -1) List.splice(Idx, 1);
+
 					Context.WorkspaceEventEmitter.removeListener(
 						"willSaveTextDocument",
+
 						Listener,
 					);
 				},
@@ -621,6 +641,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		onDidChangeWorkspaceFolders: (
 			Listener: (Event: {
 				added: readonly unknown[];
+
 				removed: readonly unknown[];
 			}) => any,
 		) => {

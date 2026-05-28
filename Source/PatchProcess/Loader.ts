@@ -112,6 +112,7 @@ export class LoaderService extends Effect.Service<LoaderService>()(
 					}
 
 					yield* InitializeProcessValidation;
+
 					yield* Effect.logInfo("Process monitoring initialized");
 				}),
 				GetSecurityPolicy: Effect.succeed({
@@ -146,15 +147,19 @@ export const InitializeSecurityLoader = Effect.gen(function* () {
 
 	// Load security patches
 	yield* Effect.logInfo("Loading security patches...");
+
 	yield* Loader.LoadSecurityPatches;
 
 	// Initialize monitoring
 	yield* Effect.logInfo("Initializing monitoring...");
+
 	yield* Loader.InitializeMonitoring;
 
 	// Run initial security audit
 	yield* Effect.logInfo("Running initial security audit...");
+
 	const AuditResult = yield* Loader.RunSecurityAudit;
+
 	yield* Effect.logInfo("Initial security audit completed", { AuditResult });
 
 	// Periodic security validation
@@ -219,6 +224,7 @@ export const ValidateFileSystemAccessWrapper = (
 				Operation,
 				Reason: Result.Reason,
 			});
+
 			return false;
 		}
 
@@ -243,6 +249,7 @@ export const ValidateNetworkAccessWrapper = (
 				Operation,
 				Reason: Result.Reason,
 			});
+
 			return false;
 		}
 
@@ -267,6 +274,7 @@ export const ValidateChildProcessSpawnWrapper = (
 				Arguments,
 				Reason: Result.Reason,
 			});
+
 			return false;
 		}
 
@@ -313,7 +321,9 @@ export const InstallSecurityHooks = Effect.gen(function* () {
 	yield* Effect.logInfo("Installing security hooks...");
 
 	yield* InstallModuleHooks;
+
 	yield* InstallFileSystemHooks;
+
 	yield* InstallChildProcessHooks;
 
 	yield* Effect.logInfo("Security hooks installed");

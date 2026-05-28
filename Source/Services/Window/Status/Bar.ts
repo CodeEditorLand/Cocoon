@@ -32,7 +32,9 @@ export const CreateStatusBarItem = (
 	GRPCClient: {
 		createStatusBarItem: (params: {
 			id: string;
+
 			text: string;
+
 			tooltip: string | undefined;
 		}) => Effect.Effect<unknown, Error>;
 	},
@@ -47,6 +49,7 @@ export const CreateStatusBarItem = (
 ): Effect.Effect<VSCode.StatusBarItem, Error> =>
 	Effect.gen(function* () {
 		const ItemId = Id ?? `statusbar-${crypto.randomUUID()}`;
+
 		yield* Logger.Info(
 			`[WindowService] Creating status bar item with id '${ItemId}'`,
 		);
@@ -97,6 +100,7 @@ export const CreateStatusBarItem = (
 			},
 			set text(Value: string) {
 				State.text = Value;
+
 				MountainClient.sendNotification("setStatusBarText", {
 					itemId: ItemId,
 					text: Value,
@@ -128,6 +132,7 @@ export const CreateStatusBarItem = (
 			},
 			show(): void {
 				State.isVisible = true;
+
 				MountainClient.sendNotification("setStatusBarText", {
 					itemId: ItemId,
 					text: State.text,
@@ -136,6 +141,7 @@ export const CreateStatusBarItem = (
 			},
 			hide(): void {
 				State.isVisible = false;
+
 				MountainClient.sendNotification("setStatusBarText", {
 					itemId: ItemId,
 					text: State.text,
@@ -144,6 +150,7 @@ export const CreateStatusBarItem = (
 			},
 			dispose(): void {
 				State.isVisible = false;
+
 				MountainClient.sendNotification("disposeStatusBarItem", {
 					itemId: ItemId,
 				}).catch(() => {});

@@ -187,6 +187,7 @@ export enum ProcessSignal {
 export const DEFAULT_TIMEOUT = 30000;
 
 export const DEFAULT_MAX_BUFFER = 1024 * 1024; // 1MB
+
 export const DEFAULT_HEARTBEAT_INTERVAL = 5000;
 
 export const DEFAULT_KILL_TIMEOUT = 5000;
@@ -243,11 +244,17 @@ export function ValidateCommand(command: string): boolean {
 	// Check for suspicious patterns
 	const dangerousPatterns = [
 		/;\s*\w/, // Command chaining
+
 		/\|\s*\w/, // Pipe chaining
+
 		/&&\s*\w/, // AND operator
+
 		/\|\|\s*\w/, // OR operator
+
 		/>\s*\/dev/, // Redirect output
+
 		/>\s*\/tmp/, // Write to temp
+
 		/`[^`]*`/, // Command substitution
 		/\$\(.*,?\)/, // Command substitution
 		/\/\.\.\/|\\\\\\.\\/, // Path traversal
@@ -275,6 +282,7 @@ export function ValidateArgs(args: string[]): boolean {
 		/;\s*\w/,
 
 		/`\s*[^`]*`/,
+
 		/\$\s*\(\s*[^)]*\)/,
 
 		/>\s*\//,
@@ -376,8 +384,11 @@ export async function SpawnProcess(
 
 			(code: number | null, signal: NodeJS.Signals | null) => {
 				processInfo.status = "stopped";
+
 				processInfo.exitCode = code;
+
 				processInfo.signal = signal;
+
 				console.log(
 					`[Process] Process ${childProc.pid} exited: code=${code}, signal=${signal}`,
 				);
@@ -387,6 +398,7 @@ export async function SpawnProcess(
 		// Handle error
 		childProc.on("error", (error: Error) => {
 			processInfo.status = "error";
+
 			console.error(`[Process] Process ${childProc.pid} error:`, error);
 		});
 
@@ -533,7 +545,9 @@ export async function ForkProcess(
 
 			(code: number | null, signal: NodeJS.Signals | null) => {
 				processInfo.status = "stopped";
+
 				processInfo.exitCode = code;
+
 				processInfo.signal = signal;
 			},
 		);
@@ -606,13 +620,16 @@ export function TerminateProcess(
 
 		const checkInterval = setInterval(() => {
 			const updatedInfo = ProcessRegistry.get(pid);
+
 			if (!updatedInfo || updatedInfo.status !== "running") {
 				clearInterval(checkInterval);
+
 				return;
 			}
 
 			if (Date.now() - startTime > timeout) {
 				clearInterval(checkInterval);
+
 				// Force kill if not terminated
 				SendSignal(pid, ProcessSignal.SIGKILL);
 			}
@@ -753,15 +770,20 @@ export async function MonitorProcess(
 	return new Promise((resolve) => {
 		const interval = setInterval(() => {
 			const updatedInfo = ProcessRegistry.get(pid);
+
 			if (!updatedInfo) {
 				clearInterval(interval);
+
 				resolve(false);
+
 				return;
 			}
 
 			if (updatedInfo.status !== "running") {
 				clearInterval(interval);
+
 				resolve(updatedInfo.status === "stopped");
+
 				return;
 			}
 		}, heartbeatInterval);
@@ -769,9 +791,11 @@ export async function MonitorProcess(
 		// Auto-kill after timeout
 		setTimeout(() => {
 			clearInterval(interval);
+
 			if (ProcessRegistry.has(pid)) {
 				TerminateProcess(pid, killTimeout);
 			}
+
 			resolve(false);
 		}, killTimeout * 10);
 	});

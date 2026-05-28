@@ -180,6 +180,7 @@ async function handleShutdown(signal) {
  */
 process.on("uncaughtException", (error) => {
 	console.error("[Cocoon] Uncaught exception:", error);
+
 	process.exit(1);
 });
 
@@ -193,6 +194,7 @@ process.on("unhandledRejection", (reason, promise) => {
 
 		reason,
 	);
+
 	process.exit(1);
 });
 
@@ -202,6 +204,7 @@ process.on("unhandledRejection", (reason, promise) => {
 if (require.main === module) {
 	bootstrap().catch((error) => {
 		console.error("[Cocoon] Bootstrap error:", error);
+
 		process.exit(1);
 	});
 }

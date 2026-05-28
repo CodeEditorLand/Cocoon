@@ -23,6 +23,7 @@ import type { HandlerContext } from "../../Handler/Context.js";
 
 interface ShowOptionsLike {
 	readonly viewColumn?: number;
+
 	readonly preserveFocus?: boolean;
 }
 
@@ -58,14 +59,20 @@ export default (
 	// to true at creation since `createWebviewPanel` is documented to
 	// reveal immediately unless `preserveFocus` is set.
 	const ShowOptionsTyped = (ShowOptions ?? {}) as ShowOptionsLike;
+
 	let CurrentViewColumn: number =
 		typeof ShowOptionsTyped.viewColumn === "number"
 			? ShowOptionsTyped.viewColumn
 			: 1;
+
 	let CurrentActive = true;
+
 	let CurrentVisible = true;
+
 	let Disposed = false;
+
 	const DisposeListeners: Array<() => void> = [];
+
 	const ViewStateListeners: Array<(state: unknown) => void> = [];
 
 	// Named-key payload bypasses Mountain's positional-to-named
@@ -94,28 +101,40 @@ export default (
 	// `panel.active` / `panel.visible` getters return the live state
 	// and fire `onDidChangeViewState` listeners.
 	const ViewStateChannel = `webview.viewState:${Handle}`;
+
 	const ViewStateListener = (State: {
 		active?: boolean;
+
 		visible?: boolean;
+
 		viewColumn?: number;
 	}) => {
 		if (Disposed) return;
+
 		const NextActive =
 			State?.active != null ? !!State.active : CurrentActive;
+
 		const NextVisible =
 			State?.visible != null ? !!State.visible : CurrentVisible;
+
 		const NextColumn =
 			typeof State?.viewColumn === "number"
 				? State.viewColumn
 				: CurrentViewColumn;
+
 		const Changed =
 			NextActive !== CurrentActive ||
 			NextVisible !== CurrentVisible ||
 			NextColumn !== CurrentViewColumn;
+
 		CurrentActive = NextActive;
+
 		CurrentVisible = NextVisible;
+
 		CurrentViewColumn = NextColumn;
+
 		if (!Changed) return;
+
 		// `WebviewPanelOnDidChangeViewStateEvent` shape per upstream:
 		// `{ webviewPanel: WebviewPanel }`. Listeners read `event.webviewPanel
 		// .active / .visible / .viewColumn`. PanelRef is just our forward
@@ -124,6 +143,7 @@ export default (
 		const Snapshot = {
 			webviewPanel: PanelRef.value,
 		};
+
 		for (const Listener of ViewStateListeners.slice()) {
 			try {
 				Listener(Snapshot);
@@ -132,6 +152,7 @@ export default (
 			}
 		}
 	};
+
 	Context.Emitter.on(ViewStateChannel, ViewStateListener);
 
 	// Per-handle dispose bridge. Mountain fires `webview.dispose:<handle>`
@@ -140,14 +161,18 @@ export default (
 	// our local dispose path so the extension's `onDidDispose` listener
 	// observes the close exactly once.
 	const DisposeChannel = `webview.dispose:${Handle}`;
+
 	const DisposeListener = () => {
 		DisposeInternal();
 	};
+
 	Context.Emitter.on(DisposeChannel, DisposeListener);
 
 	const DisposeInternal = () => {
 		if (Disposed) return;
+
 		Disposed = true;
+
 		// Drop the per-handle emitter subscriptions BEFORE we fire the
 		// listeners so a listener that disposes the panel a second time
 		// doesn't re-enter.
@@ -156,16 +181,19 @@ export default (
 		} catch {
 			/* swallow */
 		}
+
 		try {
 			Context.Emitter.removeListener(DisposeChannel, DisposeListener);
 		} catch {
 			/* swallow */
 		}
+
 		try {
 			Context.Emitter.removeAllListeners(`webview.message:${Handle}`);
 		} catch {
 			/* swallow */
 		}
+
 		// Tell Mountain to clean up. Idempotent on the Sky side - the
 		// handle registry entry is already gone if the dispose chain
 		// originated from a tab-close. `viewId` mirrors the same
@@ -176,6 +204,7 @@ export default (
 			handle: Handle,
 			viewId: ViewType,
 		}).catch(() => {});
+
 		for (const Listener of DisposeListeners.slice()) {
 			try {
 				Listener();
@@ -196,9 +225,13 @@ export default (
 
 		set title(Value: string) {
 			if (Disposed) return;
+
 			const Next = String(Value ?? "");
+
 			if (Next === CurrentTitle) return;
+
 			CurrentTitle = Next;
+
 			// `viewId` dual-key per the same rationale as setHtml below.
 			Context.MountainClient?.sendRequest("webview.setTitle", {
 				handle: Handle,
@@ -213,7 +246,9 @@ export default (
 
 		set iconPath(Value: unknown) {
 			if (Disposed) return;
+
 			CurrentIconPath = Value;
+
 			Context.MountainClient?.sendRequest("webview.setIconPath", {
 				handle: Handle,
 				viewId: ViewType,
@@ -228,7 +263,9 @@ export default (
 
 			set options(Value: Record<string, unknown>) {
 				if (Disposed) return;
+
 				CurrentOptions = Value;
+
 				Context.MountainClient?.sendRequest("webview.setOptions", {
 					handle: Handle,
 					viewId: ViewType,
@@ -242,7 +279,9 @@ export default (
 
 			set html(Value: string) {
 				if (Disposed) return;
+
 				CurrentHtml = Value;
+
 				// `viewId` aliases the panel's `viewType` for Sky's
 				// `InstallWebview.ts:300-302` resolution path - same
 				// rationale as `postMessage` below. Without it, the
@@ -266,6 +305,7 @@ export default (
 
 			postMessage: async (Message: unknown) => {
 				if (Disposed) return false;
+
 				try {
 					// `viewId` carries the panel's `viewType` so Sky's
 					// `InstallWebview.ts` resolution path can fall back to a
@@ -324,9 +364,11 @@ export default (
 
 		reveal: (Column?: number, PreserveFocus?: boolean) => {
 			if (Disposed) return;
+
 			if (typeof Column === "number") {
 				CurrentViewColumn = Column;
 			}
+
 			// `viewId` dual-key for Sky's resolution fallback - same
 			// rationale as setHtml/postMessage above. Reveal sometimes
 			// fires before the workbench finishes mounting the
@@ -346,9 +388,11 @@ export default (
 
 		onDidDispose: (Listener: () => any) => {
 			DisposeListeners.push(Listener);
+
 			return {
 				dispose: () => {
 					const Index = DisposeListeners.indexOf(Listener);
+
 					if (Index >= 0) DisposeListeners.splice(Index, 1);
 				},
 			};
@@ -356,9 +400,11 @@ export default (
 
 		onDidChangeViewState: (Listener: (State: unknown) => any) => {
 			ViewStateListeners.push(Listener);
+
 			return {
 				dispose: () => {
 					const Index = ViewStateListeners.indexOf(Listener);
+
 					if (Index >= 0) ViewStateListeners.splice(Index, 1);
 				},
 			};

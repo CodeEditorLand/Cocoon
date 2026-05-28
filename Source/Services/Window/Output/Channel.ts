@@ -33,6 +33,7 @@ export const CreateOutputChannel = (
 ): Effect.Effect<VSCode.OutputChannel, Error> =>
 	Effect.gen(function* () {
 		const ChannelId = `output-${crypto.randomUUID()}`;
+
 		yield* Logger.Info(
 			`[WindowService] Creating output channel: ${Name} (${ChannelId})`,
 		);

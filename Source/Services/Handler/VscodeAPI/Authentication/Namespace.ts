@@ -35,6 +35,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 			Options?: { supportsMultipleAccounts?: boolean },
 		) => {
 			const Handle = NextProviderHandle();
+
 			Context.SendToMountain("register_authentication_provider", {
 				handle: Handle,
 				providerId: ProviderId,
@@ -43,9 +44,12 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					Options?.supportsMultipleAccounts ?? false,
 				extensionId: "",
 			}).catch(() => {});
+
 			// Stash so ExtHostAuthentication$getSession can call getSessions().
 			const ProviderKey = `__authProvider:${ProviderId}`;
+
 			Context.ExtensionRegistry.set(ProviderKey, Provider);
+
 			// `AuthenticationProvider.onDidChangeSessions` fires with
 			// `AuthenticationProviderAuthenticationSessionsChangeEvent`
 			// (`{ added, removed, changed }`) when the provider's session
@@ -58,8 +62,10 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 			// the listener and stop leaking references when an extension
 			// re-registers a provider with the same id.
 			let SessionChangeDisposable: { dispose?: () => void } | null = null;
+
 			try {
 				const ProviderEvent = (Provider as any)?.onDidChangeSessions;
+
 				if (typeof ProviderEvent === "function") {
 					const Sub = ProviderEvent((Event: any) => {
 						try {
@@ -79,6 +85,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 							/* listener threw - never break the provider */
 						}
 					});
+
 					if (Sub && typeof Sub.dispose === "function") {
 						SessionChangeDisposable = Sub;
 					} else if (typeof Sub === "function") {
@@ -90,6 +97,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 			} catch {
 				/* provider event surface is optional */
 			}
+
 			return {
 				dispose: () => {
 					try {
@@ -97,7 +105,9 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					} catch {
 						/* swallow */
 					}
+
 					Context.ExtensionRegistry.delete(ProviderKey);
+
 					Context.SendToMountain(
 						"unregister_authentication_provider",
 
@@ -116,8 +126,11 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 			Options?: {
 				createIfNone?: boolean;
+
 				clearSessionPreference?: boolean;
+
 				forceNewSession?: boolean | { detail: string };
+
 				silent?: boolean;
 			},
 		): Promise<unknown> => {
@@ -141,6 +154,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 					[ProviderId],
 				);
+
 				return Array.isArray(Result) ? Result : [];
 			} catch {
 				return [];

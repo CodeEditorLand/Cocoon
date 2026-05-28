@@ -44,6 +44,7 @@ const RegisterCustomEditor = (
 
 	Options: {
 		supportsMultipleEditorsPerDocument?: boolean;
+
 		webviewOptions?: unknown;
 	},
 
@@ -64,16 +65,20 @@ const RegisterCustomEditor = (
 	// register with IEditorResolverService so VS Code routes file opens to
 	// the custom editor instead of the text editor.
 	let Selector: unknown[] = [];
+
 	for (const [, Ext] of Context.ExtensionRegistry) {
 		const Contributions = Ext?.contributes?.customEditors;
+
 		if (Array.isArray(Contributions)) {
 			const Match = Contributions.find(
 				(CE: any) => CE?.viewType === ViewType,
 			);
+
 			if (Match?.selector) {
 				Selector = Array.isArray(Match.selector)
 					? Match.selector
 					: [Match.selector];
+
 				break;
 			}
 		}
@@ -135,27 +140,37 @@ const RegisterCustomEditor = (
 					}\n`,
 				);
 			} catch {}
+
 			return undefined;
 		}
 	};
 
 	const Listeners: Array<{
 		Channel: string;
+
 		Listener: (P: unknown) => void;
 	}> = [];
+
 	const Subscribe = (Channel: string, MethodName: string) => {
 		const Listener = (Payload: unknown) => {
 			void SafeAwait(Channel, MethodName, Payload);
 		};
+
 		Context.Emitter.on(Channel, Listener);
+
 		Listeners.push({ Channel, Listener });
 	};
 
 	Subscribe("customEditor.saveDocument", "saveCustomDocument");
+
 	Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
+
 	Subscribe("customEditor.revertCustomDocument", "revertCustomDocument");
+
 	Subscribe("customEditor.backupCustomDocument", "backupCustomDocument");
+
 	Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
+
 	Subscribe(
 		"customEditor.didChangeCustomDocument",
 
@@ -171,12 +186,17 @@ const RegisterCustomEditor = (
 					Listener as (..._A: unknown[]) => void,
 				);
 			}
+
 			Listeners.length = 0;
+
 			CustomEditorProviders.delete(String(Handle));
+
 			const ByViewType = CustomEditorProvidersByViewType.get(ViewType);
+
 			if (ByViewType && ByViewType.Handle === Handle) {
 				CustomEditorProvidersByViewType.delete(ViewType);
 			}
+
 			Context.MountainClient?.sendRequest(
 				"webview.unregisterCustomEditor",
 

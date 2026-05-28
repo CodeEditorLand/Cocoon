@@ -73,6 +73,7 @@ export class ErrorHandlingService {
 
 		CocoonDevLog(
 			"service",
+
 			"[ErrorHandlingService] Initializing error handling service",
 		);
 	}
@@ -85,9 +86,11 @@ export class ErrorHandlingService {
 			maxRetries: 3,
 
 			retryDelay: 1000, // 1 second
+
 			exponentialBackoff: true,
 
 			circuitBreakerTimeout: 30000, // 30 seconds
+
 			circuitBreakerThreshold: 5,
 		};
 	}
@@ -108,6 +111,7 @@ export class ErrorHandlingService {
 
 		CocoonDevLog(
 			"service",
+
 			`[ErrorHandlingService] Executing operation: ${operationName}`,
 		);
 
@@ -121,6 +125,7 @@ export class ErrorHandlingService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`,
 			);
 
@@ -173,6 +178,7 @@ export class ErrorHandlingService {
 
 				CocoonDevLog(
 					"service",
+
 					`[ErrorHandlingService] Operation ${operationName} succeeded on attempt ${attempt + 1} in ${operationDuration}ms`,
 				);
 
@@ -206,6 +212,7 @@ export class ErrorHandlingService {
 
 				CocoonDevLog(
 					"service",
+
 					`[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
 
 					error,
@@ -222,6 +229,7 @@ export class ErrorHandlingService {
 
 					CocoonDevLog(
 						"service",
+
 						`[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`,
 					);
 
@@ -235,6 +243,7 @@ export class ErrorHandlingService {
 
 		CocoonDevLog(
 			"service",
+
 			`[ErrorHandlingService] Operation ${operationName} failed after ${totalRetries} retries`,
 		);
 
@@ -288,6 +297,7 @@ export class ErrorHandlingService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`,
 			);
 		}
@@ -309,6 +319,7 @@ export class ErrorHandlingService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`,
 			);
 		} else if (state.state === "CLOSED") {
@@ -333,6 +344,7 @@ export class ErrorHandlingService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`,
 			);
 		} else if (
@@ -344,6 +356,7 @@ export class ErrorHandlingService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`,
 			);
 		}
@@ -365,6 +378,7 @@ export class ErrorHandlingService {
 		const baseDelay = config.retryDelay * Math.pow(2, attempt);
 
 		const jitter = Math.random() * baseDelay * 0.1; // 10% jitter
+
 		const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter);
 
 		// Cap at maximum delay of 30 seconds
@@ -501,6 +515,7 @@ export class ErrorHandlingService {
 		// TODO: Send to Mountain for aggregation
 		CocoonDevLog(
 			"service",
+
 			`[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`,
 		);
 
@@ -555,6 +570,7 @@ export class ErrorHandlingService {
 			errorType: this.classifyError(error),
 
 			errorMessage: error.message.substring(0, 200), // Truncate long messages
+
 			retryable: this.shouldRetry(error),
 
 			circuitBreakerState:
@@ -564,6 +580,7 @@ export class ErrorHandlingService {
 		// TODO: Send to Mountain for aggregation
 		CocoonDevLog(
 			"service",
+
 			`[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`,
 		);
 	}
@@ -615,6 +632,7 @@ export class ErrorHandlingService {
 		// TODO: Integrate with PerformanceMonitoringService
 		CocoonDevLog(
 			"service",
+
 			`[ErrorHandlingService] Circuit breaker event: ${operationName}, ${eventType}`,
 		);
 	}
@@ -651,6 +669,7 @@ export class ErrorHandlingService {
 
 			CocoonDevLog(
 				"service",
+
 				`[ErrorHandlingService] Circuit breaker reset for ${serviceName}`,
 			);
 		}

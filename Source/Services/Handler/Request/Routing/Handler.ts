@@ -47,6 +47,7 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
 const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	CocoonDevLog(
 		"request-route",
+
 		`[RequestRoutingHandler] Routing request: ${Method}`,
 	);
 
@@ -185,6 +186,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// and the string otherwise - extensions that round-trip their
 			// own handles accept the string opaquely.
 			const Element = ItemHandle ? ItemHandle : undefined;
+
 			// Some extensions (e.g. `vscode.references-view`) register a
 			// `TreeDataProviderDelegate` eagerly and set the real provider
 			// later. Calling `getChildren` before that second step throws
@@ -196,28 +198,36 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// wired up. Still surface non-"MISSING provider" errors so real
 			// bugs don't get swallowed.
 			let Children: unknown;
+
 			try {
 				Children = (await Provider.getChildren?.(Element)) ?? [];
 			} catch (Reason) {
 				const Message =
 					Reason instanceof Error ? Reason.message : String(Reason);
+
 				if (/MISSING provider|provider is not set/i.test(Message)) {
 					return { items: [] };
 				}
+
 				throw Reason;
 			}
+
 			const Items = await Promise.all(
 				(Array.isArray(Children) ? Children : []).map(
 					async (Child: unknown, Index: number) => {
 						const Item =
 							(await Provider.getTreeItem?.(Child)) ?? Child;
+
 						const Raw = Item as Record<string, unknown>;
+
 						const Label =
 							typeof Raw.label === "string"
 								? Raw.label
 								: ((Raw.label as { label?: string } | undefined)
 										?.label ?? "");
+
 						const IconValue = Raw.iconPath ?? Raw.icon ?? "";
+
 						const Icon =
 							typeof IconValue === "string"
 								? IconValue
@@ -235,6 +245,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 													? `${(IconValue as any).light.scheme}://${(IconValue as any).light.authority ?? ""}${(IconValue as any).light.path}`
 													: ""))) ??
 										"");
+
 						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded.
 						// Pass the raw enum numeric through so Sky can
 						// faithfully tell "Expanded" from "Collapsed" -
@@ -245,6 +256,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// for any observer that already reads it.
 						const CollapsibleState =
 							(Raw.collapsibleState as number | undefined) ?? 0;
+
 						// Pass through the rest of the fields the workbench's
 						// TreeRenderer reads so GitLens / debug / tasks /
 						// NPM tree panes render with full fidelity:
@@ -258,6 +270,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							typeof Raw.description === "string"
 								? Raw.description
 								: undefined;
+
 						const Tooltip =
 							typeof Raw.tooltip === "string"
 								? Raw.tooltip
@@ -266,14 +279,19 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 											| { value?: string }
 											| undefined
 									)?.value;
+
 						const ResourceUri = Raw.resourceUri;
+
 						const ContextValue =
 							typeof Raw.contextValue === "string"
 								? Raw.contextValue
 								: undefined;
+
 						const Command = Raw.command;
+
 						const AccessibilityInformation =
 							Raw.accessibilityInformation;
+
 						return {
 							handle: String(
 								Raw.id ??
@@ -293,6 +311,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					},
 				),
 			);
+
 			return { items: Items };
 		},
 
@@ -301,36 +320,50 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// TreeDataProvider for the handle and serialise the response.
 			const { TreeDataProviders } =
 				await import("../../VscodeAPI/Window/Namespace.js");
+
 			const Handle = Params?.handle ?? Params?.[0];
+
 			const Provider = TreeDataProviders.get(String(Handle));
+
 			if (!Provider) {
 				throw new Error(
 					`TreeDataProvider handle not registered: ${Handle}`,
 				);
 			}
+
 			switch (Method) {
 				case "tree.getChildren": {
 					const Element = Params?.element ?? Params?.[1];
+
 					const Children =
 						(await Provider.getChildren?.(Element)) ?? [];
+
 					return Array.isArray(Children) ? Children : [];
 				}
+
 				case "tree.getTreeItem": {
 					const Element = Params?.element ?? Params?.[1];
+
 					return (await Provider.getTreeItem?.(Element)) ?? null;
 				}
+
 				case "tree.getParent": {
 					const Element = Params?.element ?? Params?.[1];
+
 					return (await Provider.getParent?.(Element)) ?? null;
 				}
+
 				case "tree.resolveTreeItem": {
 					const Item = Params?.item ?? Params?.[1];
+
 					const Element = Params?.element ?? Params?.[2];
+
 					return (
 						(await Provider.resolveTreeItem?.(Item, Element)) ??
 						Item
 					);
 				}
+
 				default:
 					throw new Error(`Unknown tree method: ${Method}`);
 			}
@@ -343,14 +376,20 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// receives it.
 			const {
 				WebviewPanels,
+
 				WebviewViewProviders,
+
 				WebviewViewBuilders,
+
 				CustomEditorProviders,
 			} = await import("../../VscodeAPI/Window/Namespace.js");
+
 			const Handle = Params?.handle ?? Params?.[0];
+
 			switch (Method) {
 				case "webview.resolveView": {
 					const Provider = WebviewViewProviders.get(String(Handle));
+
 					if (!Provider) {
 						// Soft-fail instead of throwing. Throwing here
 						// rejects the SkyBridge resolver promise, which
@@ -365,10 +404,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// vs. transient race) is still triagable.
 						CocoonDevLog(
 							"webview",
+
 							`[RequestRoutingHandler] webview.resolveView called with unregistered handle=${Handle}; returning null so the workbench resolver settles`,
 						);
+
 						return null;
 					}
+
 					// Build a proxy `WebviewView` so the extension's
 					// `resolveWebviewView(view, ctx)` callback can read /
 					// set `view.webview.html`, `.postMessage`, etc. and
@@ -379,12 +421,15 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					// override `view` in Params; honour the override
 					// when the caller has already constructed one.
 					const Builder = WebviewViewBuilders.get(String(Handle));
+
 					const View =
 						Params?.view ?? Params?.[1] ?? Builder?.() ?? {};
+
 					const Ctx = Params?.context ??
 						Params?.[2] ?? {
 							state: undefined,
 						};
+
 					// Stock VS Code passes a `CancellationToken` as the
 					// third argument to `WebviewViewProvider.resolveWebviewView(view, context, token)`.
 					// Roo, GitLens and Claude all read `token.isCancellationRequested`
@@ -397,16 +442,19 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					const Token = Params?.token ??
 						Params?.[3] ?? {
 							isCancellationRequested: false,
+
 							onCancellationRequested: () => ({
 								dispose: () => {},
 							}),
 						};
+
 					try {
 						if (process.env["Trace"]) {
 							process.stdout.write(
 								`[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView ENTER handle=${Handle} hasView=${!!View} hasWebview=${!!View?.webview} hasResolver=${typeof Provider?.resolveWebviewView === "function"}\n`,
 							);
 						}
+
 						const Result =
 							(await Provider.resolveWebviewView?.(
 								View,
@@ -415,11 +463,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 								Token,
 							)) ?? null;
+
 						if (process.env["Trace"]) {
 							process.stdout.write(
 								`[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView EXIT handle=${Handle} htmlLen=${String((View as any)?.webview?.html ?? "").length}\n`,
 							);
 						}
+
 						return Result;
 					} catch (ResolveError) {
 						// Extension's `resolveWebviewView` threw (Roo,
@@ -435,6 +485,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// rationale.
 						CocoonDevLog(
 							"webview",
+
 							`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}: ${(ResolveError as any)?.message ?? String(ResolveError)}`,
 						);
 
@@ -453,6 +504,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// settle (empty content) so the user can retry.
 						CocoonDevLog(
 							"webview",
+
 							`[RequestRoutingHandler] webview.resolveCustomEditor called with unregistered handle=${Handle}; returning null`,
 						);
 
@@ -491,6 +543,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					} catch (ResolveError) {
 						CocoonDevLog(
 							"webview",
+
 							`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}: ${(ResolveError as any)?.message ?? String(ResolveError)}`,
 						);
 
@@ -597,12 +650,15 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 	RoutePatterns["^\\$provideTextDocumentContent$"] = async (
 		_Method: string,
+
 		Params: any,
 	) => {
 		const Context = (globalThis as any).__cocoonGRPCContext;
+
 		if (!Context) return null;
 
 		const UriRaw = Params?.uri ?? Params?.[0];
+
 		const UriStr =
 			typeof UriRaw === "string"
 				? UriRaw
@@ -614,16 +670,19 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		// Extract scheme from URI string or object.
 		let Scheme = "file";
+
 		if (typeof UriRaw === "object" && UriRaw?.scheme) {
 			Scheme = String(UriRaw.scheme);
 		} else if (typeof UriStr === "string") {
 			const Colon = UriStr.indexOf(":");
+
 			if (Colon > 0 && Colon < 32) Scheme = UriStr.slice(0, Colon);
 		}
 
 		const Provider = Context.ExtensionRegistry?.get(
 			`__textDocumentContentProvider:${Scheme}`,
 		);
+
 		if (
 			!Provider ||
 			typeof Provider.provideTextDocumentContent !== "function"
@@ -633,13 +692,16 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		const CancellationToken = {
 			isCancellationRequested: false,
+
 			onCancellationRequested: () => ({ dispose: () => {} }),
 		};
 
 		try {
 			// Hydrate URI to a real vscode.Uri instance if possible.
 			let UriArg: unknown = UriRaw;
+
 			const API = (globalThis as any).__cocoonVscodeAPI;
+
 			if (API?.Uri && UriStr) {
 				try {
 					UriArg = API.Uri.parse(UriStr);
@@ -650,14 +712,18 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 			const Content = await Provider.provideTextDocumentContent(
 				UriArg,
+
 				CancellationToken,
 			);
+
 			return Content ?? null;
 		} catch (ProviderErr) {
 			CocoonDevLog(
 				"model",
+
 				`[RequestRoutingHandler] $provideTextDocumentContent provider error for ${UriStr}: ${(ProviderErr as any)?.message ?? String(ProviderErr)}`,
 			);
+
 			return null;
 		}
 	};
@@ -677,7 +743,9 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// when TierIPC=NodeDeferred. The getAll call returns the
 			// registered language IDs from the extension host.
 			const Context = (globalThis as any).__cocoonGRPCContext ?? {};
+
 			const API = (globalThis as any).__cocoonVscodeAPI;
+
 			if (!API) return null;
 
 			switch (Method) {
@@ -686,8 +754,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						(Context.languageIds as Set<string> | undefined) ??
 							new Set<string>(),
 					);
+
 				case "languages:getEncodedLanguageId":
 					return null;
+
 				default:
 					return null;
 			}
@@ -696,11 +766,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		"scm:\\w+": async (Method: string, Params: any) => {
 			// vscode.scm.* namespace - route to Cocoon's SCM namespace impl.
 			const API = (globalThis as any).__cocoonVscodeAPI;
+
 			if (!API?.scm) return null;
 
 			switch (Method) {
 				case "scm:getSourceControls":
 					return [];
+
 				default:
 					return null;
 			}
@@ -708,13 +780,16 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		"debug:\\w+": async (Method: string, Params: any) => {
 			const API = (globalThis as any).__cocoonVscodeAPI;
+
 			if (!API?.debug) return null;
 
 			switch (Method) {
 				case "debug:getSessions":
 					return [];
+
 				case "debug:getBreakpoints":
 					return [];
+
 				default:
 					return null;
 			}
@@ -722,11 +797,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		"tasks:\\w+": async (Method: string, Params: any) => {
 			const API = (globalThis as any).__cocoonVscodeAPI;
+
 			if (!API?.tasks) return null;
 
 			switch (Method) {
 				case "tasks:getTasks":
 					return [];
+
 				default:
 					return null;
 			}
@@ -734,11 +811,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 		"auth:\\w+": async (Method: string, Params: any) => {
 			const API = (globalThis as any).__cocoonVscodeAPI;
+
 			if (!API?.authentication) return null;
 
 			switch (Method) {
 				case "auth:getSessions":
 					return [];
+
 				default:
 					return null;
 			}

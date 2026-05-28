@@ -95,6 +95,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	constructor() {
 		CocoonDevLog(
 			"interceptor",
+
 			"[ModuleInterceptor] Initializing module interceptor",
 		);
 
@@ -120,6 +121,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		CocoonDevLog(
 			"interceptor",
+
 			"[ModuleInterceptor] Module interceptor initialized",
 		);
 	}
@@ -142,12 +144,15 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			CocoonDevLog(
 				"interceptor",
+
 				"[ModuleInterceptor] Service initialized successfully",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				"[ModuleInterceptor] Failed to initialize:",
+
 				error,
 			);
 
@@ -162,6 +167,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	private async loadSecurityPolicies(): Promise<void> {
 		CocoonDevLog(
 			"interceptor",
+
 			"[ModuleInterceptor] Loading security policies",
 		);
 
@@ -210,6 +216,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			securityLevel: SecurityLevel.SANDBOXED,
 
 			maxMemoryUsage: 100 * 1024 * 1024, // 100MB
+
 			maxExecutionTime: 5000, // 5 seconds
 		};
 
@@ -217,6 +224,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		CocoonDevLog(
 			"interceptor",
+
 			"[ModuleInterceptor] Security policies loaded",
 		);
 	}
@@ -227,6 +235,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	private validateModulePathResolution(): void {
 		CocoonDevLog(
 			"interceptor",
+
 			"[ModuleInterceptor] Validating module path resolution",
 		);
 
@@ -236,11 +245,13 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			CocoonDevLog(
 				"interceptor",
+
 				"[ModuleInterceptor] Module path resolution validated",
 			);
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				"[ModuleInterceptor] Module path resolution failed:",
 
 				error,
@@ -270,6 +281,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		CocoonDevLog(
 			"interceptor",
+
 			"[ModuleInterceptor] Telemetry initialized",
 		);
 	}
@@ -378,6 +390,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		CocoonDevLog(
 			"interceptor",
+
 			`[ModuleInterceptor] Intercepting require: ${request.moduleId} from ${request.extensionId}`,
 		);
 
@@ -394,6 +407,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 				CocoonDevLog(
 					"interceptor",
+
 					`[ModuleInterceptor] Using cached module: ${request.moduleId}`,
 				);
 
@@ -493,6 +507,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Module ${request.moduleId} intercepted successfully in ${analysisTime}ms`,
 			);
 
@@ -506,6 +521,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Failed to intercept module ${request.moduleId}:`,
 
 				error,
@@ -535,6 +551,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		if (policy.blockedModules.includes(modulePath)) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Blocked module access: ${modulePath}`,
 			);
 
@@ -550,6 +567,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			if (!this.isSafeNodeBuiltin(modulePath)) {
 				CocoonDevLog(
 					"interceptor",
+
 					`[ModuleInterceptor] Module not in allowed list: ${modulePath}`,
 				);
 
@@ -561,6 +579,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Node built-in module access denied: ${modulePath}`,
 			);
 
@@ -650,6 +669,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	): Promise<string> {
 		CocoonDevLog(
 			"interceptor",
+
 			`[ModuleInterceptor] Resolving module: ${modulePath} for ${extensionId}`,
 		);
 
@@ -664,6 +684,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Resolved ${modulePath} to ${resolvedPath}`,
 			);
 
@@ -671,6 +692,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Failed to resolve module ${modulePath}:`,
 
 				error,
@@ -700,6 +722,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Failed to resolve module path: ${modulePath}`,
 
 				error,
@@ -717,6 +740,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		if (modulePath.includes("..")) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Potential path traversal detected: ${modulePath}`,
 			);
 
@@ -727,6 +751,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		if (modulePath.startsWith("/")) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Absolute path detected: ${modulePath}`,
 			);
 
@@ -755,6 +780,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			if (pattern.test(resolvedPath)) {
 				CocoonDevLog(
 					"interceptor",
+
 					`[ModuleInterceptor] Suspicious resolved path detected: ${resolvedPath}`,
 				);
 
@@ -771,6 +797,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	async setSecurityPolicy(policy: SecurityPolicy): Promise<void> {
 		CocoonDevLog(
 			"interceptor",
+
 			`[ModuleInterceptor] Setting security policy for ${policy.extensionId}`,
 		);
 
@@ -796,6 +823,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		CocoonDevLog(
 			"interceptor",
+
 			`[ModuleInterceptor] Security policy set for ${policy.extensionId}`,
 		);
 	}
@@ -815,6 +843,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	async createSecurityContext(extensionId: string): Promise<any> {
 		CocoonDevLog(
 			"interceptor",
+
 			`[ModuleInterceptor] Creating security context for ${extensionId}`,
 		);
 
@@ -862,6 +891,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	): Promise<boolean> {
 		CocoonDevLog(
 			"interceptor",
+
 			`[ModuleInterceptor] Validating module security: ${moduleId} for ${extensionId}`,
 		);
 
@@ -896,6 +926,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Module security validation failed: ${moduleId}`,
 
 				error,
@@ -916,6 +947,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		try {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Performing advanced AST security analysis for ${modulePath}`,
 			);
 
@@ -941,6 +973,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 				// Can't read file, assume safe (built-in or core)
 				CocoonDevLog(
 					"interceptor",
+
 					`[ModuleInterceptor] Cannot read source for ${modulePath}, assuming safe`,
 				);
 
@@ -1009,6 +1042,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 							node.property.type === "Identifier"
 						) {
 							const objectName = node.object.name;
+
 							const propertyName = node.property.name;
 
 							if (
@@ -1039,11 +1073,13 @@ export class ModuleInterceptor implements IModuleInterceptor {
 						// Detect dangerous assignments
 						if (node.left.type === "MemberExpression") {
 							const left = node.left;
+
 							if (
 								left.object.type === "Identifier" &&
 								left.property.type === "Identifier"
 							) {
 								const objectName = left.object.name;
+
 								const propertyName = left.property.name;
 
 								if (
@@ -1074,6 +1110,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 					ImportDeclaration(node: any) {
 						// Detect dangerous imports
 						const importSource = node.source.value;
+
 						if (this.isDangerousImport(importSource)) {
 							securityIssues.push(
 								`CRITICAL: Dangerous import: ${importSource}`,
@@ -1085,6 +1122,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 						// Detect dangerous constructor calls
 						if (node.callee.type === "Identifier") {
 							const constructorName = node.callee.name;
+
 							if (this.isDangerousConstructor(constructorName)) {
 								securityIssues.push(
 									`CRITICAL: Dangerous constructor: ${constructorName}`,
@@ -1118,6 +1156,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`,
 			);
 
@@ -1129,6 +1168,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
+
 				`[ModuleInterceptor] Advanced security analysis failed for ${modulePath}:`,
 
 				error,
@@ -1350,7 +1390,9 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	): void {
 		const dangerousPatterns = [
 			{ pattern: /eval\s*\(/, description: "Direct eval call" },
+
 			{ pattern: /Function\s*\(/, description: "Function constructor" },
+
 			{
 				pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,
 				description: "Dynamic require",

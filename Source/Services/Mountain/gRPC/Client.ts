@@ -368,6 +368,7 @@ const MountainGRPCClientLive = Layer.effect(
 
 	Effect.gen(function* () {
 		const mountainClient = yield* IMountainClientService;
+
 		const logger = yield* Logger.Logger;
 
 		const service: MountainGRPCClientService = {
@@ -749,13 +750,18 @@ const MountainGRPCClientLive = Layer.effect(
 					const SafeEdits: Array<{
 						range: {
 							start: { line: number; character: number };
+
 							end: { line: number; character: number };
 						};
+
 						newText: string;
 					}> = [];
+
 					for (const edit of edits) {
 						const Start = edit?.range?.start;
+
 						const End = edit?.range?.end;
+
 						if (
 							!Start ||
 							!End ||
@@ -764,6 +770,7 @@ const MountainGRPCClientLive = Layer.effect(
 						) {
 							continue;
 						}
+
 						SafeEdits.push({
 							range: {
 								// `+ 1` converts vscode.Range (0-based)
@@ -788,6 +795,7 @@ const MountainGRPCClientLive = Layer.effect(
 									: "",
 						});
 					}
+
 					const result = yield* Effect.tryPromise({
 						try: () =>
 							mountainClient.sendRequest("applyEdit", {
@@ -847,15 +855,19 @@ const MountainGRPCClientLive = Layer.effect(
 									if (typeof arg === "string") {
 										return { stringValue: arg };
 									}
+
 									if (typeof arg === "number") {
 										return { intValue: arg };
 									}
+
 									if (typeof arg === "boolean") {
 										return { boolValue: arg };
 									}
+
 									if (arg instanceof Uint8Array) {
 										return { bytesValue: arg };
 									}
+
 									return { stringValue: String(arg) };
 								}),
 							}),
@@ -1072,8 +1084,11 @@ const MountainGRPCClientMock = Layer.effect(
 
 		// In-memory storage for mock data
 		const mockSecrets = new Map<string, string>();
+
 		const mockStatusBarItems = new Map<string, string>();
+
 		const mockWebviewPanels = new Map<number, { html: string }>();
+
 		let mockWebviewHandleCounter = 0;
 
 		const service: MountainGRPCClientService = {
@@ -1085,6 +1100,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] showTextDocument: ${uri}`,
 					);
+
 					return;
 				}),
 
@@ -1093,6 +1109,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] showInformationMessage: ${message}`,
 					);
+
 					return;
 				}),
 
@@ -1101,6 +1118,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] showWarningMessage: ${message}`,
 					);
+
 					return;
 				}),
 
@@ -1109,6 +1127,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] showErrorMessage: ${message}`,
 					);
+
 					return;
 				}),
 
@@ -1117,8 +1136,11 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] createStatusBarItem: ${options.id}`,
 					);
+
 					const itemId = `status-${options.id}`;
+
 					mockStatusBarItems.set(itemId, options.text);
+
 					return itemId;
 				}),
 
@@ -1127,7 +1149,9 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] setStatusBarText: ${itemId}`,
 					);
+
 					mockStatusBarItems.set(itemId, text);
+
 					return;
 				}),
 
@@ -1136,8 +1160,11 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`,
 					);
+
 					const handle = mockWebviewHandleCounter++;
+
 					mockWebviewPanels.set(handle, { html: options.html ?? "" });
+
 					return handle;
 				}),
 
@@ -1146,10 +1173,13 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] setWebviewHtml: ${handle}`,
 					);
+
 					const panel = mockWebviewPanels.get(handle);
+
 					if (panel) {
 						panel.html = html;
 					}
+
 					return;
 				}),
 
@@ -1158,6 +1188,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] postWebviewMessage: ${handle}`,
 					);
+
 					return;
 				}),
 
@@ -1167,6 +1198,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] findFiles: ${pattern}`,
 					);
+
 					return []; // Return empty array for mock
 				}),
 
@@ -1175,6 +1207,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] findTextInFiles: ${pattern}`,
 					);
+
 					return []; // Return empty array for mock
 				}),
 
@@ -1183,12 +1216,14 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] openDocument: ${uri}`,
 					);
+
 					return;
 				}),
 
 			saveAll: () =>
 				Effect.gen(function* () {
 					yield* logger.debug("[MountainGRPCClientMock] saveAll");
+
 					return;
 				}),
 
@@ -1197,6 +1232,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] applyEdit: ${uri}`,
 					);
+
 					return;
 				}),
 
@@ -1206,6 +1242,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] registerCommand: ${commandId}`,
 					);
+
 					return;
 				}),
 
@@ -1214,6 +1251,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] executeCommand: ${commandId}`,
 					);
+
 					return undefined;
 				}),
 
@@ -1222,6 +1260,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] unregisterCommand: ${commandId}`,
 					);
+
 					return;
 				}),
 
@@ -1231,6 +1270,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] getSecret: ${key}`,
 					);
+
 					return mockSecrets.get(key);
 				}),
 
@@ -1239,7 +1279,9 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] storeSecret: ${key}`,
 					);
+
 					mockSecrets.set(key, value);
+
 					return;
 				}),
 
@@ -1248,7 +1290,9 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] deleteSecret: ${key}`,
 					);
+
 					mockSecrets.delete(key);
+
 					return;
 				}),
 
@@ -1258,6 +1302,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] readFile: ${uri}`,
 					);
+
 					return new Uint8Array(0);
 				}),
 
@@ -1266,6 +1311,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] writeFile: ${uri}`,
 					);
+
 					return;
 				}),
 
@@ -1274,6 +1320,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] stat: ${uri}`,
 					);
+
 					return {
 						isFile: true,
 						isDirectory: false,
@@ -1287,6 +1334,7 @@ const MountainGRPCClientMock = Layer.effect(
 					yield* logger.debug(
 						`[MountainGRPCClientMock] readdir: ${uri}`,
 					);
+
 					return [];
 				}),
 		};

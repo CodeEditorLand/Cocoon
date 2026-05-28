@@ -18,6 +18,7 @@ export const SerializeItems = <T extends QuickPickItem | string>(
 			typeof Item === "string"
 				? { label: Item }
 				: (Item as QuickPickItem);
+
 		return { ...Base, handle: Index };
 	});
 };
@@ -30,6 +31,7 @@ export const SerializeItems = <T extends QuickPickItem | string>(
 export const SerializeButtons = (Buttons?: readonly QuickInputButton[]) => {
 	return Buttons?.map((Button, Index) => {
 		const iconPath = (Button as any).iconPath;
+
 		return {
 			iconPath: iconPath
 				? "dark" in iconPath && "light" in iconPath

@@ -114,6 +114,7 @@ export const defaultMountainConfig: MountainConfig = {
 	keepAliveInterval: 10000,
 
 	maxMessageSize: 104857600, // 100MB
+
 	useTls: false,
 
 	debug: false,

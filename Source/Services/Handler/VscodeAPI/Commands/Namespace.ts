@@ -30,12 +30,15 @@ const CreateCommandsNamespace = (
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
 			LanguageProviderRegistry.RegisterCommand(Command, Callback);
+
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 			}).catch(() => {});
+
 			return {
 				dispose: () => {
 					LanguageProviderRegistry.UnregisterCommand(Command);
+
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
 					}).catch(() => {});
@@ -57,6 +60,7 @@ const CreateCommandsNamespace = (
 			// method so collected edits actually apply.
 			const WrappedCallback = async (...Arguments: unknown[]) => {
 				const TextEditor = (Context as any).__activeTextEditor;
+
 				if (!TextEditor || typeof TextEditor.edit !== "function") {
 					// No active editor - upstream raises an error notification.
 					// Fall back to invoking the callback with a no-op builder
@@ -68,20 +72,25 @@ const CreateCommandsNamespace = (
 						delete: () => {},
 						setEndOfLine: () => {},
 					};
+
 					return Callback(undefined, NoopBuilder, ...Arguments);
 				}
+
 				// Drive the callback INSIDE `editor.edit()` so the buffered
 				// builder is the real one tied to the active model. The
 				// extension's return value bubbles through the outer promise
 				// so command consumers can `await commands.executeCommand(...)`.
 				let ExtensionResult: unknown = undefined;
+
 				await TextEditor.edit((Builder: unknown) => {
 					ExtensionResult = Callback(
 						TextEditor,
+
 						Builder,
 						...Arguments,
 					);
 				});
+
 				// If the callback returned a promise (e.g. async refactor that
 				// awaits an LSP response BEFORE issuing edits), await it so
 				// caller observes completion.
@@ -92,16 +101,21 @@ const CreateCommandsNamespace = (
 				) {
 					return await (ExtensionResult as Promise<unknown>);
 				}
+
 				return ExtensionResult;
 			};
+
 			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
+
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "textEditor",
 			}).catch(() => {});
+
 			return {
 				dispose: () => {
 					LanguageProviderRegistry.UnregisterCommand(Command);
+
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
 					}).catch(() => {});
@@ -122,6 +136,7 @@ const CreateCommandsNamespace = (
 			const Decision = Route(Command, {
 				Has: LanguageProviderRegistry.HasCommand,
 			});
+
 			LogRoute(Command, Decision);
 
 			if (Decision === "local") {
@@ -129,6 +144,7 @@ const CreateCommandsNamespace = (
 					Command,
 					...Arguments,
 				);
+
 				if (LocalResult !== undefined) {
 					// Symmetric with the Mountain branch: fire the
 					// `commands.executed` event for local routes too so
@@ -145,8 +161,10 @@ const CreateCommandsNamespace = (
 					} catch {
 						/* listener threw - swallow */
 					}
+
 					return LocalResult;
 				}
+
 				// Local handler returned undefined - either the extension's
 				// command legitimately has no return value, or (rare) the
 				// handler was deregistered between `Has` probe and invoke.
@@ -174,7 +192,9 @@ const CreateCommandsNamespace = (
 
 					[FilterInternal ?? false],
 				);
+
 				if (Array.isArray(Response)) return Response as string[];
+
 				return [];
 			} catch {
 				return [];
@@ -192,6 +212,7 @@ const CreateCommandsNamespace = (
 		onDidExecuteCommand: (
 			Listener: (Event: {
 				command: string;
+
 				arguments: unknown[];
 			}) => unknown,
 		) => {
@@ -200,17 +221,21 @@ const CreateCommandsNamespace = (
 					const E = Payload as
 						| { command: string; arguments: unknown[] }
 						| undefined;
+
 					if (E?.command) Listener(E);
 				} catch {
 					/* swallow */
 				}
 			};
+
 			Context.Emitter.on("commands.executed", Wrapped);
+
 			return {
 				dispose: () => {
 					try {
 						Context.Emitter.removeListener(
 							"commands.executed",
+
 							Wrapped,
 						);
 					} catch {
@@ -232,13 +257,16 @@ const CreateCommandsNamespace = (
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
 			LanguageProviderRegistry.RegisterCommand(Command, Callback);
+
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "diffInformation",
 			}).catch(() => {});
+
 			return {
 				dispose: () => {
 					LanguageProviderRegistry.UnregisterCommand(Command);
+
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
 					}).catch(() => {});

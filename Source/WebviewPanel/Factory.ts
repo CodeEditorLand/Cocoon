@@ -158,7 +158,9 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 						Effect.runFork(
 							Ref.update(ActivePanelsRef, (Registry) => {
 								const Updated = new Map(Registry);
+
 								Updated.delete(Handle);
+
 								return Updated;
 							}),
 						);
@@ -177,6 +179,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 					// Register panel for tracking
 					yield* Ref.update(ActivePanelsRef, (Registry) => {
 						const Updated = new Map(Registry);
+
 						Updated.set(Handle, {
 							Handle,
 							Panel: PanelInstance,
@@ -184,6 +187,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 							ViewType: Options.ViewType,
 							CreatedAt: new Date(),
 						});
+
 						return Updated;
 					});
 
@@ -196,6 +200,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 			const GetPanel = (Handle: string): Effect.Effect<Panel, Error> =>
 				Effect.gen(function* () {
 					const Registry = yield* Ref.get(ActivePanelsRef);
+
 					const Entry = Registry.get(Handle);
 
 					if (!Entry) {
@@ -215,6 +220,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 			const GetAllPanels = (): Effect.Effect<readonly Panel[], never> =>
 				Effect.gen(function* () {
 					const Registry = yield* Ref.get(ActivePanelsRef);
+
 					return Array.from(Registry.values()).map(
 						(Entry) => Entry.Panel,
 					);
@@ -226,6 +232,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 			const DisposePanel = (Handle: string): Effect.Effect<void, never> =>
 				Effect.gen(function* () {
 					const Registry = yield* Ref.get(ActivePanelsRef);
+
 					const Entry = Registry.get(Handle);
 
 					if (Entry) {
@@ -239,6 +246,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 			const DisposeAllPanels = (): Effect.Effect<void, never> =>
 				Effect.gen(function* () {
 					const Registry = yield* Ref.get(ActivePanelsRef);
+
 					yield* Effect.all(
 						Array.from(Registry.values()).map((Entry) =>
 							Effect.sync(() => Entry.Panel.dispose()),
