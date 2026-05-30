@@ -6911,7 +6911,7 @@ var init_RouteManifest = __esm({
       mountain: 142,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-05-28T17:51:16Z"
+      generatedAt: "2026-05-30T17:34:14Z"
     };
   }
 });
@@ -9247,6 +9247,20 @@ function diffSets(before, after) {
   }
   return { removed, added };
 }
+function equalSets(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const element of a) {
+    if (!b.has(element)) {
+      return false;
+    }
+  }
+  return true;
+}
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -9278,6 +9292,7 @@ var init_collections = __esm({
     __name(groupBy2, "groupBy");
     __name(groupByMap, "groupByMap");
     __name(diffSets, "diffSets");
+    __name(equalSets, "equalSets");
     __name(diffMaps, "diffMaps");
     __name(intersection, "intersection");
     SetWithKey = class {
@@ -21062,7 +21077,8 @@ var init_codiconsLibrary = __esm({
       terminalCompact: register("terminal-compact", 60603),
       vmPending: register("vm-pending", 60604),
       worktreeCompact: register("worktree-compact", 60605),
-      developerTools: register("developer-tools", 60606)
+      developerTools: register("developer-tools", 60606),
+      cloudCompact: register("cloud-compact", 60607)
     };
   }
 });

@@ -50,6 +50,20 @@ function diffSets(before, after) {
   }
   return { removed, added };
 }
+function equalSets(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const element of a) {
+    if (!b.has(element)) {
+      return false;
+    }
+  }
+  return true;
+}
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -81,6 +95,7 @@ var init_collections = __esm({
     __name(groupBy, "groupBy");
     __name(groupByMap, "groupByMap");
     __name(diffSets, "diffSets");
+    __name(equalSets, "equalSets");
     __name(diffMaps, "diffMaps");
     __name(intersection, "intersection");
     SetWithKey = class {
@@ -13007,7 +13022,8 @@ var init_codiconsLibrary = __esm({
       terminalCompact: register("terminal-compact", 60603),
       vmPending: register("vm-pending", 60604),
       worktreeCompact: register("worktree-compact", 60605),
-      developerTools: register("developer-tools", 60606)
+      developerTools: register("developer-tools", 60606),
+      cloudCompact: register("cloud-compact", 60607)
     };
   }
 });

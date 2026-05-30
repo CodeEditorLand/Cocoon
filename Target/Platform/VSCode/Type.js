@@ -1197,6 +1197,21 @@ function diffSets(before, after) {
   return { removed, added };
 }
 __name(diffSets, "diffSets");
+function equalSets(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const element of a) {
+    if (!b.has(element)) {
+      return false;
+    }
+  }
+  return true;
+}
+__name(equalSets, "equalSets");
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
@@ -12746,7 +12761,8 @@ var codiconsLibrary = {
   terminalCompact: register("terminal-compact", 60603),
   vmPending: register("vm-pending", 60604),
   worktreeCompact: register("worktree-compact", 60605),
-  developerTools: register("developer-tools", 60606)
+  developerTools: register("developer-tools", 60606),
+  cloudCompact: register("cloud-compact", 60607)
 };
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/codicons.js

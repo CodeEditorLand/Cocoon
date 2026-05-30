@@ -438,7 +438,7 @@ var RouteManifestSummary = {
   mountain: 142,
   stockLift: 0,
   bespoke: 1,
-  generatedAt: "2026-05-28T17:51:16Z"
+  generatedAt: "2026-05-30T17:34:14Z"
 };
 
 // Source/Services/Dual/Track.ts
@@ -1784,6 +1784,21 @@ function diffSets(before, after) {
   return { removed, added };
 }
 __name(diffSets, "diffSets");
+function equalSets(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const element of a) {
+    if (!b.has(element)) {
+      return false;
+    }
+  }
+  return true;
+}
+__name(equalSets, "equalSets");
 function diffMaps(before, after) {
   const removed = [];
   const added = [];
