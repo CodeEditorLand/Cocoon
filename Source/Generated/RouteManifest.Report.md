@@ -1,12 +1,12 @@
 # Route Manifest - coverage report
 
-_Generated 2026-05-31T09:30:22Z_
+_Generated 2026-06-04T21:15:38Z_
 
 ## Totals
 
 | Tier | Count | Source |
 |---|---:|---|
-| 1 - Mountain (Rust) | 142 | `Track/Effect/CreateEffectForRequest/*.rs` |
+| 1 - Mountain (Rust) | 145 | `Track/Effect/CreateEffectForRequest/*.rs` |
 | 2 - Stock VS Code | 0 | `StockLift.ts` |
 | 3 - Cocoon bespoke | 1 | `*Fallback.ts` |
 
@@ -61,6 +61,9 @@ _Generated 2026-05-31T09:30:22Z_
 - `FileSystem.WriteFile`
 - `FileWatcher.Register`
 - `FileWatcher.Unregister`
+- `FileWatcher.Unwatch`
+- `FileWatcher.Watch`
+- `FileWatcher.WatchStatus`
 - `findFiles`
 - `findTextInFiles`
 - `git.openChange`
