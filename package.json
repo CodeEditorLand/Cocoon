@@ -31,24 +31,24 @@
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
 		"@effect/platform": "0.96.1",
-		"@effect/platform-node": "0.106.0",
+		"@effect/platform-node": "0.107.0",
 		"@grpc/grpc-js": "1.14.4",
 		"@grpc/proto-loader": "0.8.1",
 		"effect": "3.21.2",
 		"google-protobuf": "4.0.2",
-		"protobufjs": "8.5.0",
+		"protobufjs": "8.6.0",
 		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
 		"@effect/language-service": "0.86.2",
 		"@playform/build": "0.3.2",
 		"@types/node": "25.9.1",
-		"@vitest/coverage-v8": "4.1.7",
+		"@vitest/coverage-v8": "4.1.8",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
 		"esbuild": "0.28.0",
 		"ulid": "3.0.2",
-		"vitest": "4.1.7"
+		"vitest": "4.1.8"
 	},
 	"publishConfig": {
 		"access": "public",
