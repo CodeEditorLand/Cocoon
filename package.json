@@ -34,7 +34,7 @@
 		"@effect/platform-node": "0.107.0",
 		"@grpc/grpc-js": "1.14.4",
 		"@grpc/proto-loader": "0.8.1",
-		"effect": "3.21.2",
+		"effect": "3.21.3",
 		"google-protobuf": "4.0.2",
 		"protobufjs": "8.6.0",
 		"ts-protoc-gen": "0.15.0"
