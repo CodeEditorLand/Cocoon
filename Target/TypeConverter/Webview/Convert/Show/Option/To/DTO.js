@@ -13023,7 +13023,11 @@ var init_codiconsLibrary = __esm({
       vmPending: register("vm-pending", 60604),
       worktreeCompact: register("worktree-compact", 60605),
       developerTools: register("developer-tools", 60606),
-      cloudCompact: register("cloud-compact", 60607)
+      cloudCompact: register("cloud-compact", 60607),
+      agentCompact: register("agent-compact", 60608),
+      askCompact: register("ask-compact", 60609),
+      settingsCompact: register("settings-compact", 60610),
+      vmCompact: register("vm-compact", 60611)
     };
   }
 });
@@ -13846,7 +13850,7 @@ function markdownStringEqual(a, b) {
   }
 }
 function escapeMarkdownSyntaxTokens(text) {
-  return text.replace(/[\\`*_{}[\]()#+\-!~]/g, "\\$&");
+  return text.replace(/[\\`*_{}[\]()#+!~]/g, "\\$&").replace(/^([ \t]*)-/gm, "$1\\-");
 }
 function escapeMarkdownLinkLabel(text) {
   return text.replace(/[\\\]]/g, "\\$&");
