@@ -1,9 +1,15 @@
 export * from "./Constant/Environment/Constant.js";
+
 import { sep, posix } from "node:path";
+
 import { default as default2 } from "./Config/Base/Config.js";
+
 import { default as default3 } from "./Config/Target/Config.js";
+
 import { default as default4 } from "./Config/Compile/Config.js";
+
 import { default as default5 } from "./Config/Bootstrap/Config.js";
+
 export {
   default2 as BaseConfig,
   default5 as BootstrapConfig,
@@ -12,4 +18,5 @@ export {
   posix,
   sep
 };
+
 //# sourceMappingURL=index.js.map
