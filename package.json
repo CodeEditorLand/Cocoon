@@ -34,15 +34,15 @@
 		"@effect/platform-node": "0.107.0",
 		"@grpc/grpc-js": "1.14.4",
 		"@grpc/proto-loader": "0.8.1",
-		"effect": "3.21.2",
+		"effect": "3.21.3",
 		"google-protobuf": "4.0.2",
-		"protobufjs": "8.6.0",
+		"protobufjs": "8.6.1",
 		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
 		"@effect/language-service": "0.86.2",
 		"@playform/build": "0.3.2",
-		"@types/node": "25.9.1",
+		"@types/node": "25.9.2",
 		"@vitest/coverage-v8": "4.1.8",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
