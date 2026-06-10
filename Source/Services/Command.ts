@@ -187,18 +187,14 @@ export class CommandService extends Effect.Service<CommandService>()(
 				) => {
 					const Disposable: IDisposable = { dispose: () => {} };
 
-					// Register command locally
-					Effect.runSync(
-						Ref.update(CommandRegistry, (Registry) =>
-							Registry.set(Id, {
-								Id,
-								Callback,
-								ThisArg,
-								Extension: undefined,
-								RegisteredAt: Date.now(),
-							}),
-						),
-					);
+					// Register command locally — direct map mutation
+					_commandRegistry.set(Id, {
+						Id,
+						Callback,
+						ThisArg,
+						Extension: undefined,
+						RegisteredAt: Date.now(),
+					});
 
 					return Disposable;
 				},
@@ -290,7 +286,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 				...Arguments: any[]
 			): Effect.Effect<T | undefined, Error> =>
 				Effect.gen(function* () {
-					const Registry = yield* Ref.get(CommandRegistry);
+					const Registry = _commandRegistry;
 
 					// Check if command is registered locally
 					if (Registry.has(Id)) {
@@ -390,7 +386,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					};
 
 					// Register in local registry
-					yield* Ref.update(CommandRegistry, (Registry) =>
+					_commandRegistry = ((Registry: any) =>
 						Registry.set(Id, Metadata),
 					);
 
@@ -444,35 +440,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// Return disposable for cleanup
 					return {
 						dispose: () => {
-							Effect.runFork(
-								Effect.gen(function* () {
-									// Unregister from local registry
-									yield* Ref.update(
-										CommandRegistry,
-
-										(Registry) => {
-											Registry.delete(Id);
-
-											return Registry;
-										},
-									);
-
-									yield* Logger.Info(
-										`[CommandService] Command '${Id}' unregistered`,
-									);
-
-									// Notify Mountain via the already-yielded mountainClient.
-									yield* Effect.tryPromise({
-										try: () =>
-											mountainClient.sendNotification(
-												"unregisterCommand",
-
-												{ commandId: Id },
-											),
-										catch: () => undefined,
-									});
-								}),
-							);
+							_commandRegistry.delete(Id); // lean: was Effect.runFork
 						},
 					};
 				});
@@ -503,11 +471,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 						const ActiveEditor = Window.activeTextEditor;
 
 						if (!ActiveEditor) {
-							Effect.runSync(
-								Logger.Warn(
+							Logger.Warn(
 									`[CommandService] Cannot execute text editor command '${Id}' - no active text editor`,
-								),
-							);
+								).catch?.(() => {});
 
 							return undefined;
 						}
@@ -539,7 +505,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 				FilterInternal: boolean = false,
 			): Effect.Effect<string[], Error> =>
 				Effect.gen(function* () {
-					const Registry = yield* Ref.get(CommandRegistry);
+					const Registry = _commandRegistry;
 
 					const LocalCommandIds = Array.from(Registry.keys());
 
@@ -593,7 +559,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 				GetCommands,
 			};
 
-			const Registry = yield* Ref.get(CommandRegistry);
+			const Registry = _commandRegistry;
 
 			yield* Logger.Info(
 				`[CommandService] CommandService initialized with ${Registry.size} registered commands`,

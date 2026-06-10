@@ -261,7 +261,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const AcceptWorkspaceData = (Data: any) =>
 				Effect.gen(function* () {
-					const OldWorkspace = yield* Ref.get(InternalWorkspaceRef);
+					const OldWorkspace = _internalWorkspace;
 
 					// Map incoming workspace folder DTOs to VSCode.WorkspaceFolder objects.
 					// Defensive: per-folder try/catch + empty-string skip
@@ -326,7 +326,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						Configuration: ConfigurationUri,
 					};
 
-					yield* Ref.set(InternalWorkspaceRef, NewWorkspace);
+					_internalWorkspace = NewWorkspace;
 
 					Logger.Info(
 						`[WorkspaceService] Workspace updated: ${NewWorkspace.Name} with ${Folders.length} folders`,
@@ -377,16 +377,16 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				VisibleEditorIds: string[],
 			) =>
 				Effect.gen(function* () {
-					const TextEditorsMap = yield* Ref.get(TextEditorsMapRef);
+					const TextEditorsMap = _textEditorsMap;
 
 					// Update active editor
-					const OldActiveEditor = yield* Ref.get(ActiveTextEditorRef);
+					const OldActiveEditor = _activeTextEditor;
 
 					const NewActiveEditor = ActiveEditorId
 						? TextEditorsMap.get(ActiveEditorId)
 						: undefined;
 
-					yield* Ref.set(ActiveTextEditorRef, NewActiveEditor);
+					_activeTextEditor = NewActiveEditor;
 
 					if (OldActiveEditor !== NewActiveEditor) {
 						Logger.Debug(
@@ -406,7 +406,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							editor !== undefined,
 					);
 
-					yield* Ref.set(VisibleTextEditorsRef, NewVisibleEditors);
+					_visibleTextEditors = NewVisibleEditors;
 
 					OnDidChangeVisibleTextEditorsListeners.forEach((listener) =>
 						listener(NewVisibleEditors),
@@ -421,7 +421,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			const GetWorkspaceFolder = (
 				uri: VSCode.Uri,
 			): VSCode.WorkspaceFolder | undefined => {
-				const Workspace = Effect.runSync(Ref.get(InternalWorkspaceRef));
+				const Workspace = _internalWorkspace;
 
 				if (!Workspace) {
 					return undefined;
@@ -590,7 +590,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					} else {
 						// Open current active document
 						const ActiveEditor =
-							yield* Ref.get(ActiveTextEditorRef);
+							_activeTextEditor;
 
 						if (!ActiveEditor) {
 							return yield* Effect.fail(
@@ -947,14 +947,14 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			// Return the service implementation
 			const ServiceImplementation: Workspace = {
 				get name() {
-					return Effect.runSync(Ref.get(InternalWorkspaceRef))?.Name;
+					return _internalWorkspace?.Name;
 				},
 				get workspaceFile() {
-					return Effect.runSync(Ref.get(InternalWorkspaceRef))
+					return _internalWorkspace
 						?.Configuration;
 				},
 				get workspaceFolders() {
-					return Effect.runSync(Ref.get(InternalWorkspaceRef))
+					return _internalWorkspace
 						?.Folders;
 				},
 				get isTrusted() {
@@ -962,10 +962,10 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					return true;
 				},
 				get activeTextEditor() {
-					return Effect.runSync(Ref.get(ActiveTextEditorRef));
+					return _activeTextEditor;
 				},
 				get visibleTextEditors() {
-					return Effect.runSync(Ref.get(VisibleTextEditorsRef));
+					return _visibleTextEditors;
 				},
 				GetWorkspaceFolder,
 				FindFiles,

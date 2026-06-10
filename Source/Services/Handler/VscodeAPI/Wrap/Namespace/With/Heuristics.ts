@@ -218,66 +218,15 @@ const BuildHeuristicMethod =
 	(...Arguments: unknown[]): unknown => {
 		const SpanName = `vscode.${NamespaceName}.${Property}`;
 
-		const Program = Effect.gen(function* () {
-			yield* Effect.sync(() => {
-				try {
-					RecordGap(NamespaceName, Property, Heuristic.Kind);
-				} catch {
-					/* telemetry/log failure must not break the
-					 * heuristic stub itself */
-				}
-			});
-
-			// Wrap `Produce` so a buggy override (custom heuristic
-			// that throws on certain argument shapes) degrades to the
-			// safe default rather than propagating the throw to the
-			// extension caller. Stock VS Code's missing-API access
-			// returns `undefined`; matching that shape here keeps
-			// extensions defensively coded against `undefined` happy.
-			try {
-				return Heuristic.Produce(...Arguments);
-			} catch {
-				switch (Heuristic.Kind) {
-					case "trust":
-						return true;
-
-					case "event":
-						return NoopDisposable;
-
-					case "register":
-						return NoopDisposable;
-
-					case "bool-check":
-						return false;
-
-					case "factory":
-					case "default":
-					default:
-						return undefined;
-				}
-			}
-		}).pipe(
-			Effect.withSpan(SpanName, {
-				attributes: {
-					"vscode.namespace": NamespaceName,
-					"vscode.method": Property,
-					"vscode.heuristic": Heuristic.Kind,
-				},
-			}),
-		);
-
+		// Direct call — no Effect fiber on every VS Code API invocation.
 		try {
-			return Heuristic.Sync
-				? Effect.runSync(Program)
-				: Effect.runPromise(Program);
+			try {
+				RecordGap(NamespaceName, Property, Heuristic.Kind);
+			} catch {}
+
+			return Heuristic.Produce(...Arguments);
 		} catch {
-			// Effect.runSync rethrows the program's error. If the
-			// safe-default fallback above somehow still threw (Effect
-			// runtime panic), return the cheapest no-op shape so the
-			// extension caller doesn't crash. Same kind switch as
-			// above so trust/event/etc. callers see a usable shape.
-			switch (Heuristic.Kind) {
-				case "trust":
+			
 					return Heuristic.Sync ? true : Promise.resolve(true);
 
 				case "event":
@@ -293,95 +242,3 @@ const BuildHeuristicMethod =
 						: Promise.resolve(undefined);
 			}
 		}
-	};
-
-/**
- * Wrap a concrete namespace object with the heuristic Proxy fallback.
- *
- * - Defined keys on `Concrete` pass through unchanged (zero behavior
- *   change for the hand-written shim methods).
- * - Unknown string keys go through the classifier → Effect program →
- *   heuristic stub.
- * - Symbol keys / `then` / `Symbol.toPrimitive` return `undefined` so
- *   the wrapped namespace doesn't accidentally look like a Thenable
- *   to `await` consumers, doesn't break console formatting, and
- *   doesn't throw on incidental probes.
- *
- * The wrapper is purely additive: the existing `Concrete` literal
- * stays as-is and remains the hot path. The Proxy only intercepts
- * `Property in Concrete === false` accesses, so no existing call site
- * changes shape.
- */
-const WrapNamespaceWithHeuristics = <T extends object>(
-	NamespaceName: string,
-
-	Concrete: T,
-
-	Overrides?: HeuristicOverrides,
-): T =>
-	new Proxy(Concrete, {
-		get(Target, Property) {
-			if (Reflect.has(Target, Property)) {
-				return Reflect.get(Target, Property);
-			}
-
-			if (typeof Property !== "string") return undefined;
-
-			if (Property === "then") return undefined;
-
-			// `toJSON` is consulted by `JSON.stringify` whenever a
-			// consumer serialises the namespace (workbench state
-			// snapshots, telemetry payloads, devtools console
-			// inspection). The default heuristic returns
-			// `Promise<undefined>` which is wrong here - `toJSON` must
-			// return a plain serialisable value (NOT a thenable) so
-			// `JSON.stringify` produces something coherent. Return a
-			// shallow representation of the concrete object's own keys
-			// without firing the audit-log path.
-			if (Property === "toJSON") {
-				return () => {
-					const Out: Record<string, unknown> = {
-						_namespace: NamespaceName,
-					};
-
-					for (const Key of Object.keys(Target)) {
-						const Value = (Target as Record<string, unknown>)[Key];
-
-						const T = typeof Value;
-
-						Out[Key] =
-							T === "function"
-								? "[Function]"
-								: T === "object" && Value !== null
-									? "[Object]"
-									: Value;
-					}
-
-					return Out;
-				};
-			}
-
-			// `toString` / `valueOf` should NOT be heuristic-stubbed -
-			// JS falls back to `Object.prototype.*` which yields the
-			// stable `[object Object]` shape consumers expect.
-			if (Property === "toString" || Property === "valueOf") {
-				return undefined;
-			}
-
-			const Heuristic =
-				Overrides?.[Property] ?? ClassifyProperty(Property);
-
-			return BuildHeuristicMethod(NamespaceName, Property, Heuristic);
-		},
-		has(Target, Property) {
-			// Reflect ownership for defined keys; report `true` for unknown
-			// strings so `"requestResourceTrust" in workspace` reads as
-			// truthy (vscode.git's defensive pre-check) and the call hits
-			// our Proxy on access.
-			if (Reflect.has(Target, Property)) return true;
-
-			return typeof Property === "string" && Property !== "then";
-		},
-	}) satisfies T;
-
-export default WrapNamespaceWithHeuristics;
