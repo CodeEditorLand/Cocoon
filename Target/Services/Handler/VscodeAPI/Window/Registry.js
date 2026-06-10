@@ -1,18 +1,1 @@
-// Source/Services/Handler/VscodeAPI/Window/Registry.ts
-var TreeDataProviders = /* @__PURE__ */ new Map();
-var TreeDataProvidersByViewId = /* @__PURE__ */ new Map();
-var WebviewViewProviders = /* @__PURE__ */ new Map();
-var WebviewViewBuilders = /* @__PURE__ */ new Map();
-var CustomEditorProviders = /* @__PURE__ */ new Map();
-var CustomEditorProvidersByViewType = /* @__PURE__ */ new Map();
-var WebviewPanels = /* @__PURE__ */ new Map();
-export {
-  CustomEditorProviders,
-  CustomEditorProvidersByViewType,
-  TreeDataProviders,
-  TreeDataProvidersByViewId,
-  WebviewPanels,
-  WebviewViewBuilders,
-  WebviewViewProviders
-};
-//# sourceMappingURL=Registry.js.map
+const e=new Map,n=new Map,r=new Map,o=new Map,t=new Map,i=new Map,s=new Map;export{t as CustomEditorProviders,i as CustomEditorProvidersByViewType,e as TreeDataProviders,n as TreeDataProvidersByViewId,s as WebviewPanels,o as WebviewViewBuilders,r as WebviewViewProviders};
