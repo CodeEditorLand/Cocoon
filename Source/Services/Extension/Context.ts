@@ -112,41 +112,28 @@ export class Memento {
 		// Load persisted state from Mountain's storage on construction.
 		// Keys are namespaced by ExtensionId so extensions don't collide.
 		void (async () => {
-			// async init: load persisted state from Mountain
-				if (!MountainClient) return;
+			if (!MountainClient) return;
 
-				try {
-					
-						// `storage:getItems` returns `[key, value][]` tuples.
-						// Filter by the extension namespace prefix.
-						const AllItems = await MountainClient.sendRequest(
-							"Storage.GetItems",
+			try {
+				const AllItems = await MountainClient.sendRequest(
+					"Storage.GetItems",
+					[],
+				);
 
-							[],
-						);
+				const Prefix = `${ExtensionId}:`;
 
-						const Prefix = `${ExtensionId}:`;
+				if (Array.isArray(AllItems)) {
+					const Entries = (AllItems as [string, unknown][]).filter(
+						([K]) => typeof K === "string" && K.startsWith(Prefix),
+					);
 
-						if (Array.isArray(AllItems)) {
-							const Entries = (
-								AllItems as [string, unknown][]
-							).filter(
-								([K]) =>
-									typeof K === "string" &&
-									K.startsWith(Prefix),
-							);
-
-							if (Entries.length > 0) {
-							// lean: direct map mutation
-							for (const [K, V] of Entries) {
-								this.Storage.set(K.slice(Prefix.length), V);
-							}
-							}
-						}
-					},
-					catch: () => undefined,
-				});
-			}),
+					for (const [K, V] of Entries) {
+						this.Storage.set(K.slice(Prefix.length), V);
+					}
+				}
+			} catch {
+				// ignore - storage load failure is non-fatal
+			}
 		})();
 	}
 

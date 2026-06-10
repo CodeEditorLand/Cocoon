@@ -218,7 +218,7 @@ const BuildHeuristicMethod =
 	(...Arguments: unknown[]): unknown => {
 		const SpanName = `vscode.${NamespaceName}.${Property}`;
 
-		// Direct call — no Effect fiber on every VS Code API invocation.
+		// Direct call - no Effect fiber on every VS Code API invocation.
 		try {
 			try {
 				RecordGap(NamespaceName, Property, Heuristic.Kind);
@@ -226,7 +226,8 @@ const BuildHeuristicMethod =
 
 			return Heuristic.Produce(...Arguments);
 		} catch {
-			
+			switch (Heuristic.Kind) {
+				case "trust":
 					return Heuristic.Sync ? true : Promise.resolve(true);
 
 				case "event":
@@ -242,3 +243,4 @@ const BuildHeuristicMethod =
 						: Promise.resolve(undefined);
 			}
 		}
+};
