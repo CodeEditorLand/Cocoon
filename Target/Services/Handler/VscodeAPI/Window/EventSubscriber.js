@@ -1,0 +1,1 @@
+const s=(t,e)=>(o,r,n)=>{const u=r===void 0?o:o.bind(r);t.Emitter.on(e,u);const i={dispose:()=>{t.Emitter.off(e,u)}};return n&&typeof n.push=="function"&&n.push(i),i};export{s as MakeEventSubscriber};

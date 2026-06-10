@@ -1,0 +1,1 @@
+const r=e=>({showCollapseAll:!!e.showCollapseAll,canSelectMany:!!e.canSelectMany,hasHandleDrag:!!e.dragAndDropController?.handleDrag,hasHandleDrop:!!e.dragAndDropController?.handleDrop});export{r as FromAPI};

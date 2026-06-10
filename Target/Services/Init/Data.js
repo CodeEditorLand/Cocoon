@@ -1,0 +1,1 @@
+import{Context as e,Layer as n}from"effect";class o extends e.Tag("Cocoon/InitData")(){}const t=process.env.ProductVersion??"1.118.0",r=process.env.ProductCommit??"dev",c=n.succeed(o,{commit:r,version:t,parentPid:process.pid,extensions:[],workspace:null,environment:{}});export{c as InitDataLive,o as InitDataService};

@@ -1,0 +1,1 @@
+const i=(o,a,r,e,t)=>{if(t==null||typeof t!="object")return{dispose:()=>{}};let n;try{n=a.RegisterAutoHandle(t)}catch{return{dispose:()=>{}}}const s=typeof e=="string"?e:typeof e?.language=="string"?e.language:"*";return o.SendToMountain(r,{handle:n,languageSelector:s,extensionId:""}).catch(()=>{}),{dispose:()=>{try{a.Unregister(n)}catch{}}}};export{i as RegisterProvider};

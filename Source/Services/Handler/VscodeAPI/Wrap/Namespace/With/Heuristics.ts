@@ -244,3 +244,31 @@ const BuildHeuristicMethod =
 			}
 		}
 };
+
+/**
+ * Wrap `ConcreteNamespace` with a Proxy so that any unknown property access
+ * returns a heuristic stub instead of `undefined`.
+ */
+const WrapNamespaceWithHeuristics = <T extends object>(
+	NamespaceName: string,
+	ConcreteNamespace: T,
+	Overrides?: HeuristicOverrides,
+): T =>
+	new Proxy(ConcreteNamespace, {
+		get(Target, Property: string | symbol) {
+			const Key = String(Property);
+
+			if (Property === "then" || Property === Symbol.toPrimitive)
+				return undefined;
+
+			const Existing = (Target as Record<string, unknown>)[Key];
+
+			if (Existing !== undefined) return Existing;
+
+			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
+
+			return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
+		},
+	});
+
+export default WrapNamespaceWithHeuristics;

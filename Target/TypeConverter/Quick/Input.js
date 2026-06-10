@@ -1,0 +1,1 @@
+const r=n=>n.map((i,e)=>({...typeof i=="string"?{label:i}:i,handle:e})),o=n=>n?.map((i,e)=>{const t=i.iconPath;return{iconPath:t?"dark"in t&&"light"in t?{dark:t.dark.toJSON(),light:t.light.toJSON()}:t.toJSON():void 0,tooltip:i.tooltip,handle:e}});export{o as SerializeButtons,r as SerializeItems};

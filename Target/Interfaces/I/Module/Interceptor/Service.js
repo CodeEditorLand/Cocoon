@@ -1,0 +1,1 @@
+import{Context as t}from"effect";var r=(e=>(e.TRUSTED="TRUSTED",e.SANDBOXED="SANDBOXED",e.RESTRICTED="RESTRICTED",e.BLOCKED="BLOCKED",e))(r||{});const o=t.Tag("IModuleInterceptorService");export{o as IModuleInterceptorService,r as SecurityLevel};

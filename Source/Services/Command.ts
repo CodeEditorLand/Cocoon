@@ -187,7 +187,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 				) => {
 					const Disposable: IDisposable = { dispose: () => {} };
 
-					// Register command locally — direct map mutation
+					// Register command locally - direct map mutation
 					_commandRegistry.set(Id, {
 						Id,
 						Callback,
@@ -386,9 +386,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					};
 
 					// Register in local registry
-					_commandRegistry = ((Registry: any) =>
-						Registry.set(Id, Metadata),
-					);
+					_commandRegistry.set(Id, Metadata);
 
 					yield* Logger.Info(
 						`[CommandService] Command '${Id}' registered locally`,

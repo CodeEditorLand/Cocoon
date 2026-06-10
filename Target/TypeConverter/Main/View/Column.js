@@ -1,0 +1,1 @@
+const{ViewColumn:r}=await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js"),t=-1,n=-2,o=e=>{if(typeof e=="number")switch(e){case r.Active:return t;case r.Beside:return n;default:if(e>=r.One)return e-1}};export{o as FromAPI};

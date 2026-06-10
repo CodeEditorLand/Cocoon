@@ -9,6 +9,6 @@ export declare const RouteManifestSummary: {
     readonly mountain: 146;
     readonly stockLift: 0;
     readonly bespoke: 1;
-    readonly generatedAt: "2026-06-10T12:45:31Z";
+    readonly generatedAt: "2026-06-10T12:50:43Z";
 };
 //# sourceMappingURL=RouteManifest.d.ts.map
