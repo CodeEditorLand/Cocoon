@@ -1,100 +1,71 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-
 	"compilerOptions": {
 		"allowImportingTsExtensions": false,
-
 		"baseUrl": "./",
-
 		"composite": true,
-
 		"declarationMap": true,
-
 		"downlevelIteration": true,
-
 		"emitDeclarationOnly": true,
-
 		"emitDecoratorMetadata": true,
-
 		"exactOptionalPropertyTypes": true,
-
 		"experimentalDecorators": true,
-
 		"ignoreDeprecations": "6.0",
-
-		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-
+		"lib": [
+			"ESNext",
+			"DOM",
+			"DOM.Iterable"
+		],
 		"module": "ESNext",
-
 		"moduleResolution": "Bundler",
-
 		"noFallthroughCasesInSwitch": true,
-
 		"noImplicitAny": true,
-
 		"noImplicitOverride": true,
-
 		"noImplicitReturns": true,
-
 		"noUncheckedIndexedAccess": true,
-
 		"noUnusedLocals": true,
-
 		"noUnusedParameters": true,
-
 		"outDir": "Target",
-
 		"paths": {
-			"@codeeditorland/output/*": ["../Output/*"],
+			"@codeeditorland/output/*": [
+				"../Output/*"
+			],
 			"vscode": [
 				"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
 			]
 		},
-
 		"plugins": [
 			{
 				"allowedDuplicatedPackages": [],
-
 				"completions": true,
-
 				"diagnosticSeverity": {
 					"duplicatePackage": "error",
-
 					"floatingEffect": "error",
-
 					"leakingRequirements": "error",
-
 					"missingEffectContext": "error",
-
 					"missingEffectError": "error",
-
 					"missingReturnYieldStar": "error",
-
 					"missingStarInYieldEffectGen": "error",
-
 					"unnecessaryEffectGen": "error",
-
 					"unnecessaryPipe": "error"
 				},
-
 				"diagnostics": true,
-
 				"name": "@effect/language-service",
-
 				"quickinfo": true,
-
 				"transform": "@effect/language-service/transform"
 			}
 		],
-
 		"rootDir": "./Source",
-
 		"strict": true,
-
 		"target": "ESNext"
 	},
-
-	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs", "Archive"],
-
-	"include": ["Source"]
+	"exclude": [
+		"Target",
+		"Scripts/**/*.cjs",
+		"**/*.cjs",
+		"Archive"
+	],
+	"include": [
+		"Source"
+	]
 }
