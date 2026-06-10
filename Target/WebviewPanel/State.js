@@ -1,1 +1,154 @@
-import{Effect as t}from"effect";const l=1;class E extends t.Service()("State/WebviewPanel",{effect:t.gen(function*(){const r=yield*t.tryMap(t.sync(()=>new Map),e=>new Error(`Failed to create state cache: ${e}`)),i=e=>t.gen(function*(){if(typeof e!="object"||e===null||Array.isArray(e))return yield*t.fail(new Error("Panel state must be an object"));const n=e;if(typeof n.Version!="number")return yield*t.fail(new Error("Panel state missing Version"));if(typeof n.Handle!="string")return yield*t.fail(new Error("Panel state missing Handle"));if(typeof n.ExtensionId!="string")return yield*t.fail(new Error("Panel state missing ExtensionId"));if(typeof n.ViewType!="string")return yield*t.fail(new Error("Panel state missing ViewType"));if(typeof n.Title!="string")return yield*t.fail(new Error("Panel state missing Title"));if(typeof n.Position!="object"||n.Position===null||Array.isArray(n.Position))return yield*t.fail(new Error("Panel state has invalid Position"));const a=n.Position;if(typeof a.ViewColumn!="number")return yield*t.fail(new Error("Panel state has invalid ViewColumn"));if(typeof a.PreservedFocus!="boolean")return yield*t.fail(new Error("Panel state has invalid PreservedFocus"));if(typeof n.ViewState!="object"||n.ViewState===null||Array.isArray(n.ViewState))return yield*t.fail(new Error("Panel state has invalid ViewState"));const o=n.ViewState;return typeof o.Active!="boolean"||typeof o.Visible!="boolean"||typeof o.ViewColumn!="number"?yield*t.fail(new Error("Panel state has invalid ViewState")):n}),d=e=>({Version:l,Handle:e.Handle,ExtensionId:e.ExtensionId,ViewType:e.ViewType,Title:e.Title,Position:e.Position,ViewState:e.ViewState,Options:e.Options,IconPath:e.IconPath,Content:e.Content,Metadata:{CreatedAt:Date.now()}});return{SavePanelState:e=>t.gen(function*(){yield*t.tryMap(t.sync(()=>{r.current.set(e.Handle,e)}),n=>new Error(`Failed to save panel state: ${n}`))}),RestorePanelState:e=>t.gen(function*(){const n=r.current.get(e);return n?yield*i(n):null}),DeletePanelState:e=>t.gen(function*(){yield*t.tryMap(t.sync(()=>{r.current.delete(e)}),n=>new Error(`Failed to delete panel state: ${n}`))}),GetAllPanelStates:e=>t.gen(function*(){return Array.from(r.current.values()).filter(a=>a.ExtensionId===e)}),ClearAllPanelStates:()=>t.gen(function*(){yield*t.tryMap(t.sync(()=>{r.current.clear()}),e=>new Error(`Failed to clear panel states: ${e}`))})}})}){}export{E as StateService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/WebviewPanel/State.ts
+import { Effect } from "effect";
+var STATE_VERSION = 1;
+var StateService = class extends Effect.Service()(
+  "State/WebviewPanel",
+  {
+    effect: Effect.gen(function* () {
+      const StateCacheRef = yield* Effect.tryMap(
+        Effect.sync(() => /* @__PURE__ */ new Map()),
+        (error) => new Error(`Failed to create state cache: ${error}`)
+      );
+      const ValidateState = /* @__PURE__ */ __name((State) => Effect.gen(function* () {
+        if (typeof State !== "object" || State === null || Array.isArray(State)) {
+          return yield* Effect.fail(
+            new Error("Panel state must be an object")
+          );
+        }
+        const S = State;
+        if (typeof S.Version !== "number") {
+          return yield* Effect.fail(
+            new Error("Panel state missing Version")
+          );
+        }
+        if (typeof S.Handle !== "string") {
+          return yield* Effect.fail(
+            new Error("Panel state missing Handle")
+          );
+        }
+        if (typeof S.ExtensionId !== "string") {
+          return yield* Effect.fail(
+            new Error("Panel state missing ExtensionId")
+          );
+        }
+        if (typeof S.ViewType !== "string") {
+          return yield* Effect.fail(
+            new Error("Panel state missing ViewType")
+          );
+        }
+        if (typeof S.Title !== "string") {
+          return yield* Effect.fail(
+            new Error("Panel state missing Title")
+          );
+        }
+        if (typeof S.Position !== "object" || S.Position === null || Array.isArray(S.Position)) {
+          return yield* Effect.fail(
+            new Error("Panel state has invalid Position")
+          );
+        }
+        const Position = S.Position;
+        if (typeof Position.ViewColumn !== "number") {
+          return yield* Effect.fail(
+            new Error("Panel state has invalid ViewColumn")
+          );
+        }
+        if (typeof Position.PreservedFocus !== "boolean") {
+          return yield* Effect.fail(
+            new Error("Panel state has invalid PreservedFocus")
+          );
+        }
+        if (typeof S.ViewState !== "object" || S.ViewState === null || Array.isArray(S.ViewState)) {
+          return yield* Effect.fail(
+            new Error("Panel state has invalid ViewState")
+          );
+        }
+        const ViewState = S.ViewState;
+        if (typeof ViewState.Active !== "boolean" || typeof ViewState.Visible !== "boolean" || typeof ViewState.ViewColumn !== "number") {
+          return yield* Effect.fail(
+            new Error("Panel state has invalid ViewState")
+          );
+        }
+        return S;
+      }), "ValidateState");
+      const CreatePanelState = /* @__PURE__ */ __name((Params) => {
+        const State = {
+          Version: STATE_VERSION,
+          Handle: Params.Handle,
+          ExtensionId: Params.ExtensionId,
+          ViewType: Params.ViewType,
+          Title: Params.Title,
+          Position: Params.Position,
+          ViewState: Params.ViewState,
+          Options: Params.Options,
+          IconPath: Params.IconPath,
+          Content: Params.Content,
+          Metadata: {
+            CreatedAt: Date.now()
+          }
+        };
+        return State;
+      }, "CreatePanelState");
+      const SavePanelState = /* @__PURE__ */ __name((PanelStateData) => Effect.gen(function* () {
+        yield* Effect.tryMap(
+          Effect.sync(() => {
+            StateCacheRef.current.set(
+              PanelStateData.Handle,
+              PanelStateData
+            );
+          }),
+          (error) => new Error(`Failed to save panel state: ${error}`)
+        );
+      }), "SavePanelState");
+      const RestorePanelState = /* @__PURE__ */ __name((Handle) => Effect.gen(function* () {
+        const State = StateCacheRef.current.get(Handle);
+        if (!State) {
+          return null;
+        }
+        const ValidatedState = yield* ValidateState(State);
+        return ValidatedState;
+      }), "RestorePanelState");
+      const DeletePanelState = /* @__PURE__ */ __name((Handle) => Effect.gen(function* () {
+        yield* Effect.tryMap(
+          Effect.sync(() => {
+            StateCacheRef.current.delete(Handle);
+          }),
+          (error) => new Error(`Failed to delete panel state: ${error}`)
+        );
+      }), "DeletePanelState");
+      const GetAllPanelStates = /* @__PURE__ */ __name((ExtensionId) => Effect.gen(function* () {
+        const AllStates = Array.from(
+          StateCacheRef.current.values()
+        );
+        return AllStates.filter(
+          (State) => State.ExtensionId === ExtensionId
+        );
+      }), "GetAllPanelStates");
+      const ClearAllPanelStates = /* @__PURE__ */ __name(() => Effect.gen(function* () {
+        yield* Effect.tryMap(
+          Effect.sync(() => {
+            StateCacheRef.current.clear();
+          }),
+          (error) => new Error(`Failed to clear panel states: ${error}`)
+        );
+      }), "ClearAllPanelStates");
+      return {
+        SavePanelState,
+        RestorePanelState,
+        DeletePanelState,
+        GetAllPanelStates,
+        ClearAllPanelStates
+      };
+    })
+  }
+) {
+  static {
+    __name(this, "StateService");
+  }
+};
+export {
+  StateService
+};
+//# sourceMappingURL=State.js.map

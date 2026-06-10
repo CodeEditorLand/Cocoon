@@ -1,1 +1,99 @@
-import{IFileSystemService as i}from"../../../../Services/File/System/Service.js";export{i as IFileSystemService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/I/Mountain/Client/Service.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/File/System/Service.ts
+import { Context, Effect as Effect2, Layer } from "effect";
+var IFileSystemService = Context.Tag();
+var FileSystemService = class {
+  constructor(mountainClient) {
+    this.mountainClient = mountainClient;
+  }
+  mountainClient;
+  static {
+    __name(this, "FileSystemService");
+  }
+  async stat(uri) {
+    const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+    const Response = await this.mountainClient.sendRequest(
+      "FileSystem.Stat",
+      Path
+    );
+    if (!Response) throw new Error(`File not found: ${Path}`);
+    return {
+      type: Response.type ?? 1,
+      ctime: 0,
+      mtime: Response.mtime ?? 0,
+      size: Response.size ?? 0
+    };
+  }
+  async readFile(uri) {
+    if (uri.scheme !== "file") {
+      throw new Error(`Unsupported scheme: ${uri.scheme}`);
+    }
+    const response = await this.mountainClient.sendRequest(
+      "FileSystem.ReadFile",
+      uri.fsPath
+    );
+    return response;
+  }
+  async writeFile(uri, content) {
+    if (uri.scheme !== "file") {
+      throw new Error(`Unsupported scheme: ${uri.scheme}`);
+    }
+    await this.mountainClient.sendRequest("FileSystem.WriteFile", {
+      path: uri.fsPath,
+      content: Array.from(content)
+      // Serialize buffer to array
+    });
+  }
+  async readDirectory(uri) {
+    if (uri.scheme !== "file") {
+      throw new Error(`Unsupported scheme: ${uri.scheme}`);
+    }
+    const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+    const Entries = await this.mountainClient.sendRequest(
+      "FileSystem.ReadDirectory",
+      Path
+    );
+    return (Entries ?? []).map(
+      (E) => typeof E === "string" ? [E, 1] : [E.name, E.type]
+    );
+  }
+  async createDirectory(uri) {
+    await this.mountainClient.sendRequest(
+      "FileSystem.CreateDirectory",
+      uri.fsPath
+    );
+  }
+  async delete(uri, _options) {
+    await this.mountainClient.sendRequest("FileSystem.Delete", uri.fsPath);
+  }
+  async rename(source, target, _options) {
+    await this.mountainClient.sendRequest("FileSystem.Rename", {
+      from: source.fsPath,
+      to: target.fsPath
+    });
+  }
+};
+var FileSystemServiceLayer = Layer.effect(
+  IFileSystemService,
+  Effect2.gen(function* () {
+    const mountainClient = yield* IMountainClientService;
+    return new FileSystemService(mountainClient);
+  })
+);
+export {
+  IFileSystemService
+};
+//# sourceMappingURL=Service.js.map

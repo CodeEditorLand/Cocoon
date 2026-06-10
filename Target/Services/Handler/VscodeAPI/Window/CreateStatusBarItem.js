@@ -1,1 +1,168 @@
-const C=(o,r,d)=>typeof o=="string"?{Id:o,Alignment:typeof r=="number"?r:1,Priority:typeof d=="number"?d:void 0}:{Id:void 0,Alignment:typeof o=="number"?o:1,Priority:typeof r=="number"?r:void 0};var I=(o,r,d,b,w)=>{const{Id:s,Alignment:y,Priority:g}=C(d,b,w);let a="",f="",t,l,m,u=!1,c,p,e=!1;const i=()=>{if(e||!u)return;const n=typeof t=="string"?t:typeof t=="object"&&t!==null?{command:t.command,arguments:t.arguments,title:t.title,tooltip:t.tooltip}:void 0;o.SendToMountain("statusBar.update",{handle:r,id:s,alignment:y,priority:g,text:a,tooltip:f,command:n,backgroundColor:l,color:m,visible:!0,name:c,accessibilityInformation:p}).catch(()=>{})};return{id:s??String(r),alignment:y,priority:g,get text(){return a},set text(n){if(e)return;const k=String(n??"");k!==a&&(a=k,i())},get tooltip(){return f},set tooltip(n){e||(f=n,i())},get command(){return t},set command(n){e||(t=n,i())},get backgroundColor(){return l},set backgroundColor(n){e||(l=n,i())},get color(){return m},set color(n){e||(m=n,i())},get name(){return c},set name(n){e||(c=typeof n=="string"?n:void 0,i())},get accessibilityInformation(){return p},set accessibilityInformation(n){e||(p=n,i())},show:()=>{e||u||(u=!0,i())},hide:()=>{e||u&&(u=!1,o.SendToMountain("statusBar.update",{handle:r,id:s,visible:!1}).catch(()=>{}))},dispose:()=>{e||(e=!0,u=!1,o.SendToMountain("statusBar.dispose",{handle:r,id:s}).catch(()=>{}))}}};export{I as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/Handler/VscodeAPI/Window/CreateStatusBarItem.ts
+var StatusBarAlignment = /* @__PURE__ */ ((StatusBarAlignment2) => {
+  StatusBarAlignment2[StatusBarAlignment2["Left"] = 1] = "Left";
+  StatusBarAlignment2[StatusBarAlignment2["Right"] = 2] = "Right";
+  return StatusBarAlignment2;
+})(StatusBarAlignment || {});
+var ResolveOverload = /* @__PURE__ */ __name((FirstArg, SecondArg, ThirdArg) => {
+  if (typeof FirstArg === "string") {
+    return {
+      Id: FirstArg,
+      Alignment: typeof SecondArg === "number" ? SecondArg : 1 /* Left */,
+      Priority: typeof ThirdArg === "number" ? ThirdArg : void 0
+    };
+  }
+  return {
+    Id: void 0,
+    Alignment: typeof FirstArg === "number" ? FirstArg : 1 /* Left */,
+    Priority: typeof SecondArg === "number" ? SecondArg : void 0
+  };
+}, "ResolveOverload");
+var CreateStatusBarItem_default = /* @__PURE__ */ __name((Context, Handle, AlignmentOrId, PriorityOrAlignment, Priority) => {
+  const {
+    Id,
+    Alignment,
+    Priority: ResolvedPriority
+  } = ResolveOverload(AlignmentOrId, PriorityOrAlignment, Priority);
+  let CurrentText = "";
+  let CurrentTooltip = "";
+  let CurrentCommand = void 0;
+  let CurrentBackgroundColor = void 0;
+  let CurrentColor = void 0;
+  let CurrentVisible = false;
+  let CurrentName = void 0;
+  let CurrentAccessibility = void 0;
+  let Disposed = false;
+  const Push = /* @__PURE__ */ __name(() => {
+    if (Disposed) return;
+    if (!CurrentVisible) return;
+    const NormalisedCommand = typeof CurrentCommand === "string" ? CurrentCommand : typeof CurrentCommand === "object" && CurrentCommand !== null ? {
+      command: CurrentCommand.command,
+      arguments: CurrentCommand.arguments,
+      title: CurrentCommand.title,
+      tooltip: CurrentCommand.tooltip
+    } : void 0;
+    Context.SendToMountain("statusBar.update", {
+      handle: Handle,
+      id: Id,
+      alignment: Alignment,
+      priority: ResolvedPriority,
+      text: CurrentText,
+      tooltip: CurrentTooltip,
+      command: NormalisedCommand,
+      backgroundColor: CurrentBackgroundColor,
+      color: CurrentColor,
+      visible: true,
+      name: CurrentName,
+      accessibilityInformation: CurrentAccessibility
+    }).catch(() => {
+    });
+  }, "Push");
+  const Item = {
+    // `item.id` is read by extensions to disambiguate which item
+    // fired their command. Upstream returns the `id` from the
+    // `createStatusBarItem(id, ...)` overload, falling back to a
+    // stable generated string. Use the explicit id when present;
+    // otherwise the handle is the stable fallback.
+    id: Id ?? String(Handle),
+    alignment: Alignment,
+    priority: ResolvedPriority,
+    get text() {
+      return CurrentText;
+    },
+    set text(Value) {
+      if (Disposed) return;
+      const Next = String(Value ?? "");
+      if (Next === CurrentText) return;
+      CurrentText = Next;
+      Push();
+    },
+    get tooltip() {
+      return CurrentTooltip;
+    },
+    set tooltip(Value) {
+      if (Disposed) return;
+      CurrentTooltip = Value;
+      Push();
+    },
+    get command() {
+      return CurrentCommand;
+    },
+    set command(Value) {
+      if (Disposed) return;
+      CurrentCommand = Value;
+      Push();
+    },
+    get backgroundColor() {
+      return CurrentBackgroundColor;
+    },
+    set backgroundColor(Value) {
+      if (Disposed) return;
+      CurrentBackgroundColor = Value;
+      Push();
+    },
+    get color() {
+      return CurrentColor;
+    },
+    set color(Value) {
+      if (Disposed) return;
+      CurrentColor = Value;
+      Push();
+    },
+    get name() {
+      return CurrentName;
+    },
+    set name(Value) {
+      if (Disposed) return;
+      CurrentName = typeof Value === "string" ? Value : void 0;
+      Push();
+    },
+    get accessibilityInformation() {
+      return CurrentAccessibility;
+    },
+    set accessibilityInformation(Value) {
+      if (Disposed) return;
+      CurrentAccessibility = Value;
+      Push();
+    },
+    show: /* @__PURE__ */ __name(() => {
+      if (Disposed) return;
+      if (CurrentVisible) return;
+      CurrentVisible = true;
+      Push();
+    }, "show"),
+    hide: /* @__PURE__ */ __name(() => {
+      if (Disposed) return;
+      if (!CurrentVisible) return;
+      CurrentVisible = false;
+      Context.SendToMountain("statusBar.update", {
+        handle: Handle,
+        id: Id,
+        visible: false
+      }).catch(() => {
+      });
+    }, "hide"),
+    // `dispose()` is idempotent in stock VS Code - calling it twice
+    // is a no-op on the second pass. Previously a double-dispose
+    // fired the Mountain notification twice and removed an item
+    // that didn't exist on the second emit (logged as "warn").
+    dispose: /* @__PURE__ */ __name(() => {
+      if (Disposed) return;
+      Disposed = true;
+      CurrentVisible = false;
+      Context.SendToMountain("statusBar.dispose", {
+        handle: Handle,
+        id: Id
+      }).catch(() => {
+      });
+    }, "dispose")
+  };
+  return Item;
+}, "default");
+export {
+  CreateStatusBarItem_default as default
+};
+//# sourceMappingURL=CreateStatusBarItem.js.map

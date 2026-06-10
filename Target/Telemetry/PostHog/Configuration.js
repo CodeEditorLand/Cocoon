@@ -1,1 +1,40 @@
-const u="https://eu.i.posthog.com";const r=(t,n)=>{const e=process.env[t];return e&&e.length>0?e:n},i=(t,n)=>{const e=process.env[t];return e===void 0?n:!["false","0","off",""].includes(e.toLowerCase())},a=(t,n)=>{const e=process.env[t],o=e?Number(e):Number.NaN;return Number.isFinite(o)&&o>0?o:n},s=i("Capture",!0);var l=()=>({Key:r("Authorize",""),Host:r("Beam",u),Enabled:i("Report",!0)&&s&&process.env.NODE_ENV!=="production",BatchWindowMilliseconds:a("Buffer",3e3),BatchMaximum:a("Batch",50),DistinctIdentifierSeed:process.env.Brand??"",Pipe:r("Pipe","http://127.0.0.1:4318"),Emit:i("Emit",!0)&&s&&process.env.NODE_ENV!=="production"});export{l as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey = "";
+var DefaultHost = "https://eu.i.posthog.com";
+var DefaultBatchWindowMilliseconds = 3e3;
+var DefaultBatchMaximum = 50;
+var ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  return Value && Value.length > 0 ? Value : Fallback;
+}, "ReadString");
+var ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  if (Value === void 0) return Fallback;
+  return !["false", "0", "off", ""].includes(Value.toLowerCase());
+}, "ReadBoolean");
+var ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  const Parsed = Value ? Number(Value) : Number.NaN;
+  return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+}, "ReadNumber");
+var TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+var Configuration_default = /* @__PURE__ */ __name(() => ({
+  Key: ReadString("Authorize", DefaultKey),
+  Host: ReadString("Beam", DefaultHost),
+  Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+  BatchWindowMilliseconds: ReadNumber(
+    "Buffer",
+    DefaultBatchWindowMilliseconds
+  ),
+  BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+  DistinctIdentifierSeed: process.env["Brand"] ?? "",
+  Pipe: ReadString("Pipe", "http://127.0.0.1:4318"),
+  Emit: ReadBoolean("Emit", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+}), "default");
+export {
+  Configuration_default as default
+};
+//# sourceMappingURL=Configuration.js.map
