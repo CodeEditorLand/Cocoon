@@ -1,2 +1,0 @@
-function e(o,t){return t.Has(o)?"local":"mountain"}const n=(o,t)=>{process.env.Trace?.includes("cmd-route")&&process.stdout.write(`[DEV:CMD-ROUTE] cmd=${o} route=${t}
-`)};export{n as LogRoute,e as Route};

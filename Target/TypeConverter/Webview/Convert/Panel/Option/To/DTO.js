@@ -1,1 +1,0 @@
-const t=e=>{const n={};return e.enableFindWidget!==void 0&&(n.enableFindWidget=e.enableFindWidget),e.retainContextWhenHidden!==void 0&&(n.retainContextWhenHidden=e.retainContextWhenHidden),n};export{t as ConvertPanelOptionToDTO};

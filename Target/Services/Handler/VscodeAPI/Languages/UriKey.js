@@ -1,1 +1,0 @@
-import{ToUri as o}from"../Stock/Lift.js";const s=t=>{if(t==null)return"";if(typeof t=="string")return t;const e=o(t);if(e)return e.toString();const r=String(t);if(r&&r!=="[object Object]")return r;const n=t;return typeof n.scheme=="string"&&typeof n.path=="string"?`${n.scheme}://${n.path}`:typeof n.fsPath=="string"?`file://${n.fsPath}`:r};export{s as UriKey};

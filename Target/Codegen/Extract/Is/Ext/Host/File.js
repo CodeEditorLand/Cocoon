@@ -1,1 +1,0 @@
-const r=["vs/workbench/api/common/extHost","vs/workbench/api/browser/extHost","vs/workbench/api/worker/extHost","vs/workbench/api/electron-browser/extHost"],s=e=>{const o=e.replace(/\\/g,"/");for(const t of r)if(o.includes(t))return!0;return!1};var n=s;export{s as IsExtHostFile,n as default};

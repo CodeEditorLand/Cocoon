@@ -1,1 +1,0 @@
-const n=(e,o)=>({enableCommandUris:o.enableCommandUris,enableScripts:o.enableScripts,enableForms:o.enableForms,localResourceRoots:o.localResourceRoots??[e.extensionLocation],portMapping:o.portMapping});export{n as ConvertContentOptionToDTO};

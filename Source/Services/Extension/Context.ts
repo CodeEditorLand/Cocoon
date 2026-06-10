@@ -111,12 +111,12 @@ export class Memento {
 
 		// Load persisted state from Mountain's storage on construction.
 		// Keys are namespaced by ExtensionId so extensions don't collide.
-		Effect.runFork(
-			Effect.gen(function* () {
+		void (async () => {
+			// async init: load persisted state from Mountain
 				if (!MountainClient) return;
 
-				yield* Effect.tryPromise({
-					try: async () => {
+				try {
+					
 						// `storage:getItems` returns `[key, value][]` tuples.
 						// Filter by the extension namespace prefix.
 						const AllItems = await MountainClient.sendRequest(
@@ -137,24 +137,17 @@ export class Memento {
 							);
 
 							if (Entries.length > 0) {
-								Effect.runSync(
-									Ref.update(Storage, (Map) => {
-										const Next = new Map(Map);
-
-										for (const [K, V] of Entries) {
-											Next.set(K.slice(Prefix.length), V);
-										}
-
-										return Next;
-									}),
-								);
+							// lean: direct map mutation
+							for (const [K, V] of Entries) {
+								this.Storage.set(K.slice(Prefix.length), V);
+							}
 							}
 						}
 					},
 					catch: () => undefined,
 				});
 			}),
-		);
+		})();
 	}
 
 	/**
@@ -164,7 +157,7 @@ export class Memento {
 	 * @returns The stored value or default
 	 */
 	get<T>(key: string, defaultValue?: T): T | undefined {
-		const Map = Effect.runSync(Ref.get(this.Storage));
+		const Map = this.Storage;
 
 		const Value = Map.get(key);
 
@@ -176,7 +169,7 @@ export class Memento {
 	 * @returns Array of all keys
 	 */
 	keys(): readonly string[] {
-		const Map = Effect.runSync(Ref.get(this.Storage));
+		const Map = this.Storage;
 
 		return Array.from(Map.keys());
 	}
@@ -188,15 +181,8 @@ export class Memento {
 	 * @returns Promise that resolves when update is complete
 	 */
 	async update(key: string, value: unknown): Promise<void> {
-		Effect.runSync(
-			Ref.update(this.Storage, (Map) => {
-				const NewMap = new Map(Map);
-
-				NewMap.set(key, value);
-
-				return NewMap;
-			}),
-		);
+		// lean: direct map mutation
+		this.Storage.set(key, value);
 
 		// Persist to Mountain's storage, namespaced by extension ID.
 		if (this._MountainClient) {
@@ -218,7 +204,7 @@ export class Memento {
 	 * Clear all values in memento storage
 	 */
 	clear(): void {
-		Effect.runSync(Ref.set(this.Storage, new Map()));
+		this.Storage.clear(); // lean: was Ref.set(new Map())
 
 		// Remove all namespaced keys from Mountain's storage.
 		if (this._MountainClient) {

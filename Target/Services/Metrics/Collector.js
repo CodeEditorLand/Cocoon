@@ -1,1 +1,0 @@
-class s{Metrics=new Map;Record(e,t){this.Metrics.set(e,(this.Metrics.get(e)||0)+t)}Get(e){return this.Metrics.get(e)||0}GetAll(){return Object.fromEntries(this.Metrics)}Reset(){this.Metrics.clear()}}export{s as MetricsCollector};

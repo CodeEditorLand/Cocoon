@@ -1,1 +1,0 @@
-import{resolve as t}from"node:path";import{RunExtHostCodegen as r}from"./Run/Ext/Host/Codegen.js";const c=async()=>{const o=process.cwd(),s=t(o,"..","..","Dependency","Microsoft","Dependency","Editor","src"),n=t(o,"Source"),e=await r({SourceRoot:s,OutputRoot:n});"_tag"in e&&process.exit(1),e.Failures.length>0&&process.exit(2)};c();
