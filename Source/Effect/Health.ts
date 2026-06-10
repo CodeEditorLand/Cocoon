@@ -1,13 +1,11 @@
 /**
  * @module Effect/Health
  * @description
- * Health monitoring service for Cocoon Extension Host using Effect-TS.
- * Replaces Bootstrap Stage6 - HealthCheck with Effect-based monitoring.
+ * Health monitoring service for Cocoon Extension Host.
+ * Replaces Bootstrap Stage6 - HealthCheck with plain async monitoring.
  */
 
-import { Context, Effect, Layer, Schedule } from "effect";
-
-import { TelemetryTag } from "./Telemetry.js";
+import { getTelemetry } from "./Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -48,29 +46,24 @@ export interface SystemHealth {
 }
 
 export interface HealthService {
-	readonly checkService: (
-		serviceName: string,
-	) => Effect.Effect<ServiceHealth, never>;
+	readonly checkService: (serviceName: string) => Promise<ServiceHealth>;
 
-	readonly checkAllServices: () => Effect.Effect<SystemHealth, never>;
+	readonly checkAllServices: () => Promise<SystemHealth>;
 
-	readonly getOverallStatus: () => Effect.Effect<HealthStatus, never>;
+	readonly getOverallStatus: () => Promise<HealthStatus>;
 
 	readonly monitorService: (
 		serviceName: string,
 
 		intervalMs: number,
-	) => Effect.Effect<void, never>;
+	) => Promise<void>;
 }
 
 // ============================================================================
 // SERVICE TAG
 // ============================================================================
 
-export class HealthTag extends Context.Tag("Cocoon/Health")<
-	HealthTag,
-	HealthService
->() {}
+export const HealthTag = { _tag: "Cocoon/Health" } as const;
 
 // ============================================================================
 // IMPLEMENTATION
@@ -96,182 +89,188 @@ const createServiceHealth = (
 });
 
 const makeHealthChecker = (): HealthService => ({
-	checkService: (serviceName: string) =>
-		Effect.gen(function* () {
-			const startTime = Date.now();
+	checkService: async (serviceName: string): Promise<ServiceHealth> => {
+		const startTime = Date.now();
 
-			switch (serviceName.toLowerCase()) {
-				case "environment": {
-					const envTime = Date.now() - startTime;
+		switch (serviceName.toLowerCase()) {
+			case "environment": {
+				const envTime = Date.now() - startTime;
 
-					return createServiceHealth(
-						"Environment",
+				return createServiceHealth(
+					"Environment",
 
-						"healthy",
+					"healthy",
 
-						"Environment service available",
+					"Environment service available",
 
-						envTime,
-					);
-				}
-
-				case "telemetry": {
-					const telemetryService = yield* TelemetryTag;
-
-					const telemetryTime = Date.now() - startTime;
-
-					return yield* telemetryService
-						.log("info", "[Health] Telemetry health check")
-						.pipe(
-							Effect.map(() =>
-								createServiceHealth(
-									"Telemetry",
-
-									"healthy",
-
-									"Telemetry service available",
-
-									telemetryTime,
-								),
-							),
-
-							Effect.catchAll(() =>
-								Effect.succeed(
-									createServiceHealth(
-										"Telemetry",
-
-										"unhealthy",
-
-										"Telemetry service error",
-
-										telemetryTime,
-									),
-								),
-							),
-						);
-				}
-
-				case "grpc": {
-					const grpcTime = Date.now() - startTime;
-
-					return createServiceHealth(
-						"gRPC",
-
-						"healthy",
-
-						"gRPC service available",
-
-						grpcTime,
-					);
-				}
-
-				case "extension": {
-					const extensionTime = Date.now() - startTime;
-
-					return createServiceHealth(
-						"Extension",
-
-						"healthy",
-
-						"Extension service available",
-
-						extensionTime,
-					);
-				}
-
-				default:
-					return createServiceHealth(
-						serviceName,
-
-						"unknown",
-
-						`Unknown service: ${serviceName}`,
-
-						0,
-					);
-			}
-		}),
-
-	checkAllServices: () =>
-		Effect.gen(function* () {
-			const telemetry = yield* TelemetryTag;
-
-			const services = [
-				"environment",
-				"telemetry",
-				"grpc",
-				"extension",
-			] as const;
-
-			const healthChecker = makeHealthChecker();
-
-			telemetry.log(
-				"info",
-
-				"[Health] Running health checks for all services...",
-			);
-
-			const healthResults = yield* Effect.all(
-				services.map((service) => healthChecker.checkService(service)),
-			);
-
-			// Determine overall status
-			const unhealthyCount = healthResults.filter(
-				(h) => h.status === "unhealthy",
-			).length;
-
-			const degradedCount = healthResults.filter(
-				(h) => h.status === "degraded",
-			).length;
-
-			let overallStatus: HealthStatus = "healthy";
-
-			if (unhealthyCount > 0) {
-				overallStatus = "unhealthy";
-			} else if (degradedCount > 0) {
-				overallStatus = "degraded";
+					envTime,
+				);
 			}
 
-			return {
-				overallStatus,
-				services: healthResults,
-				systemInfo: {
-					platform: process.platform,
-					architecture: process.arch,
-					nodeVersion: process.version,
-					upSince: Date.now(),
-				},
-				lastChecked: Date.now(),
-			};
-		}),
+			case "telemetry": {
+				const telemetryService = getTelemetry();
 
-	getOverallStatus: () =>
-		Effect.gen(function* () {
-			const healthChecker = makeHealthChecker();
+				const telemetryTime = Date.now() - startTime;
 
-			const systemHealth = yield* healthChecker.checkAllServices();
+				try {
+					await telemetryService.log(
+						"info",
 
-			return systemHealth.overallStatus;
-		}),
+						"[Health] Telemetry health check",
+					);
 
-	monitorService: (serviceName: string, intervalMs: number) =>
-		Effect.gen(function* () {
-			// Periodic health check using Effect.repeat
-			yield* makeHealthChecker()
-				.checkService(serviceName)
-				.pipe(Effect.repeat(Schedule.spaced(`${intervalMs} millis`)));
-		}),
+					return createServiceHealth(
+						"Telemetry",
+
+						"healthy",
+
+						"Telemetry service available",
+
+						telemetryTime,
+					);
+				} catch {
+					return createServiceHealth(
+						"Telemetry",
+
+						"unhealthy",
+
+						"Telemetry service error",
+
+						telemetryTime,
+					);
+				}
+			}
+
+			case "grpc": {
+				const grpcTime = Date.now() - startTime;
+
+				return createServiceHealth(
+					"gRPC",
+
+					"healthy",
+
+					"gRPC service available",
+
+					grpcTime,
+				);
+			}
+
+			case "extension": {
+				const extensionTime = Date.now() - startTime;
+
+				return createServiceHealth(
+					"Extension",
+
+					"healthy",
+
+					"Extension service available",
+
+					extensionTime,
+				);
+			}
+
+			default:
+				return createServiceHealth(
+					serviceName,
+
+					"unknown",
+
+					`Unknown service: ${serviceName}`,
+
+					0,
+				);
+		}
+	},
+
+	checkAllServices: async (): Promise<SystemHealth> => {
+		const telemetry = getTelemetry();
+
+		const services = [
+			"environment",
+			"telemetry",
+			"grpc",
+			"extension",
+		] as const;
+
+		const healthChecker = makeHealthChecker();
+
+		telemetry.log(
+			"info",
+
+			"[Health] Running health checks for all services...",
+		);
+
+		const healthResults = await Promise.all(
+			services.map((service) => healthChecker.checkService(service)),
+		);
+
+		// Determine overall status
+		const unhealthyCount = healthResults.filter(
+			(h) => h.status === "unhealthy",
+		).length;
+
+		const degradedCount = healthResults.filter(
+			(h) => h.status === "degraded",
+		).length;
+
+		let overallStatus: HealthStatus = "healthy";
+
+		if (unhealthyCount > 0) {
+			overallStatus = "unhealthy";
+		} else if (degradedCount > 0) {
+			overallStatus = "degraded";
+		}
+
+		return {
+			overallStatus,
+			services: healthResults,
+			systemInfo: {
+				platform: process.platform,
+				architecture: process.arch,
+				nodeVersion: process.version,
+				upSince: Date.now(),
+			},
+			lastChecked: Date.now(),
+		};
+	},
+
+	getOverallStatus: async (): Promise<HealthStatus> => {
+		const healthChecker = makeHealthChecker();
+
+		const systemHealth = await healthChecker.checkAllServices();
+
+		return systemHealth.overallStatus;
+	},
+
+	monitorService: async (
+		serviceName: string,
+
+		intervalMs: number,
+	): Promise<void> => {
+		const healthChecker = makeHealthChecker();
+
+		// Periodic health check loop
+		while (true) {
+			await healthChecker.checkService(serviceName);
+
+			await new Promise<void>((r) => setTimeout(r, intervalMs));
+		}
+	},
 });
 
 // ============================================================================
-// LAYERS
+// SINGLETON
 // ============================================================================
 
-export const HealthLive = Layer.effect(
-	HealthTag,
+let _health: HealthService | undefined;
 
-	Effect.succeed(makeHealthChecker()),
-);
+export const getHealth = (): HealthService => {
+	if (_health === undefined) {
+		_health = makeHealthChecker();
+	}
+
+	return _health;
+};
 
 // ============================================================================
 // MOCK FOR TESTING
@@ -280,61 +279,53 @@ export const HealthLive = Layer.effect(
 export const makeMockHealth = (
 	overrides?: Partial<Record<string, HealthStatus>>,
 ): HealthService => ({
-	checkService: (serviceName: string) =>
-		Effect.gen(function* () {
-			const defaultStatus: HealthStatus = "healthy";
+	checkService: async (serviceName: string): Promise<ServiceHealth> => {
+		const defaultStatus: HealthStatus = "healthy";
 
-			const status = overrides?.[serviceName] ?? defaultStatus;
+		const status = overrides?.[serviceName] ?? defaultStatus;
 
-			return createServiceHealth(
-				serviceName,
+		return createServiceHealth(
+			serviceName,
 
-				status,
+			status,
 
-				status === "healthy"
-					? "Mock service healthy"
-					: "Mock service unhealthy",
+			status === "healthy"
+				? "Mock service healthy"
+				: "Mock service unhealthy",
+
+			0,
+		);
+	},
+
+	checkAllServices: async (): Promise<SystemHealth> => {
+		const services = ["environment", "telemetry", "grpc", "extension"];
+
+		const results = services.map((name) =>
+			createServiceHealth(
+				name,
+
+				overrides?.[name] ?? "healthy",
+
+				"Mock service check",
 
 				0,
-			);
-		}),
+			),
+		);
 
-	checkAllServices: () =>
-		Effect.gen(function* () {
-			const services = ["environment", "telemetry", "grpc", "extension"];
+		return {
+			overallStatus: "healthy",
+			services: results,
+			systemInfo: {
+				platform: "mock",
+				architecture: "mock",
+				nodeVersion: "mock",
+				upSince: Date.now(),
+			},
+			lastChecked: Date.now(),
+		};
+	},
 
-			const results = services.map((name) =>
-				createServiceHealth(
-					name,
+	getOverallStatus: async (): Promise<HealthStatus> => "healthy",
 
-					overrides?.[name] ?? "healthy",
-
-					"Mock service check",
-
-					0,
-				),
-			);
-
-			return {
-				overallStatus: "healthy",
-				services: results,
-				systemInfo: {
-					platform: "mock",
-					architecture: "mock",
-					nodeVersion: "mock",
-					upSince: Date.now(),
-				},
-				lastChecked: Date.now(),
-			};
-		}),
-
-	getOverallStatus: () => Effect.succeed("healthy" as const),
-
-	monitorService: () => Effect.void,
+	monitorService: async (): Promise<void> => {},
 });
-
-export const HealthMock = Layer.effect(
-	HealthTag,
-
-	Effect.succeed(makeMockHealth()),
-);

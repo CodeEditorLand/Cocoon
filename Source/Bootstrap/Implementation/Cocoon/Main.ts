@@ -1,14 +1,11 @@
-import { NodeRuntime } from "@effect/platform-node";
-import { Effect } from "effect";
-
 // Import Tier dispatcher *after* __LandTiers is populated.
 import "../../../Utility/Tier.js";
 
+import * as CocoonDebugServer from "../../../Debug/Server.js";
+import { runBootstrap } from "../../../Effect/Bootstrap.js";
 // Dual-layer DebugServer (Cocoon half). Activated by the unified
 // `DebugServer` env var ("cocoon" | "both"). Safe no-op otherwise.
-import * as CocoonDebugServer from "../../../Debug/Server.js";
-import { BootstrapTag, TelemetryTag } from "../../../Effect/index.js";
-import { EffectServices } from "../../../Service/Mapping.js";
+import { StartWebSocketServer } from "../../WebSocket/Server.js";
 
 // PostHog telemetry - early init so bootstrap errors are captured.
 // Dead-code eliminated by esbuild in production (NODE_ENV substitute).
@@ -288,193 +285,35 @@ if (process.env["NODE_ENV"] !== "production") {
 	});
 }
 
-// ============================================================================
-// EFFECT-BASED BOOTSTRAP
-// ============================================================================
+const main = async () => {
+	try {
+		const result = await runBootstrap({ debugMode: false });
 
-/**
- * Bootstrap Cocoon using Effect-TS services
- */
-const bootstrapCocoonEffect = Effect.gen(function* () {
-	const telemetry = yield* TelemetryTag;
+		// B7-S6: start WebSocket server.
+		void StartWebSocketServer().catch(() => {});
 
-	const bootstrap = yield* BootstrapTag;
-
-	telemetry.log(
-		"info",
-
-		"[CocoonMain] Starting Cocoon bootstrap with Effect-TS...",
-	);
-
-	// Run Effect-TS bootstrap
-	const result = yield* bootstrap.run({ debugMode: false });
-
-	if (!result.success) {
-		// Partial bootstrap is acceptable - gRPC server may have started even if
-		// Mountain connection failed. Log and continue in degraded mode.
-		telemetry.log(
-			"warn",
-
-			"[CocoonMain] Bootstrap partially failed (continuing in degraded mode)",
-		);
-
-		try {
+		if (!result.success) {
 			process.stderr.write(
-				"[CocoonMain] Bootstrap partially failed - running in degraded mode\n",
+				"[CocoonMain] Bootstrap partially failed (degraded mode)\n",
 			);
-		} catch {}
 
-		for (const stage of result.stages) {
-			if (!stage.success) {
-				telemetry.log(
-					"warn",
-
-					`[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`,
-				);
-
-				try {
+			for (const stage of result.stages) {
+				if (!stage.success) {
 					process.stderr.write(
-						`[CocoonMain]   Stage failed: ${stage.stageName}: ${stage.error?.message ?? "<no message>"}\n`,
+						"[CocoonMain] Stage failed: " + stage.stageName + "\n",
 					);
-				} catch {}
+				}
 			}
+		} else {
+			process.stdout.write(
+				"[CocoonMain] Bootstrap completed successfully\n",
+			);
 		}
+	} catch (e) {
+		process.stderr.write("[CocoonMain] Fatal: " + String(e) + "\n");
+
+		process.exit(1);
 	}
-
-	if (result.success) {
-		telemetry.log(
-			"info",
-
-			"[CocoonMain] [OK] Bootstrap completed successfully",
-		);
-	}
-
-	telemetry.log(
-		"info",
-
-		`[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`,
-	);
-
-	// gRPC server (Stage 5) holds an open libuv handle keeping the Effect
-	// runtime alive. Extension activation via Mountain's $activateByEvent
-	// drives the rest - no explicit event loop needed.
-	telemetry.log("info", "[CocoonMain] Extension host ready");
-});
-
-/**
- * Map unknown errors to Error
- */
-const mapUnknownToError = (error: unknown): Error => {
-	if (error instanceof Error) {
-		return error;
-	}
-
-	return new Error(String(error));
 };
 
-/**
- * Main effect with error handling and cleanup
- */
-const mainEffectWithServices = bootstrapCocoonEffect.pipe(
-	Effect.tapError((error) =>
-		Effect.gen(function* () {
-			const telemetry = yield* TelemetryTag;
-
-			const mappedError = mapUnknownToError(error);
-
-			telemetry.log(
-				"error",
-
-				`[CocoonMain] Fatal error: ${mappedError.message}`,
-			);
-
-			if (mappedError.stack) {
-				telemetry.log(
-					"error",
-
-					`[CocoonMain] Error stack: ${mappedError.stack}`,
-				);
-			}
-		}),
-	),
-
-	Effect.ensuring(
-		Effect.gen(function* () {
-			const telemetry = yield* TelemetryTag;
-
-			telemetry.log(
-				"info",
-
-				"[CocoonMain] Cocoon extension host shutting down",
-			);
-		}),
-	),
-);
-
-/**
- * Provide all service layers to create a runnable effect
- */
-const mainEffect = mainEffectWithServices.pipe(
-	Effect.provide(EffectServices.composeAppLayer()),
-
-	Effect.scoped,
-);
-
-// ============================================================================
-// PARENT-PID WATCHDOG
-// ============================================================================
-//
-// Cocoon is spawned by Mountain (Tauri Rust). When Mountain crashes or is
-// force-quit, Cocoon orphans - it keeps running and holds port 50052,
-// preventing the next Mountain boot from binding the gRPC server.
-//
-// Self-exit on parent death closes the loop. Poll the parent PID every 5s
-// via signal-0 (single syscall, no actual signal). When kill(parent, 0)
-// returns ESRCH, the parent is gone - exit and free the port.
-const ParentPid = process.ppid;
-
-if (ParentPid && ParentPid > 1) {
-	const ParentWatchInterval = setInterval(() => {
-		try {
-			// kill(pid, 0) checks existence (ESRCH = gone, EPERM = treat as alive)
-			process.kill(ParentPid, 0);
-		} catch (Err: any) {
-			if (Err?.code === "ESRCH") {
-				clearInterval(ParentWatchInterval);
-
-				try {
-					process.stderr.write(
-						`[CocoonWatchdog] Parent PID ${ParentPid} gone; exiting to release gRPC port.\n`,
-					);
-				} catch {}
-
-				// Exit code 130 (Ctrl+C convention) to prevent retry loop
-				process.exit(130);
-			}
-
-			// EPERM: treat parent as alive, keep polling.
-		}
-	}, 5000);
-
-	// unref() so the interval doesn't keep the event loop alive on its own
-	ParentWatchInterval.unref?.();
-}
-
-// ============================================================================
-// MAIN ENTRY POINT
-// ============================================================================
-
-/**
- * Main entry - runs the composed Effect via NodeRuntime
- */
-// Start the Cocoon DebugServer listener (no-op unless DebugServer=cocoon|both).
-// Must run before runMain so the listener is reachable while bootstrap progresses.
-try {
-	CocoonDebugServer.Start();
-} catch (E) {
-	process.stderr.write(
-		`[CocoonDebug] start failed: ${(E as Error)?.message ?? E}\n`,
-	);
-}
-
-NodeRuntime.runMain(mainEffect);
+main();

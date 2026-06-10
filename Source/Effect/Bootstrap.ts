@@ -1,73 +1,14 @@
 /**
  * @module Effect/Bootstrap
  * @description
- * Bootstrap orchestration for Cocoon Extension Host using Effect-TS.
- * Coordinates initialization: environment, config, gRPC, modules, extensions, health.
+ * Lean async bootstrap orchestration for Cocoon Extension Host.
+ * All stages are plain async functions — no Effect-TS machinery.
  */
 
 import { createConnection } from "node:net";
 
-import { Context, Duration, Effect, Layer, Schedule } from "effect";
-
 import { CocoonDevLog } from "../Services/Dev/Log.js";
 import LandFixLog from "../Utility/Land/Fix/Log.js";
-import { ExtensionTag } from "./Extension.js";
-import { HealthTag } from "./Health.js";
-import { ModuleInterceptorTag } from "./Module/Interceptor.js";
-import { MountainClientTag } from "./Mountain/Client.js";
-import { RPCServerTag } from "./RPCServer.js";
-import { TelemetryTag, withSpan } from "./Telemetry.js";
-
-/**
- * Fast TCP port probe. Returns true if a connection ESTABLISHES within TimeoutMs.
- * Pre-flight check before the gRPC handshake.
- */
-const ProbeTcp = (
-	Host: string,
-
-	Port: number,
-
-	TimeoutMs: number,
-): Effect.Effect<boolean, never> =>
-	Effect.async<boolean, never>((Resume) => {
-		let Settled = false;
-
-		const Settle = (Value: boolean) => {
-			if (Settled) return;
-
-			Settled = true;
-
-			try {
-				Socket.destroy();
-			} catch {}
-
-			Resume(Effect.succeed(Value));
-		};
-
-		const Socket = createConnection({ host: Host, port: Port });
-
-		const Timer = setTimeout(() => Settle(false), TimeoutMs);
-
-		Socket.once("connect", () => {
-			clearTimeout(Timer);
-
-			Settle(true);
-		});
-
-		Socket.once("error", () => {
-			clearTimeout(Timer);
-
-			Settle(false);
-		});
-
-		return Effect.sync(() => {
-			clearTimeout(Timer);
-
-			try {
-				Socket.destroy();
-			} catch {}
-		});
-	});
 
 // ============================================================================
 // TYPES
@@ -104,150 +45,90 @@ export interface BootstrapResult {
 }
 
 export interface BootstrapService {
-	readonly run: (
-		options?: BootstrapOptions,
-	) => Effect.Effect<BootstrapResult, never>;
+	readonly run: (options?: BootstrapOptions) => Promise<BootstrapResult>;
 }
 
 // ============================================================================
-// SERVICE TAG
+// SERVICE TAG (plain marker — no Context.Tag)
 // ============================================================================
 
-export class BootstrapTag extends Context.Tag("Cocoon/Bootstrap")<
-	BootstrapTag,
-	BootstrapService
->() {}
+export const BootstrapTag = { _tag: "Cocoon/Bootstrap" as const };
 
 // ============================================================================
-// STAGE EFFECTS
+// TCP PROBE
 // ============================================================================
 
-const stage1_Environment = withSpan(
-	"stage1_environment",
+const ProbeTcp = (
+	Host: string,
+	Port: number,
+	TimeoutMs: number,
+): Promise<boolean> =>
+	new Promise((resolve) => {
+		let Settled = false;
 
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
+		const settle = (v: boolean) => {
+			if (Settled) return;
 
-		const StageStart = Date.now();
+			Settled = true;
 
-		CocoonDevLog(
-			"bootstrap-stage",
+			try {
+				Socket.destroy();
+			} catch {}
 
-			"[Bootstrap] stage=Environment event=start",
-		);
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Stage 1: Detecting environment...",
-		);
-
-		const nodeVersion = process.version;
-
-		const platform = process.platform;
-
-		const arch = process.arch;
-
-		telemetry.log(
-			"info",
-
-			`[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform}/${arch}`,
-		);
-
-		CocoonDevLog(
-			"bootstrap-stage",
-
-			`[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform}/${arch} duration_ms=${Date.now() - StageStart}`,
-		);
-
-		return {
-			stageName: "Environment",
-			success: true as boolean,
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
-
-const stage2_Configuration = withSpan(
-	"stage2_configuration",
-
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
-
-		const StageStart = Date.now();
-
-		CocoonDevLog(
-			"bootstrap-stage",
-
-			"[Bootstrap] stage=Configuration event=start",
-		);
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Stage 2: Loading configuration...",
-		);
-
-		// Parse bootstrap env vars and attach to globalThis for downstream use.
-		const ParsePort = (
-			Raw: string | undefined,
-
-			Fallback: number,
-		): number => {
-			if (Raw === undefined) return Fallback;
-
-			const Value = parseInt(Raw, 10);
-
-			return Number.isFinite(Value) && Value > 0 && Value < 65536
-				? Value
-				: Fallback;
+			resolve(v);
 		};
 
-		const ResolvedConfig = {
-			MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
-			CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
-			NodeEnv: process.env["NODE_ENV"] ?? "production",
-			DevLog: process.env["Trace"] ?? "",
-			DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true",
-		};
+		const Socket = createConnection({ host: Host, port: Port });
 
-		(
-			globalThis as unknown as {
-				__cocoonBootstrapConfig?: typeof ResolvedConfig;
+		const Timer = setTimeout(() => settle(false), TimeoutMs);
+
+		Socket.once("connect", () => {
+			clearTimeout(Timer);
+			settle(true);
+		});
+
+		Socket.once("error", () => {
+			clearTimeout(Timer);
+			settle(false);
+		});
+	});
+
+// ============================================================================
+// CONCURRENT RUNNER
+// ============================================================================
+
+async function runConcurrent<T, R>(
+	items: ReadonlyArray<T>,
+
+	fn: (item: T) => Promise<R>,
+
+	concurrency: number,
+): Promise<Array<R | { error: unknown }>> {
+	const results: Array<R | { error: unknown }> = [];
+
+	let i = 0;
+
+	const workers = Array.from(
+		{ length: Math.min(concurrency, items.length) },
+
+		async () => {
+			while (i < items.length) {
+				const item = items[i++]!;
+
+				results.push(await fn(item).catch((e) => ({ error: e })));
 			}
-		).__cocoonBootstrapConfig = ResolvedConfig;
+		},
+	);
 
-		LandFixLog.Info(
-			"Bootstrap",
+	await Promise.all(workers);
 
-			`Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`,
-		);
+	return results;
+}
 
-		telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
+// ============================================================================
+// TUNING
+// ============================================================================
 
-		CocoonDevLog(
-			"bootstrap-stage",
-
-			`[Bootstrap] stage=Configuration event=ok mountain_port=${ResolvedConfig.MountainPort} cocoon_port=${ResolvedConfig.CocoonPort} node_env=${ResolvedConfig.NodeEnv} duration_ms=${Date.now() - StageStart}`,
-		);
-
-		return {
-			stageName: "Configuration",
-			success: true as boolean,
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
-
-/**
- * MountainConnection stage tuning.
- * Now runs AFTER RPCServer (Stage 3), so it no longer blocks Mountain's
- * 20-second gRPC budget. Reduced retry caps to keep bootstrap fast.
- * TCP probe: 3 probes × 300ms timeout, 100ms gap → worst-case ~1.2s.
- * gRPC connect: 5 attempts, 500ms initial backoff → worst-case ~7.5s.
- */
 const MountainProbeTimeoutMs = 300;
 
 const MountainProbeMaxAttempts = 3;
@@ -260,568 +141,418 @@ const MountainProbeMaxDelayMs = 500;
 
 const MountainConnectMaxAttempts = 5;
 
-const stage3_MountainConnection = withSpan(
-	"stage3_mountain_connection",
+// ============================================================================
+// STAGE FUNCTIONS
+// ============================================================================
 
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
+const stage1_Environment = async (): Promise<StageResult> => {
+	const start = Date.now();
 
-		const mountainClient = yield* MountainClientTag;
+	CocoonDevLog(
+		"bootstrap-stage",
+		"[Bootstrap] stage=Environment event=start",
+	);
 
-		telemetry.log(
-			"info",
+	const nodeVersion = process.version;
 
-			"[Cocoon Bootstrap] Stage 3: Connecting to Mountain...",
+	const platform = process.platform;
+
+	const arch = process.arch;
+
+	CocoonDevLog(
+		"bootstrap-stage",
+		`[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform}/${arch} duration_ms=${Date.now() - start}`,
+	);
+
+	return {
+		stageName: "Environment",
+		success: true,
+		duration: Date.now() - start,
+		error: undefined,
+	};
+};
+
+const stage2_Configuration = async (): Promise<StageResult> => {
+	const start = Date.now();
+
+	CocoonDevLog(
+		"bootstrap-stage",
+		"[Bootstrap] stage=Configuration event=start",
+	);
+
+	const ParsePort = (Raw: string | undefined, Fallback: number): number => {
+		if (Raw === undefined) return Fallback;
+
+		const Value = parseInt(Raw, 10);
+
+		return Number.isFinite(Value) && Value > 0 && Value < 65536
+			? Value
+			: Fallback;
+	};
+
+	const ResolvedConfig = {
+		MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
+
+		CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
+
+		NodeEnv: process.env["NODE_ENV"] ?? "production",
+
+		DevLog: process.env["Trace"] ?? "",
+
+		DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true",
+	};
+
+	(globalThis as any).__cocoonBootstrapConfig = ResolvedConfig;
+
+	LandFixLog.Info(
+		"Bootstrap",
+		`Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort}`,
+	);
+
+	CocoonDevLog(
+		"bootstrap-stage",
+		`[Bootstrap] stage=Configuration event=ok duration_ms=${Date.now() - start}`,
+	);
+
+	return {
+		stageName: "Configuration",
+		success: true,
+		duration: Date.now() - start,
+		error: undefined,
+	};
+};
+
+// Import service singletons lazily to avoid circular deps
+const getRPCServer = async () => (await import("./RPCServer.js")).RPCServerLive;
+
+const getModuleInterceptor = async () =>
+	(await import("./Module/Interceptor.js")).ModuleInterceptorLive;
+
+const getMountainClient = async () =>
+	(await import("./Mountain/Client.js")).MountainClientLive;
+
+const getExtension = async () => (await import("./Extension.js")).ExtensionLive;
+
+const getHealth = async () => (await import("./Health.js")).HealthLive;
+
+const stage5_RPCServer = async (): Promise<StageResult> => {
+	const start = Date.now();
+
+	const CocoonPort = parseInt(process.env["COCOON_GRPC_PORT"] || "50052", 10);
+
+	CocoonDevLog(
+		"bootstrap",
+		`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`,
+	);
+
+	const rpcServer = await getRPCServer();
+
+	await rpcServer.start({ host: "0.0.0.0", port: CocoonPort });
+
+	process.stdout.write(`[LandFix:Bootstrap] Stage "RPCServer" OK\n`);
+
+	return {
+		stageName: "RPCServer",
+		success: true,
+		duration: Date.now() - start,
+		error: undefined,
+	};
+};
+
+const stage4_ModuleInterceptor = async (): Promise<StageResult> => {
+	const start = Date.now();
+
+	const moduleInterceptor = await getModuleInterceptor();
+
+	await moduleInterceptor.initialize();
+
+	await moduleInterceptor.install();
+
+	return {
+		stageName: "ModuleInterceptor",
+		success: true,
+		duration: Date.now() - start,
+		error: undefined,
+	};
+};
+
+const stage3_MountainConnection = async (): Promise<StageResult> => {
+	const start = Date.now();
+
+	const mountainClient = await getMountainClient();
+
+	const MountainPort = parseInt(
+		process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+		10,
+	);
+
+	const MountainHost = "localhost";
+
+	let ProbeAttempt = 0,
+		ProbeDelay = MountainProbeDelayMs,
+		Listening = false;
+
+	while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
+		ProbeAttempt++;
+
+		Listening = await ProbeTcp(
+			MountainHost,
+			MountainPort,
+			MountainProbeTimeoutMs,
 		);
 
-		// Connect to Mountain gRPC server (MountainService on port from env).
-		const MountainPort = parseInt(
-			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
-
-			10,
-		);
-
-		const MountainHost = "localhost";
-
-		// Pre-flight TCP probe - wait for listener before gRPC handshake.
-		let ProbeAttempt = 0;
-
-		let ProbeDelay = MountainProbeDelayMs;
-
-		let Listening = false;
-
-		while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
-			ProbeAttempt++;
-
-			Listening = yield* ProbeTcp(
-				MountainHost,
-
-				MountainPort,
-
-				MountainProbeTimeoutMs,
-			);
-
-			if (Listening) {
-				LandFixLog.Info(
-					"Bootstrap",
-
-					`Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`,
-				);
-
-				break;
-			}
-
-			// Exponential backoff: 200ms → 400ms → 800ms → 1000ms (capped)
-			yield* Effect.sleep(Duration.millis(ProbeDelay));
-
-			ProbeDelay = Math.min(
-				ProbeDelay * MountainProbeBackoffFactor,
-
-				MountainProbeMaxDelayMs,
-			);
-		}
-
-		if (!Listening) {
-			LandFixLog.Warn(
+		if (Listening) {
+			LandFixLog.Info(
 				"Bootstrap",
-
-				`Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`,
+				`Mountain TCP port listening after ${ProbeAttempt} probe(s)`,
 			);
+
+			break;
 		}
 
-		// gRPC connect with exponential backoff. Log failures on each retry.
-		const AttemptRef = { value: 0 };
+		await new Promise((r) => setTimeout(r, ProbeDelay));
 
-		const Connect = Effect.gen(function* () {
+		ProbeDelay = Math.min(
+			ProbeDelay * MountainProbeBackoffFactor,
+			MountainProbeMaxDelayMs,
+		);
+	}
+
+	const AttemptRef = { value: 0 };
+
+	const connectWithRetry = async () => {
+		let lastErr: Error | undefined;
+
+		for (let attempt = 0; attempt < MountainConnectMaxAttempts; attempt++) {
 			AttemptRef.value++;
 
-			yield* mountainClient.connect({
-				host: MountainHost,
-				port: MountainPort,
-			});
-		}).pipe(
-			Effect.tapError((Failure) =>
-				Effect.sync(() => {
-					const Message =
-						Failure instanceof Error
-							? Failure.message
-							: String(Failure);
-
-					LandFixLog.Warn(
-						"Bootstrap",
-
-						`MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`,
-					);
-				}),
-			),
-
-			Effect.retry(
-				Schedule.exponential(Duration.millis(500)).pipe(
-					Schedule.union(Schedule.spaced(Duration.seconds(5))),
-
-					Schedule.intersect(
-						Schedule.recurs(MountainConnectMaxAttempts - 1),
-					),
-				),
-			),
-		);
-
-		yield* Connect;
-
-		const version = yield* mountainClient.version;
-
-		LandFixLog.Info(
-			"Bootstrap",
-
-			`MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`,
-		);
-
-		telemetry.log(
-			"info",
-
-			`[Cocoon Bootstrap] Connected to Mountain (v${version})`,
-		);
-
-		return {
-			stageName: "MountainConnection",
-			success: true as boolean,
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
-
-const stage4_ModuleInterceptor = withSpan(
-	"stage4_module_interceptor",
-
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
-
-		const moduleInterceptor = yield* ModuleInterceptorTag;
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Stage 4: Setting up module interceptor...",
-		);
-
-		// Initialize and install module interceptor
-		yield* moduleInterceptor.initialize;
-
-		// Install into Node.js module system
-		yield* moduleInterceptor.install;
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Module interceptor installed successfully",
-		);
-
-		return {
-			stageName: "ModuleInterceptor",
-			success: true as boolean,
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
-
-const stage5_RPCServer = withSpan(
-	"stage5_rpc_server",
-
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
-
-		const rpcServer = yield* RPCServerTag;
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Stage 5: Starting gRPC server...",
-		);
-
-		// Start gRPC server for Mountain ← Cocoon communication.
-		const CocoonPort = parseInt(
-			process.env["COCOON_GRPC_PORT"] || "50052",
-
-			10,
-		);
-
-		CocoonDevLog(
-			"bootstrap",
-
-			`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`,
-		);
-
-		yield* rpcServer.start({
-			host: "0.0.0.0",
-			port: CocoonPort,
-		});
-
-		telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
-
-		return {
-			stageName: "RPCServer",
-			success: true as boolean,
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
-
-const stage6_Extensions = withSpan(
-	"stage6_extensions",
-
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
-
-		const extension = yield* ExtensionTag;
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Stage 6: Initializing extensions...",
-		);
-
-		// Get all extensions
-		const extensions = yield* extension.getAll;
-
-		telemetry.log(
-			"info",
-
-			`[Cocoon Bootstrap] Found ${extensions.length} extensions`,
-		);
-
-		// Parallel activation (concurrency 8) with error isolation.
-		const EligibleExtensions = extensions.filter(
-			(Ext) => Ext.manifest.enabled,
-		);
-
-		const ActivationAttempts = yield* Effect.forEach(
-			EligibleExtensions,
-
-			(Ext) =>
-				extension.activate(Ext.id).pipe(
-					Effect.map(() => ({ Id: Ext.id, Ok: true as const })),
-
-					Effect.catchAll((Failure) => {
-						const Message =
-							Failure instanceof Error
-								? Failure.message
-								: String(Failure);
-
-						telemetry.log(
-							"warn",
-
-							`[Cocoon Bootstrap] Extension ${Ext.id} activation failed: ${Message}`,
-						);
-
-						return Effect.succeed({
-							Id: Ext.id,
-							Ok: false as const,
-							Error: Message,
-						});
-					}),
-				),
-
-			{ concurrency: 8 },
-		);
-
-		const Successful = ActivationAttempts.filter((R) => R.Ok).length;
-
-		const FailedCount = ActivationAttempts.length - Successful;
-
-		const activeCount = yield* extension.getActiveCount;
-
-		telemetry.log(
-			"info",
-
-			`[Cocoon Bootstrap] Activated ${activeCount} extensions (${Successful} this stage, ${FailedCount} failed)`,
-		);
-
-		return {
-			stageName: "Extensions",
-			success: true as boolean,
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
-
-const stage7_HealthCheck = withSpan(
-	"stage7_healthcheck",
-
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
-
-		const health = yield* HealthTag;
-
-		telemetry.log(
-			"info",
-
-			"[Cocoon Bootstrap] Stage 7: Running health checks...",
-		);
-
-		const systemHealth = yield* health.checkAllServices();
-
-		telemetry.log(
-			"info",
-
-			`[Cocoon Bootstrap] Health check result: ${systemHealth.overallStatus}`,
-		);
-
-		if (systemHealth.overallStatus === "unhealthy") {
-			telemetry.log(
-				"error",
-
-				"[Cocoon Bootstrap] Some services are unhealthy!",
-			);
+			try {
+				await mountainClient.connect({
+					host: MountainHost,
+					port: MountainPort,
+				});
+
+				return;
+			} catch (e) {
+				lastErr = e instanceof Error ? e : new Error(String(e));
+
+				LandFixLog.Warn(
+					"Bootstrap",
+					`MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${lastErr.message}`,
+				);
+
+				await new Promise((r) =>
+					setTimeout(r, Math.min(500 * Math.pow(2, attempt), 5000)),
+				);
+			}
 		}
 
-		return {
-			stageName: "HealthCheck",
-			success: systemHealth.overallStatus !== "unhealthy",
-			duration: 0,
-			error: undefined,
-		} satisfies StageResult;
-	}),
-);
+		throw lastErr ?? new Error("MountainConnection: max attempts exceeded");
+	};
+
+	await connectWithRetry();
+
+	const version = mountainClient.version;
+
+	LandFixLog.Info(
+		"Bootstrap",
+		`MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s)`,
+	);
+
+	return {
+		stageName: "MountainConnection",
+		success: true,
+		duration: Date.now() - start,
+		error: undefined,
+	};
+};
+
+const stage6_Extensions = async (): Promise<StageResult> => {
+	const start = Date.now();
+
+	const extension = await getExtension();
+
+	const extensions = await extension.getAll();
+
+	const EligibleExtensions = extensions.filter(
+		(Ext: any) => Ext.manifest?.enabled,
+	);
+
+	const results = await runConcurrent(
+		EligibleExtensions,
+
+		async (Ext: any) => {
+			try {
+				await extension.activate(Ext.id);
+				return { Id: Ext.id, Ok: true };
+			} catch (e) {
+				return { Id: Ext.id, Ok: false, Error: String(e) };
+			}
+		},
+
+		8,
+	);
+
+	const Successful = results.filter((r: any) => r.Ok).length;
+
+	return {
+		stageName: "Extensions",
+		success: true,
+		duration: Date.now() - start,
+		error: undefined,
+	};
+};
+
+const stage7_HealthCheck = async (): Promise<StageResult> => {
+	const start = Date.now();
+
+	const health = await getHealth();
+
+	const systemHealth = await health.checkAllServices();
+
+	return {
+		stageName: "HealthCheck",
+
+		success: systemHealth.overallStatus !== "unhealthy",
+
+		duration: Date.now() - start,
+
+		error: undefined,
+	};
+};
 
 // ============================================================================
 // BOOTSTRAP IMPLEMENTATION
 // ============================================================================
 
 const makeBootstrap = (): BootstrapService => ({
-	run: (options) =>
-		Effect.gen(function* () {
-			const telemetry = yield* TelemetryTag;
+	run: async (options?: BootstrapOptions): Promise<BootstrapResult> => {
+		const startTime = Date.now();
 
-			const startTime = Date.now();
+		const { skipHealthCheck = false } = options ?? {};
 
-			const { skipHealthCheck = false, debugMode = false } =
-				options ?? {};
+		const stages: Array<[string, () => Promise<StageResult>]> = [
+			["Environment", stage1_Environment],
+			["Configuration", stage2_Configuration],
+			["RPCServer", stage5_RPCServer],
+			["ModuleInterceptor", stage4_ModuleInterceptor],
+			["MountainConnection", stage3_MountainConnection],
+			["Extensions", stage6_Extensions],
+			...(skipHealthCheck
+				? []
+				: [
+						["HealthCheck", stage7_HealthCheck] as [
+							string,
+							() => Promise<StageResult>,
+						],
+					]),
+		];
 
-			telemetry.log(
-				"info",
+		const results: StageResult[] = [];
 
-				"[Cocoon Bootstrap] ===============================================",
-			);
+		for (const [StageName, stageFn] of stages) {
+			const stageStart = Date.now();
 
-			telemetry.log(
-				"info",
+			try {
+				const result = await stageFn();
 
-				"[Cocoon Bootstrap] Cocoon Extension Host Bootstrap",
-			);
+				results.push({ ...result, duration: Date.now() - stageStart });
 
-			telemetry.log(
-				"info",
+				process.stdout.write(
+					`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStart}ms\n`,
+				);
+			} catch (e) {
+				const err = e instanceof Error ? e : new Error(String(e));
 
-				`[Cocoon Bootstrap] Debug mode: ${debugMode}`,
-			);
-
-			telemetry.log(
-				"info",
-
-				"[Cocoon Bootstrap] ===============================================",
-			);
-
-			const stages: Array<[string, unknown]> = [
-				["Environment", stage1_Environment],
-				["Configuration", stage2_Configuration],
-				// RPCServer must bind port 50052 BEFORE MountainConnection so
-				// Mountain's 20-second gRPC retry budget sees the server in time.
-				// MountainConnection retries for up to 45s; running it first meant
-				// Stage 5 (RPCServer) never started within Mountain's window.
-				["RPCServer", stage5_RPCServer],
-				// ModuleInterceptor must run BEFORE MountainConnection so the
-				// require('vscode') shim is installed before Mountain sends
-				// InitializeExtensionHost and extensions begin activating.
-				["ModuleInterceptor", stage4_ModuleInterceptor],
-				["MountainConnection", stage3_MountainConnection],
-				["Extensions", stage6_Extensions],
-				...(skipHealthCheck
-					? []
-					: ([["HealthCheck", stage7_HealthCheck]] as Array<
-							[string, unknown]
-						>)),
-			];
-
-			const results: StageResult[] = [];
-
-			for (const [StageName, stage] of stages) {
-				const stageStartTime = Date.now();
-
-				// Wrap in catchAllCause to survive fiber failures.
-				const SafeStage = Effect.suspend(() => stage as any).pipe(
-					Effect.catchAllCause((Cause) => {
-						const Message = String(Cause).slice(0, 300);
-
-						process.stdout.write(
-							`[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}\n`,
-						);
-
-						return Effect.succeed({
-							stageName: StageName,
-							success: false as boolean,
-							duration: Date.now() - stageStartTime,
-							error: new Error(Message),
-						} satisfies StageResult);
-					}),
+				process.stdout.write(
+					`[LandFix:Bootstrap] Stage "${StageName}" failed: ${err.message}\n`,
 				);
 
-				const result = yield* SafeStage as any;
-
-				if (result?.success === false) {
-					process.stdout.write(
-						`[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${(result as { error?: { message?: string } }).error?.message ?? "<no message>"}\n`,
-					);
-				} else {
-					process.stdout.write(
-						`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms\n`,
-					);
-				}
-
 				results.push({
-					...result,
-					duration: Date.now() - stageStartTime,
+					stageName: StageName,
+					success: false,
+					duration: Date.now() - stageStart,
+					error: err,
 				});
 			}
+		}
 
-			const endTime = Date.now();
+		const allSuccess = results.every((r) => r.success);
 
-			const totalDuration = endTime - startTime;
-
-			const allSuccess = results.every((r) => r.success);
-
-			telemetry.log(
-				"info",
-
-				"[Cocoon Bootstrap] ===============================================",
-			);
-
-			telemetry.log(
-				"info",
-
-				`[Cocoon Bootstrap] ${allSuccess ? "✓ Bootstrap completed successfully" : "✗ Bootstrap failed"}`,
-			);
-
-			telemetry.log(
-				"info",
-
-				`[Cocoon Bootstrap] Total duration: ${totalDuration}ms`,
-			);
-
-			telemetry.log(
-				"info",
-
-				"[Cocoon Bootstrap] ===============================================",
-			);
-
-			if (!allSuccess) {
-				const failedStages = results.filter((r) => !r.success);
-
-				telemetry.log("error", "[Cocoon Bootstrap] Failed stages:");
-
-				for (const failed of failedStages) {
-					telemetry.log(
-						"error",
-
-						`[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`,
-					);
-				}
-			}
-
-			return {
-				success: allSuccess,
-				totalDuration,
-				stages: results,
-				error: allSuccess ? undefined : new Error("Bootstrap failed"),
-			} satisfies BootstrapResult;
-		}),
+		return {
+			success: allSuccess,
+			totalDuration: Date.now() - startTime,
+			stages: results,
+			error: allSuccess ? undefined : new Error("Bootstrap failed"),
+		};
+	},
 });
 
 // ============================================================================
-// LAYERS
+// EXPORTS
 // ============================================================================
 
-export const BootstrapLive = Layer.effect(
-	BootstrapTag,
+export const BootstrapLive = makeBootstrap();
 
-	Effect.succeed(makeBootstrap()),
-);
+export const runBootstrap = async (
+	options?: BootstrapOptions,
+): Promise<BootstrapResult> => BootstrapLive.run(options);
 
-// ============================================================================
-// MOCK FOR TESTING
-// ============================================================================
-
+// Mock for testing
 export const makeMockBootstrap = (): BootstrapService => ({
-	run: (options) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
-
-			return {
+	run: async (options?) => ({
+		success: true,
+		totalDuration: 1,
+		stages: [
+			{
+				stageName: "Environment",
 				success: true,
-				totalDuration: 1,
-				stages: [
-					{
-						stageName: "Environment",
-						success: true,
-						duration: 0,
-						error: undefined,
-					},
-					{
-						stageName: "Configuration",
-						success: true,
-						duration: 0,
-						error: undefined,
-					},
-					{
-						stageName: "MountainConnection",
-						success: true,
-						duration: 0,
-						error: undefined,
-					},
-					{
-						stageName: "RPCServer",
-						success: true,
-						duration: 0,
-						error: undefined,
-					},
-					{
-						stageName: "Extensions",
-						success: true,
-						duration: 0,
-						error: undefined,
-					},
-					...(options?.skipHealthCheck
-						? []
-						: [
-								{
-									stageName: "HealthCheck",
-									success: true,
-									duration: 0,
-									error: undefined,
-								},
-							]),
-				],
+				duration: 0,
 				error: undefined,
-			} satisfies BootstrapResult;
-		}),
+			},
+			{
+				stageName: "Configuration",
+				success: true,
+				duration: 0,
+				error: undefined,
+			},
+			{
+				stageName: "RPCServer",
+				success: true,
+				duration: 0,
+				error: undefined,
+			},
+			{
+				stageName: "ModuleInterceptor",
+				success: true,
+				duration: 0,
+				error: undefined,
+			},
+			{
+				stageName: "MountainConnection",
+				success: true,
+				duration: 0,
+				error: undefined,
+			},
+			{
+				stageName: "Extensions",
+				success: true,
+				duration: 0,
+				error: undefined,
+			},
+			...(options?.skipHealthCheck
+				? []
+				: [
+						{
+							stageName: "HealthCheck",
+							success: true,
+							duration: 0,
+							error: undefined,
+						},
+					]),
+		],
+		error: undefined,
+	}),
 });
 
-export const BootstrapMock = Layer.effect(
-	BootstrapTag,
-
-	Effect.succeed(makeMockBootstrap()),
-);
-
-// ============================================================================
-// CONVENIENCE EXPORTS
-// ============================================================================
-
-export const runBootstrap = (options?: BootstrapOptions) =>
-	Effect.gen(function* () {
-		const bootstrap = yield* BootstrapTag;
-
-		return yield* bootstrap.run(options);
-	}).pipe(Effect.provide(BootstrapLive));
+export const BootstrapMock = makeMockBootstrap();

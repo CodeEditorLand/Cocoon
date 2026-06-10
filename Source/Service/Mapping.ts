@@ -1,13 +1,7 @@
 /**
  * @module ServiceMapping
- * @description Dependency injection container and service composition for Cocoon's Effect-TS layer stack.
+ * @description Lean singleton registry for Cocoon's service instances.
  */
-
-import { Layer } from "effect";
-
-// ============================================================================
-// EFFECT-TS SERVICE LAYERS
-// ============================================================================
 
 import {
 	BootstrapLive,
@@ -21,47 +15,28 @@ import {
 
 // ============================================================================
 
+export type AppServices =
+	typeof EffectServices.composeAppLayer extends () => infer R ? R : never;
+
 /**
  * Effect-TS Services
- * Dependency injection for the Effect-TS service-based architecture.
+ * Plain-object singletons - no Layer/pipe/provide machinery.
  */
 export const EffectServices = {
 	/**
-	 * Compose the main application layer.
-	 *
-	 * Layer deps: Telemetry → Health, MountainClient, ModuleInterceptor, Extension, RPCServer → Bootstrap
+	 * Return all service singletons as a plain record.
+	 * Each value is already initialised; callers receive live instances directly.
 	 */
-	composeAppLayer: () => {
-		// Telemetry (no dependencies)
-		const Telemetry = TelemetryLive;
+	composeAppLayer: () => ({
+		telemetry: TelemetryLive,
+		health: HealthLive,
+		mountainClient: MountainClientLive,
+		moduleInterceptor: ModuleInterceptorLive,
+		extension: ExtensionLive,
+		rpcServer: RPCServerLive,
+		bootstrap: BootstrapLive,
+	}),
 
-		// Layer 1: Services depending only on Telemetry
-		const Layer1 = Layer.mergeAll(
-			HealthLive.pipe(Layer.provide(Telemetry)),
-
-			MountainClientLive.pipe(Layer.provide(Telemetry)),
-
-			ModuleInterceptorLive.pipe(Layer.provide(Telemetry)),
-
-			ExtensionLive.pipe(Layer.provide(Telemetry)),
-
-			RPCServerLive.pipe(Layer.provide(Telemetry)),
-		);
-
-		// Layer 2: Bootstrap depends on Layer1 + Telemetry
-		const Bootstrap = BootstrapLive.pipe(
-			Layer.provide(Telemetry),
-
-			Layer.provide(Layer1),
-		);
-
-		// Merge all layers
-		return Layer.mergeAll(Telemetry, Layer1, Bootstrap);
-	},
-
-	/**
-	 * Get individual service layers for fine-grained composition
-	 */
 	getTelemetry: () => TelemetryLive,
 
 	getHealth: () => HealthLive,

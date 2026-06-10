@@ -1,15 +1,13 @@
 /**
  * @module Effect/RPCServer
  * @description
- * Atomic gRPC server service for Cocoon Extension Host using Effect-TS.
+ * Atomic gRPC server service for Cocoon Extension Host.
  * Manages the gRPC server for Mountain ← Cocoon communication.
  */
 
-import { Context, Effect, Layer, Ref, SubscriptionRef } from "effect";
-
 import { CocoonDevLog } from "../Services/Dev/Log.js";
 import { GRPCServerService } from "../Services/gRPC/Server/Service.js";
-import { TelemetryTag } from "./Telemetry.js";
+import { TelemetryLive } from "./Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -123,368 +121,339 @@ export class ServerNotRunningError extends Error {
 
 export interface RPCServerService {
 	/** Current server state */
-	readonly state: Effect.Effect<ServerState, never>;
+	getState(): ServerState;
 
-	/** Stream of state changes */
-	readonly stateChanges: Effect.Effect<ReadonlyArray<ServerState>, never>;
+	/** All recorded state transitions */
+	getStateHistory(): ReadonlyArray<ServerState>;
 
 	/** Start the gRPC server */
-	readonly start: (
-		config?: ServerConfig,
-	) => Effect.Effect<void, ServerStartError>;
+	start(config?: ServerConfig): Promise<void>;
 
 	/** Stop the gRPC server */
-	readonly stop: Effect.Effect<void, ServerStopError | ServerNotRunningError>;
+	stop(): Promise<void>;
 
 	/** Handle an RPC request */
-	readonly handleRequest: (
-		request: RPCRequest,
-	) => Effect.Effect<RPCResponse, never>;
+	handleRequest(request: RPCRequest): Promise<RPCResponse>;
 
 	/** Get server metrics */
-	readonly getMetrics: Effect.Effect<ServerMetrics, ServerNotRunningError>;
+	getMetrics(): ServerMetrics;
 }
 
 // ============================================================================
-// SERVICE TAG
+// SERVICE TAG (plain singleton descriptor)
 // ============================================================================
 
-export class RPCServerTag extends Context.Tag("Cocoon/RPCServer")<
-	RPCServerTag,
-	RPCServerService
->() {}
+export const RPCServer = { _tag: "Cocoon/RPCServer" } as const;
 
-export const RPCServer = RPCServerTag;
+// Keep legacy alias so callers that imported RPCServerTag still resolve.
+export const RPCServerTag = RPCServer;
 
 // ============================================================================
 // IMPLEMENTATION
 // ============================================================================
 
-export const RPCServerLive = Layer.effect(
-	RPCServer,
+function makeRPCServer(): RPCServerService {
+	const telemetry = TelemetryLive;
 
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
+	let state: ServerState = { _tag: "Idle" };
 
-		// Server state as reactive ref
-		const stateRef = yield* SubscriptionRef.make<ServerState>({
-			_tag: "Idle",
-		});
+	const stateHistory: ServerState[] = [state];
 
-		// Real gRPC server instance (from GRPCServerService)
-		let grpcServer: GRPCServerService | undefined;
+	let grpcServer: GRPCServerService | undefined;
 
-		// Server config
-		let currentConfig: ServerConfig | undefined;
+	let currentConfig: ServerConfig | undefined;
 
-		// Metrics - use mutable let for tracking (use plain object, not readonly interface)
-		let metrics: {
-			uptime: number;
+	let metrics = {
+		uptime: 0,
 
-			connections: number;
+		connections: 0,
 
-			requestsHandled: number;
+		requestsHandled: 0,
 
-			errors: number;
+		errors: 0,
 
-			averageLatency: number;
-		} = {
-			uptime: 0,
-			connections: 0,
-			requestsHandled: 0,
-			errors: 0,
-			averageLatency: 0,
+		averageLatency: 0,
+	};
+
+	let serverStartTime = 0;
+
+	const latencies: number[] = [];
+
+	function setState(next: ServerState): void {
+		state = next;
+
+		stateHistory.push(next);
+	}
+
+	const start = async (config?: ServerConfig): Promise<void> => {
+		const startTimeMs = Date.now();
+
+		if (state._tag === "Running") {
+			telemetry.log("warn", "[RPCServer] Server already running");
+
+			return;
+		}
+
+		// Mountain sets COCOON_GRPC_PORT when spawning Cocoon.
+		// Must NOT be 50051 (Mountain's own gRPC server).
+		const CocoonPort = parseInt(
+			process.env["COCOON_GRPC_PORT"] || "50052",
+
+			10,
+		);
+
+		currentConfig = config ?? {
+			host: "0.0.0.0",
+
+			port: CocoonPort,
+
+			maxConnections: 100,
+
+			enableCompression: true,
+
+			enableTls: false,
 		};
 
-		// Start time for uptime calculation
-		let startTime = 0;
+		setState({ _tag: "Starting", startTime: startTimeMs });
 
-		// Latency tracking
-		const latencies: number[] = [];
+		CocoonDevLog(
+			"grpc",
 
-		// Atom: Start server
-		const start = (config?: ServerConfig) =>
-			Effect.gen(function* () {
-				const startTimeMs = Date.now();
+			`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
+		);
 
-				// Check if already running
-				const currentState = yield* stateRef.get;
+		telemetry.log(
+			"info",
 
-				if (currentState._tag === "Running") {
-					telemetry.log("warn", "[RPCServer] Server already running");
+			`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
+		);
 
-					return;
-				}
+		try {
+			grpcServer = new GRPCServerService();
 
-				// Set config - port from env var or default 50052
-				// Mountain sets COCOON_GRPC_PORT when spawning Cocoon.
-				// Must NOT be 50051 (Mountain's own gRPC server).
-				const CocoonPort = parseInt(
-					process.env["COCOON_GRPC_PORT"] || "50052",
+			// Set port from config (GRPCServerService defaults to 50052)
+			(grpcServer as any).port = currentConfig.port;
 
-					10,
-				);
+			await grpcServer.start();
 
-				currentConfig = config ?? {
-					host: "0.0.0.0",
-					port: CocoonPort,
-					maxConnections: 100,
-					enableCompression: true,
-					enableTls: false,
-				};
+			serverStartTime = Date.now();
 
-				// Update state to starting
-				yield* Ref.set(stateRef, {
-					_tag: "Starting",
-					startTime: startTimeMs,
-				});
+			metrics = {
+				uptime: 0,
 
-				CocoonDevLog(
-					"grpc",
+				connections: 0,
 
-					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
-				);
+				requestsHandled: 0,
 
-				telemetry.log(
-					"info",
+				errors: 0,
 
-					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
-				);
+				averageLatency: 0,
+			};
 
-				try {
-					// Create and start the real gRPC server
-					grpcServer = new GRPCServerService();
-
-					// Set port from config (GRPCServerService defaults to 50052)
-					(grpcServer as any).port = currentConfig.port;
-
-					yield* Effect.promise(() => grpcServer!.start());
-
-					// Initialize metrics
-					startTime = Date.now();
-
-					metrics = {
-						uptime: 0,
-						connections: 0,
-						requestsHandled: 0,
-						errors: 0,
-						averageLatency: 0,
-					};
-
-					// Update state to running
-					yield* Ref.set(stateRef, {
-						_tag: "Running",
-						address: currentConfig.host,
-						port: currentConfig.port,
-						startedAt: startTime,
-					});
-
-					telemetry.log(
-						"info",
-
-						`[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`,
-					);
-				} catch (error) {
-					yield* Ref.set(stateRef, {
-						_tag: "Error",
-						error: String(error),
-					});
-
-					telemetry.log(
-						"error",
-
-						`[RPCServer] Failed to start gRPC server: ${String(error)}`,
-					);
-
-					return yield* Effect.fail(
-						new ServerStartError(
-							"Failed to start gRPC server",
-
-							error,
-						),
-					);
-				}
+			setState({
+				_tag: "Running",
+				address: currentConfig.host,
+				port: currentConfig.port,
+				startedAt: serverStartTime,
 			});
 
-		// Atom: Stop server
-		const stop = Effect.gen(function* () {
-			const currentState = yield* stateRef.get;
+			telemetry.log(
+				"info",
 
-			// Check if running
-			if (currentState._tag !== "Running") {
-				telemetry.log("warn", "[RPCServer] Server is not running");
+				`[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`,
+			);
+		} catch (error) {
+			setState({ _tag: "Error", error: String(error) });
 
-				return yield* Effect.fail(new ServerNotRunningError());
-			}
+			telemetry.log(
+				"error",
 
-			// Update state to stopping
-			yield* Ref.set(stateRef, {
-				_tag: "Stopping",
-			});
-
-			telemetry.log("info", "[RPCServer] Stopping gRPC server...");
-
-			// Stop the real gRPC server
-			if (grpcServer) {
-				yield* Effect.promise(() => grpcServer!.stop());
-
-				grpcServer = undefined;
-			}
-
-			// Update state to stopped
-			yield* Ref.set(stateRef, {
-				_tag: "Stopped",
-			});
-
-			telemetry.log("info", "[RPCServer] Server stopped successfully");
-		}) as Effect.Effect<void, ServerStopError | ServerNotRunningError>;
-
-		// Atom: Handle request
-		const handleRequest = (request: RPCRequest) =>
-			Effect.gen(function* () {
-				const requestStartTime = Date.now();
-
-				const currentState = yield* stateRef.get;
-
-				// Check if server is running
-				if (currentState._tag !== "Running") {
-					return {
-						requestId: request.requestId,
-						success: false,
-						data: null,
-						error: "Server not running",
-						timestamp: Date.now(),
-					} satisfies RPCResponse;
-				}
-
-				telemetry.log(
-					"debug",
-
-					`[RPCServer] Handling request: ${request.method} (${request.requestId})`,
-				);
-
-				// Simulate request handling (in production, this would route to actual RPC handlers)
-				metrics.requestsHandled = metrics.requestsHandled + 1;
-
-				// Simulate processing time
-				yield* Effect.sleep("5 millis");
-
-				const processingTime = Date.now() - requestStartTime;
-
-				// Update latency tracking
-				latencies.push(processingTime);
-
-				if (latencies.length > 100) {
-					latencies.shift();
-				}
-
-				metrics.averageLatency =
-					latencies.reduce((sum, lat) => sum + lat, 0) /
-					latencies.length;
-
-				telemetry.log(
-					"debug",
-
-					`[RPCServer] Request completed: ${request.method} (${processingTime}ms)`,
-				);
-
-				// Return mock response (in production, this would call actual handler)
-				return {
-					requestId: request.requestId,
-					success: true,
-					data: {
-						method: request.method,
-						result: "ok",
-					},
-					timestamp: Date.now(),
-				} satisfies RPCResponse;
-			}).pipe(
-				Effect.catchAll((error) =>
-					Effect.gen(function* () {
-						metrics.errors = metrics.errors + 1;
-
-						telemetry.log(
-							"error",
-
-							`[RPCServer] Request failed: ${request.method} (${error})`,
-						);
-
-						return {
-							requestId: request.requestId,
-							success: false,
-							data: null,
-							error: String(error),
-							timestamp: Date.now(),
-						} satisfies RPCResponse;
-					}),
-				),
+				`[RPCServer] Failed to start gRPC server: ${String(error)}`,
 			);
 
-		// Atom: Get metrics
-		const getMetrics = Effect.gen(function* () {
-			const currentState = yield* stateRef.get;
+			throw new ServerStartError("Failed to start gRPC server", error);
+		}
+	};
 
-			if (currentState._tag !== "Running") {
-				return yield* Effect.fail(new ServerNotRunningError());
+	const stop = async (): Promise<void> => {
+		if (state._tag !== "Running") {
+			telemetry.log("warn", "[RPCServer] Server is not running");
+
+			throw new ServerNotRunningError();
+		}
+
+		setState({ _tag: "Stopping" });
+
+		telemetry.log("info", "[RPCServer] Stopping gRPC server...");
+
+		if (grpcServer) {
+			await grpcServer.stop();
+
+			grpcServer = undefined;
+		}
+
+		setState({ _tag: "Stopped" });
+
+		telemetry.log("info", "[RPCServer] Server stopped successfully");
+	};
+
+	const handleRequest = async (request: RPCRequest): Promise<RPCResponse> => {
+		const requestStartTime = Date.now();
+
+		if (state._tag !== "Running") {
+			return {
+				requestId: request.requestId,
+
+				success: false,
+
+				data: null,
+
+				error: "Server not running",
+
+				timestamp: Date.now(),
+			};
+		}
+
+		telemetry.log(
+			"debug",
+
+			`[RPCServer] Handling request: ${request.method} (${request.requestId})`,
+		);
+
+		try {
+			// Simulate request handling (in production, this routes to actual RPC handlers)
+			metrics.requestsHandled = metrics.requestsHandled + 1;
+
+			// Simulate processing time
+			await new Promise<void>((r) => setTimeout(r, 5));
+
+			const processingTime = Date.now() - requestStartTime;
+
+			latencies.push(processingTime);
+
+			if (latencies.length > 100) {
+				latencies.shift();
 			}
 
-			// Update uptime
-			metrics.uptime = Date.now() - startTime;
+			metrics.averageLatency =
+				latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length;
 
-			return { ...metrics } as ServerMetrics;
-		});
+			telemetry.log(
+				"debug",
 
-		return {
-			state: stateRef.get,
-			stateChanges: Effect.map(
-				stateRef.get,
+				`[RPCServer] Request completed: ${request.method} (${processingTime}ms)`,
+			);
 
-				(state) => [state] as readonly ServerState[],
-			),
-			start,
-			stop,
-			handleRequest,
-			getMetrics,
-		} satisfies RPCServerService;
-	}),
-);
+			// Return mock response (in production, this calls actual handler)
+			return {
+				requestId: request.requestId,
+
+				success: true,
+
+				data: { method: request.method, result: "ok" },
+
+				timestamp: Date.now(),
+			};
+		} catch (error) {
+			metrics.errors = metrics.errors + 1;
+
+			telemetry.log(
+				"error",
+
+				`[RPCServer] Request failed: ${request.method} (${error})`,
+			);
+
+			return {
+				requestId: request.requestId,
+
+				success: false,
+
+				data: null,
+
+				error: String(error),
+
+				timestamp: Date.now(),
+			};
+		}
+	};
+
+	const getMetrics = (): ServerMetrics => {
+		if (state._tag !== "Running") {
+			throw new ServerNotRunningError();
+		}
+
+		metrics.uptime = Date.now() - serverStartTime;
+
+		return { ...metrics };
+	};
+
+	return {
+		getState: () => state,
+
+		getStateHistory: () => stateHistory as ReadonlyArray<ServerState>,
+
+		start,
+
+		stop,
+
+		handleRequest,
+
+		getMetrics,
+	};
+}
+
+// Singleton instance
+export const RPCServerLive: RPCServerService = makeRPCServer();
 
 // ============================================================================
 // MOCK FOR TESTING
 // ============================================================================
 
 export const makeMockRPCServer = (): RPCServerService => {
-	const mockStateRef: ServerState = { _tag: "Idle" };
+	let mockState: ServerState = { _tag: "Idle" };
+
+	const mockHistory: ServerState[] = [mockState];
 
 	return {
-		state: Effect.succeed(mockStateRef),
+		getState: () => mockState,
 
-		stateChanges: Effect.succeed([mockStateRef] as readonly ServerState[]),
+		getStateHistory: () => mockHistory as ReadonlyArray<ServerState>,
 
-		start: () => Effect.succeed(undefined),
+		start: async (_config?: ServerConfig): Promise<void> => {
+			mockState = {
+				_tag: "Running",
 
-		stop: Effect.succeed(undefined as void),
+				address: "0.0.0.0",
 
-		handleRequest: (request: RPCRequest) =>
-			Effect.succeed({
-				requestId: request.requestId,
-				success: true,
-				data: { method: request.method, result: "mock" },
-				timestamp: Date.now(),
-			}),
+				port: 50052,
 
-		getMetrics: Effect.succeed({
+				startedAt: Date.now(),
+			};
+
+			mockHistory.push(mockState);
+		},
+
+		stop: async (): Promise<void> => {
+			mockState = { _tag: "Stopped" };
+
+			mockHistory.push(mockState);
+		},
+
+		handleRequest: async (request: RPCRequest): Promise<RPCResponse> => ({
+			requestId: request.requestId,
+			success: true,
+			data: { method: request.method, result: "mock" },
+			timestamp: Date.now(),
+		}),
+
+		getMetrics: (): ServerMetrics => ({
 			uptime: 0,
 			connections: 0,
 			requestsHandled: 0,
 			errors: 0,
 			averageLatency: 0,
-		} as ServerMetrics),
+		}),
 	};
 };
 
-export const RPCServerMock = Layer.effect(
-	RPCServer,
-
-	Effect.succeed(makeMockRPCServer()),
-);
+export const RPCServerMock: RPCServerService = makeMockRPCServer();

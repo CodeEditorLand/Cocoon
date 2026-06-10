@@ -1,28 +1,8 @@
 /**
  * @module Effect/Telemetry
  * @description
- * Telemetry service consolidating logging, metrics, and tracing via Effect-TS.
+ * Lean telemetry service singleton - no Effect-TS machinery.
  */
-
-import {
-	Context,
-	Effect,
-	HashMap,
-	Layer,
-	Option,
-	Ref,
-	Stream,
-	SubscriptionRef,
-} from "effect";
-
-// ============================================================================
-// BUDGET LIMITS - soft caps; excess data dropped silently.
-// ============================================================================
-const MAX_EVENTS = 1_000;
-
-const MAX_METRICS_PER_NAME = 100;
-
-const MAX_SPANS_PER_NAME = 100;
 
 // ============================================================================
 // TYPES
@@ -70,8 +50,41 @@ export interface TelemetryLog {
 	readonly context?: Record<string, unknown>;
 }
 
+export interface SpanHandle {
+	readonly end: (success: boolean, error?: string) => void;
+}
+
+export interface TelemetryService {
+	readonly recordMetric: (
+		name: string,
+		value: number,
+		labels?: Record<string, string>,
+	) => void;
+
+	readonly startSpan: (
+		name: string,
+		labels?: Record<string, string>,
+	) => SpanHandle;
+
+	readonly log: (
+		level: TelemetryLog["level"],
+		message: string,
+		context?: Record<string, unknown>,
+	) => void;
+
+	readonly events: ReadonlyArray<TelemetryEvent>;
+
+	readonly getMetrics: (name: string) => ReadonlyArray<TelemetryMetric>;
+
+	readonly getAverageDuration: (name: string) => number;
+
+	readonly getSuccessRate: (name: string) => number;
+
+	readonly flush: () => void;
+}
+
 // ============================================================================
-// ERROR TYPES
+// ERROR
 // ============================================================================
 
 export class TelemetryCollectionError extends Error {
@@ -79,7 +92,6 @@ export class TelemetryCollectionError extends Error {
 
 	constructor(
 		readonly operation: string,
-
 		override readonly cause: unknown,
 	) {
 		super(
@@ -89,66 +101,10 @@ export class TelemetryCollectionError extends Error {
 }
 
 // ============================================================================
-// TELEMETRY SERVICE INTERFACE
+// TAG (plain marker)
 // ============================================================================
 
-export interface TelemetryService {
-	/** Record metric */
-	readonly recordMetric: (
-		name: string,
-
-		value: number,
-
-		labels?: Record<string, string>,
-	) => Effect.Effect<void, never>;
-
-	/** Start timed span */
-	readonly startSpan: (
-		name: string,
-
-		labels?: Record<string, string>,
-	) => Effect.Effect<SpanHandle, never>;
-
-	/** Log event */
-	readonly log: (
-		level: TelemetryLog["level"],
-
-		message: string,
-
-		context?: Record<string, unknown>,
-	) => Effect.Effect<void, never>;
-
-	/** Event stream */
-	readonly events: Stream.Stream<ReadonlyArray<TelemetryEvent>, never>;
-
-	/** Get metrics */
-	readonly getMetrics: (
-		name: string,
-	) => Effect.Effect<ReadonlyArray<TelemetryMetric>, never>;
-
-	/** Get average duration */
-	readonly getAverageDuration: (name: string) => Effect.Effect<number, never>;
-
-	/** Get success rate */
-	readonly getSuccessRate: (name: string) => Effect.Effect<number, never>;
-
-	/** Flush all data */
-	readonly flush: Effect.Effect<void, never>;
-}
-
-/** Active span handle */
-export interface SpanHandle {
-	readonly end: (
-		success: boolean,
-
-		error?: string,
-	) => Effect.Effect<void, never>;
-}
-
-export class TelemetryTag extends Context.Tag("Cocoon/Telemetry")<
-	TelemetryTag,
-	TelemetryService
->() {}
+export const TelemetryTag = { _tag: "Cocoon/Telemetry" as const };
 
 export const Telemetry = TelemetryTag;
 
@@ -156,360 +112,138 @@ export const Telemetry = TelemetryTag;
 // IMPLEMENTATION
 // ============================================================================
 
-export const TelemetryLive = Layer.effect(
-	Telemetry,
+const MAX_EVENTS = 1_000;
 
-	Effect.gen(function* () {
-		// In-memory metric, span, and event stores
-		const metricsRef = yield* SubscriptionRef.make<
-			HashMap.HashMap<string, ReadonlyArray<TelemetryMetric>>
-		>(HashMap.empty());
+const MAX_PER_NAME = 100;
 
-		const spansRef = yield* SubscriptionRef.make<
-			HashMap.HashMap<string, ReadonlyArray<TelemetrySpan>>
-		>(HashMap.empty());
+function makeTelemetry(): TelemetryService {
+	const metrics = new Map<string, TelemetryMetric[]>();
 
-		const eventsRef = yield* SubscriptionRef.make<TelemetryEvent[]>([]);
+	const spans = new Map<string, TelemetrySpan[]>();
 
-		// Record metric - O(1) push with bounded trim
-		const recordMetric = (
-			name: string,
+	const eventsList: TelemetryEvent[] = [];
 
-			value: number,
+	const pushEvent = (ev: TelemetryEvent) => {
+		eventsList.push(ev);
 
-			labels?: Record<string, string>,
-		) =>
-			Effect.gen(function* () {
-				const metric: TelemetryMetric = {
-					name,
-					value,
-					timestamp: Date.now(),
-					labels,
-				};
+		if (eventsList.length > MAX_EVENTS) eventsList.shift();
+	};
 
-				// Push with bounded cap
-				const events = yield* eventsRef.get;
+	const recordMetric = (
+		name: string,
+		value: number,
+		labels?: Record<string, string>,
+	) => {
+		const metric: TelemetryMetric = {
+			name,
+			value,
+			timestamp: Date.now(),
+			labels: labels ?? undefined,
+		};
 
-				events.push({
-					type: "metric",
-					timestamp: metric.timestamp,
-					data: metric,
-				});
+		const existing = metrics.get(name) ?? [];
 
-				if (events.length > MAX_EVENTS) {
-					events.splice(0, events.length - MAX_EVENTS);
-				}
+		metrics.set(name, [...existing, metric].slice(-MAX_PER_NAME));
 
-				yield* Ref.set(eventsRef, events);
+		pushEvent({ type: "metric", timestamp: Date.now(), data: metric });
+	};
 
-				// Push under name key - bounded per name
-				const currentMetrics = yield* metricsRef.get;
+	const startSpan = (
+		name: string,
+		labels?: Record<string, string>,
+	): SpanHandle => {
+		const startTime = Date.now();
 
-				const nameMetrics = HashMap.get(currentMetrics, name).pipe(
-					Option.getOrElse(() => []),
-				);
-
-				nameMetrics.push(metric);
-
-				if (nameMetrics.length > MAX_METRICS_PER_NAME) {
-					nameMetrics.splice(
-						0,
-
-						nameMetrics.length - MAX_METRICS_PER_NAME,
-					);
-				}
-
-				yield* Ref.set(
-					metricsRef,
-
-					HashMap.set(currentMetrics, name, nameMetrics),
-				);
-			});
-
-		// Start span - O(1) push with bounded cap
-		const startSpan = (name: string, labels?: Record<string, string>) =>
-			Effect.gen(function* () {
-				const startTime = Date.now();
+		return {
+			end: (success: boolean, error?: string) => {
+				const endTime = Date.now();
 
 				const span: TelemetrySpan = {
 					name,
 					startTime,
-					success: false,
+					endTime,
+					duration: endTime - startTime,
+					success,
+					error: error ?? "",
 					labels: labels ?? {},
 				};
 
-				// Push start event
-				const events = yield* eventsRef.get;
+				const existing = spans.get(name) ?? [];
 
-				events.push({
-					type: "span",
-					timestamp: startTime,
-					data: span,
-				});
+				spans.set(name, [...existing, span].slice(-MAX_PER_NAME));
 
-				if (events.length > MAX_EVENTS) {
-					events.splice(0, events.length - MAX_EVENTS);
-				}
+				pushEvent({ type: "span", timestamp: Date.now(), data: span });
+			},
+		};
+	};
 
-				yield* Ref.set(eventsRef, events);
+	const log = (
+		level: TelemetryLog["level"],
+		message: string,
+		context?: Record<string, unknown>,
+	) => {
+		const entry: TelemetryLog = { level, message, context: context ?? {} };
 
-				return {
-					end: (success: boolean, error?: string) =>
-						Effect.gen(function* () {
-							const endTime = Date.now();
+		pushEvent({ type: "log", timestamp: Date.now(), data: entry });
 
-							const completedSpan: TelemetrySpan = {
-								...span,
-								endTime,
-								duration: endTime - startTime,
-								success,
-								error,
-							};
-
-							// Push end event
-							const events = yield* eventsRef.get;
-
-							events.push({
-								type: "span",
-								timestamp: endTime,
-								data: completedSpan,
-							});
-
-							if (events.length > MAX_EVENTS) {
-								events.splice(0, events.length - MAX_EVENTS);
-							}
-
-							yield* Ref.set(eventsRef, events);
-
-							const currentSpans = yield* spansRef.get;
-
-							const nameSpans = HashMap.get(
-								currentSpans,
-
-								name,
-							).pipe(Option.getOrElse(() => []));
-
-							// Push under name key
-							nameSpans.push(completedSpan);
-
-							if (nameSpans.length > MAX_SPANS_PER_NAME) {
-								nameSpans.splice(
-									0,
-
-									nameSpans.length - MAX_SPANS_PER_NAME,
-								);
-							}
-
-							yield* Ref.set(
-								spansRef,
-
-								HashMap.set(currentSpans, name, nameSpans),
-							);
-						}),
-				} satisfies SpanHandle;
-			});
-
-		// Log event - O(1) push with bounded cap
-		const log = (
-			level: TelemetryLog["level"],
-
-			message: string,
-
-			context?: Record<string, unknown>,
-		) =>
-			Effect.gen(function* () {
-				const logEntry: TelemetryLog = {
-					level,
-					message,
-					context: context as Record<string, unknown> | undefined,
-				};
-
-				const timestamp = Date.now();
-
-				// Push log event
-				const events = yield* eventsRef.get;
-
-				events.push({ type: "log", timestamp, data: logEntry });
-
-				if (events.length > MAX_EVENTS) {
-					events.splice(0, events.length - MAX_EVENTS);
-				}
-
-				yield* Ref.set(eventsRef, events);
-
-				// Write directly to stdout/stderr (survives esbuild console drop).
-				// Context JSON-encoded inline for single-line parseable output.
-				const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-
-				let ContextText = "";
-
-				if (context && Object.keys(context).length > 0) {
-					try {
-						ContextText = ` ${JSON.stringify(context)}`;
-					} catch {
-						ContextText = " [unserializable-context]";
-					}
-				}
-
-				const Line = `${Prefix} ${message}${ContextText}\n`;
-
-				const Stream =
-					level === "error" ? process.stderr : process.stdout;
-
-				try {
-					Stream.write(Line);
-				} catch {
-					// Broken pipe on shutdown - swallow silently.
-				}
-			});
-
-		// Get metrics by name
-		const getMetrics = (name: string) =>
-			Effect.gen(function* () {
-				const metrics = yield* metricsRef.get;
-
-				return HashMap.get(metrics, name).pipe(
-					Option.getOrElse(() => []),
+		if (typeof performance !== "undefined") {
+			try {
+				performance.mark(
+					`land:telemetry:${level}:${message.slice(0, 80)}`,
 				);
-			});
+			} catch {}
+		}
+	};
 
-		// Get average duration
-		const getAverageDuration = (name: string) =>
-			Effect.gen(function* () {
-				const spans = yield* spansRef.get;
+	return {
+		recordMetric,
 
-				const nameSpans = HashMap.get(spans, name).pipe(
-					Option.getOrElse(() => []),
-				);
+		startSpan,
 
-				if (nameSpans.length === 0) {
-					return 0;
-				}
+		log,
 
-				const totalDuration = nameSpans.reduce(
-					(sum: number, span: TelemetrySpan) => {
-						return sum + (span.duration ?? 0);
-					},
+		get events() {
+			return [...eventsList] as const;
+		},
 
-					0,
-				);
+		getMetrics: (name) => [...(metrics.get(name) ?? [])] as const,
 
-				return totalDuration / nameSpans.length;
-			});
+		getAverageDuration: (name) => {
+			const ss = spans.get(name) ?? [];
 
-		// Get success rate
-		const getSuccessRate = (name: string) =>
-			Effect.gen(function* () {
-				const spans = yield* spansRef.get;
+			if (!ss.length) return 0;
 
-				const nameSpans = HashMap.get(spans, name).pipe(
-					Option.getOrElse(() => []),
-				);
+			return ss.reduce((s, sp) => s + (sp.duration || 0), 0) / ss.length;
+		},
 
-				if (nameSpans.length === 0) {
-					return 1.0;
-				}
+		getSuccessRate: (name) => {
+			const ss = spans.get(name) ?? [];
 
-				const successCount = nameSpans.filter(
-					(span: TelemetrySpan) => span.success,
-				).length;
+			if (!ss.length) return 0;
 
-				return successCount / nameSpans.length;
-			});
+			return ss.filter((s) => s.success).length / ss.length;
+		},
 
-		// Flush all data
-		const flush = Effect.gen(function* () {
-			yield* Ref.set(metricsRef, HashMap.empty());
+		flush: () => {},
+	};
+}
 
-			yield* Ref.set(spansRef, HashMap.empty());
+export const TelemetryLive: TelemetryService = makeTelemetry();
 
-			yield* Ref.set(eventsRef, []);
-		});
-
-		return {
-			recordMetric,
-			startSpan,
-			log,
-			events: eventsRef.changes,
-			getMetrics,
-			getAverageDuration,
-			getSuccessRate,
-			flush,
-		} satisfies TelemetryService;
-	}),
-);
-
-// ============================================================================
-// MOCK FOR TESTING
-// ============================================================================
+// withSpan: pass-through (no Effect tracing overhead)
+export const withSpan = (_name: string, fn: any) => fn;
 
 export const makeMockTelemetry = (): TelemetryService => ({
-	recordMetric: () => Effect.void,
-	startSpan: () =>
-		Effect.succeed({
-			end: () => Effect.void,
-		}),
-	log: (level, message, context) =>
-		Effect.sync(() => {
-			const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-
-			let ContextText = "";
-
-			if (context && Object.keys(context).length > 0) {
-				try {
-					ContextText = ` ${JSON.stringify(context)}`;
-				} catch {
-					ContextText = " [unserializable-context]";
-				}
-			}
-
-			const Stream = level === "error" ? process.stderr : process.stdout;
-
-			try {
-				Stream.write(`${Prefix} ${message}${ContextText}\n`);
-			} catch {}
-		}),
-	events: Stream.empty,
-	getMetrics: () => Effect.succeed([]),
-	getAverageDuration: () => Effect.succeed(0),
-	getSuccessRate: () => Effect.succeed(1.0),
-	flush: Effect.void,
+	recordMetric: () => {},
+	startSpan: () => ({ end: () => {} }),
+	log: () => {},
+	events: [],
+	getMetrics: () => [],
+	getAverageDuration: () => 0,
+	getSuccessRate: () => 1.0,
+	flush: () => {},
 });
 
-export const TelemetryMock = Layer.effect(
-	Telemetry,
+export const TelemetryMock: TelemetryService = makeMockTelemetry();
 
-	Effect.succeed(makeMockTelemetry()),
-);
-
-// ============================================================================
-// CONVENIENCE EXPORTS
-// ============================================================================
-
-/** Wrap an effect with telemetry span */
-export const withSpan = <A, E, R>(
-	name: string,
-
-	effect: Effect.Effect<A, E, R>,
-
-	labels?: Record<string, string>,
-) =>
-	Effect.gen(function* () {
-		const telemetry = yield* Telemetry;
-
-		const span = yield* telemetry.startSpan(name, labels);
-
-		const result = yield* effect.pipe(
-			Effect.catchAll((error: unknown) =>
-				Effect.gen(function* () {
-					yield* span.end(false, String(error));
-
-					return yield* Effect.fail(error);
-				}),
-			),
-		);
-
-		yield* span.end(true);
-
-		return result;
-	});
+export const getTelemetry = (): TelemetryService => TelemetryLive;

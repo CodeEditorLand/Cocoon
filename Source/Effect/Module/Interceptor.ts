@@ -1,15 +1,12 @@
 /**
  * @module Effect/ModuleInterceptor
  * @description
- * Atomic module interceptor service for Cocoon Extension Host using Effect-TS.
+ * Atomic module interceptor service for Cocoon Extension Host.
  * Provides AST-based security sandboxing and module isolation for extensions.
- * Wraps the existing ModuleInterceptorService with Effect patterns.
  */
 
-import { Context, Effect, HashMap, Layer, Ref, SubscriptionRef } from "effect";
-
 import { CocoonDevLog } from "../../Services/Dev/Log.js";
-import { TelemetryTag } from "../Telemetry.js";
+import { getTelemetry, type TelemetryService } from "../Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -113,13 +110,13 @@ export interface ModuleInterceptorService {
 	/**
 	 * Initialize module interception service
 	 */
-	readonly initialize: Effect.Effect<void, never>;
+	readonly initialize: () => Promise<void>;
 
 	/**
 	 * Install module interceptor into Node.js module system.
 	 * Patches Module._load to intercept require('vscode').
 	 */
-	readonly install: Effect.Effect<void, never>;
+	readonly install: () => Promise<void>;
 
 	/**
 	 * Register a vscode API instance for an extension.
@@ -129,14 +126,14 @@ export interface ModuleInterceptorService {
 		extensionId: string,
 
 		api: unknown,
-	) => Effect.Effect<void, never>;
+	) => Promise<void>;
 
 	/**
 	 * Intercept module require calls
 	 */
 	readonly interceptRequire: (
 		request: ModuleInterceptionRequest,
-	) => Effect.Effect<ModuleInterceptionResult, never>;
+	) => Promise<ModuleInterceptionResult>;
 
 	/**
 	 * Resolve module path for extension
@@ -145,21 +142,19 @@ export interface ModuleInterceptorService {
 		extensionId: string,
 
 		modulePath: string,
-	) => Effect.Effect<string, ModuleNotFoundError>;
+	) => Promise<string>;
 
 	/**
 	 * Set security policy for extension
 	 */
-	readonly setSecurityPolicy: (
-		policy: SecurityPolicy,
-	) => Effect.Effect<void, never>;
+	readonly setSecurityPolicy: (policy: SecurityPolicy) => Promise<void>;
 
 	/**
 	 * Get security policy for extension
 	 */
 	readonly getSecurityPolicy: (
 		extensionId: string,
-	) => Effect.Effect<SecurityPolicy, SecurityPolicyNotFoundError>;
+	) => Promise<SecurityPolicy>;
 
 	/**
 	 * Validate module security
@@ -168,21 +163,21 @@ export interface ModuleInterceptorService {
 		extensionId: string,
 
 		moduleId: string,
-	) => Effect.Effect<boolean, never>;
+	) => Promise<boolean>;
 
 	/**
 	 * Get interception statistics
 	 */
-	readonly getStatistics: Effect.Effect<InterceptionStats, never>;
+	readonly getStatistics: () => Promise<InterceptionStats>;
 }
 
 // ============================================================================
-// SERVICE TAG
+// SERVICE TAG (plain object, no Effect.Context.Tag)
 // ============================================================================
 
-export class ModuleInterceptorTag extends Context.Tag(
-	"Cocoon/ModuleInterceptor",
-)<ModuleInterceptorTag, ModuleInterceptorService>() {}
+export const ModuleInterceptorTag = {
+	_tag: "Cocoon/ModuleInterceptor",
+} as const;
 
 export const ModuleInterceptor = ModuleInterceptorTag;
 
@@ -216,504 +211,471 @@ const defaultSecurityPolicy = {
 	maxExecutionTime: 5000, // 5 seconds
 } satisfies Omit<SecurityPolicy, "extensionId">;
 
-export const ModuleInterceptorLive = Layer.effect(
-	ModuleInterceptor,
+async function makeModuleInterceptorService(): Promise<ModuleInterceptorService> {
+	const telemetry: TelemetryService = getTelemetry();
 
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
+	// Security policies for extensions
+	const policies = new Map<string, SecurityPolicy>();
 
-		// Security policies for extensions
-		const policiesRef = yield* SubscriptionRef.make<
-			HashMap.HashMap<string, SecurityPolicy>
-		>(HashMap.empty());
+	// Module cache
+	const moduleCache = new Map<string, unknown>();
 
-		// Module cache
-		const moduleCacheRef = yield* SubscriptionRef.make<
-			HashMap.HashMap<string, unknown>
-		>(HashMap.empty());
+	// Statistics
+	let stats: InterceptionStats = {
+		totalInterceptions: 0,
 
-		// Statistics
-		const statsRef = yield* SubscriptionRef.make<InterceptionStats>({
-			totalInterceptions: 0,
-			blockedModules: 0,
-			averageResolutionTime: 0,
-			securityViolations: 0,
-		});
+		blockedModules: 0,
 
-		// Resolution times for average calculation
-		const resolutionTimes: number[] = [];
+		averageResolutionTime: 0,
 
-		// Check if module is a Node.js built-in
-		const isNodeBuiltin = (moduleId: string): boolean => {
-			const builtins = [
-				"fs",
-				"path",
-				"os",
-				"net",
-				"http",
-				"https",
-				"child_process",
-				"crypto",
-				"util",
-				"events",
-				"stream",
-				"buffer",
-				"url",
-				"querystring",
-			];
+		securityViolations: 0,
+	};
 
-			return builtins.includes(moduleId);
+	// Resolution times for average calculation
+	const resolutionTimes: number[] = [];
+
+	// vscode API registry: extensionId → vscode API instance
+	const vscodeAPIRegistry = new Map<string, unknown>();
+
+	// Check if module is a Node.js built-in
+	const isNodeBuiltin = (moduleId: string): boolean => {
+		const builtins = [
+			"fs",
+
+			"path",
+
+			"os",
+
+			"net",
+
+			"http",
+
+			"https",
+
+			"child_process",
+
+			"crypto",
+
+			"util",
+
+			"events",
+
+			"stream",
+
+			"buffer",
+
+			"url",
+
+			"querystring",
+		];
+
+		return builtins.includes(moduleId);
+	};
+
+	// Atom: Initialize
+	const initialize = async (): Promise<void> => {
+		telemetry.log(
+			"info",
+
+			"[ModuleInterceptor] Initializing module interceptor service...",
+		);
+
+		await new Promise<void>((r) => setTimeout(r, 5));
+
+		telemetry.log(
+			"info",
+
+			"[ModuleInterceptor] Module interceptor service initialized",
+		);
+	};
+
+	// Atom: Install - patches Node.js Module._load to intercept require('vscode')
+	const install = async (): Promise<void> => {
+		telemetry.log(
+			"info",
+
+			"[ModuleInterceptor] Installing Node.js Module._load hook...",
+		);
+
+		// Cocoon/Main.js is an ESM bundle - `require` is not in scope.
+		// Use dynamic import() to get the Module constructor.
+		const { default: NodeModule } = (await import("node:module")) as any;
+
+		const OriginalLoad = NodeModule._load;
+
+		NodeModule._load = function PatchedLoad(
+			Request: string,
+
+			Parent: any,
+
+			IsMain: boolean,
+		) {
+			// Intercept require('vscode') - return the API shim
+			if (Request === "vscode") {
+				// Determine which extension is loading by checking parent filename
+				const ParentFilename: string =
+					Parent?.filename ?? Parent?.id ?? "";
+
+				// Look up registered API for this extension, or use default
+				for (const [ExtensionId, API] of vscodeAPIRegistry) {
+					if (ParentFilename.includes(ExtensionId)) {
+						return API;
+					}
+				}
+
+				// Fallback: return the last registered API (single-extension mode)
+				if (vscodeAPIRegistry.size > 0) {
+					const LastAPI = [...vscodeAPIRegistry.values()].pop();
+
+					return LastAPI;
+				}
+
+				// Bridge fallback: GRPCServerService sets globalThis.__cocoonVscodeAPI
+				// before activating extensions. Bridges imperative activation
+				// with the module interception layer.
+				const GlobalAPI = (globalThis as any).__cocoonVscodeAPI;
+
+				if (GlobalAPI) {
+					return GlobalAPI;
+				}
+
+				// No API registered yet - return empty namespace
+				CocoonDevLog(
+					"ext-host",
+
+					`[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`,
+				);
+
+				return {};
+			}
+
+			// All other modules: pass through to Node.js
+			return OriginalLoad.apply(this, [Request, Parent, IsMain]);
 		};
 
-		// Atom: Initialize
-		const initialize = Effect.gen(function* () {
-			telemetry.log(
-				"info",
+		telemetry.log(
+			"info",
 
-				"[ModuleInterceptor] Initializing module interceptor service...",
+			"[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted",
+		);
+	};
+
+	// Atom: Intercept require
+	const interceptRequire = async (
+		request: ModuleInterceptionRequest,
+	): Promise<ModuleInterceptionResult> => {
+		const startTime = Date.now();
+
+		// Update statistics
+		stats = { ...stats, totalInterceptions: stats.totalInterceptions + 1 };
+
+		// Get security policy for extension
+		const policy = policies.get(request.extensionId) ?? {
+			...defaultSecurityPolicy,
+
+			extensionId: request.extensionId,
+		};
+
+		if (!policies.has(request.extensionId)) {
+			telemetry.log(
+				"warn",
+
+				`[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`,
+			);
+		}
+
+		// Check blocked modules
+		if (policy.blockedModules.includes(request.moduleId)) {
+			telemetry.log(
+				"warn",
+
+				`[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`,
 			);
 
-			// Initialization logic would go here
-			yield* Effect.sleep("5 millis");
+			stats = {
+				...stats,
 
-			telemetry.log(
-				"info",
+				blockedModules: stats.blockedModules + 1,
 
-				"[ModuleInterceptor] Module interceptor service initialized",
-			);
-		});
-
-		// vscode API registry: extensionId → vscode API instance
-		const vscodeAPIRegistry = new Map<string, unknown>();
-
-		// Atom: Install - patches Node.js Module._load to intercept require('vscode')
-		const install = Effect.gen(function* () {
-			telemetry.log(
-				"info",
-
-				"[ModuleInterceptor] Installing Node.js Module._load hook...",
-			);
-
-			// Cocoon/Main.js is an ESM bundle - `require` is not in scope.
-			// Use dynamic import() to get the Module constructor.
-			const { default: NodeModule } = (yield* Effect.tryPromise({
-				try: () => import("node:module"),
-				catch: (Err) =>
-					new Error(
-						`[ModuleInterceptor] import('node:module') failed: ${Err}`,
-					),
-			})) as any;
-
-			const OriginalLoad = NodeModule._load;
-
-			NodeModule._load = function PatchedLoad(
-				Request: string,
-
-				Parent: any,
-
-				IsMain: boolean,
-			) {
-				// Intercept require('vscode') - return the API shim
-				if (Request === "vscode") {
-					// Determine which extension is loading by checking parent filename
-					const ParentFilename: string =
-						Parent?.filename ?? Parent?.id ?? "";
-
-					// Look up registered API for this extension, or use default
-					for (const [ExtensionId, API] of vscodeAPIRegistry) {
-						if (ParentFilename.includes(ExtensionId)) {
-							return API;
-						}
-					}
-
-					// Fallback: return the last registered API (single-extension mode)
-					if (vscodeAPIRegistry.size > 0) {
-						const LastAPI = [...vscodeAPIRegistry.values()].pop();
-
-						return LastAPI;
-					}
-
-					// Bridge fallback: GRPCServerService sets globalThis.__cocoonVscodeAPI
-					// before activating extensions. Bridges imperative activation
-					// with the Effect-TS module interception layer.
-					const GlobalAPI = (globalThis as any).__cocoonVscodeAPI;
-
-					if (GlobalAPI) {
-						return GlobalAPI;
-					}
-
-					// No API registered yet - return empty namespace
-					CocoonDevLog(
-						"ext-host",
-
-						`[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`,
-					);
-
-					return {};
-				}
-
-				// All other modules: pass through to Node.js
-				return OriginalLoad.apply(this, [Request, Parent, IsMain]);
+				securityViolations: stats.securityViolations + 1,
 			};
 
+			return {
+				success: false,
+
+				error: `Module access denied: ${request.moduleId}`,
+
+				securityLevel: SecurityLevel.BLOCKED,
+			} satisfies ModuleInterceptionResult;
+		}
+
+		// Check allowed modules
+		if (
+			!policy.allowedModules.includes(request.moduleId) &&
+			!isNodeBuiltin(request.moduleId)
+		) {
+			// For non-builtin and non-allowed modules, block
 			telemetry.log(
-				"info",
+				"warn",
 
-				"[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted",
+				`[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`,
 			);
-		});
-
-		// Atom: Intercept require
-		const interceptRequire = (request: ModuleInterceptionRequest) =>
-			Effect.gen(function* () {
-				const startTime = Date.now();
-
-				// Update statistics
-				const currentStats = yield* statsRef.get;
-
-				yield* Ref.set(statsRef, {
-					...currentStats,
-					totalInterceptions: currentStats.totalInterceptions + 1,
-				});
-
-				// Get security policy for extension
-				const policyOpt = HashMap.get(
-					yield* policiesRef.get,
-
-					request.extensionId,
-				);
-
-				if (policyOpt._tag === "None") {
-					// Use default policy
-					yield* telemetry.log(
-						"warn",
-
-						`[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`,
-					);
-				}
-
-				const policy =
-					policyOpt._tag === "Some"
-						? policyOpt.value
-						: {
-								...defaultSecurityPolicy,
-								extensionId: request.extensionId,
-							};
-
-				// Check blocked modules
-				if (policy.blockedModules.includes(request.moduleId)) {
-					yield* telemetry.log(
-						"warn",
-
-						`[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`,
-					);
-
-					// Update statistics
-					const statsAfter = yield* statsRef.get;
-
-					yield* Ref.set(statsRef, {
-						...statsAfter,
-						blockedModules: statsAfter.blockedModules + 1,
-						securityViolations: statsAfter.securityViolations + 1,
-					});
 
-					return {
-						success: false,
-						error: `Module access denied: ${request.moduleId}`,
-						securityLevel: SecurityLevel.BLOCKED,
-					} satisfies ModuleInterceptionResult;
-				}
+			stats = {
+				...stats,
 
-				// Check allowed modules
-				if (
-					!policy.allowedModules.includes(request.moduleId) &&
-					!isNodeBuiltin(request.moduleId)
-				) {
-					// For non-builtin and non-allowed modules, block
-					yield* telemetry.log(
-						"warn",
+				blockedModules: stats.blockedModules + 1,
 
-						`[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`,
-					);
+				securityViolations: stats.securityViolations + 1,
+			};
 
-					// Update statistics
-					const statsAfter = yield* statsRef.get;
+			return {
+				success: false,
 
-					yield* Ref.set(statsRef, {
-						...statsAfter,
-						blockedModules: statsAfter.blockedModules + 1,
-						securityViolations: statsAfter.securityViolations + 1,
-					});
+				error: `Module not in allowlist: ${request.moduleId}`,
 
-					return {
-						success: false,
-						error: `Module not in allowlist: ${request.moduleId}`,
-						securityLevel: SecurityLevel.RESTRICTED,
-					} satisfies ModuleInterceptionResult;
-				}
-
-				// Check cache first
-				const cacheKey = `${request.extensionId}:${request.moduleId}`;
-
-				const cachedModule = HashMap.get(
-					yield* moduleCacheRef.get,
+				securityLevel: SecurityLevel.RESTRICTED,
+			} satisfies ModuleInterceptionResult;
+		}
 
-					cacheKey,
-				);
-
-				if (cachedModule._tag === "Some") {
-					const duration = Date.now() - startTime;
+		// Check cache first
+		const cacheKey = `${request.extensionId}:${request.moduleId}`;
 
-					resolutionTimes.push(duration);
+		const cachedModule = moduleCache.get(cacheKey);
 
-					// Update average
-					const allTimes = [...resolutionTimes];
+		if (cachedModule !== undefined) {
+			const duration = Date.now() - startTime;
 
-					const avgTime =
-						allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+			resolutionTimes.push(duration);
 
-					const statsAfter = yield* statsRef.get;
+			const avgTime =
+				resolutionTimes.reduce((a, b) => a + b, 0) /
+				resolutionTimes.length;
 
-					yield* Ref.set(statsRef, {
-						...statsAfter,
-						averageResolutionTime: avgTime,
-					});
+			stats = { ...stats, averageResolutionTime: avgTime };
 
-					telemetry.log(
-						"debug",
+			telemetry.log(
+				"debug",
 
-						`[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration}ms)`,
-					);
+				`[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration}ms)`,
+			);
 
-					return {
-						success: true,
-						module: cachedModule.value,
-						securityLevel: policy.securityLevel,
-					} satisfies ModuleInterceptionResult;
-				}
+			return {
+				success: true,
 
-				// Load module (in production, this would actually require the module)
-				yield* Effect.sleep("5 millis"); // Simulate loading
+				module: cachedModule,
 
-				telemetry.log(
-					"info",
+				securityLevel: policy.securityLevel,
+			} satisfies ModuleInterceptionResult;
+		}
 
-					`[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`,
-				);
+		// Load module (in production, this would actually require the module)
+		await new Promise<void>((r) => setTimeout(r, 5)); // Simulate loading
 
-				// For now, return a mock module object
-				const module: unknown = { module: request.moduleId };
+		telemetry.log(
+			"info",
 
-				// Cache the module
-				const currentCache = yield* moduleCacheRef.get;
+			`[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`,
+		);
 
-				yield* Ref.set(
-					moduleCacheRef,
+		// For now, return a mock module object
+		const loadedModule: unknown = { module: request.moduleId };
 
-					HashMap.set(currentCache, cacheKey, module),
-				);
+		// Cache the module
+		moduleCache.set(cacheKey, loadedModule);
 
-				const duration = Date.now() - startTime;
+		const duration = Date.now() - startTime;
 
-				resolutionTimes.push(duration);
+		resolutionTimes.push(duration);
 
-				// Update average
-				const allTimes = [...resolutionTimes];
+		const avgTime =
+			resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length;
 
-				const avgTime =
-					allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
-
-				const statsAfter = yield* statsRef.get;
-
-				yield* Ref.set(statsRef, {
-					...statsAfter,
-					averageResolutionTime: avgTime,
-				});
-
-				return {
-					success: true,
-					module,
-					securityLevel: policy.securityLevel,
-				} satisfies ModuleInterceptionResult;
-			});
-
-		// Atom: Resolve module
-		const resolveModule = (extensionId: string, modulePath: string) =>
-			Effect.gen(function* () {
-				// In production, this would resolve the actual module path
-				yield* Effect.sleep("5 millis");
-
-				// Mock resolution
-				if (!modulePath) {
-					return yield* Effect.fail(
-						new ModuleNotFoundError(modulePath, extensionId),
-					);
-				}
-
-				// Return resolved path (mock)
-				const resolvedPath = `/node_modules/${modulePath}/index.js`;
-
-				return resolvedPath;
-			});
-
-		// Atom: Set security policy
-		const setSecurityPolicy = (policy: SecurityPolicy) =>
-			Effect.gen(function* () {
-				const currentPolicies = yield* policiesRef.get;
-
-				yield* Ref.set(
-					policiesRef,
-
-					HashMap.set(currentPolicies, policy.extensionId, policy),
-				);
-
-				telemetry.log(
-					"info",
-
-					`[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`,
-				);
-			});
-
-		// Atom: Get security policy
-		const getSecurityPolicy = (extensionId: string) =>
-			Effect.gen(function* () {
-				const policies = yield* policiesRef.get;
-
-				const policy = HashMap.get(policies, extensionId);
-
-				if (policy._tag === "None") {
-					return yield* Effect.fail(
-						new SecurityPolicyNotFoundError(extensionId),
-					);
-				}
-
-				return policy.value;
-			});
-
-		// Atom: Validate module security
-		const validateModuleSecurity = (
-			extensionId: string,
-
-			moduleId: string,
-		) =>
-			Effect.gen(function* () {
-				const policies = yield* policiesRef.get;
-
-				const policyOpt = HashMap.get(policies, extensionId);
-
-				if (policyOpt._tag === "None") {
-					// Use default policy for validation
-					const policy = { ...defaultSecurityPolicy, extensionId };
-
-					return (
-						!policy.blockedModules.includes(moduleId) ||
-						policy.allowedModules.includes(moduleId) ||
-						isNodeBuiltin(moduleId)
-					);
-				}
-
-				const policy = policyOpt.value;
-
-				return (
-					!policy.blockedModules.includes(moduleId) ||
-					policy.allowedModules.includes(moduleId) ||
-					isNodeBuiltin(moduleId)
-				);
-			});
-
-		// Atom: Get statistics
-		const getStatistics = Effect.gen(function* () {
-			return yield* statsRef.get;
-		});
-
-		// Atom: Register vscode API for an extension
-		const registerVscodeAPI = (extensionId: string, api: unknown) =>
-			Effect.gen(function* () {
-				vscodeAPIRegistry.set(extensionId, api);
-
-				telemetry.log(
-					"info",
-
-					`[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`,
-				);
-			});
+		stats = { ...stats, averageResolutionTime: avgTime };
 
 		return {
-			initialize,
-			install,
-			registerVscodeAPI,
-			interceptRequire,
-			resolveModule,
-			setSecurityPolicy,
-			getSecurityPolicy,
-			validateModuleSecurity,
-			getStatistics,
-		} satisfies ModuleInterceptorService;
-	}),
-);
+			success: true,
+
+			module: loadedModule,
+
+			securityLevel: policy.securityLevel,
+		} satisfies ModuleInterceptionResult;
+	};
+
+	// Atom: Resolve module
+	const resolveModule = async (
+		extensionId: string,
+
+		modulePath: string,
+	): Promise<string> => {
+		// In production, this would resolve the actual module path
+		await new Promise<void>((r) => setTimeout(r, 5));
+
+		// Mock resolution
+		if (!modulePath) {
+			throw new ModuleNotFoundError(modulePath, extensionId);
+		}
+
+		// Return resolved path (mock)
+		return `/node_modules/${modulePath}/index.js`;
+	};
+
+	// Atom: Set security policy
+	const setSecurityPolicy = async (policy: SecurityPolicy): Promise<void> => {
+		policies.set(policy.extensionId, policy);
+
+		telemetry.log(
+			"info",
+
+			`[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`,
+		);
+	};
+
+	// Atom: Get security policy
+	const getSecurityPolicy = async (
+		extensionId: string,
+	): Promise<SecurityPolicy> => {
+		const policy = policies.get(extensionId);
+
+		if (policy === undefined) {
+			throw new SecurityPolicyNotFoundError(extensionId);
+		}
+
+		return policy;
+	};
+
+	// Atom: Validate module security
+	const validateModuleSecurity = async (
+		extensionId: string,
+
+		moduleId: string,
+	): Promise<boolean> => {
+		const policy = policies.get(extensionId) ?? {
+			...defaultSecurityPolicy,
+
+			extensionId,
+		};
+
+		return (
+			!policy.blockedModules.includes(moduleId) ||
+			policy.allowedModules.includes(moduleId) ||
+			isNodeBuiltin(moduleId)
+		);
+	};
+
+	// Atom: Get statistics
+	const getStatistics = async (): Promise<InterceptionStats> => stats;
+
+	// Atom: Register vscode API for an extension
+	const registerVscodeAPI = async (
+		extensionId: string,
+
+		api: unknown,
+	): Promise<void> => {
+		vscodeAPIRegistry.set(extensionId, api);
+
+		telemetry.log(
+			"info",
+
+			`[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`,
+		);
+	};
+
+	return {
+		initialize,
+
+		install,
+
+		registerVscodeAPI,
+
+		interceptRequire,
+
+		resolveModule,
+
+		setSecurityPolicy,
+
+		getSecurityPolicy,
+
+		validateModuleSecurity,
+
+		getStatistics,
+	} satisfies ModuleInterceptorService;
+}
+
+// ============================================================================
+// SINGLETON
+// ============================================================================
+
+let _instance: ModuleInterceptorService | undefined;
+
+export async function getModuleInterceptor(): Promise<ModuleInterceptorService> {
+	if (_instance === undefined) {
+		_instance = await makeModuleInterceptorService();
+	}
+
+	return _instance;
+}
+
+// Eagerly-created live layer (resolves on first access)
+export const ModuleInterceptorLive: Promise<ModuleInterceptorService> =
+	makeModuleInterceptorService();
 
 // ============================================================================
 // MOCK FOR TESTING
 // ============================================================================
 
 export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
-	initialize: Effect.gen(function* () {
-		yield* Effect.sleep("1 millis");
-	}),
+	initialize: async () => {
+		await new Promise<void>((r) => setTimeout(r, 1));
+	},
 
-	install: Effect.gen(function* () {
-		yield* Effect.sleep("1 millis");
-	}),
+	install: async () => {
+		await new Promise<void>((r) => setTimeout(r, 1));
+	},
 
-	registerVscodeAPI: (_extensionId, _api) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
-		}),
+	registerVscodeAPI: async (_extensionId, _api) => {
+		await new Promise<void>((r) => setTimeout(r, 1));
+	},
 
-	interceptRequire: (request) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
+	interceptRequire: async (request) => {
+		await new Promise<void>((r) => setTimeout(r, 1));
 
-			return {
-				success: true,
-				module: { mock: true, moduleId: request.moduleId },
-				securityLevel: SecurityLevel.SANDBOXED,
-			} satisfies ModuleInterceptionResult;
-		}),
+		return {
+			success: true,
+			module: { mock: true, moduleId: request.moduleId },
+			securityLevel: SecurityLevel.SANDBOXED,
+		} satisfies ModuleInterceptionResult;
+	},
 
-	resolveModule: (_extensionId, modulePath) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
+	resolveModule: async (_extensionId, modulePath) => {
+		await new Promise<void>((r) => setTimeout(r, 1));
 
-			return `/node_modules/${modulePath}/index.js`;
-		}),
+		return `/node_modules/${modulePath}/index.js`;
+	},
 
-	setSecurityPolicy: (_policy) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
-		}),
+	setSecurityPolicy: async (_policy) => {
+		await new Promise<void>((r) => setTimeout(r, 1));
+	},
 
-	getSecurityPolicy: (extensionId) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
+	getSecurityPolicy: async (extensionId) => {
+		await new Promise<void>((r) => setTimeout(r, 1));
 
-			return {
-				extensionId,
-				allowedModules: ["path", "util"],
-				blockedModules: ["fs"],
-				securityLevel: SecurityLevel.SANDBOXED,
-			} satisfies SecurityPolicy;
-		}),
+		return {
+			extensionId,
+			allowedModules: ["path", "util"],
+			blockedModules: ["fs"],
+			securityLevel: SecurityLevel.SANDBOXED,
+		} satisfies SecurityPolicy;
+	},
 
-	validateModuleSecurity: (_extensionId, _moduleId) =>
-		Effect.gen(function* () {
-			yield* Effect.sleep("1 millis");
+	validateModuleSecurity: async (_extensionId, _moduleId) => {
+		await new Promise<void>((r) => setTimeout(r, 1));
 
-			return true;
-		}),
+		return true;
+	},
 
-	getStatistics: Effect.gen(function* () {
-		yield* Effect.sleep("1 millis");
+	getStatistics: async () => {
+		await new Promise<void>((r) => setTimeout(r, 1));
 
 		return {
 			totalInterceptions: 100,
@@ -721,11 +683,8 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 			averageResolutionTime: 2.5,
 			securityViolations: 3,
 		} satisfies InterceptionStats;
-	}),
+	},
 });
 
-export const ModuleInterceptorMock = Layer.effect(
-	ModuleInterceptor,
-
-	Effect.succeed(makeMockModuleInterceptor()),
-);
+export const ModuleInterceptorMock: ModuleInterceptorService =
+	makeMockModuleInterceptor();

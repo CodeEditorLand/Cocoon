@@ -1,21 +1,11 @@
 /**
  * @module Effect/Extension
  * @description
- * Atomic extension service for Cocoon Extension Host using Effect-TS.
+ * Atomic extension service for Cocoon Extension Host.
  * Manages extension lifecycle including activation, deactivation, and enumeration.
  */
 
-import {
-	Context,
-	Effect,
-	HashMap,
-	Layer,
-	Option,
-	Ref,
-	SubscriptionRef,
-} from "effect";
-
-import { TelemetryTag } from "./Telemetry.js";
+import { getTelemetry, type TelemetryService } from "./Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -127,50 +117,34 @@ export class ExtensionDeactivationError extends Error {
 
 export interface ExtensionService {
 	/** Get all extensions */
-	readonly getAll: Effect.Effect<ReadonlyArray<ExtensionHost>, never>;
+	readonly getAll: () => Promise<ReadonlyArray<ExtensionHost>>;
 
 	/** Get extension by ID */
-	readonly getById: (
-		id: string,
-	) => Effect.Effect<ExtensionHost, ExtensionNotFoundError>;
+	readonly getById: (id: string) => Promise<ExtensionHost>;
 
 	/** Activate an extension */
-	readonly activate: (
-		id: string,
-	) => Effect.Effect<
-		ActivateResult,
-		ExtensionActivationError | ExtensionNotFoundError
-	>;
+	readonly activate: (id: string) => Promise<ActivateResult>;
 
 	/** Deactivate an extension */
-	readonly deactivate: (
-		id: string,
-	) => Effect.Effect<
-		DeactivateResult,
-		ExtensionDeactivationError | ExtensionNotFoundError
-	>;
+	readonly deactivate: (id: string) => Promise<DeactivateResult>;
 
 	/** Check if extension is active */
-	readonly isActive: (id: string) => Effect.Effect<boolean, never>;
+	readonly isActive: (id: string) => Promise<boolean>;
 
 	/** Get active extensions count */
-	readonly getActiveCount: Effect.Effect<number, never>;
+	readonly getActiveCount: () => Promise<number>;
 
-	/** Stream of extension state changes */
-	readonly stateChanges: Effect.Effect<
-		Readonly<Record<string, ExtensionState>>,
-		never
+	/** Snapshot of current extension states */
+	readonly stateChanges: () => Promise<
+		Readonly<Record<string, ExtensionState>>
 	>;
 }
 
 // ============================================================================
-// SERVICE TAG
+// SERVICE TAG (plain object identity for DI)
 // ============================================================================
 
-export class ExtensionTag extends Context.Tag("Cocoon/Extension")<
-	ExtensionTag,
-	ExtensionService
->() {}
+export const ExtensionTag = { _tag: "Cocoon/Extension" } as const;
 
 export const Extension = ExtensionTag;
 
@@ -178,293 +152,274 @@ export const Extension = ExtensionTag;
 // IMPLEMENTATION
 // ============================================================================
 
-export const ExtensionLive = Layer.effect(
-	Extension,
+function makeExtensionService(telemetry: TelemetryService): ExtensionService {
+	// Storage for extensions — plain Map replaces SubscriptionRef<HashMap>
+	const extensions = new Map<string, ExtensionHost>();
 
-	Effect.gen(function* () {
-		const telemetry = yield* TelemetryTag;
+	// Atom: Get all extensions
+	const getAll = async (): Promise<ReadonlyArray<ExtensionHost>> => {
+		return Array.from(extensions.values());
+	};
 
-		// Storage for extensions
-		const extensionsRef = yield* SubscriptionRef.make<
-			HashMap.HashMap<string, ExtensionHost>
-		>(HashMap.empty());
+	// Atom: Get extension by ID
+	const getById = async (id: string): Promise<ExtensionHost> => {
+		const extension = extensions.get(id);
 
-		// Atom: Get all extensions
-		const getAll = Effect.gen(function* () {
-			const extensions = yield* extensionsRef.get;
+		if (extension === undefined) {
+			throw new ExtensionNotFoundError(id);
+		}
 
-			return Array.from(HashMap.values(extensions));
+		return extension;
+	};
+
+	// Atom: Activate an extension
+	const activate = async (id: string): Promise<ActivateResult> => {
+		const startTime = Date.now();
+
+		const current = extensions.get(id);
+
+		if (current === undefined) {
+			throw new ExtensionNotFoundError(id);
+		}
+
+		// Check if already active
+		if (current.state._tag === "Active") {
+			return {
+				extensionId: id,
+
+				success: true,
+
+				activationTime: 0,
+
+				error: undefined,
+			} satisfies ActivateResult;
+		}
+
+		// Update state to activating
+		extensions.set(id, {
+			...current,
+			state: { _tag: "Activating", startTime },
 		});
 
-		// Atom: Get extension by ID
-		const getById = (id: string) =>
-			Effect.gen(function* () {
-				const extensions = yield* extensionsRef.get;
+		telemetry.log("info", `[Extension] Activating extension: ${id}`);
 
-				const extension = HashMap.get(extensions, id);
+		try {
+			// Simulate activation (in production, this would load the extension module)
+			await new Promise<void>((r) => setTimeout(r, 10));
 
-				if (extension._tag === "None") {
-					return yield* Effect.fail(new ExtensionNotFoundError(id));
-				}
+			const activationTime = Date.now() - startTime;
 
-				return extension.value;
+			// Update state to active
+			extensions.set(id, {
+				...current,
+				state: { _tag: "Active", activatedAt: startTime },
+				activatedAt: startTime,
+				activationTime,
 			});
 
-		// Atom: Activate an extension
-		const activate = (id: string) =>
-			Effect.gen(function* () {
-				const startTime = Date.now();
+			telemetry.log(
+				"info",
 
-				const extensions = yield* extensionsRef.get;
+				`[Extension] Activated extension: ${id} (${activationTime}ms)`,
+			);
 
-				const extension = HashMap.get(extensions, id);
+			return {
+				extensionId: id,
 
-				if (extension._tag === "None") {
-					return yield* Effect.fail(new ExtensionNotFoundError(id));
-				}
+				success: true,
 
-				const current = extension.value;
+				activationTime,
 
-				// Check if already active
-				if (current.state._tag === "Active") {
-					return {
-						extensionId: id,
-						success: true,
-						activationTime: 0,
-						error: undefined,
-					} satisfies ActivateResult;
-				}
-
-				// Update state to activating
-				yield* Ref.set(
-					extensionsRef,
-
-					HashMap.set(extensions, id, {
-						...current,
-						state: { _tag: "Activating", startTime },
-					}),
-				);
-
-				telemetry.log(
-					"info",
-
-					`[Extension] Activating extension: ${id}`,
-				);
-
-				// Simulate activation (in production, this would load the extension module)
-				yield* Effect.sleep("10 millis");
-
-				const activationTime = Date.now() - startTime;
-
-				// Update state to active
-				const updatedExtensions = yield* extensionsRef.get;
-
-				yield* Ref.set(
-					extensionsRef,
-
-					HashMap.set(updatedExtensions, id, {
-						...current,
-						state: { _tag: "Active", activatedAt: startTime },
-						activatedAt: startTime,
-						activationTime,
-					}),
-				);
-
-				telemetry.log(
-					"info",
-
-					`[Extension] Activated extension: ${id} (${activationTime}ms)`,
-				);
-
-				return {
-					extensionId: id,
-					success: true,
-					activationTime,
-					error: undefined,
-				} satisfies ActivateResult;
-			}).pipe(
-				Effect.catchAll((error) =>
-					Effect.gen(function* () {
-						if (error instanceof ExtensionNotFoundError) {
-							return yield* Effect.fail(error);
-						}
-
-						// Update state to error
-						const extensions = yield* extensionsRef.get;
-
-						yield* Ref.set(
-							extensionsRef,
-
-							HashMap.set(extensions, id, {
-								...HashMap.get(extensions, id).pipe(
-									Option.getOrElse(() => ({
-										id,
-										manifest: {
-											id,
-											name: "Unknown",
-											version: "0.0.0",
-											description: "",
-											publisher: "",
-											entryPoint: "",
-											enabled: true,
-											activationEvents: [],
-											dependencies: [],
-											contributes: {},
-										},
-										state: { _tag: "Idle" },
-										activatedAt: undefined,
-										activationTime: undefined,
-									})),
-								),
-								state: { _tag: "Error", error: String(error) },
-							}),
-						);
-
-						telemetry.log(
-							"error",
-
-							`[Extension] Failed to activate ${id}: ${String(error)}`,
-						);
-
-						return yield* Effect.fail(
-							new ExtensionActivationError(id, error),
-						);
-					}),
-				),
-			) as any;
-
-		// Atom: Deactivate an extension
-		const deactivate = (id: string) =>
-			Effect.gen(function* () {
-				const extensions = yield* extensionsRef.get;
-
-				const extension = HashMap.get(extensions, id);
-
-				if (extension._tag === "None") {
-					return yield* Effect.fail(new ExtensionNotFoundError(id));
-				}
-
-				const current = extension.value;
-
-				// Check if already deactivated
-				if (
-					current.state._tag === "Deactivated" ||
-					current.state._tag === "Idle"
-				) {
-					return {
-						extensionId: id,
-						success: true,
-						error: undefined,
-					} satisfies DeactivateResult;
-				}
-
-				telemetry.log(
-					"info",
-
-					`[Extension] Deactivating extension: ${id}`,
-				);
-
-				// Update state to deactivating
-				yield* Ref.set(
-					extensionsRef,
-
-					HashMap.set(extensions, id, {
-						...current,
-						state: { _tag: "Deactivating" },
-					}),
-				);
-
-				// Simulate deactivation
-				yield* Effect.sleep("5 millis");
-
-				// Update state to deactivated
-				const updatedExtensions = yield* extensionsRef.get;
-
-				yield* Ref.set(
-					extensionsRef,
-
-					HashMap.set(updatedExtensions, id, {
-						...current,
-						state: { _tag: "Deactivated" },
-					}),
-				);
-
-				telemetry.log(
-					"info",
-
-					`[Extension] Deactivated extension: ${id}`,
-				);
-
-				return {
-					extensionId: id,
-					success: true,
-					error: undefined,
-				} satisfies DeactivateResult;
-			}).pipe(
-				Effect.catchAll((error) =>
-					Effect.gen(function* () {
-						if (error instanceof ExtensionNotFoundError) {
-							return yield* Effect.fail(error);
-						}
-
-						telemetry.log(
-							"error",
-
-							`[Extension] Failed to deactivate ${id}: ${String(error)}`,
-						);
-
-						return yield* Effect.fail(
-							new ExtensionDeactivationError(id, error),
-						);
-					}),
-				),
-			) as any;
-
-		// Atom: Check if extension is active
-		const isActive = (id: string) =>
-			Effect.gen(function* () {
-				const extensions = yield* extensionsRef.get;
-
-				const extension = HashMap.get(extensions, id);
-
-				if (extension._tag === "None") {
-					return false;
-				}
-
-				return extension.value.state._tag === "Active";
-			});
-
-		// Atom: Get active extensions count
-		const getActiveCount = Effect.gen(function* () {
-			const extensions = yield* extensionsRef.get;
-
-			const values = Array.from(HashMap.values(extensions));
-
-			return values.filter((ext) => ext.state._tag === "Active").length;
-		});
-
-		// Atom: Get state changes
-		const stateChanges = Effect.map(extensionsRef.get, (extensions) => {
-			const result: Record<string, ExtensionState> = {};
-
-			for (const [id, host] of HashMap.entries(extensions)) {
-				result[id] = host.state;
+				error: undefined,
+			} satisfies ActivateResult;
+		} catch (error) {
+			if (error instanceof ExtensionNotFoundError) {
+				throw error;
 			}
 
-			return result;
-		});
+			// Update state to error
+			const latest = extensions.get(id) ?? {
+				id,
 
-		return {
-			getAll,
-			getById,
-			activate,
-			deactivate,
-			isActive,
-			getActiveCount,
-			stateChanges,
-		} satisfies ExtensionService;
-	}),
-);
+				manifest: {
+					id,
+
+					name: "Unknown",
+
+					version: "0.0.0",
+
+					description: "",
+
+					publisher: "",
+
+					entryPoint: "",
+
+					enabled: true,
+
+					activationEvents: [],
+
+					dependencies: [],
+
+					contributes: {},
+				},
+
+				state: { _tag: "Idle" } as ExtensionState,
+
+				activatedAt: undefined,
+
+				activationTime: undefined,
+			};
+
+			extensions.set(id, {
+				...latest,
+				state: { _tag: "Error", error: String(error) },
+			});
+
+			telemetry.log(
+				"error",
+
+				`[Extension] Failed to activate ${id}: ${String(error)}`,
+			);
+
+			throw new ExtensionActivationError(id, error);
+		}
+	};
+
+	// Atom: Deactivate an extension
+	const deactivate = async (id: string): Promise<DeactivateResult> => {
+		const current = extensions.get(id);
+
+		if (current === undefined) {
+			throw new ExtensionNotFoundError(id);
+		}
+
+		// Check if already deactivated
+		if (
+			current.state._tag === "Deactivated" ||
+			current.state._tag === "Idle"
+		) {
+			return {
+				extensionId: id,
+
+				success: true,
+
+				error: undefined,
+			} satisfies DeactivateResult;
+		}
+
+		telemetry.log("info", `[Extension] Deactivating extension: ${id}`);
+
+		try {
+			// Update state to deactivating
+			extensions.set(id, {
+				...current,
+				state: { _tag: "Deactivating" },
+			});
+
+			// Simulate deactivation
+			await new Promise<void>((r) => setTimeout(r, 5));
+
+			// Update state to deactivated
+			extensions.set(id, {
+				...current,
+				state: { _tag: "Deactivated" },
+			});
+
+			telemetry.log(
+				"info",
+
+				`[Extension] Deactivated extension: ${id}`,
+			);
+
+			return {
+				extensionId: id,
+
+				success: true,
+
+				error: undefined,
+			} satisfies DeactivateResult;
+		} catch (error) {
+			if (error instanceof ExtensionNotFoundError) {
+				throw error;
+			}
+
+			telemetry.log(
+				"error",
+
+				`[Extension] Failed to deactivate ${id}: ${String(error)}`,
+			);
+
+			throw new ExtensionDeactivationError(id, error);
+		}
+	};
+
+	// Atom: Check if extension is active
+	const isActive = async (id: string): Promise<boolean> => {
+		const extension = extensions.get(id);
+
+		if (extension === undefined) {
+			return false;
+		}
+
+		return extension.state._tag === "Active";
+	};
+
+	// Atom: Get active extensions count
+	const getActiveCount = async (): Promise<number> => {
+		return Array.from(extensions.values()).filter(
+			(ext) => ext.state._tag === "Active",
+		).length;
+	};
+
+	// Atom: Snapshot of current extension states
+	const stateChanges = async (): Promise<
+		Readonly<Record<string, ExtensionState>>
+	> => {
+		const result: Record<string, ExtensionState> = {};
+
+		for (const [id, host] of extensions.entries()) {
+			result[id] = host.state;
+		}
+
+		return result;
+	};
+
+	return {
+		getAll,
+
+		getById,
+
+		activate,
+
+		deactivate,
+
+		isActive,
+
+		getActiveCount,
+
+		stateChanges,
+	};
+}
+
+// Singleton — created once on first import
+let _instance: ExtensionService | undefined;
+
+export async function getExtension(): Promise<ExtensionService> {
+	if (_instance === undefined) {
+		const telemetry = await getTelemetry();
+
+		_instance = makeExtensionService(telemetry);
+	}
+
+	return _instance;
+}
+
+/** Live singleton layer (call once at bootstrap) */
+export const ExtensionLive = {
+	_tag: "Cocoon/Extension/Live",
+
+	build: getExtension,
+} as const;
 
 // ============================================================================
 // MOCK FOR TESTING
@@ -482,49 +437,44 @@ export const makeMockExtension = (
 	}));
 
 	return {
-		getAll: Effect.succeed(mockExtensions),
+		getAll: async () => mockExtensions,
 
-		getById: (id: string) =>
-			Effect.gen(function* () {
-				const ext = mockExtensions.find((e) => e.id === id);
+		getById: async (id: string) => {
+			const ext = mockExtensions.find((e) => e.id === id);
 
-				if (!ext) {
-					return yield* Effect.fail(new ExtensionNotFoundError(id));
-				}
+			if (!ext) {
+				throw new ExtensionNotFoundError(id);
+			}
 
-				return ext;
-			}),
+			return ext;
+		},
 
-		activate: (id: string) =>
-			Effect.succeed({
-				extensionId: id,
-				success: true,
-				activationTime: 10,
-				error: undefined,
-			}),
+		activate: async (id: string) => ({
+			extensionId: id,
+			success: true,
+			activationTime: 10,
+			error: undefined,
+		}),
 
-		deactivate: (id: string) =>
-			Effect.succeed({
-				extensionId: id,
-				success: true,
-				error: undefined,
-			}),
+		deactivate: async (id: string) => ({
+			extensionId: id,
+			success: true,
+			error: undefined,
+		}),
 
-		isActive: (id: string) =>
-			Effect.succeed(
-				mockExtensions.some(
-					(e) => e.id === id && e.state._tag === "Active",
-				),
+		isActive: async (id: string) =>
+			mockExtensions.some(
+				(e) => e.id === id && e.state._tag === "Active",
 			),
 
-		getActiveCount: Effect.succeed(0),
+		getActiveCount: async () => 0,
 
-		stateChanges: Effect.succeed({}),
+		stateChanges: async () => ({}),
 	};
 };
 
-export const ExtensionMock = Layer.effect(
-	Extension,
+export const ExtensionMock = {
+	_tag: "Cocoon/Extension/Mock",
 
-	Effect.succeed(makeMockExtension()),
-);
+	build: async () => makeMockExtension(),
+} as const;
