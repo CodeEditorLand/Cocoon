@@ -470,8 +470,8 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 						if (!ActiveEditor) {
 							Logger.Warn(
-									`[CommandService] Cannot execute text editor command '${Id}' - no active text editor`,
-								).catch?.(() => {});
+								`[CommandService] Cannot execute text editor command '${Id}' - no active text editor`,
+							).catch?.(() => {});
 
 							return undefined;
 						}

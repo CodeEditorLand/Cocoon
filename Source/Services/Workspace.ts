@@ -589,8 +589,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						}
 					} else {
 						// Open current active document
-						const ActiveEditor =
-							_activeTextEditor;
+						const ActiveEditor = _activeTextEditor;
 
 						if (!ActiveEditor) {
 							return yield* Effect.fail(
@@ -950,12 +949,10 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					return _internalWorkspace?.Name;
 				},
 				get workspaceFile() {
-					return _internalWorkspace
-						?.Configuration;
+					return _internalWorkspace?.Configuration;
 				},
 				get workspaceFolders() {
-					return _internalWorkspace
-						?.Folders;
+					return _internalWorkspace?.Folders;
 				},
 				get isTrusted() {
 					// DEPENDENCY: Mountain trust status - default to true until Mountain provides trust state

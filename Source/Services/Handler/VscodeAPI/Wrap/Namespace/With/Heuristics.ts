@@ -243,7 +243,7 @@ const BuildHeuristicMethod =
 						: Promise.resolve(undefined);
 			}
 		}
-};
+	};
 
 /**
  * Wrap `ConcreteNamespace` with a Proxy so that any unknown property access
