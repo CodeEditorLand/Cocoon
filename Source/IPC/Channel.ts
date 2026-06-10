@@ -1240,7 +1240,7 @@ export function CreateResponseMessage(
 
 		data: params.data,
 
-		error: params.error,
+		...(params.error !== undefined ? { error: params.error } : {}),
 
 		priority: params.priority || MessagePriority.Normal,
 
@@ -1287,7 +1287,7 @@ export function CreateEventMessage(
 
 		timestamp: params.timestamp || Date.now(),
 
-		headers: params.headers,
+		...(params.headers !== undefined ? { headers: params.headers } : {}),
 	};
 }
 

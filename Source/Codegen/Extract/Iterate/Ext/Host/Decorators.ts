@@ -15,9 +15,13 @@
  * @category Extract
  */
 
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { ExtractDecoratorMatches } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractDecoratorMatch.js";
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { ExtractInterfaceMembers } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractInterfaceMembers.js";
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { ResolveInterfaceCrossFile } from "@codeeditorland/wind/Target/Codegen/Resolve/ResolveInterfaceCrossFile.js";
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import type { SourceFile } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 
 import type { ExtHostDecoratorRecord } from "../../../../Type/Ext/Host/Decorator/Record.js";

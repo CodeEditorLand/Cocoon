@@ -24,7 +24,7 @@
 		"outDir": "Target",
 		"paths": {
 			"@codeeditorland/output/*": ["../Output/*"],
-			"@codeeditorland/wind/Target/Codegen/*": ["../Wind/Source/Codegen/*"],
+
 			"vscode": [
 				"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
 			]

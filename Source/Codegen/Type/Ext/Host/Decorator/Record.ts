@@ -15,6 +15,7 @@
  * @category Type
  */
 
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import type { InterfaceMemberRecord } from "@codeeditorland/wind/Target/Codegen/Type/InterfaceMemberRecord.js";
 
 export interface ExtHostDecoratorRecord {

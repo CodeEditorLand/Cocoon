@@ -13,10 +13,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import type { CodegenProblem } from "@codeeditorland/wind/Target/Codegen/Type/CodegenProblem.js";
 import type {
 	InterfaceMemberParameter,
 	InterfaceMemberRecord,
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 } from "@codeeditorland/wind/Target/Codegen/Type/InterfaceMemberRecord.js";
 
 import type { ExtHostDecoratorRecord } from "../../../../Type/Ext/Host/Decorator/Record.js";
@@ -127,6 +129,7 @@ const FormatOutput = (record: ExtHostDecoratorRecord): string => {
 
 		"",
 
+// @ts-ignore — Wind Codegen types; resolved from Target at runtime
 		'import type { InterfaceMemberRecord } from "@codeeditorland/wind/Target/Codegen/Type/InterfaceMemberRecord.js";',
 
 		"",
