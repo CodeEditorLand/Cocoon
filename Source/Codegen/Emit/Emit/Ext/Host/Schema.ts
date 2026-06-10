@@ -60,7 +60,7 @@ const FormatMemberRecord = (
 	total: number,
 ): string => {
 	const Parameters = member.Parameters.map(
-		(parameter) =>
+		(parameter: { Name: string; TypeText: string; Optional: boolean }) =>
 			`{ Name: ${JSON.stringify(parameter.Name)}, TypeText: ${JSON.stringify(parameter.TypeText)}, Optional: ${parameter.Optional} }`,
 	).join(", ");
 

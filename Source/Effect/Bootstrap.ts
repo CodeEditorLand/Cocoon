@@ -2,7 +2,7 @@
  * @module Effect/Bootstrap
  * @description
  * Lean async bootstrap orchestration for Cocoon Extension Host.
- * All stages are plain async functions — no Effect-TS machinery.
+ * All stages are plain async functions - no Effect-TS machinery.
  */
 
 import { createConnection } from "node:net";
@@ -49,7 +49,7 @@ export interface BootstrapService {
 }
 
 // ============================================================================
-// SERVICE TAG (plain marker — no Context.Tag)
+// SERVICE TAG (plain marker - no Context.Tag)
 // ============================================================================
 
 export const BootstrapTag = { _tag: "Cocoon/Bootstrap" as const };
@@ -60,7 +60,9 @@ export const BootstrapTag = { _tag: "Cocoon/Bootstrap" as const };
 
 const ProbeTcp = (
 	Host: string,
+
 	Port: number,
+
 	TimeoutMs: number,
 ): Promise<boolean> =>
 	new Promise((resolve) => {
@@ -84,11 +86,13 @@ const ProbeTcp = (
 
 		Socket.once("connect", () => {
 			clearTimeout(Timer);
+
 			settle(true);
 		});
 
 		Socket.once("error", () => {
 			clearTimeout(Timer);
+
 			settle(false);
 		});
 	});
@@ -150,6 +154,7 @@ const stage1_Environment = async (): Promise<StageResult> => {
 
 	CocoonDevLog(
 		"bootstrap-stage",
+
 		"[Bootstrap] stage=Environment event=start",
 	);
 
@@ -161,13 +166,17 @@ const stage1_Environment = async (): Promise<StageResult> => {
 
 	CocoonDevLog(
 		"bootstrap-stage",
+
 		`[Bootstrap] stage=Environment event=ok node=${nodeVersion} platform=${platform}/${arch} duration_ms=${Date.now() - start}`,
 	);
 
 	return {
 		stageName: "Environment",
+
 		success: true,
+
 		duration: Date.now() - start,
+
 		error: undefined,
 	};
 };
@@ -177,6 +186,7 @@ const stage2_Configuration = async (): Promise<StageResult> => {
 
 	CocoonDevLog(
 		"bootstrap-stage",
+
 		"[Bootstrap] stage=Configuration event=start",
 	);
 
@@ -206,18 +216,23 @@ const stage2_Configuration = async (): Promise<StageResult> => {
 
 	LandFixLog.Info(
 		"Bootstrap",
+
 		`Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort}`,
 	);
 
 	CocoonDevLog(
 		"bootstrap-stage",
+
 		`[Bootstrap] stage=Configuration event=ok duration_ms=${Date.now() - start}`,
 	);
 
 	return {
 		stageName: "Configuration",
+
 		success: true,
+
 		duration: Date.now() - start,
+
 		error: undefined,
 	};
 };
@@ -229,9 +244,10 @@ const getModuleInterceptor = async () =>
 	(await import("./Module/Interceptor.js")).ModuleInterceptorLive;
 
 const getMountainClient = async () =>
-	(await import("./Mountain/Client.js")).MountainClientLive;
+	(await import("./Mountain/Client.js")).MountainClientLive();
 
-const getExtension = async () => (await import("./Extension.js")).ExtensionLive;
+const getExtension = async () =>
+	(await import("./Extension.js")).ExtensionLive.build();
 
 const getHealth = async () => (await import("./Health.js")).HealthLive;
 
@@ -242,6 +258,7 @@ const stage5_RPCServer = async (): Promise<StageResult> => {
 
 	CocoonDevLog(
 		"bootstrap",
+
 		`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`,
 	);
 
@@ -253,8 +270,11 @@ const stage5_RPCServer = async (): Promise<StageResult> => {
 
 	return {
 		stageName: "RPCServer",
+
 		success: true,
+
 		duration: Date.now() - start,
+
 		error: undefined,
 	};
 };
@@ -270,8 +290,11 @@ const stage4_ModuleInterceptor = async (): Promise<StageResult> => {
 
 	return {
 		stageName: "ModuleInterceptor",
+
 		success: true,
+
 		duration: Date.now() - start,
+
 		error: undefined,
 	};
 };
@@ -283,6 +306,7 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 
 	const MountainPort = parseInt(
 		process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+
 		10,
 	);
 
@@ -297,13 +321,16 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 
 		Listening = await ProbeTcp(
 			MountainHost,
+
 			MountainPort,
+
 			MountainProbeTimeoutMs,
 		);
 
 		if (Listening) {
 			LandFixLog.Info(
 				"Bootstrap",
+
 				`Mountain TCP port listening after ${ProbeAttempt} probe(s)`,
 			);
 
@@ -314,6 +341,7 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 
 		ProbeDelay = Math.min(
 			ProbeDelay * MountainProbeBackoffFactor,
+
 			MountainProbeMaxDelayMs,
 		);
 	}
@@ -338,6 +366,7 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 
 				LandFixLog.Warn(
 					"Bootstrap",
+
 					`MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${lastErr.message}`,
 				);
 
@@ -352,17 +381,21 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 
 	await connectWithRetry();
 
-	const version = mountainClient.version;
+	const version = await mountainClient.version();
 
 	LandFixLog.Info(
 		"Bootstrap",
+
 		`MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s)`,
 	);
 
 	return {
 		stageName: "MountainConnection",
+
 		success: true,
+
 		duration: Date.now() - start,
+
 		error: undefined,
 	};
 };
@@ -384,6 +417,7 @@ const stage6_Extensions = async (): Promise<StageResult> => {
 		async (Ext: any) => {
 			try {
 				await extension.activate(Ext.id);
+
 				return { Id: Ext.id, Ok: true };
 			} catch (e) {
 				return { Id: Ext.id, Ok: false, Error: String(e) };
@@ -393,12 +427,15 @@ const stage6_Extensions = async (): Promise<StageResult> => {
 		8,
 	);
 
-	const Successful = results.filter((r: any) => r.Ok).length;
+	void results.filter((r: any) => r.Ok).length;
 
 	return {
 		stageName: "Extensions",
+
 		success: true,
+
 		duration: Date.now() - start,
+
 		error: undefined,
 	};
 };
@@ -443,6 +480,7 @@ const makeBootstrap = (): BootstrapService => ({
 				: [
 						["HealthCheck", stage7_HealthCheck] as [
 							string,
+
 							() => Promise<StageResult>,
 						],
 					]),

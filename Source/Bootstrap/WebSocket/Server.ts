@@ -36,7 +36,9 @@ async function _Handle(ws: any, raw: string): Promise<void> {
 	try {
 		const m = JSON.parse(raw) as {
 			id?: any;
+
 			method?: string;
+
 			params?: unknown;
 		};
 
@@ -48,6 +50,7 @@ async function _Handle(ws: any, raw: string): Promise<void> {
 
 		if (id === null) {
 			RouteRequest(method, m.params ?? {}).catch(() => {});
+
 			return;
 		}
 
@@ -69,6 +72,7 @@ export async function StartWebSocketServer(): Promise<void> {
 	if (!_Port || !_SecretHex) {
 		CocoonDevLog(
 			"ws",
+
 			"[WS] COCOON_WS_PORT/SECRET unset - WS server skipped",
 		);
 
@@ -93,11 +97,13 @@ export async function StartWebSocketServer(): Promise<void> {
 
 		if (!cand) {
 			const p = req.headers["sec-websocket-protocol"] ?? "";
+
 			cand = Array.isArray(p) ? (p[0] ?? "") : p;
 		}
 
 		if (!cand) {
 			const x = req.headers["x-land-secret"] ?? "";
+
 			cand = Array.isArray(x) ? (x[0] ?? "") : x;
 		}
 
@@ -105,7 +111,9 @@ export async function StartWebSocketServer(): Promise<void> {
 			sock.write(
 				"HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n",
 			);
+
 			sock.destroy();
+
 			return;
 		}
 

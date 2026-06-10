@@ -832,6 +832,8 @@ export class ChannelManager {
 			const latency = Date.now() - startTime;
 
 			this.TrackDelivery(deliveryId, message.id, context.channel, {
+				messageId: message.id,
+				channel: context.channel,
 				status: result
 					? DeliveryStatus.Delivered
 					: DeliveryStatus.Failed,
@@ -1183,9 +1185,9 @@ export function CreateRequestMessage(
 
 		correlationId: params.correlationId || GenerateCorrelationId(),
 
-		timeout: params.timeout,
+		...(params.timeout !== undefined ? { timeout: params.timeout } : {}),
 
-		headers: params.headers,
+		...(params.headers !== undefined ? { headers: params.headers } : {}),
 	};
 }
 
@@ -1244,7 +1246,7 @@ export function CreateResponseMessage(
 
 		timestamp: params.timestamp || Date.now(),
 
-		headers: params.headers,
+		...(params.headers !== undefined ? { headers: params.headers } : {}),
 	};
 }
 

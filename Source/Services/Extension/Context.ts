@@ -84,7 +84,7 @@ export interface Configuration {
  * Specification: src/vs/workbench/api/common/extHostMemento.ts
  */
 export class Memento {
-	private readonly Storage: Ref.Ref<Map<string, unknown>>;
+	private readonly Storage: Map<string, unknown>;
 
 	private readonly ExtensionId: string;
 
@@ -93,7 +93,7 @@ export class Memento {
 	public readonly _MountainClient: IMountainClientService | undefined;
 
 	constructor(
-		Storage: Ref.Ref<Map<string, unknown>>,
+		Storage: Map<string, unknown>,
 
 		ExtensionId: string,
 
@@ -117,6 +117,7 @@ export class Memento {
 			try {
 				const AllItems = await MountainClient.sendRequest(
 					"Storage.GetItems",
+
 					[],
 				);
 
@@ -495,16 +496,8 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					}
 
 					// Create mementos for state management
-					const WorkspaceStateRef = yield* Ref.make(
-						new Map<string, unknown>(),
-					);
-
-					const GlobalStateRef = yield* Ref.make(
-						new Map<string, unknown>(),
-					);
-
 					const WorkspaceState = new Memento(
-						WorkspaceStateRef,
+						new Map<string, unknown>(),
 
 						ExtensionId,
 
@@ -514,7 +507,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					);
 
 					const GlobalState = new Memento(
-						GlobalStateRef,
+						new Map<string, unknown>(),
 
 						ExtensionId,
 

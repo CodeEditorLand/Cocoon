@@ -1,1 +1,616 @@
-import*as h from"acorn";import*as M from"acorn-walk";import{Effect as f,Layer as v}from"effect";import{IModuleInterceptorService as b}from"../../../Interfaces/I/Module/Interceptor/Service.js";import{CocoonDevLog as n}from"../../Dev/Log.js";class g{_serviceBrand;config;moduleCache;securitySandbox;constructor(){n("service","[ModuleInterceptorService] Initializing module interceptor"),this.config=this.loadDefaultConfig(),this.moduleCache=new Map,this.securitySandbox=this.createSecuritySandbox(),n("service","[ModuleInterceptorService] Module interceptor initialized")}loadDefaultConfig(){return{allowNodeBuiltins:!0,allowFileSystemAccess:!1,allowNetworkAccess:!1,allowedModules:["path","url","util","events","stream","buffer"],blockedModules:["fs","child_process","net","http","https","os","crypto"]}}createSecuritySandbox(){const e=new Map;return e.set("console.log",(()=>{}).bind(console)),e.set("console.error",(()=>{}).bind(console)),e.set("console.warn",(()=>{}).bind(console)),e.set("setTimeout",setTimeout.bind(global)),e.set("setInterval",setInterval.bind(global)),e.set("clearTimeout",clearTimeout.bind(global)),e.set("clearInterval",clearInterval.bind(global)),e.set("JSON.parse",JSON.parse),e.set("JSON.stringify",JSON.stringify),e}interceptRequire(e,r){if(n("service",`[ModuleInterceptorService] Intercepting require: ${e} from ${r}`),this.moduleCache.has(e))return this.moduleCache.get(e);if(!this.validateModuleAccess(e,r))throw new Error(`Module access denied: ${e}`);const o=this.analyzeModuleSecurity(e);if(!o.isSafe)throw new Error(`Module security violation: ${e} - ${o.reason}`);const t=this.loadAndInterceptModule(e);return this.moduleCache.set(e,t),n("service",`[ModuleInterceptorService] Module ${e} intercepted successfully`),t}validateModuleAccess(e,r){return this.config.blockedModules.includes(e)?(n("service",`[ModuleInterceptorService] Blocked module access: ${e}`),!1):this.config.allowedModules.includes(e)?!0:this.isNodeBuiltin(e)&&!this.config.allowNodeBuiltins?(n("service",`[ModuleInterceptorService] Node built-in module access denied: ${e}`),!1):!0}isNodeBuiltin(e){return["fs","path","os","net","http","https","child_process","crypto","util","events","stream","buffer","url","querystring"].includes(e)}analyzeModuleSecurity(e){try{n("service",`[ModuleInterceptorService] Performing advanced AST security analysis for ${e}`);const r=require("fs"),o=require("path"),t=require.resolve(e),l=r.readFileSync(t,"utf8"),d=h.parse(l,{ecmaVersion:"latest",sourceType:"module",allowAwaitOutsideFunction:!0,allowImportExportEverywhere:!0,allowReturnOutsideFunction:!0,ranges:!0,locations:!0}),a=[],u=[];M.simple(d,{CallExpression(i){const s=i.callee;if(s.type==="Identifier"){const c=s.name;this.isCriticalDangerousFunction(c)?a.push(`CRITICAL: Dangerous function call: ${c}`):this.isDangerousFunction(c)&&u.push(`WARNING: Dangerous function call: ${c}`)}s.type==="MemberExpression"&&s.object.type==="Identifier"&&s.object.name==="eval"&&s.property.type==="Identifier"&&s.property.name==="constructor"&&a.push("CRITICAL: Dynamic code execution via eval constructor")},MemberExpression(i){if(i.object.type==="Identifier"&&i.property.type==="Identifier"){const s=i.object.name,c=i.property.name;this.isCriticalDangerousPropertyAccess(s,c)?a.push(`CRITICAL: Dangerous property access: ${s}.${c}`):this.isDangerousPropertyAccess(s,c)&&u.push(`WARNING: Dangerous property access: ${s}.${c}`)}},AssignmentExpression(i){if(i.left.type==="MemberExpression"){const s=i.left;if(s.object.type==="Identifier"&&s.property.type==="Identifier"){const c=s.object.name,p=s.property.name;this.isCriticalDangerousAssignment(c,p)?a.push(`CRITICAL: Dangerous assignment: ${c}.${p}`):this.isDangerousAssignment(c,p)&&u.push(`WARNING: Dangerous assignment: ${c}.${p}`)}}},ImportDeclaration(i){const s=i.source.value;this.isDangerousImport(s)&&a.push(`CRITICAL: Dangerous import: ${s}`)},NewExpression(i){if(i.callee.type==="Identifier"){const s=i.callee.name;this.isDangerousConstructor(s)&&a.push(`CRITICAL: Dangerous constructor: ${s}`)}}},this),this.performPatternAnalysis(l,a,u);const y=[...a,...u],m=a.length===0,I=y.length>0?`Security analysis: ${y.join(", ")}`:"Advanced AST security analysis passed all checks";return n("service",`[ModuleInterceptorService] Security analysis for ${e}: ${a.length} critical issues, ${u.length} warnings`),{isSafe:m,reason:I}}catch(r){return n("service",`[ModuleInterceptorService] Advanced security analysis failed for ${e}:`,r),{isSafe:!1,reason:`Advanced security analysis error: ${r}`}}}isCriticalDangerousFunction(e){return["eval","Function","exec","spawn","execFile","fork","require","import","process.binding","vm.runInContext"].includes(e)}isDangerousFunction(e){return["setTimeout","setInterval","setImmediate","require.cache","module.constructor","global.eval"].includes(e)}isCriticalDangerousPropertyAccess(e,r){return[{object:"process",property:"env"},{object:"global",property:"process"},{object:"window",property:"location"},{object:"process",property:"mainModule"},{object:"process",property:"binding"}].some(t=>t.object===e&&t.property===r)}isDangerousPropertyAccess(e,r){return[{object:"process",property:"argv"},{object:"process",property:"cwd"},{object:"process",property:"env"},{object:"global",property:"eval"},{object:"global",property:"process"},{object:"window",property:"eval"},{object:"window",property:"location"}].some(t=>t.object===e&&t.property===r)}isCriticalDangerousAssignment(e,r){return[{object:"process",property:"env"},{object:"global",property:"process"},{object:"require",property:"cache"},{object:"module",property:"exports"}].some(t=>t.object===e&&t.property===r)}isDangerousAssignment(e,r){return[{object:"global",property:"eval"},{object:"window",property:"eval"}].some(t=>t.object===e&&t.property===r)}isDangerousImport(e){return["fs","child_process","net","http","https","os","crypto","vm","module","process","sys"].includes(e)}isDangerousConstructor(e){return["Function","eval","process","require"].includes(e)}performPatternAnalysis(e,r,o){const t=[{pattern:/eval\s*\(/,description:"Direct eval call"},{pattern:/Function\s*\(/,description:"Function constructor"},{pattern:/require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,description:"Dynamic require"},{pattern:/process\.binding/,description:"Process binding access"},{pattern:/vm\.runInContext/,description:"VM context execution"},{pattern:/child_process\.spawn/,description:"Child process spawning"}];for(const{pattern:l,description:d}of t)l.test(e)&&r.push(`CRITICAL: ${d} detected`)}loadAndInterceptModule(e){try{const r=require(e);return this.createSecurityWrapper(r,e)}catch(r){throw n("service",`[ModuleInterceptorService] Failed to load module ${e}:`,r),r}}createSecurityWrapper(e,r){const o={};for(const t of Object.keys(e)){const l=e[t];typeof l=="function"?o[t]=this.wrapFunction(l,r,t):o[t]=l}return o}wrapFunction(e,r,o){return(...t)=>(n("service",`[ModuleInterceptorService] Calling ${r}.${o}`),e.apply(null,t))}resolveModule(e,r){n("service",`[ModuleInterceptorService] Resolving module: ${e} from ${r}`);try{const o=require.resolve(e,{paths:[r]});return n("service",`[ModuleInterceptorService] Resolved ${e} to ${o}`),o}catch(o){throw n("service",`[ModuleInterceptorService] Failed to resolve module ${e}:`,o),o}}createExtensionContext(e){n("service",`[ModuleInterceptorService] Creating extension context for ${e}`);const r={extensionId:e,globalState:new Map,workspaceState:new Map,subscriptions:[],asAbsolutePath:o=>`/extensions/${e}/${o}`};return n("service",`[ModuleInterceptorService] Extension context created for ${e}`),r}updateConfig(e){n("service","[ModuleInterceptorService] Updating configuration"),this.config={...this.config,...e},this.moduleCache.clear(),n("service","[ModuleInterceptorService] Configuration updated")}getStatus(){return{cacheSize:this.moduleCache.size,config:this.config,securityRules:this.config.allowedModules.length+this.config.blockedModules.length}}}const N=v.effect(b,f.sync(()=>new g)),R=v.effect(b,f.sync(()=>new g));var T=g;export{g as ModuleInterceptorService,N as ModuleInterceptorServiceLayer,R as ModuleInterceptorServiceLive,T as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined") return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
+
+// Source/Interfaces/I/Module/Interceptor/Service.ts
+import { Context } from "effect";
+var SecurityLevel = /* @__PURE__ */ ((SecurityLevel3) => {
+  SecurityLevel3["TRUSTED"] = "TRUSTED";
+  SecurityLevel3["SANDBOXED"] = "SANDBOXED";
+  SecurityLevel3["RESTRICTED"] = "RESTRICTED";
+  SecurityLevel3["BLOCKED"] = "BLOCKED";
+  return SecurityLevel3;
+})(SecurityLevel || {});
+var IModuleInterceptorService = Context.Tag(
+  "IModuleInterceptorService"
+);
+
+// Source/Services/Dev/Log.ts
+var Raw = process.env["Trace"] ?? "";
+var ParsedTags = Raw.split(",").map((Segment) => Segment.trim().toLowerCase()).filter((Segment) => Segment.length > 0);
+var TagSet = new Set(ParsedTags);
+var IsShort = TagSet.has("short");
+var HasAll = TagSet.has("all");
+var IsEnabled = /* @__PURE__ */ __name((Tag) => {
+  if (TagSet.size === 0) return false;
+  if (HasAll || IsShort) return true;
+  return TagSet.has(Tag.toLowerCase());
+}, "IsEnabled");
+var CocoonDevLog = /* @__PURE__ */ __name((Tag, Message) => {
+  if (!IsEnabled(Tag)) return;
+  const TagUpper = Tag.toUpperCase();
+  process.stdout.write(`[DEV:${TagUpper}] ${Message}
+`);
+}, "CocoonDevLog");
+var Log_default = CocoonDevLog;
+
+// Source/Services/Module/Interceptor/Service.ts
+import * as acorn from "acorn";
+import * as walk from "acorn-walk";
+import { Effect, Layer } from "effect";
+var ModuleInterceptorService = class {
+  static {
+    __name(this, "ModuleInterceptorService");
+  }
+  _serviceBrand;
+  config;
+  moduleCache;
+  securitySandbox;
+  constructor() {
+    CocoonDevLog(
+      "service",
+      "[ModuleInterceptorService] Initializing module interceptor"
+    );
+    this.config = this.loadDefaultConfig();
+    this.moduleCache = /* @__PURE__ */ new Map();
+    this.securitySandbox = this.createSecuritySandbox();
+    CocoonDevLog(
+      "service",
+      "[ModuleInterceptorService] Module interceptor initialized"
+    );
+  }
+  /**
+   * Load default configuration
+   */
+  loadDefaultConfig() {
+    return {
+      allowNodeBuiltins: true,
+      allowFileSystemAccess: false,
+      allowNetworkAccess: false,
+      allowedModules: [
+        "path",
+        "url",
+        "util",
+        "events",
+        "stream",
+        "buffer"
+      ],
+      blockedModules: [
+        "fs",
+        "child_process",
+        "net",
+        "http",
+        "https",
+        "os",
+        "crypto"
+      ]
+    };
+  }
+  /**
+   * Create security sandbox with safe functions
+   */
+  createSecuritySandbox() {
+    const sandbox = /* @__PURE__ */ new Map();
+    sandbox.set("console.log", console.log.bind(console));
+    sandbox.set("console.error", console.error.bind(console));
+    sandbox.set("console.warn", console.warn.bind(console));
+    sandbox.set("setTimeout", setTimeout.bind(global));
+    sandbox.set("setInterval", setInterval.bind(global));
+    sandbox.set("clearTimeout", clearTimeout.bind(global));
+    sandbox.set("clearInterval", clearInterval.bind(global));
+    sandbox.set("JSON.parse", JSON.parse);
+    sandbox.set("JSON.stringify", JSON.stringify);
+    return sandbox;
+  }
+  /**
+   * Intercept module require calls
+   */
+  interceptRequire(modulePath, parentPath) {
+    CocoonDevLog(
+      "service",
+      `[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`
+    );
+    if (this.moduleCache.has(modulePath)) {
+      return this.moduleCache.get(modulePath);
+    }
+    if (!this.validateModuleAccess(modulePath, parentPath)) {
+      throw new Error(`Module access denied: ${modulePath}`);
+    }
+    const moduleSecurity = this.analyzeModuleSecurity(modulePath);
+    if (!moduleSecurity.isSafe) {
+      throw new Error(
+        `Module security violation: ${modulePath} - ${moduleSecurity.reason}`
+      );
+    }
+    const interceptedModule = this.loadAndInterceptModule(modulePath);
+    this.moduleCache.set(modulePath, interceptedModule);
+    CocoonDevLog(
+      "service",
+      `[ModuleInterceptorService] Module ${modulePath} intercepted successfully`
+    );
+    return interceptedModule;
+  }
+  /**
+   * Validate module access permissions
+   */
+  validateModuleAccess(modulePath, parentPath) {
+    if (this.config.blockedModules.includes(modulePath)) {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Blocked module access: ${modulePath}`
+      );
+      return false;
+    }
+    if (this.config.allowedModules.includes(modulePath)) {
+      return true;
+    }
+    if (this.isNodeBuiltin(modulePath) && !this.config.allowNodeBuiltins) {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`
+      );
+      return false;
+    }
+    return true;
+  }
+  /**
+   * Check if module is Node.js built-in
+   */
+  isNodeBuiltin(modulePath) {
+    const builtins = [
+      "fs",
+      "path",
+      "os",
+      "net",
+      "http",
+      "https",
+      "child_process",
+      "crypto",
+      "util",
+      "events",
+      "stream",
+      "buffer",
+      "url",
+      "querystring"
+    ];
+    return builtins.includes(modulePath);
+  }
+  /**
+   * Analyze module security using advanced AST parsing
+   */
+  analyzeModuleSecurity(modulePath) {
+    try {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`
+      );
+      const fs = __require("fs");
+      const path = __require("path");
+      const resolvedPath = __require.resolve(modulePath);
+      const sourceCode = fs.readFileSync(resolvedPath, "utf8");
+      const ast = acorn.parse(sourceCode, {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        allowAwaitOutsideFunction: true,
+        allowImportExportEverywhere: true,
+        allowReturnOutsideFunction: true,
+        ranges: true,
+        locations: true
+      });
+      const securityIssues = [];
+      const securityWarnings = [];
+      walk.simple(
+        ast,
+        {
+          CallExpression(node) {
+            const callee = node.callee;
+            if (callee.type === "Identifier") {
+              const functionName = callee.name;
+              if (this.isCriticalDangerousFunction(functionName)) {
+                securityIssues.push(
+                  `CRITICAL: Dangerous function call: ${functionName}`
+                );
+              } else if (this.isDangerousFunction(functionName)) {
+                securityWarnings.push(
+                  `WARNING: Dangerous function call: ${functionName}`
+                );
+              }
+            }
+            if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "eval" && callee.property.type === "Identifier" && callee.property.name === "constructor") {
+              securityIssues.push(
+                `CRITICAL: Dynamic code execution via eval constructor`
+              );
+            }
+          },
+          MemberExpression(node) {
+            if (node.object.type === "Identifier" && node.property.type === "Identifier") {
+              const objectName = node.object.name;
+              const propertyName = node.property.name;
+              if (this.isCriticalDangerousPropertyAccess(
+                objectName,
+                propertyName
+              )) {
+                securityIssues.push(
+                  `CRITICAL: Dangerous property access: ${objectName}.${propertyName}`
+                );
+              } else if (this.isDangerousPropertyAccess(
+                objectName,
+                propertyName
+              )) {
+                securityWarnings.push(
+                  `WARNING: Dangerous property access: ${objectName}.${propertyName}`
+                );
+              }
+            }
+          },
+          AssignmentExpression(node) {
+            if (node.left.type === "MemberExpression") {
+              const left = node.left;
+              if (left.object.type === "Identifier" && left.property.type === "Identifier") {
+                const objectName = left.object.name;
+                const propertyName = left.property.name;
+                if (this.isCriticalDangerousAssignment(
+                  objectName,
+                  propertyName
+                )) {
+                  securityIssues.push(
+                    `CRITICAL: Dangerous assignment: ${objectName}.${propertyName}`
+                  );
+                } else if (this.isDangerousAssignment(
+                  objectName,
+                  propertyName
+                )) {
+                  securityWarnings.push(
+                    `WARNING: Dangerous assignment: ${objectName}.${propertyName}`
+                  );
+                }
+              }
+            }
+          },
+          ImportDeclaration(node) {
+            const importSource = node.source.value;
+            if (this.isDangerousImport(importSource)) {
+              securityIssues.push(
+                `CRITICAL: Dangerous import: ${importSource}`
+              );
+            }
+          },
+          NewExpression(node) {
+            if (node.callee.type === "Identifier") {
+              const constructorName = node.callee.name;
+              if (this.isDangerousConstructor(constructorName)) {
+                securityIssues.push(
+                  `CRITICAL: Dangerous constructor: ${constructorName}`
+                );
+              }
+            }
+          }
+        },
+        this
+      );
+      this.performPatternAnalysis(
+        sourceCode,
+        securityIssues,
+        securityWarnings
+      );
+      const allIssues = [...securityIssues, ...securityWarnings];
+      const isSafe = securityIssues.length === 0;
+      const reason = allIssues.length > 0 ? `Security analysis: ${allIssues.join(", ")}` : "Advanced AST security analysis passed all checks";
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`
+      );
+      return {
+        isSafe,
+        reason
+      };
+    } catch (error) {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
+        error
+      );
+      return {
+        isSafe: false,
+        reason: `Advanced security analysis error: ${error}`
+      };
+    }
+  }
+  /**
+   * Check if function is critically dangerous (block immediately)
+   */
+  isCriticalDangerousFunction(functionName) {
+    const criticalFunctions = [
+      "eval",
+      "Function",
+      "exec",
+      "spawn",
+      "execFile",
+      "fork",
+      "require",
+      "import",
+      "process.binding",
+      "vm.runInContext"
+    ];
+    return criticalFunctions.includes(functionName);
+  }
+  /**
+   * Check if function is dangerous (warning level)
+   */
+  isDangerousFunction(functionName) {
+    const dangerousFunctions = [
+      "setTimeout",
+      "setInterval",
+      "setImmediate",
+      "require.cache",
+      "module.constructor",
+      "global.eval"
+    ];
+    return dangerousFunctions.includes(functionName);
+  }
+  /**
+   * Check if property access is critically dangerous
+   */
+  isCriticalDangerousPropertyAccess(objectName, propertyName) {
+    const criticalAccesses = [
+      { object: "process", property: "env" },
+      { object: "global", property: "process" },
+      { object: "window", property: "location" },
+      { object: "process", property: "mainModule" },
+      { object: "process", property: "binding" }
+    ];
+    return criticalAccesses.some(
+      (access) => access.object === objectName && access.property === propertyName
+    );
+  }
+  /**
+   * Check if property access is dangerous
+   */
+  isDangerousPropertyAccess(objectName, propertyName) {
+    const dangerousAccesses = [
+      { object: "process", property: "argv" },
+      { object: "process", property: "cwd" },
+      { object: "process", property: "env" },
+      { object: "global", property: "eval" },
+      { object: "global", property: "process" },
+      { object: "window", property: "eval" },
+      { object: "window", property: "location" }
+    ];
+    return dangerousAccesses.some(
+      (access) => access.object === objectName && access.property === propertyName
+    );
+  }
+  /**
+   * Check if assignment is critically dangerous
+   */
+  isCriticalDangerousAssignment(objectName, propertyName) {
+    const criticalAssignments = [
+      { object: "process", property: "env" },
+      { object: "global", property: "process" },
+      { object: "require", property: "cache" },
+      { object: "module", property: "exports" }
+    ];
+    return criticalAssignments.some(
+      (assignment) => assignment.object === objectName && assignment.property === propertyName
+    );
+  }
+  /**
+   * Check if assignment is dangerous
+   */
+  isDangerousAssignment(objectName, propertyName) {
+    const dangerousAssignments = [
+      { object: "global", property: "eval" },
+      { object: "window", property: "eval" }
+    ];
+    return dangerousAssignments.some(
+      (assignment) => assignment.object === objectName && assignment.property === propertyName
+    );
+  }
+  /**
+   * Check if import is dangerous
+   */
+  isDangerousImport(importSource) {
+    const dangerousImports = [
+      "fs",
+      "child_process",
+      "net",
+      "http",
+      "https",
+      "os",
+      "crypto",
+      "vm",
+      "module",
+      "process",
+      "sys"
+    ];
+    return dangerousImports.includes(importSource);
+  }
+  /**
+   * Check if constructor is dangerous
+   */
+  isDangerousConstructor(constructorName) {
+    const dangerousConstructors = [
+      "Function",
+      "eval",
+      "process",
+      "require"
+    ];
+    return dangerousConstructors.includes(constructorName);
+  }
+  /**
+   * Perform pattern-based security analysis
+   */
+  performPatternAnalysis(sourceCode, securityIssues, securityWarnings) {
+    const dangerousPatterns = [
+      { pattern: /eval\s*\(/, description: "Direct eval call" },
+      { pattern: /Function\s*\(/, description: "Function constructor" },
+      {
+        pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/,
+        description: "Dynamic require"
+      },
+      {
+        pattern: /process\.binding/,
+        description: "Process binding access"
+      },
+      {
+        pattern: /vm\.runInContext/,
+        description: "VM context execution"
+      },
+      {
+        pattern: /child_process\.spawn/,
+        description: "Child process spawning"
+      }
+    ];
+    for (const { pattern, description } of dangerousPatterns) {
+      if (pattern.test(sourceCode)) {
+        securityIssues.push(`CRITICAL: ${description} detected`);
+      }
+    }
+  }
+  /**
+   * Load and intercept module with security wrappers
+   */
+  loadAndInterceptModule(modulePath) {
+    try {
+      const originalModule = __require(modulePath);
+      const interceptedModule = this.createSecurityWrapper(
+        originalModule,
+        modulePath
+      );
+      return interceptedModule;
+    } catch (error) {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Failed to load module ${modulePath}:`,
+        error
+      );
+      throw error;
+    }
+  }
+  /**
+   * Create security wrapper for module
+   */
+  createSecurityWrapper(originalModule, modulePath) {
+    const wrapper = {};
+    for (const key of Object.keys(originalModule)) {
+      const originalValue = originalModule[key];
+      if (typeof originalValue === "function") {
+        wrapper[key] = this.wrapFunction(
+          originalValue,
+          modulePath,
+          key
+        );
+      } else {
+        wrapper[key] = originalValue;
+      }
+    }
+    return wrapper;
+  }
+  /**
+   * Wrap function with security checks
+   */
+  wrapFunction(originalFn, modulePath, functionName) {
+    return (...args) => {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Calling ${modulePath}.${functionName}`
+      );
+      return originalFn.apply(null, args);
+    };
+  }
+  /**
+   * Resolve module path
+   */
+  resolveModule(modulePath, parentPath) {
+    CocoonDevLog(
+      "service",
+      `[ModuleInterceptorService] Resolving module: ${modulePath} from ${parentPath}`
+    );
+    try {
+      const resolvedPath = __require.resolve(modulePath, {
+        paths: [parentPath]
+      });
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Resolved ${modulePath} to ${resolvedPath}`
+      );
+      return resolvedPath;
+    } catch (error) {
+      CocoonDevLog(
+        "service",
+        `[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
+        error
+      );
+      throw error;
+    }
+  }
+  /**
+   * Create extension context with isolated environment
+   */
+  createExtensionContext(extensionId) {
+    CocoonDevLog(
+      "service",
+      `[ModuleInterceptorService] Creating extension context for ${extensionId}`
+    );
+    const context = {
+      extensionId,
+      globalState: /* @__PURE__ */ new Map(),
+      workspaceState: /* @__PURE__ */ new Map(),
+      subscriptions: [],
+      asAbsolutePath: /* @__PURE__ */ __name((relativePath) => {
+        return `/extensions/${extensionId}/${relativePath}`;
+      }, "asAbsolutePath")
+    };
+    CocoonDevLog(
+      "service",
+      `[ModuleInterceptorService] Extension context created for ${extensionId}`
+    );
+    return context;
+  }
+  /**
+   * Update configuration
+   */
+  updateConfig(newConfig) {
+    CocoonDevLog(
+      "service",
+      "[ModuleInterceptorService] Updating configuration"
+    );
+    this.config = { ...this.config, ...newConfig };
+    this.moduleCache.clear();
+    CocoonDevLog(
+      "service",
+      "[ModuleInterceptorService] Configuration updated"
+    );
+  }
+  /**
+   * Get service status
+   */
+  getStatus() {
+    return {
+      cacheSize: this.moduleCache.size,
+      config: this.config,
+      securityRules: this.config.allowedModules.length + this.config.blockedModules.length
+    };
+  }
+};
+var ModuleInterceptorServiceLayer = Layer.effect(
+  IModuleInterceptorService,
+  Effect.sync(() => new ModuleInterceptorService())
+);
+var ModuleInterceptorServiceLive = Layer.effect(
+  IModuleInterceptorService,
+  Effect.sync(() => new ModuleInterceptorService())
+);
+var Service_default = ModuleInterceptorService;
+export {
+  ModuleInterceptorService,
+  ModuleInterceptorServiceLayer,
+  ModuleInterceptorServiceLive,
+  Service_default as default
+};
+//# sourceMappingURL=Service.js.map

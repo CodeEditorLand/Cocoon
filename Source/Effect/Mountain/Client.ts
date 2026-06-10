@@ -70,7 +70,7 @@ export class ConnectionError extends Error {
 	constructor(
 		override readonly message: string,
 
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(message);
 	}
@@ -79,14 +79,12 @@ export class ConnectionError extends Error {
 export class RPCError extends Error {
 	readonly _tag = "RPCError";
 
-	readonly method: string;
-
 	constructor(
 		readonly method: string,
 
 		override readonly message: string,
 
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(message);
 	}
@@ -98,7 +96,7 @@ export class DisconnectionError extends Error {
 	constructor(
 		override readonly message: string,
 
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(message);
 	}
@@ -189,6 +187,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 		if (state._tag === "Connected") {
 			telemetry.log(
 				"warn",
+
 				"[MountainClient] Already connected to Mountain",
 			);
 
@@ -243,6 +242,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 
 			throw new ConnectionError(
 				"Failed to connect to Mountain backend",
+
 				error,
 			);
 		}
@@ -252,6 +252,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 
 		telemetry.log(
 			"info",
+
 			`[MountainClient] Connected to Mountain (v${serverVersion})`,
 		);
 	};
@@ -263,6 +264,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 			if (state._tag !== "Connected") {
 				telemetry.log(
 					"warn",
+
 					"[MountainClient] Not connected to Mountain",
 				);
 
@@ -274,6 +276,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 
 			telemetry.log(
 				"info",
+
 				"[MountainClient] Disconnecting from Mountain...",
 			);
 
@@ -307,6 +310,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 
 			telemetry.log(
 				"info",
+
 				"[MountainClient] Disconnected from Mountain",
 			);
 		} catch (error) {
@@ -337,7 +341,9 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 
 			telemetry.log(
 				"debug",
+
 				`[MountainClient] RPC call: ${method}`,
+
 				params,
 			);
 
@@ -391,7 +397,9 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 
 				throw new RPCError(
 					method,
+
 					`RPC call failed: ${String(error)}`,
+
 					error,
 				);
 			}
@@ -549,3 +557,6 @@ export const makeMockMountainClient = (): MountainClientService => {
 		}),
 	};
 };
+
+export const MountainClientMock: MountainClientService =
+	makeMockMountainClient();

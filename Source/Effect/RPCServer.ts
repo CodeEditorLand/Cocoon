@@ -89,7 +89,7 @@ export class ServerStartError extends Error {
 	constructor(
 		override readonly message: string,
 
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(message);
 	}
@@ -101,7 +101,7 @@ export class ServerStopError extends Error {
 	constructor(
 		override readonly message: string,
 
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(message);
 	}

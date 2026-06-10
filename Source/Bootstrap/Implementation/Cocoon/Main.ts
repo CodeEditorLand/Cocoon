@@ -1,7 +1,7 @@
 // Import Tier dispatcher *after* __LandTiers is populated.
 import "../../../Utility/Tier.js";
+import "../../../Debug/Server.js";
 
-import * as CocoonDebugServer from "../../../Debug/Server.js";
 import { runBootstrap } from "../../../Effect/Bootstrap.js";
 // Dual-layer DebugServer (Cocoon half). Activated by the unified
 // `DebugServer` env var ("cocoon" | "both"). Safe no-op otherwise.

@@ -1,2 +1,86 @@
-import{ExtractDecoratorMatches as s}from"@codeeditorland/wind/Target/Codegen/Extract/ExtractDecoratorMatch.js";import{ExtractInterfaceMembers as i}from"@codeeditorland/wind/Target/Codegen/Extract/ExtractInterfaceMembers.js";import{ResolveInterfaceCrossFile as l}from"@codeeditorland/wind/Target/Codegen/Resolve/ResolveInterfaceCrossFile.js";import{IsExtHostFile as f}from"../../../Is/Ext/Host/File.js";const m=r=>r.startsWith("IExtHost")?`MainThread${r.slice(8)}Shape`:null,u=(r,t)=>{const e=new RegExp(`((?:\\s*\\/\\*\\*[\\s\\S]*?\\*\\/\\s*)*)(?:export\\s+)?interface\\s+${t}\\b`).exec(r);if(!e)return null;const o=/\/\*\*([\s\S]*?)\*\//.exec(e[1]??"");return o?(o[1]??"").split(/\r?\n/).map(n=>n.replace(/^\s*\/?\*+\/?/,"").replace(/\*+\/?$/,"").trim()).filter(n=>n.length>0).join(`
-`):null},p=async function*(r){for await(const t of r){if(!f(t.SourcePath))continue;const a=s(t.Contents);if(a.length!==0)for(const e of a){let o=i(t.Contents,e.InterfaceName),n=u(t.Contents,e.InterfaceName);if(o.length===0){const c=await l({InterfaceName:e.InterfaceName,DecoratorFilePath:t.AbsolutePath,DecoratorFileContents:t.Contents});c&&(o=c.Members)}yield{DecoratorName:e.DecoratorName,DecoratorTag:e.DecoratorTag,InterfaceName:e.InterfaceName,SourcePath:t.SourcePath,SourceLine:e.SourceLine,Members:o,DecoratorDocComment:e.DocComment,InterfaceDocComment:n,MainThreadCounterpart:m(e.DecoratorName)}}}};var g=p;export{p as IterateExtHostDecorators,g as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Codegen/Extract/Is/Ext/Host/File.ts
+var ExtHostPathSegments = [
+  "vs/workbench/api/common/extHost",
+  "vs/workbench/api/browser/extHost",
+  "vs/workbench/api/worker/extHost",
+  "vs/workbench/api/electron-browser/extHost"
+];
+var IsExtHostFile = /* @__PURE__ */ __name((sourcePath) => {
+  const Normalised = sourcePath.replace(/\\/g, "/");
+  for (const Segment of ExtHostPathSegments) {
+    if (Normalised.includes(Segment)) return true;
+  }
+  return false;
+}, "IsExtHostFile");
+var File_default = IsExtHostFile;
+
+// Source/Codegen/Extract/Iterate/Ext/Host/Decorators.ts
+import { ExtractDecoratorMatches } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractDecoratorMatch.js";
+import { ExtractInterfaceMembers } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractInterfaceMembers.js";
+import { ResolveInterfaceCrossFile } from "@codeeditorland/wind/Target/Codegen/Resolve/ResolveInterfaceCrossFile.js";
+var MainThreadCounterpartName = /* @__PURE__ */ __name((decoratorName) => {
+  if (!decoratorName.startsWith("IExtHost")) return null;
+  const Suffix = decoratorName.slice("IExtHost".length);
+  return `MainThread${Suffix}Shape`;
+}, "MainThreadCounterpartName");
+var FindInterfaceDocComment = /* @__PURE__ */ __name((source, interfaceName) => {
+  const Pattern = new RegExp(
+    `((?:\\s*\\/\\*\\*[\\s\\S]*?\\*\\/\\s*)*)(?:export\\s+)?interface\\s+${interfaceName}\\b`
+  );
+  const Match = Pattern.exec(source);
+  if (!Match) return null;
+  const DocBlock = /\/\*\*([\s\S]*?)\*\//.exec(Match[1] ?? "");
+  if (!DocBlock) return null;
+  return (DocBlock[1] ?? "").split(/\r?\n/).map(
+    (line) => line.replace(/^\s*\/?\*+\/?/, "").replace(/\*+\/?$/, "").trim()
+  ).filter((line) => line.length > 0).join("\n");
+}, "FindInterfaceDocComment");
+var IterateExtHostDecorators = /* @__PURE__ */ __name(async function* (files) {
+  for await (const File of files) {
+    if (!IsExtHostFile(File.SourcePath)) continue;
+    const Matches = ExtractDecoratorMatches(File.Contents);
+    if (Matches.length === 0) continue;
+    for (const Match of Matches) {
+      let Members = ExtractInterfaceMembers(
+        File.Contents,
+        Match.InterfaceName
+      );
+      let InterfaceDoc = FindInterfaceDocComment(
+        File.Contents,
+        Match.InterfaceName
+      );
+      if (Members.length === 0) {
+        const CrossFile = await ResolveInterfaceCrossFile({
+          InterfaceName: Match.InterfaceName,
+          DecoratorFilePath: File.AbsolutePath,
+          DecoratorFileContents: File.Contents
+        });
+        if (CrossFile) {
+          Members = CrossFile.Members;
+        }
+      }
+      yield {
+        DecoratorName: Match.DecoratorName,
+        DecoratorTag: Match.DecoratorTag,
+        InterfaceName: Match.InterfaceName,
+        SourcePath: File.SourcePath,
+        SourceLine: Match.SourceLine,
+        Members,
+        DecoratorDocComment: Match.DocComment,
+        InterfaceDocComment: InterfaceDoc,
+        MainThreadCounterpart: MainThreadCounterpartName(
+          Match.DecoratorName
+        )
+      };
+    }
+  }
+}, "IterateExtHostDecorators");
+var Decorators_default = IterateExtHostDecorators;
+export {
+  IterateExtHostDecorators,
+  Decorators_default as default
+};
+//# sourceMappingURL=Decorators.js.map

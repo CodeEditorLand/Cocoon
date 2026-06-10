@@ -251,7 +251,9 @@ const BuildHeuristicMethod =
  */
 const WrapNamespaceWithHeuristics = <T extends object>(
 	NamespaceName: string,
+
 	ConcreteNamespace: T,
+
 	Overrides?: HeuristicOverrides,
 ): T =>
 	new Proxy(ConcreteNamespace, {

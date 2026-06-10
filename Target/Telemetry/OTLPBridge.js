@@ -1,1 +1,165 @@
-import*as b from"node:http";import*as N from"node:https";import T from"./PostHog/Configuration.js";const m=T();let c=m.OTLPEnabled;const h=t=>{let n="";for(let e=0;e<t;e=e+1)n=n+Math.floor(Math.random()*256).toString(16).padStart(2,"0");return n};let u;const y=()=>(u||(u=h(16)),u),p=()=>{const t=process.hrtime();return BigInt(t[0])*1000000000n+BigInt(t[1])},l=(t,n,e,i=[])=>{if(process.env.NODE_ENV==="production"||!c)return;const r=h(8),s=y(),S=t.includes("error")?2:1,v=i.map(([o,f])=>({key:o,value:{stringValue:f}})),g=JSON.stringify({resourceSpans:[{resource:{attributes:[{key:"service.name",value:{stringValue:"land-editor-cocoon"}},{key:"service.version",value:{stringValue:"0.0.1"}},{key:"land.tier",value:{stringValue:"cocoon"}}]},scopeSpans:[{scope:{name:"land.cocoon",version:"1.0.0"},spans:[{traceId:s,spanId:r,name:t,kind:1,startTimeUnixNano:n.toString(),endTimeUnixNano:e.toString(),attributes:v,status:{code:S}}]}]}]});try{const o=new URL("/v1/traces",m.OTLPEndpoint),a=(o.protocol==="https:"?N:b).request({method:"POST",hostname:o.hostname,port:o.port||(o.protocol==="https:"?443:80),path:o.pathname,headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(g)},timeout:200},d=>{(d.statusCode===void 0||d.statusCode>=300)&&(c=!1),d.resume()});a.on("error",()=>{c=!1}),a.on("timeout",()=>{a.destroy()}),a.write(g),a.end()}catch{c=!1}},x=async(t,n,e=[])=>{const i=p();try{const r=await n(),s=p();return l(t,i,s,e),r}catch(r){const s=p();throw l(`${t}:error`,i,s,[...e,["error",String(r.message??r)]]),r}};var I={CaptureSpan:l,TraceIdentifier:y,WithSpan:x};export{l as CaptureSpan,y as TraceIdentifier,x as WithSpan,I as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey = "";
+var DefaultHost = "https://eu.i.posthog.com";
+var DefaultBatchWindowMilliseconds = 3e3;
+var DefaultBatchMaximum = 50;
+var ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  return Value && Value.length > 0 ? Value : Fallback;
+}, "ReadString");
+var ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  if (Value === void 0) return Fallback;
+  return !["false", "0", "off", ""].includes(Value.toLowerCase());
+}, "ReadBoolean");
+var ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  const Parsed = Value ? Number(Value) : Number.NaN;
+  return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+}, "ReadNumber");
+var TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+var Configuration_default = /* @__PURE__ */ __name(() => ({
+  Key: ReadString("Authorize", DefaultKey),
+  Host: ReadString("Beam", DefaultHost),
+  Enabled: ReadBoolean("Report", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production",
+  BatchWindowMilliseconds: ReadNumber(
+    "Buffer",
+    DefaultBatchWindowMilliseconds
+  ),
+  BatchMaximum: ReadNumber("Batch", DefaultBatchMaximum),
+  DistinctIdentifierSeed: process.env["Brand"] ?? "",
+  Pipe: ReadString("Pipe", "http://127.0.0.1:4318"),
+  Emit: ReadBoolean("Emit", true) && TelemetryCaptureEnabled && process.env["NODE_ENV"] !== "production"
+}), "default");
+
+// Source/Telemetry/OTLPBridge.ts
+import * as NodeHttp from "node:http";
+import * as NodeHttps from "node:https";
+var Configuration = Configuration_default();
+var OTLPAvailable = Configuration.OTLPEnabled;
+var RandomHex = /* @__PURE__ */ __name((Bytes) => {
+  let Output = "";
+  for (let Index = 0; Index < Bytes; Index = Index + 1) {
+    Output = Output + Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+  }
+  return Output;
+}, "RandomHex");
+var TraceIdentifierCached;
+var TraceIdentifier = /* @__PURE__ */ __name(() => {
+  if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
+  return TraceIdentifierCached;
+}, "TraceIdentifier");
+var NowNano = /* @__PURE__ */ __name(() => {
+  const Hr = process.hrtime();
+  return BigInt(Hr[0]) * 1000000000n + BigInt(Hr[1]);
+}, "NowNano");
+var CaptureSpan = /* @__PURE__ */ __name((Name, StartNano, EndNano, Attributes = []) => {
+  if (process.env["NODE_ENV"] === "production") return;
+  if (!OTLPAvailable) return;
+  const SpanIdentifier = RandomHex(8);
+  const TraceIdentifierResolved = TraceIdentifier();
+  const StatusCode = Name.includes("error") ? 2 : 1;
+  const AttributesPayload = Attributes.map(([Key, Value]) => ({
+    key: Key,
+    value: { stringValue: Value }
+  }));
+  const Payload = JSON.stringify({
+    resourceSpans: [
+      {
+        resource: {
+          attributes: [
+            {
+              key: "service.name",
+              value: { stringValue: "land-editor-cocoon" }
+            },
+            {
+              key: "service.version",
+              value: { stringValue: "0.0.1" }
+            },
+            {
+              key: "land.tier",
+              value: { stringValue: "cocoon" }
+            }
+          ]
+        },
+        scopeSpans: [
+          {
+            scope: { name: "land.cocoon", version: "1.0.0" },
+            spans: [
+              {
+                traceId: TraceIdentifierResolved,
+                spanId: SpanIdentifier,
+                name: Name,
+                kind: 1,
+                startTimeUnixNano: StartNano.toString(),
+                endTimeUnixNano: EndNano.toString(),
+                attributes: AttributesPayload,
+                status: { code: StatusCode }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  });
+  try {
+    const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
+    const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
+    const Request = HttpModule.request(
+      {
+        method: "POST",
+        hostname: Address.hostname,
+        port: Address.port || (Address.protocol === "https:" ? 443 : 80),
+        path: Address.pathname,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(Payload)
+        },
+        timeout: 200
+      },
+      (Response) => {
+        if (Response.statusCode === void 0 || Response.statusCode >= 300) {
+          OTLPAvailable = false;
+        }
+        Response.resume();
+      }
+    );
+    Request.on("error", () => {
+      OTLPAvailable = false;
+    });
+    Request.on("timeout", () => {
+      Request.destroy();
+    });
+    Request.write(Payload);
+    Request.end();
+  } catch {
+    OTLPAvailable = false;
+  }
+}, "CaptureSpan");
+var WithSpan = /* @__PURE__ */ __name(async (Name, Body, Attributes = []) => {
+  const StartNano = NowNano();
+  try {
+    const Output = await Body();
+    const EndNano = NowNano();
+    CaptureSpan(Name, StartNano, EndNano, Attributes);
+    return Output;
+  } catch (Error2) {
+    const EndNano = NowNano();
+    CaptureSpan(`${Name}:error`, StartNano, EndNano, [
+      ...Attributes,
+      ["error", String(Error2.message ?? Error2)]
+    ]);
+    throw Error2;
+  }
+}, "WithSpan");
+var OTLPBridge_default = { CaptureSpan, TraceIdentifier, WithSpan };
+export {
+  CaptureSpan,
+  TraceIdentifier,
+  WithSpan,
+  OTLPBridge_default as default
+};
+//# sourceMappingURL=OTLPBridge.js.map

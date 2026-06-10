@@ -57,18 +57,23 @@ export interface SpanHandle {
 export interface TelemetryService {
 	readonly recordMetric: (
 		name: string,
+
 		value: number,
+
 		labels?: Record<string, string>,
 	) => void;
 
 	readonly startSpan: (
 		name: string,
+
 		labels?: Record<string, string>,
 	) => SpanHandle;
 
 	readonly log: (
 		level: TelemetryLog["level"],
+
 		message: string,
+
 		context?: Record<string, unknown>,
 	) => void;
 
@@ -92,6 +97,7 @@ export class TelemetryCollectionError extends Error {
 
 	constructor(
 		readonly operation: string,
+
 		override readonly cause: unknown,
 	) {
 		super(
@@ -131,13 +137,18 @@ function makeTelemetry(): TelemetryService {
 
 	const recordMetric = (
 		name: string,
+
 		value: number,
+
 		labels?: Record<string, string>,
 	) => {
 		const metric: TelemetryMetric = {
 			name,
+
 			value,
+
 			timestamp: Date.now(),
+
 			labels: labels ?? undefined,
 		};
 
@@ -150,6 +161,7 @@ function makeTelemetry(): TelemetryService {
 
 	const startSpan = (
 		name: string,
+
 		labels?: Record<string, string>,
 	): SpanHandle => {
 		const startTime = Date.now();
@@ -160,11 +172,17 @@ function makeTelemetry(): TelemetryService {
 
 				const span: TelemetrySpan = {
 					name,
+
 					startTime,
+
 					endTime,
+
 					duration: endTime - startTime,
+
 					success,
+
 					error: error ?? "",
+
 					labels: labels ?? {},
 				};
 
@@ -179,7 +197,9 @@ function makeTelemetry(): TelemetryService {
 
 	const log = (
 		level: TelemetryLog["level"],
+
 		message: string,
+
 		context?: Record<string, unknown>,
 	) => {
 		const entry: TelemetryLog = { level, message, context: context ?? {} };

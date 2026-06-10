@@ -1,1 +1,31 @@
-import{Context as g,Effect as e,Layer as f}from"effect";const i=g.Tag("Service/Window/Dialog"),a=e.gen(function*(){const t=(r,n=[])=>e.gen(function*(){}),o=(r,n=[])=>e.gen(function*(){}),s=(r,n=[])=>e.gen(function*(){});return i.of({ShowInformationMessage:t,ShowWarningMessage:o,ShowErrorMessage:s})}),d=f.effect(i,a);export{d as DialogLayer,a as DialogLive,i as DialogService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/Window/Dialog.ts
+import { Context, Effect, Layer } from "effect";
+var DialogService = Context.Tag(
+  "Service/Window/Dialog"
+);
+var DialogLive = Effect.gen(function* () {
+  const ShowInformationMessage = /* @__PURE__ */ __name((message, items = []) => Effect.gen(function* () {
+    return void 0;
+  }), "ShowInformationMessage");
+  const ShowWarningMessage = /* @__PURE__ */ __name((message, items = []) => Effect.gen(function* () {
+    return void 0;
+  }), "ShowWarningMessage");
+  const ShowErrorMessage = /* @__PURE__ */ __name((message, items = []) => Effect.gen(function* () {
+    return void 0;
+  }), "ShowErrorMessage");
+  return DialogService.of({
+    ShowInformationMessage,
+    ShowWarningMessage,
+    ShowErrorMessage
+  });
+});
+var DialogLayer = Layer.effect(DialogService, DialogLive);
+export {
+  DialogLayer,
+  DialogLive,
+  DialogService
+};
+//# sourceMappingURL=Dialog.js.map

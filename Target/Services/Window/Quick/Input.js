@@ -1,1 +1,109 @@
-import{Effect as r}from"effect";import{SerializeButtons as l,SerializeItems as f}from"../../../TypeConverter/Quick/Input.js";const w=(i,c,e,t)=>r.gen(function*(){yield*c.Debug(`[WindowService] Showing quick pick with ${e.length} items`);const u=f(e),n=t?.buttons?l(t.buttons):void 0,a={items:u,options:t?{placeHolder:t.placeHolder,matchOnDescription:t.matchOnDescription,matchOnDetail:t.matchOnDetail,ignoreFocusLost:t.ignoreFocusLost,canPickMany:t.canPickMany}:void 0,buttons:n},s=yield*r.tryPromise({try:async()=>{const o=await i.sendRequest("UserInterface.ShowQuickPick",[a.items,a.options]);if(o!=null)return o},catch:o=>{throw new Error(`Failed to show quick pick: ${o.message}`)}});if(!s||s.length===0)return;const d=s[0];return typeof e[0]=="string"?d:e.find(o=>o.label===d)}),h=(i,c,e)=>r.gen(function*(){yield*c.Debug(`[WindowService] Showing input box${e?` with placeholder: ${e.placeholder}`:""}`);const t=e?{title:e.title,value:e.value,valueSelection:e.valueSelection,prompt:e.prompt,placeHolder:e.placeHolder,password:e.password,ignoreFocusLost:e.ignoreFocusLost,validateInput:e.validateInput?e.validateInput.toString():void 0}:void 0;return yield*r.tryPromise({try:async()=>{const n=await i.sendRequest("UserInterface.ShowInputBox",[t]);if(n!=null)return n},catch:n=>{throw new Error(`Failed to show input box: ${n.message}`)}})});export{h as ShowInputBox,w as ShowQuickPick};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/TypeConverter/Quick/Input.ts
+var SerializeItems = /* @__PURE__ */ __name((Items) => {
+  return Items.map((Item, Index) => {
+    const Base = typeof Item === "string" ? { label: Item } : Item;
+    return { ...Base, handle: Index };
+  });
+}, "SerializeItems");
+var SerializeButtons = /* @__PURE__ */ __name((Buttons) => {
+  return Buttons?.map((Button, Index) => {
+    const iconPath = Button.iconPath;
+    return {
+      iconPath: iconPath ? "dark" in iconPath && "light" in iconPath ? {
+        dark: iconPath.dark.toJSON(),
+        light: iconPath.light.toJSON()
+      } : iconPath.toJSON() : void 0,
+      tooltip: Button.tooltip,
+      handle: Index
+    };
+  });
+}, "SerializeButtons");
+
+// Source/Services/Window/Quick/Input.ts
+import { Effect } from "effect";
+var ShowQuickPick = /* @__PURE__ */ __name((MountainClient, Logger, Items, Options) => Effect.gen(function* () {
+  yield* Logger.Debug(
+    `[WindowService] Showing quick pick with ${Items.length} items`
+  );
+  const ItemsDTO = SerializeItems(Items);
+  const ButtonsDTO = Options?.buttons ? SerializeButtons(Options.buttons) : void 0;
+  const RequestPayload = {
+    items: ItemsDTO,
+    options: Options ? {
+      placeHolder: Options.placeHolder,
+      matchOnDescription: Options.matchOnDescription,
+      matchOnDetail: Options.matchOnDetail,
+      ignoreFocusLost: Options.ignoreFocusLost,
+      canPickMany: Options.canPickMany
+    } : void 0,
+    buttons: ButtonsDTO
+  };
+  const SelectedItems = yield* Effect.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowQuickPick",
+        [RequestPayload.items, RequestPayload.options]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      return Response;
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show quick pick: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  if (!SelectedItems || SelectedItems.length === 0) {
+    return void 0;
+  }
+  const SelectedValue = SelectedItems[0];
+  if (typeof Items[0] === "string") {
+    return SelectedValue;
+  }
+  return Items.find(
+    (Item) => Item.label === SelectedValue
+  );
+}), "ShowQuickPick");
+var ShowInputBox = /* @__PURE__ */ __name((MountainClient, Logger, Options) => Effect.gen(function* () {
+  yield* Logger.Debug(
+    `[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`
+  );
+  const RequestPayload = Options ? {
+    title: Options.title,
+    value: Options.value,
+    valueSelection: Options.valueSelection,
+    prompt: Options.prompt,
+    placeHolder: Options.placeHolder,
+    password: Options.password,
+    ignoreFocusLost: Options.ignoreFocusLost,
+    validateInput: Options.validateInput ? Options.validateInput.toString() : void 0
+  } : void 0;
+  const Result = yield* Effect.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowInputBox",
+        [RequestPayload]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      return Response;
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show input box: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  return Result;
+}), "ShowInputBox");
+export {
+  ShowInputBox,
+  ShowQuickPick
+};
+//# sourceMappingURL=Input.js.map

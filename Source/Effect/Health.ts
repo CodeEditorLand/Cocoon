@@ -329,3 +329,7 @@ export const makeMockHealth = (
 
 	monitorService: async (): Promise<void> => {},
 });
+
+export const HealthLive: HealthService = getHealth();
+
+export const HealthMock: HealthService = makeMockHealth();
