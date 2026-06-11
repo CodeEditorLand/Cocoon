@@ -42,7 +42,7 @@
 	"devDependencies": {
 		"@effect/language-service": "0.86.2",
 		"@playform/build": "0.3.2",
-		"@types/node": "25.9.2",
+		"@types/node": "25.9.3",
 		"@vitest/coverage-v8": "4.1.8",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
