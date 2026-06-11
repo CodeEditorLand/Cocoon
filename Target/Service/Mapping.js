@@ -3279,9 +3279,17 @@ var init_Handler = __esm({
             return { items: [] };
           }
           const Element = ItemHandle ? ItemHandle : void 0;
+          const _ChildrenTimeout = new Promise(
+            (Resolve) => setTimeout(() => Resolve([]), 5e3)
+          );
           let Children;
           try {
-            Children = await Provider.getChildren?.(Element) ?? [];
+            Children = await Promise.race([
+              Promise.resolve(
+                Provider.getChildren?.(Element)
+              ),
+              _ChildrenTimeout
+            ]) ?? [];
           } catch (Reason) {
             const Message = Reason instanceof Error ? Reason.message : String(Reason);
             if (/MISSING provider|provider is not set/i.test(Message)) {
@@ -4805,7 +4813,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T21:21:23Z"
+      generatedAt: "2026-06-11T22:35:28Z"
     };
   }
 });
