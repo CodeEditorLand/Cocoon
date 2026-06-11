@@ -19393,21 +19393,13 @@ var ConvertShowOptionToDTO = /* @__PURE__ */ __name((ViewColumn2, PreserveFocus)
 
 // Source/Utility/Event/Stream.ts
 init_event();
-import { Effect, PubSub } from "effect";
+import { Effect } from "effect";
 var CreateEventStream = /* @__PURE__ */ __name(() => {
   const VSCodeEmitter = new Emitter();
-  const PubSubInstance = Effect.runSync(PubSub.unbounded());
-  const Fire = /* @__PURE__ */ __name((Data) => PubSub.publish(PubSubInstance, Data).pipe(
-    Effect.andThen(Effect.sync(() => VSCodeEmitter.fire(Data))),
-    Effect.asVoid
-  ), "Fire");
-  const Shutdown = /* @__PURE__ */ __name(() => Effect.all([
-    PubSub.shutdown(PubSubInstance),
-    Effect.sync(() => VSCodeEmitter.dispose())
-  ]).pipe(Effect.asVoid), "Shutdown");
+  const Fire = /* @__PURE__ */ __name((Data) => Effect.sync(() => VSCodeEmitter.fire(Data)), "Fire");
+  const Shutdown = /* @__PURE__ */ __name(() => Effect.sync(() => VSCodeEmitter.dispose()), "Shutdown");
   return {
     Fire,
-    PubSub: PubSubInstance,
     event: VSCodeEmitter.event,
     Shutdown
   };

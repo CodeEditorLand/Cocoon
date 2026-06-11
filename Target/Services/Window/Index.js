@@ -19362,21 +19362,13 @@ var IMountainClientService = Effect.Service()(
 
 // Source/Utility/Event/Stream.ts
 init_event();
-import { Effect as Effect2, PubSub } from "effect";
+import { Effect as Effect2 } from "effect";
 var CreateEventStream = /* @__PURE__ */ __name(() => {
   const VSCodeEmitter = new Emitter();
-  const PubSubInstance = Effect2.runSync(PubSub.unbounded());
-  const Fire = /* @__PURE__ */ __name((Data) => PubSub.publish(PubSubInstance, Data).pipe(
-    Effect2.andThen(Effect2.sync(() => VSCodeEmitter.fire(Data))),
-    Effect2.asVoid
-  ), "Fire");
-  const Shutdown = /* @__PURE__ */ __name(() => Effect2.all([
-    PubSub.shutdown(PubSubInstance),
-    Effect2.sync(() => VSCodeEmitter.dispose())
-  ]).pipe(Effect2.asVoid), "Shutdown");
+  const Fire = /* @__PURE__ */ __name((Data) => Effect2.sync(() => VSCodeEmitter.fire(Data)), "Fire");
+  const Shutdown = /* @__PURE__ */ __name(() => Effect2.sync(() => VSCodeEmitter.dispose()), "Shutdown");
   return {
     Fire,
-    PubSub: PubSubInstance,
     event: VSCodeEmitter.event,
     Shutdown
   };
@@ -21025,7 +21017,7 @@ var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Log
 }), "CreateWebviewPanel");
 
 // Source/Services/Window/Index.ts
-import { Context as Context3, Effect as Effect14, Ref as Ref2 } from "effect";
+import { Context as Context3, Effect as Effect14 } from "effect";
 var WindowService = class extends Effect14.Service()(
   "Service/Window",
   {
@@ -21034,15 +21026,14 @@ var WindowService = class extends Effect14.Service()(
       const Workspace_ = yield* Context3.Tag("Service/Workspace");
       const Logger_ = yield* Context3.Tag("Service/Logger");
       const MountainGRPC = yield* MountainGRPCClientService;
-      const WindowStateRef = yield* Ref2.make({
+      let _windowState = {
         focused: true,
         active: true
-      });
+      };
       const OnDidChangeWindowStateStream = CreateEventStream();
       const AcceptWindowStateChange = /* @__PURE__ */ __name((State) => Effect14.gen(function* () {
-        const CurrentState = yield* Ref2.get(WindowStateRef);
-        if (CurrentState.focused !== State.focused || CurrentState.active !== State.active) {
-          yield* Ref2.set(WindowStateRef, State);
+        if (_windowState.focused !== State.focused || _windowState.active !== State.active) {
+          _windowState = State;
           yield* Logger_.Debug(
             `[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`
           );
@@ -21051,7 +21042,7 @@ var WindowService = class extends Effect14.Service()(
       }), "AcceptWindowStateChange");
       const ServiceImplementation = {
         get state() {
-          return Effect14.runSync(Ref2.get(WindowStateRef));
+          return _windowState;
         },
         get activeTextEditor() {
           return Workspace_.activeTextEditor;

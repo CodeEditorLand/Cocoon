@@ -13,7 +13,7 @@ var IMountainClientService = Effect.Service()(
 );
 
 // Source/Services/Extension.ts
-import { Context, Effect as Effect2, Ref } from "effect";
+import { Context, Effect as Effect2 } from "effect";
 var ExtensionService = class extends Effect2.Service()(
   "Service/Extension",
   {
@@ -23,16 +23,9 @@ var ExtensionService = class extends Effect2.Service()(
         "Service/Configuration"
       );
       const Logger = yield* Context.Tag("Service/Logger");
-      const ExtensionRegistryRef = yield* Ref.make(
-        /* @__PURE__ */ new Map()
-      );
-      const ExtensionActivationRef = yield* Ref.make(
-        /* @__PURE__ */ new Map()
-      );
-      const ExtensionExportsRef = yield* Ref.make(
-        /* @__PURE__ */ new Map()
-      );
-      yield* Ref.make(/* @__PURE__ */ new Map());
+      const _registry = /* @__PURE__ */ new Map();
+      const _activation = /* @__PURE__ */ new Map();
+      const _exports = /* @__PURE__ */ new Map();
       const OnDidChangeListeners = /* @__PURE__ */ new Set();
       const DiscoverExtensions = /* @__PURE__ */ __name(() => Effect2.gen(function* () {
         Logger.Debug(
@@ -82,11 +75,11 @@ var ExtensionService = class extends Effect2.Service()(
             );
           }
         }
-        const OldRegistry = yield* Ref.get(ExtensionRegistryRef);
-        if (NewRegistry.size !== OldRegistry.size || Array.from(NewRegistry.keys()).some(
-          (key) => !OldRegistry.has(key) || JSON.stringify(NewRegistry.get(key)) !== JSON.stringify(OldRegistry.get(key))
+        if (NewRegistry.size !== _registry.size || Array.from(NewRegistry.keys()).some(
+          (key) => !_registry.has(key) || JSON.stringify(NewRegistry.get(key)) !== JSON.stringify(_registry.get(key))
         )) {
-          yield* Ref.set(ExtensionRegistryRef, NewRegistry);
+          _registry.clear();
+          NewRegistry.forEach((v, k) => _registry.set(k, v));
           Logger.Info(
             `[ExtensionService] Extensions discovered: ${NewRegistry.size} extensions`
           );
@@ -94,19 +87,10 @@ var ExtensionService = class extends Effect2.Service()(
         }
       }), "DiscoverExtensions");
       const GetExtension = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(() => {
-        const Registry = Effect2.runSync(
-          Ref.get(ExtensionRegistryRef)
-        );
-        const Description = Registry.get(ExtensionId);
+        const Description = _registry.get(ExtensionId);
         if (!Description) {
           return void 0;
         }
-        const ActivationMap = Effect2.runSync(
-          Ref.get(ExtensionActivationRef)
-        );
-        const ExportsMap = Effect2.runSync(
-          Ref.get(ExtensionExportsRef)
-        );
         const SafePackageJSON = (() => {
           const Raw = Description;
           const Identifier = Description.identifier;
@@ -122,30 +106,21 @@ var ExtensionService = class extends Effect2.Service()(
           id: Description.identifier,
           extensionUri: Description.extensionLocation,
           extensionPath: Description.extensionLocation.fsPath,
-          isActive: ActivationMap.get(ExtensionId) ?? false,
+          isActive: _activation.get(ExtensionId) ?? false,
           packageJSON: SafePackageJSON,
-          exports: ExportsMap.get(ExtensionId),
+          exports: _exports.get(ExtensionId),
           extensionKind: Description.kind?.[0],
           activate: /* @__PURE__ */ __name(async () => {
             Logger.Warn(
               `[ExtensionService] activate() called on ${ExtensionId}, but activation is handled by ExtensionHostService`
             );
-            return ExportsMap.get(ExtensionId);
+            return _exports.get(ExtensionId);
           }, "activate")
         };
         return ExtensionObject;
       })(), "GetExtension");
       const GetAllExtensions = /* @__PURE__ */ __name(() => Effect2.succeed(() => {
-        const Registry = Effect2.runSync(
-          Ref.get(ExtensionRegistryRef)
-        );
-        const ActivationMap = Effect2.runSync(
-          Ref.get(ExtensionActivationRef)
-        );
-        const ExportsMap = Effect2.runSync(
-          Ref.get(ExtensionExportsRef)
-        );
-        const Extensions = Array.from(Registry.entries()).map(
+        const Extensions = Array.from(_registry.entries()).map(
           ([id, description]) => {
             const Raw = description;
             const PublisherFallback = typeof id === "string" ? id.split(".")[0] ?? "unknown" : "unknown";
@@ -159,18 +134,15 @@ var ExtensionService = class extends Effect2.Service()(
               id: description.identifier,
               extensionUri: description.extensionLocation,
               extensionPath: description.extensionLocation.fsPath,
-              isActive: ActivationMap.get(id) ?? false,
+              isActive: _activation.get(id) ?? false,
               packageJSON: SafePackageJSON,
-              exports: ExportsMap.get(id)
+              exports: _exports.get(id)
             };
           }
         );
         return Extensions;
       })(), "GetAllExtensions");
-      const GetExtensionPath = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(() => {
-        const Extension = Effect2.runSync(GetExtension(ExtensionId));
-        return Extension?.extensionPath;
-      }), "GetExtensionPath");
+      const GetExtensionPath = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(_registry.get(ExtensionId)?.extensionLocation?.fsPath), "GetExtensionPath");
       const OnDidChange = /* @__PURE__ */ __name((Listener) => {
         OnDidChangeListeners.add(Listener);
         const Disposable = {
@@ -180,27 +152,15 @@ var ExtensionService = class extends Effect2.Service()(
         };
         return Disposable;
       }, "OnDidChange");
-      const MarkActivated = /* @__PURE__ */ __name((ExtensionId, Exports) => Effect2.gen(function* () {
-        yield* Ref.update(ExtensionActivationRef, (Map2) => {
-          const NewMap = new Map2(Map2);
-          NewMap.set(ExtensionId, true);
-          return NewMap;
-        });
-        yield* Ref.update(ExtensionExportsRef, (Map2) => {
-          const NewMap = new Map2(Map2);
-          NewMap.set(ExtensionId, Exports);
-          return NewMap;
-        });
+      const MarkActivated = /* @__PURE__ */ __name((ExtensionId, Exports) => Effect2.sync(() => {
+        _activation.set(ExtensionId, true);
+        _exports.set(ExtensionId, Exports);
         Logger.Info(
           `[ExtensionService] Extension activated: ${ExtensionId}`
         );
       }), "MarkActivated");
-      const MarkDeactivated = /* @__PURE__ */ __name((ExtensionId) => Effect2.gen(function* () {
-        yield* Ref.update(ExtensionActivationRef, (Map2) => {
-          const NewMap = new Map2(Map2);
-          NewMap.set(ExtensionId, false);
-          return NewMap;
-        });
+      const MarkDeactivated = /* @__PURE__ */ __name((ExtensionId) => Effect2.sync(() => {
+        _activation.set(ExtensionId, false);
         Logger.Debug(
           `[ExtensionService] Extension deactivated: ${ExtensionId}`
         );
