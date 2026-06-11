@@ -21,7 +21,7 @@
  * - CreateWebviewPanel: COMPLETE → WebviewPanel.ts
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
@@ -68,11 +68,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 			// Resolve the Mountain gRPC client (used by delegated operations)
 			const MountainGRPC = yield* MountainGRPCClientService;
 
-			// Window state tracking
-			const WindowStateRef = yield* Ref.make<VSCode.WindowState>({
+			// Window state tracking - plain variable, no Ref overhead
+			let _windowState: VSCode.WindowState = {
 				focused: true,
 				active: true,
-			});
+			};
 
 			// Event stream for window state changes
 			const OnDidChangeWindowStateStream =
@@ -84,13 +84,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 			 */
 			const AcceptWindowStateChange = (State: VSCode.WindowState) =>
 				Effect.gen(function* () {
-					const CurrentState = yield* Ref.get(WindowStateRef);
-
 					if (
-						CurrentState.focused !== State.focused ||
-						CurrentState.active !== State.active
+						_windowState.focused !== State.focused ||
+						_windowState.active !== State.active
 					) {
-						yield* Ref.set(WindowStateRef, State);
+						_windowState = State;
 
 						yield* Logger_.Debug(
 							`[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`,
@@ -103,7 +101,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 			// Build the service implementation object
 			const ServiceImplementation: Window = {
 				get state() {
-					return Effect.runSync(Ref.get(WindowStateRef));
+					return _windowState;
 				},
 				get activeTextEditor() {
 					return Workspace_.activeTextEditor;

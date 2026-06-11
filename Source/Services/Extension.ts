@@ -36,7 +36,7 @@
  * FUTURE: Schema validation - validate package.json against schema
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
@@ -309,23 +309,10 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
-			// Extension metadata registry with Ref
-			const ExtensionRegistryRef = yield* Ref.make(
-				new Map<string, IExtensionDescription>(),
-			);
-
-			// Extension activation tracking
-			const ExtensionActivationRef = yield* Ref.make(
-				new Map<string, boolean>(),
-			);
-
-			// Extension exports cache
-			const ExtensionExportsRef = yield* Ref.make(
-				new Map<string, unknown>(),
-			);
-
-			// Activation metrics tracking
-			yield* Ref.make(new Map<string, ActivationMetrics>());
+			// Plain Maps - no Ref overhead on every extension lookup.
+			const _registry = new Map<string, IExtensionDescription>();
+			const _activation = new Map<string, boolean>();
+			const _exports = new Map<string, unknown>();
 
 			// Change event listeners
 			const OnDidChangeListeners = new Set<() => void>();
@@ -474,18 +461,17 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					// when VS Code resolves extension resources.
 
 					// Check for changes
-					const OldRegistry = yield* Ref.get(ExtensionRegistryRef);
-
 					if (
-						NewRegistry.size !== OldRegistry.size ||
+						NewRegistry.size !== _registry.size ||
 						Array.from(NewRegistry.keys()).some(
 							(key) =>
-								!OldRegistry.has(key) ||
+								!_registry.has(key) ||
 								JSON.stringify(NewRegistry.get(key)) !==
-									JSON.stringify(OldRegistry.get(key)),
+									JSON.stringify(_registry.get(key)),
 						)
 					) {
-						yield* Ref.set(ExtensionRegistryRef, NewRegistry);
+						_registry.clear();
+						NewRegistry.forEach((v, k) => _registry.set(k, v));
 
 						Logger.Info(
 							`[ExtensionService] Extensions discovered: ${NewRegistry.size} extensions`,
@@ -508,23 +494,11 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				ExtensionId: string,
 			): Effect.Effect<IExtension<T> | undefined, never> =>
 				Effect.succeed(() => {
-					const Registry = Effect.runSync(
-						Ref.get(ExtensionRegistryRef),
-					);
-
-					const Description = Registry.get(ExtensionId);
+					const Description = _registry.get(ExtensionId);
 
 					if (!Description) {
 						return undefined;
 					}
-
-					const ActivationMap = Effect.runSync(
-						Ref.get(ExtensionActivationRef),
-					);
-
-					const ExportsMap = Effect.runSync(
-						Ref.get(ExtensionExportsRef),
-					);
 
 					// LAND-FIX: SafePackageJSON guard. Same rationale as
 					// ExtensionsNamespace.ts:249 - extensions like
@@ -573,18 +547,16 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						id: Description.identifier,
 						extensionUri: Description.extensionLocation,
 						extensionPath: Description.extensionLocation.fsPath,
-						isActive: ActivationMap.get(ExtensionId) ?? false,
+						isActive: _activation.get(ExtensionId) ?? false,
 						packageJSON: SafePackageJSON,
-						exports: ExportsMap.get(ExtensionId) as T | undefined,
+						exports: _exports.get(ExtensionId) as T | undefined,
 						extensionKind: Description.kind?.[0],
 						activate: async () => {
-							// This is a stub - actual activation is handled by ExtensionHostService
-							// TODO HIGH: This should trigger activation via ExtensionHostService
 							Logger.Warn(
 								`[ExtensionService] activate() called on ${ExtensionId}, but activation is handled by ExtensionHostService`,
 							);
 
-							return ExportsMap.get(ExtensionId) as T;
+							return _exports.get(ExtensionId) as T;
 						},
 					};
 
@@ -602,19 +574,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				never
 			> =>
 				Effect.succeed(() => {
-					const Registry = Effect.runSync(
-						Ref.get(ExtensionRegistryRef),
-					);
-
-					const ActivationMap = Effect.runSync(
-						Ref.get(ExtensionActivationRef),
-					);
-
-					const ExportsMap = Effect.runSync(
-						Ref.get(ExtensionExportsRef),
-					);
-
-					const Extensions = Array.from(Registry.entries()).map(
+					const Extensions = Array.from(_registry.entries()).map(
 						([id, description]): IExtension => {
 							// LAND-FIX: SafePackageJSON guard mirrored
 							// from GetExtension above so getAllExtensions
@@ -652,9 +612,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								extensionUri: description.extensionLocation,
 								extensionPath:
 									description.extensionLocation.fsPath,
-								isActive: ActivationMap.get(id) ?? false,
+								isActive: _activation.get(id) ?? false,
 								packageJSON: SafePackageJSON,
-								exports: ExportsMap.get(id),
+								exports: _exports.get(id),
 							};
 						},
 					);
@@ -668,11 +628,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			const GetExtensionPath = (
 				ExtensionId: string,
 			): Effect.Effect<string | undefined, never> =>
-				Effect.succeed(() => {
-					const Extension = Effect.runSync(GetExtension(ExtensionId));
-
-					return Extension?.extensionPath;
-				});
+				Effect.succeed(_registry.get(ExtensionId)?.extensionLocation?.fsPath);
 
 			/**
 			 * Register event handler for extension changes
@@ -696,46 +652,21 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 */
 			const MarkActivated = (
 				ExtensionId: string,
-
 				Exports: unknown,
 			): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
-					yield* Ref.update(ExtensionActivationRef, (Map) => {
-						const NewMap = new Map(Map);
-
-						NewMap.set(ExtensionId, true);
-
-						return NewMap;
-					});
-
-					yield* Ref.update(ExtensionExportsRef, (Map) => {
-						const NewMap = new Map(Map);
-
-						NewMap.set(ExtensionId, Exports);
-
-						return NewMap;
-					});
-
+				Effect.sync(() => {
+					_activation.set(ExtensionId, true);
+					_exports.set(ExtensionId, Exports);
 					Logger.Info(
 						`[ExtensionService] Extension activated: ${ExtensionId}`,
 					);
 				});
 
-			/**
-			 * Mark extension as deactivated (called by ExtensionHostService)
-			 */
 			const MarkDeactivated = (
 				ExtensionId: string,
 			): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
-					yield* Ref.update(ExtensionActivationRef, (Map) => {
-						const NewMap = new Map(Map);
-
-						NewMap.set(ExtensionId, false);
-
-						return NewMap;
-					});
-
+				Effect.sync(() => {
+					_activation.set(ExtensionId, false);
 					Logger.Debug(
 						`[ExtensionService] Extension deactivated: ${ExtensionId}`,
 					);
