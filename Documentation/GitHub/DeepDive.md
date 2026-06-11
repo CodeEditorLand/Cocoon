@@ -22,20 +22,21 @@
 This document provides the technical foundation for implementing VSCode
 extension host compatibility within the Land ecosystem. **Cocoon** serves as the
 Node.js sidecar that provides high-fidelity VSCode extension API compatibility
-through Effect-TS implementations and gRPC communication with Mountain.
+through plain `async/await` service implementations and gRPC communication with
+Mountain.
 
 ---
 
 ## Core Architecture Principles
 
-| Principle                   | Description                                                                                                                                                              | Key Components Involved                          |
-| :-------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
-| **High-Fidelity API Shim**  | Provide comprehensive implementations of VSCode's Extension Host services (`IExtHost...`), ensuring maximum compatibility with existing VSCode extensions.               | All `Service/*` modules                          |
-| **Effect-TS Native**        | Build the entire application with Effect-TS, using `Layer` composition and declarative effects for maximum robustness, testability, and type safety.                     | `AppLayer`, all service implementations          |
-| **Module Interception**     | Implement sophisticated `require()` and `import` patching to ensure calls to the `'vscode'` module are correctly intercepted and routed to the appropriate API instance. | `Core/RequireInterceptor.ts`                     |
-| **gRPC-Powered IPC**        | Establish a fast, strongly-typed communication channel with `Mountain` using `tonic` and the `Vine` protocol for all extension lifecycle and API calls.                  | `Service/Ipc.ts`                                 |
-| **Process Hardening**       | Perform comprehensive process hardening, handling uncaught exceptions, managing logs, and ensuring graceful shutdown if the parent `Mountain` process exits.             | `PatchProcess/*`                                 |
-| **Extensible Architecture** | Design all components with extensibility in mind, allowing for new service implementations to be easily added as the VSCode API evolves.                                 | Service provider pattern, `AppLayer` composition |
+| Principle                   | Description                                                                                                                                                                                  | Key Components Involved                          |
+| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
+| **High-Fidelity API Shim**  | Provide comprehensive implementations of VSCode's Extension Host services (`IExtHost...`), ensuring maximum compatibility with existing VSCode extensions.                                   | All `Service/*` modules                          |
+| **Lean Async Bootstrap**    | Bootstrap and service wiring use plain `async/await`. `Layer.succeed` is used where Effect-TS layers are needed; `NodeRuntime.runMain` is not used. `ManagedRuntime` is eagerly initialized. | `Effect/Bootstrap.ts`, service implementations   |
+| **Module Interception**     | Implement sophisticated `require()` and `import` patching to ensure calls to the `'vscode'` module are correctly intercepted and routed to the appropriate API instance.                     | `Core/RequireInterceptor.ts`                     |
+| **gRPC-Powered IPC**        | Establish a fast, strongly-typed communication channel with `Mountain` using `tonic` and the `Vine` protocol for all extension lifecycle and API calls.                                      | `Service/Ipc.ts`                                 |
+| **Process Hardening**       | Perform comprehensive process hardening, handling uncaught exceptions, managing logs, and ensuring graceful shutdown if the parent `Mountain` process exits.                                 | `PatchProcess/*`                                 |
+| **Extensible Architecture** | Design all components with extensibility in mind, allowing for new service implementations to be easily added as the VSCode API evolves.                                                     | Service provider pattern, `AppLayer` composition |
 
 ---
 
@@ -335,6 +336,108 @@ graph TB
         MountainFS --> OS
     end
 ```
+
+---
+
+## Bootstrap Sequence
+
+`Effect/Bootstrap.ts` runs Cocoon's startup as a sequential list of named
+stages. Each stage is a plain `async` function; failures are caught and reported
+without aborting subsequent stages where possible.
+
+### Stage order (actual runtime order)
+
+| #   | Stage name           | What it does                                                                                                     |
+| :-- | :------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| 1   | `Environment`        | Reads `process.version`, `platform`, `arch`; logs Node details                                                   |
+| 2   | `Configuration`      | Parses env vars (`MOUNTAIN_GRPC_PORT`, `COCOON_GRPC_PORT`, `Trace`, …) into `globalThis.__cocoonBootstrapConfig` |
+| 3   | `RPCServer`          | Binds Cocoon's own gRPC server on `COCOON_GRPC_PORT` (default **50052**)                                         |
+| 4   | `ModuleInterceptor`  | Installs the `require('vscode')` / ESM import interceptor                                                        |
+| 5   | `MountainConnection` | TCP-probes Mountain's gRPC port (default **50051**), then connects                                               |
+| 6   | `Extensions`         | Activates all enabled extensions (concurrency 8, topological order)                                              |
+| 7   | `HealthCheck`        | Optional; skipped when `skipHealthCheck: true`                                                                   |
+
+**Critical ordering constraint**: `RPCServer` (stage 3) must bind before
+`MountainConnection` (stage 5). Mountain's gRPC connect budget is 30 seconds
+(`GRPC_CONNECT_BUDGET_MS = 30_000` in `CocoonManagement.rs`). If the stages were
+reversed, Mountain would time out waiting for Cocoon's gRPC port to appear
+before Cocoon ever started its server.
+
+### Tuning constants
+
+| Constant                     | Value  | Description                                         |
+| :--------------------------- | :----- | :-------------------------------------------------- |
+| `MountainProbeMaxAttempts`   | 3      | TCP probes before giving up waiting for Mountain    |
+| `MountainProbeTimeoutMs`     | 300 ms | Per-probe connect timeout                           |
+| `MountainConnectMaxAttempts` | 5      | gRPC connect retries (exponential backoff, max 5 s) |
+
+---
+
+## Effect-TS Usage
+
+Cocoon has been migrated away from `NodeRuntime.runMain` and full Layer
+composition at the process entry point. The current pattern:
+
+- **`Layer.succeed`** - used when a service implementation needs to be wrapped
+  in a Layer but carries no async initialization side-effects.
+- **`Layer.effect`** - used only where the Layer build itself is async (e.g.
+  services that open a connection during construction).
+- **`ManagedRuntime`** - initialized eagerly at module load time so the first
+  Effect dispatch does not pay a startup penalty.
+- **Bootstrap entry point** - `async/await` directly; no `Effect.runPromise`
+  wrapper at the top level. This avoids the unhandled-rejection behavior of
+  `NodeRuntime.runMain` in production Node.js environments where `console.*` is
+  stripped by esbuild.
+
+---
+
+## Extension Activation
+
+### Topological ordering
+
+Before activating an extension, Cocoon reads its `extensionDependencies` array
+from the manifest and recursively activates each dependency first. This ensures
+language server host extensions (e.g. a language grammar pack required by a
+formatter) are ready before their consumers run.
+
+### Circular dependency guard
+
+An `InProgress: Set<string>` tracks every extension ID whose activation has
+started but not yet completed. If a dependency's ID is already in `InProgress`,
+the recursive activation is skipped - preventing infinite loops from circular
+dependency declarations.
+
+```
+activate(ExtId):
+  if ActivatedExtensions.has(ExtId) || InProgress.has(ExtId) → return
+  InProgress.add(ExtId)
+  for each DepId in extensionDependencies:
+    if not activated and not InProgress → activate(DepId)
+  … load & call activate() …
+  ActivatedExtensions.add(ExtId)
+  InProgress.delete(ExtId)
+```
+
+### Extension context storage
+
+Every activated extension receives an `ExtensionContext` whose storage
+properties are backed by Mountain:
+
+| Property         | Backing mechanism                                                        |
+| :--------------- | :----------------------------------------------------------------------- |
+| `workspaceState` | Mountain `Storage.Get` / `Storage.Set` (key prefix `<extId>:workspace:`) |
+| `globalState`    | Mountain `Storage.Get` / `Storage.Set` (key prefix `<extId>:global:`)    |
+| `secrets.get`    | Mountain `secrets.get` → `encryption:decrypt` (AES-256-GCM)              |
+| `secrets.store`  | Mountain `secrets.store` → `encryption:encrypt` (AES-256-GCM)            |
+| `secrets.delete` | Mountain `secrets.delete`                                                |
+
+Storage is **primed synchronously** before `activate()` is called:
+`PrimeStorageCaches` bulk-loads every persisted key for the extension so that
+the first synchronous `workspaceState.get(key)` call during activate sees the
+real persisted value rather than the default. This matters because VS Code
+extensions commonly drive their initial UI state from storage reads inside
+`activate()` (e.g. Roo Code reads `taskHistory`, GitHub Copilot reads
+`signInDismissed`).
 
 ---
 
