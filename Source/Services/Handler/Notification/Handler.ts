@@ -1772,13 +1772,20 @@ const HandleSpecificNotification = (
 				}
 				(Context as any).__visibleTextEditors = Visible;
 			}
-			SafeEmit(
-				Emitter,
+			// Only emit when there IS a valid editor. Many extensions use
+			// `n?.document.languageId` (missing the second `?.`) which throws
+			// "Cannot read properties of undefined (reading 'languageId')" when
+			// n is undefined. VS Code fires this with undefined to signal
+			// "no active editor", but our extensions can't safely handle that.
+			if (TextEditorStub !== undefined) {
+				SafeEmit(
+					Emitter,
 
-				"window.didChangeActiveTextEditor",
+					"window.didChangeActiveTextEditor",
 
-				TextEditorStub,
-			);
+					TextEditorStub,
+				);
+			}
 			break;
 		}
 

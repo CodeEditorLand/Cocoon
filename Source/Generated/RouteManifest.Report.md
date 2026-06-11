@@ -1,6 +1,6 @@
 # Route Manifest - coverage report
 
-_Generated 2026-06-10T20:14:00Z_
+_Generated 2026-06-11T02:01:37Z_
 
 ## Totals
 
