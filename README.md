@@ -308,10 +308,10 @@ the `PatchProcess` module and will appear in `Mountain`'s console output.
 
 ## See Also&#x2001;🔗
 
-- [Cocoon Documentation](https://editor.land/Doc/cocoon)
-- [Architecture Overview](https://editor.land/Doc/architecture)
-- [Why `Effect-TS`](https://editor.land/Doc/why-effect-ts)
-- [Why `gRPC`](https://editor.land/Doc/why-grpc)
+- [Cocoon Documentation](https://Editor.Land/Doc/cocoon)
+- [Architecture Overview](https://Editor.Land/Doc/architecture)
+- [Why `Effect-TS`](https://Editor.Land/Doc/why-effect-ts)
+- [Why `gRPC`](https://Editor.Land/Doc/why-grpc)
 - [`Mountain`](https://github.com/CodeEditorLand/Mountain)
 - [`Wind`](https://github.com/CodeEditorLand/Wind)
 - [`Vine`](https://github.com/CodeEditorLand/Vine)
