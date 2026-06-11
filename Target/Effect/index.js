@@ -4840,7 +4840,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T20:40:41Z"
+      generatedAt: "2026-06-11T21:21:23Z"
     };
   }
 });
@@ -29121,7 +29121,7 @@ var init_Files = __esm({
     init_Lift();
     init_Helpers();
     __name(CompileGlob, "CompileGlob");
-    FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
+    FindFilesLocal = /* @__PURE__ */ __name(async (Context6, Folders, Include, Exclude, MaxResults) => {
       const IncludePattern = ExtractGlobPattern(Include);
       const ExcludePattern = ExtractGlobPattern(Exclude);
       const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
@@ -29208,7 +29208,9 @@ var init_Files = __esm({
           }
         }
       }, "Walk");
-      for (const Folder of Folders) {
+      const EffectiveFolders = Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context6);
+      const Roots = [];
+      for (const Folder of EffectiveFolders) {
         const FsPath = FolderToFsPath(Folder?.uri);
         if (!FsPath) {
           if (process.env["Trace"]?.includes("wsns"))
@@ -29218,7 +29220,17 @@ var init_Files = __esm({
             );
           continue;
         }
-        await Walk(FsPath, FsPath, 0);
+        Roots.push(FsPath);
+      }
+      if (Roots.length === 0) {
+        if (process.env["Trace"]?.includes("wsns"))
+          process.stdout.write(
+            "[LandFix:WsNs] findFiles: no workspace folders resolved \u2192 walking process.cwd()\n"
+          );
+        Roots.push(process.cwd());
+      }
+      for (const Root of Roots) {
+        await Walk(Root, Root, 0);
       }
       if (Truncated) {
         if (process.env["Trace"]?.includes("wsns"))
@@ -29256,7 +29268,7 @@ async function FindTextInFilesNodeFallback(Context6, Folders, Query, Options, Ca
   let Emitted = 0;
   for (const Candidate of Candidates) {
     if (Emitted >= Max) return { limitHit: true };
-    const Path = ToFsPath(Candidate);
+    const Path = FolderToFsPath(Candidate);
     if (!Path) continue;
     let Content;
     try {
@@ -29305,19 +29317,20 @@ async function FindTextInFilesNodeFallback(Context6, Folders, Query, Options, Ca
   }
   return { limitHit: false };
 }
-var ExtractPattern, ToFsPath;
+var EscapeLiteral, ExtractPattern;
 var init_Fallback = __esm({
   "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Text/In/Files/Fallback.ts"() {
     "use strict";
+    init_Helpers();
     init_Files();
+    EscapeLiteral = /* @__PURE__ */ __name((Text) => Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "EscapeLiteral");
     ExtractPattern = /* @__PURE__ */ __name((Query) => {
-      if (Query == null) return void 0;
-      const Q = typeof Query === "string" ? { pattern: Query } : Query;
+      const Q = typeof Query === "string" ? { pattern: Query } : Query ?? {};
       if (!Q.pattern) return void 0;
       const Flags = `gm${Q.isCaseSensitive ? "" : "i"}`;
       let Source = Q.pattern;
       if (!Q.isRegExp) {
-        Source = Source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        Source = EscapeLiteral(Source);
       }
       if (Q.isWordMatch) {
         Source = `\\b${Source}\\b`;
@@ -29325,17 +29338,10 @@ var init_Fallback = __esm({
       try {
         return new RegExp(Source, Flags);
       } catch {
-        return void 0;
+        const Literal = Q.isWordMatch ? `\\b${EscapeLiteral(Q.pattern)}\\b` : EscapeLiteral(Q.pattern);
+        return new RegExp(Literal, Flags);
       }
     }, "ExtractPattern");
-    ToFsPath = /* @__PURE__ */ __name((Uri2) => {
-      if (Uri2 == null) return void 0;
-      if (typeof Uri2 === "string") {
-        return Uri2.startsWith("file://") ? Uri2.slice("file://".length) : Uri2;
-      }
-      const U = Uri2;
-      return U.fsPath ?? U.path;
-    }, "ToFsPath");
     __name(FindTextInFilesNodeFallback, "FindTextInFilesNodeFallback");
   }
 });
@@ -36320,8 +36326,35 @@ var init_Handler5 = __esm({
             handle: WebviewPanelHandle,
             viewType: ViewType,
             webview: {
-              postMessage: /* @__PURE__ */ __name(() => Promise.resolve(false), "postMessage"),
-              html: "",
+              // Providers (Roo, Claude, Continue) post their init
+              // message inside resolveCustomEditor - it must reach the
+              // real workbench webview, keyed by the handle Mountain
+              // sent in Args[2]. Same wire as the WebviewView proxy:
+              // `webview.postMessage` → Webview.rs → sky relay.
+              postMessage: /* @__PURE__ */ __name((Message) => {
+                if (WebviewPanelHandle == null || !Context6) {
+                  return Promise.resolve(false);
+                }
+                return Context6.SendToMountain("webview.postMessage", {
+                  handle: WebviewPanelHandle,
+                  message: Message
+                }).then(() => true).catch(() => false);
+              }, "postMessage"),
+              // Setter forwards to the workbench panel; getter returns
+              // the last value set through this proxy.
+              get html() {
+                return this.__html ?? "";
+              },
+              set html(Value) {
+                this.__html = Value;
+                if (WebviewPanelHandle != null && Context6) {
+                  void Context6.SendToMountain("webview.setHtml", {
+                    handle: WebviewPanelHandle,
+                    html: Value
+                  }).catch(() => {
+                  });
+                }
+              },
               options: {},
               cspSource: "vscode-webview:"
             },
@@ -36657,13 +36690,22 @@ var init_Service8 = __esm({
         );
       }
       /**
-       * Validate authentication token
+       * Validate the authorization token presented in the gRPC call metadata.
+       * Permissive when authentication is disabled (no MOUNTAIN_AUTH_TOKEN);
+       * otherwise the "authorization" metadata entry must match the configured
+       * token exactly (an optional "Bearer " prefix is accepted).
        */
-      ValidateAuthentication() {
+      ValidateAuthentication(Metadata) {
         if (!this.authEnabled) {
           return true;
         }
-        return true;
+        const Entries = Metadata.get("authorization");
+        if (Entries.length === 0) {
+          return false;
+        }
+        const Presented = Entries[0]?.toString() ?? "";
+        const Token = Presented.startsWith("Bearer ") ? Presented.slice("Bearer ".length) : Presented;
+        return Token === this.authToken;
       }
       // ==================================================================
       // gRPC Service Implementation
@@ -36674,7 +36716,7 @@ var init_Service8 = __esm({
       createServiceImplementation() {
         return {
           ProcessMountainRequest: /* @__PURE__ */ __name((Call2, Callback) => {
-            if (!this.ValidateAuthentication()) {
+            if (!this.ValidateAuthentication(Call2.metadata)) {
               Callback({
                 code: grpc2.status.UNAUTHENTICATED,
                 details: "Authentication failed"
@@ -36689,7 +36731,7 @@ var init_Service8 = __esm({
             );
           }, "ProcessMountainRequest"),
           SendMountainNotification: /* @__PURE__ */ __name((Call2, Callback) => {
-            if (!this.ValidateAuthentication()) {
+            if (!this.ValidateAuthentication(Call2.metadata)) {
               Callback({
                 code: grpc2.status.UNAUTHENTICATED,
                 details: "Authentication failed"
@@ -36700,7 +36742,7 @@ var init_Service8 = __esm({
             Callback(null, {});
           }, "SendMountainNotification"),
           CancelOperation: /* @__PURE__ */ __name((Call2, Callback) => {
-            if (!this.ValidateAuthentication()) {
+            if (!this.ValidateAuthentication(Call2.metadata)) {
               Callback({
                 code: grpc2.status.UNAUTHENTICATED,
                 details: "Authentication failed"
@@ -36716,12 +36758,18 @@ var init_Service8 = __esm({
       // Bidirectional Streaming
       // ==================================================================
       /**
-       * Start bidirectional streaming for real-time events
-       * TODO: FUTURE: Implement streaming handlers for real-time event communication
+       * Start bidirectional streaming for real-time events.
+       * Incoming GenericRequests are dispatched through the same routing as
+       * the unary ProcessMountainRequest handler; the GenericResponse is
+       * written back on the same stream keyed by RequestIdentifier.
+       * Keepalive pings are emitted every keepaliveInterval milliseconds.
+       *
+       * NOT YET BOUND: `addService` registers only the three unary methods,
+       * so this handler has no callers until the Patch 14 multiplexer work
+       * registers the streaming RPC (plan/Phase2-Performance.md §2.5). The
+       * dispatch is kept unified with the unary path so binding it is a
+       * one-line service-definition change.
        * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bidirectional Streaming)
-       * Implementation: Add stream handlers for Mountain-Cocoon event stream
-       * Dependencies: Event marshaling, backpressure handling
-       * Validation: Test with high-frequency event streams
        */
       startBidirectionalStreaming(stream) {
         CocoonDevLog2(
@@ -36753,20 +36801,19 @@ var init_Service8 = __esm({
         this.startKeepalive(stream);
       }
       /**
-       * Handle streaming request
+       * Handle streaming request.
+       * Delegates to handleMountainRequest so streamed calls receive the same
+       * validation, request tracking, serialization, and error envelope as the
+       * unary ProcessMountainRequest path. handleMountainRequest converts
+       * routing failures into an error-bearing GenericResponse itself; the
+       * catch below mirrors that envelope for failures outside its scope.
        */
       async handleStreamingRequest(request2, stream) {
         try {
-          const parameters = this.parseParameters(request2.Parameter);
-          const responseData = await this.routeRequest(
-            request2.Method,
-            parameters
-          );
-          const response = {
-            RequestIdentifier: request2.RequestIdentifier,
-            Result: Buffer.from(JSON.stringify(responseData))
-          };
-          stream.write(response);
+          const response = await this.handleMountainRequest(request2);
+          if (stream.writable) {
+            stream.write(response);
+          }
         } catch (error) {
           CocoonDevLog2(
             "grpc",
@@ -39472,7 +39519,17 @@ var init_Bootstrap = __esm({
     stage6_Extensions = /* @__PURE__ */ __name(async () => {
       const start = Date.now();
       const extension = await getExtension2();
-      const extensions = await extension.getAll();
+      let extensions = await extension.getAll();
+      for (let Retry = 0; Retry < 3 && extensions.length === 0; Retry++) {
+        await new Promise((r) => setTimeout(r, 300));
+        extensions = await extension.getAll();
+        if (extensions.length > 0) {
+          Log_default2.Info(
+            "Bootstrap",
+            `Extensions list populated after ${Retry + 1} retry probe(s)`
+          );
+        }
+      }
       const EligibleExtensions = extensions.filter(
         (Ext) => Ext.manifest?.enabled
       );
@@ -39500,11 +39557,28 @@ var init_Bootstrap = __esm({
       const start = Date.now();
       const health = await getHealth2();
       const systemHealth = await health.checkAllServices();
+      const FloorFailures = [];
+      const ServerState = (await getRPCServer()).getState();
+      if (ServerState._tag !== "Running") {
+        FloorFailures.push(`gRPC server not bound (state=${ServerState._tag})`);
+      }
+      const MountainState = await (await getMountainClient2()).connectionState();
+      if (MountainState._tag !== "Connected") {
+        FloorFailures.push(
+          `Mountain connection not established (state=${MountainState._tag})`
+        );
+      }
+      if (FloorFailures.length > 0) {
+        Log_default2.Warn(
+          "Bootstrap",
+          `HealthCheck floor failed: ${FloorFailures.join("; ")}`
+        );
+      }
       return {
         stageName: "HealthCheck",
-        success: systemHealth.overallStatus !== "unhealthy",
+        success: systemHealth.overallStatus !== "unhealthy" && FloorFailures.length === 0,
         duration: Date.now() - start,
-        error: void 0
+        error: FloorFailures.length > 0 ? new Error(`HealthCheck floor: ${FloorFailures.join("; ")}`) : void 0
       };
     }, "stage7_HealthCheck");
     makeBootstrap = /* @__PURE__ */ __name(() => ({

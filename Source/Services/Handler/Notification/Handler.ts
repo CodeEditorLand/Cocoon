@@ -2754,9 +2754,39 @@ const HandleSpecificNotification = (
 				handle: WebviewPanelHandle,
 				viewType: ViewType,
 				webview: {
-					postMessage: () => Promise.resolve(false),
+					// Providers (Roo, Claude, Continue) post their init
+					// message inside resolveCustomEditor - it must reach the
+					// real workbench webview, keyed by the handle Mountain
+					// sent in Args[2]. Same wire as the WebviewView proxy:
+					// `webview.postMessage` → Webview.rs → sky relay.
+					postMessage: (Message: unknown): Promise<boolean> => {
+						if (WebviewPanelHandle == null || !Context) {
+							return Promise.resolve(false);
+						}
 
-					html: "",
+						return Context.SendToMountain("webview.postMessage", {
+							handle: WebviewPanelHandle,
+							message: Message,
+						})
+							.then(() => true)
+							.catch(() => false);
+					},
+
+					// Setter forwards to the workbench panel; getter returns
+					// the last value set through this proxy.
+					get html() {
+						return (this as { __html?: string }).__html ?? "";
+					},
+					set html(Value: string) {
+						(this as { __html?: string }).__html = Value;
+
+						if (WebviewPanelHandle != null && Context) {
+							void Context.SendToMountain("webview.setHtml", {
+								handle: WebviewPanelHandle,
+								html: Value,
+							}).catch(() => {});
+						}
+					},
 
 					options: {},
 

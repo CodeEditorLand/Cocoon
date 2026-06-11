@@ -20,6 +20,7 @@ import {
 	DefaultExcludeSegments,
 	ExtractGlobPattern,
 	FolderToFsPath,
+	ResolveWorkspaceFolders,
 } from "../Helpers.js";
 
 type GlobMatcher = (Path: string) => boolean;
@@ -49,7 +50,7 @@ function CompileGlob(Pattern: string): GlobMatcher | undefined {
 }
 
 export const FindFilesLocal = async (
-	_Context: HandlerContext,
+	Context: HandlerContext,
 
 	Folders: Array<{ uri: unknown; name: string; index: number }>,
 
@@ -238,7 +239,17 @@ export const FindFilesLocal = async (
 		}
 	};
 
-	for (const Folder of Folders) {
+	// Extensions routinely call `findFiles` during activation, before
+	// `$deltaWorkspaceFolders` has populated the live folder list. An empty
+	// list must not degrade to a silent zero-result walk: fall back to the
+	// `ExtensionHostInitData` workspace snapshot, then to the process
+	// working directory as the last-resort root.
+	const EffectiveFolders =
+		Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context);
+
+	const Roots: string[] = [];
+
+	for (const Folder of EffectiveFolders) {
 		const FsPath = FolderToFsPath(Folder?.uri);
 
 		if (!FsPath) {
@@ -250,7 +261,20 @@ export const FindFilesLocal = async (
 			continue;
 		}
 
-		await Walk(FsPath, FsPath, 0);
+		Roots.push(FsPath);
+	}
+
+	if (Roots.length === 0) {
+		if (process.env["Trace"]?.includes("wsns"))
+			process.stdout.write(
+				"[LandFix:WsNs] findFiles: no workspace folders resolved → walking process.cwd()\n",
+			);
+
+		Roots.push(process.cwd());
+	}
+
+	for (const Root of Roots) {
+		await Walk(Root, Root, 0);
 	}
 
 	if (Truncated) {

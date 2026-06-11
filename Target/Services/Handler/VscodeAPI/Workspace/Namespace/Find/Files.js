@@ -11542,7 +11542,7 @@ function CompileGlob(Pattern) {
   }
 }
 __name(CompileGlob, "CompileGlob");
-var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
+var FindFilesLocal = /* @__PURE__ */ __name(async (Context, Folders, Include, Exclude, MaxResults) => {
   const IncludePattern = ExtractGlobPattern(Include);
   const ExcludePattern = ExtractGlobPattern(Exclude);
   const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
@@ -11629,7 +11629,9 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
       }
     }
   }, "Walk");
-  for (const Folder of Folders) {
+  const EffectiveFolders = Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context);
+  const Roots = [];
+  for (const Folder of EffectiveFolders) {
     const FsPath = FolderToFsPath(Folder?.uri);
     if (!FsPath) {
       if (process.env["Trace"]?.includes("wsns"))
@@ -11639,7 +11641,17 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
         );
       continue;
     }
-    await Walk(FsPath, FsPath, 0);
+    Roots.push(FsPath);
+  }
+  if (Roots.length === 0) {
+    if (process.env["Trace"]?.includes("wsns"))
+      process.stdout.write(
+        "[LandFix:WsNs] findFiles: no workspace folders resolved \u2192 walking process.cwd()\n"
+      );
+    Roots.push(process.cwd());
+  }
+  for (const Root of Roots) {
+    await Walk(Root, Root, 0);
   }
   if (Truncated) {
     if (process.env["Trace"]?.includes("wsns"))

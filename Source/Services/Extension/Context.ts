@@ -243,6 +243,10 @@ export class ExtensionSecretStorage {
 
 	private readonly MountainClient?: IMountainClientService | null;
 
+	private readonly DidChangeListener = new Set<
+		(Event: VSCode.SecretStorageChangeEvent) => unknown
+	>();
+
 	constructor(
 		ExtensionId: string,
 
@@ -308,6 +312,8 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
 				);
 
+				this.EmitDidChange(key);
+
 				return;
 			} catch (error) {
 				this.Logger.Error(
@@ -323,6 +329,8 @@ export class ExtensionSecretStorage {
 		this.Logger.Debug(
 			`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
 		);
+
+		this.EmitDidChange(key);
 	}
 
 	/**
@@ -341,6 +349,8 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
 				);
 
+				this.EmitDidChange(key);
+
 				return;
 			} catch (error) {
 				this.Logger.Error(
@@ -356,23 +366,47 @@ export class ExtensionSecretStorage {
 		this.Logger.Debug(
 			`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
 		);
+
+		this.EmitDidChange(key);
 	}
 
 	/**
 	 * Get the onDidChange secret event
 	 * @returns Event that fires when secrets change
+	 *
+	 * Fires only for changes made through this context; cross-process
+	 * changes (e.g. another window) are not propagated.
 	 */
 	get onDidChange(): VSCode.Event<VSCode.SecretStorageChangeEvent> {
-		// TODO: MEDIUM: Implement secret change event from Mountain
-		return (_Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
+		return (Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
+			this.DidChangeListener.add(Listener);
+
 			const Disposable = {
 				dispose: () => {
-					// Cleanup
+					this.DidChangeListener.delete(Listener);
 				},
 			} as VSCode.Disposable;
 
 			return Disposable;
 		};
+	}
+
+	/**
+	 * Notify registered listeners that a secret changed
+	 * @param key The key that was stored or deleted
+	 */
+	private EmitDidChange(key: string): void {
+		for (const Listener of this.DidChangeListener) {
+			try {
+				Listener({ key });
+			} catch (error) {
+				this.Logger.Error(
+					`[ExtensionContext] Secret change listener failed: ${this.ExtensionId}.${key}`,
+
+					error as Error,
+				);
+			}
+		}
 	}
 }
 

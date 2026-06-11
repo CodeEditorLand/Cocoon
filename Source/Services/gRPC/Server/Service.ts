@@ -15,6 +15,24 @@
  * - Manage connection keepalive for reliability
  * - Monitor server health and track errors
  *
+ * AUTH MODEL:
+ * Optional shared-token authentication. When MOUNTAIN_AUTH_TOKEN is set in
+ * the environment, every RPC must carry an "authorization" metadata entry
+ * matching the token (an optional "Bearer " prefix is accepted). When the
+ * variable is unset the server is permissive - the transport is
+ * loopback-only and Mountain spawns Cocoon directly.
+ *
+ * TOPOLOGY:
+ * - Unary RPCs carry the Mountain->Cocoon path: ProcessMountainRequest
+ *   (request/response), SendMountainNotification (fire-and-forget), and
+ *   CancelOperation (advisory, local-only - NOT mirrored upstream, the
+ *   request-id spaces of the two directions are independent counters).
+ * - Bidirectional streaming (startBidirectionalStreaming) shares the
+ *   ProcessMountainRequest dispatch but is NOT YET BOUND: addService
+ *   registers only the three unary methods above, so the streaming path
+ *   has no callers until the Patch 14 multiplexer work registers it
+ *   (see plan/Phase2-Performance.md §2.5).
+ *
  * Domain logic is delegated to handler modules in ./Handler/:
  * - ExtensionHostHandler - extension host lifecycle (init, delta, activate, start)
  * - LanguageProviderHandler - $provide* language feature invocations
@@ -280,17 +298,29 @@ export class GRPCServerService
 	}
 
 	/**
-	 * Validate authentication token
+	 * Validate the authorization token presented in the gRPC call metadata.
+	 * Permissive when authentication is disabled (no MOUNTAIN_AUTH_TOKEN);
+	 * otherwise the "authorization" metadata entry must match the configured
+	 * token exactly (an optional "Bearer " prefix is accepted).
 	 */
-	private ValidateAuthentication(): boolean {
+	private ValidateAuthentication(Metadata: grpc.Metadata): boolean {
 		if (!this.authEnabled) {
 			return true; // No auth required
 		}
 
-		// TODO: Implement actual token validation
-		// For now, always return true if auth is enabled
-		// A proper implementation would validate the token from the call metadata
-		return true;
+		const Entries = Metadata.get("authorization");
+
+		if (Entries.length === 0) {
+			return false;
+		}
+
+		const Presented = Entries[0]?.toString() ?? "";
+
+		const Token = Presented.startsWith("Bearer ")
+			? Presented.slice("Bearer ".length)
+			: Presented;
+
+		return Token === this.authToken;
 	}
 
 	// ==================================================================
@@ -307,7 +337,7 @@ export class GRPCServerService
 
 				Callback: grpc.sendUnaryData<GenericResponse>,
 			) => {
-				if (!this.ValidateAuthentication()) {
+				if (!this.ValidateAuthentication(Call.metadata)) {
 					Callback({
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
@@ -334,7 +364,7 @@ export class GRPCServerService
 
 				Callback: grpc.sendUnaryData<Empty>,
 			) => {
-				if (!this.ValidateAuthentication()) {
+				if (!this.ValidateAuthentication(Call.metadata)) {
 					Callback({
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
@@ -353,7 +383,7 @@ export class GRPCServerService
 
 				Callback: grpc.sendUnaryData<Empty>,
 			) => {
-				if (!this.ValidateAuthentication()) {
+				if (!this.ValidateAuthentication(Call.metadata)) {
 					Callback({
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
@@ -374,12 +404,18 @@ export class GRPCServerService
 	// ==================================================================
 
 	/**
-	 * Start bidirectional streaming for real-time events
-	 * TODO: FUTURE: Implement streaming handlers for real-time event communication
+	 * Start bidirectional streaming for real-time events.
+	 * Incoming GenericRequests are dispatched through the same routing as
+	 * the unary ProcessMountainRequest handler; the GenericResponse is
+	 * written back on the same stream keyed by RequestIdentifier.
+	 * Keepalive pings are emitted every keepaliveInterval milliseconds.
+	 *
+	 * NOT YET BOUND: `addService` registers only the three unary methods,
+	 * so this handler has no callers until the Patch 14 multiplexer work
+	 * registers the streaming RPC (plan/Phase2-Performance.md §2.5). The
+	 * dispatch is kept unified with the unary path so binding it is a
+	 * one-line service-definition change.
 	 * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bidirectional Streaming)
-	 * Implementation: Add stream handlers for Mountain-Cocoon event stream
-	 * Dependencies: Event marshaling, backpressure handling
-	 * Validation: Test with high-frequency event streams
 	 */
 	public startBidirectionalStreaming(
 		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
@@ -431,7 +467,12 @@ export class GRPCServerService
 	}
 
 	/**
-	 * Handle streaming request
+	 * Handle streaming request.
+	 * Delegates to handleMountainRequest so streamed calls receive the same
+	 * validation, request tracking, serialization, and error envelope as the
+	 * unary ProcessMountainRequest path. handleMountainRequest converts
+	 * routing failures into an error-bearing GenericResponse itself; the
+	 * catch below mirrors that envelope for failures outside its scope.
 	 */
 	private async handleStreamingRequest(
 		request: GenericRequest,
@@ -439,21 +480,11 @@ export class GRPCServerService
 		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
 	): Promise<void> {
 		try {
-			const parameters = this.parseParameters(request.Parameter);
+			const response = await this.handleMountainRequest(request);
 
-			const responseData = await this.routeRequest(
-				request.Method,
-
-				parameters,
-			);
-
-			const response: GenericResponse = {
-				RequestIdentifier: request.RequestIdentifier,
-
-				Result: Buffer.from(JSON.stringify(responseData)),
-			};
-
-			stream.write(response);
+			if (stream.writable) {
+				stream.write(response);
+			}
 		} catch (error) {
 			CocoonDevLog(
 				"grpc",
@@ -1578,6 +1609,15 @@ export class GRPCServerService
 				error,
 			);
 		}
+
+		// NOT mirrored to Mountain: the inbound RequestIdentifier comes from
+		// Mountain's outbound counter (Vine SendRequest REQ_SEQ), while
+		// Mountain's CancelOperation RPC keys its ActiveOperations map by
+		// COCOON's outbound ids (MountainClientService.generateRequestId) -
+		// two independent dense counters, so forwarding the id could cancel
+		// an unrelated in-flight Cocoon→Mountain operation. Propagating
+		// cancellation upstream needs a shared correlation id on the wire
+		// first (tracked in Phase1-Compatibility A4).
 	}
 
 	/**

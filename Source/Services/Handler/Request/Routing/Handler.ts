@@ -197,10 +197,28 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// throw here and return an empty root until the provider is
 			// wired up. Still surface non-"MISSING provider" errors so real
 			// bugs don't get swallowed.
+			//
+			// A 5-second timeout guards against providers whose
+			// `getChildren()` never settles (e.g. `vscode.npm` when the
+			// workspace has no package.json and `workspace.findFiles` stalls
+			// before the file-watcher initialises). Without the guard VS
+			// Code's tree renderer applies its own 15-second timeout and
+			// logs an error on every run. Returning an empty list is the
+			// same result - the tree re-queries on the next refresh event.
+			const _ChildrenTimeout = new Promise<unknown[]>((Resolve) =>
+				setTimeout(() => Resolve([]), 5_000),
+			);
+
 			let Children: unknown;
 
 			try {
-				Children = (await Provider.getChildren?.(Element)) ?? [];
+				Children =
+					(await Promise.race([
+						Promise.resolve(
+							Provider.getChildren?.(Element),
+						),
+						_ChildrenTimeout,
+					])) ?? [];
 			} catch (Reason) {
 				const Message =
 					Reason instanceof Error ? Reason.message : String(Reason);

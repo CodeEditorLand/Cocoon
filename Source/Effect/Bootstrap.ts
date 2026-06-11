@@ -405,7 +405,23 @@ const stage6_Extensions = async (): Promise<StageResult> => {
 
 	const extension = await getExtension();
 
-	const extensions = await extension.getAll();
+	let extensions = await extension.getAll();
+
+	// Mountain populates the installed-extensions list asynchronously; an
+	// empty list here may be a not-yet-populated race, not a real absence.
+	for (let Retry = 0; Retry < 3 && extensions.length === 0; Retry++) {
+		await new Promise((r) => setTimeout(r, 300));
+
+		extensions = await extension.getAll();
+
+		if (extensions.length > 0) {
+			LandFixLog.Info(
+				"Bootstrap",
+
+				`Extensions list populated after ${Retry + 1} retry probe(s)`,
+			);
+		}
+	}
 
 	const EligibleExtensions = extensions.filter(
 		(Ext: any) => Ext.manifest?.enabled,
@@ -447,14 +463,45 @@ const stage7_HealthCheck = async (): Promise<StageResult> => {
 
 	const systemHealth = await health.checkAllServices();
 
+	// checkAllServices reports healthy when no services are registered;
+	// enforce explicit floors: gRPC server bound + Mountain connection up.
+	const FloorFailures: string[] = [];
+
+	const ServerState = (await getRPCServer()).getState();
+
+	if (ServerState._tag !== "Running") {
+		FloorFailures.push(`gRPC server not bound (state=${ServerState._tag})`);
+	}
+
+	const MountainState = await (await getMountainClient()).connectionState();
+
+	if (MountainState._tag !== "Connected") {
+		FloorFailures.push(
+			`Mountain connection not established (state=${MountainState._tag})`,
+		);
+	}
+
+	if (FloorFailures.length > 0) {
+		LandFixLog.Warn(
+			"Bootstrap",
+
+			`HealthCheck floor failed: ${FloorFailures.join("; ")}`,
+		);
+	}
+
 	return {
 		stageName: "HealthCheck",
 
-		success: systemHealth.overallStatus !== "unhealthy",
+		success:
+			systemHealth.overallStatus !== "unhealthy" &&
+			FloorFailures.length === 0,
 
 		duration: Date.now() - start,
 
-		error: undefined,
+		error:
+			FloorFailures.length > 0
+				? new Error(`HealthCheck floor: ${FloorFailures.join("; ")}`)
+				: undefined,
 	};
 };
 

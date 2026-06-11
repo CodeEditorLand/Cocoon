@@ -1,8 +1,23 @@
 /**
  * @module Effect/Health
  * @description
- * Health monitoring service for Cocoon Extension Host.
- * Replaces Bootstrap Stage6 - HealthCheck with plain async monitoring.
+ * Health monitoring service for the Cocoon Extension Host. Drives
+ * Bootstrap stage 7 (`stage7_HealthCheck` in `Effect/Bootstrap.ts`) via
+ * the `getHealth()` singleton.
+ *
+ * `checkAllServices` aggregates a fixed list - `environment`, `telemetry`,
+ * `grpc`, `extension` - into a `SystemHealth`. Only the telemetry check
+ * performs a real probe (a telemetry log round-trip); the other three
+ * return "healthy" unconditionally.
+ *
+ * `overallStatus` semantics: "unhealthy" when any service reports
+ * unhealthy, otherwise "degraded" when any reports degraded, otherwise
+ * "healthy". "unknown" results never lower the status.
+ *
+ * Caveat: because the aggregate counts only unhealthy/degraded results,
+ * an empty or pass-through service set reads "healthy". Bootstrap stage 7
+ * therefore applies its own floor checks on top of this value rather than
+ * trusting it alone.
  */
 
 import { getTelemetry } from "./Telemetry.js";

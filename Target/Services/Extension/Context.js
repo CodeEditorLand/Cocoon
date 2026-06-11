@@ -129,6 +129,7 @@ var ExtensionSecretStorage = class {
   ExtensionId;
   Logger;
   MountainClient;
+  DidChangeListener = /* @__PURE__ */ new Set();
   constructor(ExtensionId, Logger, MountainClient) {
     this.ExtensionId = ExtensionId;
     this.Logger = Logger;
@@ -176,6 +177,7 @@ var ExtensionSecretStorage = class {
         this.Logger.Debug(
           `[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`
         );
+        this.EmitDidChange(key);
         return;
       } catch (error) {
         this.Logger.Error(
@@ -188,6 +190,7 @@ var ExtensionSecretStorage = class {
     this.Logger.Debug(
       `[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`
     );
+    this.EmitDidChange(key);
   }
   /**
    * Delete a secret
@@ -203,6 +206,7 @@ var ExtensionSecretStorage = class {
         this.Logger.Debug(
           `[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`
         );
+        this.EmitDidChange(key);
         return;
       } catch (error) {
         this.Logger.Error(
@@ -215,19 +219,41 @@ var ExtensionSecretStorage = class {
     this.Logger.Debug(
       `[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`
     );
+    this.EmitDidChange(key);
   }
   /**
    * Get the onDidChange secret event
    * @returns Event that fires when secrets change
+   *
+   * Fires only for changes made through this context; cross-process
+   * changes (e.g. another window) are not propagated.
    */
   get onDidChange() {
-    return (_Listener) => {
+    return (Listener) => {
+      this.DidChangeListener.add(Listener);
       const Disposable = {
         dispose: /* @__PURE__ */ __name(() => {
+          this.DidChangeListener.delete(Listener);
         }, "dispose")
       };
       return Disposable;
     };
+  }
+  /**
+   * Notify registered listeners that a secret changed
+   * @param key The key that was stored or deleted
+   */
+  EmitDidChange(key) {
+    for (const Listener of this.DidChangeListener) {
+      try {
+        Listener({ key });
+      } catch (error) {
+        this.Logger.Error(
+          `[ExtensionContext] Secret change listener failed: ${this.ExtensionId}.${key}`,
+          error
+        );
+      }
+    }
   }
 };
 var ExtensionContextService = class extends Effect2.Service()(

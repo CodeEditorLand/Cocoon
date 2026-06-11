@@ -1,9 +1,41 @@
 /**
  * @module MountainClientService
  * @description
- * Cocoon's gRPC client for Mountain integration using the Vine protocol.
- * Handles connection management, circuit breaker, retry logic, health checks,
- * request cancellation, and metrics tracking.
+ * Cocoon's outbound gRPC client to Mountain's `MountainService`, default
+ * `localhost:50051` (overridable via `MOUNTAIN_CONNECTION_HOST` /
+ * `MOUNTAIN_GRPC_PORT`).
+ *
+ * Connection contract:
+ * - `waitForConnection` polls channel connectivity every 100ms with a 3s
+ *   timeout (fast fail for bootstrap); `TRANSIENT_FAILURE` / `SHUTDOWN`
+ *   reject immediately.
+ * - Health monitoring runs every 30s (`MOUNTAIN_HEALTH_CHECK_PERIOD`) and
+ *   checks channel connectivity only - Mountain has no `health.check` RPC -
+ *   waiting up to 3s for the channel to reach `READY`.
+ *
+ * Request contract:
+ * - Request ids come from a monotonic in-process counter
+ *   (`generateRequestId`), sent as `uint64 RequestIdentifier`; parameters
+ *   are JSON-serialized into the `Parameter` bytes field.
+ * - `SendRequestWithRetry` issues callback-style `ProcessCocoonRequest`
+ *   calls, up to `maxRetries` attempts (default 3, `MOUNTAIN_MAX_RETRIES`).
+ *   Only transient errors retry (`UNAVAILABLE`, `DEADLINE_EXCEEDED`,
+ *   `INTERNAL`, `RESOURCE_EXHAUSTED`, socket-level connection errors);
+ *   backoff is `1000ms * 2^attempt` plus 10% jitter, capped at 10s.
+ *   Non-transient errors throw immediately.
+ *
+ * Error contract:
+ * - A `GenericResponse.error` (`RPCError { Code, Message, Data }`) rethrows
+ *   as `Error("Mountain request failed: <Message>")` with `.code` and
+ *   `.data` attached.
+ * - The circuit breaker opens after 5 failures, recovers via half-open
+ *   after 60s, and closes after 3 successes. Benign failures never feed
+ *   it: `FileSystem.ReadFile/Stat/ReadDirectory` not-founds (Code `-32004`
+ *   or a not-found message), `FileWatcher.Register` on a missing path,
+ *   `Command.Execute` on an unregistered command, and `Unknown method:`
+ *   routing misses. Unknown-method misses always log (code bug, not
+ *   transport failure); all benign cases still reject the caller's
+ *   Promise.
  *
  * Protocol: /Element/Mountain/Proto/Vine.proto
  * Generated Types: /Element/Cocoon/Source/Generated/Vine.ts

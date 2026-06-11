@@ -23,6 +23,7 @@
 import { promises as FsPromises } from "node:fs";
 
 import type { HandlerContext } from "../../../../../../../Handler/Context.js";
+import { FolderToFsPath } from "../../../../Helpers.js";
 import { FindFilesLocal } from "../../../Files.js";
 
 interface QueryShape {
@@ -69,12 +70,16 @@ interface TextSearchMatch {
 	};
 }
 
+const EscapeLiteral = (Text: string): string =>
+	Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const ExtractPattern = (Query: unknown): RegExp | undefined => {
-	if (Query == null) return undefined;
-
 	const Q =
-		typeof Query === "string" ? { pattern: Query } : (Query as QueryShape);
+		typeof Query === "string"
+			? { pattern: Query }
+			: ((Query ?? {}) as QueryShape);
 
+	// The only legitimate empty outcome: a genuinely empty query string.
 	if (!Q.pattern) return undefined;
 
 	// `m` flag for multiline so `^`/`$` match per-line; `g` flag so the
@@ -86,7 +91,7 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	if (!Q.isRegExp) {
 		// Plain-text search: escape regex metacharacters so the user's
 		// `(foo)` doesn't get interpreted as a capture group.
-		Source = Source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		Source = EscapeLiteral(Source);
 	}
 
 	if (Q.isWordMatch) {
@@ -96,20 +101,15 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	try {
 		return new RegExp(Source, Flags);
 	} catch {
-		return undefined;
+		// Invalid extension-supplied regex: degrade to a literal-text
+		// search on the raw pattern instead of matching nothing. The
+		// escaped form cannot throw - every metacharacter is neutralised.
+		const Literal = Q.isWordMatch
+			? `\\b${EscapeLiteral(Q.pattern)}\\b`
+			: EscapeLiteral(Q.pattern);
+
+		return new RegExp(Literal, Flags);
 	}
-};
-
-const ToFsPath = (Uri: unknown): string | undefined => {
-	if (Uri == null) return undefined;
-
-	if (typeof Uri === "string") {
-		return Uri.startsWith("file://") ? Uri.slice("file://".length) : Uri;
-	}
-
-	const U = Uri as { fsPath?: string; path?: string };
-
-	return U.fsPath ?? U.path;
 };
 
 export async function FindTextInFilesNodeFallback(
@@ -153,7 +153,7 @@ export async function FindTextInFilesNodeFallback(
 	for (const Candidate of Candidates) {
 		if (Emitted >= Max) return { limitHit: true };
 
-		const Path = ToFsPath(Candidate);
+		const Path = FolderToFsPath(Candidate);
 
 		if (!Path) continue;
 

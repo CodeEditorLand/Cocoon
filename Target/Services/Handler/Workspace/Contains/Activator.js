@@ -23124,7 +23124,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T20:40:41Z"
+      generatedAt: "2026-06-11T21:21:23Z"
     };
   }
 });
@@ -27122,7 +27122,7 @@ var init_Files = __esm({
     init_Lift();
     init_Helpers();
     __name(CompileGlob, "CompileGlob");
-    FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
+    FindFilesLocal = /* @__PURE__ */ __name(async (Context, Folders, Include, Exclude, MaxResults) => {
       const IncludePattern = ExtractGlobPattern(Include);
       const ExcludePattern = ExtractGlobPattern(Exclude);
       const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
@@ -27209,7 +27209,9 @@ var init_Files = __esm({
           }
         }
       }, "Walk");
-      for (const Folder of Folders) {
+      const EffectiveFolders = Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context);
+      const Roots = [];
+      for (const Folder of EffectiveFolders) {
         const FsPath = FolderToFsPath(Folder?.uri);
         if (!FsPath) {
           if (process.env["Trace"]?.includes("wsns"))
@@ -27219,7 +27221,17 @@ var init_Files = __esm({
             );
           continue;
         }
-        await Walk(FsPath, FsPath, 0);
+        Roots.push(FsPath);
+      }
+      if (Roots.length === 0) {
+        if (process.env["Trace"]?.includes("wsns"))
+          process.stdout.write(
+            "[LandFix:WsNs] findFiles: no workspace folders resolved \u2192 walking process.cwd()\n"
+          );
+        Roots.push(process.cwd());
+      }
+      for (const Root of Roots) {
+        await Walk(Root, Root, 0);
       }
       if (Truncated) {
         if (process.env["Trace"]?.includes("wsns"))
@@ -27257,7 +27269,7 @@ async function FindTextInFilesNodeFallback(Context, Folders, Query, Options, Cal
   let Emitted = 0;
   for (const Candidate of Candidates) {
     if (Emitted >= Max) return { limitHit: true };
-    const Path = ToFsPath(Candidate);
+    const Path = FolderToFsPath(Candidate);
     if (!Path) continue;
     let Content;
     try {
@@ -27306,19 +27318,20 @@ async function FindTextInFilesNodeFallback(Context, Folders, Query, Options, Cal
   }
   return { limitHit: false };
 }
-var ExtractPattern, ToFsPath;
+var EscapeLiteral, ExtractPattern;
 var init_Fallback = __esm({
   "Source/Services/Handler/VscodeAPI/Workspace/Namespace/Find/Text/In/Files/Fallback.ts"() {
     "use strict";
+    init_Helpers();
     init_Files();
+    EscapeLiteral = /* @__PURE__ */ __name((Text) => Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "EscapeLiteral");
     ExtractPattern = /* @__PURE__ */ __name((Query) => {
-      if (Query == null) return void 0;
-      const Q = typeof Query === "string" ? { pattern: Query } : Query;
+      const Q = typeof Query === "string" ? { pattern: Query } : Query ?? {};
       if (!Q.pattern) return void 0;
       const Flags = `gm${Q.isCaseSensitive ? "" : "i"}`;
       let Source = Q.pattern;
       if (!Q.isRegExp) {
-        Source = Source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        Source = EscapeLiteral(Source);
       }
       if (Q.isWordMatch) {
         Source = `\\b${Source}\\b`;
@@ -27326,17 +27339,10 @@ var init_Fallback = __esm({
       try {
         return new RegExp(Source, Flags);
       } catch {
-        return void 0;
+        const Literal = Q.isWordMatch ? `\\b${EscapeLiteral(Q.pattern)}\\b` : EscapeLiteral(Q.pattern);
+        return new RegExp(Literal, Flags);
       }
     }, "ExtractPattern");
-    ToFsPath = /* @__PURE__ */ __name((Uri2) => {
-      if (Uri2 == null) return void 0;
-      if (typeof Uri2 === "string") {
-        return Uri2.startsWith("file://") ? Uri2.slice("file://".length) : Uri2;
-      }
-      const U = Uri2;
-      return U.fsPath ?? U.path;
-    }, "ToFsPath");
     __name(FindTextInFilesNodeFallback, "FindTextInFilesNodeFallback");
   }
 });

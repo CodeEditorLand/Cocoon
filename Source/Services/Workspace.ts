@@ -188,12 +188,20 @@ interface InternalWorkspace {
 /**
  * @class WorkspaceService
  * @description
- * The Effect-TS service for the Workspace service. Manages workspace state,
- * folder structure, configuration, and file operations by delegating to
- * Mountain's backend implementation.
+ * Lean Effect-TS service mirroring the `vscode.workspace` API surface.
+ * Reads and mutations (findFiles, openTextDocument, saveAll, applyEdit)
+ * delegate to Mountain through `MountainGRPCClientService`; live state is
+ * fed by the notification path through the
+ * `globalThis.__COCOON_WORKSPACE_BRIDGE__` global (`AcceptWorkspaceData`,
+ * `AcceptEditorState`, `RegisterTextEditor`), installed at service
+ * construction for `Handler/Notification/Handler.ts` to call into.
+ *
+ * State (workspace shape, active/visible editors, listener registries)
+ * lives in direct-mutation locals captured by the service closure - not
+ * Effect `Ref`s - so synchronous getters (`workspaceFolders`,
+ * `activeTextEditor`) serve extensions without running an Effect.
  *
  * Architecture Pattern: src/vs/workbench/api/common/extHostWorkspace.ts (ExtHostWorkspace)
- * Implementation: Effect-TS service with Ref-based state management
  *
  * TODOs:
  * - PERFORMANCE: Track workspace operations latency
