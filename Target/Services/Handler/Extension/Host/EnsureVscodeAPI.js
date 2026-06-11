@@ -19004,10 +19004,12 @@ var init_extHostTypes = __esm({
       static {
         __name(this, "ChatReferenceBinaryData");
       }
-      constructor(mimeType, data, reference) {
+      constructor(mimeType, data, reference, isPasted, isURL) {
         this.mimeType = mimeType;
         this.data = data;
         this.reference = reference;
+        this.isPasted = isPasted;
+        this.isURL = isURL;
       }
     };
     ChatReferenceDiagnostic = class {
@@ -21805,7 +21807,11 @@ var init_Namespace2 = __esm({
                 isDirty: false,
                 isPreview: false,
                 group: void 0,
-                input: { uri: Uri2, fileName: FileName }
+                input: {
+                  uri: Uri2,
+                  fileName: FileName,
+                  document: Ed?.document
+                }
               };
             });
             return [
@@ -21830,7 +21836,11 @@ var init_Namespace2 = __esm({
                   isDirty: false,
                   isPreview: false,
                   group: void 0,
-                  input: { uri: Uri2, fileName: FileName }
+                  input: {
+                    uri: Uri2,
+                    fileName: FileName,
+                    document: Ed?.document
+                  }
                 };
               });
             },
@@ -21849,7 +21859,11 @@ var init_Namespace2 = __esm({
                 isDirty: false,
                 isPreview: false,
                 group: void 0,
-                input: { uri: Uri2, fileName: FileName }
+                input: {
+                  uri: Uri2,
+                  fileName: FileName,
+                  document: Active?.document
+                }
               };
             }
           },
@@ -22455,7 +22469,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T12:14:21Z"
+      generatedAt: "2026-06-11T17:05:28Z"
     };
   }
 });
@@ -25396,6 +25410,24 @@ var init_Configuration2 = __esm({
           if (Prior !== Resolved) FireConfigChange(Key);
         });
       }, "PrimeConfig");
+      const TypeSafeDefault = /* @__PURE__ */ __name((Decl) => {
+        const T = Array.isArray(Decl.type) ? Decl.type[0] : Decl.type;
+        switch (T) {
+          case "array":
+            return [];
+          case "object":
+            return {};
+          case "boolean":
+            return false;
+          case "number":
+          case "integer":
+            return 0;
+          case "string":
+            return "";
+          default:
+            return void 0;
+        }
+      }, "TypeSafeDefault");
       const PrePopulateFromManifest = /* @__PURE__ */ __name((PackageJSON) => {
         const Manifest = PackageJSON ?? {};
         const Contributed = Manifest.contributes?.configuration;
@@ -25416,9 +25448,12 @@ var init_Configuration2 = __esm({
               Skipped++;
               continue;
             }
-            if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
-              ConfigCache.set(DottedKey, Declaration.default);
-              Seeded++;
+            if (Declaration !== null && typeof Declaration === "object") {
+              const Value = "default" in Declaration ? Declaration.default : TypeSafeDefault(Declaration);
+              if (Value !== void 0) {
+                ConfigCache.set(DottedKey, Value);
+                Seeded++;
+              }
             }
           }
         }
@@ -25529,6 +25564,9 @@ var init_Configuration2 = __esm({
             "config-prime",
             `[ConfigPrime] synthesise key=${Full} source=miss`
           );
+          if (DefaultValue !== void 0 && DefaultValue !== null && typeof DefaultValue === "object" && !Array.isArray(DefaultValue) && typeof Subtree === "object") {
+            return { ...DefaultValue, ...Subtree };
+          }
           return Subtree;
         }
         State.PrimeConfig(Full);

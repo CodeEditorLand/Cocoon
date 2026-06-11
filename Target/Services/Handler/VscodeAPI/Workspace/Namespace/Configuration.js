@@ -125,6 +125,24 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
       if (Prior !== Resolved) FireConfigChange(Key);
     });
   }, "PrimeConfig");
+  const TypeSafeDefault = /* @__PURE__ */ __name((Decl) => {
+    const T = Array.isArray(Decl.type) ? Decl.type[0] : Decl.type;
+    switch (T) {
+      case "array":
+        return [];
+      case "object":
+        return {};
+      case "boolean":
+        return false;
+      case "number":
+      case "integer":
+        return 0;
+      case "string":
+        return "";
+      default:
+        return void 0;
+    }
+  }, "TypeSafeDefault");
   const PrePopulateFromManifest = /* @__PURE__ */ __name((PackageJSON) => {
     const Manifest = PackageJSON ?? {};
     const Contributed = Manifest.contributes?.configuration;
@@ -145,9 +163,12 @@ var CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
           Skipped++;
           continue;
         }
-        if (Declaration !== null && typeof Declaration === "object" && "default" in Declaration) {
-          ConfigCache.set(DottedKey, Declaration.default);
-          Seeded++;
+        if (Declaration !== null && typeof Declaration === "object") {
+          const Value = "default" in Declaration ? Declaration.default : TypeSafeDefault(Declaration);
+          if (Value !== void 0) {
+            ConfigCache.set(DottedKey, Value);
+            Seeded++;
+          }
         }
       }
     }
@@ -258,6 +279,9 @@ var BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section,
         "config-prime",
         `[ConfigPrime] synthesise key=${Full} source=miss`
       );
+      if (DefaultValue !== void 0 && DefaultValue !== null && typeof DefaultValue === "object" && !Array.isArray(DefaultValue) && typeof Subtree === "object") {
+        return { ...DefaultValue, ...Subtree };
+      }
       return Subtree;
     }
     State.PrimeConfig(Full);

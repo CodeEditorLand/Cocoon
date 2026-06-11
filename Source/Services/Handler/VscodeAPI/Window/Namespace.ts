@@ -1130,7 +1130,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						isDirty: false,
 						isPreview: false,
 						group: undefined,
-						input: { uri: Uri, fileName: FileName },
+						input: {
+							uri: Uri,
+							fileName: FileName,
+							document: (Ed as any)?.document,
+						},
 					};
 				});
 				return [
@@ -1166,7 +1170,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							isDirty: false,
 							isPreview: false,
 							group: undefined,
-							input: { uri: Uri, fileName: FileName },
+							input: {
+								uri: Uri,
+								fileName: FileName,
+								document: (Ed as any)?.document,
+							},
 						};
 					});
 				},
@@ -1191,7 +1199,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						isDirty: false,
 						isPreview: false,
 						group: undefined,
-						input: { uri: Uri, fileName: FileName },
+						input: {
+							uri: Uri,
+							fileName: FileName,
+							document: Active?.document,
+						},
 					};
 				},
 			},

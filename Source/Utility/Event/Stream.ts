@@ -28,7 +28,9 @@ export const CreateEventStream = <T>(): EventStream<T> => {
 
 	return {
 		Fire,
+
 		event: VSCodeEmitter.event,
+
 		Shutdown,
 	};
 };

@@ -2324,7 +2324,11 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
             isDirty: false,
             isPreview: false,
             group: void 0,
-            input: { uri: Uri, fileName: FileName }
+            input: {
+              uri: Uri,
+              fileName: FileName,
+              document: Ed?.document
+            }
           };
         });
         return [
@@ -2349,7 +2353,11 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
               isDirty: false,
               isPreview: false,
               group: void 0,
-              input: { uri: Uri, fileName: FileName }
+              input: {
+                uri: Uri,
+                fileName: FileName,
+                document: Ed?.document
+              }
             };
           });
         },
@@ -2368,7 +2376,11 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
             isDirty: false,
             isPreview: false,
             group: void 0,
-            input: { uri: Uri, fileName: FileName }
+            input: {
+              uri: Uri,
+              fileName: FileName,
+              document: Active?.document
+            }
           };
         }
       },

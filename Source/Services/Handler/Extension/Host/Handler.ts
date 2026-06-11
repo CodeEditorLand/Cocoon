@@ -297,19 +297,16 @@ const HandleActivateByEvent = async (
 				`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
 			);
 
-			if (
-				Err instanceof Error &&
-				/Class extends value undefined/.test(Err.message)
-			) {
-				const Stack = (Err.stack ?? "")
+			if (Err instanceof Error && Err.stack) {
+				const Stack = Err.stack
 					.split("\n")
-					.slice(0, 6)
+					.slice(0, 10)
 					.join("\n");
 
 				CocoonDevLog(
 					"ext-activate",
 
-					`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
+					`[ExtensionHostHandler] Stack for ${ExtId}:\n${Stack}`,
 				);
 			}
 		});

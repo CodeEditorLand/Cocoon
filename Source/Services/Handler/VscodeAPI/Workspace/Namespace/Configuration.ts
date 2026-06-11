@@ -121,15 +121,44 @@ export const CreateConfigurationState = (
 		});
 	};
 
+	const TypeSafeDefault = (Decl: {
+		type?: string | string[];
+		default?: unknown;
+		items?: unknown;
+	}): unknown => {
+		const T = Array.isArray(Decl.type) ? Decl.type[0] : Decl.type;
+		switch (T) {
+			case "array":
+				return [];
+			case "object":
+				return {};
+			case "boolean":
+				return false;
+			case "number":
+			case "integer":
+				return 0;
+			case "string":
+				return "";
+			default:
+				return undefined;
+		}
+	};
+
 	const PrePopulateFromManifest = (PackageJSON: unknown): void => {
 		const Manifest = (PackageJSON ?? {}) as {
 			contributes?: {
 				configuration?:
 					| {
-							properties?: Record<string, { default?: unknown }>;
+							properties?: Record<
+								string,
+								{ default?: unknown; type?: string | string[] }
+							>;
 					  }
 					| Array<{
-							properties?: Record<string, { default?: unknown }>;
+							properties?: Record<
+								string,
+								{ default?: unknown; type?: string | string[] }
+							>;
 					  }>;
 			};
 		};
@@ -176,14 +205,22 @@ export const CreateConfigurationState = (
 					continue;
 				}
 
-				if (
-					Declaration !== null &&
-					typeof Declaration === "object" &&
-					"default" in Declaration
-				) {
-					ConfigCache.set(DottedKey, Declaration.default);
+				if (Declaration !== null && typeof Declaration === "object") {
+					// Use the explicit default when declared; fall back to a
+					// type-safe zero-value so `SynthesiseSubtree` never returns
+					// a partial object with missing array/object properties that
+					// cause `undefined.length` / `undefined.languageId` crashes
+					// in built-in extensions (markdown, html, search-result).
+					const Value =
+						"default" in Declaration
+							? Declaration.default
+							: TypeSafeDefault(Declaration);
 
-					Seeded++;
+					if (Value !== undefined) {
+						ConfigCache.set(DottedKey, Value);
+
+						Seeded++;
+					}
 				}
 			}
 		}
@@ -432,6 +469,24 @@ export const BuildGetConfiguration =
 
 					`[ConfigPrime] synthesise key=${Full} source=miss`,
 				);
+
+				// When the caller provided a default (declared complete shape),
+				// merge it under the synthesised partial so all expected keys
+				// exist. Without this, built-in extensions that call
+				// `config.get('validate', { enable: true, languageId: 'html' })`
+				// receive a partial `{ enable: false }` and then crash on
+				// `result.languageId` - "Cannot read properties of undefined
+				// (reading 'languageId')". The synthesised values win for keys
+				// they carry; the default fills the rest.
+				if (
+					DefaultValue !== undefined &&
+					DefaultValue !== null &&
+					typeof DefaultValue === "object" &&
+					!Array.isArray(DefaultValue) &&
+					typeof Subtree === "object"
+				) {
+					return { ...(DefaultValue as object), ...Subtree } as T;
+				}
 
 				return Subtree as T;
 			}

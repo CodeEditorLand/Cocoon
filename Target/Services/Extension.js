@@ -142,7 +142,9 @@ var ExtensionService = class extends Effect2.Service()(
         );
         return Extensions;
       })(), "GetAllExtensions");
-      const GetExtensionPath = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(_registry.get(ExtensionId)?.extensionLocation?.fsPath), "GetExtensionPath");
+      const GetExtensionPath = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(
+        _registry.get(ExtensionId)?.extensionLocation?.fsPath
+      ), "GetExtensionPath");
       const OnDidChange = /* @__PURE__ */ __name((Listener) => {
         OnDidChangeListeners.add(Listener);
         const Disposable = {

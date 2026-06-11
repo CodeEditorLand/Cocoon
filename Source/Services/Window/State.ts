@@ -30,6 +30,7 @@ function makeWindowStateService(): WindowStateService {
 		setState: (newState: WindowStateConfig) =>
 			Effect.sync(() => {
 				_state = newState;
+
 				return newState;
 			}),
 		onStateChange: Effect.void,
@@ -40,5 +41,6 @@ export const WindowStateLive = Effect.succeed(makeWindowStateService());
 
 export const WindowStateLayer = Layer.succeed(
 	WindowStateService,
+
 	makeWindowStateService(),
 );

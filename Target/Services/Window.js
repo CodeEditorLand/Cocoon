@@ -18971,10 +18971,12 @@ var init_extHostTypes = __esm({
       static {
         __name(this, "ChatReferenceBinaryData");
       }
-      constructor(mimeType, data, reference) {
+      constructor(mimeType, data, reference, isPasted, isURL) {
         this.mimeType = mimeType;
         this.data = data;
         this.reference = reference;
+        this.isPasted = isPasted;
+        this.isURL = isURL;
       }
     };
     ChatReferenceDiagnostic = class {

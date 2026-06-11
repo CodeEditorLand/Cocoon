@@ -311,7 +311,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 			// Plain Maps - no Ref overhead on every extension lookup.
 			const _registry = new Map<string, IExtensionDescription>();
+
 			const _activation = new Map<string, boolean>();
+
 			const _exports = new Map<string, unknown>();
 
 			// Change event listeners
@@ -471,6 +473,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						)
 					) {
 						_registry.clear();
+
 						NewRegistry.forEach((v, k) => _registry.set(k, v));
 
 						Logger.Info(
@@ -628,7 +631,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			const GetExtensionPath = (
 				ExtensionId: string,
 			): Effect.Effect<string | undefined, never> =>
-				Effect.succeed(_registry.get(ExtensionId)?.extensionLocation?.fsPath);
+				Effect.succeed(
+					_registry.get(ExtensionId)?.extensionLocation?.fsPath,
+				);
 
 			/**
 			 * Register event handler for extension changes
@@ -652,11 +657,14 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 */
 			const MarkActivated = (
 				ExtensionId: string,
+
 				Exports: unknown,
 			): Effect.Effect<void, Error> =>
 				Effect.sync(() => {
 					_activation.set(ExtensionId, true);
+
 					_exports.set(ExtensionId, Exports);
+
 					Logger.Info(
 						`[ExtensionService] Extension activated: ${ExtensionId}`,
 					);
@@ -667,6 +675,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			): Effect.Effect<void, Error> =>
 				Effect.sync(() => {
 					_activation.set(ExtensionId, false);
+
 					Logger.Debug(
 						`[ExtensionService] Extension deactivated: ${ExtensionId}`,
 					);
