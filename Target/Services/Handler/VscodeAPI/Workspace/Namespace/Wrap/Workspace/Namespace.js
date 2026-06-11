@@ -621,7 +621,8 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     if (Property === "then" || Property === Symbol.toPrimitive)
       return void 0;
     const Existing = Target[Key];
-    if (Existing !== void 0) return Existing;
+    if (Existing !== void 0 || Reflect.has(Target, Key))
+      return Existing;
     const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
     return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
   }

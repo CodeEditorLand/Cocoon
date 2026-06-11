@@ -1309,6 +1309,24 @@ const HandleSpecificNotification = (
 			// Also emit on the generic Emitter so non-workspace listeners
 			// (e.g. BATCH-15's activator) can subscribe in one place.
 			SafeEmit(Emitter, "workspaceFoldersChanged", Event);
+			// Mirror into the Effect-TS WorkspaceService (when built) so its
+			// `workspaceFolders` getter and folder-change listeners stay in
+			// lockstep with the shim Context.
+			try {
+				(globalThis as any).__COCOON_WORKSPACE_BRIDGE__
+					?.AcceptWorkspaceData?.({
+						id:
+							(Context as any)?.InitWorkspace?.id ?? "workspace",
+						name:
+							(Context as any)?.InitWorkspace?.name ??
+							"Workspace",
+						folders: MergedHydrated.map((Folder) => ({
+							uri: Folder.uri.toString(),
+							name: Folder.name,
+							index: Folder.index,
+						})),
+					});
+			} catch {}
 			// BATCH-15: run the workspaceContains activation pass. Lazy-load to
 			// avoid a circular import with the handler suite at module init.
 			if (Context && Added.length > 0) {
@@ -1771,6 +1789,25 @@ const HandleSpecificNotification = (
 					Visible.push(TextEditorStub);
 				}
 				(Context as any).__visibleTextEditors = Visible;
+				// Mirror into the Effect-TS WorkspaceService (when built) so
+				// its `activeTextEditor` getter and listener registries stay
+				// in lockstep with the shim Context.
+				try {
+					const Bridge = (globalThis as any)
+						.__COCOON_WORKSPACE_BRIDGE__;
+					if (Bridge && TextEditorStub && UriKey) {
+						Bridge.RegisterTextEditor?.(UriKey, TextEditorStub);
+						Bridge.AcceptEditorState?.(
+							UriKey,
+							Visible.map(
+								(E: unknown) =>
+									(
+										E as any
+									)?.document?.uri?.toString?.() as string,
+							).filter(Boolean),
+						);
+					}
+				} catch {}
 			}
 			// Only emit when there IS a valid editor. Many extensions use
 			// `n?.document.languageId` (missing the second `?.`) which throws

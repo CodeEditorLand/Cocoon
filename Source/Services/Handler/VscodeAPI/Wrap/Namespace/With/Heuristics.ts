@@ -265,7 +265,16 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 
 			const Existing = (Target as Record<string, unknown>)[Key];
 
-			if (Existing !== undefined) return Existing;
+			// A property that EXISTS on the concrete namespace must be
+			// returned faithfully even when its value is `undefined` -
+			// data getters like `window.activeTextEditor` legitimately
+			// return `undefined` (no active editor). Substituting a
+			// heuristic function makes the value truthy, so extension
+			// guards like `if (!editor) return` pass and the next access
+			// (`editor.document.languageId`) crashes. Heuristics are only
+			// for properties the shim does not define at all.
+			if (Existing !== undefined || Reflect.has(Target, Key))
+				return Existing;
 
 			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
 

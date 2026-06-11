@@ -57,7 +57,7 @@
  *   channel, not the Mountain gRPC channel.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
@@ -214,23 +214,50 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
-			// Internal workspace state
-			const InternalWorkspaceRef = yield* Ref.make<
-				InternalWorkspace | undefined
-			>(undefined);
+			/**
+			 * Parse a URI string into a `vscode.Uri`-shaped object. The
+			 * `VSCode` import is type-only (erased by esbuild), so
+			 * `VSCode.Uri.parse` does not exist at runtime - this local
+			 * builder provides the getters extensions rely on (`fsPath`,
+			 * `toString`), mirroring the notification handler's stub.
+			 */
+			const ParseUri = (Raw: string): VSCode.Uri => {
+				const Match = /^([A-Za-z][A-Za-z0-9+.-]*):(?:\/\/([^/]*))?(.*)$/.exec(
+					Raw,
+				);
 
-			// Text editor tracking
-			const TextEditorsMapRef = yield* Ref.make(
-				new Map<string, VSCode.TextEditor>(),
-			);
+				const Scheme = Match?.[1] ?? "file";
 
-			const ActiveTextEditorRef = yield* Ref.make<
-				VSCode.TextEditor | undefined
-			>(undefined);
+				const Authority = Match?.[2] ?? "";
 
-			const VisibleTextEditorsRef = yield* Ref.make<
-				readonly VSCode.TextEditor[]
-			>([]);
+				const Path = Match ? (Match[3] ?? "") : Raw;
+
+				return {
+					scheme: Scheme,
+					authority: Authority,
+					path: Path,
+					query: "",
+					fragment: "",
+					fsPath: Path,
+					toString: () => Raw,
+					toJSON: () => ({
+						scheme: Scheme,
+						authority: Authority,
+						path: Path,
+					}),
+					with: () => ParseUri(Raw),
+				} as unknown as VSCode.Uri;
+			};
+
+			// Internal workspace state - plain locals, direct mutation
+			let _internalWorkspace: InternalWorkspace | undefined;
+
+			// Text editor tracking - keyed by document URI string
+			const _textEditorsMap = new Map<string, VSCode.TextEditor>();
+
+			let _activeTextEditor: VSCode.TextEditor | undefined;
+
+			let _visibleTextEditors: readonly VSCode.TextEditor[] = [];
 
 			// Event listener registries (fire on AcceptWorkspaceData / IPC notifications)
 			const OnDidChangeWorkspaceFoldersListeners = new Set<
@@ -254,9 +281,11 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			>();
 
 			/**
-			 * Accept workspace data from Mountain
+			 * Accept workspace data from Mountain. Invoked through the
+			 * `__COCOON_WORKSPACE_BRIDGE__` global by the live notification
+			 * handler (`Handler/Notification/Handler.ts` case
+			 * `$deltaWorkspaceFolders`).
 			 *
-			 * TODO: Wire this up to gRPC notification handler in GRPCServerService
 			 * TYPECONVERTR: Integrate TypeConverter for WorkspaceFolder conversion
 			 */
 			const AcceptWorkspaceData = (Data: any) =>
@@ -288,7 +317,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							if (!SourceString) continue;
 
 							Folders.push({
-								uri: VSCode.Uri.parse(SourceString),
+								uri: ParseUri(SourceString),
 								name:
 									(F as any).name ??
 									(typeof F === "string"
@@ -311,9 +340,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						Data.configuration.length > 0
 					) {
 						try {
-							ConfigurationUri = VSCode.Uri.parse(
-								Data.configuration,
-							);
+							ConfigurationUri = ParseUri(Data.configuration);
 						} catch {
 							ConfigurationUri = undefined;
 						}
@@ -328,7 +355,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					_internalWorkspace = NewWorkspace;
 
-					Logger.Info(
+					yield* Logger.Info(
 						`[WorkspaceService] Workspace updated: ${NewWorkspace.Name} with ${Folders.length} folders`,
 					);
 
@@ -348,7 +375,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						(OldFolder) =>
 							!Folders.some(
 								(Folder) =>
-									OldFolder.uri.toString() ===
+									Folder.uri.toString() ===
 									OldFolder.uri.toString(),
 							),
 					);
@@ -368,7 +395,11 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			/**
 			 * Accept text editor state from Mountain
 			 *
-			 * TODO: Wire this up to gRPC notification handler in GRPCServerService
+			 * Invoked through the `__COCOON_WORKSPACE_BRIDGE__` global by the
+			 * live notification handler (`Handler/Notification/Handler.ts`
+			 * case `window.didChangeActiveTextEditor`). Editor ids are
+			 * document URI strings registered via `RegisterTextEditor`.
+			 *
 			 * TYPECONVERTR: Integrate TypeConverter for TextEditor conversion
 			 */
 			const AcceptEditorState = (
@@ -389,7 +420,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					_activeTextEditor = NewActiveEditor;
 
 					if (OldActiveEditor !== NewActiveEditor) {
-						Logger.Debug(
+						yield* Logger.Debug(
 							`[WorkspaceService] Active text editor changed: ${NewActiveEditor?.document.uri.toString() ?? "none"}`,
 						);
 
@@ -579,7 +610,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							Uri = uriOrOptions;
 						} else {
 							// Create untitled document
-							Uri = VSCode.Uri.parse(
+							Uri = ParseUri(
 								`untitled:${Language}-${Date.now()}`,
 							);
 
@@ -976,6 +1007,38 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				OnDidChangeVisibleTextEditors,
 				OnDidChangeTextDocument,
 				OnDidChangeConfiguration,
+			};
+
+			// Bridge for the live notification path. The gRPC notification
+			// handler (`Handler/Notification/Handler.ts`) runs outside the
+			// Effect layer graph, so it reaches this service through a
+			// global registry instead of a Tag. Wrappers run the Effects on
+			// the default runtime and swallow failures - notification
+			// delivery must never throw into the gRPC dispatcher.
+			(globalThis as any).__COCOON_WORKSPACE_BRIDGE__ = {
+				AcceptWorkspaceData: (Data: unknown): void => {
+					void Effect.runPromise(AcceptWorkspaceData(Data)).catch(
+						() => {},
+					);
+				},
+
+				AcceptEditorState: (
+					ActiveEditorId: string | undefined,
+
+					VisibleEditorIds: string[],
+				): void => {
+					void Effect.runPromise(
+						AcceptEditorState(ActiveEditorId, VisibleEditorIds),
+					).catch(() => {});
+				},
+
+				RegisterTextEditor: (
+					Id: string,
+
+					Editor: VSCode.TextEditor,
+				): void => {
+					_textEditorsMap.set(Id, Editor);
+				},
 			};
 
 			return ServiceImplementation;

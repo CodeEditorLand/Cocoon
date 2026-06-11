@@ -20740,7 +20740,8 @@ var init_Heuristics = __esm({
         if (Property === "then" || Property === Symbol.toPrimitive)
           return void 0;
         const Existing = Target[Key];
-        if (Existing !== void 0) return Existing;
+        if (Existing !== void 0 || Reflect.has(Target, Key))
+          return Existing;
         const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
         return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
       }
@@ -23123,7 +23124,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T17:43:45Z"
+      generatedAt: "2026-06-11T20:40:41Z"
     };
   }
 });
@@ -32628,6 +32629,18 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
       };
       SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event2);
       SafeEmit(Emitter2, "workspaceFoldersChanged", Event2);
+      try {
+        globalThis.__COCOON_WORKSPACE_BRIDGE__?.AcceptWorkspaceData?.({
+          id: Context?.InitWorkspace?.id ?? "workspace",
+          name: Context?.InitWorkspace?.name ?? "Workspace",
+          folders: MergedHydrated.map((Folder) => ({
+            uri: Folder.uri.toString(),
+            name: Folder.name,
+            index: Folder.index
+          }))
+        });
+      } catch {
+      }
       if (Context && Added.length > 0) {
         const CapturedContext = Context;
         setImmediate(() => {
@@ -32921,6 +32934,19 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
           Visible.push(TextEditorStub);
         }
         Context.__visibleTextEditors = Visible;
+        try {
+          const Bridge = globalThis.__COCOON_WORKSPACE_BRIDGE__;
+          if (Bridge && TextEditorStub && UriKey2) {
+            Bridge.RegisterTextEditor?.(UriKey2, TextEditorStub);
+            Bridge.AcceptEditorState?.(
+              UriKey2,
+              Visible.map(
+                (E) => E?.document?.uri?.toString?.()
+              ).filter(Boolean)
+            );
+          }
+        } catch {
+        }
       }
       if (TextEditorStub !== void 0) {
         SafeEmit(

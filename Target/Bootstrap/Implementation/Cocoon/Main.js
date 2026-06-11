@@ -69517,7 +69517,8 @@ var init_Heuristics = __esm({
         if (Property2 === "then" || Property2 === Symbol.toPrimitive)
           return void 0;
         const Existing = Target[Key2];
-        if (Existing !== void 0) return Existing;
+        if (Existing !== void 0 || Reflect.has(Target, Key2))
+          return Existing;
         const Heuristic = Overrides?.[Key2] ?? ClassifyProperty(Key2);
         return BuildHeuristicMethod(NamespaceName, Key2, Heuristic);
       }
@@ -71893,7 +71894,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T17:43:45Z"
+      generatedAt: "2026-06-11T20:40:41Z"
     };
   }
 });
@@ -80231,6 +80232,18 @@ var init_Handler4 = __esm({
           };
           SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event2);
           SafeEmit(Emitter2, "workspaceFoldersChanged", Event2);
+          try {
+            globalThis.__COCOON_WORKSPACE_BRIDGE__?.AcceptWorkspaceData?.({
+              id: Context?.InitWorkspace?.id ?? "workspace",
+              name: Context?.InitWorkspace?.name ?? "Workspace",
+              folders: MergedHydrated.map((Folder) => ({
+                uri: Folder.uri.toString(),
+                name: Folder.name,
+                index: Folder.index
+              }))
+            });
+          } catch {
+          }
           if (Context && Added.length > 0) {
             const CapturedContext = Context;
             setImmediate(() => {
@@ -80524,6 +80537,19 @@ var init_Handler4 = __esm({
               Visible.push(TextEditorStub);
             }
             Context.__visibleTextEditors = Visible;
+            try {
+              const Bridge = globalThis.__COCOON_WORKSPACE_BRIDGE__;
+              if (Bridge && TextEditorStub && UriKey2) {
+                Bridge.RegisterTextEditor?.(UriKey2, TextEditorStub);
+                Bridge.AcceptEditorState?.(
+                  UriKey2,
+                  Visible.map(
+                    (E) => E?.document?.uri?.toString?.()
+                  ).filter(Boolean)
+                );
+              }
+            } catch {
+            }
           }
           if (TextEditorStub !== void 0) {
             SafeEmit(
@@ -85443,6 +85469,7 @@ var init_Service8 = __esm({
         const Client = new MountainClientService2();
         await Client.connect();
         this.mountainClient = Client;
+        globalThis.__COCOON_MOUNTAIN_CLIENT__ = Client;
         CocoonDevLog2(
           "grpc",
           `[GRPCServerService] Connected to Mountain gRPC - return path active`
@@ -90188,6 +90215,15 @@ if (true) {
 }
 var main = /* @__PURE__ */ __name(async () => {
   try {
+    const ParentWatch = setInterval(() => {
+      if (process.ppid === 1) {
+        process.stderr.write(
+          "[CocoonMain] Parent (Mountain) exited - shutting down\n"
+        );
+        process.exit(0);
+      }
+    }, 5e3);
+    ParentWatch.unref();
     const result = await runBootstrap({ debugMode: false });
     void StartWebSocketServer().catch(() => {
     });

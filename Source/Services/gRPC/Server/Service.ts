@@ -1637,6 +1637,12 @@ export class GRPCServerService
 
 		this.mountainClient = Client;
 
+		// Publish the live client for services that run outside the
+		// Effect layer graph and the HandlerContext (e.g. WebviewPanel
+		// state persistence). Lazy readers must tolerate this being
+		// undefined before the connection is up.
+		(globalThis as any).__COCOON_MOUNTAIN_CLIENT__ = Client;
+
 		CocoonDevLog(
 			"grpc",
 

@@ -55,7 +55,6 @@
  */
 
 import { Effect } from "effect";
-import type { Uri } from "vscode";
 
 /**
  * @interface PanelPosition
@@ -170,12 +169,29 @@ export class StateService extends Effect.Service<StateService>()(
 
 	{
 		effect: Effect.gen(function* () {
-			// In-memory cache of panel states (simplified implementation)
-			const StateCacheRef = yield* Effect.tryMap(
-				Effect.sync(() => new Map<string, PanelState>()),
+			// In-memory cache of panel states - read path; Mountain storage
+			// is the durable copy keyed `webviewPanelState:<handle>`.
+			const StateCache = new Map<string, PanelState>();
 
-				(error) => new Error(`Failed to create state cache: ${error}`),
-			);
+			/**
+			 * Resolve the live Mountain client published by
+			 * `GRPCServerService.ConnectToMountain`. Undefined until the
+			 * gRPC connection is up - persistence is then cache-only and
+			 * the next save after connect re-syncs.
+			 */
+			const GetMountainClient = ():
+				| {
+						sendRequest: (
+							method: string,
+
+							parameters: unknown,
+						) => Promise<unknown>;
+				  }
+				| undefined =>
+				(globalThis as any).__COCOON_MOUNTAIN_CLIENT__;
+
+			const StorageKey = (Handle: string): string =>
+				`webviewPanelState:${Handle}`;
 
 			/**
 			 * Validate a PanelState structure
@@ -325,44 +341,47 @@ export class StateService extends Effect.Service<StateService>()(
 			};
 
 			/**
-			 * Save panel state to cache
+			 * Save panel state to cache and persist to Mountain storage.
+			 * The Mountain write is fire-and-forget: panel state must never
+			 * block or fail panel creation, and the in-memory copy already
+			 * serves same-session reads.
 			 */
 			const SavePanelState = (
 				PanelStateData: PanelState,
 			): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
-					yield* Effect.tryMap(
-						Effect.sync(() => {
-							(
-								StateCacheRef as {
-									current: Map<string, PanelState>;
-								}
-							).current.set(
-								PanelStateData.Handle,
+					StateCache.set(PanelStateData.Handle, PanelStateData);
 
-								PanelStateData,
-							);
-						}),
+					void GetMountainClient()
+						?.sendRequest("Storage.Set", [
+							StorageKey(PanelStateData.Handle),
 
-						(error) =>
-							new Error(`Failed to save panel state: ${error}`),
-					);
-
-					// TODO: Persist to Mountain backend via IPC
-					// TODO: Implement async persistence with error handling
-					// TODO: Add retry logic for failed persistence
+							PanelStateData,
+						])
+						.catch(() => undefined);
 				});
 
 			/**
-			 * Restore panel state from cache
+			 * Restore panel state - cache first, Mountain storage on miss
+			 * (panels created before the last reload only exist there).
 			 */
 			const RestorePanelState = (
 				Handle: string,
 			): Effect.Effect<PanelState | null, Error> =>
 				Effect.gen(function* () {
-					const State = (
-						StateCacheRef as { current: Map<string, PanelState> }
-					).current.get(Handle);
+					let State: unknown = StateCache.get(Handle);
+
+					if (!State) {
+						State = yield* Effect.tryPromise({
+							try: async () =>
+								(await GetMountainClient()?.sendRequest(
+									"Storage.Get",
+
+									[StorageKey(Handle)],
+								)) ?? null,
+							catch: () => null,
+						}).pipe(Effect.orElseSucceed(() => null));
+					}
 
 					if (!State) {
 						return null;
@@ -371,30 +390,27 @@ export class StateService extends Effect.Service<StateService>()(
 					// Validate loaded state
 					const ValidatedState = yield* ValidateState(State);
 
+					StateCache.set(Handle, ValidatedState);
+
 					return ValidatedState;
 				});
 
 			/**
-			 * Delete panel state
+			 * Delete panel state from cache and Mountain storage.
 			 */
 			const DeletePanelState = (
 				Handle: string,
 			): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
-					yield* Effect.tryMap(
-						Effect.sync(() => {
-							(
-								StateCacheRef as {
-									current: Map<string, PanelState>;
-								}
-							).current.delete(Handle);
-						}),
+					StateCache.delete(Handle);
 
-						(error) =>
-							new Error(`Failed to delete panel state: ${error}`),
-					);
+					void GetMountainClient()
+						?.sendRequest("Storage.Set", [
+							StorageKey(Handle),
 
-					// TODO: Delete from Mountain backend via IPC
+							null,
+						])
+						.catch(() => undefined);
 				});
 
 			/**
@@ -404,38 +420,29 @@ export class StateService extends Effect.Service<StateService>()(
 				ExtensionId: string,
 			): Effect.Effect<readonly PanelState[], Error> =>
 				Effect.gen(function* () {
-					const AllStates = Array.from(
-						(
-							StateCacheRef as {
-								current: Map<string, PanelState>;
-							}
-						).current.values(),
-					);
-
-					return AllStates.filter(
+					return Array.from(StateCache.values()).filter(
 						(State) => State.ExtensionId === ExtensionId,
 					);
 				});
 
 			/**
-			 * Clear all panel states
+			 * Clear all panel states from cache and Mountain storage.
 			 */
 			const ClearAllPanelStates = (): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
-					yield* Effect.tryMap(
-						Effect.sync(() => {
-							(
-								StateCacheRef as {
-									current: Map<string, PanelState>;
-								}
-							).current.clear();
-						}),
+					const Handles = Array.from(StateCache.keys());
 
-						(error) =>
-							new Error(`Failed to clear panel states: ${error}`),
-					);
+					StateCache.clear();
 
-					// TODO: Clear from Mountain backend via IPC
+					const Client = GetMountainClient();
+
+					for (const Handle of Handles) {
+						void Client?.sendRequest("Storage.Set", [
+							StorageKey(Handle),
+
+							null,
+						]).catch(() => undefined);
+					}
 				});
 
 			return {

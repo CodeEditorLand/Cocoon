@@ -438,7 +438,7 @@ var RouteManifestSummary = {
   mountain: 143,
   stockLift: 0,
   bespoke: 1,
-  generatedAt: "2026-06-11T17:43:45Z"
+  generatedAt: "2026-06-11T20:40:41Z"
 };
 
 // Source/Services/Dual/Track.ts
@@ -14176,7 +14176,8 @@ var WrapNamespaceWithHeuristics = /* @__PURE__ */ __name((NamespaceName, Concret
     if (Property === "then" || Property === Symbol.toPrimitive)
       return void 0;
     const Existing = Target[Key];
-    if (Existing !== void 0) return Existing;
+    if (Existing !== void 0 || Reflect.has(Target, Key))
+      return Existing;
     const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
     return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
   }

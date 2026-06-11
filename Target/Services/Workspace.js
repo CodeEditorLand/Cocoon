@@ -28,14 +28,18 @@ var LoggerService = class extends Effect2.Service()(
         const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
         return `${Timestamp} ${Prefix} ${Message}`;
       }, "FormatMessage");
+      const ForwardToMountain = /* @__PURE__ */ __name((Level, Line) => {
+        const Stream = Level === "error" || Level === "fatal" ? process.stderr : process.stdout;
+        Stream.write(`${Line}
+`);
+      }, "ForwardToMountain");
       const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
         const LogLevel = yield* Ref.get(LogLevelRef);
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
         if (LogLevel === "trace") {
-          const FormattedMessage = FormatMessage(
-            Message,
+          ForwardToMountain(
             "trace",
-            ExtensionId
+            FormatMessage(Message, "trace", ExtensionId)
           );
           return yield* Effect2.logTrace(Message).pipe(
             Effect2.annotateLogs({
@@ -49,10 +53,9 @@ var LoggerService = class extends Effect2.Service()(
         const LogLevel = yield* Ref.get(LogLevelRef);
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
         if (LogLevel === "trace" || LogLevel === "debug") {
-          const FormattedMessage = FormatMessage(
-            Message,
+          ForwardToMountain(
             "debug",
-            ExtensionId
+            FormatMessage(Message, "debug", ExtensionId)
           );
           return yield* Effect2.logDebug(Message).pipe(
             Effect2.annotateLogs({
@@ -64,10 +67,9 @@ var LoggerService = class extends Effect2.Service()(
       }), "Debug");
       const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
-        const FormattedMessage = FormatMessage(
-          Message,
+        ForwardToMountain(
           "info",
-          ExtensionId
+          FormatMessage(Message, "info", ExtensionId)
         );
         return yield* Effect2.logInfo(Message).pipe(
           Effect2.annotateLogs({
@@ -78,6 +80,10 @@ var LoggerService = class extends Effect2.Service()(
       }), "Info");
       const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        ForwardToMountain(
+          "warn",
+          FormatMessage(Message, "warn", ExtensionId)
+        );
         return yield* Effect2.logWarning(Message).pipe(
           Effect2.annotateLogs({
             extensionId: ExtensionId,
@@ -87,6 +93,10 @@ var LoggerService = class extends Effect2.Service()(
       }), "Warn");
       const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        ForwardToMountain(
+          "error",
+          FormatMessage(Message, "error", ExtensionId)
+        );
         return yield* Effect2.logError(Message).pipe(
           Effect2.annotateLogs({
             extensionId: ExtensionId,
@@ -96,6 +106,10 @@ var LoggerService = class extends Effect2.Service()(
       }), "Error");
       const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect2.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        ForwardToMountain(
+          "fatal",
+          FormatMessage(Message, "fatal", ExtensionId)
+        );
         return yield* Effect2.logFatal(Message).pipe(
           Effect2.annotateLogs({
             extensionId: ExtensionId,
@@ -809,7 +823,7 @@ var MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
 var MountainGRPCClientMockLayer = MountainGRPCClientMock;
 
 // Source/Services/Workspace.ts
-import { Context as Context3, Effect as Effect4, Ref as Ref2 } from "effect";
+import { Context as Context3, Effect as Effect4 } from "effect";
 var WorkspaceService = class extends Effect4.Service()(
   "Service/Workspace",
   {
@@ -818,12 +832,33 @@ var WorkspaceService = class extends Effect4.Service()(
         "Service/Configuration"
       );
       const Logger2 = yield* Context3.Tag("Service/Logger");
-      const InternalWorkspaceRef = yield* Ref2.make(void 0);
-      const TextEditorsMapRef = yield* Ref2.make(
-        /* @__PURE__ */ new Map()
-      );
-      const ActiveTextEditorRef = yield* Ref2.make(void 0);
-      const VisibleTextEditorsRef = yield* Ref2.make([]);
+      const ParseUri = /* @__PURE__ */ __name((Raw) => {
+        const Match = /^([A-Za-z][A-Za-z0-9+.-]*):(?:\/\/([^/]*))?(.*)$/.exec(
+          Raw
+        );
+        const Scheme = Match?.[1] ?? "file";
+        const Authority = Match?.[2] ?? "";
+        const Path = Match ? Match[3] ?? "" : Raw;
+        return {
+          scheme: Scheme,
+          authority: Authority,
+          path: Path,
+          query: "",
+          fragment: "",
+          fsPath: Path,
+          toString: /* @__PURE__ */ __name(() => Raw, "toString"),
+          toJSON: /* @__PURE__ */ __name(() => ({
+            scheme: Scheme,
+            authority: Authority,
+            path: Path
+          }), "toJSON"),
+          with: /* @__PURE__ */ __name(() => ParseUri(Raw), "with")
+        };
+      }, "ParseUri");
+      let _internalWorkspace;
+      const _textEditorsMap = /* @__PURE__ */ new Map();
+      let _activeTextEditor;
+      let _visibleTextEditors = [];
       const OnDidChangeWorkspaceFoldersListeners = /* @__PURE__ */ new Set();
       const OnDidChangeActiveTextEditorListeners = /* @__PURE__ */ new Set();
       const OnDidChangeVisibleTextEditorsListeners = /* @__PURE__ */ new Set();
@@ -838,7 +873,7 @@ var WorkspaceService = class extends Effect4.Service()(
             const SourceString = typeof Source === "string" ? Source : String(Source ?? "");
             if (!SourceString) continue;
             Folders.push({
-              uri: VSCode.Uri.parse(SourceString),
+              uri: ParseUri(SourceString),
               name: F.name ?? (typeof F === "string" ? F.split("/").pop() ?? "" : ""),
               index: F.index ?? Index
             });
@@ -848,9 +883,7 @@ var WorkspaceService = class extends Effect4.Service()(
         let ConfigurationUri;
         if (typeof Data.configuration === "string" && Data.configuration.length > 0) {
           try {
-            ConfigurationUri = VSCode.Uri.parse(
-              Data.configuration
-            );
+            ConfigurationUri = ParseUri(Data.configuration);
           } catch {
             ConfigurationUri = void 0;
           }
@@ -862,7 +895,7 @@ var WorkspaceService = class extends Effect4.Service()(
           Configuration: ConfigurationUri
         };
         _internalWorkspace = NewWorkspace;
-        Logger2.Info(
+        yield* Logger2.Info(
           `[WorkspaceService] Workspace updated: ${NewWorkspace.Name} with ${Folders.length} folders`
         );
         const OldFolders = OldWorkspace?.Folders ?? [];
@@ -873,7 +906,7 @@ var WorkspaceService = class extends Effect4.Service()(
         );
         const RemovedFolders = OldFolders.filter(
           (OldFolder) => !Folders.some(
-            (Folder) => OldFolder.uri.toString() === OldFolder.uri.toString()
+            (Folder) => Folder.uri.toString() === OldFolder.uri.toString()
           )
         );
         if (AddedFolders.length > 0 || RemovedFolders.length > 0) {
@@ -892,7 +925,7 @@ var WorkspaceService = class extends Effect4.Service()(
         const NewActiveEditor = ActiveEditorId ? TextEditorsMap.get(ActiveEditorId) : void 0;
         _activeTextEditor = NewActiveEditor;
         if (OldActiveEditor !== NewActiveEditor) {
-          Logger2.Debug(
+          yield* Logger2.Debug(
             `[WorkspaceService] Active text editor changed: ${NewActiveEditor?.document.uri.toString() ?? "none"}`
           );
           OnDidChangeActiveTextEditorListeners.forEach(
@@ -980,7 +1013,7 @@ var WorkspaceService = class extends Effect4.Service()(
           if ("uri" in uriOrOptions) {
             Uri = uriOrOptions;
           } else {
-            Uri = VSCode.Uri.parse(
+            Uri = ParseUri(
               `untitled:${Language}-${Date.now()}`
             );
             Language = uriOrOptions.language;
@@ -1232,6 +1265,23 @@ var WorkspaceService = class extends Effect4.Service()(
         OnDidChangeVisibleTextEditors,
         OnDidChangeTextDocument,
         OnDidChangeConfiguration
+      };
+      globalThis.__COCOON_WORKSPACE_BRIDGE__ = {
+        AcceptWorkspaceData: /* @__PURE__ */ __name((Data) => {
+          void Effect4.runPromise(AcceptWorkspaceData(Data)).catch(
+            () => {
+            }
+          );
+        }, "AcceptWorkspaceData"),
+        AcceptEditorState: /* @__PURE__ */ __name((ActiveEditorId, VisibleEditorIds) => {
+          void Effect4.runPromise(
+            AcceptEditorState(ActiveEditorId, VisibleEditorIds)
+          ).catch(() => {
+          });
+        }, "AcceptEditorState"),
+        RegisterTextEditor: /* @__PURE__ */ __name((Id, Editor) => {
+          _textEditorsMap.set(Id, Editor);
+        }, "RegisterTextEditor")
       };
       return ServiceImplementation;
     })

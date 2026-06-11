@@ -1290,7 +1290,7 @@ var init_RouteManifest = __esm({
       mountain: 143,
       stockLift: 0,
       bespoke: 1,
-      generatedAt: "2026-06-11T17:43:45Z"
+      generatedAt: "2026-06-11T20:40:41Z"
     };
   }
 });
@@ -22407,7 +22407,8 @@ var init_Heuristics = __esm({
         if (Property === "then" || Property === Symbol.toPrimitive)
           return void 0;
         const Existing = Target[Key];
-        if (Existing !== void 0) return Existing;
+        if (Existing !== void 0 || Reflect.has(Target, Key))
+          return Existing;
         const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
         return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
       }
@@ -34725,6 +34726,18 @@ var init_Handler4 = __esm({
           };
           SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event2);
           SafeEmit(Emitter2, "workspaceFoldersChanged", Event2);
+          try {
+            globalThis.__COCOON_WORKSPACE_BRIDGE__?.AcceptWorkspaceData?.({
+              id: Context6?.InitWorkspace?.id ?? "workspace",
+              name: Context6?.InitWorkspace?.name ?? "Workspace",
+              folders: MergedHydrated.map((Folder) => ({
+                uri: Folder.uri.toString(),
+                name: Folder.name,
+                index: Folder.index
+              }))
+            });
+          } catch {
+          }
           if (Context6 && Added.length > 0) {
             const CapturedContext = Context6;
             setImmediate(() => {
@@ -35018,6 +35031,19 @@ var init_Handler4 = __esm({
               Visible.push(TextEditorStub);
             }
             Context6.__visibleTextEditors = Visible;
+            try {
+              const Bridge = globalThis.__COCOON_WORKSPACE_BRIDGE__;
+              if (Bridge && TextEditorStub && UriKey2) {
+                Bridge.RegisterTextEditor?.(UriKey2, TextEditorStub);
+                Bridge.AcceptEditorState?.(
+                  UriKey2,
+                  Visible.map(
+                    (E) => E?.document?.uri?.toString?.()
+                  ).filter(Boolean)
+                );
+              }
+            } catch {
+            }
           }
           if (TextEditorStub !== void 0) {
             SafeEmit(
@@ -36915,6 +36941,7 @@ var init_Service4 = __esm({
         const Client = new MountainClientService2();
         await Client.connect();
         this.mountainClient = Client;
+        globalThis.__COCOON_MOUNTAIN_CLIENT__ = Client;
         CocoonDevLog2(
           "grpc",
           `[GRPCServerService] Connected to Mountain gRPC - return path active`

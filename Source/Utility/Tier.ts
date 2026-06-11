@@ -105,9 +105,11 @@ export type TierStorageValue = "Mountain" | "Node";
 
 export type TierModelValue = "Mountain" | "Node";
 
-export type TierTasksValue = "Mountain" | "Node";
+// `WebSocket` forwards to Cocoon over the Mist WS transport (B7-S6);
+// requires TierWebSocket=Mist, falls back to Tauri IPC when disconnected.
+export type TierTasksValue = "Mountain" | "Node" | "WebSocket";
 
-export type TierAuthValue = "Mountain" | "Node";
+export type TierAuthValue = "Mountain" | "Node" | "WebSocket";
 
 export type TierEncryptionValue = "Mountain" | "Node";
 

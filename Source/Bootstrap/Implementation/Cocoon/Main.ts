@@ -287,6 +287,24 @@ if (process.env["NODE_ENV"] !== "production") {
 
 const main = async () => {
 	try {
+		// Parent-death watchdog: when Mountain exits (quit, crash, kill),
+		// Cocoon is reparented to launchd (ppid 1) but keeps running and
+		// keeps :50052 bound - the NEXT launch's Cocoon then fails to bind
+		// and Mountain can end up talking to this stale instance, which
+		// makes rebuilds appear to have no effect. Poll ppid and exit when
+		// orphaned; unref() so the timer never keeps the process alive.
+		const ParentWatch = setInterval(() => {
+			if (process.ppid === 1) {
+				process.stderr.write(
+					"[CocoonMain] Parent (Mountain) exited - shutting down\n",
+				);
+
+				process.exit(0);
+			}
+		}, 5000);
+
+		ParentWatch.unref();
+
 		const result = await runBootstrap({ debugMode: false });
 
 		// B7-S6: start WebSocket server.

@@ -17,14 +17,18 @@ var LoggerService = class extends Effect.Service()(
         const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
         return `${Timestamp} ${Prefix} ${Message}`;
       }, "FormatMessage");
+      const ForwardToMountain = /* @__PURE__ */ __name((Level, Line) => {
+        const Stream = Level === "error" || Level === "fatal" ? process.stderr : process.stdout;
+        Stream.write(`${Line}
+`);
+      }, "ForwardToMountain");
       const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect.gen(function* () {
         const LogLevel = yield* Ref.get(LogLevelRef);
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
         if (LogLevel === "trace") {
-          const FormattedMessage = FormatMessage(
-            Message,
+          ForwardToMountain(
             "trace",
-            ExtensionId
+            FormatMessage(Message, "trace", ExtensionId)
           );
           return yield* Effect.logTrace(Message).pipe(
             Effect.annotateLogs({
@@ -38,10 +42,9 @@ var LoggerService = class extends Effect.Service()(
         const LogLevel = yield* Ref.get(LogLevelRef);
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
         if (LogLevel === "trace" || LogLevel === "debug") {
-          const FormattedMessage = FormatMessage(
-            Message,
+          ForwardToMountain(
             "debug",
-            ExtensionId
+            FormatMessage(Message, "debug", ExtensionId)
           );
           return yield* Effect.logDebug(Message).pipe(
             Effect.annotateLogs({
@@ -53,10 +56,9 @@ var LoggerService = class extends Effect.Service()(
       }), "Debug");
       const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
-        const FormattedMessage = FormatMessage(
-          Message,
+        ForwardToMountain(
           "info",
-          ExtensionId
+          FormatMessage(Message, "info", ExtensionId)
         );
         return yield* Effect.logInfo(Message).pipe(
           Effect.annotateLogs({
@@ -67,6 +69,10 @@ var LoggerService = class extends Effect.Service()(
       }), "Info");
       const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        ForwardToMountain(
+          "warn",
+          FormatMessage(Message, "warn", ExtensionId)
+        );
         return yield* Effect.logWarning(Message).pipe(
           Effect.annotateLogs({
             extensionId: ExtensionId,
@@ -76,6 +82,10 @@ var LoggerService = class extends Effect.Service()(
       }), "Warn");
       const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        ForwardToMountain(
+          "error",
+          FormatMessage(Message, "error", ExtensionId)
+        );
         return yield* Effect.logError(Message).pipe(
           Effect.annotateLogs({
             extensionId: ExtensionId,
@@ -85,6 +95,10 @@ var LoggerService = class extends Effect.Service()(
       }), "Error");
       const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect.gen(function* () {
         const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        ForwardToMountain(
+          "fatal",
+          FormatMessage(Message, "fatal", ExtensionId)
+        );
         return yield* Effect.logFatal(Message).pipe(
           Effect.annotateLogs({
             extensionId: ExtensionId,

@@ -26,7 +26,6 @@
  * FUTURE: Log persistence - use winston or pino for file logging
  * FUTURE: Log rotation - implement size-based rotation (10MB files, keep 5)
  * FUTURE: Log filtering - add Ref-based level filtering by extension ID
- * FUTURE: Mountain forwarding - integrate with MountainClientService
  * PERFORMANCE: Volume tracking - add metrics for log count by level
  * ARCHITECTURE-PATTERN: See src/vs/platform/log/common/logService.ts
  * VSCODE-LIFT: See src/vs/base/common/log.js for log formatting
@@ -89,7 +88,6 @@ export const Logger = Context.Tag<Logger>("Service/Logger");
  * FUTURE: Log persistence - write to rotating log files
  * FUTURE: Log rotation - rotate by size (10MB) and age (daily)
  * FUTURE: Log filtering - filter by extension ID and log level
- * FUTURE: Mountain forwarding - send error/fatal logs to Mountain
  * PERFORMANCE: Telemetry - track log count per level for monitoring
  */
 export class LoggerService extends Effect.Service<LoggerService>()(
@@ -110,7 +108,6 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			/**
 			 * Format log message with context
 			 *
-			 * TODO: Implement proper structured log formatting (MEDIUM)
 			 * ARCHITECTURE-PATTERN: src/vs/base/common/log.js (log formatting)
 			 */
 			const FormatMessage = (
@@ -128,6 +125,23 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			};
 
 			/**
+			 * Forward a formatted log line to Mountain. Cocoon's stdout and
+			 * stderr are captured by Mountain into its dev log as
+			 * `[Cocoon stdout] ...`, so a direct stream write is the
+			 * centralized-logging channel; it also survives esbuild's
+			 * `drop: ["console"]` in production bundles, unlike the Effect
+			 * console logger.
+			 */
+			const ForwardToMountain = (Level: string, Line: string): void => {
+				const Stream =
+					Level === "error" || Level === "fatal"
+						? process.stderr
+						: process.stdout;
+
+				Stream.write(`${Line}\n`);
+			};
+
+			/**
 			 * Trace level logging
 			 */
 			const Trace = (
@@ -140,25 +154,11 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
 					if (LogLevel === "trace") {
-						const FormattedMessage = FormatMessage(
-							Message,
-
+						ForwardToMountain(
 							"trace",
 
-							ExtensionId,
+							FormatMessage(Message, "trace", ExtensionId),
 						);
-
-						// TODO: MOUNTAIN-INTEGRATION: Forward trace logs to Mountain (MEDIUM)
-						// if (ExtensionId) {
-						//     yield* Effect.tryPromise({
-						//         try: () => IMountainClientService.sendRequest('log.trace', {
-						//             extensionId: ExtensionId,
-						//             message: FormattedMessage,
-						//             data: Data
-						//         }),
-						//         catch: () => undefined,
-						//     });
-						// }
 
 						return yield* Effect.logTrace(Message).pipe(
 							Effect.annotateLogs({
@@ -182,15 +182,12 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
 					if (LogLevel === "trace" || LogLevel === "debug") {
-						const FormattedMessage = FormatMessage(
-							Message,
-
+						ForwardToMountain(
 							"debug",
 
-							ExtensionId,
+							FormatMessage(Message, "debug", ExtensionId),
 						);
 
-						// TODO: MOUNTAIN-INTEGRATION: Forward debug logs to Mountain (MEDIUM)
 						return yield* Effect.logDebug(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
@@ -210,15 +207,12 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 				Effect.gen(function* () {
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
-					const FormattedMessage = FormatMessage(
-						Message,
-
+					ForwardToMountain(
 						"info",
 
-						ExtensionId,
+						FormatMessage(Message, "info", ExtensionId),
 					);
 
-					// TODO: MOUNTAIN-INTEGRATION: Forward info logs to Mountain (MEDIUM)
 					return yield* Effect.logInfo(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
@@ -237,7 +231,12 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 				Effect.gen(function* () {
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
-					// TODO: MOUNTAIN-INTEGRATION: Forward warning logs to Mountain (MEDIUM)
+					ForwardToMountain(
+						"warn",
+
+						FormatMessage(Message, "warn", ExtensionId),
+					);
+
 					return yield* Effect.logWarning(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
@@ -256,7 +255,12 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 				Effect.gen(function* () {
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
-					// TODO: MOUNTAIN-INTEGRATION: Forward error logs to Mountain (MEDIUM)
+					ForwardToMountain(
+						"error",
+
+						FormatMessage(Message, "error", ExtensionId),
+					);
+
 					return yield* Effect.logError(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
@@ -275,7 +279,12 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 				Effect.gen(function* () {
 					const ExtensionId = yield* Ref.get(ExtensionIdRef);
 
-					// TODO: MOUNTAIN-INTEGRATION: Forward fatal logs to Mountain with urgency (MEDIUM)
+					ForwardToMountain(
+						"fatal",
+
+						FormatMessage(Message, "fatal", ExtensionId),
+					);
+
 					return yield* Effect.logFatal(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,

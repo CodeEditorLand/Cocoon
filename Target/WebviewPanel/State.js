@@ -8,10 +8,9 @@ var StateService = class extends Effect.Service()(
   "State/WebviewPanel",
   {
     effect: Effect.gen(function* () {
-      const StateCacheRef = yield* Effect.tryMap(
-        Effect.sync(() => /* @__PURE__ */ new Map()),
-        (error) => new Error(`Failed to create state cache: ${error}`)
-      );
+      const StateCache = /* @__PURE__ */ new Map();
+      const GetMountainClient = /* @__PURE__ */ __name(() => globalThis.__COCOON_MOUNTAIN_CLIENT__, "GetMountainClient");
+      const StorageKey = /* @__PURE__ */ __name((Handle) => `webviewPanelState:${Handle}`, "StorageKey");
       const ValidateState = /* @__PURE__ */ __name((State) => Effect.gen(function* () {
         if (typeof State !== "object" || State === null || Array.isArray(State)) {
           return yield* Effect.fail(
@@ -92,47 +91,52 @@ var StateService = class extends Effect.Service()(
         return State;
       }, "CreatePanelState");
       const SavePanelState = /* @__PURE__ */ __name((PanelStateData) => Effect.gen(function* () {
-        yield* Effect.tryMap(
-          Effect.sync(() => {
-            StateCacheRef.current.set(
-              PanelStateData.Handle,
-              PanelStateData
-            );
-          }),
-          (error) => new Error(`Failed to save panel state: ${error}`)
-        );
+        StateCache.set(PanelStateData.Handle, PanelStateData);
+        void GetMountainClient()?.sendRequest("Storage.Set", [
+          StorageKey(PanelStateData.Handle),
+          PanelStateData
+        ]).catch(() => void 0);
       }), "SavePanelState");
       const RestorePanelState = /* @__PURE__ */ __name((Handle) => Effect.gen(function* () {
-        const State = StateCacheRef.current.get(Handle);
+        let State = StateCache.get(Handle);
+        if (!State) {
+          State = yield* Effect.tryPromise({
+            try: /* @__PURE__ */ __name(async () => await GetMountainClient()?.sendRequest(
+              "Storage.Get",
+              [StorageKey(Handle)]
+            ) ?? null, "try"),
+            catch: /* @__PURE__ */ __name(() => null, "catch")
+          }).pipe(Effect.orElseSucceed(() => null));
+        }
         if (!State) {
           return null;
         }
         const ValidatedState = yield* ValidateState(State);
+        StateCache.set(Handle, ValidatedState);
         return ValidatedState;
       }), "RestorePanelState");
       const DeletePanelState = /* @__PURE__ */ __name((Handle) => Effect.gen(function* () {
-        yield* Effect.tryMap(
-          Effect.sync(() => {
-            StateCacheRef.current.delete(Handle);
-          }),
-          (error) => new Error(`Failed to delete panel state: ${error}`)
-        );
+        StateCache.delete(Handle);
+        void GetMountainClient()?.sendRequest("Storage.Set", [
+          StorageKey(Handle),
+          null
+        ]).catch(() => void 0);
       }), "DeletePanelState");
       const GetAllPanelStates = /* @__PURE__ */ __name((ExtensionId) => Effect.gen(function* () {
-        const AllStates = Array.from(
-          StateCacheRef.current.values()
-        );
-        return AllStates.filter(
+        return Array.from(StateCache.values()).filter(
           (State) => State.ExtensionId === ExtensionId
         );
       }), "GetAllPanelStates");
       const ClearAllPanelStates = /* @__PURE__ */ __name(() => Effect.gen(function* () {
-        yield* Effect.tryMap(
-          Effect.sync(() => {
-            StateCacheRef.current.clear();
-          }),
-          (error) => new Error(`Failed to clear panel states: ${error}`)
-        );
+        const Handles = Array.from(StateCache.keys());
+        StateCache.clear();
+        const Client = GetMountainClient();
+        for (const Handle of Handles) {
+          void Client?.sendRequest("Storage.Set", [
+            StorageKey(Handle),
+            null
+          ]).catch(() => void 0);
+        }
       }), "ClearAllPanelStates");
       return {
         SavePanelState,

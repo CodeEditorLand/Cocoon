@@ -25,24 +25,22 @@
  * - TypeConverter/Command: For command marshalling
  *
  * TODOs:
- * - HIGH: Implement gRPC calls for register/execute via MountainClientService
  * - HIGH: Add command validation and registration conflict resolution
  * - MEDIUM: Implement command execution timeout and cancellation
- * - MEDIUM: Add command execution telemetry and performance tracking
  * - SECURITY: Validate command ID format before registration (MEDIUM)
  * - LOW: Extract command documentation from JSDoc for autocomplete
  * - LOW: Implement command conflict resolution strategy
  * - VSCODE-LIFT: Lift complete command lifecycle from Dependency/Editor/extHostCommands.ts
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
-import { MountainGRPCClientService } from "./Mountain/gRPC/Client.js";
+import { CocoonDevLog } from "./Dev/Log.js";
 
 /**
  * @interface InternalCommandMetadata
@@ -163,16 +161,37 @@ export class CommandService extends Effect.Service<CommandService>()(
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
-			yield* IMountainClientService;
+			const MountainClient = yield* IMountainClientService;
 
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
 			const Window = yield* Context.Tag<Window>("Service/Window");
 
 			// Command registry - maps command ID to registered command metadata
-			const CommandRegistry = yield* Ref.make(
-				new Map<string, InternalCommandMetadata>(),
-			);
+			const _commandRegistry = new Map<
+				string,
+				InternalCommandMetadata
+			>();
+
+			/**
+			 * Emit a tag-gated execution breadcrumb so command latency is
+			 * observable in Mountain's dev log (`Trace=command-telemetry`).
+			 */
+			const TrackCommandExecution = (
+				Id: string,
+
+				Mode: "local" | "remote",
+
+				DurationMs: number,
+
+				Success: boolean,
+			): void => {
+				CocoonDevLog(
+					"command-telemetry",
+
+					`execute id=${Id} mode=${Mode} duration_ms=${DurationMs} ok=${Success}`,
+				);
+			};
 
 			// Command converter for marshalling
 			void new CommandConverter(
@@ -217,7 +236,6 @@ export class CommandService extends Effect.Service<CommandService>()(
 			 * TODOs:
 			 * - TIMEOUT: Add command execution timeout (configurable, default 30s) (MEDIUM)
 			 * - CANCELLATION: Support CancellationToken for long-running commands (MEDIUM)
-			 * - MOUNTAIN-INTEGRATION: Implement telemetry tracking via gRPC (HIGH)
 			 */
 			const ExecuteLocalCommand = (
 				Command: InternalCommandMetadata,
@@ -238,36 +256,31 @@ export class CommandService extends Effect.Service<CommandService>()(
 						`[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`,
 					);
 
-					// TODO: MOUNTAIN-INTEGRATION: Implement telemetry tracking via gRPC (HIGH)
-					// yield* Effect.tryPromise({
-					//     try: () => MountainClient.sendRequest('telemetry.commandExecution', {
-					//         commandId: Id,
-					//         extensionId: Extension,
-					//         timestamp: StartTime
-					//     }),
-					//     catch: () => undefined
-					// });
-
 					const Result = yield* Effect.tryPromise({
 						try: () =>
 							Promise.resolve(Callback.apply(ThisArg, Arguments)),
 						catch: (Cause) => {
+							TrackCommandExecution(
+								Id,
+
+								"local",
+
+								Date.now() - StartTime,
+
+								false,
+							);
+
 							throw Cause;
 						},
 					});
 
 					const Duration = Date.now() - StartTime;
 
+					TrackCommandExecution(Id, "local", Duration, true);
+
 					yield* Logger.Debug(
 						`[CommandService] Command '${Id}' executed in ${Duration}ms`,
 					);
-
-					// TODO: Track performance metrics (target: <50ms for local commands) (LOW)
-					// if (Duration >= 50) {
-					//     yield* Logger.Warn(
-					//         `[CommandService] Command '${Id}' exceeded performance target: ${Duration}ms >= 50ms`
-					//     );
-					// }
 
 					return Result;
 				});
@@ -306,19 +319,24 @@ export class CommandService extends Effect.Service<CommandService>()(
 						`[CommandService] Command '${Id}' not registered locally, executing via Mountain gRPC`,
 					);
 
-					// Mountain gRPC integration for command execution
-					const mountainClient = yield* MountainGRPCClientService;
-
 					const startTime = Date.now();
 
 					try {
-						const result = yield* mountainClient.executeCommand(
-							Id,
-							...Arguments,
-						);
+						// Routed by Mountain via Track::SideCarRequest →
+						// Command.Execute effect.
+						const result = yield* Effect.tryPromise({
+							try: () =>
+								MountainClient.sendRequest("Command.Execute", [
+									Id,
+									...Arguments,
+								]),
+							catch: (Cause) =>
+								Cause instanceof Error
+									? Cause
+									: new Error(String(Cause)),
+						});
 
-						// Track performance metrics
-						this.trackCommandExecution(
+						TrackCommandExecution(
 							Id,
 
 							"remote",
@@ -330,8 +348,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 						return result as T;
 					} catch (error) {
-						// Track execution failure
-						this.trackCommandExecution(
+						TrackCommandExecution(
 							Id,
 
 							"remote",
@@ -392,53 +409,24 @@ export class CommandService extends Effect.Service<CommandService>()(
 						`[CommandService] Command '${Id}' registered locally`,
 					);
 
-					// TODO: MOUNTAIN-INTEGRATION: Register with Mountain via gRPC (HIGH)
-					// if (Global) {
-					//     yield* Effect.tryPromise({
-					//         try: () => MountainClient.sendRequest('command.register', {
-					//             commandId: Id
-					//         }),
-					//         catch: (Error) => {
-					//             yield* Logger.Error(
-					//                 `[CommandService] Failed to register command '${Id}' with Mountain`,
-					//                 Error as Error
-					//             );
-					//             throw Error;
-					//         }
-					//     });
-					// }
-
-					// Mountain gRPC integration for command registration
-					const mountainClient = yield* MountainGRPCClientService;
-
-					const extensionId = this.getCallingExtension();
-
-					try {
-						yield* mountainClient.registerCommand(
-							Id,
-
-							extensionId,
-
-							`Command: ${Id}`,
-						);
-
-						yield* Logger.Info(
-							`[CommandService] Command '${Id}' registered with Mountain`,
-						);
-					} catch (error) {
-						yield* Logger.Warn(
-							`[CommandService] Failed to register command '${Id}' with Mountain:`,
-
-							error,
-						);
-
-						// Continue with local registration even if Mountain registration fails
-					}
+					// Mirror into Mountain's command registry so Sky's command
+					// palette and `Command.Execute` routing can see it.
+					// Fire-and-forget: local registration stays valid even if
+					// Mountain is not yet connected.
+					void MountainClient.sendNotification("registerCommand", {
+						commandId: Id,
+					}).catch(() => {});
 
 					// Return disposable for cleanup
 					return {
 						dispose: () => {
 							_commandRegistry.delete(Id); // lean: was Effect.runFork
+
+							void MountainClient.sendNotification(
+								"unregisterCommand",
+
+								{ commandId: Id },
+							).catch(() => {});
 						},
 					};
 				});
@@ -495,9 +483,6 @@ export class CommandService extends Effect.Service<CommandService>()(
 			 * Get all registered commands
 			 *
 			 * Implementation Pattern: Dependency/Editor/extHostCommands.ts (getCommands)
-			 *
-			 * TODOs:
-			 * - MOUNTAIN-INTEGRATION: Merge with remote commands from Mountain (HIGH)
 			 */
 			const GetCommands = (
 				FilterInternal: boolean = false,
@@ -507,13 +492,23 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 					const LocalCommandIds = Array.from(Registry.keys());
 
-					// Mountain gRPC integration for getting remote commands
 					try {
-						yield* MountainGRPCClientService;
+						// Routed by Mountain via Track::SideCarRequest →
+						// Command.GetAll effect; returns the native registry ids.
+						const Response = yield* Effect.tryPromise({
+							try: () =>
+								MountainClient.sendRequest("Command.GetAll", [
+									FilterInternal,
+								]),
+							catch: (Cause) =>
+								Cause instanceof Error
+									? Cause
+									: new Error(String(Cause)),
+						});
 
-						// For now, just return local commands
-						// TODO: Implement getCommands in MountainGRPCClientService
-						const RemoteCommands: string[] = [];
+						const RemoteCommands: string[] = Array.isArray(Response)
+							? (Response as string[])
+							: [];
 
 						yield* Logger.Info(
 							`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`,
