@@ -213,10 +213,20 @@ const MakeTestRun = (
 
 	let Ended = false;
 
+	let RunStarted = false;
+
 	const SetState =
 		(State: TestRunState) =>
 		(Item: TestItem, MaybeMessage?: unknown, MaybeDuration?: number) => {
 			if (Ended || !Item?.id) return;
+
+			if (!RunStarted) {
+				RunStarted = true;
+				Context.SendToMountain("tests.run_started", {
+					controllerId: ControllerId,
+					runName: Name,
+				}).catch(() => {};
+			}
 
 			Results.set(Item.id, {
 				state: State,
@@ -229,6 +239,22 @@ const MakeTestRun = (
 						? MaybeMessage
 						: undefined,
 			};
+
+			// Forward individual result to Mountain for Sky bridge
+			Context.SendToMountain("tests.result", {
+				controllerId: ControllerId,
+				runName: Name,
+				itemId: Item.id,
+				state: State,
+				duration:
+					typeof MaybeDuration === "number"
+						? MaybeDuration
+						: undefined,
+				message:
+					MaybeMessage && State !== "passed" && State !== "skipped"
+						? MaybeMessage
+						: undefined,
+			}).catch(() => {};
 		};
 
 	const Run = {
@@ -283,6 +309,14 @@ const MakeTestRun = (
 			} catch {
 				/* listener threw */
 			}
+
+			// Forward end-of-run results to Mountain for Sky bridge
+			Context.SendToMountain("tests.run_ended", {
+				controllerId: ControllerId,
+				runName: Name,
+				results: Object.fromEntries(Results),
+				output: OutputBuffer.join(""),
+			}).catch(() => {};
 		},
 	};
 
@@ -405,15 +439,20 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 					),
 
 				dispose: () => {
-					Context.ExtensionRegistry.delete(ControllerKey;
+				Context.ExtensionRegistry.delete(ControllerKey;
 
-					Profiles.clear(;
-				},
-			};
+				Profiles.clear(;
+			},
+		};
 
-			Context.ExtensionRegistry.set(ControllerKey, Controller;
+		Context.ExtensionRegistry.set(ControllerKey, Controller;
 
-			return Controller;
+		Context.SendToMountain("tests.controller_created", {
+			controllerId: Id,
+			label: Label,
+		}).catch(() => {};
+
+		return Controller;
 		},
 
 		// `onDidChangeTestResults` - fires when any TestRun.end() lands.
