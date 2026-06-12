@@ -46,7 +46,7 @@
 		"@vitest/coverage-v8": "4.1.8",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
-		"esbuild": "0.28.0",
+		"esbuild": "0.28.1",
 		"ulid": "3.0.2",
 		"vitest": "4.1.8"
 	},
