@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Configuration/ESBuild/Constant/Environment/Constant.ts"],
-  "sourcesContent": ["export const On =\n\tprocess.env[\"NODE_ENV\"] === \"development\" ||\n\tprocess.env[\"TAURI_ENV_DEBUG\"] === \"true\";\n\nexport const Clean = process.env[\"Clean\"] === \"true\";\n\nexport const Bundle = process.env[\"Bundle\"] === \"true\";\n\nexport const Compile = process.env[\"Compile\"] === \"true\";\n"],
-  "mappings": "AAAO,MAAM,KACZ,QAAQ,IAAI,UAAU,MAAM,iBAC5B,QAAQ,IAAI,iBAAiB,MAAM;AAE7B,MAAM,QAAQ,QAAQ,IAAI,OAAO,MAAM;AAEvC,MAAM,SAAS,QAAQ,IAAI,QAAQ,MAAM;AAEzC,MAAM,UAAU,QAAQ,IAAI,SAAS,MAAM;",
-  "names": []
-}
