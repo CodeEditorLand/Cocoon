@@ -928,6 +928,83 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				isSingleLine: true,
 			};
 
+			// The notification handler mirrors opened documents (with their
+			// real languageId) into `Context.__textDocuments`; prefer that
+			// over deriving from the URI extension.
+			const RegisteredDocs: any[] = Array.isArray(
+				(Context as any).__textDocuments,
+			)
+				? (Context as any).__textDocuments
+				: [];
+
+			const KnownDoc = RegisteredDocs.find(
+				(D: any) =>
+					(D?.uri?.toString?.() ?? String(D?.uri ?? "")) === UriRaw,
+			);
+
+			const ExtensionLanguageMap: Record<string, string> = {
+				rs: "rust",
+
+				ts: "typescript",
+
+				tsx: "typescriptreact",
+
+				js: "javascript",
+
+				jsx: "javascriptreact",
+
+				mjs: "javascript",
+
+				json: "json",
+
+				jsonc: "jsonc",
+
+				py: "python",
+
+				go: "go",
+
+				rb: "ruby",
+
+				java: "java",
+
+				c: "c",
+
+				cpp: "cpp",
+
+				cs: "csharp",
+
+				h: "c",
+
+				hpp: "cpp",
+
+				html: "html",
+
+				css: "css",
+
+				scss: "scss",
+
+				md: "markdown",
+
+				toml: "toml",
+
+				yaml: "yaml",
+
+				yml: "yaml",
+
+				xml: "xml",
+
+				sh: "shellscript",
+			};
+
+			const DocLanguageId: string =
+				KnownDoc?.languageId ??
+				ExtensionLanguageMap[
+					(UriRaw.split(".").pop() ?? "")
+						.toLowerCase()
+						.split("?")[0] ?? ""
+				] ??
+				"plaintext";
+
 			return {
 				document: {
 					uri: {
@@ -937,7 +1014,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						scheme: "file",
 					},
 					fileName: UriRaw.replace(/^file:\/\//, ""),
-					languageId: "plaintext",
+					languageId: DocLanguageId,
 
 					version: 1,
 

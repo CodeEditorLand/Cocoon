@@ -28,10 +28,8 @@
  *   CancelOperation (advisory, local-only - NOT mirrored upstream, the
  *   request-id spaces of the two directions are independent counters).
  * - Bidirectional streaming (startBidirectionalStreaming) shares the
- *   ProcessMountainRequest dispatch but is NOT YET BOUND: addService
- *   registers only the three unary methods above, so the streaming path
- *   has no callers until the Patch 14 multiplexer work registers it
- *   (see plan/Phase2-Performance.md §2.5).
+ *   ProcessMountainRequest dispatch and is bound as the
+ *   OpenChannelFromMountain RPC alongside the three unary methods above.
  *
  * Domain logic is delegated to handler modules in ./Handler/:
  * - ExtensionHostHandler - extension host lifecycle (init, delta, activate, start)
@@ -396,6 +394,10 @@ export class GRPCServerService
 
 				Callback(null, {});
 			},
+
+			OpenChannelFromMountain: this.startBidirectionalStreaming.bind(
+				this,
+			),
 		};
 	}
 
@@ -410,11 +412,9 @@ export class GRPCServerService
 	 * written back on the same stream keyed by RequestIdentifier.
 	 * Keepalive pings are emitted every keepaliveInterval milliseconds.
 	 *
-	 * NOT YET BOUND: `addService` registers only the three unary methods,
-	 * so this handler has no callers until the Patch 14 multiplexer work
-	 * registers the streaming RPC (plan/Phase2-Performance.md §2.5). The
-	 * dispatch is kept unified with the unary path so binding it is a
-	 * one-line service-definition change.
+	 * Bound as the OpenChannelFromMountain RPC in
+	 * createServiceImplementation; the dispatch is kept unified with the
+	 * unary path.
 	 * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bidirectional Streaming)
 	 */
 	public startBidirectionalStreaming(

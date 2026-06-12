@@ -55,10 +55,45 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 				CocoonDevLog(
 					"ext-host",
 
-					"[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace",
+					"[ExtensionHostHandler] require('vscode') called before shim registered - returning lazy facade",
 				);
 
-				return {};
+				// Lazy facade: every trap reads through to the live
+				// `globalThis.__cocoonVscodeAPI` at access time, so extensions
+				// that capture the module object before the shim registers
+				// still see the full API once registration completes.
+				const Resolve = (): object =>
+					Reflect.has(globalThis, "__cocoonVscodeAPI") &&
+					(globalThis as any).__cocoonVscodeAPI
+						? (globalThis as any).__cocoonVscodeAPI
+						: {};
+
+				return new Proxy(Object.create(null), {
+					get: (_Target, Property) => {
+						const Live = Resolve();
+
+						return Reflect.has(Live, Property)
+							? Reflect.get(Live, Property, Live)
+							: undefined;
+					},
+
+					has: (_Target, Property) =>
+						Reflect.has(Resolve(), Property),
+
+					ownKeys: () => Reflect.ownKeys(Resolve()),
+
+					getOwnPropertyDescriptor: (_Target, Property) => {
+						const Descriptor = Reflect.getOwnPropertyDescriptor(
+							Resolve(),
+
+							Property,
+						);
+
+						return Descriptor
+							? { ...Descriptor, configurable: true }
+							: undefined;
+					},
+				});
 			}
 
 			return OriginalLoad.call(this, Request, Parent, IsMain);

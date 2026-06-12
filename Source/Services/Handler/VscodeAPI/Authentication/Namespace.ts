@@ -134,8 +134,92 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 				silent?: boolean;
 			},
 		): Promise<unknown> => {
+			const ScopeList: string[] = Array.isArray(Scopes)
+				? [...Scopes]
+				: typeof Scopes === "string"
+					? [Scopes]
+					: [];
+
+			// Prefer the in-process provider stashed by
+			// registerAuthenticationProvider - it owns the real sessions.
+			const Provider = Context.ExtensionRegistry.get(
+				`__authProvider:${ProviderId}`,
+			) as
+				| {
+						getSessions?: (
+							Scopes?: readonly string[],
+						) => Promise<unknown[]> | unknown[];
+
+						createSession?: (
+							Scopes: readonly string[],
+						) => Promise<unknown>;
+				  }
+				| undefined;
+
+			if (Provider && typeof Provider.getSessions === "function") {
+				let Sessions: unknown[] = [];
+
+				try {
+					const Raw = await Provider.getSessions(ScopeList);
+
+					Sessions = Array.isArray(Raw) ? Raw : [];
+				} catch {
+					Sessions = [];
+				}
+
+				if (Sessions.length === 0 && ScopeList.length > 0) {
+					// Providers with a 0-arg getSessions ignore the scope
+					// argument; re-query unscoped and filter locally.
+					try {
+						const Raw = await Provider.getSessions();
+
+						Sessions = Array.isArray(Raw) ? Raw : [];
+					} catch {
+						Sessions = [];
+					}
+				}
+
+				const Matching =
+					ScopeList.length === 0
+						? Sessions[0]
+						: Sessions.find((Session: any) => {
+								const SessionScopes: unknown[] = Array.isArray(
+									Session?.scopes,
+								)
+									? Session.scopes
+									: [];
+
+								return ScopeList.every((Scope) =>
+									SessionScopes.includes(Scope),
+								);
+							});
+
+				if (Matching) return Matching;
+
+				if (
+					Options?.createIfNone &&
+					typeof Provider.createSession === "function"
+				) {
+					const Created = await Provider.createSession(ScopeList);
+
+					if (Created) {
+						Context.Emitter.emit("auth.didChangeSessions", {
+							provider: { id: ProviderId, label: ProviderId },
+							added: [Created],
+							removed: [],
+							changed: [],
+						});
+					}
+
+					return Created;
+				}
+
+				return undefined;
+			}
+
 			try {
-				// Authentication.GetSession - not yet routed; catch returns undefined.
+				// No local provider - Authentication.GetSession via Mountain;
+				// catch returns undefined.
 				return await Context.MountainClient?.sendRequest(
 					"Authentication.GetSession",
 

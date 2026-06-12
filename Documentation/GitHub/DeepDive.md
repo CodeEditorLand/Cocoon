@@ -19,8 +19,8 @@
 
 # **Cocoon** 🦋 Deep Dive & Architecture
 
-This document provides the technical foundation for implementing VSCode
-extension host compatibility within the Land ecosystem. **Cocoon** serves as the
+**Cocoon** provides the technical foundation for implementing VSCode
+extension host compatibility within the Land project. **Cocoon** serves as the
 Node.js sidecar that provides high-fidelity VSCode extension API compatibility
 through plain `async/await` service implementations and gRPC communication with
 Mountain.
