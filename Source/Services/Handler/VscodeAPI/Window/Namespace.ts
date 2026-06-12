@@ -9,6 +9,7 @@
 
 import { EventEmitter as NodeEventEmitter } from "node:events";
 
+import { CocoonDevLog } from "../../../Dev/Log.js";
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
 import type { HandlerContext } from "../../Handler/Context.js";
 import WrapWindowNamespace from "../Wrap/Window/Namespace.js";
@@ -39,6 +40,69 @@ export {
 } from "./Registry.js";
 
 type Listener<T> = (Event: T) => unknown;
+
+// `tree.register` sent before the Mountain connection is up vanishes
+// silently - the view never appears in the workbench. On failure (or when
+// MountainClient is still null), log and schedule exactly one retry on the
+// next `extensionHostInitialized` emit (the event Extension/Host/Handler.ts
+// fires once the gRPC link is live), with a 2s timer fallback in case that
+// event has already fired.
+const SendTreeRegister = (
+	Context: HandlerContext,
+
+	Handle: number,
+
+	ViewId: string,
+
+	Options: Record<string, unknown>,
+) => {
+	const Attempt = (): Promise<unknown> =>
+		Context.MountainClient?.sendRequest("tree.register", [
+			Handle,
+
+			ViewId,
+
+			Options,
+		]) ?? Promise.reject(new Error("MountainClient unavailable"));
+
+	Attempt().catch((Error: unknown) => {
+		CocoonDevLog(
+			"window-ns",
+
+			`tree.register failed for view '${ViewId}' (handle ${Handle}); scheduling one retry: ${String(Error)}`,
+		);
+
+		let Retried = false;
+
+		const RetryOnce = () => {
+			if (Retried) return;
+
+			Retried = true;
+
+			Context.Emitter.removeListener(
+				"extensionHostInitialized",
+
+				RetryOnce,
+			);
+
+			clearTimeout(Timer);
+
+			Attempt().catch((RetryError: unknown) => {
+				CocoonDevLog(
+					"window-ns",
+
+					`tree.register retry failed for view '${ViewId}': ${String(RetryError)}`,
+				);
+			});
+		};
+
+		Context.Emitter.once("extensionHostInitialized", RetryOnce);
+
+		const Timer = setTimeout(RetryOnce, 2_000);
+
+		Timer.unref?.();
+	});
+};
 
 const MakeEventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
@@ -466,11 +530,24 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// `onDidChangeSelection`. On dismiss, fires `onDidHide`.
 			const AcceptListeners: Array<() => void> = [];
 
+			// Distinct listener arrays: `onDidChangeActive` tracks the
+			// focused/cursor item, `onDidChangeSelection` the confirmed
+			// pick - VS Code semantics treat these as separate events.
+			const ActiveListeners: Array<(items: unknown[]) => void> = [];
+
 			const SelectionListeners: Array<(items: unknown[]) => void> = [];
 
 			const HideListeners: Array<() => void> = [];
 
 			const ValueListeners: Array<(value: string) => void> = [];
+
+			const FireActive = (Items: unknown[]) => {
+				for (const L of ActiveListeners) {
+					try {
+						L(Items);
+					} catch {}
+				}
+			};
 
 			const State = {
 				value: "",
@@ -538,6 +615,14 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							const PickedArr = Array.isArray(Picked)
 								? Picked
 								: [Picked];
+
+							// The round-trip returns only the confirmed
+							// pick; no richer cursor data is available, so
+							// the picked items double as the final active
+							// items before selection fires.
+							State.activeItems = PickedArr;
+
+							FireActive(PickedArr);
 
 							State.selectedItems = PickedArr;
 
@@ -627,7 +712,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					return Sub;
 				};
 
-			return Object.assign(State, {
+			const QuickPick = Object.assign(State, {
 				show: Show,
 				hide: () => {
 					for (const L of HideListeners) {
@@ -639,12 +724,35 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				dispose: () => {},
 				onDidAccept: MakeEventNoArg(AcceptListeners),
 				onDidChangeValue: MakeEvent<string>(ValueListeners),
-				onDidChangeActive: MakeEvent<unknown[]>(SelectionListeners),
+				onDidChangeActive: MakeEvent<unknown[]>(ActiveListeners),
 				onDidChangeSelection: MakeEvent<unknown[]>(SelectionListeners),
 				onDidTriggerButton: () => ({ dispose: () => {} }),
 				onDidTriggerItemButton: () => ({ dispose: () => {} }),
 				onDidHide: MakeEventNoArg(HideListeners),
 			});
+
+			// Assigning `items` resets the active item to the first entry
+			// and fires `onDidChangeActive` (VS Code semantics).
+			let ItemsBacking = State.items;
+
+			Object.defineProperty(QuickPick, "items", {
+				configurable: true,
+
+				enumerable: true,
+
+				get: () => ItemsBacking,
+
+				set: (Next: unknown[]) => {
+					ItemsBacking = Array.isArray(Next) ? Next : [];
+
+					State.activeItems =
+						ItemsBacking.length > 0 ? [ItemsBacking[0]] : [];
+
+					FireActive(State.activeItems);
+				},
+			});
+
+			return QuickPick;
 		},
 
 		createInputBox: () => {
@@ -1438,13 +1546,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					manageCheckboxStateManually:
 						Options?.manageCheckboxStateManually === true,
 				};
-				Context.MountainClient?.sendRequest("tree.register", [
-					Handle,
-
-					Id,
-
-					SerializableOptions,
-				]).catch(() => {});
+				SendTreeRegister(Context, Handle, Id, SerializableOptions);
 
 				// Subscribe to provider's `onDidChangeTreeData` event so
 				// the workbench's tree refreshes when the extension fires
@@ -1580,13 +1682,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = NextProviderHandle();
 			TreeDataProviders.set(String(Handle), Provider);
 			TreeDataProvidersByViewId.set(ViewId, Provider);
-			Context.MountainClient?.sendRequest("tree.register", [
-				Handle,
-
-				ViewId,
-
-				{},
-			]).catch(() => {});
+			SendTreeRegister(Context, Handle, ViewId, {});
 
 			// Subscribe to the provider's `onDidChangeTreeData` event.
 			// Extensions fire this through their own `EventEmitter` when

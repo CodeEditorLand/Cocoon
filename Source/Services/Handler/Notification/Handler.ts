@@ -616,6 +616,143 @@ const BuildTextDocumentShim = (
 };
 
 /**
+ * Run all `workspace.onWillSaveTextDocument` listeners for a willSave
+ * payload and collect the TextEdits their `waitUntil` thenables resolve to.
+ *
+ * Serves two callers:
+ * - the `document.willSave` / `$acceptWillSaveDocument` NOTIFICATION case
+ *   (fire-and-forget back-compat path that pushes edits to Mountain via
+ *   `window.applyTextEdits`), and
+ * - the `$willSaveDocument` REQUEST route (RequestRoutingHandler) whose
+ *   response carries the edits so Mountain can apply them BEFORE persisting.
+ *
+ * A 1.5s overall budget caps the listener thenables (VS Code's
+ * `ExtHostDocumentSaveParticipant` timeout); on overrun the edits collected
+ * so far are dropped and `[]` is returned so the save is never blocked.
+ */
+export const CollectWillSaveDocumentEdits = async (
+	Context: HandlerContext | undefined,
+
+	DocumentContentCache: Map<string, string>,
+
+	Parameters: any,
+
+	WorkspaceEventEmitter?: EventEmitter,
+): Promise<{ Uri: string; Edits: unknown[] }> => {
+	const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+
+	const Uri: string = Payload?.uri ?? Payload?.Uri ?? "";
+
+	const Reason = Payload?.reason ?? Payload?.Reason ?? 1; // 1=Manual
+
+	const Listeners: ((...A: any[]) => any)[] =
+		(Context as any)?.__willSaveListeners ?? [];
+
+	const Edits: unknown[] = [];
+
+	if (Listeners.length > 0 && Uri) {
+		const Doc = {
+			uri: {
+				toString: () => Uri,
+				fsPath: Uri.replace(/^file:\/\//, ""),
+				scheme: "file",
+			},
+			fileName: Uri.replace(/^file:\/\//, ""),
+			languageId: "plaintext",
+
+			version: 1,
+
+			isDirty: true,
+
+			isClosed: false,
+
+			isUntitled: false,
+
+			getText: () => DocumentContentCache.get(Uri) ?? "",
+
+			save: async () => true,
+		};
+
+		const WillSaveThenables: Promise<any>[] = [];
+
+		const Event = {
+			document: Doc,
+
+			reason: Reason,
+
+			// Collect thenables so we can await them all before any edit
+			// is handed back. This ensures all `waitUntil(promise)` calls
+			// in the same save cycle complete before any edit is applied,
+			// matching VS Code's `ExtHostDocuments.$acceptWillSaveDocument`
+			// ordering.
+			waitUntil: (Thenable: Promise<any>) => {
+				WillSaveThenables.push(
+					Promise.resolve(Thenable).catch(() => undefined),
+				);
+			},
+		};
+
+		for (const Listener of Listeners) {
+			try {
+				Listener(Event);
+			} catch {
+				/* never block save */
+			}
+		}
+
+		// Emit before awaiting the thenables so emitter subscribers see
+		// the event at the same point in the save cycle as before this
+		// path could be awaited (the notification case used to emit
+		// synchronously right after invoking the listeners).
+		if (WorkspaceEventEmitter) {
+			SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
+				uri: Uri,
+				reason: Reason,
+			});
+		}
+
+		if (WillSaveThenables.length > 0) {
+			const Settled = await Promise.race([
+				Promise.allSettled(WillSaveThenables),
+
+				new Promise<undefined>((Resolve) => {
+					const Timer = setTimeout(() => Resolve(undefined), 1_500);
+
+					(Timer as any).unref?.();
+				}),
+			]);
+
+			if (Settled === undefined) {
+				CocoonDevLog(
+					"workspace",
+
+					`[NotificationHandler] willSave listeners for ${Uri} exceeded 1.5s budget; saving without their edits`,
+				);
+			} else {
+				for (const R of Settled) {
+					if (
+						R.status === "fulfilled" &&
+						Array.isArray(R.value) &&
+						R.value.length > 0
+					) {
+						Edits.push(...R.value);
+					}
+				}
+			}
+		}
+	}
+
+	if (WorkspaceEventEmitter && (Listeners.length === 0 || !Uri)) {
+		SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
+			uri: Uri,
+			reason: Reason,
+		});
+	}
+
+	return { Uri, Edits };
+};
+
+/**
  * Handle specific notification types by routing to domain handlers.
  * DocumentContentHandler methods are passed directly to avoid circular imports.
  * WorkspaceEventEmitter is forwarded to document handlers for event emission.
@@ -1152,87 +1289,26 @@ const HandleSpecificNotification = (
 		// `window.applyTextEdits` so they are applied before disk-write.
 		case "document.willSave":
 		case "$acceptWillSaveDocument": {
-			const Payload = Array.isArray(Parameters)
-				? Parameters[0]
-				: Parameters;
-			const Uri = Payload?.uri ?? Payload?.Uri ?? "";
-			const Reason = Payload?.reason ?? Payload?.Reason ?? 1; // 1=Manual
-			const Listeners: ((...A: any[]) => any)[] =
-				(Context as any).__willSaveListeners ?? [];
-			if (Listeners.length > 0 && Uri) {
-				const Doc = {
-					uri: {
-						toString: () => Uri,
-						fsPath: Uri.replace(/^file:\/\//, ""),
-						scheme: "file",
-					},
-					fileName: Uri.replace(/^file:\/\//, ""),
-					languageId: "plaintext",
+			// Fire-and-forget back-compat path: collect the listeners'
+			// waitUntil edits and push them to Mountain. Saves routed
+			// through the `$willSaveDocument` REQUEST instead get the
+			// edits in the response (see RequestRoutingHandler) so
+			// Mountain can apply them BEFORE persisting.
+			void CollectWillSaveDocumentEdits(
+				Context,
 
-					version: 1,
+				DocumentContentCache,
 
-					isDirty: true,
+				Parameters,
 
-					isClosed: false,
-
-					isUntitled: false,
-
-					getText: () => DocumentContentCache.get(Uri) ?? "",
-
-					save: async () => true,
-				};
-				const WillSaveThenables: Promise<any>[] = [];
-				const Event = {
-					document: Doc,
-
-					reason: Reason,
-
-					// Collect thenables so we can await them all before
-					// forwarding edits to Mountain. This ensures all
-					// `waitUntil(promise)` calls in the same save cycle
-					// complete before any edit is applied, matching VS Code's
-					// `ExtHostDocuments.$acceptWillSaveDocument` ordering.
-					waitUntil: (Thenable: Promise<any>) => {
-						WillSaveThenables.push(
-							Promise.resolve(Thenable).catch(() => undefined),
-						);
-					},
-				};
-				for (const Listener of Listeners) {
-					try {
-						Listener(Event);
-					} catch {
-						/* never block save */
-					}
+				WorkspaceEventEmitter,
+			).then(({ Uri, Edits }) => {
+				if (Edits.length > 0 && Uri) {
+					Context?.SendToMountain("window.applyTextEdits", {
+						uri: Uri,
+						edits: Edits,
+					}).catch(() => {});
 				}
-				// Await all thenables, then batch any returned TextEdits back
-				// to Mountain in one `window.applyTextEdits` call per URI.
-				if (WillSaveThenables.length > 0 && Uri) {
-					Promise.allSettled(WillSaveThenables).then((Results) => {
-						const AllEdits: unknown[] = [];
-
-						for (const R of Results) {
-							if (
-								R.status === "fulfilled" &&
-								Array.isArray(R.value) &&
-								R.value.length > 0
-							) {
-								AllEdits.push(...R.value);
-							}
-						}
-
-						if (AllEdits.length > 0) {
-							Context?.SendToMountain("window.applyTextEdits", {
-								uri: Uri,
-								edits: AllEdits,
-							}).catch(() => {});
-						}
-					});
-				}
-			}
-			SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
-				uri: Uri,
-				reason: Reason,
 			});
 			break;
 		}

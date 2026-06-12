@@ -481,63 +481,68 @@ const makeBootstrap = (): BootstrapService => ({
 
 		const { skipHealthCheck = false } = options ?? {};
 
-		// Stages grouped by dependency: stages inside a group are
-		// independent and run via Promise.all; groups run in order.
-		// RPCServer ∥ ModuleInterceptor (independent); MountainConnection
-		// requires RPCServer to be bound first.
-		const stageGroups: Array<Array<[string, () => Promise<StageResult>]>> =
-			[
-				[["Environment", stage1_Environment]],
-				[["Configuration", stage2_Configuration]],
-				[
-					["RPCServer", stage5_RPCServer],
-					["ModuleInterceptor", stage4_ModuleInterceptor],
-				],
-				[["MountainConnection", stage3_MountainConnection]],
-				[["Extensions", stage6_Extensions]],
-				...(skipHealthCheck
-					? []
-					: [
-							[
-								["HealthCheck", stage7_HealthCheck] as [
-									string,
-
-									() => Promise<StageResult>,
-								],
-							],
-						]),
-			];
-
 		const results: StageResult[] = [];
 
-		for (const Group of stageGroups) {
-			const GroupResults = await Promise.all(
-				Group.map(([StageName, stageFn]) =>
-					runStage(StageName, stageFn),
-				),
+		results.push(await runStage("Environment", stage1_Environment));
+
+		results.push(await runStage("Configuration", stage2_Configuration));
+
+		// RPCServer ∥ ModuleInterceptor are independent. MountainConnection
+		// needs only the RPCServer to be bound - chain it on that stage's
+		// promise so the connect attempt starts the moment the server
+		// settles instead of waiting for ModuleInterceptor too. Extension
+		// activation is NOT gated on stage order: Mountain drives it via
+		// `InitializeExtensionHost` / `$activateByEvent` over the gRPC
+		// server (stage6 below only logs the delegation).
+		const RpcServerPromise = runStage("RPCServer", stage5_RPCServer);
+
+		// runStage never rejects (errors become `success: false`), so this
+		// chain cannot produce an unhandled rejection.
+		const MountainConnectionPromise: Promise<StageResult> =
+			RpcServerPromise.then((RpcResult) =>
+				RpcResult.success
+					? runStage("MountainConnection", stage3_MountainConnection)
+					: {
+							stageName: "MountainConnection",
+
+							success: false,
+
+							duration: 0,
+
+							error: new Error("Skipped: RPCServer stage failed"),
+						},
 			);
 
-			results.push(...GroupResults);
+		const [RpcResult, InterceptorResult] = await Promise.all([
+			RpcServerPromise,
 
-			// An unreachable gRPC server makes Cocoon an orphan Mountain
-			// can never contact; exit instead of lingering degraded.
-			const RpcFailure = GroupResults.find(
-				(r) => r.stageName === "RPCServer" && !r.success,
+			runStage("ModuleInterceptor", stage4_ModuleInterceptor),
+		]);
+
+		results.push(RpcResult, InterceptorResult);
+
+		// An unreachable gRPC server makes Cocoon an orphan Mountain
+		// can never contact; exit instead of lingering degraded.
+		if (!RpcResult.success) {
+			CocoonDevLog(
+				"bootstrap",
+
+				`[Bootstrap] FATAL: RPCServer stage failed (${RpcResult.error?.message ?? "unknown error"}); exiting to avoid orphan Cocoon`,
 			);
 
-			if (RpcFailure) {
-				CocoonDevLog(
-					"bootstrap",
+			process.stderr.write(
+				`[LandFix:Bootstrap] FATAL: RPCServer stage failed (${RpcResult.error?.message ?? "unknown error"}); exiting\n`,
+			);
 
-					`[Bootstrap] FATAL: RPCServer stage failed (${RpcFailure.error?.message ?? "unknown error"}); exiting to avoid orphan Cocoon`,
-				);
+			process.exit(1);
+		}
 
-				process.stderr.write(
-					`[LandFix:Bootstrap] FATAL: RPCServer stage failed (${RpcFailure.error?.message ?? "unknown error"}); exiting\n`,
-				);
+		results.push(await MountainConnectionPromise);
 
-				process.exit(1);
-			}
+		results.push(await runStage("Extensions", stage6_Extensions));
+
+		if (!skipHealthCheck) {
+			results.push(await runStage("HealthCheck", stage7_HealthCheck));
 		}
 
 		const allSuccess = results.every((r) => r.success);

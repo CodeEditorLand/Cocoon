@@ -24,6 +24,29 @@ const enum StatusBarAlignment {
 	Right = 2,
 }
 
+// Upstream allows only these two background colors on a StatusBarItem;
+// each forces the paired foreground so text stays legible on the
+// error/warning fill.
+const PairedStatusBarForeground: Record<string, string> = {
+	"statusBarItem.errorBackground": "statusBarItem.errorForeground",
+
+	"statusBarItem.warningBackground": "statusBarItem.warningForeground",
+};
+
+const ThemeColorId = (Value: unknown): string | undefined => {
+	const Id = (Value as { id?: unknown } | null)?.id;
+
+	return typeof Id === "string" ? Id : undefined;
+};
+
+const SerializeColor = (Value: unknown): unknown => {
+	if (typeof Value === "string") return Value;
+
+	const Id = ThemeColorId(Value);
+
+	return Id === undefined ? undefined : { id: Id };
+};
+
 const ResolveOverload = (
 	FirstArg: unknown,
 
@@ -123,6 +146,8 @@ export default (
 						}
 					: undefined;
 
+		const BackgroundId = ThemeColorId(CurrentBackgroundColor);
+
 		Context.SendToMountain("statusBar.update", {
 			handle: Handle,
 			id: Id,
@@ -131,8 +156,12 @@ export default (
 			text: CurrentText,
 			tooltip: CurrentTooltip,
 			command: NormalisedCommand,
-			backgroundColor: CurrentBackgroundColor,
-			color: CurrentColor,
+			backgroundColor:
+				BackgroundId === undefined ? undefined : { id: BackgroundId },
+			color:
+				BackgroundId === undefined
+					? SerializeColor(CurrentColor)
+					: { id: PairedStatusBarForeground[BackgroundId] },
 			visible: true,
 			name: CurrentName,
 			accessibilityInformation: CurrentAccessibility,
@@ -198,7 +227,12 @@ export default (
 		set backgroundColor(Value: unknown) {
 			if (Disposed) return;
 
-			CurrentBackgroundColor = Value;
+			const Id = ThemeColorId(Value);
+
+			CurrentBackgroundColor =
+				Id !== undefined && Id in PairedStatusBarForeground
+					? Value
+					: undefined;
 
 			Push();
 		},

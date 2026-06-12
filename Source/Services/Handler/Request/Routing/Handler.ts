@@ -746,6 +746,41 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	};
 
 	// -----------------------------------------------------------------------
+	// willSave-as-REQUEST. Mountain calls `$willSaveDocument` BEFORE
+	// persisting a document; the response carries the TextEdits collected
+	// from `workspace.onWillSaveTextDocument` waitUntil thenables so
+	// Mountain can apply them and only then write to disk. The legacy
+	// `document.willSave` / `$acceptWillSaveDocument` NOTIFICATION path
+	// stays alive in NotificationHandler for back-compat (fire-and-forget
+	// `window.applyTextEdits`).
+	// -----------------------------------------------------------------------
+
+	RoutePatterns["^\\$willSaveDocument$"] = async (
+		_Method: string,
+
+		Params: any,
+	) => {
+		const Context = (globalThis as any).__cocoonGRPCContext;
+
+		if (!Context) return [];
+
+		const { CollectWillSaveDocumentEdits } =
+			await import("../../Notification/Handler.js");
+
+		const { Edits } = await CollectWillSaveDocumentEdits(
+			Context,
+
+			Context.DocumentContentCache ?? new Map(),
+
+			Params,
+
+			Context.WorkspaceEventEmitter,
+		);
+
+		return Edits;
+	};
+
+	// -----------------------------------------------------------------------
 	// VS Code feature channel routes - Mountain defers these to Cocoon via
 	// NodeDeferred path (TierIPC=NodeDeferred/Node in .env.Land). Each
 	// wraps the existing vscode.* API shim namespace implementations so

@@ -9,6 +9,7 @@
 
 import LandFixLog from "../../../../Utility/Land/Fix/Log.js";
 import type { HandlerContext } from "../../Handler/Context.js";
+import { ToUri as StockToUri } from "../Stock/Lift.js";
 import WrapEnvNamespace from "../Wrap/Env/Namespace.js";
 
 const CreateEnvNamespace = (Context: HandlerContext) => {
@@ -139,7 +140,13 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 
 		isAppPortable: false,
 
-		isTelemetryEnabled: false,
+		// Mountain's init payload carries no telemetry-enablement field
+		// today; honour it if/when one appears, otherwise telemetry is
+		// off by default.
+		isTelemetryEnabled:
+			typeof Env["isTelemetryEnabled"] === "boolean"
+				? (Env["isTelemetryEnabled"] as boolean)
+				: false,
 
 		onDidChangeTelemetryEnabled: () => ({ dispose: () => {} }),
 
@@ -277,7 +284,54 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		},
 
 		openExternal: async (Target: unknown): Promise<boolean> => {
-			const Url = typeof Target === "string" ? Target : String(Target);
+			// Accept every URI shape extensions hand us: plain string,
+			// real `vscode.Uri`, URI-like `{ scheme, path }` POJO, and the
+			// underscore-serialized wire form (`_scheme` / `_path`).
+			// `String(POJO)` yields "[object Object]" which Mountain would
+			// pass straight to the OS opener.
+			const Hydrate = (Raw: unknown): string => {
+				if (typeof Raw === "string") return Raw;
+
+				const Direct = StockToUri(Raw);
+
+				if (Direct) return Direct.toString();
+
+				const Record = (Raw ?? {}) as Record<string, unknown>;
+
+				const Component = (Key: string): string => {
+					const Plain = Record[Key];
+
+					if (typeof Plain === "string") return Plain;
+
+					const Serialized = Record[`_${Key}`];
+
+					return typeof Serialized === "string" ? Serialized : "";
+				};
+
+				const Shape = {
+					scheme: Component("scheme"),
+
+					authority: Component("authority"),
+
+					path: Component("path"),
+
+					query: Component("query"),
+
+					fragment: Component("fragment"),
+				};
+
+				if (Shape.scheme.length === 0) return String(Raw);
+
+				const Rehydrated = StockToUri(Shape);
+
+				return Rehydrated
+					? Rehydrated.toString()
+					: `${Shape.scheme}://${Shape.authority}${Shape.path}${
+							Shape.query ? `?${Shape.query}` : ""
+						}${Shape.fragment ? `#${Shape.fragment}` : ""}`;
+			};
+
+			const Url = Hydrate(Target);
 
 			const OkFromMountain = await Call<boolean>(
 				"NativeHost.OpenExternal",
@@ -335,7 +389,58 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			}
 		},
 
-		asExternalUri: async (Target: unknown) => Target,
+		// Local desktop host: no tunnel rewriting needed, but the return
+		// value must stringify as a real URL - extensions embed
+		// `(await asExternalUri(u)).toString()` in OAuth redirect URLs,
+		// and a POJO yields `[object Object]`.
+		asExternalUri: async (Target: unknown) => {
+			const Direct = StockToUri(Target);
+
+			if (Direct) return Direct;
+
+			const Raw = (Target ?? {}) as Record<string, unknown>;
+
+			const Component = (Key: string): string => {
+				const Plain = Raw[Key];
+
+				if (typeof Plain === "string") return Plain;
+
+				const Serialized = Raw[`_${Key}`];
+
+				return typeof Serialized === "string" ? Serialized : "";
+			};
+
+			const Shape = {
+				scheme: Component("scheme"),
+
+				authority: Component("authority"),
+
+				path: Component("path"),
+
+				query: Component("query"),
+
+				fragment: Component("fragment"),
+			};
+
+			const Rehydrated = StockToUri(Shape);
+
+			if (Rehydrated) return Rehydrated;
+
+			LandFixLog.Warn(
+				"EnvNs",
+
+				"asExternalUri could not hydrate input; returning shaped fallback",
+			);
+
+			return {
+				...Shape,
+
+				toString: () =>
+					`${Shape.scheme}://${Shape.authority}${Shape.path}${
+						Shape.query ? `?${Shape.query}` : ""
+					}${Shape.fragment ? `#${Shape.fragment}` : ""}`,
+			};
+		},
 
 		createTelemetryLogger: (_Sender: unknown, _Options?: unknown) => ({
 			isUsageEnabled: false,
