@@ -19,10 +19,10 @@
 
 # **Cocoon** 🦋 Deep Dive & Architecture
 
-**Cocoon** provides the technical foundation for implementing VSCode
-extension host compatibility within the Land project. **Cocoon** serves as the
-Node.js sidecar that provides high-fidelity VSCode extension API compatibility
-through plain `async/await` service implementations and gRPC communication with
+**Cocoon** provides the technical foundation for implementing VSCode extension
+host compatibility within the Land project. **Cocoon** serves as the Node.js
+sidecar that provides high-fidelity VSCode extension API compatibility through
+plain `async/await` service implementations and gRPC communication with
 Mountain.
 
 ---

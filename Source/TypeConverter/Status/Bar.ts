@@ -6,14 +6,11 @@
 import type { Command, StatusBarItem as VSCodeStatusBarItem } from "vscode";
 
 import { MarkdownString, ThemeColor } from "../../Platform/VSCode/Type.js";
-
 import type { Command as CommandConverter } from "../Command.js";
-
 import { FromAPI as MarkdownStringFromAPI } from "../Main/Markdown/String.js";
 
 // Placeholder DTO, matching VS Code's internal structure.
 interface IStatusbarEntry {
-
 	id: string;
 
 	name: string | undefined;
@@ -52,7 +49,6 @@ export const FromAPI = (
 
 	CommandConverter: CommandConverter,
 ): IStatusbarEntry => {
-
 	return {
 		id: EntryId,
 
@@ -65,12 +61,10 @@ export const FromAPI = (
 				? From.tooltip
 				: From.tooltip instanceof MarkdownString
 					? MarkdownStringFromAPI(From.tooltip)
-
 					: undefined,
 
 		command: From.command
 			? CommandConverter.ToInternal(From.command as Command, [])
-
 			: undefined,
 
 		priority: From.priority,

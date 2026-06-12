@@ -4,7 +4,6 @@
  * Real types are in Source/Generated/Vine.ts.
  */
 export interface EchoAction {
-
 	readonly ActionId: string;
 
 	readonly ActionType: string;
@@ -13,7 +12,6 @@ export interface EchoAction {
 }
 
 export interface EchoActionResponse {
-
 	readonly ActionId: string;
 
 	readonly Success: boolean;
@@ -24,14 +22,12 @@ export interface EchoActionResponse {
 }
 
 export interface RegisterExtensionHostRequest {
-
 	readonly HostId: string;
 
 	readonly ProcessId: number;
 }
 
 export interface RegisterExtensionHostResponse {
-
 	readonly Accepted: boolean;
 
 	readonly SessionId: string;

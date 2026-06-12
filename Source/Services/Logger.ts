@@ -41,7 +41,6 @@ import { Context, Effect, Ref } from "effect";
  * Specification: src/vs/base/common/log.js (ILogger)
  */
 export interface Logger {
-
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]

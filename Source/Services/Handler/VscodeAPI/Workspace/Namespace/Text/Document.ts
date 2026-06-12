@@ -9,11 +9,8 @@
 import { promises as FsPromises } from "node:fs";
 
 import type { HandlerContext } from "../../../../Handler/Context.js";
-
 import { ExtractFsPath, Route } from "../File/System/Route.js";
-
 import { Call, EventSubscriber } from "../Helpers.js";
-
 import {
 	DeriveLanguageIdFromUri,
 	FireOnLanguageActivation,
@@ -21,7 +18,6 @@ import {
 
 export const BuildOpenTextDocument =
 	(Context: HandlerContext) => async (UriOrPath: any) => {
-
 		// Handle `openTextDocument({ language, content })` - creates an untitled
 		// document with pre-populated content and the specified language.
 		// VS Code's overload: `openTextDocument(options: { language?: string, content?: string })`.
@@ -48,7 +44,6 @@ export const BuildOpenTextDocument =
 
 			// Add to workspace.textDocuments so extensions iterating all open docs see it.
 			if (!Array.isArray((Context as any).__textDocuments))
-
 				(Context as any).__textDocuments = [];
 
 			const UriShape = {
@@ -73,14 +68,12 @@ export const BuildOpenTextDocument =
 
 			const PositionAt = (Off: number) => {
 				let Lo = 0,
-
 					Hi = LineStarts.length - 1;
 
 				while (Lo < Hi) {
 					const Mid = (Lo + Hi + 1) >>> 1;
 
 					if (LineStarts[Mid]! <= Off) Lo = Mid;
-
 					else Hi = Mid - 1;
 				}
 
@@ -228,7 +221,6 @@ export const BuildOpenTextDocument =
 					let O = 0;
 
 					for (let I = 0; I < (P?.line ?? 0); I++)
-
 						O += (ULines[I]?.length ?? 0) + 1;
 
 					return O + (P?.character ?? 0);
@@ -316,7 +308,6 @@ export const BuildOpenTextDocument =
 			// (no gRPC, no 10s timeout on miss).
 			const Scheme = (() => {
 				if (typeof UriOrPath === "object" && (UriOrPath as any)?.scheme)
-
 					return String((UriOrPath as any).scheme);
 
 				if (typeof UriString === "string") {
@@ -349,7 +340,6 @@ export const BuildOpenTextDocument =
 						const API = (globalThis as any).__cocoonVscodeAPI;
 
 						if (API?.Uri && UriString)
-
 							ProviderUri = API.Uri.parse(UriString);
 					} catch {}
 
@@ -472,7 +462,6 @@ export const BuildOpenTextDocument =
 				const Mid = (Lo + Hi + 1) >>> 1;
 
 				if (LineStarts[Mid]! <= Clamped) Lo = Mid;
-
 				else Hi = Mid - 1;
 			}
 
@@ -528,7 +517,6 @@ export const BuildOpenTextDocument =
 					end:
 						Clamped < Lines.length - 1
 							? { line: Clamped + 1, character: 0 }
-
 							: End,
 				},
 
@@ -640,7 +628,6 @@ export const BuildOpenTextDocument =
 
 export const BuildSaveAll =
 	(Context: HandlerContext) => async (_IncludeUntitled?: boolean) => {
-
 		// Route through Workspace.SaveAll which dispatches to Sky's
 		// `sky://workspace/saveAll` handler (round-trip via workbench command).
 		try {
@@ -667,7 +654,6 @@ export const BuildApplyEdit =
 
 		_Metadata?: { isRefactoring?: boolean; label?: string },
 	): Promise<boolean> => {
-
 		// Route through Mountain's `applyEdit` Track effect which does a
 		// round-trip to Sky so the edit is applied to the Monaco model
 		// before the extension's awaited promise resolves. Using
@@ -714,13 +700,11 @@ export const BuildUpdateWorkspaceFolders =
 		DeleteCount: number | null | undefined,
 		...ToAdd: Array<{ uri?: unknown; name?: string }>
 	) => {
-
 		const Current = ReadFolders();
 
 		const RemoveCount =
 			typeof DeleteCount === "number" && DeleteCount > 0
 				? Math.min(DeleteCount, Math.max(Current.length - Start, 0))
-
 				: 0;
 
 		const Removals = Current.slice(Start, Start + RemoveCount).map(

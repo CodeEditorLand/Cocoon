@@ -18,15 +18,12 @@ import {
 	MESSAGE_HEADER_MAGIC,
 	PROTOCOL_VERSION,
 } from "../Constants.js";
-
 import {
 	CompressionHint,
 	type IMessage,
 	type ISerializationResult,
 } from "../Types.js";
-
 import { ValidateMessage } from "../Validation.js";
-
 import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
@@ -41,7 +38,6 @@ import VSBuffer from "../VSBuffer.js";
  * @returns ISerializationResult with success/failure information
  */
 export default (Message: IMessage): ISerializationResult => {
-
 	const Warnings: string[] = [];
 
 	let OriginalSize = 0;

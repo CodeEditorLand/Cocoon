@@ -8,15 +8,12 @@
  */
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
-
 import type { HandlerContext } from "../../Handler/Context.js";
-
 import WrapAuthenticationNamespace from "../Wrap/Authentication/Namespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
-
 		Context.Emitter.on(EventName, Listener);
 
 		return {
@@ -75,15 +72,12 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 							Context.Emitter.emit("auth.didChangeSessions", {
 								provider: { id: ProviderId, label: Label },
 								added: Array.isArray(Event?.added)
-
 									? Event.added
 									: [],
 								removed: Array.isArray(Event?.removed)
-
 									? Event.removed
 									: [],
 								changed: Array.isArray(Event?.changed)
-
 									? Event.changed
 									: [],
 							});
@@ -141,7 +135,6 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 			},
 		): Promise<unknown> => {
 			const ScopeList: string[] = Array.isArray(Scopes)
-
 				? [...Scopes]
 				: typeof Scopes === "string"
 					? [Scopes]
@@ -161,7 +154,6 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 							Scopes: readonly string[],
 						) => Promise<unknown>;
 				  }
-
 				| undefined;
 
 			if (Provider && typeof Provider.getSessions === "function") {
@@ -194,7 +186,6 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 								const SessionScopes: unknown[] = Array.isArray(
 									Session?.scopes,
 								)
-
 									? Session.scopes
 									: [];
 

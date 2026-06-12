@@ -22,15 +22,11 @@
  */
 
 import { promises as FsPromises } from "node:fs";
-
 import { dirname as PathDirname } from "node:path";
 
 import type { HandlerContext } from "../../../../../Handler/Context.js";
-
 import { ToUri as StockToUri } from "../../../../Stock/Lift.js";
-
 import { Call } from "../../Helpers.js";
-
 import {
 	ExtractFsPath,
 	ExtractScheme,
@@ -61,7 +57,6 @@ import {
  *      Mountain will reject "[object Object]" with a clear error).
  */
 const UriToString = (Value: unknown): string => {
-
 	if (Value == null) return "";
 
 	if (typeof Value === "string") {
@@ -135,7 +130,6 @@ const UriToString = (Value: unknown): string => {
 };
 
 type StatShape = {
-
 	readonly type: number;
 
 	readonly size: number;
@@ -146,7 +140,6 @@ type StatShape = {
 };
 
 const FileType = {
-
 	Unknown: 0,
 
 	File: 1,
@@ -163,7 +156,6 @@ const LogRoute = (
 
 	Decision: FileSystemRoute,
 ): void => {
-
 	// Per-call route decision - 14k+ lines per session under a normal
 	// extension activation (svelte's `detect` alone reads thousands of
 	// files). Gate under the explicit `fs-route` tag so the default
@@ -179,7 +171,6 @@ const LogRoute = (
 };
 
 const ThrowFileNotFound = (Uri: unknown): never => {
-
 	const Api = (globalThis as any).__cocoonVscodeAPI;
 
 	const FileNotFound = Api?.FileSystemError?.FileNotFound;
@@ -209,10 +200,8 @@ const MetadataToStat = (Metadata: {
 	ctimeMs: number;
 }): StatShape => ({
 	type: Metadata.isSymbolicLink()
-
 		? FileType.SymbolicLink
 		: Metadata.isDirectory()
-
 			? FileType.Directory
 			: FileType.File,
 
@@ -289,7 +278,6 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			if (Raw == null) return Buffer.alloc(0);
 
 			if (Array.isArray(Raw))
-
 				return Buffer.from(Raw as readonly number[]);
 
 			if (Raw instanceof Uint8Array) return Buffer.from(Raw);
@@ -387,10 +375,8 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 
 				return Entries.map((Entry) => {
 					const Type = Entry.isSymbolicLink()
-
 						? FileType.SymbolicLink
 						: Entry.isDirectory()
-
 							? FileType.Directory
 							: FileType.File;
 

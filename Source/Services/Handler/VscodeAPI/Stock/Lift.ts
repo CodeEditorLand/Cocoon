@@ -46,7 +46,6 @@ import {
 	match as StockGlobMatch,
 	parse as StockGlobParse,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/glob.js";
-
 import {
 	basename as StockBasename,
 	dirname as StockDirname,
@@ -55,7 +54,6 @@ import {
 	joinPath as StockJoinPath,
 	relativePath as StockRelativePath,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
-
 import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 
 /**
@@ -67,7 +65,6 @@ import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/comm
  * during a fallback that already has a safe no-op return).
  */
 export function ToUri(Input: unknown): URI | undefined {
-
 	if (Input == null) return undefined;
 
 	if (Input instanceof URI) return Input;
@@ -141,7 +138,6 @@ export function ToUri(Input: unknown): URI | undefined {
  * descendant of `from`.
  */
 export function RelativePath(From: unknown, To: unknown): string | undefined {
-
 	const FromUri = ToUri(From);
 
 	const ToUriValue = ToUri(To);
@@ -163,7 +159,6 @@ export function IsEqualOrParent(
 
 	Candidate: unknown,
 ): boolean {
-
 	const R = ToUri(Resource);
 
 	const C = ToUri(Candidate);
@@ -179,21 +174,18 @@ export function IsEqualOrParent(
  * implementations.
  */
 export function Basename(Resource: unknown): string {
-
 	const U = ToUri(Resource);
 
 	return U ? StockBasename(U) : "";
 }
 
 export function Dirname(Resource: unknown): URI | undefined {
-
 	const U = ToUri(Resource);
 
 	return U ? StockDirname(U) : undefined;
 }
 
 export function Extname(Resource: unknown): string {
-
 	const U = ToUri(Resource);
 
 	return U ? StockExtname(U) : "";
@@ -203,7 +195,6 @@ export function JoinPath(
 	Resource: unknown,
 	...Parts: string[]
 ): URI | undefined {
-
 	const U = ToUri(Resource);
 
 	return U ? StockJoinPath(U, ...Parts) : undefined;
@@ -238,14 +229,12 @@ export function GlobMatch(
 
 	Path: string,
 ): boolean {
-
 	return StockGlobMatch(Pattern as any, Path);
 }
 
 export function GlobParsePattern(
 	Pattern: string | { base: string; pattern: string },
 ): (Path: string) => boolean {
-
 	return StockGlobParse(Pattern as any) as unknown as (
 		Path: string,
 	) => boolean;
@@ -254,6 +243,5 @@ export function GlobParsePattern(
 export function GlobIsEmpty(
 	Pattern: string | { base: string; pattern: string },
 ): boolean {
-
 	return StockGlobIsEmpty(Pattern as any);
 }

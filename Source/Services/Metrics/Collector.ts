@@ -4,7 +4,6 @@
  */
 
 export class MetricsCollector {
-
 	private readonly Metrics: Map<string, number> = new Map();
 
 	Record(Name: string, Value: number): void {

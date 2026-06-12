@@ -34,12 +34,10 @@
 import { mkdirSync } from "node:fs";
 
 import { Context, Effect, Ref } from "effect";
-
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
-
 import FiddeeRoot from "../../Platform/FiddeeRoot.js";
 
 /**
@@ -47,7 +45,6 @@ import FiddeeRoot from "../../Platform/FiddeeRoot.js";
  * @description Logger interface for service logging
  */
 export interface Logger {
-
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -73,7 +70,6 @@ export interface Logger {
  * @description Configuration service interface
  */
 export interface Configuration {
-
 	readonly GetValue: <T>(key: string, defaultValue?: T) => T;
 
 	readonly UpdateValue: <T>(key: string, value: T) => Promise<void>;
@@ -88,7 +84,6 @@ export interface Configuration {
  * Specification: src/vs/workbench/api/common/extHostMemento.ts
  */
 export class Memento {
-
 	private readonly Storage: Map<string, unknown>;
 
 	private readonly ExtensionId: string;
@@ -242,7 +237,6 @@ export class Memento {
  * Specification: src/vs/workbench/api/common/extHostSecretStorage.ts
  */
 export class ExtensionSecretStorage {
-
 	private readonly ExtensionId: string;
 
 	private readonly Logger: Logger;
@@ -420,7 +414,6 @@ export class ExtensionSecretStorage {
  * Extension metadata interface
  */
 export interface IExtensionDescription {
-
 	readonly identifier: string;
 
 	readonly displayName?: string;
@@ -446,7 +439,6 @@ export interface IExtensionDescription {
  * Specification: src/vs/workbench/api/common/extHostExtensionActivator.ts (ExtensionContext)
  */
 export interface ExtensionContextService {
-
 	readonly CreateExtensionContext: (
 		ExtensionId: string,
 

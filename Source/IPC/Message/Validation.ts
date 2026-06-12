@@ -9,7 +9,6 @@ import {
 	MAX_BATCH_SIZE,
 	MAX_MESSAGE_SIZE,
 } from "./Constants.js";
-
 import {
 	CompressionHint,
 	type IBatchMessage,
@@ -28,7 +27,6 @@ import {
  * @returns True if valid, false otherwise
  */
 export const ValidateMetadata = (Metadata: MessageMetadata): boolean => {
-
 	if (!Metadata) {
 		return false;
 	}
@@ -72,7 +70,6 @@ export const ValidateMetadata = (Metadata: MessageMetadata): boolean => {
  * @returns True if valid, false otherwise
  */
 export const ValidateMessage = (Message: IMessage): boolean => {
-
 	if (!Message) {
 		return false;
 	}
@@ -107,7 +104,6 @@ export const ValidateMessage = (Message: IMessage): boolean => {
  * @returns True if valid, false otherwise
  */
 export const ValidateBatchMessage = (Batch: IBatchMessage): boolean => {
-
 	if (!Batch) {
 		return false;
 	}

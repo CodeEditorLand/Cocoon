@@ -13,7 +13,6 @@ import { URI } from "../../../Platform/VSCode/Type.js";
  * @returns A `vscode.Uri` or `undefined`.
  */
 export const ToURI = (DTO: any): Uri | undefined => {
-
 	if (!DTO) {
 		return undefined;
 	}
@@ -27,7 +26,6 @@ export const ToURI = (DTO: any): Uri | undefined => {
  * @returns A `Uri[]` or `undefined`.
  */
 export const ToURIArray = (DTOs: any[] | undefined): Uri[] | undefined => {
-
 	if (!DTOs || !Array.isArray(DTOs)) {
 		return undefined;
 	}

@@ -10,7 +10,6 @@ export type Err<E = Error> = { readonly success: false; readonly error: E };
 export type Result<T, E = Error> = Ok<T> | Err<E>;
 
 export const Result = {
-
 	Ok: <T>(Value: T): Ok<T> => ({ success: true, value: Value }),
 
 	Err: <E>(Error: E): Err<E> => ({ success: false, error: Error }),

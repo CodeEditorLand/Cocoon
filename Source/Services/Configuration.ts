@@ -14,19 +14,16 @@
  */
 
 import { CocoonDevLog } from "Dev/Log.js";
-
 import { Effect, Layer } from "effect";
 
 import {
 	IConfigurationService,
 	type ConfigurationChangeEvent,
 } from "../Interfaces/I/Configuration/Service.js";
-
 import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
 
 // Configuration scopes
 enum ConfigurationScope {
-
 	APPLICATION = "APPLICATION",
 
 	WORKSPACE = "WORKSPACE",
@@ -36,7 +33,6 @@ enum ConfigurationScope {
 
 // Configuration value interface
 interface IConfigurationValue<T> {
-
 	key: string;
 
 	value?: T;
@@ -48,7 +44,6 @@ interface IConfigurationValue<T> {
  * ConfigurationService implementation
  */
 export class Configuration implements IConfigurationService {
-
 	readonly _serviceBrand: undefined;
 
 	private configuration: Map<ConfigurationScope, any>;

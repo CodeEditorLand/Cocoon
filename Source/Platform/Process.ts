@@ -40,7 +40,6 @@ import { Effect, Option } from "effect";
  * Process exit status
  */
 export interface ProcessExitStatus {
-
 	code: number | null;
 
 	signal: NodeJS.Signals | null;
@@ -52,7 +51,6 @@ export interface ProcessExitStatus {
  * Process spawn options
  */
 export interface ProcessSpawnOptions {
-
 	cwd?: string;
 
 	env?: Record<string, string>;
@@ -76,7 +74,6 @@ export interface ProcessSpawnOptions {
  * Process monitoring options
  */
 export interface ProcessMonitorOptions {
-
 	heartbeatInterval?: number;
 
 	killTimeout?: number;
@@ -92,7 +89,6 @@ export interface ProcessMonitorOptions {
  * Process information
  */
 export interface ProcessInfo {
-
 	pid: number;
 
 	command: string;
@@ -118,7 +114,6 @@ export interface ProcessInfo {
  * Process signal
  */
 export enum ProcessSignal {
-
 	SIGHUP = "SIGHUP",
 
 	SIGINT = "SIGINT",
@@ -210,7 +205,6 @@ const ProcessRegistry = new Map<number, ProcessInfo>();
  * Check if child_process module is available
  */
 function IsChildProcessAvailable(): boolean {
-
 	try {
 		return typeof require === "function" && require("child_process");
 	} catch {
@@ -222,7 +216,6 @@ function IsChildProcessAvailable(): boolean {
  * Get child_process module
  */
 function GetChildProcessModule(): any {
-
 	if (!IsChildProcessAvailable()) {
 		return null;
 	}
@@ -238,7 +231,6 @@ function GetChildProcessModule(): any {
  * Validate command for security
  */
 export function ValidateCommand(command: string): boolean {
-
 	if (!command || typeof command !== "string") {
 		return false;
 	}
@@ -323,7 +315,6 @@ export async function SpawnProcess(
 
 	options: ProcessSpawnOptions = {},
 ): Promise<ProcessInfo | null> {
-
 	// Security validation
 	if (!ValidateCommand(command)) {
 		console.error("[Process] Invalid command:", command);
@@ -433,7 +424,6 @@ export async function ExecuteCommand(
 
 	options: ProcessSpawnOptions = {},
 ): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
-
 	if (!ValidateCommand(command)) {
 		throw new Error("Invalid command");
 	}
@@ -494,7 +484,6 @@ export async function ForkProcess(
 
 	options: ProcessSpawnOptions = {},
 ): Promise<ProcessInfo | null> {
-
 	const childProcess = GetChildProcessModule();
 
 	if (!childProcess) {
@@ -583,7 +572,6 @@ export function SendSignal(
 
 	signal: NodeJS.Signals | string,
 ): boolean {
-
 	try {
 		process.kill(pid, signal);
 
@@ -607,7 +595,6 @@ export function TerminateProcess(
 
 	timeout: number = DEFAULT_KILL_TIMEOUT,
 ): boolean {
-
 	const processInfo = ProcessRegistry.get(pid);
 
 	if (!processInfo) {
@@ -660,7 +647,6 @@ export function TerminateProcess(
  * Kill process immediately
  */
 export function KillProcess(pid: number): boolean {
-
 	const processInfo = ProcessRegistry.get(pid);
 
 	if (!processInfo) {
@@ -682,7 +668,6 @@ export function KillProcess(pid: number): boolean {
  * Get process information by PID
  */
 export function GetProcess(pid: number): Option.Option<ProcessInfo> {
-
 	const processInfo = ProcessRegistry.get(pid);
 
 	return processInfo ? Option.some(processInfo) : Option.none();
@@ -692,7 +677,6 @@ export function GetProcess(pid: number): Option.Option<ProcessInfo> {
  * Get all managed processes
  */
 export function GetAllProcesses(): ProcessInfo[] {
-
 	return Array.from(ProcessRegistry.values());
 }
 
@@ -700,7 +684,6 @@ export function GetAllProcesses(): ProcessInfo[] {
  * Get running processes
  */
 export function GetRunningProcesses(): ProcessInfo[] {
-
 	return Array.from(ProcessRegistry.values()).filter(
 		(p) => p.status === "running",
 	);
@@ -710,7 +693,6 @@ export function GetRunningProcesses(): ProcessInfo[] {
  * Get stopped processes
  */
 export function GetStoppedProcesses(): ProcessInfo[] {
-
 	return Array.from(ProcessRegistry.values()).filter(
 		(p) => p.status === "stopped" || p.status === "error",
 	);
@@ -720,7 +702,6 @@ export function GetStoppedProcesses(): ProcessInfo[] {
  * Unregister process
  */
 export function UnregisterProcess(pid: number): boolean {
-
 	return ProcessRegistry.delete(pid);
 }
 
@@ -728,7 +709,6 @@ export function UnregisterProcess(pid: number): boolean {
  * Clean up all processes
  */
 export function CleanupAllProcesses(): void {
-
 	const processes = GetRunningProcesses();
 
 	for (const procInfo of processes) {
@@ -746,7 +726,6 @@ export function CleanupAllProcesses(): void {
 function GetMergedEnvironment(
 	additionalEnv?: Record<string, string>,
 ): Record<string, string> {
-
 	const env: Record<string, string> = {};
 
 	// Copy process.env values, handling undefined
@@ -777,7 +756,6 @@ export async function MonitorProcess(
 
 	options: ProcessMonitorOptions = {},
 ): Promise<boolean> {
-
 	const processInfo = ProcessRegistry.get(pid);
 
 	if (!processInfo) {
@@ -827,7 +805,6 @@ export async function MonitorProcess(
  * Check if process is running
  */
 export function IsProcessRunning(pid: number): boolean {
-
 	try {
 		// Send signal 0 to check if process exists
 		process.kill(pid, 0);
@@ -842,7 +819,6 @@ export function IsProcessRunning(pid: number): boolean {
  * Get current process ID
  */
 export function GetCurrentPid(): number {
-
 	return process.pid;
 }
 
@@ -850,7 +826,6 @@ export function GetCurrentPid(): number {
  * Get parent process ID
  */
 export function GetParentPid(): number {
-
 	return process.ppid;
 }
 
@@ -864,7 +839,6 @@ export function SpawnProcessEffect(
 
 	options: ProcessSpawnOptions,
 ): Effect.Effect<ProcessInfo | null, Error> {
-
 	return Effect.tryPromise({
 		try: () => SpawnProcess(command, args, options),
 		catch: (error) => new Error(`Failed to spawn process: ${error}`),
@@ -882,10 +856,8 @@ export function ExecuteCommandEffect(
 	options: ProcessSpawnOptions = {},
 ): Effect.Effect<
 	{ stdout: string; stderr: string; exitCode: number | null },
-
 	Error
 > {
-
 	return Effect.tryPromise({
 		try: () => ExecuteCommand(command, args, options),
 		catch: (error) => new Error(`Failed to execute command: ${error}`),
@@ -900,7 +872,6 @@ export function SendSignalEffect(
 
 	signal: NodeJS.Signals,
 ): Effect.Effect<void, Error> {
-
 	return Effect.try(() => {
 		if (!SendSignal(pid, signal)) {
 			throw new Error(
@@ -916,7 +887,6 @@ export function SendSignalEffect(
 export function GetProcessEffect(
 	pid: number,
 ): Effect.Effect<Option.Option<ProcessInfo>> {
-
 	return Effect.sync(() => GetProcess(pid));
 }
 
@@ -924,7 +894,6 @@ export function GetProcessEffect(
  * Export process module
  */
 export const Process = {
-
 	ValidateCommand,
 
 	ValidateArgs,
@@ -966,7 +935,6 @@ export const Process = {
  * Export constants
  */
 export const ProcessConstants = {
-
 	DEFAULT_TIMEOUT,
 
 	DEFAULT_MAX_BUFFER,

@@ -9,7 +9,6 @@
  */
 
 import { Effect } from "effect";
-
 import type * as VSCode from "vscode";
 
 /**

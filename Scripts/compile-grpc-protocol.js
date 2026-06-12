@@ -9,11 +9,8 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Compilation)
  */
 import { execSync } from "child_process";
-
 import { existsSync, readFileSync, writeFileSync } from "fs";
-
 import { dirname, join } from "path";
-
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +27,6 @@ const TS_PROTO_OUTPUT = join(OUTPUT_DIR, "Vine.ts");
  * Main compilation function
  */
 async function compilegRPCProtocol() {
-
 	console.log("[compile-grpc-protocol] Starting gRPC protocol compilation");
 
 	try {
@@ -64,7 +60,6 @@ async function compilegRPCProtocol() {
  * Check if protoc is available
  */
 function checkProtocAvailability() {
-
 	try {
 		execSync("protoc --version", { stdio: "ignore" });
 
@@ -86,7 +81,6 @@ function checkProtocAvailability() {
  * Ensure Mountain's proto file exists
  */
 function ensureProtoFileExists() {
-
 	if (!existsSync(MOUNTAIN_PROTO_PATH)) {
 		throw new Error(
 			`Mountain proto file not found at: ${MOUNTAIN_PROTO_PATH}`,
@@ -102,7 +96,6 @@ function ensureProtoFileExists() {
  * Ensure output directory exists
  */
 function ensureOutputDirectory() {
-
 	if (!existsSync(OUTPUT_DIR)) {
 		execSync(`mkdir -p ${OUTPUT_DIR}`);
 
@@ -116,7 +109,6 @@ function ensureOutputDirectory() {
  * Compile proto to TypeScript using protoc with ts-proto plugin
  */
 function compileProtoToTypeScript() {
-
 	console.log("[compile-grpc-protocol] Compiling proto to TypeScript");
 
 	// Try multiple approaches for protoc-gen-ts
@@ -181,7 +173,6 @@ function compileProtoToTypeScript() {
  * Generate manual TypeScript interfaces when protoc-gen-ts is not available
  */
 function generateManualTypeScriptInterfaces() {
-
 	console.log(
 		"[compile-grpc-protocol] Generating manual TypeScript interfaces",
 	);
@@ -277,7 +268,6 @@ export interface RPCDataPayload {
  * Generate enhanced service interfaces from proto content
  */
 function generateServiceInterfaces() {
-
 	console.log(
 		"[compile-grpc-protocol] Generating enhanced service interfaces",
 	);
@@ -303,7 +293,6 @@ function generateServiceInterfaces() {
  * Enhanced service definition parsing
  */
 function parseServiceDefinitionsEnhanced(protoContent) {
-
 	const services = [];
 
 	// Enhanced regex pattern to handle proto3 syntax
@@ -312,7 +301,6 @@ function parseServiceDefinitionsEnhanced(protoContent) {
 	let serviceMatch;
 
 	while ((serviceMatch = servicePattern.exec(protoContent)) !== null) {
-
 		const serviceName = serviceMatch[1];
 
 		const serviceBody = serviceMatch[2];
@@ -330,7 +318,6 @@ function parseServiceDefinitionsEnhanced(protoContent) {
  * Parse message definitions from proto
  */
 function parseMessageDefinitionsEnhanced(protoContent) {
-
 	const messages = [];
 
 	// Pattern to match message definitions (handles empty messages too)
@@ -339,7 +326,6 @@ function parseMessageDefinitionsEnhanced(protoContent) {
 	let messageMatch;
 
 	while ((messageMatch = messagePattern.exec(protoContent)) !== null) {
-
 		const messageName = messageMatch[1];
 
 		const messageBody = messageMatch[2];
@@ -360,7 +346,6 @@ function parseMessageDefinitionsEnhanced(protoContent) {
  * Parse enum definitions from proto
  */
 function parseEnumDefinitionsEnhanced(protoContent) {
-
 	const enums = [];
 
 	// Pattern to match enum definitions
@@ -369,7 +354,6 @@ function parseEnumDefinitionsEnhanced(protoContent) {
 	let enumMatch;
 
 	while ((enumMatch = enumPattern.exec(protoContent)) !== null) {
-
 		const enumName = enumMatch[1];
 
 		const enumBody = enumMatch[2];
@@ -390,7 +374,6 @@ function parseEnumDefinitionsEnhanced(protoContent) {
  * Parse enum values
  */
 function parseEnumValues(enumBody) {
-
 	const values = [];
 
 	// Pattern to match enum values: NAME = number;
@@ -412,7 +395,6 @@ function parseEnumValues(enumBody) {
  * Parse message fields
  */
 function parseMessageFields(messageBody) {
-
 	const fields = [];
 
 	// Pattern to match field definitions (simplified for proto3)
@@ -438,7 +420,6 @@ function parseMessageFields(messageBody) {
  * Map protobuf types to TypeScript types
  */
 function mapProtoTypeToTypeScript(protoType) {
-
 	const typeMap = {
 		"string": "string",
 
@@ -480,7 +461,6 @@ function mapProtoTypeToTypeScript(protoType) {
  * Enhanced service method parsing
  */
 function parseServiceMethodsEnhanced(serviceBody) {
-
 	const methods = [];
 
 	const methodPattern =
@@ -503,7 +483,6 @@ function parseServiceMethodsEnhanced(serviceBody) {
  * Generate enhanced TypeScript interfaces
  */
 function generateEnhancedTypeScriptInterfaces(services) {
-
 	let tsCode = `/**
  * @module Generated
  * @description
@@ -556,7 +535,6 @@ function generateEnhancedTypeScriptInterfaces(services) {
  * Generate message interfaces from parsed message definitions
  */
 function generateMessageInterfaces(messageDefinitions) {
-
 	let tsCode = `
 // Message interfaces parsed from Vine.proto
 `;
@@ -584,7 +562,6 @@ function generateMessageInterfaces(messageDefinitions) {
  * Generate enum interfaces from parsed enum definitions
  */
 function generateEnumInterfaces(enumDefinitions) {
-
 	let tsCode = `
 // Enum types parsed from Vine.proto
 `;
@@ -610,7 +587,6 @@ function generateEnumInterfaces(enumDefinitions) {
  * Generate enhanced client interfaces
  */
 function generateEnhancedClientInterfaces(services) {
-
 	let tsCode = `
 // Enhanced interfaces for better TypeScript support
 `;
@@ -652,7 +628,6 @@ function generateEnhancedClientInterfaces(services) {
  * Entry point
  */
 if (import.meta.url === `file://${process.argv[1]}`) {
-
 	compilegRPCProtocol().catch((error) => {
 		console.error("[compile-grpc-protocol] Error:", error);
 

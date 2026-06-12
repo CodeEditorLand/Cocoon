@@ -5,7 +5,6 @@
  */
 
 import type { UriComponents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
-
 import type { Uri as VSCodeURI } from "vscode";
 
 import { URI } from "../../Platform/VSCode/Type.js";

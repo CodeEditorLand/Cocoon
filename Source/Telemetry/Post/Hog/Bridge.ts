@@ -13,11 +13,8 @@
  */
 
 import CreateBuffer, { type Buffer } from "../../PostHog/Buffer.js";
-
 import ReadConfiguration from "../../PostHog/Configuration.js";
-
 import EventModule, { type Properties } from "../../PostHog/Event.js";
-
 import ResolveDistinctIdentifier from "../../PostHog/Identifier.js";
 
 const Configuration = ReadConfiguration();
@@ -31,7 +28,6 @@ let ActiveBuffer: Buffer | undefined;
 let Initialized = false;
 
 const Buffered = (): Buffer | undefined => {
-
 	if (!Configuration.Enabled) return undefined;
 
 	if (!ActiveBuffer) {
@@ -49,7 +45,6 @@ export const CaptureEvent = (
 
 	Properties: Properties = {},
 ): void => {
-
 	// Build-time gate. esbuild substitutes `process.env.NODE_ENV` with
 	// the literal `"production"` for prod, the comparison folds, and
 	// the entire body (Buffered() lookup, Enqueue, the try/catch) dead-
@@ -75,7 +70,6 @@ export const CaptureError = (
 
 	Extra: Properties = {},
 ): void => {
-
 	if (process.env["NODE_ENV"] === "production") return;
 
 	const Bridge = Buffered();
@@ -96,7 +90,6 @@ export const CaptureError = (
  * `land:cocoon:session:start`.
  */
 export const Initialize = (): void => {
-
 	if (process.env["NODE_ENV"] === "production") return;
 
 	if (Initialized) return;
@@ -149,7 +142,6 @@ export const CaptureHandler = (
 
 	Ok: boolean,
 ): void => {
-
 	CaptureEvent("land:cocoon:handler:complete", {
 		feature: Feature,
 		duration_ms: DurationMs,
@@ -164,7 +156,6 @@ export const CaptureHandler = (
  * Mountain Migration Progress chart.
  */
 export const CaptureStub = (Feature: string, Reason: string): void => {
-
 	CaptureEvent("land:cocoon:stub:active", {
 		feature: Feature,
 		reason: Reason,
@@ -177,12 +168,10 @@ export const CaptureStub = (Feature: string, Reason: string): void => {
  * Lifecycle dashboard funnels these to detect entry-point regressions.
  */
 export const CaptureEntryLoad = (Entry: string): void => {
-
 	CaptureEvent("land:cocoon:entry:load", { entry: Entry });
 };
 
 export const CaptureEntryLoaded = (Entry: string, DurationMs: number): void => {
-
 	CaptureEvent("land:cocoon:entry:loaded", {
 		entry: Entry,
 		duration_ms: DurationMs,
@@ -190,7 +179,6 @@ export const CaptureEntryLoaded = (Entry: string, DurationMs: number): void => {
 };
 
 export default {
-
 	CaptureEvent,
 
 	CaptureError,

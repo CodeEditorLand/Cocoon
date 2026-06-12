@@ -6,7 +6,6 @@
 import { Context, Effect, Layer } from "effect";
 
 export interface InitData {
-
 	readonly commit: string;
 
 	readonly version: string;
@@ -22,7 +21,6 @@ export interface InitData {
 
 export class InitDataService extends Context.Tag("Cocoon/InitData")<
 	InitDataService,
-
 	InitData
 >() {}
 

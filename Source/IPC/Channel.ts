@@ -62,7 +62,6 @@
  * Higher priority messages are processed first.
  */
 export enum MessagePriority {
-
 	/** Low priority - background tasks, telemetry */
 	Low = 0,
 
@@ -80,7 +79,6 @@ export enum MessagePriority {
  * Communication directions for channels.
  */
 export enum ChannelDirection {
-
 	/** Send-only channel (command/event dispatch) */
 	SendOnly = "send-only",
 
@@ -95,7 +93,6 @@ export enum ChannelDirection {
  * System component identifiers for cross-component communication.
  */
 export enum SystemComponent {
-
 	/** Mountain - Rust backend with Tauri */
 	Mountain = "mountain",
 
@@ -116,7 +113,6 @@ export enum SystemComponent {
  * Message delivery status tracking.
  */
 export enum DeliveryStatus {
-
 	/** Message queued but not yet sent */
 	Queued = "queued",
 
@@ -137,7 +133,6 @@ export enum DeliveryStatus {
  * Base message structure with common metadata.
  */
 export interface BaseMessage {
-
 	/** Unique message identifier */
 	id: string;
 
@@ -170,7 +165,6 @@ export interface BaseMessage {
  * Request message for RPC-style communication.
  */
 export interface RequestMessage extends BaseMessage {
-
 	type: "request";
 
 	/** Request payload (any serializable data) */
@@ -184,7 +178,6 @@ export interface RequestMessage extends BaseMessage {
  * Response message for RPC request-reply pattern.
  */
 export interface ResponseMessage extends BaseMessage {
-
 	type: "response";
 
 	/** Whether the request was successful */
@@ -207,7 +200,6 @@ export interface ResponseMessage extends BaseMessage {
  * Event message for fire-and-forget notifications.
  */
 export interface EventMessage extends BaseMessage {
-
 	type: "event";
 
 	/** Event payload */
@@ -232,7 +224,6 @@ export type MessageHandler<T = unknown> = (
  * Context information passed to message handlers.
  */
 export interface MessageContext {
-
 	/** Channel that received the message */
 	channel: string;
 
@@ -250,7 +241,6 @@ export interface MessageContext {
  * Channel configuration options.
  */
 export interface ChannelOptions {
-
 	/** Channel name (required) */
 	name: string;
 
@@ -280,7 +270,6 @@ export interface ChannelOptions {
  * Channel state information.
  */
 export interface ChannelState {
-
 	/** Channel name */
 	name: string;
 
@@ -310,7 +299,6 @@ export interface ChannelState {
  * Channel statistics for monitoring.
  */
 export interface ChannelStatistics extends ChannelState {
-
 	/** Messages by priority */
 	messagesByPriority: Record<MessagePriority, number>;
 
@@ -328,7 +316,6 @@ export interface ChannelStatistics extends ChannelState {
  * Message delivery result.
  */
 export interface DeliveryResult {
-
 	/** Status of the delivery attempt */
 	status: DeliveryStatus;
 
@@ -385,7 +372,6 @@ const CHANNEL_ID_PREFIX = "chan";
  * Provides thread-safe channel registration, lookup, and lifecycle management.
  */
 export class ChannelRegistry {
-
 	/** Map of channel name to channel configuration */
 	private channels: Map<string, RegisteredChannel> = new Map();
 
@@ -668,7 +654,6 @@ export class ChannelRegistry {
  * Handles message routing, channel lifecycle, and inter-component communication.
  */
 export class ChannelManager {
-
 	/** Channel registry instance */
 	private registry: ChannelRegistry;
 
@@ -1138,7 +1123,6 @@ export class ChannelManager {
  * @returns Message ID
  */
 export function GenerateMessageId(): string {
-
 	const timestamp = Date.now();
 
 	const random = Math.random().toString(36).substring(2, 15);
@@ -1151,7 +1135,6 @@ export function GenerateMessageId(): string {
  * @returns Correlation ID
  */
 export function GenerateCorrelationId(): string {
-
 	const timestamp = Date.now();
 
 	const random = Math.random().toString(36).substring(2, 15);
@@ -1183,7 +1166,6 @@ export function CreateRequestMessage(
 		headers?: Record<string, string>;
 	} & Partial<BaseMessage>,
 ): RequestMessage {
-
 	return {
 		id: params.id || GenerateMessageId(),
 
@@ -1241,7 +1223,6 @@ export function CreateResponseMessage(
 		headers?: Record<string, string>;
 	} & Partial<BaseMessage>,
 ): ResponseMessage {
-
 	return {
 		id: params.id || GenerateMessageId(),
 
@@ -1289,7 +1270,6 @@ export function CreateEventMessage(
 		headers?: Record<string, string>;
 	} & Partial<BaseMessage>,
 ): EventMessage {
-
 	return {
 		id: params.id || GenerateMessageId(),
 
@@ -1319,7 +1299,6 @@ export function CreateEventMessage(
  * Registered channel with handlers and metrics.
  */
 interface RegisteredChannel {
-
 	/** Unique channel identifier */
 	id: string;
 
@@ -1383,7 +1362,6 @@ interface RegisteredChannel {
  * Pending request tracking.
  */
 interface PendingRequest {
-
 	/** Message ID */
 	messageId: string;
 
@@ -1407,7 +1385,6 @@ interface PendingRequest {
  * Delivery tracking information.
  */
 interface DeliveryTracking {
-
 	/** Original message ID */
 	messageId: string;
 

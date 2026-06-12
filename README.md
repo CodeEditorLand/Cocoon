@@ -69,22 +69,22 @@ safety.
 
 VS Code's extension host is a single `Node.js` event loop — one hung `Promise`
 blocks every other extension. Cocoon solves this by giving each extension its
-own `Effect-TS` fiber with cancellation, back-pressure, and preemption. A
-crash in one extension doesn't bring down the rest.
+own `Effect-TS` fiber with cancellation, back-pressure, and preemption. A crash
+in one extension doesn't bring down the rest.
 
 **Cocoon is engineered to:**
 
 1. **Host VS Code Extensions** — Run existing VS Code extensions unmodified
    through a comprehensive API shim layer that mirrors `vscode.d.ts`.
-2. **Provide Fiber-Level Isolation** — Each extension runs in its own
-   supervised `Effect-TS` fiber with independent lifecycle, cancellation
-   tokens, and error boundaries.
+2. **Provide Fiber-Level Isolation** — Each extension runs in its own supervised
+   `Effect-TS` fiber with independent lifecycle, cancellation tokens, and error
+   boundaries.
 3. **Enforce Process Hardening** — Patch `process.exit`, block native modules,
-   intercept uncaught exceptions, and terminate if the parent `Mountain`
-   process exits.
-4. **Bridge via gRPC & WebSocket** — Communicate with `Mountain` through
-   `gRPC` (`Vine` protocol on port `:50052`) and with `Sky` through a
-   `WebSocket` JSON-RPC transport with cryptographic authentication.
+   intercept uncaught exceptions, and terminate if the parent `Mountain` process
+   exits.
+4. **Bridge via gRPC & WebSocket** — Communicate with `Mountain` through `gRPC`
+   (`Vine` protocol on port `:50052`) and with `Sky` through a `WebSocket`
+   JSON-RPC transport with cryptographic authentication.
 
 ---
 
@@ -95,17 +95,17 @@ crash in one extension doesn't bring down the rest.
 through the fiber tree, hung operations are preemptible, and fiber crashes are
 trapped at the supervision boundary rather than taking down the host process.
 
-**Full `vscode` API Shimming** — The `APIFactory` service constructs a
-complete `vscode` API object with namespaces for `window`, `workspace`,
-`commands`, `languages`, `debug`, `scm`, `tasks`, `env`, `extensions`,
-`authentication`, `tests`, and `comments`. Extension code runs against this
-shim without modification.
+**Full `vscode` API Shimming** — The `APIFactory` service constructs a complete
+`vscode` API object with namespaces for `window`, `workspace`, `commands`,
+`languages`, `debug`, `scm`, `tasks`, `env`, `extensions`, `authentication`,
+`tests`, and `comments`. Extension code runs against this shim without
+modification.
 
 **Process Security Hardening** — The `PatchProcess` module runs before any
-extension activates, intercepting `process.exit`, `process.crash`, native
-module loads, uncaught exceptions, and unhandled rejections. A configurable
-`SecurityPolicy` controls exit permissions, memory limits, network access,
-file system access, and child process spawning.
+extension activates, intercepting `process.exit`, `process.crash`, native module
+loads, uncaught exceptions, and unhandled rejections. A configurable
+`SecurityPolicy` controls exit permissions, memory limits, network access, file
+system access, and child process spawning.
 
 **Code Generation Pipeline** — The `Codegen` module walks the VS Code
 extension-host source tree (`Wind`) and emits `IExtHost*Upstream` schemas
@@ -123,8 +123,7 @@ events into Cocoon asynchronously without polling.
 
 **Telemetry & Observability** — `PostHog` event buffering and batching with
 identity management, plus `OTLP` fire-and-forget span export for distributed
-tracing. Tree-shaken from production builds via `esbuild` `define`
-substitution.
+tracing. Tree-shaken from production builds via `esbuild` `define` substitution.
 
 **Dual-Layer Debug Server** — An HTTP inspection surface (`:9934`) matching
 `Mountain`'s `DebugServer` wire protocol, supporting `/health`, `/layers`,
@@ -135,12 +134,12 @@ runtime introspection.
 
 ## Core Architecture Principles&#x2001;🏗️
 
-| Principle | Description | Key Components |
-|-----------|-------------|----------------|
-| **Fiber Isolation** | Each extension is a separate `Effect` fiber with its own supervision tree, cancellation scope, and error channel. Failures don't cascade. | `Effect/Extension.ts`, `Effect/Bootstrap.ts`, `Effect/Module/Interceptor.ts` |
-| **API Surface Parity** | Implement the full VS Code extension API (`vscode.d.ts`) so extensions port seamlessly between `Cocoon` and `Grove`. | `Services/API/Factory/`, `Services/Handler/VscodeAPI/*`, `Services/Extension/Host/` |
-| **Defense in Depth** | Process-level hardening (`PatchProcess`) + `Effect-TS` error boundaries + configurable `SecurityPolicy` + platform-native sandboxing (future). | `PatchProcess/Patcher.ts`, `PatchProcess/Security.ts`, `PatchProcess/Validator.ts` |
-| **Transport Flexibility** | Multiple communication channels (`gRPC`, `WebSocket`, `IPC`) for different deployment topologies, each behind a typed interface. | `Services/gRPC/Server/`, `Services/Mountain/gRPC/Client.ts`, `Bootstrap/WebSocket/Server.ts`, `IPC/Channel.ts` |
+| Principle                 | Description                                                                                                                                    | Key Components                                                                                                 |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Fiber Isolation**       | Each extension is a separate `Effect` fiber with its own supervision tree, cancellation scope, and error channel. Failures don't cascade.      | `Effect/Extension.ts`, `Effect/Bootstrap.ts`, `Effect/Module/Interceptor.ts`                                   |
+| **API Surface Parity**    | Implement the full VS Code extension API (`vscode.d.ts`) so extensions port seamlessly between `Cocoon` and `Grove`.                           | `Services/API/Factory/`, `Services/Handler/VscodeAPI/*`, `Services/Extension/Host/`                            |
+| **Defense in Depth**      | Process-level hardening (`PatchProcess`) + `Effect-TS` error boundaries + configurable `SecurityPolicy` + platform-native sandboxing (future). | `PatchProcess/Patcher.ts`, `PatchProcess/Security.ts`, `PatchProcess/Validator.ts`                             |
+| **Transport Flexibility** | Multiple communication channels (`gRPC`, `WebSocket`, `IPC`) for different deployment topologies, each behind a typed interface.               | `Services/gRPC/Server/`, `Services/Mountain/gRPC/Client.ts`, `Bootstrap/WebSocket/Server.ts`, `IPC/Channel.ts` |
 
 ---
 
@@ -221,25 +220,25 @@ graph LR
 
 ## Key Components
 
-| Component       | Path                                             | Description                                                                                                                                     |
-| --------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Main Entry      | `Source/Bootstrap/Implementation/Cocoon/Main.ts` | Primary entry point composing all `Effect-TS` layers, establishing `gRPC` connection, handshake with `Mountain`                                 |
-| Bootstrap       | `Source/Effect/Bootstrap.ts`                     | Lean async bootstrap orchestrating initialization stages: environment detection, configuration, `gRPC` connection, module interceptor, extension registry, health checks |
-| Service Mapping | `Source/Service/Mapping.ts`                      | Dependency injection container wiring all services into the main `AppLayer`                                                                     |
-| APIFactory      | `Source/Services/API/Factory/Service.ts`         | Constructs the `vscode` API object that extensions receive                                                                                      |
-| Extension Host  | `Source/Services/Extension/Host/Service.ts`      | Manages extension activation and lifecycle with module interception and API injection                                                           |
-| IPC Channel     | `Source/IPC/Channel.ts`                          | Multi-channel RPC system management with advanced message routing                                                                               |
-| gRPC Client     | `Source/Services/Mountain/gRPC/Client.ts`        | `Effect-TS` wrapper for `Mountain` `gRPC` operations                                                                                            |
-| gRPC Server     | `Source/Services/gRPC/Server/Service.ts`         | Cocoon's `gRPC` server implementing the `Vine` protocol with bidirectional streaming                                                            |
-| WebSocket Server| `Source/Bootstrap/WebSocket/Server.ts`           | JSON-RPC `WebSocket` server for `Sky`↔Cocoon direct transport with cryptographic authentication                                                 |
-| PatchProcess    | `Source/PatchProcess/`                           | Process hardening: patches `process.exit`, handles exceptions, enforces security policy                                                         |
-| TypeConverter   | `Source/TypeConverter/`                          | Pure functions to serialize `TypeScript` types into plain DTOs for `gRPC` transport                                                             |
-| Codegen         | `Source/Codegen/`                                | Code generation pipeline walking VS Code extension-host source to emit `IExtHost*Upstream` schemas                                              |
-| Platform        | `Source/Platform/`                               | Platform abstraction layer providing OS, environment, and process info as `Effect-TS` service                                                    |
-| WebviewPanel    | `Source/WebviewPanel/`                           | Webview panel factory, implementation, and serializer managing lifecycle and state                                                              |
-| Telemetry       | `Source/Telemetry/`                              | `PostHog` and `OTLP` telemetry bridges with event buffering and identity management                                                             |
-| Debug Server    | `Source/Debug/Server.ts`                         | HTTP inspection surface (`:9934`) for `/health`, `/layers`, `/execute`, `/extensions` runtime introspection                                     |
-| Generated       | `Source/Generated/RouteManifest.ts`              | Auto-generated route manifest enumerating `Mountain`-side RPC methods                                                                           |
+| Component        | Path                                             | Description                                                                                                                                                              |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Main Entry       | `Source/Bootstrap/Implementation/Cocoon/Main.ts` | Primary entry point composing all `Effect-TS` layers, establishing `gRPC` connection, handshake with `Mountain`                                                          |
+| Bootstrap        | `Source/Effect/Bootstrap.ts`                     | Lean async bootstrap orchestrating initialization stages: environment detection, configuration, `gRPC` connection, module interceptor, extension registry, health checks |
+| Service Mapping  | `Source/Service/Mapping.ts`                      | Dependency injection container wiring all services into the main `AppLayer`                                                                                              |
+| APIFactory       | `Source/Services/API/Factory/Service.ts`         | Constructs the `vscode` API object that extensions receive                                                                                                               |
+| Extension Host   | `Source/Services/Extension/Host/Service.ts`      | Manages extension activation and lifecycle with module interception and API injection                                                                                    |
+| IPC Channel      | `Source/IPC/Channel.ts`                          | Multi-channel RPC system management with advanced message routing                                                                                                        |
+| gRPC Client      | `Source/Services/Mountain/gRPC/Client.ts`        | `Effect-TS` wrapper for `Mountain` `gRPC` operations                                                                                                                     |
+| gRPC Server      | `Source/Services/gRPC/Server/Service.ts`         | Cocoon's `gRPC` server implementing the `Vine` protocol with bidirectional streaming                                                                                     |
+| WebSocket Server | `Source/Bootstrap/WebSocket/Server.ts`           | JSON-RPC `WebSocket` server for `Sky`↔Cocoon direct transport with cryptographic authentication                                                                          |
+| PatchProcess     | `Source/PatchProcess/`                           | Process hardening: patches `process.exit`, handles exceptions, enforces security policy                                                                                  |
+| TypeConverter    | `Source/TypeConverter/`                          | Pure functions to serialize `TypeScript` types into plain DTOs for `gRPC` transport                                                                                      |
+| Codegen          | `Source/Codegen/`                                | Code generation pipeline walking VS Code extension-host source to emit `IExtHost*Upstream` schemas                                                                       |
+| Platform         | `Source/Platform/`                               | Platform abstraction layer providing OS, environment, and process info as `Effect-TS` service                                                                            |
+| WebviewPanel     | `Source/WebviewPanel/`                           | Webview panel factory, implementation, and serializer managing lifecycle and state                                                                                       |
+| Telemetry        | `Source/Telemetry/`                              | `PostHog` and `OTLP` telemetry bridges with event buffering and identity management                                                                                      |
+| Debug Server     | `Source/Debug/Server.ts`                         | HTTP inspection surface (`:9934`) for `/health`, `/layers`, `/execute`, `/extensions` runtime introspection                                                              |
+| Generated        | `Source/Generated/RouteManifest.ts`              | Auto-generated route manifest enumerating `Mountain`-side RPC methods                                                                                                    |
 
 ---
 
@@ -301,15 +300,15 @@ Element/Cocoon/
 ## In the Land Project
 
 `Cocoon` operates as a standalone `Node.js` process orchestrated by `Mountain`.
-It provides the `Node.js` extension runtime environment that allows existing
-VS Code extensions to run unmodified within Land. It complements `Grove`
+It provides the `Node.js` extension runtime environment that allows existing VS
+Code extensions to run unmodified within Land. It complements `Grove`
 (`Rust`/`WASM`) as the second extension host, together providing the two
 execution environments for Land's extension model:
 
-| Host | Language | Runtime | Isolation |
-|------|----------|---------|-----------|
+| Host       | Language                   | Runtime                   | Isolation                                   |
+| ---------- | -------------------------- | ------------------------- | ------------------------------------------- |
 | **Cocoon** | `TypeScript`, `JavaScript` | `Node.js` via `Effect-TS` | Fiber-level supervision + process hardening |
-| **Grove** | `Rust`, `WASM` | `WASMtime` | Hardware-enforced via capability model |
+| **Grove**  | `Rust`, `WASM`             | `WASMtime`                | Hardware-enforced via capability model      |
 
 - **Depends on:** `Mountain` (gRPC host), `@codeeditorland/output` (VS Code
   platform code), `Wind` (extraction pipeline for codegen)
@@ -341,16 +340,16 @@ execution environments for Land's extension model:
 
 Cocoon enforces security at multiple layers:
 
-| Layer | Mechanism |
-|-------|-----------|
-| **Process Hardening** | `PatchProcess/Patcher.ts` runs before any extension: blocks `process.crash()`, intercepts `process.exit()` (unless `SecurityPolicy.AllowExit`), blocks native module loads (`Module._load("natives")`), sets `Error.stackTraceLimit=100` |
-| **Exception Boundaries** | `uncaughtException` and `unhandledRejection` handlers trap orphaned errors to stderr; gRPC RPC takes over error forwarding once connected |
-| **Parent Liveness** | `TerminateOnParentExit` monitors `VSCODE_PID` and exits cleanly if the parent `Mountain` process dies |
-| **SecurityPolicy** | Configurable policy controlling exit permissions, memory limits (`MaxMemoryMB`), network access (`AllowNetwork`), child process spawning (`AllowChildProcesses`), file system access validation, and environment variable restrictions |
-| **Runtime Validation** | `Validator` service runs continuous security validation: file system access checks, network access checks, memory usage monitoring, suspicious behavior detection, and audit trail generation |
-| **Module Interception** | `Module/Interceptor` patches `require`/`import` to control which modules extensions can load; the `vscode` API object is injected through this interceptor |
-| **WebSocket Auth** | Cryptographic authentication via `timingSafeEqual` hex secret comparison: accepted through URL `?secret=`, `Sec-WebSocket-Protocol` header, or `X-Land-Secret` header |
-| **Memory Enforcement** | Soft memory limit using `v8.setFlagsFromString("--max-old-space-size=…")`; configurable per-extension via `SecurityPolicy.MaxMemoryMB` |
+| Layer                    | Mechanism                                                                                                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Process Hardening**    | `PatchProcess/Patcher.ts` runs before any extension: blocks `process.crash()`, intercepts `process.exit()` (unless `SecurityPolicy.AllowExit`), blocks native module loads (`Module._load("natives")`), sets `Error.stackTraceLimit=100` |
+| **Exception Boundaries** | `uncaughtException` and `unhandledRejection` handlers trap orphaned errors to stderr; gRPC RPC takes over error forwarding once connected                                                                                                |
+| **Parent Liveness**      | `TerminateOnParentExit` monitors `VSCODE_PID` and exits cleanly if the parent `Mountain` process dies                                                                                                                                    |
+| **SecurityPolicy**       | Configurable policy controlling exit permissions, memory limits (`MaxMemoryMB`), network access (`AllowNetwork`), child process spawning (`AllowChildProcesses`), file system access validation, and environment variable restrictions   |
+| **Runtime Validation**   | `Validator` service runs continuous security validation: file system access checks, network access checks, memory usage monitoring, suspicious behavior detection, and audit trail generation                                            |
+| **Module Interception**  | `Module/Interceptor` patches `require`/`import` to control which modules extensions can load; the `vscode` API object is injected through this interceptor                                                                               |
+| **WebSocket Auth**       | Cryptographic authentication via `timingSafeEqual` hex secret comparison: accepted through URL `?secret=`, `Sec-WebSocket-Protocol` header, or `X-Land-Secret` header                                                                    |
+| **Memory Enforcement**   | Soft memory limit using `v8.setFlagsFromString("--max-old-space-size=…")`; configurable per-extension via `SecurityPolicy.MaxMemoryMB`                                                                                                   |
 
 Future platform-native layers: `Windows` Job Objects / AppContainer, `Linux`
 `seccomp` via `libseccomp`, and `macOS` sandbox via `sandbox-exec`.
@@ -361,13 +360,13 @@ Future platform-native layers: `Windows` Job Objects / AppContainer, `Linux`
 
 Cocoon is designed to be compatible with:
 
-| Target | Integration |
-|--------|-------------|
-| **Grove** | Shares VS Code API surface, activation semantics, and manifest parsing for seamless extension porting |
-| **VS Code** | Implements `vscode.d.ts` type definitions; existing extensions run unmodified |
-| **Mountain** | Integrates via `gRPC` using the `Vine` protocol on port `:50052` with bidirectional streaming |
-| **Sky** | Direct `WebSocket` `JSON-RPC` transport with cryptographic authentication |
-| **Output** | Consumes compiled VS Code platform code from `@codeeditorland/output` |
+| Target       | Integration                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
+| **Grove**    | Shares VS Code API surface, activation semantics, and manifest parsing for seamless extension porting |
+| **VS Code**  | Implements `vscode.d.ts` type definitions; existing extensions run unmodified                         |
+| **Mountain** | Integrates via `gRPC` using the `Vine` protocol on port `:50052` with bidirectional streaming         |
+| **Sky**      | Direct `WebSocket` `JSON-RPC` transport with cryptographic authentication                             |
+| **Output**   | Consumes compiled VS Code platform code from `@codeeditorland/output`                                 |
 
 ---
 
@@ -387,14 +386,14 @@ triggers the `Rest` element to prepare the necessary VS Code platform code.
 ### Key Dependencies
 
 | Package                            | Purpose                                               |
-|------------------------------------|-------------------------------------------------------|
+| ---------------------------------- | ----------------------------------------------------- |
 | `effect` (v3.21.3)                 | Core library for the entire application structure     |
-| `@effect/platform` (v0.96.1)       | `Effect-TS` platform abstractions                      |
-| `@effect/platform-node` (v0.107.0) | `Node.js`-specific `Effect-TS` platform                |
-| `@grpc/grpc-js` (v1.14.4)          | `gRPC` communication                                   |
-| `@grpc/proto-loader` (v0.8.1)      | `.proto` file loading for `gRPC`                       |
+| `@effect/platform` (v0.96.1)       | `Effect-TS` platform abstractions                     |
+| `@effect/platform-node` (v0.107.0) | `Node.js`-specific `Effect-TS` platform               |
+| `@grpc/grpc-js` (v1.14.4)          | `gRPC` communication                                  |
+| `@grpc/proto-loader` (v0.8.1)      | `.proto` file loading for `gRPC`                      |
 | `@codeeditorland/output` (v0.0.1)  | Compiled VS Code platform code from `Land/Dependency` |
-| `google-protobuf` & `protobufjs`   | Protocol buffers for `gRPC`                            |
+| `google-protobuf` & `protobufjs`   | Protocol buffers for `gRPC`                           |
 
 **Debugging Cocoon:** Attach a standard `Node.js` debugger. `Mountain` must
 launch Cocoon with debug flags (e.g., `--inspect-brk=PORT_NUMBER`). Logs from

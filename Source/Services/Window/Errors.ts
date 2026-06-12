@@ -9,7 +9,6 @@
  * Error when window operation fails
  */
 export class WindowOperationError extends Error {
-
 	readonly _tag = "WindowOperationError";
 
 	readonly operation: string;
@@ -35,7 +34,6 @@ export class WindowOperationError extends Error {
  * Error when dialog operation fails
  */
 export class DialogError extends Error {
-
 	readonly _tag = "DialogError";
 
 	readonly dialogType: string;
@@ -61,7 +59,6 @@ export class DialogError extends Error {
  * Error when quick input operation fails
  */
 export class QuickInputError extends Error {
-
 	readonly _tag = "QuickInputError";
 
 	readonly inputType: string;
@@ -87,7 +84,6 @@ export class QuickInputError extends Error {
  * Error when status bar operation fails
  */
 export class StatusBarError extends Error {
-
 	readonly _tag = "StatusBarError";
 
 	readonly itemId: string;
@@ -119,7 +115,6 @@ export class StatusBarError extends Error {
  * Error when output channel operation fails
  */
 export class OutputChannelError extends Error {
-
 	readonly _tag = "OutputChannelError";
 
 	readonly channelName: string;
@@ -151,7 +146,6 @@ export class OutputChannelError extends Error {
  * Error when webview panel operation fails
  */
 export class WebviewPanelError extends Error {
-
 	readonly _tag = "WebviewPanelError";
 
 	readonly viewType: string;
@@ -183,7 +177,6 @@ export class WebviewPanelError extends Error {
  * Error when progress operation fails
  */
 export class ProgressError extends Error {
-
 	readonly _tag = "ProgressError";
 
 	readonly operation: string;
@@ -209,7 +202,6 @@ export class ProgressError extends Error {
  * Error when text document operation fails
  */
 export class TextDocumentError extends Error {
-
 	readonly _tag = "TextDocumentError";
 
 	readonly documentUri: string;

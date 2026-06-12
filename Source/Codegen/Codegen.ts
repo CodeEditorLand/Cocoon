@@ -14,7 +14,6 @@ import { resolve } from "node:path";
 import { RunExtHostCodegen } from "./Run/Ext/Host/Codegen.js";
 
 const Main = async (): Promise<void> => {
-
 	const Cwd = process.cwd();
 
 	const SourceRoot = resolve(

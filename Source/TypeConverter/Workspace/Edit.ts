@@ -5,28 +5,23 @@
  */
 
 import type { UriComponents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
-
 import type { IIdentifiedSingleEditOperation } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/model.js";
-
 import type * as VSCode from "vscode";
 
 import {
 	TextEdit as VSCodeTextEdit,
 	WorkspaceEdit as VSCodeWorkspaceEdit,
 } from "../../Platform/VSCode/Type.js";
-
 import {
 	FromAPI as TextEditFromAPI,
 	ToAPI as TextEditToAPI,
 } from "../Main/Text/Edit.js";
-
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
 
 // --- DTO Interfaces for IPC ---
 // These define the plain, serializable objects for IPC, decoupling from complex VS Code internal types.
 
 interface IWorkspaceTextEditDTO {
-
 	_type: "text";
 
 	resource: UriComponents;
@@ -39,7 +34,6 @@ interface IWorkspaceTextEditDTO {
 }
 
 interface IWorkspaceFileEditDTO {
-
 	_type: "file";
 
 	oldResource?: UriComponents;
@@ -52,7 +46,6 @@ interface IWorkspaceFileEditDTO {
 }
 
 type IWorkspaceEditDTO = {
-
 	edits: Array<IWorkspaceTextEditDTO | IWorkspaceFileEditDTO>;
 
 	metadata?: VSCode.WorkspaceEditMetadata;
@@ -61,7 +54,6 @@ type IWorkspaceEditDTO = {
 // --- Conversion Logic ---
 
 export interface IVersionInformationProvider {
-
 	GetTextDocumentVersion(Uri: VSCode.Uri): number | undefined;
 }
 
@@ -70,7 +62,6 @@ export const FromAPI = (
 
 	VersionProvider?: IVersionInformationProvider,
 ): IWorkspaceEditDTO => {
-
 	const Result: IWorkspaceEditDTO = { edits: [] };
 
 	for (const [URI, URIEditArray] of Edit.entries()) {
@@ -110,7 +101,6 @@ export const FromAPI = (
 };
 
 export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
-
 	const Result = new VSCodeWorkspaceEdit();
 
 	for (const Edit of DTO.edits) {

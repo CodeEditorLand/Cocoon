@@ -42,23 +42,16 @@
  */
 
 import { createRequire } from "module";
-
 import { dirname } from "path";
-
 import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
-
 import * as protoLoader from "@grpc/proto-loader";
-
 import { Effect, Layer } from "effect";
-
 import { v4 as uuidv4 } from "uuid";
 
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
-
 import { CocoonDevLog } from "../../Dev/Log.js";
-
 import {
 	CancelOperationRequest,
 	Empty,
@@ -80,7 +73,6 @@ const require = createRequire(import.meta.url);
  * Circuit breaker state
  */
 enum CircuitBreakerState {
-
 	Closed = "CLOSED", // Normal operation
 
 	Open = "OPEN", // Reject all requests
@@ -92,7 +84,6 @@ enum CircuitBreakerState {
  * Connection state
  */
 enum ConnectionState {
-
 	Disconnected = "DISCONNECTED",
 
 	Connecting = "CONNECTING",
@@ -110,7 +101,6 @@ enum ConnectionState {
  * optionally receive a disposable back.
  */
 interface CancellationToken {
-
 	readonly isCancellationRequested: boolean;
 
 	onCancellationRequested?: (
@@ -123,7 +113,6 @@ interface CancellationToken {
  * and retry logic for Mountain integration.
  */
 export class MountainClientService implements IMountainClientService {
-
 	readonly _serviceBrand: undefined;
 
 	// Core gRPC state
@@ -846,7 +835,6 @@ message RPCDataPayload {
 
 					const Correlation =
 						(parameters?.[0] as { viewId?: string } | undefined)
-
 							?.viewId ?? `req-${requestIdentifier}`;
 
 					process.stdout.write(
@@ -924,7 +912,6 @@ message RPCDataPayload {
 
 				(error as any).data = rpcError.Data
 					? this.DeserializeResponse(rpcError.Data)
-
 					: undefined;
 
 				throw error;
@@ -1262,7 +1249,6 @@ message RPCDataPayload {
 
 							(error: any, response: any) => {
 								if (error) reject(error);
-
 								else resolve(response);
 							},
 						);
@@ -1713,7 +1699,6 @@ message RPCDataPayload {
 
 					(error: any) => {
 						if (error) reject(error);
-
 						else resolve();
 					},
 				);
@@ -1791,7 +1776,6 @@ message RPCDataPayload {
 			await new Promise<void>((resolve, reject) => {
 				this.client!.CancelOperation(cancelRequest, (error: any) => {
 					if (error) reject(error);
-
 					else resolve();
 				});
 			});
@@ -1915,8 +1899,6 @@ message RPCDataPayload {
 export const MountainClientServiceLayer =
 	IMountainClientService.Default as Layer.Layer<
 		IMountainClientService,
-
 		never,
-
 		never
 	>;

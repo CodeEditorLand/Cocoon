@@ -7,11 +7,8 @@
  */
 
 import GlobToRegex from "../../../../Utility/Glob/To/Regex.js";
-
 import type { HandlerContext } from "../../Handler/Context.js";
-
 import { ToUri as StockToUri } from "../Stock/Lift.js";
-
 import WrapLanguagesNamespace from "../Wrap/Languages/Namespace.js";
 
 /**
@@ -21,7 +18,6 @@ import WrapLanguagesNamespace from "../Wrap/Languages/Namespace.js";
  * silently merging errors across files.
  */
 const UriKey = (Value: unknown): string => {
-
 	if (Value == null) return "";
 
 	if (typeof Value === "string") return Value;
@@ -50,7 +46,6 @@ const UriKey = (Value: unknown): string => {
 	}
 
 	if (typeof WithParts.fsPath === "string")
-
 		return `file://${WithParts.fsPath}`;
 
 	return Rendered;
@@ -92,7 +87,6 @@ const RegisterProvider = (
 
 	Extra?: Record<string, unknown>,
 ) => {
-
 	// Defensive: if the extension passes `null`/`undefined` as a
 	// provider (some extensions do this defensively when their feature
 	// flags are off), don't register an empty handle - return a noop
@@ -128,9 +122,7 @@ const RegisterProvider = (
 	};
 
 	const SelectorArray = Array.isArray(Selector)
-
 		? Selector.map(NormaliseOne)
-
 		: [NormaliseOne(Selector)];
 
 	const Language =
@@ -484,12 +476,10 @@ const CreateLanguagesNamespace = (
 				};
 
 				TriggerCharacters = Array.isArray(Meta.triggerCharacters)
-
 					? Meta.triggerCharacters
 					: [];
 
 				RetriggerCharacters = Array.isArray(Meta.retriggerCharacters)
-
 					? Meta.retriggerCharacters
 					: [];
 			} else {
@@ -1162,26 +1152,20 @@ const CreateLanguagesNamespace = (
 
 				if (typeof Filter.language === "string") {
 					if (Filter.language === DocLanguage) Score += 5;
-
 					else if (Filter.language === "*") Score += 3;
-
 					else return 0;
 				}
 
 				if (typeof Filter.scheme === "string") {
 					if (Filter.scheme === DocScheme) Score += 5;
-
 					else if (Filter.scheme === "*") Score += 3;
-
 					else return 0;
 				}
 
 				if (typeof Filter.pattern === "string" && DocPath.length > 0) {
 					try {
 						if (GlobToRegex(Filter.pattern).test(DocPath))
-
 							Score += 5;
-
 						else return 0;
 					} catch {
 						// Malformed pattern - treat as no-match rather than throwing.
@@ -1196,9 +1180,7 @@ const CreateLanguagesNamespace = (
 							: "";
 
 					if (Filter.notebookType === NotebookType) Score += 1;
-
 					else if (Filter.notebookType === "*") Score += 1;
-
 					else return 0;
 				}
 

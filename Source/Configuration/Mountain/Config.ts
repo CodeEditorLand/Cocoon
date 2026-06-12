@@ -11,7 +11,6 @@
  * Mountain connection configuration
  */
 export interface MountainConfig {
-
 	/**
 	 * Mountain gRPC server host
 	 * @default "localhost"
@@ -100,7 +99,6 @@ export interface MountainConfig {
  * Default Mountain configuration
  */
 export const defaultMountainConfig: MountainConfig = {
-
 	host: "localhost",
 
 	port: 50051,
@@ -132,7 +130,6 @@ export const defaultMountainConfig: MountainConfig = {
  * Load Mountain configuration from environment variables
  */
 export function loadMountainConfigFromEnv(): MountainConfig {
-
 	const config = { ...defaultMountainConfig };
 
 	// Load from environment variables
@@ -237,7 +234,6 @@ export function loadMountainConfigFromEnv(): MountainConfig {
  * Validate Mountain configuration
  */
 export function validateMountainConfig(config: MountainConfig): string[] {
-
 	const errors: string[] = [];
 
 	// Validate host
@@ -289,7 +285,6 @@ export function validateMountainConfig(config: MountainConfig): string[] {
 export function createMountainConfig(
 	overrides?: Partial<MountainConfig>,
 ): MountainConfig {
-
 	const config = { ...defaultMountainConfig, ...overrides };
 
 	const errors = validateMountainConfig(config);
@@ -305,7 +300,6 @@ export function createMountainConfig(
  * Get Mountain configuration summary
  */
 export function getMountainConfigSummary(config: MountainConfig): string {
-
 	return `Mountain Configuration:
   Host: ${config.host}
 

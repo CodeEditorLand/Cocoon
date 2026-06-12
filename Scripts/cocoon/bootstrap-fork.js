@@ -12,16 +12,13 @@
 import { Effect } from "effect";
 
 import { ServiceMapping } from "../Source/ServiceMapping.js";
-
 import { GRPCServerService } from "../Source/Services/GRPCServerService.js";
-
 import { MountainClientService } from "../Source/Services/MountainClientService.js";
 
 /**
  * Bootstrap process entry point
  */
 async function bootstrap() {
-
 	console.log("[Cocoon] Bootstrap script starting");
 
 	console.log(`[Cocoon] Process PID: ${process.pid}`);
@@ -84,7 +81,6 @@ async function bootstrap() {
  * Start gRPC services
  */
 async function startServices() {
-
 	console.log("[Cocoon] Starting gRPC services");
 
 	try {
@@ -118,7 +114,6 @@ async function startServices() {
  * Signal readiness to Mountain
  */
 async function signalReadiness() {
-
 	console.log("[Cocoon] Signaling readiness to Mountain");
 
 	try {
@@ -146,7 +141,6 @@ async function signalReadiness() {
  * Handle graceful shutdown
  */
 async function handleShutdown(signal) {
-
 	console.log(`[Cocoon] Received ${signal}, shutting down gracefully`);
 
 	try {
@@ -208,7 +202,6 @@ process.on("unhandledRejection", (reason, promise) => {
  * Entry point
  */
 if (require.main === module) {
-
 	bootstrap().catch((error) => {
 		console.error("[Cocoon] Bootstrap error:", error);
 

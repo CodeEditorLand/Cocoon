@@ -13,7 +13,6 @@ import { SerializeFilters } from "../../Filter.js";
  * @returns The serializable DTO.
  */
 export const ToDTO = (Options?: OpenDialogOptions) => {
-
 	if (!Options) {
 		return undefined;
 	}

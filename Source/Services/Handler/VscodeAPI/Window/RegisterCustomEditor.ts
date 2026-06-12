@@ -29,9 +29,7 @@
  */
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
-
 import type { HandlerContext } from "../../Handler/Context.js";
-
 import {
 	CustomEditorProviders,
 	CustomEditorProvidersByViewType,
@@ -52,7 +50,6 @@ const RegisterCustomEditor = (
 
 	IsReadonly: boolean,
 ) => {
-
 	const Handle = NextProviderHandle();
 
 	CustomEditorProviders.set(String(Handle), Provider);
@@ -79,7 +76,6 @@ const RegisterCustomEditor = (
 
 			if (Match?.selector) {
 				Selector = Array.isArray(Match.selector)
-
 					? Match.selector
 					: [Match.selector];
 
@@ -114,7 +110,6 @@ const RegisterCustomEditor = (
 		if (!Entry || Entry.Handle !== Handle) return undefined;
 
 		if (Entry.Readonly && MethodName !== "resolveCustomEditor")
-
 			return undefined;
 
 		const Method = (Entry.Provider as Record<string, unknown>)?.[

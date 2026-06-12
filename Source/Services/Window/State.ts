@@ -9,7 +9,6 @@ import { Context, Effect, Layer } from "effect";
 import type { WindowStateConfig } from "./Types.js";
 
 export interface WindowStateService {
-
 	readonly getState: Effect.Effect<WindowStateConfig, never>;
 
 	readonly setState: (
@@ -24,7 +23,6 @@ export const WindowStateService = Context.Tag<WindowStateService>(
 );
 
 function makeWindowStateService(): WindowStateService {
-
 	let _state: WindowStateConfig = { focused: true, active: true };
 
 	return WindowStateService.of({

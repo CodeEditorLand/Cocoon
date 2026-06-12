@@ -4,18 +4,15 @@
  */
 
 import type { IIdentifiedSingleEditOperation } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/model.js";
-
 import type { Range as VSCodeRange, TextEdit as VSCodeTextEdit } from "vscode";
 
 import {
 	Range as ExtHostRange,
 	TextEdit as ExtHostTextEdit,
 } from "../../../Platform/VSCode/Type.js";
-
 import { FromAPI as RangeFromAPI, ToAPI as RangeToAPI } from "../Range.js";
 
 function ToExtHostRange(range: VSCodeRange): ExtHostRange {
-
 	return new ExtHostRange(
 		range.start.line,
 

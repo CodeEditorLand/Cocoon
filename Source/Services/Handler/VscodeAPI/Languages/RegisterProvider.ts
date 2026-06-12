@@ -25,7 +25,6 @@ export const RegisterProvider = (
 
 	Provider: any,
 ): { dispose: () => void } => {
-
 	if (Provider == null || typeof Provider !== "object") {
 		return { dispose: () => {} };
 	}

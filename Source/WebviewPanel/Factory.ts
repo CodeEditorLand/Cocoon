@@ -50,11 +50,8 @@
  */
 
 import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
-
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-
 import { Effect, Ref } from "effect";
-
 import type { WebviewPanel as VSCodeWebviewPanel } from "vscode";
 
 import { Panel as PanelModule, type Panel } from "./Panel.js";
@@ -64,7 +61,6 @@ import { Panel as PanelModule, type Panel } from "./Panel.js";
  * @description Metadata about a registered panel in the factory registry
  */
 export interface PanelRegistryEntry {
-
 	readonly Handle: string;
 
 	readonly Panel: Panel;
@@ -81,7 +77,6 @@ export interface PanelRegistryEntry {
  * @description Configuration options for creating a new Webview panel
  */
 export interface CreatePanelOptions {
-
 	readonly ViewType: string;
 
 	readonly Title: string;
@@ -110,7 +105,6 @@ export interface CreatePanelOptions {
  * @description The contract for the Webview Panel Factory service
  */
 export interface Factory {
-
 	readonly CreatePanel: (
 		Extension: IExtensionDescription,
 

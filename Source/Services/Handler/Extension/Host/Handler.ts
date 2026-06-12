@@ -15,20 +15,13 @@
  */
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
-
 import type { HandlerContext } from "../../Handler/Context.js";
-
 import ActivateExtension, {
-
 	ActiveExtensionContexts,
-
 	DisposeExtensionContext,
-
 	IsExtensionActivating,
-
 	ResetStoragePrime,
 } from "./ActivateExtension.js";
-
 import EnsureVscodeAPIRegistered from "./EnsureVscodeAPI.js";
 
 /**
@@ -56,7 +49,6 @@ const HandleInitializeExtensionHost = async (
 
 	Parameters: any,
 ): Promise<string> => {
-
 	const Extensions: any[] = Parameters?.extensions ?? [];
 
 	CocoonDevLog(
@@ -151,7 +143,6 @@ const HandleDeltaExtensions = async (
 
 	Parameters: any,
 ): Promise<any> => {
-
 	const DeltaStart = performance.now();
 
 	const Added: any[] = Parameters?.toAdd ?? [];
@@ -234,7 +225,6 @@ const HandleActivateByEvent = async (
 
 	Parameters: any,
 ): Promise<any> => {
-
 	// Ensure the vscode API shim is available before any extension loads
 	await EnsureVscodeAPIRegistered(Context);
 
@@ -305,7 +295,6 @@ const HandleActivateByEvent = async (
 			InProgress.has(ExtId) ||
 			IsExtensionActivating(ExtId)
 		)
-
 			return;
 
 		// Depth guard: max 20 levels of transitive deps before bail-out.
@@ -426,8 +415,7 @@ const HandleActivateByEvent = async (
 	if (
 		!StartupFinishedScheduled &&
 		ActivationEvent !== "onStartupFinished" &&
-		(Context.ActivationEventIndex.get("onStartupFinished")?.length ?? 0) >
-			0
+		(Context.ActivationEventIndex.get("onStartupFinished")?.length ?? 0) > 0
 	) {
 		StartupFinishedScheduled = true;
 
@@ -468,7 +456,6 @@ const HandleStartExtensionHost = async (
 
 	_Parameters: any,
 ): Promise<any> => {
-
 	CocoonDevLog(
 		"ext-host",
 
@@ -493,7 +480,6 @@ const HandleStartExtensionHost = async (
 };
 
 export default {
-
 	HandleInitializeExtensionHost,
 
 	HandleDeltaExtensions,

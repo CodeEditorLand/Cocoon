@@ -28,7 +28,6 @@ import type { HandlerContext } from "../Handler/Handler/Context.js";
  * output doesn't break Wind.
  */
 export type ScannedExtension = {
-
 	readonly type: number;
 
 	readonly isBuiltin: boolean;
@@ -53,7 +52,6 @@ export type ScannedExtension = {
 };
 
 export type ScanOptions = {
-
 	readonly includeUninstalled?: boolean;
 
 	readonly includeInvalid?: boolean;
@@ -62,7 +60,6 @@ export type ScanOptions = {
 };
 
 export type ScannerStatistics = {
-
 	readonly totalExtensions: number;
 
 	readonly builtinCount: number;
@@ -126,7 +123,6 @@ export const GetExtension = (
  * the exported shape.
  */
 export const GetStatistics = (Context: HandlerContext): ScannerStatistics => {
-
 	const All = Array.from(Context.ExtensionRegistry.values());
 
 	let Builtin = 0;
@@ -153,7 +149,6 @@ export const GetStatistics = (Context: HandlerContext): ScannerStatistics => {
 };
 
 export default {
-
 	ScanAllExtensions,
 
 	ScanSystemExtensions,

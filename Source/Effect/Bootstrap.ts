@@ -8,7 +8,6 @@
 import { createConnection } from "node:net";
 
 import { CocoonDevLog } from "../Services/Dev/Log.js";
-
 import LandFixLog from "../Utility/Land/Fix/Log.js";
 
 // ============================================================================
@@ -16,7 +15,6 @@ import LandFixLog from "../Utility/Land/Fix/Log.js";
 // ============================================================================
 
 export interface BootstrapOptions {
-
 	readonly debugMode?: boolean;
 
 	readonly verboseLogging?: boolean;
@@ -27,7 +25,6 @@ export interface BootstrapOptions {
 }
 
 export interface StageResult {
-
 	readonly stageName: string;
 
 	readonly success: boolean;
@@ -38,7 +35,6 @@ export interface StageResult {
 }
 
 export interface BootstrapResult {
-
 	readonly success: boolean;
 
 	readonly totalDuration: number;
@@ -49,7 +45,6 @@ export interface BootstrapResult {
 }
 
 export interface BootstrapService {
-
 	readonly run: (options?: BootstrapOptions) => Promise<BootstrapResult>;
 }
 
@@ -123,7 +118,6 @@ const MountainConnectMaxAttempts = 5;
 // ============================================================================
 
 const stage1_Environment = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	CocoonDevLog(
@@ -156,7 +150,6 @@ const stage1_Environment = async (): Promise<StageResult> => {
 };
 
 const stage2_Configuration = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	CocoonDevLog(
@@ -224,7 +217,6 @@ const getMountainClient = async () =>
 const getHealth = async () => (await import("./Health.js")).HealthLive;
 
 const stage5_RPCServer = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	const CocoonPort = parseInt(process.env["COCOON_GRPC_PORT"] || "50052", 10);
@@ -253,7 +245,6 @@ const stage5_RPCServer = async (): Promise<StageResult> => {
 };
 
 const stage4_ModuleInterceptor = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	const moduleInterceptor = await getModuleInterceptor();
@@ -274,7 +265,6 @@ const stage4_ModuleInterceptor = async (): Promise<StageResult> => {
 };
 
 const stage3_MountainConnection = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	const mountainClient = await getMountainClient();
@@ -288,9 +278,7 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 	const MountainHost = "localhost";
 
 	let ProbeAttempt = 0,
-
 		ProbeDelay = MountainProbeDelayMs,
-
 		Listening = false;
 
 	while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
@@ -378,7 +366,6 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 };
 
 const stage6_Extensions = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	// Extension activation is driven solely by Mountain's $activateByEvent
@@ -402,7 +389,6 @@ const stage6_Extensions = async (): Promise<StageResult> => {
 };
 
 const stage7_HealthCheck = async (): Promise<StageResult> => {
-
 	const start = Date.now();
 
 	const health = await getHealth();
@@ -447,7 +433,6 @@ const stage7_HealthCheck = async (): Promise<StageResult> => {
 		error:
 			FloorFailures.length > 0
 				? new Error(`HealthCheck floor: ${FloorFailures.join("; ")}`)
-
 				: undefined,
 	};
 };
@@ -461,7 +446,6 @@ const runStage = async (
 
 	stageFn: () => Promise<StageResult>,
 ): Promise<StageResult> => {
-
 	const stageStart = Date.now();
 
 	try {

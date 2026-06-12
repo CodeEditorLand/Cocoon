@@ -41,9 +41,7 @@ export const CustomEditorProviders = new Map<string, any>();
 
 export const CustomEditorProvidersByViewType = new Map<
 	string,
-
 	{ Provider: any; Readonly: boolean; Handle: number }
-
 >();
 
 /** Active webview panels keyed by handle. */

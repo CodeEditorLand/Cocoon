@@ -4,16 +4,12 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-
 import type * as VSCode from "vscode";
 
 // TreeItemCollapsibleState comes from the Platform/VSCode barrel (real VS Code source).
 import * as ExtHostTypes from "../../Platform/VSCode/Type.js";
-
 import type { Command } from "../Command.js";
-
 import { FromAPI as MarkdownStringFromAPI } from "../Main/Markdown/String.js";
-
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
 
 const { TreeItemCollapsibleState } = ExtHostTypes;
@@ -38,7 +34,6 @@ export const FromAPI = (
 
 	commandConverter: Command,
 ): any => {
-
 	const {
 		label: Label,
 
@@ -75,7 +70,6 @@ export const FromAPI = (
 		Icon = IconPath as
 			| VSCode.Uri
 			| { light: VSCode.Uri; dark: VSCode.Uri }
-
 			| undefined;
 	}
 
@@ -97,7 +91,6 @@ export const FromAPI = (
 				? Tooltip
 				: Tooltip instanceof ExtHostTypes.MarkdownString
 					? MarkdownStringFromAPI(Tooltip)
-
 					: undefined,
 
 		command: Command ? commandConverter.ToInternal(Command, []) : undefined,
@@ -116,9 +109,7 @@ export const FromAPI = (
 
 						dark: UriFromAPI(Icon.dark),
 					}
-
 				: UriFromAPI(Icon as VSCode.Uri)
-
 			: undefined,
 
 		accessibilityInformation: AccessibilityInformation,
@@ -131,7 +122,6 @@ export const FromAPI = (
  * @returns A new `vscode.TreeItem` instance.
  */
 export const ToAPI = (dto: any): VSCode.TreeItem => {
-
 	const Label = dto.label.label;
 
 	const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState);

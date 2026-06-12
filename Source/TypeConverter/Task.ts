@@ -4,7 +4,6 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-
 import type * as VSCode from "vscode";
 
 import {
@@ -17,7 +16,6 @@ export const FromAPI = (
 
 	Extension: IExtensionDescription,
 ): any /* ITaskDTO */ => {
-
 	const Definition: VSCode.TaskDefinition = TaskToConvert.definition;
 
 	const Execution = TaskToConvert.execution;
@@ -58,7 +56,6 @@ export const FromAPI = (
 };
 
 export const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
-
 	const Execution = DTO.execution
 		? new ProcessExecution(
 				DTO.execution.process,
@@ -67,7 +64,6 @@ export const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
 
 				DTO.execution.options,
 			)
-
 		: undefined;
 
 	const ConvertedTask = new ExtHostTask(
@@ -94,7 +90,6 @@ export const ExecutionToAPI = (
 
 	TaskToExecute: VSCode.Task,
 ): VSCode.TaskExecution => {
-
 	return {
 		task: TaskToExecute,
 

@@ -15,7 +15,6 @@ import type { MountainClientService } from "../../Mountain/Client/Service.js";
  * Exposes the subset of GRPCServerService state each handler needs.
  */
 export interface HandlerContext {
-
 	/** EventEmitter instance for emitting domain events */
 	readonly Emitter: EventEmitter;
 

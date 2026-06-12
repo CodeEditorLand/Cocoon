@@ -7,7 +7,6 @@
  */
 
 export type Configuration = {
-
 	readonly Key: string;
 
 	readonly Host: string;
@@ -34,14 +33,12 @@ const DefaultBatchWindowMilliseconds = 3000;
 const DefaultBatchMaximum = 50;
 
 const ReadString = (Key: string, Fallback: string): string => {
-
 	const Value = process.env[Key];
 
 	return Value && Value.length > 0 ? Value : Fallback;
 };
 
 const ReadBoolean = (Key: string, Fallback: boolean): boolean => {
-
 	const Value = process.env[Key];
 
 	if (Value === undefined) return Fallback;
@@ -50,7 +47,6 @@ const ReadBoolean = (Key: string, Fallback: boolean): boolean => {
 };
 
 const ReadNumber = (Key: string, Fallback: number): number => {
-
 	const Value = process.env[Key];
 
 	const Parsed = Value ? Number(Value) : Number.NaN;

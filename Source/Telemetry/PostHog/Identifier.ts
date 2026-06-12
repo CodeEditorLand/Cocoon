@@ -8,7 +8,6 @@
  */
 
 export default (Seed: string): string => {
-
 	if (Seed.length > 0) return Seed;
 
 	const Username =

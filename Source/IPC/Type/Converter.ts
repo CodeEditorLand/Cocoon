@@ -87,7 +87,6 @@
  */
 
 import { Effect } from "effect";
-
 import type { Uri } from "vscode";
 
 // URI class for runtime use - the `import type` above is erased at runtime.
@@ -104,7 +103,6 @@ const { URI } =
  * Matches: Element/Mountain/Source/ApplicationState/DTO/WindowStateDTO.rs
  */
 export interface WindowStateDTO {
-
 	readonly IsFocused: boolean;
 
 	readonly IsFullScreen: boolean;
@@ -118,7 +116,6 @@ export interface WindowStateDTO {
  * Matches: Element/Mountain/Source/ApplicationState/DTO/DocumentStateDTO.rs
  */
 export interface DocumentStateDTO {
-
 	readonly URI: string;
 
 	readonly LanguageIdentifier: string;
@@ -142,7 +139,6 @@ export interface DocumentStateDTO {
  * Matches: Element/Mountain/Source/ApplicationState/DTO/WebviewStateDTO.rs
  */
 export interface WebviewStateDTO {
-
 	readonly Handle: string;
 
 	readonly ViewType: string;
@@ -173,7 +169,6 @@ export interface WebviewStateDTO {
  * Runtime handles (PTYInputTransmitter, ReaderTaskHandle, ProcessWaitHandle) are excluded
  */
 export interface TerminalStateDTO {
-
 	readonly Identifier: number;
 
 	readonly Name: string;
@@ -198,7 +193,6 @@ export interface TerminalStateDTO {
  * @description Mountain's OutputChannelStateDTO serialized from Rust
  */
 export interface OutputChannelStateDTO {
-
 	readonly Name: string;
 
 	readonly URI: string;
@@ -213,7 +207,6 @@ export interface OutputChannelStateDTO {
  * @description Mountain's TreeViewStateDTO serialized from Rust
  */
 export interface TreeViewStateDTO {
-
 	readonly ViewId: string;
 
 	readonly Title: string;
@@ -230,7 +223,6 @@ export interface TreeViewStateDTO {
  * @description Mountain's WorkspaceFolderStateDTO serialized from Rust
  */
 export interface WorkspaceFolderStateDTO {
-
 	readonly URI: string;
 
 	readonly Name: string;
@@ -247,7 +239,6 @@ export interface WorkspaceFolderStateDTO {
  * @description Wind's internal WindowState type
  */
 export interface WindowState {
-
 	readonly isFocused: boolean;
 
 	readonly isFullScreen: boolean;
@@ -260,7 +251,6 @@ export interface WindowState {
  * @description Wind's internal DocumentState type
  */
 export interface DocumentState {
-
 	readonly uri: Uri;
 
 	readonly languageIdentifier: string;
@@ -283,7 +273,6 @@ export interface DocumentState {
  * @description Wind's internal WebviewState type
  */
 export interface WebviewState {
-
 	readonly handle: string;
 
 	readonly viewType: string;
@@ -312,7 +301,6 @@ export interface WebviewState {
  * @description Wind's internal TerminalState type
  */
 export interface TerminalState {
-
 	readonly identifier: number;
 
 	readonly name: string;

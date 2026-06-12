@@ -57,7 +57,6 @@ export type CommandsRoute = "local" | "mountain";
  * argument-spread call site.
  */
 export interface CommandsLocalRegistry {
-
 	Has(CommandId: string): boolean;
 }
 
@@ -76,12 +75,10 @@ export function Route(
 
 	Registry: CommandsLocalRegistry,
 ): CommandsRoute {
-
 	return Registry.Has(CommandId) ? "local" : "mountain";
 }
 
 export const LogRoute = (CommandId: string, Decision: CommandsRoute): void => {
-
 	// Per-command dispatch is noisy (every `setContext` / workbench action
 	// / native boot command logs a line). Gate under `cmd-route` so the
 	// trace stays available when diagnosing routing decisions but doesn't

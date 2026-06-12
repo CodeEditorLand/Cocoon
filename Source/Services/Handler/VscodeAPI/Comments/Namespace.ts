@@ -35,7 +35,6 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 type Comment = {
-
 	body: string | { value: string };
 
 	mode?: number;
@@ -52,7 +51,6 @@ type Comment = {
 };
 
 type CommentThread = {
-
 	uri: unknown;
 
 	range: unknown;
@@ -73,7 +71,6 @@ type CommentThread = {
 };
 
 const ThreadKey = (Uri: unknown, Range: unknown): string => {
-
 	const UriStr =
 		typeof Uri === "string"
 			? Uri
@@ -81,7 +78,6 @@ const ThreadKey = (Uri: unknown, Range: unknown): string => {
 
 	const R = Range as
 		| { start?: { line?: number; character?: number } }
-
 		| undefined;
 
 	const Line = R?.start?.line ?? 0;
@@ -92,7 +88,6 @@ const ThreadKey = (Uri: unknown, Range: unknown): string => {
 };
 
 const CreateCommentsNamespace = (Context: HandlerContext) => {
-
 	return {
 		createCommentController: (Id: string, Label: string) => {
 			const ControllerKey = `__commentController:${Id}`;

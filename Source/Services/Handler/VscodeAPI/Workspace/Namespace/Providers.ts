@@ -9,7 +9,6 @@
  */
 
 import { NextProviderHandle } from "../../../../Language/Provider/Registry.js";
-
 import type { HandlerContext } from "../../../Handler/Context.js";
 
 const MakeProvider =
@@ -29,7 +28,6 @@ const MakeProvider =
 		OnDispose?: (Handle: number, Key: string) => void,
 	) =>
 	(Key: string, _Provider: any, _Options?: any) => {
-
 		const Handle = NextProviderHandle();
 
 		Context.SendToMountain(RegisterMethod, {
@@ -179,7 +177,6 @@ export const BuildRegisterFileSystemProvider =
 
 		Options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
 	) => {
-
 		const Handle = NextProviderHandle();
 
 		ClaimedFileSystemSchemes.add(Scheme);
@@ -253,7 +250,6 @@ export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 export const BuildRegisterRemoteAuthorityResolver =
 	(Context: HandlerContext) =>
 	(AuthorityPrefix: string, _Resolver: unknown) => {
-
 		Context.SendToMountain("register_remote_authority_resolver", {
 			authorityPrefix: AuthorityPrefix,
 			extensionId: "",
@@ -270,7 +266,6 @@ export const BuildRegisterRemoteAuthorityResolver =
 
 export const BuildRegisterResourceLabelFormatter =
 	(Context: HandlerContext) => (Formatter: unknown) => {
-
 		Context.SendToMountain("register_resource_label_formatter", {
 			formatter: Formatter,
 		}).catch(() => {});

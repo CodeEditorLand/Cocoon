@@ -38,7 +38,6 @@ import { Effect, Option } from "effect";
  * Process environment interface
  */
 export interface IProcessEnvironment {
-
 	[key: string]: string | undefined;
 }
 
@@ -46,7 +45,6 @@ export interface IProcessEnvironment {
  * Environment variable validation result
  */
 export interface EnvironmentValidationResult {
-
 	isValid: boolean;
 
 	value: string;
@@ -58,7 +56,6 @@ export interface EnvironmentValidationResult {
  * Environment variable validation rules
  */
 export interface EnvironmentValidationRule {
-
 	required?: boolean;
 
 	type?: "string" | "number" | "boolean" | "path" | "url";
@@ -78,7 +75,6 @@ export interface EnvironmentValidationRule {
  * Environment information structure
  */
 export interface EnvironmentInfo {
-
 	variables: Record<string, string>;
 
 	language: string;
@@ -122,7 +118,6 @@ declare const process: { env: IProcessEnvironment };
  * Get the process environment
  */
 function GetProcessEnvironment(): IProcessEnvironment {
-
 	if (typeof process === "object" && typeof process.env === "object") {
 		return process.env;
 	}
@@ -134,7 +129,6 @@ function GetProcessEnvironment(): IProcessEnvironment {
  * Clear environment cache
  */
 export function ClearCache(): void {
-
 	EnvironmentCache.clear();
 
 	CacheTimestamp = Date.now();
@@ -144,7 +138,6 @@ export function ClearCache(): void {
  * Invalidate cache if expired
  */
 function InvalidateCacheIfNeeded(): void {
-
 	if (Date.now() - CacheTimestamp > CACHE_TTL) {
 		ClearCache();
 	}
@@ -154,7 +147,6 @@ function InvalidateCacheIfNeeded(): void {
  * Get environment variable
  */
 export function GetEnvironmentVariable(name: string): Option.Option<string> {
-
 	if (!name || typeof name !== "string") {
 		return Option.none();
 	}
@@ -189,7 +181,6 @@ export function GetEnvironmentVariableOr(
 
 	defaultValue: string,
 ): string {
-
 	return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue);
 }
 
@@ -197,7 +188,6 @@ export function GetEnvironmentVariableOr(
  * Set environment variable (where supported)
  */
 export function SetEnvironmentVariable(name: string, value: string): boolean {
-
 	if (!name || typeof name !== "string") {
 		return false;
 	}
@@ -220,7 +210,6 @@ export function SetEnvironmentVariable(name: string, value: string): boolean {
  * Delete environment variable
  */
 export function DeleteEnvironmentVariable(name: string): boolean {
-
 	if (!name || typeof name !== "string") {
 		return false;
 	}
@@ -239,7 +228,6 @@ export function DeleteEnvironmentVariable(name: string): boolean {
  * Get all environment variables
  */
 export function GetAllEnvironmentVariables(): IProcessEnvironment {
-
 	InvalidateCacheIfNeeded();
 
 	return GetProcessEnvironment();
@@ -255,7 +243,6 @@ export function ValidateEnvironmentVariable(
 
 	rule: EnvironmentValidationRule,
 ): EnvironmentValidationResult {
-
 	// Check required
 	if (rule.required && (!value || value.trim() === "")) {
 		return {
@@ -400,7 +387,6 @@ export function GetValidatedEnvironmentVariable(
 
 	rule: EnvironmentValidationRule,
 ): EnvironmentValidationResult {
-
 	const valueOption = GetEnvironmentVariable(name);
 
 	if (Option.isNone(valueOption)) {
@@ -428,7 +414,6 @@ export function GetValidatedEnvironmentVariable(
  * Get language from environment
  */
 export function GetLanguage(): string {
-
 	// Check VSCODE_NLS_CONFIG first (VSCode)
 	const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG");
 
@@ -488,7 +473,6 @@ export function GetLanguage(): string {
  * Get locale from environment
  */
 export function GetLocale(): string {
-
 	// Check VSCODE_NLS_CONFIG first (VSCode)
 	const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG");
 
@@ -536,7 +520,6 @@ export function GetLocale(): string {
  * Get home directory from environment
  */
 export function GetHomeDirectory(): string {
-
 	const env = GetProcessEnvironment();
 
 	// Unix/Linux/macOS
@@ -561,7 +544,6 @@ export function GetHomeDirectory(): string {
  * Get temp directory from environment
  */
 export function GetTempDirectory(): string {
-
 	const env = GetProcessEnvironment();
 
 	// Windows
@@ -592,7 +574,6 @@ export function GetTempDirectory(): string {
  * Get user data directory
  */
 export function GetUserDataDirectory(): string {
-
 	// Check XDG_DATA_HOME (Unix/Linux)
 	const xdgDataHome = GetEnvironmentVariable("XDG_DATA_HOME");
 
@@ -628,7 +609,6 @@ export function GetUserDataDirectory(): string {
  * Get platform home directory
  */
 export function GetPlatformHome(): string {
-
 	const home = GetHomeDirectory();
 
 	const platform = GetPlatformType();
@@ -654,13 +634,11 @@ export function GetPlatformHome(): string {
  * Detect platform type
  */
 function GetPlatformType(): "windows" | "mac" | "linux" {
-
 	const currentProcess = typeof process !== "undefined" ? process : undefined;
 
 	const platform =
 		currentProcess && "platform" in currentProcess
 			? ((currentProcess as any).platform as string)
-
 			: "";
 
 	if (platform === "win32") {
@@ -678,7 +656,6 @@ function GetPlatformType(): "windows" | "mac" | "linux" {
  * Get comprehensive environment information
  */
 export function GetEnvironmentInfo(): EnvironmentInfo {
-
 	const envVars = GetAllEnvironmentVariables();
 
 	const safeEnvVars: Record<string, string> = {};
@@ -710,7 +687,6 @@ export function GetEnvironmentInfo(): EnvironmentInfo {
  * Check if running in development environment
  */
 export function IsDevelopment(): boolean {
-
 	const nodeEnv = GetEnvironmentVariable("NODE_ENV");
 
 	if (Option.isNone(nodeEnv)) {
@@ -724,7 +700,6 @@ export function IsDevelopment(): boolean {
  * Check if running in production environment
  */
 export function IsProduction(): boolean {
-
 	const nodeEnv = GetEnvironmentVariable("NODE_ENV");
 
 	if (Option.isNone(nodeEnv)) {
@@ -738,7 +713,6 @@ export function IsProduction(): boolean {
  * Check if running in CI environment
  */
 export function IsCI(): boolean {
-
 	const ciVariables = [
 		"CI",
 
@@ -776,7 +750,6 @@ export function IsCI(): boolean {
  * Check if running in VSCode environment
  */
 export function IsVSCode(): boolean {
-
 	const codeEnv = GetEnvironmentVariable("VSCODE_PID");
 
 	const vscodeEnv = GetEnvironmentVariable("VSCODE_CWD");
@@ -788,7 +761,6 @@ export function IsVSCode(): boolean {
  * Get VSCode installation path
  */
 export function GetVSCodePath(): Option.Option<string> {
-
 	return GetEnvironmentVariable("VSCODE_PATH");
 }
 
@@ -796,7 +768,6 @@ export function GetVSCodePath(): Option.Option<string> {
  * Sanitize environment variable name
  */
 export function SanitizeName(name: string): string {
-
 	return name.replace(/[^a-zA-Z0-9_]/g, "").toUpperCase();
 }
 
@@ -804,7 +775,6 @@ export function SanitizeName(name: string): string {
  * Sanitize environment variable value
  */
 export function SanitizeValue(value: string): string {
-
 	// Remove control characters
 	return value.replace(/[\x00-\x1F\x7F]/g, "").trim();
 }
@@ -815,7 +785,6 @@ export function SanitizeValue(value: string): string {
 export function GetEnvironmentVariableEffect(
 	name: string,
 ): Effect.Effect<Option.Option<string>> {
-
 	return Effect.sync(() => GetEnvironmentVariable(name));
 }
 
@@ -827,7 +796,6 @@ export function GetEnvironmentVariableOrEffect(
 
 	defaultValue: string,
 ): Effect.Effect<string> {
-
 	return Effect.sync(() => GetEnvironmentVariableOr(name, defaultValue));
 }
 
@@ -839,7 +807,6 @@ export function SetEnvironmentVariableEffect(
 
 	value: string,
 ): Effect.Effect<void, Error> {
-
 	if (!name) {
 		return Effect.fail(
 			new Error("Environment variable name cannot be empty"),
@@ -855,7 +822,6 @@ export function SetEnvironmentVariableEffect(
  * Effect-TS: Get environment info as Effect
  */
 export function GetEnvironmentInfoEffect(): Effect.Effect<EnvironmentInfo> {
-
 	return Effect.sync(() => GetEnvironmentInfo());
 }
 
@@ -863,7 +829,6 @@ export function GetEnvironmentInfoEffect(): Effect.Effect<EnvironmentInfo> {
  * Export environment module
  */
 export const Environment = {
-
 	GetEnvironmentVariable,
 
 	GetEnvironmentVariableOr,

@@ -13,7 +13,6 @@
  */
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
-
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
 
 /** Cached node:fs/promises module - loaded once on first cache-miss read. */
@@ -34,7 +33,6 @@ let FsPromisesModule: typeof import("node:fs/promises") | null = null;
 const NormalizeRange = (
 	VsRange: any,
 ): {
-
 	StartLineNumber: number;
 
 	StartColumn: number;
@@ -43,7 +41,6 @@ const NormalizeRange = (
 
 	EndColumn: number;
 } => {
-
 	return {
 		StartLineNumber: (VsRange?.start?.line ?? 0) + 1,
 
@@ -59,7 +56,6 @@ const NormalizeRange = (
  * Map file extension to VS Code language identifier.
  */
 const ResolveLanguageIdentifier = (Extension: string): string => {
-
 	switch (Extension) {
 		case "rs":
 			return "rust";
@@ -106,7 +102,6 @@ const BuildVsDocument = async (
 
 	DocumentContentCache: Map<string, string>,
 ): Promise<any> => {
-
 	const { Position, Range } =
 		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
@@ -204,7 +199,6 @@ const BuildVsDocument = async (
 			Result.push((Lines[StartLine] ?? "").substring(StartChar));
 
 			for (let I = StartLine + 1; I < EndLine; I++)
-
 				Result.push(Lines[I] ?? "");
 
 			Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
@@ -342,7 +336,6 @@ const InvokeLanguageProvider = async (
 
 	CancellationSignal?: AbortSignal,
 ): Promise<any> => {
-
 	const Args: any[] = Array.isArray(Parameters) ? Parameters : [Parameters];
 
 	const Handle: number = Args[0];
@@ -381,7 +374,6 @@ const InvokeLanguageProvider = async (
 
 				column?: number;
 		  }
-
 		| undefined;
 
 	// Inverse of `NormalizeRange`: the workbench → Mountain → Cocoon path
@@ -487,14 +479,12 @@ const InvokeLanguageProvider = async (
 				const Contents: Array<{ Value: string }> = Array.isArray(
 					RawContents,
 				)
-
 					? RawContents.map((C: any) => ({
 							Value:
 								typeof C === "string"
 									? C
 									: (C?.value ?? C?.Value ?? ""),
 						}))
-
 					: typeof RawContents === "string"
 						? [{ Value: RawContents }]
 						: [
@@ -524,12 +514,10 @@ const InvokeLanguageProvider = async (
 
 							EndColumn: (VsRange.end?.character ?? 0) + 1,
 						}
-
 					: undefined;
 
 				return RangeDTO !== undefined
 					? { Contents, Range: RangeDTO }
-
 					: { Contents };
 			}
 
@@ -549,7 +537,6 @@ const InvokeLanguageProvider = async (
 				if (!Result) return { Suggestions: [], IsIncomplete: false };
 
 				const RawItems = Array.isArray(Result)
-
 					? Result
 					: (Result.items ?? []);
 
@@ -565,10 +552,8 @@ const InvokeLanguageProvider = async (
 						Documentation:
 							typeof Item.documentation === "string"
 								? { Value: Item.documentation }
-
 								: Item.documentation?.value !== undefined
 									? { Value: Item.documentation.value }
-
 									: undefined,
 						InsertText:
 							typeof Item.insertText === "string"

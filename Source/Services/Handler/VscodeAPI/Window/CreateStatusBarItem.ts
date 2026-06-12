@@ -19,7 +19,6 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 const enum StatusBarAlignment {
-
 	Left = 1,
 
 	Right = 2,
@@ -32,14 +31,12 @@ const ResolveOverload = (
 
 	ThirdArg: unknown,
 ): {
-
 	Id: string | undefined;
 
 	Alignment: number;
 
 	Priority: number | undefined;
 } => {
-
 	// Three-arg form: createStatusBarItem(id, alignment, priority)
 	if (typeof FirstArg === "string") {
 		return {
@@ -76,7 +73,6 @@ export default (
 
 	Priority?: number,
 ): Record<string, unknown> => {
-
 	const {
 		Id,
 
@@ -125,7 +121,6 @@ export default (
 
 							tooltip: (CurrentCommand as any).tooltip,
 						}
-
 					: undefined;
 
 		Context.SendToMountain("statusBar.update", {

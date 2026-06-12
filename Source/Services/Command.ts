@@ -34,15 +34,12 @@
  */
 
 import { Context, Effect } from "effect";
-
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
-
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
-
 import { CocoonDevLog } from "./Dev/Log.js";
 
 /**
@@ -51,7 +48,6 @@ import { CocoonDevLog } from "./Dev/Log.js";
  * its callback, argument transformations, and associated extension metadata.
  */
 export interface InternalCommandMetadata {
-
 	readonly Id: string;
 
 	readonly Callback: (...Args: any[]) => any;
@@ -68,7 +64,6 @@ export interface InternalCommandMetadata {
  * @description Disposable interface for cleanup
  */
 export interface IDisposable {
-
 	dispose(): void;
 }
 
@@ -77,7 +72,6 @@ export interface IDisposable {
  * @description Logger interface for service logging
  */
 export interface Logger {
-
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -103,7 +97,6 @@ export interface Logger {
  * @description Window interface for accessing active text editor
  */
 export interface Window {
-
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
 }
 
@@ -116,7 +109,6 @@ export interface Window {
  * Specification: Dependency/Editor/extHostCommands.ts (ExtHostCommandsShape)
  */
 export interface Command {
-
 	readonly RegisterCommand: (
 		Id: string,
 
@@ -512,9 +504,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 						});
 
 						const RemoteCommands: string[] = Array.isArray(Response)
-
 							? (Response as string[])
-
 							: [];
 
 						yield* Logger.Info(

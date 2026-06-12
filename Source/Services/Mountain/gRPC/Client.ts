@@ -39,14 +39,12 @@
 import { Context, Effect, Layer } from "effect";
 
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
-
 import { Logger } from "../../Logger.js";
 
 /**
  * Options for showing a text document
  */
 export interface ShowTextDocumentOptions {
-
 	uri: string;
 
 	viewColumn?: number;
@@ -66,7 +64,6 @@ export interface ShowTextDocumentOptions {
  * Status bar item configuration
  */
 export interface StatusBarItemOptions {
-
 	id: string;
 
 	text: string;
@@ -78,7 +75,6 @@ export interface StatusBarItemOptions {
  * Webview panel configuration
  */
 export interface WebviewPanelOptions {
-
 	viewType: string;
 
 	title: string;
@@ -102,7 +98,6 @@ export interface WebviewPanelOptions {
  * Text edit for applying document edits
  */
 export interface TextEdit {
-
 	range: {
 		start: { line: number; character: number };
 
@@ -117,7 +112,6 @@ export interface TextEdit {
  * Provides Effect-based wrappers for Mountain's Vine protocol operations
  */
 export interface MountainGRPCClientService {
-
 	readonly _serviceBrand: undefined;
 
 	// ==================== Window Operations ====================

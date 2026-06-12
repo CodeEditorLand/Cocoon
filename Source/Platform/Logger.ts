@@ -4,7 +4,6 @@
  */
 
 export class Logger {
-
 	private readonly Prefix: string;
 
 	constructor(Prefix: string = "Cocoon") {

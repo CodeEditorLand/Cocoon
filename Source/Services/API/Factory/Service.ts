@@ -8,15 +8,10 @@
 import { Context, Effect, Layer } from "effect";
 
 import { IConfigurationService } from "../../../Interfaces/I/Configuration/Service.js";
-
 import { IFileSystemService } from "../../../Interfaces/I/File/System/Service.js";
-
 import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
-
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
-
 import { ITerminalService } from "../../../Interfaces/I/Terminal/Service.js";
-
 import * as LanguageProviderRegistry from "../../Language/Provider/Registry.js";
 
 // Real VS Code type constructors from @codeeditorland/output (compiled from VS Code source).
@@ -57,7 +52,6 @@ const { Emitter } =
 const StockRelativePattern: any = VsCodeTypes.RelativePattern;
 
 const HydrateBase = (Base: unknown): unknown => {
-
 	if (Base == null) return Base;
 
 	if (typeof Base === "string") return Base;
@@ -115,7 +109,6 @@ const PatchedRelativePattern: any = function RelativePattern(
 
 	Pattern: string,
 ) {
-
 	const Safe = HydrateBase(Base);
 
 	// Forward to the stock constructor. `Reflect.construct` preserves
@@ -136,7 +129,6 @@ Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 // --- API Service Interface ---
 
 export interface IAPIFactoryService {
-
 	createAPI(): any;
 }
 
@@ -145,7 +137,6 @@ export const IAPIFactoryService = Context.Tag<IAPIFactoryService>();
 // --- API Implementation ---
 
 interface VSCodeAPI {
-
 	version: string;
 
 	env: any;
@@ -181,7 +172,6 @@ const createVSCodeAPI = (
 
 	terminalService: ITerminalService,
 ): VSCodeAPI => {
-
 	return {
 		version: "1.88.0",
 
@@ -573,15 +563,12 @@ const createVSCodeAPI = (
 								commandId: command,
 								arguments: args.map((Arg) => {
 									if (typeof Arg === "string")
-
 										return { stringValue: Arg };
 
 									if (typeof Arg === "number")
-
 										return { intValue: Arg };
 
 									if (typeof Arg === "boolean")
-
 										return { boolValue: Arg };
 
 									return { stringValue: JSON.stringify(Arg) };
@@ -881,7 +868,6 @@ const createVSCodeAPI = (
  * APIFactoryService implementation
  */
 export class APIFactoryService implements IAPIFactoryService {
-
 	readonly _serviceBrand: undefined;
 
 	private api: any;

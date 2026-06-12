@@ -22,11 +22,9 @@
  */
 
 import GlobToRegex from "../../../../Utility/Glob/To/Regex.js";
-
 import type { HandlerContext } from "../../Handler/Context.js";
 
 type WorkspaceFolderWire = {
-
 	uri?: string;
 
 	name?: string;
@@ -41,7 +39,6 @@ const WORKSPACE_CONTAINS_PREFIX = "workspaceContains:";
  * the helper in WorkspaceNamespace - kept local to avoid circular imports.
  */
 const UriToFsPath = (Uri: unknown): string | undefined => {
-
 	const Raw =
 		typeof Uri === "string"
 			? Uri

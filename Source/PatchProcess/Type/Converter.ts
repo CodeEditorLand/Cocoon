@@ -46,7 +46,6 @@ import * as Process from "node:process";
 import { Data, Effect } from "effect";
 
 import { SecurityPolicy } from "../Security.js";
-
 import { ProcessValidationState, ValidationResult } from "../Validator.js";
 
 // --- Mountain DTO Types ---
@@ -56,7 +55,6 @@ import { ProcessValidationState, ValidationResult } from "../Validator.js";
  * Uses PascalCase naming convention for Rust compatibility
  */
 export interface SecurityPolicyDTO {
-
 	readonly AllowExit: boolean;
 
 	readonly MaxMemoryMB: number;
@@ -88,7 +86,6 @@ export interface SecurityPolicyDTO {
  * Mountain DTO for process state
  */
 export interface ProcessStateDTO {
-
 	readonly Pid: number;
 
 	readonly Ppid: number;
@@ -124,7 +121,6 @@ export interface ProcessStateDTO {
  * Mountain DTO for validation state
  */
 export interface ValidationStateDTO {
-
 	readonly TotalValidations: number;
 
 	readonly FailedValidations: number;
@@ -148,7 +144,6 @@ export interface ValidationStateDTO {
  * Mountain DTO for security event
  */
 export interface SecurityEventDTO {
-
 	readonly EventId: string;
 
 	readonly EventType: string;
@@ -168,7 +163,6 @@ export interface SecurityEventDTO {
  * Mountain DTO for validation result
  */
 export interface ValidationResultDTO {
-
 	readonly ProcessId: number;
 
 	readonly ValidationType: string;
@@ -190,7 +184,6 @@ export interface ValidationResultDTO {
  * Tagged error for conversion failures
  */
 export class ConversionError extends Data.TaggedError("ConversionError")<{
-
 	readonly SourceType: string;
 
 	readonly TargetType: string;
@@ -199,7 +192,6 @@ export class ConversionError extends Data.TaggedError("ConversionError")<{
 
 	readonly Data?: unknown;
 }> {
-
 	public override readonly message: string;
 
 	constructor(Properties: any) {
@@ -219,7 +211,6 @@ export const SecurityPolicyToDTO = (
 
 	Version: string = "1.0.0",
 ): SecurityPolicyDTO => {
-
 	return {
 		AllowExit: Policy.AllowExit,
 
@@ -255,7 +246,6 @@ export const SecurityPolicyToDTO = (
 export const DTOToSecurityPolicy = (
 	DTO: SecurityPolicyDTO,
 ): Effect.Effect<SecurityPolicy, ConversionError> => {
-
 	return Effect.sync(() => {
 		// Validate DTO structure
 		if (!ValidateSecurityPolicyDTO(DTO)) {
@@ -287,7 +277,6 @@ export const DTOToSecurityPolicy = (
  * Validate SecurityPolicyDTO structure
  */
 const ValidateSecurityPolicyDTO = (DTO: SecurityPolicyDTO): boolean => {
-
 	return (
 		typeof DTO.AllowExit === "boolean" &&
 		typeof DTO.MaxMemoryMB === "number" &&
@@ -313,7 +302,6 @@ const ValidateSecurityPolicyDTO = (DTO: SecurityPolicyDTO): boolean => {
 export const ProcessStateToDTO = (
 	ValidationState: ProcessValidationState,
 ): ProcessStateDTO => {
-
 	const MemoryUsage = Process.memoryUsage();
 
 	const CpuUsage = Process.cpuUsage();
@@ -360,7 +348,6 @@ export const ProcessStateToDTO = (
 export const DTOToProcessState = (
 	DTO: ProcessStateDTO,
 ): Effect.Effect<Partial<ProcessValidationState>, ConversionError> => {
-
 	return Effect.sync(() => {
 		if (!ValidateProcessStateDTO(DTO)) {
 			throw new ConversionError({
@@ -382,7 +369,6 @@ export const DTOToProcessState = (
  * Validate ProcessStateDTO structure
  */
 const ValidateProcessStateDTO = (DTO: ProcessStateDTO): boolean => {
-
 	return (
 		typeof DTO.Pid === "number" &&
 		typeof DTO.Ppid === "number" &&
@@ -406,7 +392,6 @@ const ValidateProcessStateDTO = (DTO: ProcessStateDTO): boolean => {
 export const ValidationStateToDTO = (
 	State: ProcessValidationState,
 ): ValidationStateDTO => {
-
 	const FileAccessTotal = (
 		Array.from(State.FileAccessCount.values()) as number[]
 	).reduce((a, b) => a + b, 0);
@@ -440,7 +425,6 @@ export const ValidationStateToDTO = (
  * Calculate security policy hash
  */
 const GetSecurityPolicyHash = (Policy: SecurityPolicy): string => {
-
 	const PolicyString = JSON.stringify(Policy);
 
 	return Buffer.from(PolicyString).toString("base64").slice(0, 16);
@@ -460,7 +444,6 @@ export const ValidationResultToDTO = (
 
 	DurationMs: number,
 ): ValidationResultDTO => {
-
 	return {
 		ProcessId,
 
@@ -484,7 +467,6 @@ export const ValidationResultToDTO = (
 export const DTOToValidationResult = (
 	DTO: ValidationResultDTO,
 ): ValidationResult => {
-
 	return {
 		Valid: DTO.Success,
 
@@ -510,7 +492,6 @@ export const CreateSecurityEventDTO = (
 
 	Data: Record<string, unknown> = {},
 ): SecurityEventDTO => {
-
 	return {
 		EventId: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
 
@@ -540,7 +521,6 @@ export const SerializeDTO = (
 		| SecurityEventDTO
 		| ValidationResultDTO,
 ): Effect.Effect<string, ConversionError> => {
-
 	return Effect.try({
 		try: () => JSON.stringify(DTO),
 		catch: (Error) => {
@@ -565,7 +545,6 @@ export const DeserializeDTO = <T>(
 
 	ExpectedType: string,
 ): Effect.Effect<T, ConversionError> => {
-
 	return Effect.try({
 		try: () => JSON.parse(JsonString) as T,
 		catch: (Error) => {
@@ -586,7 +565,6 @@ export const DeserializeDTO = <T>(
  * Convert camelCase to PascalCase
  */
 export const CamelCaseToPascalCase = (CamelCase: string): string => {
-
 	return CamelCase.replace(/([a-z])([A-Z])/g, "$1_$2")
 		.split("_")
 		.map((Part) => Part.charAt(0).toUpperCase() + Part.slice(1))
@@ -597,7 +575,6 @@ export const CamelCaseToPascalCase = (CamelCase: string): string => {
  * Convert PascalCase to camelCase
  */
 export const PascalCaseToCamelCase = (PascalCase: string): string => {
-
 	return PascalCase.replace(/([A-Z])/g, (Match, Offset) =>
 		Offset > 0 ? Match.toLowerCase() : Match,
 	);
@@ -607,7 +584,6 @@ export const PascalCaseToCamelCase = (PascalCase: string): string => {
  * Recursively convert object keys from camelCase to PascalCase
  */
 export const ConvertObjectKeysToPascalCase = <T>(Obj: T): T => {
-
 	if (typeof Obj !== "object" || Obj === null) {
 		return Obj;
 	}
@@ -631,7 +607,6 @@ export const ConvertObjectKeysToPascalCase = <T>(Obj: T): T => {
  * Recursively convert object keys from PascalCase to camelCase
  */
 export const ConvertObjectKeysToCamelCase = <T>(Obj: T): T => {
-
 	if (typeof Obj !== "object" || Obj === null) {
 		return Obj;
 	}
@@ -661,7 +636,6 @@ export const BatchSecurityPoliciesToDTO = (
 
 	Version: string = "1.0.0",
 ): SecurityPolicyDTO[] => {
-
 	return Policies.map((Policy) => SecurityPolicyToDTO(Policy, Version));
 };
 
@@ -671,7 +645,6 @@ export const BatchSecurityPoliciesToDTO = (
 export const BatchDTOsToSecurityPolicies = (
 	DTOs: SecurityPolicyDTO[],
 ): Effect.Effect<SecurityPolicy[], ConversionError> => {
-
 	return Effect.all(
 		DTOs.map((DTO) => DTOToSecurityPolicy(DTO)),
 

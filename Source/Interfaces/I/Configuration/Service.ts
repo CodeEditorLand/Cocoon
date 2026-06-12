@@ -9,7 +9,6 @@ import { Context } from "effect";
 
 // Configuration scopes matching VSCode patterns
 export enum ConfigurationScope {
-
 	APPLICATION = "APPLICATION",
 
 	WORKSPACE = "WORKSPACE",
@@ -18,14 +17,12 @@ export enum ConfigurationScope {
 }
 
 export interface ConfigurationChangeEvent {
-
 	affectedKeys: string[];
 
 	scope: ConfigurationScope;
 }
 
 export interface IConfigurationService {
-
 	readonly _serviceBrand: undefined;
 
 	/**

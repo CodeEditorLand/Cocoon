@@ -67,7 +67,6 @@ import {
 	MountainMethods,
 	RouteManifestSummary,
 } from "../../Generated/RouteManifest.js";
-
 import type { HandlerContext } from "../Handler/Handler/Context.js";
 
 /**
@@ -78,7 +77,6 @@ import type { HandlerContext } from "../Handler/Handler/Context.js";
  * so we notify the build process which APIs are still unavailable.
  */
 export class NotImplementedError extends Error {
-
 	readonly code = "NotImplemented";
 
 	readonly _tag = "NotImplementedError";
@@ -99,7 +97,6 @@ export class NotImplementedError extends Error {
  * as the previous run).
  */
 if (process.env["Trace"]) {
-
 	process.stdout.write(
 		`[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}\n`,
 	);
@@ -134,7 +131,6 @@ if (process.env["Trace"]) {
  * gated - Mountain decides whether to dispatch them.
  */
 const IsBypassValue = (Raw: string | undefined): boolean => {
-
 	if (!Raw) return false;
 
 	const Normalised = Raw.trim().toLowerCase();
@@ -148,7 +144,6 @@ const IsBypassValue = (Raw: string | undefined): boolean => {
 };
 
 const ParseDomain = (Method: string): string => {
-
 	const Dot = Method.indexOf(".");
 
 	if (Dot <= 0) return "";
@@ -162,7 +157,6 @@ const ParseDomain = (Method: string): string => {
  * skip Mountain and go straight to the Node fallback.
  */
 export const IsRustDeferralEnabled = (Method: string): boolean => {
-
 	// Per-method override wins. Method names can contain `.` and `:` -
 	// neither character is valid in a POSIX env-var name, so substitute
 	// to `_`.
@@ -194,7 +188,6 @@ export const IsRustDeferralEnabled = (Method: string): boolean => {
 // Boot-time banner: surface the active deferral state so debugging the
 // "why is Mountain being skipped" question is one log line away.
 if (process.env["Trace"]) {
-
 	const ActiveBypasses = Object.keys(process.env)
 		.filter((K) => K === "Defer" || K.startsWith("Defer"))
 		.filter((K) => IsBypassValue(process.env[K]))
@@ -217,7 +210,6 @@ if (process.env["Trace"]) {
  * source Cocoon sees can be probed the same way.
  */
 export function IsUnknownMethodError(Err: unknown): boolean {
-
 	if (Err == null) return false;
 
 	const Message =
@@ -267,7 +259,6 @@ export async function TryMountainThenNode<T>(
 
 	NodeFallback: (Arguments: unknown[]) => Promise<T>,
 ): Promise<T> {
-
 	// Env-controlled bypass: `Defer=false` (global),
 	// `Defer<DOMAIN>=false` (per-domain), or
 	// `Defer<METHOD>=false` (per-method) skip the
@@ -367,7 +358,6 @@ export async function TryMountainWithEmptyFallback<T>(
 
 	IsEmpty: (Result: T) => boolean,
 ): Promise<T> {
-
 	// Env-controlled bypass mirrors `TryMountainThenNode`. When set,
 	// skip Mountain and rely on the Node fallback directly.
 	if (!IsRustDeferralEnabled(Method)) {
@@ -470,7 +460,6 @@ export async function TryMountainWithEmptyFallback<T>(
  * route=unavailable` so the build process can surface the gap.
  */
 export function MarkUnavailable(Method: string): never {
-
 	LogDualTrack(Method, "unavailable");
 
 	throw new NotImplementedError(Method);
@@ -505,7 +494,6 @@ export const SendToMountainOrLocal = (
 
 	OnLocalFallback?: () => void,
 ): Promise<void> => {
-
 	if (!IsRustDeferralEnabled(Method)) {
 		LogDualTrack(Method, "node-bypass");
 
@@ -550,7 +538,6 @@ export type DualTrackRoute =
  * tail under `[DEV:COCOON]` prefix.
  */
 export const LogDualTrack = (Method: string, Route: DualTrackRoute): void => {
-
 	if (!process.env["Trace"]) return;
 
 	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`);

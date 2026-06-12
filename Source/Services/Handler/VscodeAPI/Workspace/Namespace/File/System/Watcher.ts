@@ -8,13 +8,9 @@
  */
 
 import GlobToRegex from "../../../../../../../Utility/Glob/To/Regex.js";
-
 import Tier from "../../../../../../../Utility/Tier.js";
-
 import { NextProviderHandle } from "../../../../../../Language/Provider/Registry.js";
-
 import type { HandlerContext } from "../../../../../Handler/Context.js";
-
 import { ExtractGlobPattern, ResolveWorkspaceFolders } from "../../Helpers.js";
 
 export const CreateFileSystemWatcher = (
@@ -28,7 +24,6 @@ export const CreateFileSystemWatcher = (
 
 	IgnoreDeleteEvents?: boolean,
 ) => {
-
 	const StubDisposable = { dispose: () => {} };
 
 	const StubWatcher = {

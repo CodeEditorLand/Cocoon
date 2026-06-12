@@ -59,7 +59,6 @@ const PadThree = (Value: number): string =>
 	Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value);
 
 const FormatTimestamp = (): string => {
-
 	const Now = new Date();
 
 	if (Long) return Now.toISOString();
@@ -72,7 +71,6 @@ const FormatTimestamp = (): string => {
 const SerializeContext = (
 	Context: Readonly<Record<string, unknown>>,
 ): string => {
-
 	const Seen = new WeakSet<object>();
 
 	try {
@@ -110,7 +108,6 @@ const FormatLine = (
 
 	Context: Readonly<Record<string, unknown>> | undefined,
 ): string => {
-
 	const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
 
 	if (!Context) return `${Head}\n`;
@@ -129,7 +126,6 @@ const Emit = (
 
 	Context: Readonly<Record<string, unknown>> | undefined,
 ): void => {
-
 	if (!Enabled) return;
 
 	if (AllowList && !AllowList.has(Tag)) return;
@@ -149,7 +145,6 @@ const Info = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-
 	Emit(process.stdout, "info", Tag, Message, Context);
 };
 
@@ -160,7 +155,6 @@ const Warn = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-
 	Emit(process.stdout, "warn", Tag, Message, Context);
 };
 
@@ -171,7 +165,6 @@ const ErrorLog = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-
 	Emit(process.stderr, "error", Tag, Message, Context);
 };
 
@@ -182,7 +175,6 @@ const Debug = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-
 	if (!DebugEnabled) return;
 
 	Emit(process.stdout, "debug", Tag, Message, Context);
@@ -202,7 +194,6 @@ const DebugOnce = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-
 	if (!DebugEnabled) return;
 
 	const Combined = `${Tag}:${Key}`;
@@ -223,7 +214,6 @@ const InfoOnce = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-
 	const Combined = `${Tag}:${Key}`;
 
 	if (SeenOnce.has(Combined)) return;
@@ -234,7 +224,6 @@ const InfoOnce = (
 };
 
 const LandFixLog = {
-
 	Info,
 
 	InfoOnce,

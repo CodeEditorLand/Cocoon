@@ -6,13 +6,10 @@
  */
 
 import { Schemas } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/network.js";
-
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
 import { ConvertContentOptionToDTO } from "../../TypeConverter/Webview/Convert/Content/Option/To/DTO.js";
-
 import { CreateEventStream } from "../../Utility/Event/Stream.js";
 
 /**
@@ -21,7 +18,6 @@ import { CreateEventStream } from "../../Utility/Event/Stream.js";
  * implementations to relay state changes to the Mountain host.
  */
 export interface IPC {
-
 	readonly SendNotification: (
 		Method: string,
 
@@ -40,7 +36,6 @@ export interface IPC {
  * @implements {Webview}
  */
 export class WebviewImplementation implements Webview {
-
 	private IsDisposed = false;
 
 	private _html = "";

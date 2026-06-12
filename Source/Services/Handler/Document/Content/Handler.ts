@@ -23,7 +23,6 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
  * Infer the languageId from a URI string based on file extension.
  */
 const InferLanguageIdentifier = (Uri: string): string => {
-
 	const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/);
 
 	if (!ExtensionMatch?.[1]) return "plaintext";
@@ -126,7 +125,6 @@ const BuildTextDocument = (
 
 	LanguageIdentifier?: string,
 ): TextDocumentShape => {
-
 	const Lines = Content.split(/\r?\n/);
 
 	const FileName = Uri.replace(/^file:\/\//, "");
@@ -373,10 +371,8 @@ const HandleDocumentChange = (
 		let Updated = Existing;
 
 		const Changes: any[] = Array.isArray(EventData?.changes)
-
 			? EventData.changes
 			: Array.isArray(Parameters?.changes)
-
 				? Parameters.changes
 				: [];
 

@@ -15,7 +15,6 @@ export { default as CompileConfig } from "./Config/Compile/Config.js";
  * which inherit this external array.
  */
 export const CocoonESBuildConfig: BuildOptions = {
-
 	entryPoints: ["Source/**/*.ts"],
 
 	outdir: "Target",

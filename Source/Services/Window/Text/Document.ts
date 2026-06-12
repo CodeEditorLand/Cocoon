@@ -9,11 +9,9 @@
  */
 
 import { Effect } from "effect";
-
 import type * as VSCode from "vscode";
 
 import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
-
 import type { Workspace } from "../Interfaces.js";
 
 /**
@@ -103,7 +101,6 @@ export const ShowTextDocument = (
 						line: Selection.start.line,
 						character: Selection.start.character,
 					}
-
 				: undefined,
 		});
 
@@ -175,7 +172,6 @@ export const ShowInformationMessage = (
 
 		return InfoSelected
 			? (Items.find((I) => I === InfoSelected) ?? InfoSelected)
-
 			: undefined;
 	});
 
@@ -225,7 +221,6 @@ export const ShowWarningMessage = (
 
 		return WarnSelected
 			? (Items.find((I) => I === WarnSelected) ?? WarnSelected)
-
 			: undefined;
 	});
 
@@ -279,6 +274,5 @@ export const ShowErrorMessage = (
 						(typeof I === "string" ? I : (I as any).title) ===
 						ErrorSelected,
 				) ?? undefined)
-
 			: undefined;
 	});

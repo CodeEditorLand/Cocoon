@@ -29,7 +29,6 @@ import { getTelemetry } from "./Telemetry.js";
 export type HealthStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
 
 export interface ServiceHealth {
-
 	readonly serviceName: string;
 
 	readonly status: HealthStatus;
@@ -44,7 +43,6 @@ export interface ServiceHealth {
 }
 
 export interface SystemHealth {
-
 	readonly overallStatus: HealthStatus;
 
 	readonly services: ReadonlyArray<ServiceHealth>;
@@ -63,7 +61,6 @@ export interface SystemHealth {
 }
 
 export interface HealthService {
-
 	readonly checkService: (serviceName: string) => Promise<ServiceHealth>;
 
 	readonly checkAllServices: () => Promise<SystemHealth>;
@@ -283,7 +280,6 @@ const makeHealthChecker = (): HealthService => ({
 let _health: HealthService | undefined;
 
 export const getHealth = (): HealthService => {
-
 	if (_health === undefined) {
 		_health = makeHealthChecker();
 	}

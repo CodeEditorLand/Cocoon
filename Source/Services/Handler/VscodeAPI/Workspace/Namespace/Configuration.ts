@@ -17,18 +17,14 @@
  */
 
 import { CocoonDevLog } from "../../../../Dev/Log.js";
-
 import type { HandlerContext } from "../../../Handler/Context.js";
-
 import { Call } from "./Helpers.js";
 
 export type ConfigurationChangeEvent = {
-
 	affectsConfiguration: (Key: string) => boolean;
 };
 
 export type ConfigurationState = {
-
 	ConfigCache: Map<string, unknown>;
 
 	ConfigInFlight: Set<string>;
@@ -55,7 +51,6 @@ export type ConfigurationState = {
 export const CreateConfigurationState = (
 	Context: HandlerContext,
 ): ConfigurationState => {
-
 	const ConfigCache = new Map<string, unknown>();
 
 	const ConfigInFlight = new Set<string>();
@@ -164,18 +159,13 @@ export const CreateConfigurationState = (
 					| {
 							properties?: Record<
 								string,
-
 								{ default?: unknown; type?: string | string[] }
-
 							>;
 					  }
-
 					| Array<{
 							properties?: Record<
 								string,
-
 								{ default?: unknown; type?: string | string[] }
-
 							>;
 					  }>;
 			};
@@ -189,7 +179,6 @@ export const CreateConfigurationState = (
 		// array of objects, both with a `properties` map keyed on the full
 		// dotted path (e.g. `gitlens.blame.format`).
 		const Sections = Array.isArray(Contributed)
-
 			? Contributed
 			: [Contributed];
 
@@ -268,13 +257,9 @@ export const CreateConfigurationState = (
 		const Shape = (Payload ?? {}) as { keys?: unknown; affected?: unknown };
 
 		const Keys: string[] = Array.isArray(Shape.keys)
-
 			? (Shape.keys as string[])
-
 			: Array.isArray(Shape.affected)
-
 				? (Shape.affected as string[])
-
 				: [];
 
 		if (Keys.length === 0) {
@@ -352,7 +337,6 @@ const SynthesiseSubtree = (
 
 	Full: string,
 ): Record<string, unknown> | undefined => {
-
 	const Prefix = `${Full}.`;
 
 	const Subtree: Record<string, unknown> = {};
@@ -605,7 +589,6 @@ export const BuildOnDidChangeConfiguration =
 
 		Disposables?: { push: (D: { dispose: () => void }) => unknown },
 	) => {
-
 		// VS Code's event contract is `(listener, thisArg?, disposables?)` -
 		// ours ignored both. rust-analyzer passes `this` as ThisArg and
 		// relies on the bound callback, so

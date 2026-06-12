@@ -9,18 +9,15 @@
  */
 
 import { Effect } from "effect";
-
 import type * as VSCode from "vscode";
 
 import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
-
 import { WebviewPanelImplementation } from "../../../WebviewPanel/Webview/Panel/Implementation.js";
 
 /**
  * IPC proxy shape used inside WebviewPanelImplementation.
  */
 interface WebviewIPC {
-
 	SendNotification: (Method: string, Params: unknown[]) => Promise<void>;
 
 	SendRequest: <T>(Method: string, Params: unknown[]) => Promise<T>;
@@ -97,7 +94,6 @@ export const CreateWebviewPanel = (
 		const PreserveFocus =
 			typeof ShowOptions === "object"
 				? (ShowOptions.preserveFocus ?? false)
-
 				: false;
 
 		// Parse panel options for the proxy
@@ -111,7 +107,6 @@ export const CreateWebviewPanel = (
 					localResourceRoots: Options.localResourceRoots,
 					retainContextWhenHidden: Options.retainContextWhenHidden,
 				}
-
 			: undefined;
 
 		// Convert ViewColumn to DTO format

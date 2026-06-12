@@ -22,7 +22,6 @@ export default (
 
 	Batch: ReadonlyArray<QueuedEvent>,
 ): void => {
-
 	if (Batch.length === 0) return;
 
 	const Payload = JSON.stringify({

@@ -36,7 +36,6 @@ const IsShort = TagSet.has("short");
 const HasAll = TagSet.has("all");
 
 const IsEnabled = (Tag: string): boolean => {
-
 	if (TagSet.size === 0) return false;
 
 	if (HasAll || IsShort) return true;
@@ -50,7 +49,6 @@ const IsEnabled = (Tag: string): boolean => {
  * `[DEV:<TAG>]` prefix so grep patterns work across both sources.
  */
 export const CocoonDevLog = (Tag: string, Message: string): void => {
-
 	if (!IsEnabled(Tag)) return;
 
 	const TagUpper = Tag.toUpperCase();

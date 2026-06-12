@@ -22,7 +22,6 @@ export const DotfileName: string = ".fiddee";
  * string - matches the previous `$HOME/.land` resolution semantics.
  */
 export default function FiddeeRoot(): string {
-
 	const Home = process.env["HOME"] ?? process.env["USERPROFILE"] ?? null;
 
 	if (typeof Home === "string" && Home.length > 0) {

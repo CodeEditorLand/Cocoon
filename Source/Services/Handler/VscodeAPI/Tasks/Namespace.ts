@@ -8,15 +8,12 @@
  */
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
-
 import type { HandlerContext } from "../../Handler/Context.js";
-
 import WrapTasksNamespace from "../Wrap/Tasks/Namespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
-
 		Context.Emitter.on(EventName, Listener);
 
 		return {
@@ -27,7 +24,6 @@ const EventSubscriber =
 	};
 
 const CreateTasksNamespace = (Context: HandlerContext) => {
-
 	// Track active task executions. VS Code's `vscode.tasks.taskExecutions`
 	// is a live array reflecting every running TaskExecution. Extensions
 	// (Mocha, Jest, Cargo runners) read this to skip launching duplicate
@@ -113,7 +109,6 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 
 				const Resolved = Response as
 					| { id?: string; task?: unknown }
-
 					| undefined;
 
 				const TaskId = String(Resolved?.id ?? "");

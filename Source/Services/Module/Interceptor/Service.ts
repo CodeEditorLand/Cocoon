@@ -9,9 +9,7 @@
  */
 
 import * as acorn from "acorn";
-
 import * as walk from "acorn-walk";
-
 import { Context, Effect, Layer } from "effect";
 
 import {
@@ -21,12 +19,10 @@ import {
 	SecurityLevel,
 	SecurityPolicy,
 } from "../../../Interfaces/I/Module/Interceptor/Service.js";
-
 import { CocoonDevLog } from "../../Dev/Log.js";
 
 // Module interception configuration
 interface ModuleInterceptorConfig {
-
 	allowNodeBuiltins: boolean;
 
 	allowFileSystemAccess: boolean;
@@ -45,7 +41,6 @@ type ASTNode = any;
  * ModuleInterceptorService implementation
  */
 export class ModuleInterceptorService implements IModuleInterceptorService {
-
 	private readonly _serviceBrand: undefined;
 
 	private config: ModuleInterceptorConfig;
@@ -461,7 +456,6 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			const reason =
 				allIssues.length > 0
 					? `Security analysis: ${allIssues.join(", ")}`
-
 					: "Advanced AST security analysis passed all checks";
 
 			CocoonDevLog(

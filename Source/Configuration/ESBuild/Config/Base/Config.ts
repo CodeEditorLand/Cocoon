@@ -3,7 +3,6 @@ import type { BuildOptions } from "esbuild";
 import * as Environment from "../../Constant/Environment/Constant.js";
 
 export default {
-
 	color: true,
 
 	format: "esm",
@@ -54,7 +53,6 @@ export default {
 										).rm(outdir, {
 											recursive: true,
 										})
-
 									: {};
 							} catch (_Error) {
 								console.log(_Error);
