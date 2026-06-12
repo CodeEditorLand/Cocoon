@@ -17,7 +17,7 @@ const TierDefines = (() => {
 	} catch {
 		return {};
 	}
-})();
+})(;
 
 export default async function TargetConfig(
 	Current: BuildOptions,
@@ -75,16 +75,16 @@ export default async function TargetConfig(
 												`Build '${Output}' \
 											--ESBuild Configuration/ESBuild/Config/CompileConfig.js \
 											--TypeScript Configuration/tsconfig/Target/Compile.json`,
-											);
+											;
 										}
 									}
 								}
-							});
+							};
 						},
 					},
 				])
 			: [],
-	});
+	};
 
 	return Merged as unknown as BuildOptions;
 }

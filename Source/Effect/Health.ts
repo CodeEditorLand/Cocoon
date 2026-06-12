@@ -101,11 +101,11 @@ const createServiceHealth = (
 	lastChecked: Date.now(),
 	responseTime,
 	details,
-});
+};
 
 const makeHealthChecker = (): HealthService => ({
 	checkService: async (serviceName: string): Promise<ServiceHealth> => {
-		const startTime = Date.now();
+		const startTime = Date.now(;
 
 		switch (serviceName.toLowerCase()) {
 			case "environment": {
@@ -119,11 +119,11 @@ const makeHealthChecker = (): HealthService => ({
 					"Environment service available",
 
 					envTime,
-				);
+				;
 			}
 
 			case "telemetry": {
-				const telemetryService = getTelemetry();
+				const telemetryService = getTelemetry(;
 
 				const telemetryTime = Date.now() - startTime;
 
@@ -132,7 +132,7 @@ const makeHealthChecker = (): HealthService => ({
 						"info",
 
 						"[Health] Telemetry health check",
-					);
+					;
 
 					return createServiceHealth(
 						"Telemetry",
@@ -142,7 +142,7 @@ const makeHealthChecker = (): HealthService => ({
 						"Telemetry service available",
 
 						telemetryTime,
-					);
+					;
 				} catch {
 					return createServiceHealth(
 						"Telemetry",
@@ -152,7 +152,7 @@ const makeHealthChecker = (): HealthService => ({
 						"Telemetry service error",
 
 						telemetryTime,
-					);
+					;
 				}
 			}
 
@@ -167,7 +167,7 @@ const makeHealthChecker = (): HealthService => ({
 					"gRPC service available",
 
 					grpcTime,
-				);
+				;
 			}
 
 			case "extension": {
@@ -181,7 +181,7 @@ const makeHealthChecker = (): HealthService => ({
 					"Extension service available",
 
 					extensionTime,
-				);
+				;
 			}
 
 			default:
@@ -193,12 +193,12 @@ const makeHealthChecker = (): HealthService => ({
 					`Unknown service: ${serviceName}`,
 
 					0,
-				);
+				;
 		}
 	},
 
 	checkAllServices: async (): Promise<SystemHealth> => {
-		const telemetry = getTelemetry();
+		const telemetry = getTelemetry(;
 
 		const services = [
 			"environment",
@@ -207,17 +207,17 @@ const makeHealthChecker = (): HealthService => ({
 			"extension",
 		] as const;
 
-		const healthChecker = makeHealthChecker();
+		const healthChecker = makeHealthChecker(;
 
 		telemetry.log(
 			"info",
 
 			"[Health] Running health checks for all services...",
-		);
+		;
 
 		const healthResults = await Promise.all(
 			services.map((service) => healthChecker.checkService(service)),
-		);
+		;
 
 		// Determine overall status
 		const unhealthyCount = healthResults.filter(
@@ -250,9 +250,9 @@ const makeHealthChecker = (): HealthService => ({
 	},
 
 	getOverallStatus: async (): Promise<HealthStatus> => {
-		const healthChecker = makeHealthChecker();
+		const healthChecker = makeHealthChecker(;
 
-		const systemHealth = await healthChecker.checkAllServices();
+		const systemHealth = await healthChecker.checkAllServices(;
 
 		return systemHealth.overallStatus;
 	},
@@ -262,16 +262,16 @@ const makeHealthChecker = (): HealthService => ({
 
 		intervalMs: number,
 	): Promise<void> => {
-		const healthChecker = makeHealthChecker();
+		const healthChecker = makeHealthChecker(;
 
 		// Periodic health check loop
 		while (true) {
-			await healthChecker.checkService(serviceName);
+			await healthChecker.checkService(serviceName;
 
-			await new Promise<void>((r) => setTimeout(r, intervalMs));
+			await new Promise<void>((r) => setTimeout(r, intervalMs);
 		}
 	},
-});
+};
 
 // ============================================================================
 // SINGLETON
@@ -281,7 +281,7 @@ let _health: HealthService | undefined;
 
 export const getHealth = (): HealthService => {
 	if (_health === undefined) {
-		_health = makeHealthChecker();
+		_health = makeHealthChecker(;
 	}
 
 	return _health;
@@ -309,7 +309,7 @@ export const makeMockHealth = (
 				: "Mock service unhealthy",
 
 			0,
-		);
+		;
 	},
 
 	checkAllServices: async (): Promise<SystemHealth> => {
@@ -325,7 +325,7 @@ export const makeMockHealth = (
 
 				0,
 			),
-		);
+		;
 
 		return {
 			overallStatus: "healthy",
@@ -343,8 +343,8 @@ export const makeMockHealth = (
 	getOverallStatus: async (): Promise<HealthStatus> => "healthy",
 
 	monitorService: async (): Promise<void> => {},
-});
+};
 
-export const HealthLive: HealthService = getHealth();
+export const HealthLive: HealthService = getHealth(;
 
-export const HealthMock: HealthService = makeMockHealth();
+export const HealthMock: HealthService = makeMockHealth(;

@@ -14,11 +14,11 @@ import { URI } from "../../Platform/VSCode/Type.js";
  * @param URI The `vscode.URI` instance to convert.
  * @returns The `UriComponents` DTO.
  */
-export const FromAPI = (TheURI: VSCodeURI): UriComponents => TheURI.toJSON();
+export const FromAPI = (TheURI: VSCodeURI): UriComponents => TheURI.toJSON(;
 
 /**
  * @description Revives a URI DTO back into a `vscode.URI` class instance.
  * @param DTO The `UriComponents` DTO to revive.
  * @returns A new `vscode.URI` instance.
  */
-export const ToAPI = (DTO: UriComponents): VSCodeURI => URI.revive(DTO);
+export const ToAPI = (DTO: UriComponents): VSCodeURI => URI.revive(DTO;

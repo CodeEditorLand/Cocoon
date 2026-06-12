@@ -102,7 +102,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 	public override readonly message: string;
 
 	constructor(Properties: any) {
-		super(Properties);
+		super(Properties;
 
 		this.message = `Validation failed for process ${Properties.ProcessId}: ${Properties.Reason}`;
 	}
@@ -150,14 +150,14 @@ class ValidationMetricsStore {
 
 	public static GetInstance(): ValidationMetricsStore {
 		if (!ValidationMetricsStore._instance) {
-			ValidationMetricsStore._instance = new ValidationMetricsStore();
+			ValidationMetricsStore._instance = new ValidationMetricsStore(;
 		}
 
 		return ValidationMetricsStore._instance;
 	}
 
 	public RecordValidation(StartTime: number, Success: boolean): void {
-		const EndTime = Date.now();
+		const EndTime = Date.now(;
 
 		const Duration = EndTime - StartTime;
 
@@ -196,7 +196,7 @@ class ValidationMetricsStore {
 
 // --- State Management ---
 
-const ProcessValidationStates = new Map<number, ProcessValidationState>();
+const ProcessValidationStates = new Map<number, ProcessValidationState>(;
 
 export let ValidationAlertQueue: Queue.Queue<ValidationResult> | null = null;
 
@@ -205,7 +205,7 @@ export let ValidationAlertQueue: Queue.Queue<ValidationResult> | null = null;
 /**
  * Initialize process validation state
  */
-export const InitializeProcessValidation = Effect.gen(function* () {
+export const InitializeProcessValidation = async function() {
 	const State: ProcessValidationState = {
 		ProcessId: Process.pid,
 		StartTime: Date.now(),
@@ -216,16 +216,16 @@ export const InitializeProcessValidation = Effect.gen(function* () {
 		SecurityPolicy: DefaultSecurityPolicy,
 	};
 
-	ProcessValidationStates.set(Process.pid, State);
+	ProcessValidationStates.set(Process.pid, State;
 
-	ValidationAlertQueue = yield* Queue.unbounded<ValidationResult>();
+	ValidationAlertQueue = yield* Queue.unbounded<ValidationResult>(;
 
-	yield* Effect.logInfo("Process validation initialized", {
+	yield* console.info("Process validation initialized", {
 		ProcessId: Process.pid,
-	});
+	};
 
 	return State;
-});
+};
 
 /**
  * Validate file system access
@@ -234,13 +234,13 @@ export const ValidateFileSystemAccess = (
 	File: string,
 
 	Operation: "read" | "write" | "delete",
-): Effect.Effect<ValidationResult, ValidationError> =>
-	Effect.gen(function* () {
-		const StartTime = Date.now();
+): Promise<ValidationResult> =>
+	async function() {
+		const StartTime = Date.now(;
 
-		const Metrics = ValidationMetricsStore.GetInstance();
+		const Metrics = ValidationMetricsStore.GetInstance(;
 
-		const State = ProcessValidationStates.get(Process.pid);
+		const State = ProcessValidationStates.get(Process.pid;
 
 		if (!State) {
 			const Result: ValidationResult = {
@@ -250,7 +250,7 @@ export const ValidateFileSystemAccess = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false);
+			Metrics.RecordValidation(StartTime, false;
 
 			return Result;
 		}
@@ -262,14 +262,14 @@ export const ValidateFileSystemAccess = (
 			Operation,
 
 			State.SecurityPolicy,
-		);
+		;
 
 		if (!PathValid) {
 			State.ViolationCount++;
 
 			const Count = (State.FileAccessCount.get(File) || 0) + 1;
 
-			State.FileAccessCount.set(File, Count);
+			State.FileAccessCount.set(File, Count;
 
 			const Result: ValidationResult = {
 				Valid: false,
@@ -278,13 +278,13 @@ export const ValidateFileSystemAccess = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false);
+			Metrics.RecordValidation(StartTime, false;
 
-			yield* Effect.logWarning("File system access denied", {
+			yield* console.warn("File system access denied", {
 				File,
 				Operation,
 				ProcessId: Process.pid,
-			});
+			};
 
 			return Result;
 		}
@@ -295,10 +295,10 @@ export const ValidateFileSystemAccess = (
 			Timestamp: Date.now(),
 		};
 
-		Metrics.RecordValidation(StartTime, true);
+		Metrics.RecordValidation(StartTime, true;
 
 		return Result;
-	});
+	};
 
 /**
  * Validate network access
@@ -307,13 +307,13 @@ export const ValidateNetworkAccess = (
 	Endpoint: string,
 
 	Operation: "connect" | "listen",
-): Effect.Effect<ValidationResult, ValidationError> =>
-	Effect.gen(function* () {
-		const StartTime = Date.now();
+): Promise<ValidationResult> =>
+	async function() {
+		const StartTime = Date.now(;
 
-		const Metrics = ValidationMetricsStore.GetInstance();
+		const Metrics = ValidationMetricsStore.GetInstance(;
 
-		const State = ProcessValidationStates.get(Process.pid);
+		const State = ProcessValidationStates.get(Process.pid;
 
 		if (!State) {
 			const Result: ValidationResult = {
@@ -323,7 +323,7 @@ export const ValidateNetworkAccess = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false);
+			Metrics.RecordValidation(StartTime, false;
 
 			return Result;
 		}
@@ -332,14 +332,14 @@ export const ValidateNetworkAccess = (
 			Endpoint,
 
 			State.SecurityPolicy,
-		);
+		;
 
 		if (!NetworkValid) {
 			State.ViolationCount++;
 
 			const Count = (State.NetworkAccessCount.get(Endpoint) || 0) + 1;
 
-			State.NetworkAccessCount.set(Endpoint, Count);
+			State.NetworkAccessCount.set(Endpoint, Count;
 
 			const Result: ValidationResult = {
 				Valid: false,
@@ -348,13 +348,13 @@ export const ValidateNetworkAccess = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false);
+			Metrics.RecordValidation(StartTime, false;
 
-			yield* Effect.logWarning("Network access denied", {
+			yield* console.warn("Network access denied", {
 				Endpoint,
 				Operation,
 				ProcessId: Process.pid,
-			});
+			};
 
 			return Result;
 		}
@@ -365,10 +365,10 @@ export const ValidateNetworkAccess = (
 			Timestamp: Date.now(),
 		};
 
-		Metrics.RecordValidation(StartTime, true);
+		Metrics.RecordValidation(StartTime, true;
 
 		return Result;
-	});
+	};
 
 /**
  * Validate child process spawning
@@ -377,13 +377,13 @@ export const ValidateChildProcessSpawn = (
 	Command: string,
 
 	Arguments: readonly string[],
-): Effect.Effect<ValidationResult, ValidationError> =>
-	Effect.gen(function* () {
-		const StartTime = Date.now();
+): Promise<ValidationResult> =>
+	async function() {
+		const StartTime = Date.now(;
 
-		const Metrics = ValidationMetricsStore.GetInstance();
+		const Metrics = ValidationMetricsStore.GetInstance(;
 
-		const State = ProcessValidationStates.get(Process.pid);
+		const State = ProcessValidationStates.get(Process.pid;
 
 		if (!State) {
 			const Result: ValidationResult = {
@@ -393,7 +393,7 @@ export const ValidateChildProcessSpawn = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false);
+			Metrics.RecordValidation(StartTime, false;
 
 			return Result;
 		}
@@ -404,7 +404,7 @@ export const ValidateChildProcessSpawn = (
 			Arguments,
 
 			State.SecurityPolicy,
-		);
+		;
 
 		if (!SpawnValid) {
 			State.ViolationCount++;
@@ -418,13 +418,13 @@ export const ValidateChildProcessSpawn = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false);
+			Metrics.RecordValidation(StartTime, false;
 
-			yield* Effect.logWarning("Child process spawn denied", {
+			yield* console.warn("Child process spawn denied", {
 				Command,
 				Arguments,
 				ProcessId: Process.pid,
-			});
+			};
 
 			return Result;
 		}
@@ -437,20 +437,20 @@ export const ValidateChildProcessSpawn = (
 			Timestamp: Date.now(),
 		};
 
-		Metrics.RecordValidation(StartTime, true);
+		Metrics.RecordValidation(StartTime, true;
 
 		return Result;
-	});
+	};
 
 /**
  * Validate process memory usage
  */
-export const ValidateMemoryUsage = Effect.gen(function* () {
-	const StartTime = Date.now();
+export const ValidateMemoryUsage = async function() {
+	const StartTime = Date.now(;
 
-	const Metrics = ValidationMetricsStore.GetInstance();
+	const Metrics = ValidationMetricsStore.GetInstance(;
 
-	const State = ProcessValidationStates.get(Process.pid);
+	const State = ProcessValidationStates.get(Process.pid;
 
 	if (!State) {
 		const Result: ValidationResult = {
@@ -460,14 +460,14 @@ export const ValidateMemoryUsage = Effect.gen(function* () {
 			Timestamp: Date.now(),
 		};
 
-		Metrics.RecordValidation(StartTime, false);
+		Metrics.RecordValidation(StartTime, false;
 
 		return Result;
 	}
 
-	const MemoryUsage = Process.memoryUsage();
+	const MemoryUsage = Process.memoryUsage(;
 
-	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024);
+	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024;
 
 	const MaxMemoryMB = State.SecurityPolicy.MaxMemoryMB;
 
@@ -481,13 +481,13 @@ export const ValidateMemoryUsage = Effect.gen(function* () {
 			Timestamp: Date.now(),
 		};
 
-		Metrics.RecordValidation(StartTime, false);
+		Metrics.RecordValidation(StartTime, false;
 
-		yield* Effect.logError("Memory limit exceeded", {
+		yield* console.error("Memory limit exceeded", {
 			UsedMemoryMB,
 			MaxMemoryMB,
 			ProcessId: Process.pid,
-		});
+		};
 
 		return Result;
 	}
@@ -498,27 +498,26 @@ export const ValidateMemoryUsage = Effect.gen(function* () {
 		Timestamp: Date.now(),
 	};
 
-	Metrics.RecordValidation(StartTime, true);
+	Metrics.RecordValidation(StartTime, true;
 
 	return Result;
-});
+};
 
 /**
  * Detect suspicious behavior patterns
  * Analyzes accumulated metrics for anomalies
  */
-export const DetectSuspiciousBehavior = Effect.gen(function* () {
-	const State = ProcessValidationStates.get(Process.pid);
+export const DetectSuspiciousBehavior = async function() {
+	const State = ProcessValidationStates.get(Process.pid;
 
 	if (!State) {
-		return yield* Effect.fail(
-			new ValidationError({
+		throw new ValidationError({
 				ProcessId: Process.pid,
 				ValidationType: "BehaviorDetection",
 				Reason: "Process validation state not initialized",
 				Severity: "error",
 			}),
-		);
+		;
 	}
 
 	const UptimeMinutes = (Date.now() - State.StartTime) / 60000;
@@ -527,46 +526,46 @@ export const DetectSuspiciousBehavior = Effect.gen(function* () {
 		(a, b) => a + b,
 
 		0,
-	);
+	;
 
 	const NetworkRate = Array.from(State.NetworkAccessCount.values()).reduce(
 		(a, b) => a + b,
 
 		0,
-	);
+	;
 
 	// Detect rapid file access (possible scanning)
 	if (UptimeMinutes > 0 && AccessRate / UptimeMinutes > 100) {
-		yield* Effect.logWarning("Suspicious file access rate detected", {
+		yield* console.warn("Suspicious file access rate detected", {
 			AccessRate,
 			UptimeMinutes,
 			ProcessId: Process.pid,
-		});
+		};
 	}
 
 	// Detect many network connections (possible exfiltration)
 	if (UptimeMinutes > 0 && NetworkRate / UptimeMinutes > 10) {
-		yield* Effect.logWarning("Suspicious network activity detected", {
+		yield* console.warn("Suspicious network activity detected", {
 			NetworkRate,
 			UptimeMinutes,
 			ProcessId: Process.pid,
-		});
+		};
 	}
 
 	// Detect excessive child processes
 	if (State.ChildProcessCount > 50) {
-		yield* Effect.logWarning("Excessive child process spawning", {
+		yield* console.warn("Excessive child process spawning", {
 			ChildProcessCount: State.ChildProcessCount,
 			ProcessId: Process.pid,
-		});
+		};
 	}
 
 	// Detect many security violations
 	if (State.ViolationCount > 10) {
-		yield* Effect.logError("Multiple security violations detected", {
+		yield* console.error("Multiple security violations detected", {
 			ViolationCount: State.ViolationCount,
 			ProcessId: Process.pid,
-		});
+		};
 	}
 
 	return {
@@ -575,23 +574,23 @@ export const DetectSuspiciousBehavior = Effect.gen(function* () {
 		ChildProcessCount: State.ChildProcessCount,
 		ViolationCount: State.ViolationCount,
 	};
-});
+};
 
 /**
  * Get validation metrics
  */
 export const GetValidationMetrics = (): ValidationMetrics => {
-	return ValidationMetricsStore.GetInstance().GetMetrics();
+	return ValidationMetricsStore.GetInstance().GetMetrics(;
 };
 
 /**
  * Reset validation metrics
  */
-export const ResetValidationMetrics = Effect.sync(() => {
-	ValidationMetricsStore.GetInstance().Reset();
+export const ResetValidationMetrics = {
+	ValidationMetricsStore.GetInstance(.Reset(;
 
 	return;
-});
+};
 
 /**
  * Get process validation state
@@ -599,7 +598,7 @@ export const ResetValidationMetrics = Effect.sync(() => {
 export const GetProcessValidationState = (
 	ProcessId: number = Process.pid,
 ): ProcessValidationState | undefined => {
-	return ProcessValidationStates.get(ProcessId);
+	return ProcessValidationStates.get(ProcessId;
 };
 
 /**
@@ -607,17 +606,17 @@ export const GetProcessValidationState = (
  */
 export const ClearProcessValidationState = (
 	ProcessId: number = Process.pid,
-): Effect.Effect<void> => {
-	return Effect.sync(() => {
-		ProcessValidationStates.delete(ProcessId);
-	});
+): Promise<void> => {
+	return {
+		ProcessValidationStates.delete(ProcessId;
+	};
 };
 
 /**
  * Run comprehensive security validation
  * Performs all validation checks in sequence
  */
-export const RunSecurityValidation = Effect.gen(function* () {
+export const RunSecurityValidation = async function() {
 	yield* ValidateMemoryUsage;
 
 	const BehaviorCheck = yield* DetectSuspiciousBehavior;
@@ -629,11 +628,11 @@ export const RunSecurityValidation = Effect.gen(function* () {
 		Metrics: GetValidationMetrics(),
 	};
 
-	yield* Effect.logInfo(
+	yield* console.info(
 		"Comprehensive security validation completed",
 
 		Result,
-	);
+	;
 
 	return Result;
-});
+};

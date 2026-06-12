@@ -107,4 +107,4 @@ export interface IAPIFactoryService {
 /**
  * Effect context for APIFactoryService
  */
-export const IAPIFactoryService: unique symbol = Symbol.for("IAPIFactoryService");
+export const IAPIFactoryService: unique symbol = Symbol.for("IAPIFactoryService";

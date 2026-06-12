@@ -31,7 +31,7 @@ const ScmTrace = (Message: string): void => {
 	if (!ScmTraceEnabled) return;
 
 	try {
-		process.stdout.write(`[DEV:SCM-TRACE] ${Message}\n`);
+		process.stdout.write(`[DEV:SCM-TRACE] ${Message}\n`;
 	} catch {}
 };
 
@@ -169,7 +169,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 					: undefined) ??
 				Holder["uri"];
 
-			const RepositoryRootString = UriLikeToString(RepositoryRoot);
+			const RepositoryRootString = UriLikeToString(RepositoryRoot;
 
 			if (RepositoryRootString !== undefined)
 				Projected["__celRepositoryRoot"] = RepositoryRootString;
@@ -239,7 +239,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 const CreateScmNamespace = (Context: HandlerContext) =>
 	WrapScmNamespace({
 		createSourceControl: (Id: string, Label: string, RootUri?: unknown) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			const RootUriDescription =
 				RootUri == null
@@ -252,7 +252,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 
 			ScmTrace(
 				`createSourceControl id="${Id}" label="${Label}" rootUri=${RootUriDescription} handle=${Handle}`,
-			);
+			;
 
 			// vscode.git's `Uri.file()` returns a Uri instance whose getters
 			// (`fsPath`, `path`) and prototype methods don't serialise cleanly
@@ -313,17 +313,17 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 					const Message =
 						Error instanceof globalThis.Error
 							? Error.message
-							: String(Error);
+							: String(Error;
 
 					ScmTrace(
 						`register_scm_provider FAILED id="${Id}" handle=${Handle} error=${Message}`,
-					);
-				});
+					;
+				};
 
 			const Groups = new Map<
 				string,
 				{ label: string; resourceStates: unknown[] }
-			>();
+			>(;
 
 			// vscode.git's `Repository` ctor reads several methods/events on
 			// the returned SourceControl that aren't in our concrete shape:
@@ -359,7 +359,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								"$scm:updateSourceControl",
 
 								[Handle, { inputBoxValue: V }],
-							).catch(() => {});
+							).catch(() => {};
 						},
 						get placeholder() {
 							return (this as any).__placeholder ?? "";
@@ -371,7 +371,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								"$scm:updateSourceControl",
 
 								[Handle, { inputBoxPlaceholder: V }],
-							).catch(() => {});
+							).catch(() => {};
 						},
 						enabled: true,
 						visible: true,
@@ -383,11 +383,11 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 					Groups.set(GroupId, {
 						label: GroupLabel,
 						resourceStates: [],
-					});
+					};
 
 					ScmTrace(
 						`createResourceGroup scm="${Id}" handle=${Handle} groupId="${GroupId}" groupLabel="${GroupLabel}"`,
-					);
+					;
 
 					const GroupReady = ProviderReady.then(() =>
 						Context.SendToMountain("register_scm_resource_group", {
@@ -403,8 +403,8 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 									? Error.message
 									: String(Error)
 							}`,
-						);
-					});
+						;
+					};
 
 					const State = { resourceStates: [] as unknown[] };
 
@@ -424,7 +424,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								`update_scm_group scm=${Handle} group="${GroupId}" resourceCount=${
 									Array.isArray(Value) ? Value.length : 0
 								}`,
-							);
+							;
 
 							// Strip vscode.git's back-references before
 							// serialising. Each `SourceControlResourceState`
@@ -470,8 +470,8 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 											? Error.message
 											: String(Error)
 									}`,
-								);
-							});
+								;
+							};
 						},
 						dispose: () => {
 							GroupReady.then(() =>
@@ -483,9 +483,9 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 										groupHandle: GroupHandle,
 									},
 								),
-							).catch(() => {});
+							).catch(() => {};
 
-							Groups.delete(GroupId);
+							Groups.delete(GroupId;
 						},
 					};
 				},
@@ -494,7 +494,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				get commitTemplate() {
 					return (
 						(ConcreteSourceControl as any).__commitTemplate ?? ""
-					);
+					;
 				},
 				set commitTemplate(V: string) {
 					(ConcreteSourceControl as any).__commitTemplate = V;
@@ -503,7 +503,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						"$scm:updateSourceControl",
 
 						[Handle, { commitTemplate: V }],
-					).catch(() => {});
+					).catch(() => {};
 				},
 				get acceptInputCommand() {
 					return (ConcreteSourceControl as any).__acceptInputCommand;
@@ -515,7 +515,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						"$scm:updateSourceControl",
 
 						[Handle, { acceptInputCommand: V }],
-					).catch(() => {});
+					).catch(() => {};
 				},
 				quickDiffProvider: undefined,
 				dispose: () => {
@@ -523,9 +523,9 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						Context.SendToMountain("unregister_scm_provider", {
 							handle: Handle,
 						}),
-					).catch(() => {});
+					).catch(() => {};
 
-					Groups.clear();
+					Groups.clear(;
 				},
 			};
 
@@ -533,7 +533,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				`scm.sourceControl[${Id}]`,
 
 				ConcreteSourceControl,
-			);
+			;
 		},
 
 		// vscode.scm.inputBox - global input box reference; proxies the active
@@ -551,8 +551,8 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 					enabled: true,
 					visible: true,
 				}
-			);
+			;
 		},
-	});
+	};
 
 export default CreateScmNamespace;

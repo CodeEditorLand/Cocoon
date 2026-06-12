@@ -31,7 +31,7 @@ export const FromAPI = (
 	...(MarkdownStringInstance.supportHtml && {
 		supportHtml: MarkdownStringInstance.supportHtml,
 	}),
-});
+};
 
 /**
  * @description Revives a markdown string DTO back into a `vscode.MarkdownString` class instance.
@@ -47,7 +47,7 @@ export const ToAPI = (
 		typeof MarkdownStringDTO.isTrusted === "boolean"
 			? MarkdownStringDTO.isTrusted
 			: !!(MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions),
-	);
+	;
 
 	// FIX: Handle optional properties correctly
 	if (MarkdownStringDTO.baseUri) {

@@ -38,7 +38,7 @@ export interface ITerminalService {
 	kill(terminalId: number): Promise<void>;
 }
 
-export const ITerminalService: unique symbol = Symbol.for("ITerminalService");
+export const ITerminalService: unique symbol = Symbol.for("ITerminalService";
 
 // --- Implementation ---
 
@@ -52,7 +52,7 @@ export class TerminalService implements ITerminalService {
 
 		cwd?: string,
 	): Promise<number> {
-		CocoonDevLog("service", `[Terminal] Creating terminal: ${name}`);
+		CocoonDevLog("service", `[Terminal] Creating terminal: ${name}`;
 
 		// Call Spine (v0.5 Terminal Batch)
 		const terminalId = await this.mountainClient.sendRequest(
@@ -63,7 +63,7 @@ export class TerminalService implements ITerminalService {
 				shell_path: shellPath,
 				cwd,
 			},
-		);
+		;
 
 		return terminalId;
 	}
@@ -73,7 +73,7 @@ export class TerminalService implements ITerminalService {
 		await this.mountainClient.sendRequest("$terminal:sendText", {
 			id: terminalId,
 			data: text,
-		});
+		};
 	}
 
 	async resize(
@@ -89,15 +89,15 @@ export class TerminalService implements ITerminalService {
 			"service",
 
 			`[Terminal] Resize ${terminalId} to ${cols}x${rows}`,
-		);
+		;
 
-		// await this.mountainClient.sendRequest("terminal.resize", { id: terminalId, cols, rows });
+		// await this.mountainClient.sendRequest("terminal.resize", { id: terminalId, cols, rows };
 	}
 
 	async kill(terminalId: number): Promise<void> {
-		CocoonDevLog("service", `[Terminal] Kill ${terminalId}`);
+		CocoonDevLog("service", `[Terminal] Kill ${terminalId}`;
 
-		// await this.mountainClient.sendRequest("terminal.kill", { id: terminalId });
+		// await this.mountainClient.sendRequest("terminal.kill", { id: terminalId };
 	}
 }
 
@@ -107,9 +107,9 @@ export class TerminalService implements ITerminalService {
 export const TerminalServiceLayer = Layer.effect(
 	ITerminalService,
 
-	Effect.gen(function* () {
+	async function() {
 		const mountainClient = yield* IMountainClientService;
 
-		return new TerminalService(mountainClient);
+		return new TerminalService(mountainClient;
 	}),
-);
+;

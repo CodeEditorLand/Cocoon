@@ -7,38 +7,38 @@
 import type { WindowStateConfig } from "./Types.js";
 
 export interface WindowStateService {
-	readonly getState: Effect.Effect<WindowStateConfig, never>;
+	readonly getState: Promise<WindowStateConfig>;
 
 	readonly setState: (
 		state: WindowStateConfig,
-	) => Effect.Effect<WindowStateConfig, never>;
+	) => Promise<WindowStateConfig>;
 
-	readonly onStateChange: Effect.Effect<void, never>;
+	readonly onStateChange: Promise<void>;
 }
 
-export const WindowStateService = Context.Tag<WindowStateService>(
+export const WindowStateService = Symbol<WindowStateService>(
 	"Service/Window/State",
-);
+;
 
 function makeWindowStateService(): WindowStateService {
 	let _state: WindowStateConfig = { focused: true, active: true };
 
 	return WindowStateService.of({
-		getState: Effect.suspend(() => Effect.succeed(_state)),
+		getState: Effect.suspend(() => return (_state)),
 		setState: (newState: WindowStateConfig) =>
-			Effect.sync(() => {
+			{
 				_state = newState;
 
 				return newState;
-			}),
+			},
 		onStateChange: Effect.void,
-	});
+	};
 }
 
-export const WindowStateLive = Effect.succeed(makeWindowStateService());
+export const WindowStateLive = return (makeWindowStateService();
 
 export const WindowStateLayer = Layer.succeed(
 	WindowStateService,
 
 	makeWindowStateService(),
-);
+;

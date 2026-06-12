@@ -109,29 +109,27 @@ export interface Factory {
 		Extension: IExtensionDescription,
 
 		Options: CreatePanelOptions,
-	) => Effect.Effect<Panel, Error>;
+	) => Promise<Panel>;
 
-	readonly GetPanel: (Handle: string) => Effect.Effect<Panel, Error>;
+	readonly GetPanel: (Handle: string) => Promise<Panel>;
 
-	readonly GetAllPanels: () => Effect.Effect<readonly Panel[], never>;
+	readonly GetAllPanels: () => Promise<readonly Panel[]>;
 
-	readonly DisposePanel: (Handle: string) => Effect.Effect<void, never>;
+	readonly DisposePanel: (Handle: string) => Promise<void>;
 
-	readonly DisposeAllPanels: () => Effect.Effect<void, never>;
+	readonly DisposeAllPanels: () => Promise<void>;
 }
 
 /**
  * @class FactoryService
  * @description The Effect Service for managing Webview Panel Factory
  */
-export class FactoryService extends Effect.Service<FactoryService>()(
+export class FactoryService extends /* Effect.Service */(
 	"Factory/WebviewPanel",
 
 	{
-		effect: Effect.gen(function* () {
-			const ActivePanelsRef = yield* Ref.make(
-				new Map<string, PanelRegistryEntry>(),
-			);
+		effect: async function() {
+			const ActivePanelsRef = { current: new Map<string, PanelRegistryEntry>(), };
 
 			/**
 			 * Create a new Webview panel with proper initialization
@@ -140,13 +138,12 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 				Extension: IExtensionDescription,
 
 				Options: CreatePanelOptions,
-			): Effect.Effect<Panel, Error> =>
-				Effect.gen(function* () {
+			): Promise<Panel> =>
+				async function() {
 					// Defensive: Validate required options
 					if (!Options?.ViewType || !Options?.Title) {
-						return yield* Effect.fail(
-							new Error("Panel requires ViewType and Title"),
-						);
+						throw new Error("Panel requires ViewType and Title"),
+						;
 					}
 
 					// Generate unique handle for this panel
@@ -154,13 +151,13 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 
 					// Create dispose callback for registry cleanup
 					const OnDispose = () =>
-						void Ref.update(ActivePanelsRef, (Registry) => {
-							const Updated = new Map(Registry);
+						void ActivePanelsRef.current = Registry(ActivePanelsRef.current) => {
+							const Updated = new Map(Registry;
 
-							Updated.delete(Handle);
+							Updated.delete(Handle;
 
 							return Updated;
-						}).pipe(Effect.runPromise).catch(() => {});
+						}).catch(() => {};
 
 					// Create the panel instance
 					const PanelInstance = PanelModule.Create({
@@ -171,11 +168,11 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 						ShowOptions: Options.ShowOptions,
 						Options: Options.Options,
 						OnDispose,
-					});
+					};
 
 					// Register panel for tracking
-					yield* Ref.update(ActivePanelsRef, (Registry) => {
-						const Updated = new Map(Registry);
+					yield* ActivePanelsRef.current = Registry(ActivePanelsRef.current) => {
+						const Updated = new Map(Registry;
 
 						Updated.set(Handle, {
 							Handle,
@@ -183,75 +180,73 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 							ExtensionId: Extension.identifier.value,
 							ViewType: Options.ViewType,
 							CreatedAt: new Date(),
-						});
+						};
 
 						return Updated;
-					});
+					};
 
 					return PanelInstance;
-				});
+				};
 
 			/**
 			 * Get a specific panel by handle
 			 */
-			const GetPanel = (Handle: string): Effect.Effect<Panel, Error> =>
-				Effect.gen(function* () {
-					const Registry = yield* Ref.get(ActivePanelsRef);
+			const GetPanel = (Handle: string): Promise<Panel> =>
+				async function() {
+					const Registry = ActivePanelsRef.current;
 
-					const Entry = Registry.get(Handle);
+					const Entry = Registry.get(Handle;
 
 					if (!Entry) {
-						return yield* Effect.fail(
-							new Error(
+						throw new Error(
 								`Panel with handle '${Handle}' not found`,
 							),
-						);
+						;
 					}
 
 					return Entry.Panel;
-				});
+				};
 
 			/**
 			 * Get all active panels
 			 */
-			const GetAllPanels = (): Effect.Effect<readonly Panel[], never> =>
-				Effect.gen(function* () {
-					const Registry = yield* Ref.get(ActivePanelsRef);
+			const GetAllPanels = (): Promise<readonly Panel[]> =>
+				async function() {
+					const Registry = ActivePanelsRef.current;
 
 					return Array.from(Registry.values()).map(
 						(Entry) => Entry.Panel,
-					);
-				});
+					;
+				};
 
 			/**
 			 * Dispose a specific panel by handle
 			 */
-			const DisposePanel = (Handle: string): Effect.Effect<void, never> =>
-				Effect.gen(function* () {
-					const Registry = yield* Ref.get(ActivePanelsRef);
+			const DisposePanel = (Handle: string): Promise<void> =>
+				async function() {
+					const Registry = ActivePanelsRef.current;
 
-					const Entry = Registry.get(Handle);
+					const Entry = Registry.get(Handle;
 
 					if (Entry) {
-						Entry.Panel.dispose();
+						Entry.Panel.dispose(;
 					}
-				});
+				};
 
 			/**
 			 * Dispose all active panels
 			 */
-			const DisposeAllPanels = (): Effect.Effect<void, never> =>
-				Effect.gen(function* () {
-					const Registry = yield* Ref.get(ActivePanelsRef);
+			const DisposeAllPanels = (): Promise<void> =>
+				async function() {
+					const Registry = ActivePanelsRef.current;
 
-					yield* Effect.all(
-						Array.from(Registry.values()).map((Entry) =>
-							Effect.sync(() => Entry.Panel.dispose()),
+					await Promise.all(Array.from(Registry.values()).map((Entry) =>
+							Entry.Panel.dispose(),
 						),
 
 						{ concurrency: "unbounded" },
-					);
-				});
+					;
+				};
 
 			return {
 				CreatePanel,

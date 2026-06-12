@@ -2,11 +2,8 @@
  * @module Services/Mountain/gRPC/Types
  *
  * DTO and interface definitions for the Mountain gRPC client service.
- * Isolated so consumers can `import type` without pulling in the Effect
- * layer or live implementation.
+ * Isolated so consumers can `import type` without pulling in live implementation.
  */
-
-import type { Effect } from "effect";
 
 // ── Request option shapes ──────────────────────────────────────────────────
 
@@ -67,7 +64,7 @@ export interface TextEdit {
 // ── Service interface ──────────────────────────────────────────────────────
 
 /**
- * Effect-TS service interface for Mountain Vine protocol operations.
+ * Service interface for Mountain Vine protocol operations.
  * Covers Window, Workspace, Command, Secret Storage, and File System domains.
  */
 export interface IMountainGRPCClientService {
@@ -78,38 +75,38 @@ export interface IMountainGRPCClientService {
 		uri: string,
 
 		options?: Partial<ShowTextDocumentOptions>,
-	): Effect.Effect<void, Error>;
+	): Promise<void>;
 
-	showInformationMessage(message: string): Effect.Effect<void, Error>;
+	showInformationMessage(message: string): Promise<void>;
 
-	showWarningMessage(message: string): Effect.Effect<void, Error>;
+	showWarningMessage(message: string): Promise<void>;
 
-	showErrorMessage(message: string): Effect.Effect<void, Error>;
+	showErrorMessage(message: string): Promise<void>;
 
 	createStatusBarItem(
 		options: StatusBarItemOptions,
-	): Effect.Effect<string, Error>;
+	): Promise<string>;
 
-	setStatusBarText(itemId: string, text: string): Effect.Effect<void, Error>;
+	setStatusBarText(itemId: string, text: string): Promise<void>;
 
 	createWebviewPanel(
 		options: WebviewPanelOptions,
-	): Effect.Effect<number, Error>;
+	): Promise<number>;
 
-	setWebviewHtml(handle: number, html: string): Effect.Effect<void, Error>;
+	setWebviewHtml(handle: number, html: string): Promise<void>;
 
 	postWebviewMessage(
 		handle: number,
 
 		message: string | Uint8Array,
-	): Effect.Effect<void, Error>;
+	): Promise<void>;
 
 	// Workspace
 	findFiles(
 		pattern: string,
 
 		include?: string[],
-	): Effect.Effect<string[], Error>;
+	): Promise<string[]>;
 
 	findTextInFiles(
 		pattern: string,
@@ -117,13 +114,13 @@ export interface IMountainGRPCClientService {
 		include?: string[],
 
 		exclude?: string[],
-	): Effect.Effect<any[], Error>;
+	): Promise<any[]>;
 
-	openDocument(uri: string, viewColumn?: number): Effect.Effect<void, Error>;
+	openDocument(uri: string, viewColumn?: number): Promise<void>;
 
-	saveAll(includeUntitled?: boolean): Effect.Effect<void, Error>;
+	saveAll(includeUntitled?: boolean): Promise<void>;
 
-	applyEdit(uri: string, edits: TextEdit[]): Effect.Effect<void, Error>;
+	applyEdit(uri: string, edits: TextEdit[]): Promise<void>;
 
 	// Commands
 	registerCommand(
@@ -132,24 +129,24 @@ export interface IMountainGRPCClientService {
 		extensionId: string,
 
 		title: string,
-	): Effect.Effect<void, Error>;
+	): Promise<void>;
 
 	executeCommand(
 		commandId: string,
 		...args: any[]
-	): Effect.Effect<any, Error>;
+	): Promise<any>;
 
-	unregisterCommand(commandId: string): Effect.Effect<void, Error>;
+	unregisterCommand(commandId: string): Promise<void>;
 
 	// Secret Storage
-	getSecret(key: string): Effect.Effect<string | undefined, Error>;
+	getSecret(key: string): Promise<string | undefined>;
 
-	storeSecret(key: string, value: string): Effect.Effect<void, Error>;
+	storeSecret(key: string, value: string): Promise<void>;
 
-	deleteSecret(key: string): Effect.Effect<void, Error>;
+	deleteSecret(key: string): Promise<void>;
 
 	// File System
-	readFile(uri: string): Effect.Effect<Uint8Array, Error>;
+	readFile(uri: string): Promise<Uint8Array>;
 
 	writeFile(
 		uri: string,
@@ -157,9 +154,9 @@ export interface IMountainGRPCClientService {
 		content: Uint8Array,
 
 		encoding?: string,
-	): Effect.Effect<void, Error>;
+	): Promise<void>;
 
-	stat(uri: string): Effect.Effect<any, Error>;
+	stat(uri: string): Promise<any>;
 
-	readdir(uri: string): Effect.Effect<string[], Error>;
+	readdir(uri: string): Promise<string[]>;
 }

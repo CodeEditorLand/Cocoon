@@ -35,7 +35,7 @@ export const Create = (Name: string, Properties: Properties = {}): Event => ({
 	Name,
 	Timestamp: new Date().toISOString(),
 	Properties,
-});
+};
 
 // Stamp `$trace_id` on every PostHog event so the matching Jaeger span
 // can be opened with one click from PostHog. The trace ID is the same
@@ -53,6 +53,6 @@ export const Enrich = (Properties: Properties): Properties => ({
 	...BaseProperties,
 	$node_version: process.version,
 	...(CurrentTraceIdentifier ? { $trace_id: CurrentTraceIdentifier } : {}),
-});
+};
 
 export default { Create, Enrich, SetTraceIdentifier };

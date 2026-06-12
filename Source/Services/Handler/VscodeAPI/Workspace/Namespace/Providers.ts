@@ -28,22 +28,22 @@ const MakeProvider =
 		OnDispose?: (Handle: number, Key: string) => void,
 	) =>
 	(Key: string, _Provider: any, _Options?: any) => {
-		const Handle = NextProviderHandle();
+		const Handle = NextProviderHandle(;
 
 		Context.SendToMountain(RegisterMethod, {
 			handle: Handle,
 			...ExtraPayload(Key),
-		}).catch(() => {});
+		}).catch(() => {};
 
-		OnRegister?.(Handle, Key, _Provider);
+		OnRegister?.(Handle, Key, _Provider;
 
 		return {
 			dispose: () => {
-				OnDispose?.(Handle, Key);
+				OnDispose?.(Handle, Key;
 
 				Context.SendToMountain(UnregisterMethod, {
 					handle: Handle,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 		};
 	};
@@ -67,7 +67,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 				`__textDocumentContentProvider:${Scheme}`,
 
 				Provider,
-			);
+			;
 
 			// Wire provider's onDidChange: when content changes, re-fetch and
 			// notify Cocoon's document model so $acceptModelChanged fires for
@@ -78,7 +78,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 						const UriStr =
 							typeof Uri === "string"
 								? Uri
-								: ((Uri as any)?.toString?.() ?? "");
+								: ((Uri as any)?.toString?.() ?? "";
 
 						if (!UriStr) return;
 
@@ -102,7 +102,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 										UriStr,
 
 										Content,
-									);
+									;
 
 									// Emit didChangeTextDocument so extensions listening
 									// to onDidChangeTextDocument for virtual docs get the update.
@@ -134,11 +134,11 @@ export const BuildRegisterTextDocumentContentProvider = (
 											],
 											reason: undefined,
 										},
-									);
+									;
 								}
 							})
-							.catch(() => {});
-					});
+							.catch(() => {};
+					};
 				} catch {
 					// Provider may not have an event subscription method - skip.
 				}
@@ -148,9 +148,9 @@ export const BuildRegisterTextDocumentContentProvider = (
 		(_Handle, Scheme) => {
 			Context.ExtensionRegistry.delete(
 				`__textDocumentContentProvider:${Scheme}`,
-			);
+			;
 		},
-	);
+	;
 
 /**
  * Local registry of schemes an extension has claimed via
@@ -166,7 +166,7 @@ export const BuildRegisterTextDocumentContentProvider = (
  * Exported so the routing module + its tests can read it. `disposeAll`
  * is for test teardown.
  */
-export const ClaimedFileSystemSchemes = new Set<string>();
+export const ClaimedFileSystemSchemes = new Set<string>(;
 
 export const BuildRegisterFileSystemProvider =
 	(Context: HandlerContext) =>
@@ -177,9 +177,9 @@ export const BuildRegisterFileSystemProvider =
 
 		Options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
 	) => {
-		const Handle = NextProviderHandle();
+		const Handle = NextProviderHandle(;
 
-		ClaimedFileSystemSchemes.add(Scheme);
+		ClaimedFileSystemSchemes.add(Scheme;
 
 		Context.SendToMountain("register_file_system_provider", {
 			handle: Handle,
@@ -187,15 +187,15 @@ export const BuildRegisterFileSystemProvider =
 			isCaseSensitive: Options?.isCaseSensitive ?? true,
 			isReadonly: Options?.isReadonly ?? false,
 			extensionId: "",
-		}).catch(() => {});
+		}).catch(() => {};
 
 		return {
 			dispose: () => {
-				ClaimedFileSystemSchemes.delete(Scheme);
+				ClaimedFileSystemSchemes.delete(Scheme;
 
 				Context.SendToMountain("unregister_file_system_provider", {
 					handle: Handle,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 		};
 	};
@@ -213,13 +213,13 @@ export const BuildRegisterTaskProvider = (Context: HandlerContext) =>
 		(TaskType) => ({ taskType: TaskType, extensionId: "" }),
 
 		(Handle, _TaskType, Provider) => {
-			Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider);
+			Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider;
 		},
 
 		(Handle, _TaskType) => {
-			Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`);
+			Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`;
 		},
-	);
+	;
 
 export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>
 	MakeProvider(
@@ -232,7 +232,7 @@ export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>
 		"notebookContent",
 
 		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
-	);
+	;
 
 export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 	MakeProvider(
@@ -245,7 +245,7 @@ export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 		"notebookSerializer",
 
 		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
-	);
+	;
 
 export const BuildRegisterRemoteAuthorityResolver =
 	(Context: HandlerContext) =>
@@ -253,13 +253,13 @@ export const BuildRegisterRemoteAuthorityResolver =
 		Context.SendToMountain("register_remote_authority_resolver", {
 			authorityPrefix: AuthorityPrefix,
 			extensionId: "",
-		}).catch(() => {});
+		}).catch(() => {};
 
 		return {
 			dispose: () => {
 				Context.SendToMountain("unregister_remote_authority_resolver", {
 					authorityPrefix: AuthorityPrefix,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 		};
 	};
@@ -268,7 +268,7 @@ export const BuildRegisterResourceLabelFormatter =
 	(Context: HandlerContext) => (Formatter: unknown) => {
 		Context.SendToMountain("register_resource_label_formatter", {
 			formatter: Formatter,
-		}).catch(() => {});
+		}).catch(() => {};
 
 		return { dispose: () => {} };
 	};

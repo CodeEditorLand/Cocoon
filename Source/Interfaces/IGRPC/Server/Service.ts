@@ -7,8 +7,6 @@
  * Based on Mountain's Vine protocol specification.
  */
 
-import { Context } from "effect";
-
 export interface IGRPCServerService {
 	readonly _serviceBrand: undefined;
 
@@ -37,4 +35,4 @@ export interface IGRPCServerService {
 }
 
 export const IGRPCServerService =
-	Context.GenericTag<IGRPCServerService>("IGRPCServerService");
+	Context.GenericTag<IGRPCServerService>("IGRPCServerService";

@@ -48,7 +48,7 @@ export class ExtensionHostService implements IExtensionHostService {
 	readonly _serviceBrand: undefined;
 
 	// Extensions registry
-	private activatedExtensions: Map<string, ActivatedExtension> = new Map();
+	private activatedExtensions: Map<string, ActivatedExtension> = new Map(;
 
 	constructor(
 		private moduleInterceptor: IModuleInterceptorService,
@@ -72,17 +72,17 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`,
-		);
+		;
 
 		try {
-			const startTime = Date.now();
+			const startTime = Date.now(;
 
 			// 1. Prepare API instance for this extension
-			const vscodeAPI = this.apiFactory.createAPI();
+			const vscodeAPI = this.apiFactory.createAPI(;
 
 			// 2. Register with module interceptor
 			// When the extension requires 'vscode', it gets our proxy
-			this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
+			this.moduleInterceptor.registerAPI(extensionId, vscodeAPI;
 
 			// 3. Mock extension description (In real app, fetch from Registry)
 			const extension: IExtensionDescription = {
@@ -96,17 +96,17 @@ export class ExtensionHostService implements IExtensionHostService {
 			};
 
 			// 4. Load the extension module
-			const moduleLoadStart = Date.now();
+			const moduleLoadStart = Date.now(;
 
-			const extensionModule = await this._loadExtensionModule(extension);
+			const extensionModule = await this._loadExtensionModule(extension;
 
 			const codeLoadingTime = Date.now() - moduleLoadStart;
 
 			// 5. Activate (context kept so deactivation can dispose
 			// everything the extension pushed onto `subscriptions`)
-			const activateCallStart = Date.now();
+			const activateCallStart = Date.now(;
 
-			const context = this._createExtensionContext(extension);
+			const context = this._createExtensionContext(extension;
 
 			const exports = await this._callActivate(
 				extensionModule,
@@ -114,7 +114,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				extension,
 
 				context,
-			);
+			;
 
 			const activateCallTime = Date.now() - activateCallStart;
 
@@ -128,13 +128,13 @@ export class ExtensionHostService implements IExtensionHostService {
 				},
 				exports,
 				context,
-			});
+			};
 
 			CocoonDevLog(
 				"service",
 
 				`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -142,7 +142,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				`[ExtensionHost] Failed to activate ${extensionId}:`,
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -165,7 +165,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Loading module: ${modulePath}`,
-		);
+		;
 
 		// Advanced module loading with security interception
 		try {
@@ -174,7 +174,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				modulePath,
 
 				extension.extensionLocation,
-			);
+			;
 
 			// Load module with security interception
 			// Note: interceptRequire would be synchronous in Node, but we simulate it here
@@ -182,7 +182,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				resolvedPath,
 
 				extension.extensionLocation,
-			);
+			;
 
 			return extensionModule;
 		} catch (error) {
@@ -192,7 +192,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				`[ExtensionHost] Failed to load module ${modulePath}:`,
 
 				error,
-			);
+			;
 
 			// Fallback: If module interceptor fails (e.g. file not found in real FS),
 			// we simulate a dummy module for development continuity
@@ -200,7 +200,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				"service",
 
 				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
-			);
+			;
 
 			return {
 				activate: (_context: any) => {
@@ -208,7 +208,7 @@ export class ExtensionHostService implements IExtensionHostService {
 						"service",
 
 						`[${extension.identifier}] activate() called`,
-					);
+					;
 				},
 
 				deactivate: () => {},
@@ -252,14 +252,14 @@ export class ExtensionHostService implements IExtensionHostService {
 		}
 
 		// Call activate function
-		return await extensionModule.activate(context);
+		return await extensionModule.activate(context;
 	}
 
 	/**
 	 * Deactivate an extension
 	 */
 	async deactivateExtension(extensionId: string): Promise<void> {
-		const activated = this.activatedExtensions.get(extensionId);
+		const activated = this.activatedExtensions.get(extensionId;
 
 		if (!activated) {
 			return;
@@ -269,7 +269,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Deactivating extension: ${extensionId}`,
-		);
+		;
 
 		// Dispose everything the extension pushed onto
 		// `context.subscriptions` (watchers, status-bar items, output
@@ -280,7 +280,7 @@ export class ExtensionHostService implements IExtensionHostService {
 
 		for (const subscription of subscriptions) {
 			try {
-				subscription?.dispose?.();
+				subscription?.dispose?.(;
 
 				disposed++;
 			} catch (error) {
@@ -290,7 +290,7 @@ export class ExtensionHostService implements IExtensionHostService {
 					`[ExtensionHost] Subscription dispose failed for ${extensionId}:`,
 
 					error,
-				);
+				;
 			}
 		}
 
@@ -300,9 +300,9 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Disposed ${disposed} subscription(s) for ${extensionId}`,
-		);
+		;
 
-		this.activatedExtensions.delete(extensionId);
+		this.activatedExtensions.delete(extensionId;
 	}
 }
 
@@ -312,11 +312,11 @@ export class ExtensionHostService implements IExtensionHostService {
 export const ExtensionHostLayer = Layer.effect(
 	IExtensionHostService,
 
-	Effect.gen(function* () {
+	async function() {
 		const moduleInterceptor = yield* IModuleInterceptorService;
 
 		const apiFactory = yield* IAPIFactoryService;
 
-		return new ExtensionHostService(moduleInterceptor, apiFactory);
+		return new ExtensionHostService(moduleInterceptor, apiFactory;
 	}),
-);
+;

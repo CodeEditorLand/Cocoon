@@ -52,9 +52,9 @@ export default (
 	// the pane.
 	let CurrentVisible = true;
 
-	const VisibilityListeners = new Set<(visible: boolean) => void>();
+	const VisibilityListeners = new Set<(visible: boolean) => void>(;
 
-	const DisposeListeners = new Set<() => void>();
+	const DisposeListeners = new Set<() => void>(;
 
 	// Per-resolve subscriptions to the Cocoon-side Emitter
 	// channels populated by `NotificationHandler.ts:
@@ -72,7 +72,7 @@ export default (
 
 		for (const L of VisibilityListeners) {
 			try {
-				L(!!Visible);
+				L(!!Visible;
 			} catch (_e) {
 				/* swallow */
 			}
@@ -82,24 +82,24 @@ export default (
 	const DisposeForward = () => {
 		for (const L of DisposeListeners) {
 			try {
-				L();
+				L(;
 			} catch (_e) {
 				/* swallow */
 			}
 		}
 
-		DisposeListeners.clear();
+		DisposeListeners.clear(;
 
-		VisibilityListeners.clear();
+		VisibilityListeners.clear(;
 
-		Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
+		Context.Emitter?.off?.(ChannelVisibility, VisibilityForward;
 
-		Context.Emitter?.off?.(ChannelDispose, DisposeForward);
+		Context.Emitter?.off?.(ChannelDispose, DisposeForward;
 	};
 
-	Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
+	Context.Emitter?.on?.(ChannelVisibility, VisibilityForward;
 
-	Context.Emitter?.on?.(ChannelDispose, DisposeForward);
+	Context.Emitter?.on?.(ChannelDispose, DisposeForward;
 
 	let CurrentTitle: string | undefined;
 
@@ -114,7 +114,7 @@ export default (
 			title: CurrentTitle ?? null,
 			description: CurrentDescription ?? null,
 			badge: CurrentBadge ?? null,
-		}).catch(() => {});
+		}).catch(() => {};
 	};
 
 	const View: any = {
@@ -157,7 +157,7 @@ export default (
 		set title(Value: string | undefined) {
 			CurrentTitle = Value;
 
-			FireMetadataUpdate();
+			FireMetadataUpdate(;
 		},
 
 		get description() {
@@ -167,7 +167,7 @@ export default (
 		set description(Value: string | undefined) {
 			CurrentDescription = Value;
 
-			FireMetadataUpdate();
+			FireMetadataUpdate(;
 		},
 
 		get badge() {
@@ -177,7 +177,7 @@ export default (
 		set badge(Value: unknown) {
 			CurrentBadge = Value;
 
-			FireMetadataUpdate();
+			FireMetadataUpdate(;
 		},
 
 		webview: {
@@ -186,7 +186,7 @@ export default (
 			},
 
 			set html(Value: string) {
-				CurrentHtml = String(Value ?? "");
+				CurrentHtml = String(Value ?? "";
 
 				// Diagnostic: prove the setter was reached. If we see
 				// `[WebviewView] set-html-enter` in the log but no
@@ -200,7 +200,7 @@ export default (
 						process.stdout.write(
 							`[WebviewView] set-html-enter handle=${Handle} viewId=${ViewId} htmlLen=${CurrentHtml.length}
 `,
-						);
+						;
 					}
 				} catch {
 					/* stdout may be unavailable mid-teardown */
@@ -217,7 +217,7 @@ export default (
 								process.stdout.write(
 									`[WebviewView] set-html-sent handle=${Handle} viewId=${ViewId}
 `,
-								);
+								;
 							}
 						} catch {}
 					},
@@ -228,11 +228,11 @@ export default (
 								process.stdout.write(
 									`[WebviewView] set-html-failed handle=${Handle} viewId=${ViewId} error=${String((Error as { message?: string })?.message ?? Error).slice(0, 120)}
 `,
-								);
+								;
 							}
 						} catch {}
 					},
-				);
+				;
 			},
 
 			// Stock VS Code populates `webview.options` from the
@@ -262,7 +262,7 @@ export default (
 					handle: Handle,
 					viewId: ViewId,
 					options: Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 
 			cspSource: SharedCspSource,
@@ -274,7 +274,7 @@ export default (
 					handle: Handle,
 					viewId: ViewId,
 					message: Message,
-				}).catch(() => {});
+				}).catch(() => {};
 
 				return true;
 			},
@@ -282,7 +282,7 @@ export default (
 			onDidReceiveMessage: (Listener: (msg: unknown) => void) => {
 				const Channel = `webview.message:${Handle}`;
 
-				Context.Emitter?.on?.(Channel, Listener);
+				Context.Emitter?.on?.(Channel, Listener;
 
 				return {
 					dispose: () => Context.Emitter?.off?.(Channel, Listener),
@@ -295,11 +295,11 @@ export default (
 				handle: Handle,
 				viewId: ViewId,
 				preserveFocus: !!PreserveFocus,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		onDidChangeVisibility: (Listener: (visible: boolean) => void) => {
-			VisibilityListeners.add(Listener);
+			VisibilityListeners.add(Listener;
 
 			return {
 				dispose: () => VisibilityListeners.delete(Listener),
@@ -307,7 +307,7 @@ export default (
 		},
 
 		onDispose: (Listener: () => void) => {
-			DisposeListeners.add(Listener);
+			DisposeListeners.add(Listener;
 
 			return {
 				dispose: () => DisposeListeners.delete(Listener),
@@ -322,7 +322,7 @@ export default (
 		// alias to the existing `onDispose` listener-set rather than
 		// duplicate the storage.
 		onDidDispose: (Listener: () => void) => {
-			DisposeListeners.add(Listener);
+			DisposeListeners.add(Listener;
 
 			return {
 				dispose: () => DisposeListeners.delete(Listener),
@@ -334,7 +334,7 @@ export default (
 			// Emitter subscriptions are uniformly cleaned. `DisposeForward`
 			// handles firing all `DisposeListeners` and dropping the
 			// channel subscriptions.
-			DisposeForward();
+			DisposeForward(;
 		},
 	};
 

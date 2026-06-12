@@ -55,26 +55,26 @@ const HandleInitializeExtensionHost = async (
 		"ext-host",
 
 		`[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`,
-	);
+	;
 
 	// Store init data for later use by extension activation
 	Context.ExtensionHostInitData = Parameters;
 
 	// Host (re)initialization invalidates the coalesced storage dump.
-	ResetStoragePrime();
+	ResetStoragePrime(;
 
 	// Host re-init: dispose every previously-activated extension's
 	// `context.subscriptions` before the registry is rebuilt, so watchers,
 	// status-bar items, and providers from the prior host generation do not
 	// leak into the new one.
 	for (const ActivatedId of [...ActiveExtensionContexts.keys()]) {
-		DisposeExtensionContext(ActivatedId);
+		DisposeExtensionContext(ActivatedId;
 	}
 
 	// Build extension registry and activation event index
-	Context.ExtensionRegistry.clear();
+	Context.ExtensionRegistry.clear(;
 
-	Context.ActivationEventIndex.clear();
+	Context.ActivationEventIndex.clear(;
 
 	for (const Extension of Extensions) {
 		const Identifier =
@@ -83,16 +83,16 @@ const HandleInitializeExtensionHost = async (
 			Extension?.identifier ??
 			"unknown";
 
-		Context.ExtensionRegistry.set(Identifier, Extension);
+		Context.ExtensionRegistry.set(Identifier, Extension;
 
 		const ActivationEvents: string[] = Extension?.activationEvents ?? [];
 
 		for (const Event of ActivationEvents) {
 			const Existing = Context.ActivationEventIndex.get(Event) ?? [];
 
-			Existing.push(Identifier);
+			Existing.push(Identifier;
 
-			Context.ActivationEventIndex.set(Event, Existing);
+			Context.ActivationEventIndex.set(Event, Existing;
 		}
 	}
 
@@ -105,13 +105,13 @@ const HandleInitializeExtensionHost = async (
 		"ext-host",
 
 		`[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`,
-	);
+	;
 
 	// Emit event so other Cocoon services can react
 	Context.Emitter.emit("extensionHostInitialized", {
 		extensionCount: Context.ExtensionRegistry.size,
 		autoStart: Parameters?.autoStart ?? false,
-	});
+	};
 
 	// Mountain's gRPC is now confirmed running (it just called us).
 	// Reconnect MountainClientService in the background so Cocoon can
@@ -122,8 +122,8 @@ const HandleInitializeExtensionHost = async (
 			"ext-host",
 
 			`[ExtensionHostHandler] Background Mountain reconnect failed: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
-		);
-	});
+		;
+	};
 
 	return "initialized";
 };
@@ -143,7 +143,7 @@ const HandleDeltaExtensions = async (
 
 	Parameters: any,
 ): Promise<any> => {
-	const DeltaStart = performance.now();
+	const DeltaStart = performance.now(;
 
 	const Added: any[] = Parameters?.toAdd ?? [];
 
@@ -159,9 +159,9 @@ const HandleDeltaExtensions = async (
 
 	// Add new extensions to registry
 	for (const Extension of Added) {
-		const Identifier = IdentifierOf(Extension);
+		const Identifier = IdentifierOf(Extension;
 
-		Context.ExtensionRegistry.set(Identifier, Extension);
+		Context.ExtensionRegistry.set(Identifier, Extension;
 
 		const ActivationEvents: string[] = Extension?.activationEvents ?? [];
 
@@ -169,9 +169,9 @@ const HandleDeltaExtensions = async (
 			const Existing = Context.ActivationEventIndex.get(Event) ?? [];
 
 			if (!Existing.includes(Identifier)) {
-				Existing.push(Identifier);
+				Existing.push(Identifier;
 
-				Context.ActivationEventIndex.set(Event, Existing);
+				Context.ActivationEventIndex.set(Event, Existing;
 
 				AddedActivationEvents++;
 			}
@@ -180,32 +180,32 @@ const HandleDeltaExtensions = async (
 
 	// Remove extensions from registry
 	for (const Extension of Removed) {
-		const Identifier = IdentifierOf(Extension);
+		const Identifier = IdentifierOf(Extension;
 
-		Context.ExtensionRegistry.delete(Identifier);
+		Context.ExtensionRegistry.delete(Identifier;
 
 		// Deactivate: dispose the removed extension's
 		// `context.subscriptions` and drop its activated mark so a
 		// re-install can activate again.
-		DisposeExtensionContext(Identifier);
+		DisposeExtensionContext(Identifier;
 
-		Context.ActivatedExtensions.delete(Identifier);
+		Context.ActivatedExtensions.delete(Identifier;
 	}
 
-	const DurationMs = Math.round(performance.now() - DeltaStart);
+	const DurationMs = Math.round(performance.now() - DeltaStart;
 
 	CocoonDevLog(
 		"ext-host",
 
 		`[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`,
-	);
+	;
 
 	Context.Emitter.emit("deltaExtensions", {
 		added: Added.length,
 		removed: Removed.length,
 		registrySize: Context.ExtensionRegistry.size,
 		durationMs: DurationMs,
-	});
+	};
 
 	return {
 		success: true,
@@ -226,12 +226,12 @@ const HandleActivateByEvent = async (
 	Parameters: any,
 ): Promise<any> => {
 	// Ensure the vscode API shim is available before any extension loads
-	await EnsureVscodeAPIRegistered(Context);
+	await EnsureVscodeAPIRegistered(Context;
 
 	const ActivationEvent =
 		typeof Parameters === "string"
 			? Parameters
-			: (Parameters?.activationEvent ?? Parameters?.event ?? "*");
+			: (Parameters?.activationEvent ?? Parameters?.event ?? "*";
 
 	// For "*" we activate all extensions that have any activation event.
 	// For a specific event we activate matching ones AND "*" ones.
@@ -239,10 +239,10 @@ const HandleActivateByEvent = async (
 
 	if (ActivationEvent === "*") {
 		// Collect all extensions across every event bucket (deduplicated)
-		const All = new Set<string>();
+		const All = new Set<string>(;
 
 		for (const Ids of Context.ActivationEventIndex.values()) {
-			for (const Id of Ids) All.add(Id);
+			for (const Id of Ids) All.add(Id;
 		}
 
 		MatchingExtensions = [...All];
@@ -259,26 +259,26 @@ const HandleActivateByEvent = async (
 		"ext-host",
 
 		`[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} → ${MatchingExtensions.length} extensions`,
-	);
+	;
 
 	if (MatchingExtensions.length > 0) {
 		CocoonDevLog(
 			"ext-activate",
 
 			`[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`,
-		);
+		;
 	} else {
 		CocoonDevLog(
 			"ext-activate",
 
 			`[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`,
-		);
+		;
 	}
 
 	// Dependency-ordered activation (T2.5). Before activating each
 	// extension, activate its declared `extensionDependencies` first.
 	// A Set tracks in-progress activations to break circular dep cycles.
-	const InProgress = new Set<string>();
+	const InProgress = new Set<string>(;
 
 	const ActivateWithDeps = async (
 		ExtId: string,
@@ -303,14 +303,14 @@ const HandleActivateByEvent = async (
 				"ext-activate",
 
 				`[ExtensionHostHandler] Max dep depth reached at ${ExtId}; skipping`,
-			);
+			;
 
 			return;
 		}
 
-		InProgress.add(ExtId);
+		InProgress.add(ExtId;
 
-		const Extension = Context.ExtensionRegistry.get(ExtId);
+		const Extension = Context.ExtensionRegistry.get(ExtId;
 
 		const Deps: string[] = (Extension as any)?.extensionDependencies ?? [];
 
@@ -328,45 +328,45 @@ const HandleActivateByEvent = async (
 							"ext-activate",
 
 							`[ExtensionHostHandler] Dep activation failed ${DepId} (required by ${ExtId}): ${Err instanceof Error ? Err.message : String(Err)}`,
-						);
+						;
 					},
-				);
+				;
 			}
 		}
 
 		// Now activate the extension itself.
 		await ActivateExtension(Context, ExtId, Event).catch((Err: unknown) => {
-			const Msg = Err instanceof Error ? Err.message : String(Err);
+			const Msg = Err instanceof Error ? Err.message : String(Err;
 
 			CocoonDevLog(
 				"ext-activate",
 
 				`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`,
-			);
+			;
 
 			if (Err instanceof Error && Err.stack) {
-				const Stack = Err.stack.split("\n").slice(0, 10).join("\n");
+				const Stack = Err.stack.split("\n").slice(0, 10).join("\n";
 
 				CocoonDevLog(
 					"ext-activate",
 
 					`[ExtensionHostHandler] Stack for ${ExtId}:\n${Stack}`,
-				);
+				;
 			}
-		});
+		};
 
-		InProgress.delete(ExtId);
+		InProgress.delete(ExtId;
 	};
 
 	const ToActivate = MatchingExtensions.filter(
 		(Id) => !Context.ActivatedExtensions.has(Id),
-	);
+	;
 
 	CocoonDevLog(
 		"ext-activate",
 
 		`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`,
-	);
+	;
 
 	// Await all top-level activations so the $activateByEvent response
 	// is sent only after extensions have actually activated. Returning
@@ -392,21 +392,21 @@ const HandleActivateByEvent = async (
 						"ext-activate",
 
 						`[ExtensionHostHandler] Activation timed out after ${ActivationTimeoutMs}ms: ${ExtId}`,
-					);
+					;
 
-					Resolve();
-				}, ActivationTimeoutMs);
-			});
+					Resolve(;
+				}, ActivationTimeoutMs;
+			};
 
 			return Promise.race([
 				ActivateWithDeps(ExtId, ActivationEvent).finally(() => {
-					if (Timer !== undefined) clearTimeout(Timer);
+					if (Timer !== undefined) clearTimeout(Timer;
 				}),
 
 				Timeout,
-			]);
+			];
 		}),
-	);
+	;
 
 	// `onStartupFinished` family: VS Code activates these extensions
 	// shortly after the eager startup batch settles. Schedule a single
@@ -427,16 +427,16 @@ const HandleActivateByEvent = async (
 					"ext-activate",
 
 					`[ExtensionHostHandler] onStartupFinished pass failed: ${Err instanceof Error ? Err.message : String(Err)}`,
-				);
-			});
-		}, StartupFinishedDelayMs);
+				;
+			};
+		}, StartupFinishedDelayMs;
 	}
 
 	// Keep legacy event for any listeners
 	Context.Emitter.emit("activateByEvent", {
 		event: ActivationEvent,
 		extensions: MatchingExtensions,
-	});
+	};
 
 	return {
 		success: true,
@@ -460,15 +460,15 @@ const HandleStartExtensionHost = async (
 		"ext-host",
 
 		`[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`,
-	);
+	;
 
 	// Host start invalidates the coalesced storage dump.
-	ResetStoragePrime();
+	ResetStoragePrime(;
 
 	Context.Emitter.emit("startExtensionHost", {
 		extensionCount: Context.ExtensionRegistry.size,
 		ready: Context.ExtensionHostReady,
-	});
+	};
 
 	return {
 		success: true,

@@ -193,7 +193,7 @@ export class ConversionError extends Data.TaggedError("ConversionError")<{
 	public override readonly message: string;
 
 	constructor(Properties: any) {
-		super(Properties);
+		super(Properties;
 
 		this.message = `Conversion failed from ${Properties.SourceType} to ${Properties.TargetType}: ${Properties.Reason}`;
 	}
@@ -243,16 +243,16 @@ export const SecurityPolicyToDTO = (
  */
 export const DTOToSecurityPolicy = (
 	DTO: SecurityPolicyDTO,
-): Effect.Effect<SecurityPolicy, ConversionError> => {
-	return Effect.sync(() => {
+): Promise<SecurityPolicy> => {
+	return {
 		// Validate DTO structure
-		if (!ValidateSecurityPolicyDTO(DTO)) {
+		if (!ValidateSecurityPolicyDTO(DTO) {
 			throw new ConversionError({
 				SourceType: "SecurityPolicyDTO",
 				TargetType: "SecurityPolicy",
 				Reason: "Invalid DTO structure",
 				Data: DTO,
-			});
+			};
 		}
 
 		return {
@@ -268,7 +268,7 @@ export const DTOToSecurityPolicy = (
 			MaxFileDescriptors: DTO.MaxFileDescriptors,
 			MaxTimers: DTO.MaxTimers,
 		};
-	});
+	};
 };
 
 /**
@@ -289,7 +289,7 @@ const ValidateSecurityPolicyDTO = (DTO: SecurityPolicyDTO): boolean => {
 		typeof DTO.MaxTimers === "number" &&
 		typeof DTO.Version === "string" &&
 		typeof DTO.Timestamp === "number"
-	);
+	;
 };
 
 // --- ProcessState Conversion ---
@@ -300,11 +300,11 @@ const ValidateSecurityPolicyDTO = (DTO: SecurityPolicyDTO): boolean => {
 export const ProcessStateToDTO = (
 	ValidationState: ProcessValidationState,
 ): ProcessStateDTO => {
-	const MemoryUsage = Process.memoryUsage();
+	const MemoryUsage = Process.memoryUsage(;
 
-	const CpuUsage = Process.cpuUsage();
+	const CpuUsage = Process.cpuUsage(;
 
-	const Uptime = Process.uptime();
+	const Uptime = Process.uptime(;
 
 	return {
 		Pid: Process.pid,
@@ -345,22 +345,22 @@ export const ProcessStateToDTO = (
  */
 export const DTOToProcessState = (
 	DTO: ProcessStateDTO,
-): Effect.Effect<Partial<ProcessValidationState>, ConversionError> => {
-	return Effect.sync(() => {
-		if (!ValidateProcessStateDTO(DTO)) {
+): Promise<Partial<ProcessValidationState>> => {
+	return {
+		if (!ValidateProcessStateDTO(DTO) {
 			throw new ConversionError({
 				SourceType: "ProcessStateDTO",
 				TargetType: "ProcessValidationState",
 				Reason: "Invalid DTO structure",
 				Data: DTO,
-			});
+			};
 		}
 
 		return {
 			ProcessId: DTO.Pid,
 			StartTime: DTO.StartTime,
 		};
-	});
+	};
 };
 
 /**
@@ -379,7 +379,7 @@ const ValidateProcessStateDTO = (DTO: ProcessStateDTO): boolean => {
 		typeof DTO.NodeVersion === "string" &&
 		Array.isArray(DTO.ExecArgv) &&
 		typeof DTO.Timestamp === "number"
-	);
+	;
 };
 
 // --- ValidationState Conversion ---
@@ -392,11 +392,11 @@ export const ValidationStateToDTO = (
 ): ValidationStateDTO => {
 	const FileAccessTotal = (
 		Array.from(State.FileAccessCount.values()) as number[]
-	).reduce((a, b) => a + b, 0);
+	).reduce((a, b) => a + b, 0;
 
 	const NetworkAccessTotal = (
 		Array.from(State.NetworkAccessCount.values()) as number[]
-	).reduce((a, b) => a + b, 0);
+	).reduce((a, b) => a + b, 0;
 
 	return {
 		TotalValidations: FileAccessTotal + NetworkAccessTotal,
@@ -423,9 +423,9 @@ export const ValidationStateToDTO = (
  * Calculate security policy hash
  */
 const GetSecurityPolicyHash = (Policy: SecurityPolicy): string => {
-	const PolicyString = JSON.stringify(Policy);
+	const PolicyString = JSON.stringify(Policy;
 
-	return Buffer.from(PolicyString).toString("base64").slice(0, 16);
+	return Buffer.from(PolicyString).toString("base64").slice(0, 16;
 };
 
 // --- ValidationResult Conversion ---
@@ -518,7 +518,7 @@ export const SerializeDTO = (
 		| ProcessStateDTO
 		| SecurityEventDTO
 		| ValidationResultDTO,
-): Effect.Effect<string, ConversionError> => {
+): Promise<string> => {
 	return Effect.try({
 		try: () => JSON.stringify(DTO),
 		catch: (Error) => {
@@ -530,9 +530,9 @@ export const SerializeDTO = (
 						? Error.message
 						: String(Error),
 				Data: DTO,
-			});
+			};
 		},
-	});
+	};
 };
 
 /**
@@ -542,7 +542,7 @@ export const DeserializeDTO = <T>(
 	JsonString: string,
 
 	ExpectedType: string,
-): Effect.Effect<T, ConversionError> => {
+): Promise<T> => {
 	return Effect.try({
 		try: () => JSON.parse(JsonString) as T,
 		catch: (Error) => {
@@ -554,9 +554,9 @@ export const DeserializeDTO = <T>(
 						? Error.message
 						: String(Error),
 				Data: JsonString,
-			});
+			};
 		},
-	});
+	};
 };
 
 /**
@@ -566,7 +566,7 @@ export const CamelCaseToPascalCase = (CamelCase: string): string => {
 	return CamelCase.replace(/([a-z])([A-Z])/g, "$1_$2")
 		.split("_")
 		.map((Part) => Part.charAt(0).toUpperCase() + Part.slice(1))
-		.join("");
+		.join("";
 };
 
 /**
@@ -575,7 +575,7 @@ export const CamelCaseToPascalCase = (CamelCase: string): string => {
 export const PascalCaseToCamelCase = (PascalCase: string): string => {
 	return PascalCase.replace(/([A-Z])/g, (Match, Offset) =>
 		Offset > 0 ? Match.toLowerCase() : Match,
-	);
+	;
 };
 
 /**
@@ -593,9 +593,9 @@ export const ConvertObjectKeysToPascalCase = <T>(Obj: T): T => {
 	const Result: Record<string, unknown> = {};
 
 	for (const [Key, Value] of Object.entries(Obj as Record<string, unknown>)) {
-		const PascalKey = CamelCaseToPascalCase(Key);
+		const PascalKey = CamelCaseToPascalCase(Key;
 
-		Result[PascalKey] = ConvertObjectKeysToPascalCase(Value);
+		Result[PascalKey] = ConvertObjectKeysToPascalCase(Value;
 	}
 
 	return Result as T;
@@ -616,9 +616,9 @@ export const ConvertObjectKeysToCamelCase = <T>(Obj: T): T => {
 	const Result: Record<string, unknown> = {};
 
 	for (const [Key, Value] of Object.entries(Obj as Record<string, unknown>)) {
-		const CamelKey = PascalCaseToCamelCase(Key);
+		const CamelKey = PascalCaseToCamelCase(Key;
 
-		Result[CamelKey] = ConvertObjectKeysToCamelCase(Value);
+		Result[CamelKey] = ConvertObjectKeysToCamelCase(Value;
 	}
 
 	return Result as T;
@@ -634,7 +634,7 @@ export const BatchSecurityPoliciesToDTO = (
 
 	Version: string = "1.0.0",
 ): SecurityPolicyDTO[] => {
-	return Policies.map((Policy) => SecurityPolicyToDTO(Policy, Version));
+	return Policies.map((Policy) => SecurityPolicyToDTO(Policy, Version);
 };
 
 /**
@@ -642,10 +642,10 @@ export const BatchSecurityPoliciesToDTO = (
  */
 export const BatchDTOsToSecurityPolicies = (
 	DTOs: SecurityPolicyDTO[],
-): Effect.Effect<SecurityPolicy[], ConversionError> => {
-	return Effect.all(
+): Promise<SecurityPolicy[]> => {
+	return Promise.all(
 		DTOs.map((DTO) => DTOToSecurityPolicy(DTO)),
 
 		{ concurrency: "unbounded" },
-	);
+	;
 };

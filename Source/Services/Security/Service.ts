@@ -92,7 +92,7 @@ export interface IncidentResponse {
  * SecurityService implementation
  */
 export class SecurityService {
-	private policies: Map<string, SecurityPolicy> = new Map();
+	private policies: Map<string, SecurityPolicy> = new Map(;
 
 	private auditLog: SecurityEvent[] = [];
 
@@ -103,27 +103,27 @@ export class SecurityService {
 			"service",
 
 			"[SecurityService] Initializing security service",
-		);
+		;
 
 		// Load default security policies
-		this.loadDefaultPolicies();
+		this.loadDefaultPolicies(;
 	}
 
 	/**
 	 * Initialize security service
 	 */
 	async initialize(): Promise<void> {
-		CocoonDevLog("service", "[SecurityService] Starting security service");
+		CocoonDevLog("service", "[SecurityService] Starting security service";
 
 		try {
 			// Load security policies from Mountain
-			await this.loadSecurityPolicies();
+			await this.loadSecurityPolicies(;
 
 			// Initialize audit logging
-			await this.initializeAuditLogging();
+			await this.initializeAuditLogging(;
 
 			// Initialize incident response
-			await this.initializeIncidentResponse();
+			await this.initializeIncidentResponse(;
 
 			this.securityActive = true;
 
@@ -131,7 +131,7 @@ export class SecurityService {
 				"service",
 
 				"[SecurityService] Security service started",
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -139,7 +139,7 @@ export class SecurityService {
 				"[SecurityService] Failed to initialize:",
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -186,13 +186,13 @@ export class SecurityService {
 			requireAuthentication: true,
 		};
 
-		this.policies.set("default", defaultPolicy);
+		this.policies.set("default", defaultPolicy;
 
 		CocoonDevLog(
 			"service",
 
 			"[SecurityService] Default security policy loaded",
-		);
+		;
 	}
 
 	/**
@@ -202,9 +202,9 @@ export class SecurityService {
 		try {
 			// Import MountainClientService for policy loading
 			const { MountainClientService } =
-				await import("../Mountain/Client/Service.js");
+				await import("../Mountain/Client/Service.js";
 
-			const mountainClient = new MountainClientService();
+			const mountainClient = new MountainClientService(;
 
 			// Load security policies from Mountain
 			const policiesResponse = await mountainClient.sendRequest(
@@ -214,7 +214,7 @@ export class SecurityService {
 					includeDefaults: true,
 					timestamp: Date.now(),
 				},
-			);
+			;
 
 			if (policiesResponse && policiesResponse.policies) {
 				for (const policy of policiesResponse.policies) {
@@ -230,20 +230,20 @@ export class SecurityService {
 						fileSystemAccess: policy.fileSystemAccess || false,
 						requireAuthentication:
 							policy.requireAuthentication || true,
-					});
+					};
 				}
 
 				CocoonDevLog(
 					"service",
 
 					`[SecurityService] Loaded ${policiesResponse.policies.length} security policies from Mountain`,
-				);
+				;
 			} else {
 				CocoonDevLog(
 					"service",
 
 					"[SecurityService] No security policies received from Mountain, using defaults",
-				);
+				;
 			}
 		} catch (error) {
 			CocoonDevLog(
@@ -252,13 +252,13 @@ export class SecurityService {
 				"[SecurityService] Failed to load security policies from Mountain:",
 
 				error,
-			);
+			;
 
 			CocoonDevLog(
 				"service",
 
 				"[SecurityService] Continuing with default security policies",
-			);
+			;
 		}
 	}
 
@@ -272,14 +272,14 @@ export class SecurityService {
 
 			// Create audit log rotation timer
 			setInterval(() => {
-				this.rotateAuditLog();
+				this.rotateAuditLog(;
 			}, 3600000); // Rotate every hour
 
 			CocoonDevLog(
 				"service",
 
 				"[SecurityService] Advanced audit logging initialized with hourly rotation",
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -287,7 +287,7 @@ export class SecurityService {
 				"[SecurityService] Failed to initialize audit logging:",
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -300,13 +300,13 @@ export class SecurityService {
 		const maxLogSize = 10000; // Keep last 10,000 events
 
 		if (this.auditLog.length > maxLogSize) {
-			this.auditLog = this.auditLog.slice(-maxLogSize);
+			this.auditLog = this.auditLog.slice(-maxLogSize;
 
 			CocoonDevLog(
 				"service",
 
 				`[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`,
-			);
+			;
 		}
 	}
 
@@ -319,14 +319,14 @@ export class SecurityService {
 
 			// Set up incident escalation timer
 			setInterval(() => {
-				this.escalateCriticalIncidents();
+				this.escalateCriticalIncidents(;
 			}, 300000); // Check every 5 minutes
 
 			CocoonDevLog(
 				"service",
 
 				"[SecurityService] Advanced incident response system initialized",
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -334,7 +334,7 @@ export class SecurityService {
 				"[SecurityService] Failed to initialize incident response:",
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -349,20 +349,20 @@ export class SecurityService {
 				incident.severity === "critical" &&
 				incident.status === "open" &&
 				Date.now() - incident.timestamp > 300000, // 5 minutes
-		);
+		;
 
 		if (criticalIncidents.length > 0) {
 			CocoonDevLog(
 				"service",
 
 				`[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`,
-			);
+			;
 
 			criticalIncidents.forEach((incident) => {
-				incident.actions.push("Automatically escalated due to timeout");
+				incident.actions.push("Automatically escalated due to timeout";
 
-				this.sendIncidentToMountain(incident);
-			});
+				this.sendIncidentToMountain(incident;
+			};
 		}
 	}
 
@@ -374,9 +374,9 @@ export class SecurityService {
 	): Promise<void> {
 		try {
 			const { MountainClientService } =
-				await import("../Mountain/Client/Service.js");
+				await import("../Mountain/Client/Service.js";
 
-			const mountainClient = new MountainClientService();
+			const mountainClient = new MountainClientService(;
 
 			await mountainClient.sendNotification("security.incident", {
 				incidentId: incident.id,
@@ -384,13 +384,13 @@ export class SecurityService {
 				description: incident.description,
 				timestamp: incident.timestamp,
 				actions: incident.actions,
-			});
+			};
 
 			CocoonDevLog(
 				"service",
 
 				`[SecurityService] Incident ${incident.id} sent to Mountain`,
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -398,7 +398,7 @@ export class SecurityService {
 				`[SecurityService] Failed to send incident ${incident.id} to Mountain:`,
 
 				error,
-			);
+			;
 		}
 	}
 
@@ -410,7 +410,7 @@ export class SecurityService {
 
 		moduleId: string,
 	): Promise<boolean> {
-		const policy = this.getExtensionPolicy(extensionId);
+		const policy = this.getExtensionPolicy(extensionId;
 
 		// Check blocked modules first
 		if (policy.blockedModules.includes(moduleId)) {
@@ -424,7 +424,7 @@ export class SecurityService {
 				outcome: "blocked",
 				timestamp: Date.now(),
 				details: { reason: "Module blocked by security policy" },
-			});
+			};
 
 			return false;
 		}
@@ -441,7 +441,7 @@ export class SecurityService {
 				outcome: "allowed",
 				timestamp: Date.now(),
 				details: {},
-			});
+			};
 
 			return true;
 		}
@@ -457,7 +457,7 @@ export class SecurityService {
 			outcome: "denied",
 			timestamp: Date.now(),
 			details: { reason: "Module not explicitly allowed" },
-		});
+		};
 
 		return false;
 	}
@@ -470,7 +470,7 @@ export class SecurityService {
 
 		apiName: string,
 	): Promise<boolean> {
-		const policy = this.getExtensionPolicy(extensionId);
+		const policy = this.getExtensionPolicy(extensionId;
 
 		// Check blocked APIs first
 		if (policy.blockedAPIs.includes(apiName)) {
@@ -484,7 +484,7 @@ export class SecurityService {
 				outcome: "blocked",
 				timestamp: Date.now(),
 				details: { reason: "API blocked by security policy" },
-			});
+			};
 
 			return false;
 		}
@@ -501,7 +501,7 @@ export class SecurityService {
 				outcome: "allowed",
 				timestamp: Date.now(),
 				details: {},
-			});
+			};
 
 			return true;
 		}
@@ -517,7 +517,7 @@ export class SecurityService {
 			outcome: "denied",
 			timestamp: Date.now(),
 			details: { reason: "API not explicitly allowed" },
-		});
+		};
 
 		return false;
 	}
@@ -526,7 +526,7 @@ export class SecurityService {
 	 * Check network access permission
 	 */
 	async checkNetworkAccess(extensionId: string): Promise<boolean> {
-		const policy = this.getExtensionPolicy(extensionId);
+		const policy = this.getExtensionPolicy(extensionId;
 
 		if (!policy.networkAccess) {
 			await this.logSecurityEvent({
@@ -539,7 +539,7 @@ export class SecurityService {
 				outcome: "denied",
 				timestamp: Date.now(),
 				details: { reason: "Network access not allowed" },
-			});
+			};
 
 			return false;
 		}
@@ -554,7 +554,7 @@ export class SecurityService {
 			outcome: "allowed",
 			timestamp: Date.now(),
 			details: {},
-		});
+		};
 
 		return true;
 	}
@@ -563,7 +563,7 @@ export class SecurityService {
 	 * Check file system access permission
 	 */
 	async checkFileSystemAccess(extensionId: string): Promise<boolean> {
-		const policy = this.getExtensionPolicy(extensionId);
+		const policy = this.getExtensionPolicy(extensionId;
 
 		if (!policy.fileSystemAccess) {
 			await this.logSecurityEvent({
@@ -576,7 +576,7 @@ export class SecurityService {
 				outcome: "denied",
 				timestamp: Date.now(),
 				details: { reason: "File system access not allowed" },
-			});
+			};
 
 			return false;
 		}
@@ -591,7 +591,7 @@ export class SecurityService {
 			outcome: "allowed",
 			timestamp: Date.now(),
 			details: {},
-		});
+		};
 
 		return true;
 	}
@@ -613,21 +613,21 @@ export class SecurityService {
 	 * Log security event with advanced threat detection
 	 */
 	private async logSecurityEvent(event: SecurityEvent): Promise<void> {
-		this.auditLog.push(event);
+		this.auditLog.push(event;
 
 		// Real-time threat detection
-		await this.detectThreatPatterns(event);
+		await this.detectThreatPatterns(event;
 
 		// Check for incident escalation
 		if (event.severity === "critical" || event.severity === "high") {
-			await this.escalateIncident(event);
+			await this.escalateIncident(event;
 		}
 
 		CocoonDevLog(
 			"service",
 
 			`[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`,
-		);
+		;
 	}
 
 	/**
@@ -638,7 +638,7 @@ export class SecurityService {
 			(e) =>
 				Date.now() - e.timestamp < 60000 && // Last minute
 				e.extensionId === event.extensionId,
-		);
+		;
 
 		// Detect rapid-fire violations
 		if (recentEvents.length >= 10) {
@@ -668,15 +668,15 @@ export class SecurityService {
 				},
 			};
 
-			this.auditLog.push(threatEvent);
+			this.auditLog.push(threatEvent;
 
-			await this.escalateIncident(threatEvent);
+			await this.escalateIncident(threatEvent;
 
 			CocoonDevLog(
 				"service",
 
 				`[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`,
-			);
+			;
 		}
 	}
 
@@ -704,13 +704,13 @@ export class SecurityService {
 			timestamp: Date.now(),
 		};
 
-		this.incidents.push(incident);
+		this.incidents.push(incident;
 
 		CocoonDevLog(
 			"service",
 
 			`[SecurityService] Security incident escalated: ${incident.description}`,
-		);
+		;
 
 		// TODO: Notify Mountain about security incident
 		// Specification: IMPLEMENTATION-SPECIFICATION.md (Incident Notification)
@@ -727,7 +727,7 @@ export class SecurityService {
 
 		policy: SecurityPolicy,
 	): Promise<void> {
-		this.policies.set(extensionId, policy);
+		this.policies.set(extensionId, policy;
 
 		await this.logSecurityEvent({
 			id: `policy-update-${Date.now()}`,
@@ -739,13 +739,13 @@ export class SecurityService {
 			outcome: "allowed",
 			timestamp: Date.now(),
 			details: { policy },
-		});
+		};
 
 		CocoonDevLog(
 			"service",
 
 			`[SecurityService] Security policy updated for extension: ${extensionId}`,
-		);
+		;
 	}
 
 	/**
@@ -754,7 +754,7 @@ export class SecurityService {
 	async getSecurityPolicy(
 		extensionId: string,
 	): Promise<SecurityPolicy | undefined> {
-		return this.policies.get(extensionId);
+		return this.policies.get(extensionId;
 	}
 
 	/**
@@ -764,17 +764,17 @@ export class SecurityService {
 		const violations = this.auditLog.filter(
 			(event) =>
 				event.outcome === "denied" || event.outcome === "blocked",
-		);
+		;
 
 		const authenticationFailures = this.auditLog.filter(
 			(event) =>
 				event.type === "authentication" && event.outcome === "denied",
-		);
+		;
 
 		const authorizationFailures = this.auditLog.filter(
 			(event) =>
 				event.type === "authorization" && event.outcome === "denied",
-		);
+		;
 
 		return {
 			events: [...this.auditLog],
@@ -801,7 +801,7 @@ export class SecurityService {
 			(incident) =>
 				incident.status === "open" ||
 				incident.status === "investigating",
-		);
+		;
 	}
 
 	/**
@@ -812,7 +812,7 @@ export class SecurityService {
 
 		resolution: string,
 	): Promise<void> {
-		const incident = this.incidents.find((inc) => inc.id === incidentId);
+		const incident = this.incidents.find((inc) => inc.id === incidentId;
 
 		if (incident) {
 			incident.status = "resolved";
@@ -829,13 +829,13 @@ export class SecurityService {
 				outcome: "allowed",
 				timestamp: Date.now(),
 				details: { resolution },
-			});
+			};
 
 			CocoonDevLog(
 				"service",
 
 				`[SecurityService] Incident resolved: ${incidentId}`,
-			);
+			;
 		}
 	}
 
@@ -854,20 +854,20 @@ export class SecurityService {
 		const recommendations: string[] = [];
 
 		// Generate recommendations based on audit log
-		const auditLog = this.getAuditLog();
+		const auditLog = this.getAuditLog(;
 
 		if (auditLog.summary.violations > 10) {
 			recommendations.push(
 				"Review security policies for frequent violations",
-			);
+			;
 		}
 
 		if (auditLog.summary.authenticationFailures > 5) {
-			recommendations.push("Investigate authentication failures");
+			recommendations.push("Investigate authentication failures";
 		}
 
 		if (this.getActiveIncidents().length > 0) {
-			recommendations.push("Address active security incidents");
+			recommendations.push("Address active security incidents";
 		}
 
 		return {
@@ -885,14 +885,14 @@ export class SecurityService {
 	 * Stop security service
 	 */
 	async stop(): Promise<void> {
-		CocoonDevLog("service", "[SecurityService] Stopping security service");
+		CocoonDevLog("service", "[SecurityService] Stopping security service";
 
 		this.securityActive = false;
 
 		// Save audit log and incidents
-		await this.saveSecurityState();
+		await this.saveSecurityState(;
 
-		CocoonDevLog("service", "[SecurityService] Security service stopped");
+		CocoonDevLog("service", "[SecurityService] Security service stopped";
 	}
 
 	/**
@@ -905,7 +905,7 @@ export class SecurityService {
 		// Dependencies: MountainClientService
 		// Validation: Test state persistence
 
-		CocoonDevLog("service", "[SecurityService] Security state saved");
+		CocoonDevLog("service", "[SecurityService] Security state saved";
 	}
 }
 
@@ -915,8 +915,8 @@ export class SecurityService {
 export const SecurityServiceLayer = Layer.effect(
 	"SecurityService",
 
-	Effect.sync(() => new SecurityService()),
-);
+	new SecurityService(),
+;
 
 /**
  * Live implementation
@@ -924,5 +924,5 @@ export const SecurityServiceLayer = Layer.effect(
 export const SecurityServiceLive = Layer.effect(
 	"SecurityService",
 
-	Effect.sync(() => new SecurityService()),
-);
+	new SecurityService(),
+;

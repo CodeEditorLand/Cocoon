@@ -111,7 +111,7 @@ const WarnLazyURIUnavailable = (Reason: string): void => {
 		"uri-hydrate",
 
 		`real URI class unavailable (${Reason}) - URIs degrade to stub objects`,
-	);
+	;
 };
 
 const EnsureLazyURI = (): void => {
@@ -129,7 +129,7 @@ const EnsureLazyURI = (): void => {
 				} else {
 					WarnLazyURIUnavailable(
 						"module loaded without a URI export",
-					);
+					;
 				}
 			})
 			.catch((Error) => {
@@ -137,18 +137,18 @@ const EnsureLazyURI = (): void => {
 					Error instanceof globalThis.Error
 						? Error.message
 						: String(Error),
-				);
-			});
+				;
+			};
 };
 
 // Warm the cache at module load (non-blocking) so the pending-import window
 // where HydrateUri must hand out stubs is as short as possible.
-EnsureLazyURI();
+EnsureLazyURI(;
 
 // Minimal stub for when LazyURI.parse is unavailable (import failed or not
 // yet resolved). Enough shape for extensions to call fsPath / toString().
 const MakeUriStub = (Raw: string): UriObject => {
-	const Path = Raw.replace(/^file:\/\//, "");
+	const Path = Raw.replace(/^file:\/\//, "";
 	return {
 		scheme: Raw.startsWith("file://") ? "file" : "unknown",
 		authority: "",
@@ -161,24 +161,24 @@ const MakeUriStub = (Raw: string): UriObject => {
 };
 
 const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
-	EnsureLazyURI();
+	EnsureLazyURI(;
 
 	if (!Raw) return null;
 	if (typeof Raw === "string") {
 		if (!LazyURI) {
 			// Import still pending or failed - degrade to a stub so the
 			// folder is not silently dropped from the workspace list.
-			WarnLazyURIUnavailable("import pending or failed at parse time");
+			WarnLazyURIUnavailable("import pending or failed at parse time";
 
-			return MakeUriStub(Raw);
+			return MakeUriStub(Raw;
 		}
 
 		try {
-			return LazyURI.parse(Raw);
+			return LazyURI.parse(Raw;
 		} catch {
 			// Parse error - fall back to a stub so the folder is not
 			// silently dropped from the workspace list.
-			return MakeUriStub(Raw);
+			return MakeUriStub(Raw;
 		}
 	}
 	// Already a URI-shaped object - check for the critical getters extensions
@@ -200,12 +200,12 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 		if (!RawStr) return null;
 
 		if (!LazyURI) {
-			WarnLazyURIUnavailable("import pending or failed at parse time");
+			WarnLazyURIUnavailable("import pending or failed at parse time";
 
-			return MakeUriStub(RawStr);
+			return MakeUriStub(RawStr;
 		}
 
-		return LazyURI.parse(RawStr);
+		return LazyURI.parse(RawStr;
 	} catch {
 		const FallbackStr =
 			Raw.toString !== Object.prototype.toString
@@ -229,19 +229,19 @@ if (
 			const Stack =
 				Error instanceof globalThis.Error
 					? Error.stack?.split("\n").slice(0, 6).join(" | ")
-					: String(Error);
+					: String(Error;
 
 			process.stdout.write(
 				`[LandFix:UncaughtException] ${Stack ?? "unknown"}\n`,
-			);
+			;
 		} catch {}
-	});
+	};
 	process.on("unhandledRejection", (Reason) => {
 		try {
 			const Stack =
 				Reason instanceof globalThis.Error
 					? Reason.stack?.split("\n").slice(0, 6).join(" | ")
-					: String(Reason);
+					: String(Reason;
 
 			// Benign first-boot probes: extensions read state files that
 			// don't exist on a fresh profile (vim's `.registers`, gitlens
@@ -262,7 +262,7 @@ if (
 					Text.includes("/User/prompts") ||
 					Text.includes("/User/keybindings.json") ||
 					Text.includes("aiGeneratedWorkspaces.json") ||
-					Text.includes("languageDetectionWorkerCache.json"));
+					Text.includes("languageDetectionWorkerCache.json");
 
 			// Extension-internal bugs: an extension's own code throws a
 			// TypeError whose stack lives entirely under an extension
@@ -279,29 +279,29 @@ if (
 			// Node-internal and `<anonymous>` frames are neutral.
 			const FrameLines = Text.split(" | ")
 				.map((Line) => Line.trim())
-				.filter((Line) => Line.startsWith("at "));
+				.filter((Line) => Line.startsWith("at ");
 
 			const IsExtensionFramePath = (Line: string): boolean =>
 				Line.includes("/.fiddee/extensions/") ||
 				Line.includes("/.land/extensions/") ||
-				Line.includes("/extensions/");
+				Line.includes("/extensions/";
 
 			const IsCocoonFramePath = (Line: string): boolean =>
-				Line.includes("/Cocoon/") || Line.includes("@codeeditorland/");
+				Line.includes("/Cocoon/") || Line.includes("@codeeditorland/";
 
 			const IsNeutralFramePath = (Line: string): boolean =>
 				Line.includes("node:") ||
 				Line.includes("<anonymous>") ||
-				!Line.includes("/");
+				!Line.includes("/";
 
 			const PathFrames = FrameLines.filter(
 				(Line) => !IsNeutralFramePath(Line),
-			);
+			;
 
 			const HasExtensionFrame =
 				PathFrames.length > 0 &&
 				!PathFrames.some(IsCocoonFramePath) &&
-				PathFrames.every(IsExtensionFramePath);
+				PathFrames.every(IsExtensionFramePath;
 
 			const IsBenignExtensionTypeError =
 				HasExtensionFrame &&
@@ -314,7 +314,7 @@ if (
 						"TypeError: Cannot set properties of undefined",
 					) ||
 					Text.includes("is not a function") ||
-					Text.includes("is not iterable"));
+					Text.includes("is not iterable");
 
 			const IsBenign = IsBenignEnoent || IsBenignExtensionTypeError;
 
@@ -329,16 +329,16 @@ if (
 				return;
 			}
 
-			process.stdout.write(`[${Tag}] ${Text}\n`);
+			process.stdout.write(`[${Tag}] ${Text}\n`;
 		} catch {}
-	});
+	};
 	(
 		process as { _landUncaughtHandlerInstalled?: boolean }
 	)._landUncaughtHandlerInstalled = true;
 	try {
 		process.stdout.write(
 			"[LandFix:UncaughtHandlers] uncaughtException + unhandledRejection handlers installed at NotificationHandler module load\n",
-		);
+		;
 	} catch {}
 }
 
@@ -364,28 +364,28 @@ const ApplyWorkspaceDelta = (
 		Removed.map((Folder) => Folder?.uri ?? "").filter(
 			(Uri) => Uri.length > 0,
 		),
-	);
+	;
 
-	const Init = (Context.ExtensionHostInitData ??= {});
-	const Workspace = (Init.workspace ??= Init.workspaceData ?? {});
+	const Init = (Context.ExtensionHostInitData ??= {};
+	const Workspace = (Init.workspace ??= Init.workspaceData ?? {};
 	const Existing: WorkspaceFolderWire[] = Array.isArray(Workspace.folders)
 		? (Workspace.folders as WorkspaceFolderWire[])
 		: [];
 
 	const Kept = Existing.filter(
 		(Folder) => !RemovedUris.has(Folder?.uri ?? ""),
-	);
+	;
 	const ExistingUris = new Set<string>(
 		Kept.map((Folder) => Folder?.uri ?? "").filter((Uri) => Uri.length > 0),
-	);
+	;
 	for (const Candidate of Added) {
 		const Uri = Candidate?.uri ?? "";
 
 		if (Uri.length === 0 || ExistingUris.has(Uri)) continue;
 
-		Kept.push(Candidate);
+		Kept.push(Candidate;
 
-		ExistingUris.add(Uri);
+		ExistingUris.add(Uri;
 	}
 	// Re-index so the exposed list stays VS Code-compatible.
 	for (let Index = 0; Index < Kept.length; Index += 1) {
@@ -438,11 +438,11 @@ const SafeEmit = (
 	Payload: unknown,
 ): void => {
 	if (!Source) return;
-	const Listeners = Source.listeners(Event);
+	const Listeners = Source.listeners(Event;
 	if (Listeners.length === 0) return;
 	for (const Listener of Listeners) {
 		try {
-			(Listener as (..._Args: unknown[]) => void)(Payload);
+			(Listener as (..._Args: unknown[]) => void)(Payload;
 		} catch (Caught) {
 			const Err = Caught as { message?: string; stack?: string };
 
@@ -451,12 +451,12 @@ const SafeEmit = (
 					? Err.stack.split("\n").slice(0, 3).join(" | ")
 					: typeof Err?.message === "string"
 						? Err.message
-						: String(Caught);
+						: String(Caught;
 
 			try {
 				process.stdout.write(
 					`[LandFix:SafeEmit] listener for "${Event}" threw: ${Summary}\n`,
-				);
+				;
 			} catch {}
 		}
 	}
@@ -494,11 +494,11 @@ const BuildTextDocumentShim = (
 		} catch {
 			return false;
 		}
-	});
+	};
 	if (Found) return Found;
 	const Text = Context?.DocumentContentCache?.get(Uri) ?? "";
-	const Lines = Text.split(/\r?\n/);
-	const FsPath = Uri.replace(/^file:\/\//, "");
+	const Lines = Text.split(/\r?\n/;
+	const FsPath = Uri.replace(/^file:\/\//, "";
 	return {
 		uri: {
 			toString: () => Uri,
@@ -531,24 +531,24 @@ const BuildTextDocumentShim = (
 
 			const EC = Range?.end?.character ?? Lines[EL]?.length ?? 0;
 
-			if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+			if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC;
 
 			const Parts = [(Lines[SL] ?? "").slice(SC)];
 
-			for (let I = SL + 1; I < EL; I++) Parts.push(Lines[I] ?? "");
+			for (let I = SL + 1; I < EL; I++) Parts.push(Lines[I] ?? "";
 
-			Parts.push((Lines[EL] ?? "").slice(0, EC));
+			Parts.push((Lines[EL] ?? "").slice(0, EC);
 
-			return Parts.join("\n");
+			return Parts.join("\n";
 		},
 		lineAt: (N: any) => {
-			const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+			const Ln = typeof N === "number" ? N : (N?.line ?? 0;
 
-			const Clamped = Math.max(0, Math.min(Ln, Lines.length - 1));
+			const Clamped = Math.max(0, Math.min(Ln, Lines.length - 1);
 
 			const T = Lines[Clamped] ?? "";
 
-			const FNW = T.search(/\S/);
+			const FNW = T.search(/\S/;
 
 			return {
 				text: T,
@@ -594,7 +594,7 @@ const BuildTextDocumentShim = (
 			for (let I = 0; I < (P?.line ?? 0) && I < Lines.length; I++)
 				O += (Lines[I]?.length ?? 0) + 1;
 
-			return O + (P?.character ?? 0);
+			return O + (P?.character ?? 0;
 		},
 		positionAt: (Off: number) => {
 			let R = Off;
@@ -688,13 +688,13 @@ export const CollectWillSaveDocumentEdits = async (
 			waitUntil: (Thenable: Promise<any>) => {
 				WillSaveThenables.push(
 					Promise.resolve(Thenable).catch(() => undefined),
-				);
+				;
 			},
 		};
 
 		for (const Listener of Listeners) {
 			try {
-				Listener(Event);
+				Listener(Event;
 			} catch {
 				/* never block save */
 			}
@@ -708,7 +708,7 @@ export const CollectWillSaveDocumentEdits = async (
 			SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
 				uri: Uri,
 				reason: Reason,
-			});
+			};
 		}
 
 		if (WillSaveThenables.length > 0) {
@@ -716,18 +716,18 @@ export const CollectWillSaveDocumentEdits = async (
 				Promise.allSettled(WillSaveThenables),
 
 				new Promise<undefined>((Resolve) => {
-					const Timer = setTimeout(() => Resolve(undefined), 1_500);
+					const Timer = setTimeout(() => Resolve(undefined), 1_500;
 
-					(Timer as any).unref?.();
+					(Timer as any).unref?.(;
 				}),
-			]);
+			];
 
 			if (Settled === undefined) {
 				CocoonDevLog(
 					"workspace",
 
 					`[NotificationHandler] willSave listeners for ${Uri} exceeded 1.5s budget; saving without their edits`,
-				);
+				;
 			} else {
 				for (const R of Settled) {
 					if (
@@ -735,7 +735,7 @@ export const CollectWillSaveDocumentEdits = async (
 						Array.isArray(R.value) &&
 						R.value.length > 0
 					) {
-						Edits.push(...R.value);
+						Edits.push(...R.value;
 					}
 				}
 			}
@@ -746,7 +746,7 @@ export const CollectWillSaveDocumentEdits = async (
 		SafeEmit(WorkspaceEventEmitter, "willSaveTextDocument", {
 			uri: Uri,
 			reason: Reason,
-		});
+		};
 	}
 
 	return { Uri, Edits };
@@ -840,28 +840,28 @@ const HandleSpecificNotification = (
 											? Error.message
 											: String(Error)
 									}\n`,
-								);
+								;
 							} catch {}
-						});
+						};
 					})
-					.catch(() => {});
-			});
+					.catch(() => {};
+			};
 
 			break;
 		}
 
 		case "extension.change":
-			Emitter.emit("extensionChanged", Parameters);
+			Emitter.emit("extensionChanged", Parameters;
 
 			break;
 
 		case "configuration.change":
-			Emitter.emit("configurationChanged", Parameters);
+			Emitter.emit("configurationChanged", Parameters;
 
 			break;
 
 		case "window.focused":
-			Emitter.emit("windowFocused", Parameters);
+			Emitter.emit("windowFocused", Parameters;
 
 			if (Context) {
 				(Context as any).__windowState = {
@@ -872,13 +872,13 @@ const HandleSpecificNotification = (
 				Emitter.emit("window.didChangeWindowState", {
 					focused: true,
 					active: true,
-				});
+				};
 			}
 
 			break;
 
 		case "window.blurred":
-			Emitter.emit("windowBlurred", Parameters);
+			Emitter.emit("windowBlurred", Parameters;
 
 			if (Context) {
 				(Context as any).__windowState = {
@@ -889,13 +889,13 @@ const HandleSpecificNotification = (
 				Emitter.emit("window.didChangeWindowState", {
 					focused: false,
 					active: false,
-				});
+				};
 			}
 
 			break;
 
 		case "system.shutdown":
-			Emitter.emit("systemShutdown", Parameters);
+			Emitter.emit("systemShutdown", Parameters;
 
 			break;
 
@@ -912,7 +912,7 @@ const HandleSpecificNotification = (
 				CancelPayload?.handle ?? CancelPayload?.id ?? CancelPayload;
 
 			if (CancelHandle !== undefined && CancelHandle !== null) {
-				Emitter.emit("progress.cancel", { handle: CancelHandle });
+				Emitter.emit("progress.cancel", { handle: CancelHandle };
 			}
 
 			break;
@@ -926,7 +926,7 @@ const HandleSpecificNotification = (
 				Parameters,
 
 				WorkspaceEventEmitter,
-			);
+			;
 
 			// Update the `version` in `__textDocuments` so extensions that
 			// compare document.version don't see stale values.
@@ -959,7 +959,7 @@ const HandleSpecificNotification = (
 						(D: any) =>
 							D?.uri?.toString?.() === ChangeUri ||
 							D?.fileName === ChangeUri,
-					);
+					;
 
 					if (Doc) {
 						if (NewVersion != null) Doc.version = NewVersion;
@@ -980,7 +980,7 @@ const HandleSpecificNotification = (
 				Parameters,
 
 				WorkspaceEventEmitter,
-			);
+			;
 
 			// Populate `workspace.textDocuments` - the global flat list of all
 			// open documents that extensions iterate with `workspace.textDocuments`.
@@ -1006,7 +1006,7 @@ const HandleSpecificNotification = (
 					const Existing = TextDocs.find(
 						(D: any) =>
 							D?.uri?.toString?.() === Uri || D?.fileName === Uri,
-					);
+					;
 
 					if (!Existing) {
 						const DocUri = {
@@ -1046,7 +1046,7 @@ const HandleSpecificNotification = (
 
 								if (!Range) return Text;
 
-								const Lines = Text.split(/\r?\n/);
+								const Lines = Text.split(/\r?\n/;
 
 								const SL = Range?.start?.line ?? 0;
 
@@ -1060,36 +1060,36 @@ const HandleSpecificNotification = (
 									0;
 
 								if (SL === EL)
-									return (Lines[SL] ?? "").slice(SC, EC);
+									return (Lines[SL] ?? "").slice(SC, EC;
 
 								const Parts = [(Lines[SL] ?? "").slice(SC)];
 
 								for (let I = SL + 1; I < EL; I++)
-									Parts.push(Lines[I] ?? "");
+									Parts.push(Lines[I] ?? "";
 
-								Parts.push((Lines[EL] ?? "").slice(0, EC));
+								Parts.push((Lines[EL] ?? "").slice(0, EC);
 
-								return Parts.join("\n");
+								return Parts.join("\n";
 							},
 
 							lineAt: (N: any) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
 
-								const Lines = Text.split(/\r?\n/);
+								const Lines = Text.split(/\r?\n/;
 
 								const Ln =
-									typeof N === "number" ? N : (N?.line ?? 0);
+									typeof N === "number" ? N : (N?.line ?? 0;
 
 								const Clamped = Math.max(
 									0,
 
 									Math.min(Ln, Lines.length - 1),
-								);
+								;
 
 								const T = Lines[Clamped] ?? "";
 
-								const FNW = T.search(/\S/);
+								const FNW = T.search(/\S/;
 
 								return {
 									text: T,
@@ -1117,7 +1117,7 @@ const HandleSpecificNotification = (
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
 
-								const Lines = Text.split(/\r?\n/);
+								const Lines = Text.split(/\r?\n/;
 
 								const L = Lines[Pos?.line ?? 0] ?? "";
 
@@ -1158,7 +1158,7 @@ const HandleSpecificNotification = (
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
 
-								const Lines = Text.split(/\r?\n/);
+								const Lines = Text.split(/\r?\n/;
 
 								let O = 0;
 
@@ -1169,14 +1169,14 @@ const HandleSpecificNotification = (
 								)
 									O += (Lines[I]?.length ?? 0) + 1;
 
-								return O + (P?.character ?? 0);
+								return O + (P?.character ?? 0;
 							},
 
 							positionAt: (Off: number) => {
 								const Text =
 									DocumentContentCache.get(Uri) ?? "";
 
-								const Lines = Text.split(/\r?\n/);
+								const Lines = Text.split(/\r?\n/;
 
 								let R = Off;
 
@@ -1194,7 +1194,7 @@ const HandleSpecificNotification = (
 										Lines[Lines.length - 1]?.length ?? 0,
 								};
 							},
-						});
+						};
 					}
 				}
 				(Context as any).__textDocuments = TextDocs;
@@ -1208,14 +1208,14 @@ const HandleSpecificNotification = (
 				const Models = Array.isArray(Parameters)
 					? Parameters
 					: [Parameters];
-				const LanguageIdentifiers = new Set<string>();
+				const LanguageIdentifiers = new Set<string>(;
 				for (const Model of Models) {
 					const Id: string | undefined =
 						Model?.LanguageIdentifier ??
 						Model?.languageId ??
 						Model?.language;
 					if (typeof Id === "string" && Id.length > 0) {
-						LanguageIdentifiers.add(Id);
+						LanguageIdentifiers.add(Id;
 					}
 				}
 				if (LanguageIdentifiers.size > 0) {
@@ -1231,13 +1231,13 @@ const HandleSpecificNotification = (
 										try {
 											process.stdout.write(
 												`[LandFix:Activator] onLanguage:${Id} activation failed: ${Error instanceof globalThis.Error ? Error.message : String(Error)}\n`,
-											);
+											;
 										} catch {}
-									});
+									};
 								}
 							})
-							.catch(() => {});
-					});
+							.catch(() => {};
+					};
 				}
 			}
 			break;
@@ -1250,7 +1250,7 @@ const HandleSpecificNotification = (
 				Parameters,
 
 				WorkspaceEventEmitter,
-			);
+			;
 			// Remove from workspace.textDocuments
 			if (Context) {
 				const CloseModels = Array.isArray(Parameters)
@@ -1260,13 +1260,13 @@ const HandleSpecificNotification = (
 					CloseModels.map(
 						(M: any) => M?.uri ?? M?.Uri ?? M?.fileName ?? "",
 					).filter(Boolean),
-				);
+				;
 				const Docs = (Context as any).__textDocuments ?? [];
 				(Context as any).__textDocuments = Docs.filter((D: any) => {
 					const DUri = D?.uri?.toString?.() ?? D?.fileName ?? "";
 
-					return !ClosedUris.has(DUri);
-				});
+					return !ClosedUris.has(DUri;
+				};
 				// Also remove from visibleTextEditors so the array stays
 				// in sync with what's actually open in the workbench.
 				const Visible: unknown[] =
@@ -1276,9 +1276,9 @@ const HandleSpecificNotification = (
 						const EUri =
 							(E as any)?.document?.uri?.toString?.() ?? "";
 
-						return !ClosedUris.has(EUri);
+						return !ClosedUris.has(EUri;
 					},
-				);
+				;
 			}
 			break;
 		// `document.willSave` - Mountain fires this BEFORE the file is persisted
@@ -1307,9 +1307,9 @@ const HandleSpecificNotification = (
 					Context?.SendToMountain("window.applyTextEdits", {
 						uri: Uri,
 						edits: Edits,
-					}).catch(() => {});
+					}).catch(() => {};
 				}
-			});
+			};
 			break;
 		}
 
@@ -1321,7 +1321,7 @@ const HandleSpecificNotification = (
 				Parameters,
 
 				WorkspaceEventEmitter,
-			);
+			;
 			// Update isDirty → false in __textDocuments so extensions that
 			// check `document.isDirty` after saving see the correct state.
 			if (Context) {
@@ -1338,7 +1338,7 @@ const HandleSpecificNotification = (
 						(D: any) =>
 							D?.uri?.toString?.() === SaveUri ||
 							D?.fileName === SaveUri,
-					);
+					;
 					if (SaveDoc) {
 						SaveDoc.isDirty = false;
 					}
@@ -1355,7 +1355,7 @@ const HandleSpecificNotification = (
 					`webview.message:${Payload.handle}`,
 
 					Payload.message,
-				);
+				;
 			}
 			break;
 		}
@@ -1364,7 +1364,7 @@ const HandleSpecificNotification = (
 				? Parameters[0]
 				: Parameters;
 			if (Payload?.handle) {
-				Emitter.emit(`webview.dispose:${Payload.handle}`);
+				Emitter.emit(`webview.dispose:${Payload.handle}`;
 				// Webview-view branch: dispose the per-handle proxy
 				// view so its onDispose listeners fire on the
 				// extension side. Builders entry stays in case the
@@ -1375,7 +1375,7 @@ const HandleSpecificNotification = (
 						({ WebviewViewBuilders: _Builders }) => {
 							/* builders are factories - no per-instance state to dispose here */
 						},
-					);
+					;
 				} catch (_e) {
 					/* swallow */
 				}
@@ -1391,7 +1391,7 @@ const HandleSpecificNotification = (
 					active: Payload.active,
 					visible: Payload.visible,
 					viewColumn: Payload.viewColumn,
-				});
+				};
 				// Webview-view onDidChangeVisibility forward. The most
 				// recent proxy view for this handle stored its
 				// `_FireVisibility` hook on a per-resolve closure; we
@@ -1404,7 +1404,7 @@ const HandleSpecificNotification = (
 					`webview.viewVisibility:${Payload.handle}`,
 
 					!!Payload.visible,
-				);
+				;
 			}
 			break;
 		}
@@ -1423,12 +1423,12 @@ const HandleSpecificNotification = (
 			const Removed = Payload?.removed ?? [];
 			let Merged: WorkspaceFolderWire[] = [];
 			if (Context) {
-				Merged = ApplyWorkspaceDelta(Context, Payload ?? {});
+				Merged = ApplyWorkspaceDelta(Context, Payload ?? {};
 			}
 			try {
 				process.stdout.write(
 					`[LandFix:WsDelta] $deltaWorkspaceFolders +${Added.length} -${Removed.length} → folders=${Merged.length}\n`,
-				);
+				;
 			} catch {}
 			// Atom I3 (root-cause fix): hydrate wire URIs into real
 			// `vscode.Uri` objects before emitting. Built-in extensions
@@ -1449,7 +1449,7 @@ const HandleSpecificNotification = (
 				name: string;
 				index: number;
 			} | null => {
-				const Uri = HydrateUri(Wire.uri);
+				const Uri = HydrateUri(Wire.uri;
 				if (!Uri) return null;
 				return {
 					uri: Uri,
@@ -1461,17 +1461,17 @@ const HandleSpecificNotification = (
 			};
 			const AddedHydrated = Added.map((W, I) =>
 				HydrateFolder(W, I),
-			).filter((V): V is Exclude<typeof V, null> => V !== null);
+			).filter((V): V is Exclude<typeof V, null> => V !== null;
 			const RemovedHydrated = Removed.map((W, I) =>
 				HydrateFolder(W, I),
-			).filter((V): V is Exclude<typeof V, null> => V !== null);
+			).filter((V): V is Exclude<typeof V, null> => V !== null;
 			const MergedHydrated = Merged.map((W, I) =>
 				HydrateFolder(W, I),
-			).filter((V): V is Exclude<typeof V, null> => V !== null);
+			).filter((V): V is Exclude<typeof V, null> => V !== null;
 			try {
 				process.stdout.write(
 					`[LandFix:WsDelta] hydrated +${AddedHydrated.length}/${Added.length} -${RemovedHydrated.length}/${Removed.length} folders=${MergedHydrated.length}/${Merged.length}\n`,
-				);
+				;
 			} catch {}
 
 			// Atom I2 (retained): SafeEmit isolates each listener's
@@ -1481,10 +1481,10 @@ const HandleSpecificNotification = (
 				removed: RemovedHydrated,
 				folders: MergedHydrated,
 			};
-			SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event);
+			SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event;
 			// Also emit on the generic Emitter so non-workspace listeners
 			// (e.g. BATCH-15's activator) can subscribe in one place.
-			SafeEmit(Emitter, "workspaceFoldersChanged", Event);
+			SafeEmit(Emitter, "workspaceFoldersChanged", Event;
 			// Mirror into the Effect-TS WorkspaceService (when built) so its
 			// `workspaceFolders` getter and folder-change listeners stay in
 			// lockstep with the shim Context.
@@ -1499,7 +1499,7 @@ const HandleSpecificNotification = (
 						name: Folder.name,
 						index: Folder.index,
 					})),
-				});
+				};
 			} catch {}
 			// BATCH-15: run the workspaceContains activation pass. Lazy-load to
 			// avoid a circular import with the handler suite at module init.
@@ -1514,10 +1514,10 @@ const HandleSpecificNotification = (
 							try {
 								process.stdout.write(
 									`[LandFix:Activator] activation pass failed: ${Error instanceof Error ? Error.message : String(Error)}\n`,
-								);
+								;
 							} catch {}
-						});
-				});
+						};
+				};
 			}
 			break;
 		}
@@ -1534,7 +1534,7 @@ const HandleSpecificNotification = (
 					? Payload
 					: (Payload?.uri ??
 						Payload?.document?.uri ??
-						Payload?.document);
+						Payload?.document;
 			const DeriveLang = (UriStr: string | undefined): string => {
 				if (!UriStr) return "plaintext";
 				const Ext =
@@ -1639,7 +1639,7 @@ const HandleSpecificNotification = (
 				return Map[Ext] ?? "plaintext";
 			};
 			const LanguageId: string =
-				Payload?.languageId ?? Payload?.language ?? DeriveLang(UriRaw);
+				Payload?.languageId ?? Payload?.language ?? DeriveLang(UriRaw;
 			const HydratedUri = UriRaw ? HydrateUri(UriRaw) : null;
 			// Update `vscode.window.activeTextEditor`. Extensions read this
 			// synchronously; mutating the shim's `__activeTextEditor` makes
@@ -1650,9 +1650,9 @@ const HandleSpecificNotification = (
 				? Context?.DocumentContentCache?.get(UriRaw)
 				: undefined;
 			const DocText = DocCached ?? "";
-			const DocLines = DocText.split(/\r?\n/);
+			const DocLines = DocText.split(/\r?\n/;
 			const MakeDoc = (RealText: string) => {
-				const Lines = RealText.split(/\r?\n/);
+				const Lines = RealText.split(/\r?\n/;
 				return {
 					uri: HydratedUri,
 
@@ -1684,16 +1684,16 @@ const HandleSpecificNotification = (
 						const EC =
 							Range?.end?.character ?? Lines[EL]?.length ?? 0;
 
-						if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC);
+						if (SL === EL) return (Lines[SL] ?? "").slice(SC, EC;
 
 						const Parts = [(Lines[SL] ?? "").slice(SC)];
 
 						for (let I = SL + 1; I < EL; I++)
-							Parts.push(Lines[I] ?? "");
+							Parts.push(Lines[I] ?? "";
 
-						Parts.push((Lines[EL] ?? "").slice(0, EC));
+						Parts.push((Lines[EL] ?? "").slice(0, EC);
 
-						return Parts.join("\n");
+						return Parts.join("\n";
 					},
 
 					lineAt: (LineOrPos: number | { line: number }) => {
@@ -1704,7 +1704,7 @@ const HandleSpecificNotification = (
 
 						const T = Lines[N] ?? "";
 
-						const FNW = T.search(/\S/);
+						const FNW = T.search(/\S/;
 
 						return {
 							text: T,
@@ -1763,7 +1763,7 @@ const HandleSpecificNotification = (
 						)
 							O += (Lines[I]?.length ?? 0) + 1;
 
-						return O + (P?.character ?? 0);
+						return O + (P?.character ?? 0;
 					},
 
 					positionAt: (Off: number) => {
@@ -1801,7 +1801,7 @@ const HandleSpecificNotification = (
 							return LiveSelection;
 						},
 						set selection(S: any) {
-							Object.assign(LiveSelection, S);
+							Object.assign(LiveSelection, S;
 						},
 						selections: [LiveSelection],
 						visibleRanges: [],
@@ -1826,7 +1826,7 @@ const HandleSpecificNotification = (
 									? DecorationType
 									: (DecorationType?.key ??
 										DecorationType?.id ??
-										String(DecorationType));
+										String(DecorationType);
 							Context.SendToMountain(
 								"window.setTextEditorDecorations",
 
@@ -1835,7 +1835,7 @@ const HandleSpecificNotification = (
 									uri: UriRaw,
 									rangesOrOptions: RangesOrOptions,
 								},
-							).catch(() => {});
+							).catch(() => {};
 						},
 						// `editor.edit(editBuilder => {...})` - collect edits and send to Mountain
 						edit: (
@@ -1869,18 +1869,18 @@ const HandleSpecificNotification = (
 								setEndOfLine: () => {},
 							};
 							try {
-								Callback(Builder);
+								Callback(Builder;
 							} catch {
-								return Promise.resolve(false);
+								return Promise.resolve(false;
 							}
-							if (!Collected.length) return Promise.resolve(true);
+							if (!Collected.length) return Promise.resolve(true;
 							return Context.SendToMountain(
 								"window.applyTextEdits",
 
 								{ uri: UriRaw, edits: Collected },
 							)
 								.then(() => true)
-								.catch(() => false);
+								.catch(() => false;
 						},
 						// `editor.insertSnippet` - convert to plain-text edit for now
 						insertSnippet: async (
@@ -1893,7 +1893,7 @@ const HandleSpecificNotification = (
 									? Snippet
 									: typeof Snippet?.value === "string"
 										? Snippet.value
-										: String(Snippet);
+										: String(Snippet;
 							const Range = Location ?? LiveSelection;
 							await Context.SendToMountain(
 								"window.applyTextEdits",
@@ -1902,7 +1902,7 @@ const HandleSpecificNotification = (
 									uri: UriRaw,
 									edits: [{ range: Range, text: Text }],
 								},
-							).catch(() => {});
+							).catch(() => {};
 							return true;
 						},
 						revealRange: (Range: any, RevealType?: number) => {
@@ -1916,7 +1916,7 @@ const HandleSpecificNotification = (
 									range: Range,
 									revealType: RevealType ?? 0,
 								},
-							).catch(() => {});
+							).catch(() => {};
 						},
 						show: (ViewColumn?: number) => {
 							// Use sendRequest for showTextDocument round-trip.
@@ -1931,7 +1931,7 @@ const HandleSpecificNotification = (
 
 									ViewColumn ?? 1,
 								],
-							).catch(() => {});
+							).catch(() => {};
 						},
 						hide: () => {},
 					}
@@ -1960,7 +1960,7 @@ const HandleSpecificNotification = (
 				if (Idx >= 0) {
 					Visible[Idx] = TextEditorStub;
 				} else if (TextEditorStub) {
-					Visible.push(TextEditorStub);
+					Visible.push(TextEditorStub;
 				}
 				(Context as any).__visibleTextEditors = Visible;
 				// Mirror into the Effect-TS WorkspaceService (when built) so
@@ -1970,7 +1970,7 @@ const HandleSpecificNotification = (
 					const Bridge = (globalThis as any)
 						.__COCOON_WORKSPACE_BRIDGE__;
 					if (Bridge && TextEditorStub && UriKey) {
-						Bridge.RegisterTextEditor?.(UriKey, TextEditorStub);
+						Bridge.RegisterTextEditor?.(UriKey, TextEditorStub;
 
 						Bridge.AcceptEditorState?.(
 							UriKey,
@@ -1981,7 +1981,7 @@ const HandleSpecificNotification = (
 										E as any
 									)?.document?.uri?.toString?.() as string,
 							).filter(Boolean),
-						);
+						;
 					}
 				} catch {}
 			}
@@ -1997,7 +1997,7 @@ const HandleSpecificNotification = (
 					"window.didChangeActiveTextEditor",
 
 					TextEditorStub,
-				);
+				;
 			}
 			break;
 		}
@@ -2021,22 +2021,22 @@ const HandleSpecificNotification = (
 					0,
 
 					(S?.startLineNumber ?? S?.start?.line ?? 1) - 1,
-				);
+				;
 				const StartChar = Math.max(
 					0,
 
 					(S?.startColumn ?? S?.start?.character ?? 1) - 1,
-				);
+				;
 				const EndLine = Math.max(
 					0,
 
 					(S?.endLineNumber ?? S?.end?.line ?? 1) - 1,
-				);
+				;
 				const EndChar = Math.max(
 					0,
 
 					(S?.endColumn ?? S?.end?.character ?? 1) - 1,
-				);
+				;
 				LiveSel.start = { line: StartLine, character: StartChar };
 				LiveSel.end = { line: EndLine, character: EndChar };
 				LiveSel.active = { line: EndLine, character: EndChar };
@@ -2068,17 +2068,17 @@ const HandleSpecificNotification = (
 					S?.startColumn === S?.endColumn,
 				isReversed: false,
 				isSingleLine: S?.startLineNumber === S?.endLineNumber,
-			}));
+			});
 			const Editor = (Context as any)?.__activeTextEditor;
 			if (Editor && StubSels.length > 0) {
-				Object.assign(Editor.selection ?? {}, StubSels[0]);
+				Object.assign(Editor.selection ?? {}, StubSels[0];
 				(Editor as any).selections = StubSels;
 			}
 			SafeEmit(Emitter, "window.didChangeTextEditorSelection", {
 				textEditor: Editor,
 				selections: StubSels,
 				kind: undefined,
-			});
+			};
 			break;
 		}
 
@@ -2093,9 +2093,9 @@ const HandleSpecificNotification = (
 			const TerminalId = Payload[0];
 			const Data = Payload[1];
 			if (TerminalId !== undefined) {
-				Emitter.emit(`terminal:data:${TerminalId}`, Data);
+				Emitter.emit(`terminal:data:${TerminalId}`, Data;
 			}
-			Emitter.emit("terminalData", { id: TerminalId, data: Data });
+			Emitter.emit("terminalData", { id: TerminalId, data: Data };
 			break;
 		}
 		case "$acceptTerminalProcessExit": {
@@ -2107,9 +2107,9 @@ const HandleSpecificNotification = (
 				: [Parameters];
 			const TerminalId = Payload[0];
 			if (TerminalId !== undefined) {
-				Emitter.emit(`terminal:exit:${TerminalId}`);
+				Emitter.emit(`terminal:exit:${TerminalId}`;
 			}
-			Emitter.emit("terminalExit", { id: TerminalId });
+			Emitter.emit("terminalExit", { id: TerminalId };
 			break;
 		}
 
@@ -2128,7 +2128,7 @@ const HandleSpecificNotification = (
 				}
 				const Already = ((Context as any).__terminals as any[]).some(
 					(T: any) => T?.handle === OpenId || T?.id === OpenId,
-				);
+				;
 				if (!Already) {
 					// Push a minimal terminal stub matching the shape from
 					// Window/Namespace.ts createTerminal().
@@ -2148,10 +2148,10 @@ const HandleSpecificNotification = (
 						hide: () => {},
 						dispose: () => {},
 					};
-					(Context as any).__terminals.push(Stub);
+					(Context as any).__terminals.push(Stub;
 					(Context as any).__activeTerminal = Stub;
-					Emitter.emit("window.didOpenTerminal", Stub);
-					Emitter.emit("window.didChangeActiveTerminal", Stub);
+					Emitter.emit("window.didOpenTerminal", Stub;
+					Emitter.emit("window.didChangeActiveTerminal", Stub;
 				}
 			}
 			break;
@@ -2178,7 +2178,7 @@ const HandleSpecificNotification = (
 			const Terminals = ((Context as any).__terminals as any[]) ?? [];
 			const Terminal = Terminals.find(
 				(T: any) => T?.id === TermId || T?.handle === TermId,
-			);
+			;
 			const CommandLine =
 				typeof StartPayload?.commandLine === "string"
 					? StartPayload.commandLine
@@ -2199,10 +2199,10 @@ const HandleSpecificNotification = (
 							 * minimal stub - extensions that need streaming
 							 * output should hook `onDidWriteData` instead.
 							 */
-							return (async function* () {})();
+							return (async function* () {})(;
 						},
 					},
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2227,7 +2227,7 @@ const HandleSpecificNotification = (
 			const Terminals = ((Context as any).__terminals as any[]) ?? [];
 			const Terminal = Terminals.find(
 				(T: any) => T?.id === TermId || T?.handle === TermId,
-			);
+			;
 			const CommandLine =
 				typeof EndPayload?.commandLine === "string"
 					? EndPayload.commandLine
@@ -2249,7 +2249,7 @@ const HandleSpecificNotification = (
 						cwd: Cwd ? { fsPath: Cwd } : undefined,
 					},
 					exitCode: ExitCode >= 0 ? ExitCode : undefined,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2283,7 +2283,7 @@ const HandleSpecificNotification = (
 					commandLine: CommandLine,
 					cwd: Cwd,
 					exitCode: ExitCode,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2304,7 +2304,7 @@ const HandleSpecificNotification = (
 				? DiagPayload.uris.filter((U: unknown) => typeof U === "string")
 				: [];
 			try {
-				Emitter.emit("diagnostics.didChange", { uris: Uris });
+				Emitter.emit("diagnostics.didChange", { uris: Uris };
 			} catch {
 				/* listener threw */
 			}
@@ -2340,9 +2340,9 @@ const HandleSpecificNotification = (
 				visibleRanges: [],
 				viewColumn: Index + 1,
 				options: {},
-			}));
+			});
 			try {
-				Emitter.emit("window.didChangeVisibleTextEditors", Stubs);
+				Emitter.emit("window.didChangeVisibleTextEditors", Stubs;
 			} catch {
 				/* listener threw */
 			}
@@ -2378,34 +2378,34 @@ const HandleSpecificNotification = (
 
 			// Build flat tab lists keyed by URI for cheap diffing.
 			const Flatten = (Groups: typeof NewGroups): Map<string, string> => {
-				const Map_ = new Map<string, string>();
+				const Map_ = new Map<string, string>(;
 				for (const G of Groups) {
 					for (const T of G.tabs ?? []) {
-						if (T.uri) Map_.set(T.uri, T.label);
+						if (T.uri) Map_.set(T.uri, T.label;
 					}
 				}
 				return Map_;
 			};
-			const Prior = Flatten(PriorGroups);
-			const Next = Flatten(NewGroups);
+			const Prior = Flatten(PriorGroups;
+			const Next = Flatten(NewGroups;
 			const Opened: Array<{ uri: string; label: string }> = [];
 			const Closed: Array<{ uri: string; label: string }> = [];
 			for (const [Uri, Label] of Next)
-				if (!Prior.has(Uri)) Opened.push({ uri: Uri, label: Label });
+				if (!Prior.has(Uri)) Opened.push({ uri: Uri, label: Label };
 			for (const [Uri, Label] of Prior)
-				if (!Next.has(Uri)) Closed.push({ uri: Uri, label: Label });
+				if (!Next.has(Uri)) Closed.push({ uri: Uri, label: Label };
 
 			try {
 				Emitter.emit("window.didChangeTabs", {
 					opened: Opened,
 					closed: Closed,
 					changed: [],
-				});
+				};
 				Emitter.emit("window.didChangeTabGroups", {
 					opened: [],
 					closed: [],
 					changed: NewGroups,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2438,7 +2438,7 @@ const HandleSpecificNotification = (
 						visibleRanges: VisibleRanges,
 					},
 					visibleRanges: VisibleRanges,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2468,7 +2468,7 @@ const HandleSpecificNotification = (
 						options: Options,
 					},
 					options: Options,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2515,7 +2515,7 @@ const HandleSpecificNotification = (
 						original: OriginalUri,
 						changes: Changes,
 					},
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2547,7 +2547,7 @@ const HandleSpecificNotification = (
 						viewColumn: ViewColumn,
 					},
 					viewColumn: ViewColumn,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2572,7 +2572,7 @@ const HandleSpecificNotification = (
 				Emitter.emit("window.didChangeActiveColorTheme", {
 					kind: ThemeKind,
 					id: ThemeId,
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -2600,7 +2600,7 @@ const HandleSpecificNotification = (
 						arguments: Array.isArray(ExecPayload?.arguments)
 							? ExecPayload.arguments
 							: [],
-					});
+					};
 				} catch {
 					/* listener threw - keep dispatching */
 				}
@@ -2617,19 +2617,19 @@ const HandleSpecificNotification = (
 				const All = ((Context as any).__terminals as any[]) ?? [];
 				const Removed = All.filter(
 					(T: any) => T?.handle === CloseId || T?.id === CloseId,
-				);
+				;
 				(Context as any).__terminals = All.filter(
 					(T: any) => T?.handle !== CloseId && T?.id !== CloseId,
-				);
+				;
 				if (
 					(Context as any).__activeTerminal?.handle === CloseId ||
 					(Context as any).__activeTerminal?.id === CloseId
 				) {
 					(Context as any).__activeTerminal = undefined;
-					Emitter.emit("window.didChangeActiveTerminal", undefined);
+					Emitter.emit("window.didChangeActiveTerminal", undefined;
 				}
 				for (const Term of Removed) {
-					Emitter.emit("window.didCloseTerminal", Term);
+					Emitter.emit("window.didCloseTerminal", Term;
 				}
 			}
 			break;
@@ -2644,17 +2644,17 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const ActiveId =
 				ActivePayload?.id ??
-				(typeof ActivePayload === "number" ? ActivePayload : null);
+				(typeof ActivePayload === "number" ? ActivePayload : null;
 			if (ActiveId === null || ActiveId === undefined) {
 				(Context as any).__activeTerminal = undefined;
-				Emitter.emit("window.didChangeActiveTerminal", undefined);
+				Emitter.emit("window.didChangeActiveTerminal", undefined;
 			} else {
 				const Found = ((Context as any).__terminals ?? []).find(
 					(T: any) => T?.handle === ActiveId || T?.id === ActiveId,
-				);
+				;
 				if (Found) {
 					(Context as any).__activeTerminal = Found;
-					Emitter.emit("window.didChangeActiveTerminal", Found);
+					Emitter.emit("window.didChangeActiveTerminal", Found;
 				}
 			}
 			break;
@@ -2672,12 +2672,12 @@ const HandleSpecificNotification = (
 				ActivatedPayload?.id ??
 				(typeof ActivatedPayload === "number"
 					? ActivatedPayload
-					: null);
+					: null;
 			if (ActivatedId !== null && ActivatedId !== undefined) {
 				const ActivatedTerm = ((Context as any).__terminals ?? []).find(
 					(T: any) =>
 						T?.handle === ActivatedId || T?.id === ActivatedId,
-				);
+				;
 				if (ActivatedTerm && !ActivatedTerm.shellIntegration) {
 					ActivatedTerm.shellIntegration = {
 						cwd: undefined,
@@ -2686,7 +2686,7 @@ const HandleSpecificNotification = (
 					Emitter.emit("window.didChangeTerminalShellIntegration", {
 						terminal: ActivatedTerm,
 						shellIntegration: ActivatedTerm.shellIntegration,
-					});
+					};
 				}
 			}
 			break;
@@ -2702,13 +2702,13 @@ const HandleSpecificNotification = (
 				? Parameters[0]
 				: Parameters;
 			const StateTermId = StatePayload?.id ?? null;
-			const Interacted = Boolean(StatePayload?.interactedWith);
+			const Interacted = Boolean(StatePayload?.interactedWith;
 			if (StateTermId === null || StateTermId === undefined) {
 				break;
 			}
 			const StateTerm = ((Context as any).__terminals ?? []).find(
 				(T: any) => T?.handle === StateTermId || T?.id === StateTermId,
-			);
+			;
 			if (StateTerm) {
 				const PrevState = StateTerm.state ?? {
 					isInteractedWith: false,
@@ -2720,7 +2720,7 @@ const HandleSpecificNotification = (
 				};
 				StateTerm.state = NextState;
 				try {
-					Emitter.emit("window.didChangeTerminalState", StateTerm);
+					Emitter.emit("window.didChangeTerminalState", StateTerm;
 				} catch {
 					/* listener threw */
 				}
@@ -2733,7 +2733,7 @@ const HandleSpecificNotification = (
 					Emitter.emit("window.didChangeTerminalState", {
 						id: StateTermId,
 						state: { isInteractedWith: Interacted },
-					});
+					};
 				} catch {
 					/* listener threw */
 				}
@@ -2770,7 +2770,7 @@ const HandleSpecificNotification = (
 				};
 				const TermEntry = ((Context as any).__terminals ?? []).find(
 					(T: any) => T?.handle === CwdTermId || T?.id === CwdTermId,
-				);
+				;
 				if (TermEntry) {
 					TermEntry.shellIntegration = {
 						...(TermEntry.shellIntegration ?? {}),
@@ -2781,7 +2781,7 @@ const HandleSpecificNotification = (
 				Emitter.emit("window.didChangeTerminalShellIntegration", {
 					terminal: TermEntry ?? null,
 					shellIntegration: { cwd: CwdUri },
-				});
+				};
 			}
 			break;
 		}
@@ -2798,7 +2798,7 @@ const HandleSpecificNotification = (
 					Emitter.emit(`fileWatcher:${Event.handle}`, {
 						kind: Event.kind,
 						path: Event.path,
-					});
+					};
 				}
 			}
 			break;
@@ -2823,7 +2823,7 @@ const HandleSpecificNotification = (
 			// activation; already-active extensions are skipped by the
 			// activation handler's dedupe.
 			if (Context?.ActivateByEvent) {
-				void Context.ActivateByEvent("onDebug").catch(() => {});
+				void Context.ActivateByEvent("onDebug").catch(() => {};
 
 				const SessionType =
 					typeof Payload?.type === "string" ? Payload.type : "";
@@ -2831,15 +2831,15 @@ const HandleSpecificNotification = (
 				if (SessionType) {
 					void Context.ActivateByEvent(
 						`onDebugResolve:${SessionType}`,
-					).catch(() => {});
+					).catch(() => {};
 
 					void Context.ActivateByEvent(
 						`onDebugAdapterProtocolTracker:${SessionType}`,
-					).catch(() => {});
+					).catch(() => {};
 				}
 			}
 
-			Emitter.emit("debug.didStartSession", Payload);
+			Emitter.emit("debug.didStartSession", Payload;
 			break;
 		}
 		case "$onDidTerminateDebugSession": {
@@ -2852,7 +2852,7 @@ const HandleSpecificNotification = (
 					(Context as any).__activeDebugSession = undefined;
 				}
 			}
-			Emitter.emit("debug.didTerminateSession", Payload);
+			Emitter.emit("debug.didTerminateSession", Payload;
 			break;
 		}
 		case "$onDidChangeActiveDebugSession": {
@@ -2862,28 +2862,28 @@ const HandleSpecificNotification = (
 			if (Context) {
 				(Context as any).__activeDebugSession = Payload ?? undefined;
 			}
-			Emitter.emit("debug.didChangeActiveSession", Payload);
+			Emitter.emit("debug.didChangeActiveSession", Payload;
 			break;
 		}
 		case "$onDidReceiveDebugSessionCustomEvent": {
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
-			Emitter.emit("debug.didReceiveCustomEvent", Payload);
+			Emitter.emit("debug.didReceiveCustomEvent", Payload;
 			break;
 		}
 		case "$onDidChangeBreakpoints": {
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
-			Emitter.emit("debug.didChangeBreakpoints", Payload);
+			Emitter.emit("debug.didChangeBreakpoints", Payload;
 			break;
 		}
 		case "$onDidChangeActiveStackItem": {
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
-			Emitter.emit("debug.didChangeActiveStackItem", Payload);
+			Emitter.emit("debug.didChangeActiveStackItem", Payload;
 			break;
 		}
 		// Custom-editor document lifecycle. Mountain forwards each
@@ -2914,12 +2914,12 @@ const HandleSpecificNotification = (
 			const ProviderEntry =
 				WindowNamespaceModule.CustomEditorProvidersByViewType.get(
 					ViewType,
-				);
+				;
 			if (!ProviderEntry) {
 				try {
 					process.stdout.write(
 						`[NotificationHandler] $resolveCustomEditor: no provider for viewType="${ViewType}"\n`,
-					);
+					;
 				} catch {}
 				break;
 			}
@@ -2936,7 +2936,7 @@ const HandleSpecificNotification = (
 				try {
 					process.stdout.write(
 						`[NotificationHandler] $resolveCustomEditor: provider for "${ViewType}" lacks ${Method}()\n`,
-					);
+					;
 				} catch {}
 				break;
 			}
@@ -2960,7 +2960,7 @@ const HandleSpecificNotification = (
 					// `webview.postMessage` → Webview.rs → sky relay.
 					postMessage: (Message: unknown): Promise<boolean> => {
 						if (WebviewPanelHandle == null || !Context) {
-							return Promise.resolve(false);
+							return Promise.resolve(false;
 						}
 
 						return Context.SendToMountain("webview.postMessage", {
@@ -2968,7 +2968,7 @@ const HandleSpecificNotification = (
 							message: Message,
 						})
 							.then(() => true)
-							.catch(() => false);
+							.catch(() => false;
 					},
 
 					// Setter forwards to the workbench panel; getter returns
@@ -2984,7 +2984,7 @@ const HandleSpecificNotification = (
 							void Context.SendToMountain("webview.setHtml", {
 								handle: WebviewPanelHandle,
 								html: Value,
-							}).catch(() => {});
+							}).catch(() => {};
 						}
 					},
 
@@ -3015,10 +3015,10 @@ const HandleSpecificNotification = (
 											? Error.message
 											: String(Error)
 									}\n`,
-								);
+								;
 							} catch {}
 						},
-					);
+					;
 				}
 			} catch (Error) {
 				try {
@@ -3028,7 +3028,7 @@ const HandleSpecificNotification = (
 								? Error.message
 								: String(Error)
 						}\n`,
-					);
+					;
 				} catch {}
 			}
 			break;
@@ -3060,7 +3060,7 @@ const HandleSpecificNotification = (
 				$onDidChangeCustomDocument: "didChangeCustomDocument",
 			};
 			const Suffix = ChannelMap[Method] ?? Method;
-			Emitter.emit(`customEditor.${Suffix}`, Payload);
+			Emitter.emit(`customEditor.${Suffix}`, Payload;
 			break;
 		}
 
@@ -3074,7 +3074,7 @@ const HandleSpecificNotification = (
 				const Emitter2 = ViewEmitters.get(ViewId) as any;
 				Emitter2?.emit("treeView.selectionChanged", {
 					selection: P?.selection ?? [],
-				});
+				};
 			}
 			break;
 		}
@@ -3087,7 +3087,7 @@ const HandleSpecificNotification = (
 				const Emitter2 = ViewEmitters.get(ViewId) as any;
 				Emitter2?.emit("treeView.visibilityChanged", {
 					visible: P?.visible ?? false,
-				});
+				};
 			}
 			break;
 		}
@@ -3100,7 +3100,7 @@ const HandleSpecificNotification = (
 				const Emitter2 = ViewEmitters.get(ViewId) as any;
 				Emitter2?.emit("treeView.collapseElement", {
 					element: P?.element,
-				});
+				};
 			}
 			break;
 		}
@@ -3113,7 +3113,7 @@ const HandleSpecificNotification = (
 				const Emitter2 = ViewEmitters.get(ViewId) as any;
 				Emitter2?.emit("treeView.expandElement", {
 					element: P?.element,
-				});
+				};
 			}
 			break;
 		}
@@ -3128,7 +3128,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
 			if (Files.length > 0) {
-				WorkspaceEventEmitter?.emit("didCreateFiles", { files: Files });
+				WorkspaceEventEmitter?.emit("didCreateFiles", { files: Files };
 			}
 			break;
 		}
@@ -3138,7 +3138,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
 			if (Files.length > 0) {
-				WorkspaceEventEmitter?.emit("didDeleteFiles", { files: Files });
+				WorkspaceEventEmitter?.emit("didDeleteFiles", { files: Files };
 			}
 			break;
 		}
@@ -3148,7 +3148,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			const Files = Array.isArray(Payload?.files) ? Payload.files : [];
 			if (Files.length > 0) {
-				WorkspaceEventEmitter?.emit("didRenameFiles", { files: Files });
+				WorkspaceEventEmitter?.emit("didRenameFiles", { files: Files };
 			}
 			break;
 		}
@@ -3160,13 +3160,13 @@ const HandleSpecificNotification = (
 			try {
 				process.stdout.write(
 					`[NotificationHandler] Generic notification handler for: ${Method}\n`,
-				);
+				;
 			} catch {}
 			try {
 				Emitter.emit("unknownNotification", {
 					method: Method,
 					parameters: Parameters,
-				});
+				};
 			} catch (EmitError) {
 				// `EventEmitter.emit` rethrows the FIRST listener that
 				// throws synchronously, abandoning the rest. Wrapping
@@ -3181,7 +3181,7 @@ const HandleSpecificNotification = (
 						`[NotificationHandler] unknownNotification subscriber threw for ${Method}: ${
 							(EmitError as any)?.message ?? String(EmitError)
 						}\n`,
-					);
+					;
 				} catch {}
 			}
 	}

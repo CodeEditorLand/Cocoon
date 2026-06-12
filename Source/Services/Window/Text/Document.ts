@@ -40,13 +40,13 @@ export const ShowTextDocument = (
 
 				selection: { line: number; character: number } | undefined;
 			},
-		) => Effect.Effect<void, Error>;
+		) => Promise<void>;
 	},
 
 	Logger: {
-		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Debug: (Message: string, ...Data: unknown[]) => Promise<void>;
 	},
 
 	Workspace_: Workspace,
@@ -56,15 +56,15 @@ export const ShowTextDocument = (
 	ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
 
 	PreserveFocus?: boolean,
-): Effect.Effect<VSCode.TextEditor, Error> =>
-	Effect.gen(function* () {
+): Promise<VSCode.TextEditor> =>
+	async function() {
 		// Extract URI from either Uri or TextDocument
 		const Uri = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
 
 		yield* Logger.Info(
 			`[WindowService] Showing text document: ${Uri.toString()}` +
 				(ColumnOrOptions ? ` with options` : ""),
-		);
+		;
 
 		let ViewColumnDTO: number | undefined;
 
@@ -75,11 +75,11 @@ export const ShowTextDocument = (
 		let Preview: boolean | undefined;
 
 		if (typeof ColumnOrOptions === "number") {
-			ViewColumnDTO = ViewColumnFromAPI(ColumnOrOptions);
+			ViewColumnDTO = ViewColumnFromAPI(ColumnOrOptions;
 		} else if (ColumnOrOptions) {
 			const Options = ColumnOrOptions;
 
-			ViewColumnDTO = ViewColumnFromAPI(Options.viewColumn);
+			ViewColumnDTO = ViewColumnFromAPI(Options.viewColumn;
 
 			PreserveFocusValue = Options.preserveFocus ?? false;
 
@@ -101,28 +101,27 @@ export const ShowTextDocument = (
 						character: Selection.start.character,
 					}
 				: undefined,
-		});
+		};
 
-		const EditorId = "editor-" + Uri.toString().slice(-8);
+		const EditorId = "editor-" + Uri.toString().slice(-8;
 
 		yield* Logger.Debug(
 			`[WindowService] Showed text document with ID: ${EditorId}`,
-		);
+		;
 
 		const Editor = Workspace_.visibleTextEditors.find(
 			(E) => (E as any).id === EditorId,
-		);
+		;
 
 		if (!Editor) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`[WindowService] Could not find text editor with ID ${EditorId} after Mountain confirmation`,
 				),
-			);
+			;
 		}
 
 		return Editor;
-	});
+	};
 
 /**
  * Show an information message dialog.
@@ -140,15 +139,15 @@ export const ShowInformationMessage = (
 		sendRequest: (method: string, params: unknown) => Promise<unknown>;
 	},
 
-	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Logger: { Debug: (Message: string) => Promise<void> },
 
 	Message: string,
 	...Items: string[]
-): Effect.Effect<string | undefined, Error> =>
-	Effect.gen(function* () {
+): Promise<string | undefined> =>
+	async function() {
 		yield* Logger.Debug(
 			`[WindowService] Showing information message: ${Message}`,
-		);
+		;
 
 		const InfoResponse = yield* Effect.tryPromise({
 			try: () =>
@@ -161,18 +160,18 @@ export const ShowInformationMessage = (
 					},
 				]),
 			catch: () => null,
-		});
+		};
 
 		// Mountain returns the selected action title string or null.
 		const InfoSelected =
 			typeof InfoResponse === "string"
 				? InfoResponse
-				: ((InfoResponse as any)?.title ?? null);
+				: ((InfoResponse as any)?.title ?? null;
 
 		return InfoSelected
 			? (Items.find((I) => I === InfoSelected) ?? InfoSelected)
 			: undefined;
-	});
+	};
 
 /**
  * Show a warning message dialog.
@@ -190,15 +189,15 @@ export const ShowWarningMessage = (
 		sendRequest: (method: string, params: unknown) => Promise<unknown>;
 	},
 
-	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Logger: { Debug: (Message: string) => Promise<void> },
 
 	Message: string,
 	...Items: string[]
-): Effect.Effect<string | undefined, Error> =>
-	Effect.gen(function* () {
+): Promise<string | undefined> =>
+	async function() {
 		yield* Logger.Debug(
 			`[WindowService] Showing warning message: ${Message}`,
-		);
+		;
 
 		const WarnResponse = yield* Effect.tryPromise({
 			try: () =>
@@ -211,17 +210,17 @@ export const ShowWarningMessage = (
 					},
 				]),
 			catch: () => null,
-		});
+		};
 
 		const WarnSelected =
 			typeof WarnResponse === "string"
 				? WarnResponse
-				: ((WarnResponse as any)?.title ?? null);
+				: ((WarnResponse as any)?.title ?? null;
 
 		return WarnSelected
 			? (Items.find((I) => I === WarnSelected) ?? WarnSelected)
 			: undefined;
-	});
+	};
 
 /**
  * Show an error message dialog.
@@ -239,15 +238,15 @@ export const ShowErrorMessage = (
 		sendRequest: (method: string, params: unknown) => Promise<unknown>;
 	},
 
-	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Logger: { Debug: (Message: string) => Promise<void> },
 
 	Message: string,
 	...Items: string[]
-): Effect.Effect<string | undefined, Error> =>
-	Effect.gen(function* () {
+): Promise<string | undefined> =>
+	async function() {
 		yield* Logger.Debug(
 			`[WindowService] Showing error message: ${Message}`,
-		);
+		;
 
 		const ErrorResponse = yield* Effect.tryPromise({
 			try: () =>
@@ -260,12 +259,12 @@ export const ShowErrorMessage = (
 					},
 				]),
 			catch: () => null,
-		});
+		};
 
 		const ErrorSelected =
 			typeof ErrorResponse === "string"
 				? ErrorResponse
-				: ((ErrorResponse as any)?.title ?? null);
+				: ((ErrorResponse as any)?.title ?? null;
 
 		return ErrorSelected
 			? (Items.find(
@@ -274,4 +273,4 @@ export const ShowErrorMessage = (
 						ErrorSelected,
 				) ?? undefined)
 			: undefined;
-	});
+	};

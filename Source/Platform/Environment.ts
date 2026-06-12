@@ -98,7 +98,7 @@ export const DEFAULT_LOCALE = "en-US";
 /**
  * Cache for environment variables
  */
-const EnvironmentCache = new Map<string, string>();
+const EnvironmentCache = new Map<string, string>(;
 
 /**
  * Cache validity timestamp
@@ -127,9 +127,9 @@ function GetProcessEnvironment(): IProcessEnvironment {
  * Clear environment cache
  */
 export function ClearCache(): void {
-	EnvironmentCache.clear();
+	EnvironmentCache.clear(;
 
-	CacheTimestamp = Date.now();
+	CacheTimestamp = Date.now(;
 }
 
 /**
@@ -137,7 +137,7 @@ export function ClearCache(): void {
  */
 function InvalidateCacheIfNeeded(): void {
 	if (Date.now() - CacheTimestamp > CACHE_TTL) {
-		ClearCache();
+		ClearCache(;
 	}
 }
 
@@ -146,29 +146,29 @@ function InvalidateCacheIfNeeded(): void {
  */
 export function GetEnvironmentVariable(name: string): Option.Option<string> {
 	if (!name || typeof name !== "string") {
-		return Option.none();
+		return Option.none(;
 	}
 
-	InvalidateCacheIfNeeded();
+	InvalidateCacheIfNeeded(;
 
 	// Check cache first
-	const cached = EnvironmentCache.get(name);
+	const cached = EnvironmentCache.get(name;
 
 	if (cached !== undefined) {
-		return Option.some(cached);
+		return Option.some(cached;
 	}
 
-	const env = GetProcessEnvironment();
+	const env = GetProcessEnvironment(;
 
 	const value = env[name];
 
 	if (value !== undefined) {
-		EnvironmentCache.set(name, value);
+		EnvironmentCache.set(name, value;
 
-		return Option.some(value);
+		return Option.some(value;
 	}
 
-	return Option.none();
+	return Option.none(;
 }
 
 /**
@@ -179,7 +179,7 @@ export function GetEnvironmentVariableOr(
 
 	defaultValue: string,
 ): string {
-	return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue);
+	return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue;
 }
 
 /**
@@ -194,12 +194,12 @@ export function SetEnvironmentVariable(name: string, value: string): boolean {
 		return false;
 	}
 
-	const env = GetProcessEnvironment();
+	const env = GetProcessEnvironment(;
 
 	(env as any)[name] = value;
 
 	// Update cache
-	EnvironmentCache.set(name, value);
+	EnvironmentCache.set(name, value;
 
 	return true;
 }
@@ -212,12 +212,12 @@ export function DeleteEnvironmentVariable(name: string): boolean {
 		return false;
 	}
 
-	const env = GetProcessEnvironment();
+	const env = GetProcessEnvironment(;
 
 	delete (env as any)[name];
 
 	// Remove from cache
-	EnvironmentCache.delete(name);
+	EnvironmentCache.delete(name;
 
 	return true;
 }
@@ -226,9 +226,9 @@ export function DeleteEnvironmentVariable(name: string): boolean {
  * Get all environment variables
  */
 export function GetAllEnvironmentVariables(): IProcessEnvironment {
-	InvalidateCacheIfNeeded();
+	InvalidateCacheIfNeeded(;
 
-	return GetProcessEnvironment();
+	return GetProcessEnvironment(;
 }
 
 /**
@@ -304,7 +304,7 @@ export function ValidateEnvironmentVariable(
 
 			case "url":
 				try {
-					new URL(value);
+					new URL(value;
 				} catch {
 					return {
 						isValid: false,
@@ -367,7 +367,7 @@ export function ValidateEnvironmentVariable(
 	let sanitizedValue = value;
 
 	if (rule.sanitize) {
-		sanitizedValue = rule.sanitize(value);
+		sanitizedValue = rule.sanitize(value;
 	}
 
 	return {
@@ -385,7 +385,7 @@ export function GetValidatedEnvironmentVariable(
 
 	rule: EnvironmentValidationRule,
 ): EnvironmentValidationResult {
-	const valueOption = GetEnvironmentVariable(name);
+	const valueOption = GetEnvironmentVariable(name;
 
 	if (Option.isNone(valueOption)) {
 		if (rule.required) {
@@ -405,7 +405,7 @@ export function GetValidatedEnvironmentVariable(
 		};
 	}
 
-	return ValidateEnvironmentVariable(name, valueOption.value, rule);
+	return ValidateEnvironmentVariable(name, valueOption.value, rule;
 }
 
 /**
@@ -413,11 +413,11 @@ export function GetValidatedEnvironmentVariable(
  */
 export function GetLanguage(): string {
 	// Check VSCODE_NLS_CONFIG first (VSCode)
-	const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG");
+	const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG";
 
 	if (Option.isSome(nlsConfig)) {
 		try {
-			const config = JSON.parse(nlsConfig.value);
+			const config = JSON.parse(nlsConfig.value;
 
 			if (config.resolvedLanguage) {
 				return config.resolvedLanguage;
@@ -432,31 +432,31 @@ export function GetLanguage(): string {
 	}
 
 	// Check standard locale variables
-	const lcAll = GetEnvironmentVariable("LC_ALL");
+	const lcAll = GetEnvironmentVariable("LC_ALL";
 
 	if (Option.isSome(lcAll) && lcAll.value) {
-		const parts = lcAll.value.split(".");
+		const parts = lcAll.value.split(".";
 
 		if (parts.length > 0) {
-			const locale = parts[0]!.replace("_", "-");
+			const locale = parts[0]!.replace("_", "-";
 
 			return locale.split("-")[0] || DEFAULT_LANGUAGE;
 		}
 	}
 
-	const lang = GetEnvironmentVariable("LANG");
+	const lang = GetEnvironmentVariable("LANG";
 
 	if (Option.isSome(lang) && lang.value) {
-		const parts = lang.value.split(".");
+		const parts = lang.value.split(".";
 
 		if (parts.length > 0) {
-			const locale = parts[0]!.replace("_", "-");
+			const locale = parts[0]!.replace("_", "-";
 
 			return locale.split("-")[0] || DEFAULT_LANGUAGE;
 		}
 	}
 
-	const language = GetEnvironmentVariable("LANGUAGE");
+	const language = GetEnvironmentVariable("LANGUAGE";
 
 	if (Option.isSome(language) && language.value) {
 		const parts = language.value.split(":")[0];
@@ -472,11 +472,11 @@ export function GetLanguage(): string {
  */
 export function GetLocale(): string {
 	// Check VSCODE_NLS_CONFIG first (VSCode)
-	const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG");
+	const nlsConfig = GetEnvironmentVariable("VSCODE_NLS_CONFIG";
 
 	if (Option.isSome(nlsConfig)) {
 		try {
-			const config = JSON.parse(nlsConfig.value);
+			const config = JSON.parse(nlsConfig.value;
 
 			if (config.userLocale && typeof config.userLocale === "string") {
 				return config.userLocale;
@@ -491,23 +491,23 @@ export function GetLocale(): string {
 	}
 
 	// Check standard locale variables
-	const lcAll = GetEnvironmentVariable("LC_ALL");
+	const lcAll = GetEnvironmentVariable("LC_ALL";
 
 	if (Option.isSome(lcAll) && lcAll.value) {
-		const parts = lcAll.value.split(".");
+		const parts = lcAll.value.split(".";
 
 		if (parts && parts.length > 0) {
-			return parts[0]!.replace("_", "-");
+			return parts[0]!.replace("_", "-";
 		}
 	}
 
-	const lang = GetEnvironmentVariable("LANG");
+	const lang = GetEnvironmentVariable("LANG";
 
 	if (Option.isSome(lang) && lang.value) {
-		const parts = lang.value.split(".");
+		const parts = lang.value.split(".";
 
 		if (parts && parts.length > 0) {
-			return parts[0]!.replace("_", "-");
+			return parts[0]!.replace("_", "-";
 		}
 	}
 
@@ -518,7 +518,7 @@ export function GetLocale(): string {
  * Get home directory from environment
  */
 export function GetHomeDirectory(): string {
-	const env = GetProcessEnvironment();
+	const env = GetProcessEnvironment(;
 
 	// Unix/Linux/macOS
 	if (env.HOME) {
@@ -542,7 +542,7 @@ export function GetHomeDirectory(): string {
  * Get temp directory from environment
  */
 export function GetTempDirectory(): string {
-	const env = GetProcessEnvironment();
+	const env = GetProcessEnvironment(;
 
 	// Windows
 	if (env.TEMP) {
@@ -559,7 +559,7 @@ export function GetTempDirectory(): string {
 	}
 
 	// Default temp directories
-	const platform = GetPlatformType();
+	const platform = GetPlatformType(;
 
 	if (platform === "windows") {
 		return "\	emp";
@@ -573,15 +573,15 @@ export function GetTempDirectory(): string {
  */
 export function GetUserDataDirectory(): string {
 	// Check XDG_DATA_HOME (Unix/Linux)
-	const xdgDataHome = GetEnvironmentVariable("XDG_DATA_HOME");
+	const xdgDataHome = GetEnvironmentVariable("XDG_DATA_HOME";
 
 	if (Option.isSome(xdgDataHome) && xdgDataHome.value) {
 		return xdgDataHome.value;
 	}
 
-	const home = GetHomeDirectory();
+	const home = GetHomeDirectory(;
 
-	const platform = GetPlatformType();
+	const platform = GetPlatformType(;
 
 	// Platform-specific defaults
 	switch (platform) {
@@ -589,7 +589,7 @@ export function GetUserDataDirectory(): string {
 			return `${home}/Library/Application Support`;
 
 		case "windows":
-			const localAppData = GetEnvironmentVariable("LOCALAPPDATA");
+			const localAppData = GetEnvironmentVariable("LOCALAPPDATA";
 
 			if (Option.isSome(localAppData) && localAppData.value) {
 				return localAppData.value;
@@ -607,9 +607,9 @@ export function GetUserDataDirectory(): string {
  * Get platform home directory
  */
 export function GetPlatformHome(): string {
-	const home = GetHomeDirectory();
+	const home = GetHomeDirectory(;
 
-	const platform = GetPlatformType();
+	const platform = GetPlatformType(;
 
 	switch (platform) {
 		case "mac":
@@ -620,7 +620,7 @@ export function GetPlatformHome(): string {
 				"APPDATA",
 
 				`${home}/AppData/Roaming`,
-			);
+			;
 
 		case "linux":
 		default:
@@ -654,7 +654,7 @@ function GetPlatformType(): "windows" | "mac" | "linux" {
  * Get comprehensive environment information
  */
 export function GetEnvironmentInfo(): EnvironmentInfo {
-	const envVars = GetAllEnvironmentVariables();
+	const envVars = GetAllEnvironmentVariables(;
 
 	const safeEnvVars: Record<string, string> = {};
 
@@ -685,20 +685,20 @@ export function GetEnvironmentInfo(): EnvironmentInfo {
  * Check if running in development environment
  */
 export function IsDevelopment(): boolean {
-	const nodeEnv = GetEnvironmentVariable("NODE_ENV");
+	const nodeEnv = GetEnvironmentVariable("NODE_ENV";
 
 	if (Option.isNone(nodeEnv)) {
 		return false;
 	}
 
-	return ["development", "dev", "test"].includes(nodeEnv.value.toLowerCase());
+	return ["development", "dev", "test"].includes(nodeEnv.value.toLowerCase();
 }
 
 /**
  * Check if running in production environment
  */
 export function IsProduction(): boolean {
-	const nodeEnv = GetEnvironmentVariable("NODE_ENV");
+	const nodeEnv = GetEnvironmentVariable("NODE_ENV";
 
 	if (Option.isNone(nodeEnv)) {
 		return true; // Default to production
@@ -734,7 +734,7 @@ export function IsCI(): boolean {
 	];
 
 	for (const variable of ciVariables) {
-		const value = GetEnvironmentVariable(variable);
+		const value = GetEnvironmentVariable(variable;
 
 		if (Option.isSome(value) && value.value) {
 			return true;
@@ -748,25 +748,25 @@ export function IsCI(): boolean {
  * Check if running in VSCode environment
  */
 export function IsVSCode(): boolean {
-	const codeEnv = GetEnvironmentVariable("VSCODE_PID");
+	const codeEnv = GetEnvironmentVariable("VSCODE_PID";
 
-	const vscodeEnv = GetEnvironmentVariable("VSCODE_CWD");
+	const vscodeEnv = GetEnvironmentVariable("VSCODE_CWD";
 
-	return Option.isSome(codeEnv) || Option.isSome(vscodeEnv);
+	return Option.isSome(codeEnv) || Option.isSome(vscodeEnv;
 }
 
 /**
  * Get VSCode installation path
  */
 export function GetVSCodePath(): Option.Option<string> {
-	return GetEnvironmentVariable("VSCODE_PATH");
+	return GetEnvironmentVariable("VSCODE_PATH";
 }
 
 /**
  * Sanitize environment variable name
  */
 export function SanitizeName(name: string): string {
-	return name.replace(/[^a-zA-Z0-9_]/g, "").toUpperCase();
+	return name.replace(/[^a-zA-Z0-9_]/g, "").toUpperCase(;
 }
 
 /**
@@ -774,7 +774,7 @@ export function SanitizeName(name: string): string {
  */
 export function SanitizeValue(value: string): string {
 	// Remove control characters
-	return value.replace(/[\x00-\x1F\x7F]/g, "").trim();
+	return value.replace(/[\x00-\x1F\x7F]/g, "").trim(;
 }
 
 /**
@@ -782,8 +782,8 @@ export function SanitizeValue(value: string): string {
  */
 export function GetEnvironmentVariableEffect(
 	name: string,
-): Effect.Effect<Option.Option<string>> {
-	return Effect.sync(() => GetEnvironmentVariable(name));
+): Promise<Option.Option<string>> {
+	return GetEnvironmentVariable(name;
 }
 
 /**
@@ -793,8 +793,8 @@ export function GetEnvironmentVariableOrEffect(
 	name: string,
 
 	defaultValue: string,
-): Effect.Effect<string> {
-	return Effect.sync(() => GetEnvironmentVariableOr(name, defaultValue));
+): Promise<string> {
+	return GetEnvironmentVariableOr(name, defaultValue;
 }
 
 /**
@@ -804,23 +804,23 @@ export function SetEnvironmentVariableEffect(
 	name: string,
 
 	value: string,
-): Effect.Effect<void, Error> {
+): Promise<void> {
 	if (!name) {
-		return Effect.fail(
+		return throw (
 			new Error("Environment variable name cannot be empty"),
-		);
+		;
 	}
 
-	return Effect.sync(() => {
-		SetEnvironmentVariable(name, value);
-	});
+	return {
+		SetEnvironmentVariable(name, value;
+	};
 }
 
 /**
  * Effect-TS: Get environment info as Effect
  */
-export function GetEnvironmentInfoEffect(): Effect.Effect<EnvironmentInfo> {
-	return Effect.sync(() => GetEnvironmentInfo());
+export function GetEnvironmentInfoEffect(): Promise<EnvironmentInfo> {
+	return GetEnvironmentInfo(;
 }
 
 /**

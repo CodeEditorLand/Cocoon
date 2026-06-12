@@ -224,21 +224,21 @@ export interface Logger {
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
-	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 }
 
 /**
@@ -268,30 +268,30 @@ export interface Window {
 		ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
 
 		PreserveFocus?: boolean,
-	) => Effect.Effect<VSCode.TextEditor, Error>;
+	) => Promise<VSCode.TextEditor>;
 
 	readonly ShowInformationMessage: (
 		Message: string,
 		...Items: string[]
-	) => Effect.Effect<string | undefined, Error>;
+	) => Promise<string | undefined>;
 
 	readonly ShowWarningMessage: (
 		Message: string,
 		...Items: string[]
-	) => Effect.Effect<string | undefined, Error>;
+	) => Promise<string | undefined>;
 
 	readonly ShowErrorMessage: (
 		Message: string,
 		...Items: string[]
-	) => Effect.Effect<string | undefined, Error>;
+	) => Promise<string | undefined>;
 
 	readonly ShowQuickPick: <T extends string>(
 		Items: readonly T[] | VSCode.QuickPickItem[],
 
 		Options?: VSCode.QuickPickOptions,
-	) => Effect.Effect<T | VSCode.QuickPickItem | undefined, Error>;
+	) => Promise<T | VSCode.QuickPickItem | undefined>;
 
 	readonly ShowInputBox: (
 		Options?: VSCode.InputBoxOptions,
-	) => Effect.Effect<string | undefined, Error>;
+	) => Promise<string | undefined>;
 }

@@ -24,7 +24,7 @@ const ExtHostPathSegments: ReadonlyArray<string> = [
 ];
 
 export const IsExtHostFile = (sourcePath: string): boolean => {
-	const Normalised = sourcePath.replace(/\\/g, "/");
+	const Normalised = sourcePath.replace(/\\/g, "/";
 
 	for (const Segment of ExtHostPathSegments) {
 		if (Normalised.includes(Segment)) return true;

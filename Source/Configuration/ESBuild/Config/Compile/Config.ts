@@ -4,7 +4,7 @@ import TargetConfig from "../Target/Config.js";
 
 const Merge = (await import("deepmerge-ts")).deepmergeCustom({
 	mergeArrays: false,
-});
+};
 
 export default async (Current: BuildOptions): Promise<BuildOptions> =>
 	Merge(await TargetConfig(Current), {

@@ -16,13 +16,13 @@ export class WindowOperationError extends Error {
 	readonly cause: unknown;
 
 	constructor(operation: string, cause: unknown) {
-		super(`Window operation '${operation}' failed: ${String(cause)}`);
+		super(`Window operation '${operation}' failed: ${String(cause)}`;
 
 		this.operation = operation;
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, WindowOperationError.prototype);
+		Object.setPrototypeOf(this, WindowOperationError.prototype;
 	}
 
 	override get name() {
@@ -41,13 +41,13 @@ export class DialogError extends Error {
 	readonly cause: unknown;
 
 	constructor(dialogType: string, cause: unknown) {
-		super(`Dialog operation '${dialogType}' failed: ${String(cause)}`);
+		super(`Dialog operation '${dialogType}' failed: ${String(cause)}`;
 
 		this.dialogType = dialogType;
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, DialogError.prototype);
+		Object.setPrototypeOf(this, DialogError.prototype;
 	}
 
 	override get name() {
@@ -66,13 +66,13 @@ export class QuickInputError extends Error {
 	readonly cause: unknown;
 
 	constructor(inputType: string, cause: unknown) {
-		super(`Quick input operation '${inputType}' failed: ${String(cause)}`);
+		super(`Quick input operation '${inputType}' failed: ${String(cause)}`;
 
 		this.inputType = inputType;
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, QuickInputError.prototype);
+		Object.setPrototypeOf(this, QuickInputError.prototype;
 	}
 
 	override get name() {
@@ -95,7 +95,7 @@ export class StatusBarError extends Error {
 	constructor(itemId: string, operation: string, cause: unknown) {
 		super(
 			`StatusBar '${itemId}' operation '${operation}' failed: ${String(cause)}`,
-		);
+		;
 
 		this.itemId = itemId;
 
@@ -103,7 +103,7 @@ export class StatusBarError extends Error {
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, StatusBarError.prototype);
+		Object.setPrototypeOf(this, StatusBarError.prototype;
 	}
 
 	override get name() {
@@ -126,7 +126,7 @@ export class OutputChannelError extends Error {
 	constructor(channelName: string, operation: string, cause: unknown) {
 		super(
 			`OutputChannel '${channelName}' operation '${operation}' failed: ${String(cause)}`,
-		);
+		;
 
 		this.channelName = channelName;
 
@@ -134,7 +134,7 @@ export class OutputChannelError extends Error {
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, OutputChannelError.prototype);
+		Object.setPrototypeOf(this, OutputChannelError.prototype;
 	}
 
 	override get name() {
@@ -157,7 +157,7 @@ export class WebviewPanelError extends Error {
 	constructor(viewType: string, operation: string, cause: unknown) {
 		super(
 			`WebviewPanel '${viewType}' operation '${operation}' failed: ${String(cause)}`,
-		);
+		;
 
 		this.viewType = viewType;
 
@@ -165,7 +165,7 @@ export class WebviewPanelError extends Error {
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, WebviewPanelError.prototype);
+		Object.setPrototypeOf(this, WebviewPanelError.prototype;
 	}
 
 	override get name() {
@@ -184,13 +184,13 @@ export class ProgressError extends Error {
 	readonly cause: unknown;
 
 	constructor(operation: string, cause: unknown) {
-		super(`Progress operation '${operation}' failed: ${String(cause)}`);
+		super(`Progress operation '${operation}' failed: ${String(cause)}`;
 
 		this.operation = operation;
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, ProgressError.prototype);
+		Object.setPrototypeOf(this, ProgressError.prototype;
 	}
 
 	override get name() {
@@ -213,7 +213,7 @@ export class TextDocumentError extends Error {
 	constructor(documentUri: string, operation: string, cause: unknown) {
 		super(
 			`TextDocument '${documentUri}' operation '${operation}' failed: ${String(cause)}`,
-		);
+		;
 
 		this.documentUri = documentUri;
 
@@ -221,7 +221,7 @@ export class TextDocumentError extends Error {
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, TextDocumentError.prototype);
+		Object.setPrototypeOf(this, TextDocumentError.prototype;
 	}
 
 	override get name() {

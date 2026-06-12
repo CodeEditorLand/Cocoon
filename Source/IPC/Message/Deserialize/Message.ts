@@ -72,7 +72,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		}
 
 		// Wrap data in VSBuffer for safe access
-		const Buffer = VSBuffer.Wrap(Data);
+		const Buffer = VSBuffer.Wrap(Data;
 
 		let Offset = 0;
 
@@ -97,24 +97,24 @@ export default (Data: Uint8Array): IDeserializationResult => {
 			};
 		}
 
-		const Version = Buffer.getByte(Offset);
+		const Version = Buffer.getByte(Offset;
 
 		Offset += 1;
 
 		if (Version !== PROTOCOL_VERSION) {
 			Warnings.push(
 				`Protocol version mismatch: expected ${PROTOCOL_VERSION}, got ${Version}`,
-			);
+			;
 		}
 
-		const Flags = Buffer.getByte(Offset);
+		const Flags = Buffer.getByte(Offset;
 
 		Offset += 1;
 
 		Offset += 3; // Skip reserved bytes
 
 		// Read metadata length
-		const MetadataLength = Buffer.readUInt32LE(Offset);
+		const MetadataLength = Buffer.readUInt32LE(Offset;
 
 		Offset += 4;
 
@@ -143,7 +143,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		}
 
 		// Read metadata
-		const MetadataBuffer = Buffer.slice(Offset, Offset + MetadataLength);
+		const MetadataBuffer = Buffer.slice(Offset, Offset + MetadataLength;
 
 		Offset += MetadataLength;
 
@@ -164,11 +164,11 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		}
 
 		if (!ValidateMetadata(Metadata)) {
-			Warnings.push("Metadata validation failed, continuing anyway");
+			Warnings.push("Metadata validation failed, continuing anyway";
 		}
 
 		// Read data length
-		const DataLength = Buffer.readUInt32LE(Offset);
+		const DataLength = Buffer.readUInt32LE(Offset;
 
 		Offset += 4;
 
@@ -209,7 +209,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		if (Offset < Data.length) {
 			Warnings.push(
 				`Extra data at end of message: ${Data.length - Offset} bytes`,
-			);
+			;
 		}
 
 		// Determine compression hint from flags
@@ -220,7 +220,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 
 			Warnings.push(
 				"Message is compressed but decompression not implemented",
-			);
+			;
 		}
 
 		const Message: IMessage = {

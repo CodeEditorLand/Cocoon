@@ -63,14 +63,14 @@ const SendTreeRegister = (
 			ViewId,
 
 			Options,
-		]) ?? Promise.reject(new Error("MountainClient unavailable"));
+		]) ?? Promise.reject(new Error("MountainClient unavailable");
 
 	Attempt().catch((Error: unknown) => {
 		CocoonDevLog(
 			"window-ns",
 
 			`tree.register failed for view '${ViewId}' (handle ${Handle}); scheduling one retry: ${String(Error)}`,
-		);
+		;
 
 		let Retried = false;
 
@@ -83,25 +83,25 @@ const SendTreeRegister = (
 				"extensionHostInitialized",
 
 				RetryOnce,
-			);
+			;
 
-			clearTimeout(Timer);
+			clearTimeout(Timer;
 
 			Attempt().catch((RetryError: unknown) => {
 				CocoonDevLog(
 					"window-ns",
 
 					`tree.register retry failed for view '${ViewId}': ${String(RetryError)}`,
-				);
-			});
+				;
+			};
 		};
 
-		Context.Emitter.once("extensionHostInitialized", RetryOnce);
+		Context.Emitter.once("extensionHostInitialized", RetryOnce;
 
-		const Timer = setTimeout(RetryOnce, 2_000);
+		const Timer = setTimeout(RetryOnce, 2_000;
 
-		Timer.unref?.();
-	});
+		Timer.unref?.(;
+	};
 };
 
 const MakeEventSubscriber =
@@ -121,18 +121,18 @@ const MakeEventSubscriber =
 		const Bound =
 			ThisArg === undefined
 				? Callback
-				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg);
+				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg;
 
-		Context.Emitter.on(EventName, Bound as Listener<unknown>);
+		Context.Emitter.on(EventName, Bound as Listener<unknown>;
 
 		const Subscription = {
 			dispose: () => {
-				Context.Emitter.off(EventName, Bound as Listener<unknown>);
+				Context.Emitter.off(EventName, Bound as Listener<unknown>;
 			},
 		};
 
 		if (Disposables && typeof Disposables.push === "function") {
-			Disposables.push(Subscription);
+			Disposables.push(Subscription;
 		}
 
 		return Subscription;
@@ -182,7 +182,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			) {
 				Options = Items[0];
 
-				Actions = Items.slice(1);
+				Actions = Items.slice(1;
 			}
 
 			// Route all variants through Window.ShowMessage. Mountain handles
@@ -202,7 +202,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							options: Options ?? {},
 						},
 					],
-				);
+				;
 
 				if (Result == null || Actions.length === 0) return undefined;
 
@@ -211,7 +211,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						? Result
 						: ((Result as any)?.title ??
 							(Result as any)?.label ??
-							null);
+							null;
 
 				if (!SelectedTitle) return undefined;
 
@@ -220,11 +220,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						const Label =
 							typeof A === "string"
 								? A
-								: ((A as any)?.title ?? String(A));
+								: ((A as any)?.title ?? String(A);
 
 						return Label === SelectedTitle;
 					}) ?? SelectedTitle
-				);
+				;
 			} catch {
 				return undefined;
 			}
@@ -258,7 +258,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			if (Input.startsWith("vscode-webview-resource://")) {
 				const Match = Input.match(
 					/^vscode-webview-resource:\/\/[^/]+(.*)$/,
-				);
+				;
 
 				return Match
 					? `vscode-file://vscode-app${Match[1] ?? ""}`
@@ -270,11 +270,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					"vscode-resource://",
 
 					"vscode-file://vscode-app/",
-				);
+				;
 			}
 
 			if (Input.startsWith("file://")) {
-				return Input.replace("file://", "vscode-file://vscode-app");
+				return Input.replace("file://", "vscode-file://vscode-app";
 			}
 
 			return Input;
@@ -284,9 +284,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			toString?: () => string;
 		};
 
-		const Scheme = String(Anything.scheme ?? "");
+		const Scheme = String(Anything.scheme ?? "";
 
-		const Path = String(Anything.path ?? "");
+		const Path = String(Anything.path ?? "";
 
 		if (Scheme === "file" && Path) {
 			const Rewritten = {
@@ -367,7 +367,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					"Window.ShowQuickPick",
 
 					[Items, Options ?? {}],
-				);
+				;
 			} catch {
 				return undefined;
 			}
@@ -379,7 +379,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					"Window.ShowInputBox",
 
 					[Options ?? {}],
-				);
+				;
 			} catch {
 				return undefined;
 			}
@@ -391,7 +391,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					"Window.ShowOpenDialog",
 
 					[Options ?? {}],
-				);
+				;
 
 				return Array.isArray(Selected) ? (Selected as unknown[]) : [];
 			} catch {
@@ -407,36 +407,36 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					"Window.ShowSaveDialog",
 
 					[Options ?? {}],
-				);
+				;
 			} catch {
 				return undefined;
 			}
 		},
 
 		createTerminal: (Options?: { name?: string; [k: string]: unknown }) => {
-			const Stub = CreateTerminal(Context, NextProviderHandle(), Options);
+			const Stub = CreateTerminal(Context, NextProviderHandle(), Options;
 
 			if (!Array.isArray((Context as any).__terminals)) {
 				(Context as any).__terminals = [];
 			}
 
-			(Context as any).__terminals.push(Stub);
+			(Context as any).__terminals.push(Stub;
 
 			(Context as any).__activeTerminal = Stub;
 
 			// Fire onDidOpenTerminal and onDidChangeActiveTerminal events.
 			setImmediate(() => {
-				Context.Emitter.emit("window.didOpenTerminal", Stub);
+				Context.Emitter.emit("window.didOpenTerminal", Stub;
 
-				Context.Emitter.emit("window.didChangeActiveTerminal", Stub);
-			});
+				Context.Emitter.emit("window.didChangeActiveTerminal", Stub;
+			};
 
-			const OrigDispose = Stub.dispose.bind(Stub);
+			const OrigDispose = Stub.dispose.bind(Stub;
 
 			Stub.dispose = () => {
 				(Context as any).__terminals = (
 					(Context as any).__terminals ?? []
-				).filter((T: unknown) => T !== Stub);
+				).filter((T: unknown) => T !== Stub;
 
 				if ((Context as any).__activeTerminal === Stub) {
 					(Context as any).__activeTerminal = undefined;
@@ -445,12 +445,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						"window.didChangeActiveTerminal",
 
 						undefined,
-					);
+					;
 				}
 
-				Context.Emitter.emit("window.didCloseTerminal", Stub);
+				Context.Emitter.emit("window.didCloseTerminal", Stub;
 
-				OrigDispose();
+				OrigDispose(;
 			};
 
 			return Stub;
@@ -487,7 +487,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Context.SendToMountain("window.createTextEditorDecorationType", {
 				key: Key,
 				options: Options ?? {},
-			}).catch(() => {});
+			}).catch(() => {};
 
 			return {
 				key: Key,
@@ -505,7 +505,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						{
 							key: Key,
 						},
-					).catch(() => {});
+					).catch(() => {};
 				},
 			};
 		},
@@ -544,7 +544,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const FireActive = (Items: unknown[]) => {
 				for (const L of ActiveListeners) {
 					try {
-						L(Items);
+						L(Items;
 					} catch {}
 				}
 			};
@@ -609,7 +609,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 										totalSteps: State.totalSteps,
 									},
 								],
-							);
+							;
 
 						if (Picked != null) {
 							const PickedArr = Array.isArray(Picked)
@@ -622,19 +622,19 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							// items before selection fires.
 							State.activeItems = PickedArr;
 
-							FireActive(PickedArr);
+							FireActive(PickedArr;
 
 							State.selectedItems = PickedArr;
 
 							for (const L of SelectionListeners) {
 								try {
-									L(PickedArr);
+									L(PickedArr;
 								} catch {}
 							}
 
 							for (const L of AcceptListeners) {
 								try {
-									L();
+									L(;
 								} catch {}
 							}
 						}
@@ -643,11 +643,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 						for (const L of HideListeners) {
 							try {
-								L();
+								L(;
 							} catch {}
 						}
 					}
-				})();
+				})(;
 			};
 
 			const MakeEvent =
@@ -665,19 +665,19 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						? (Listener as any).bind(_ThisArg)
 						: Listener;
 
-					Listeners.push(Bound as (e: T) => void);
+					Listeners.push(Bound as (e: T) => void;
 
 					const Sub = {
 						dispose: () => {
 							const I = Listeners.indexOf(
 								Bound as (e: T) => void,
-							);
+							;
 
-							if (I !== -1) Listeners.splice(I, 1);
+							if (I !== -1) Listeners.splice(I, 1;
 						},
 					};
 
-					Disposables?.push(Sub);
+					Disposables?.push(Sub;
 
 					return Sub;
 				};
@@ -697,17 +697,17 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						? (Listener as any).bind(_ThisArg)
 						: Listener;
 
-					Listeners.push(Bound);
+					Listeners.push(Bound;
 
 					const Sub = {
 						dispose: () => {
-							const I = Listeners.indexOf(Bound);
+							const I = Listeners.indexOf(Bound;
 
-							if (I !== -1) Listeners.splice(I, 1);
+							if (I !== -1) Listeners.splice(I, 1;
 						},
 					};
 
-					Disposables?.push(Sub);
+					Disposables?.push(Sub;
 
 					return Sub;
 				};
@@ -717,7 +717,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				hide: () => {
 					for (const L of HideListeners) {
 						try {
-							L();
+							L(;
 						} catch {}
 					}
 				},
@@ -729,7 +729,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				onDidTriggerButton: () => ({ dispose: () => {} }),
 				onDidTriggerItemButton: () => ({ dispose: () => {} }),
 				onDidHide: MakeEventNoArg(HideListeners),
-			});
+			};
 
 			// Assigning `items` resets the active item to the first entry
 			// and fires `onDidChangeActive` (VS Code semantics).
@@ -748,9 +748,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					State.activeItems =
 						ItemsBacking.length > 0 ? [ItemsBacking[0]] : [];
 
-					FireActive(State.activeItems);
+					FireActive(State.activeItems;
 				},
-			});
+			};
 
 			return QuickPick;
 		},
@@ -817,20 +817,20 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 										ignoreFocusOut: State.ignoreFocusOut,
 									},
 								],
-							);
+							;
 
 						if (typeof Result === "string") {
 							State.value = Result;
 
 							for (const L of ValueListeners) {
 								try {
-									L(Result);
+									L(Result;
 								} catch {}
 							}
 
 							for (const L of AcceptListeners) {
 								try {
-									L();
+									L(;
 								} catch {}
 							}
 						}
@@ -839,11 +839,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 						for (const L of HideListeners) {
 							try {
-								L();
+								L(;
 							} catch {}
 						}
 					}
-				})();
+				})(;
 			};
 
 			const MakeEventNoArg =
@@ -861,17 +861,17 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						? (Listener as any).bind(_ThisArg)
 						: Listener;
 
-					Listeners.push(Bound);
+					Listeners.push(Bound;
 
 					const Sub = {
 						dispose: () => {
-							const I = Listeners.indexOf(Bound);
+							const I = Listeners.indexOf(Bound;
 
-							if (I !== -1) Listeners.splice(I, 1);
+							if (I !== -1) Listeners.splice(I, 1;
 						},
 					};
 
-					Disposables?.push(Sub);
+					Disposables?.push(Sub;
 
 					return Sub;
 				};
@@ -891,17 +891,17 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						? (Listener as any).bind(_ThisArg)
 						: Listener;
 
-					Listeners.push(Bound);
+					Listeners.push(Bound;
 
 					const Sub = {
 						dispose: () => {
-							const I = Listeners.indexOf(Bound);
+							const I = Listeners.indexOf(Bound;
 
-							if (I !== -1) Listeners.splice(I, 1);
+							if (I !== -1) Listeners.splice(I, 1;
 						},
 					};
 
-					Disposables?.push(Sub);
+					Disposables?.push(Sub;
 
 					return Sub;
 				};
@@ -911,7 +911,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				hide: () => {
 					for (const L of HideListeners) {
 						try {
-							L();
+							L(;
 						} catch {}
 					}
 				},
@@ -920,7 +920,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				onDidChangeValue: MakeEventStr(ValueListeners),
 				onDidTriggerButton: () => ({ dispose: () => {} }),
 				onDidHide: MakeEventNoArg(HideListeners),
-			});
+			};
 		},
 
 		createWebviewPanel: (
@@ -932,7 +932,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			Options?: unknown,
 		) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			const Panel = CreateWebviewPanel(
 				Context,
@@ -950,9 +950,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				ToWebviewUri,
 
 				SharedCspSource,
-			);
+			;
 
-			WebviewPanels.set(String(Handle), Panel);
+			WebviewPanels.set(String(Handle), Panel;
 
 			return Panel;
 		},
@@ -993,7 +993,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						typeof RawUri.toString === "function" &&
 						RawUri.toString !== Object.prototype.toString
 					) {
-						UriRaw = String(RawUri);
+						UriRaw = String(RawUri;
 					} else if (typeof RawUri.external === "string") {
 						UriRaw = RawUri.external;
 					} else if (
@@ -1025,7 +1025,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			try {
 				// Mountain's GenericRequest dispatcher reads NAMED fields
-				// (`Params.get("uri")` / `"viewColumn"` / `"preserveFocus"`);
+				// (`Params.get("uri")` / `"viewColumn"` / `"preserveFocus"`;
 				// a positional array makes every lookup miss and the open
 				// silently degrades. Send the resolved URI STRING (not the
 				// raw doc object) so the workbench never renders the tab as
@@ -1036,7 +1036,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					viewColumn: ViewColumn,
 
 					preserveFocus: PreserveFocus,
-				});
+				};
 			} catch {
 				// Mountain not yet connected or Sky rejected - no-op.
 			}
@@ -1054,7 +1054,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const DocText =
 				(Context as any).DocumentContentCache?.get(UriRaw) ?? "";
 
-			const DocLines = DocText.split(/\r?\n/);
+			const DocLines = DocText.split(/\r?\n/;
 
 			const LiveSel = {
 				start: { line: 0, character: 0 },
@@ -1084,7 +1084,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const KnownDoc = RegisteredDocs.find(
 				(D: any) =>
 					(D?.uri?.toString?.() ?? String(D?.uri ?? "")) === UriRaw,
-			);
+			;
 
 			const ExtensionLanguageMap: Record<string, string> = {
 				rs: "rust",
@@ -1175,7 +1175,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					getText: () => DocText,
 
 					lineAt: (N: any) => {
-						const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+						const Ln = typeof N === "number" ? N : (N?.line ?? 0;
 
 						const T = DocLines[Ln] ?? "";
 
@@ -1219,7 +1219,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						for (let I = 0; I < (P?.line ?? 0); I++)
 							O += (DocLines[I]?.length ?? 0) + 1;
 
-						return O + (P?.character ?? 0);
+						return O + (P?.character ?? 0;
 					},
 
 					save: async () => true,
@@ -1234,7 +1234,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					return LiveSel;
 				},
 				set selection(S: any) {
-					Object.assign(LiveSel, S);
+					Object.assign(LiveSel, S;
 				},
 				selections: [LiveSel],
 				visibleRanges: [],
@@ -1247,7 +1247,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					const Key =
 						typeof Type === "string"
 							? Type
-							: (Type?.key ?? Type?.id ?? String(Type));
+							: (Type?.key ?? Type?.id ?? String(Type);
 					Context.SendToMountain("window.setTextEditorDecorations", {
 						decorationTypeKey: Key,
 						uri: UriRaw,
@@ -1259,7 +1259,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							Type && typeof Type === "object"
 								? (Type.__options ?? undefined)
 								: undefined,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 				edit: (Callback: (Builder: any) => void): Promise<boolean> => {
 					const Collected: any[] = [];
@@ -1281,17 +1281,17 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						setEndOfLine: () => {},
 					};
 					try {
-						Callback(Builder);
+						Callback(Builder;
 					} catch {
-						return Promise.resolve(false);
+						return Promise.resolve(false;
 					}
-					if (!Collected.length) return Promise.resolve(true);
+					if (!Collected.length) return Promise.resolve(true;
 					return Context.SendToMountain("window.applyTextEdits", {
 						uri: UriRaw,
 						edits: Collected,
 					})
 						.then(() => true)
-						.catch(() => false);
+						.catch(() => false;
 				},
 				insertSnippet: async (
 					Snippet: any,
@@ -1301,11 +1301,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					const Text =
 						typeof Snippet === "string"
 							? Snippet
-							: (Snippet?.value ?? "");
+							: (Snippet?.value ?? "";
 					await Context.SendToMountain("window.applyTextEdits", {
 						uri: UriRaw,
 						edits: [{ range: Location ?? LiveSel, text: Text }],
-					}).catch(() => {});
+					}).catch(() => {};
 					return true;
 				},
 				revealRange: (Range: any, RevealType?: number) => {
@@ -1317,7 +1317,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							range: Range,
 							revealType: RevealType ?? 0,
 						},
-					).catch(() => {});
+					).catch(() => {};
 				},
 				show: (ViewColumn?: number) => {
 					void Context.MountainClient?.sendRequest(
@@ -1328,7 +1328,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 							ViewColumn ?? 1,
 						],
-					).catch(() => {});
+					).catch(() => {};
 				},
 				hide: () => {},
 			};
@@ -1348,7 +1348,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					const FileName =
 						typeof Uri?.toString === "function"
 							? Uri.toString()
-							: String(Uri ?? "");
+							: String(Uri ?? "";
 
 					return {
 						label: FileName.split("/").pop() ?? "",
@@ -1364,7 +1364,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							document: (Ed as any)?.document,
 						},
 					};
-				});
+				};
 				return [
 					{
 						tabs: Tabs,
@@ -1387,7 +1387,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						const FileName =
 							typeof Uri?.toString === "function"
 								? Uri.toString()
-								: String(Uri ?? "");
+								: String(Uri ?? "";
 
 						return {
 							label: FileName.split("/").pop() ?? "",
@@ -1404,7 +1404,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 								document: (Ed as any)?.document,
 							},
 						};
-					});
+					};
 				},
 
 				isActive: true,
@@ -1419,7 +1419,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					const FileName =
 						typeof Uri?.toString === "function"
 							? Uri.toString()
-							: String(Uri ?? "");
+							: String(Uri ?? "";
 					return {
 						label: FileName.split("/").pop() ?? "",
 						isActive: true,
@@ -1456,12 +1456,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						const Group = EditorGroups.activeGroup;
 
 						if (Group?.closeEditor) {
-							const Editor = Group.findEditor?.(TabUri);
+							const Editor = Group.findEditor?.(TabUri;
 
 							if (Editor) {
 								await Group.closeEditor(Editor, {
 									preserveFocus: _PreserveFocus ?? false,
-								});
+								};
 
 								return true;
 							}
@@ -1475,7 +1475,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						"Command.Execute",
 
 						["workbench.action.closeActiveEditor", []],
-					);
+					;
 					return true;
 				} catch {
 					return false;
@@ -1492,7 +1492,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			try {
 				const ThemeService = (globalThis as any).__CEL_SERVICES__
 					?.Theme;
-				const ColorTheme = ThemeService?.getColorTheme?.();
+				const ColorTheme = ThemeService?.getColorTheme?.(;
 				if (ColorTheme?.type) {
 					const T = ColorTheme.type;
 					if (T === "light") Kind = 1;
@@ -1527,10 +1527,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			let TreeRefreshSubscription: { dispose?: () => void } | undefined;
 			let RegisteredHandle: number | undefined;
 			if (Provider) {
-				const Handle = NextProviderHandle();
+				const Handle = NextProviderHandle(;
 				RegisteredHandle = Handle;
-				TreeDataProviders.set(String(Handle), Provider);
-				TreeDataProvidersByViewId.set(Id, Provider);
+				TreeDataProviders.set(String(Handle), Provider;
+				TreeDataProvidersByViewId.set(Id, Provider;
 				// Send ONLY the serialisable primitive options to Mountain.
 				// The previous version forwarded `Options` verbatim, which
 				// included the `treeDataProvider` itself - the provider's
@@ -1546,7 +1546,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					manageCheckboxStateManually:
 						Options?.manageCheckboxStateManually === true,
 				};
-				SendTreeRegister(Context, Handle, Id, SerializableOptions);
+				SendTreeRegister(Context, Handle, Id, SerializableOptions;
 
 				// Subscribe to provider's `onDidChangeTreeData` event so
 				// the workbench's tree refreshes when the extension fires
@@ -1559,9 +1559,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 									handle: Handle,
 									viewId: Id,
 									element: Element ?? null,
-								}).catch(() => {});
+								}).catch(() => {};
 							},
-						);
+						;
 
 						if (
 							Subscription &&
@@ -1577,11 +1577,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 			// Per-view event emitter so each TreeView instance gets its own
 			// event streams for selection/visibility/collapse/expand.
-			const ViewEmitter = new NodeEventEmitter();
-			ViewEmitter.setMaxListeners(0);
+			const ViewEmitter = new NodeEventEmitter(;
+			ViewEmitter.setMaxListeners(0;
 			const MakeViewEvent =
 				(EventName: string) => (Listener: (...A: any[]) => any) => {
-					ViewEmitter.on(EventName, Listener);
+					ViewEmitter.on(EventName, Listener;
 					return {
 						dispose: () =>
 							void ViewEmitter.removeListener(
@@ -1595,8 +1595,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// (treeView.selectionChanged, collapseElement, expandElement) can fire it.
 			const ViewEmitters: Map<string, typeof ViewEmitter> = ((
 				Context as any
-			).__treeViewEmitters ??= new Map());
-			ViewEmitters.set(Id, ViewEmitter);
+			).__treeViewEmitters ??= new Map();
+			ViewEmitters.set(Id, ViewEmitter;
 
 			return {
 				reveal: async (
@@ -1629,23 +1629,23 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							focus: Options?.focus ?? false,
 							expand: Options?.expand ?? false,
 						},
-					]).catch(() => {});
+					]).catch(() => {};
 				},
 
 				dispose: () => {
 					try {
-						TreeRefreshSubscription?.dispose?.();
+						TreeRefreshSubscription?.dispose?.(;
 					} catch {
 						/* swallow */
 					}
 					if (RegisteredHandle !== undefined) {
-						TreeDataProviders.delete(String(RegisteredHandle));
+						TreeDataProviders.delete(String(RegisteredHandle);
 					}
-					TreeDataProvidersByViewId.delete(Id);
-					ViewEmitters.delete(Id);
+					TreeDataProvidersByViewId.delete(Id;
+					ViewEmitters.delete(Id;
 					Context.MountainClient?.sendRequest("tree.dispose", [
 						Id,
-					]).catch(() => {});
+					]).catch(() => {};
 				},
 
 				selection: [],
@@ -1679,10 +1679,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		},
 
 		registerTreeDataProvider: (ViewId: string, Provider: any) => {
-			const Handle = NextProviderHandle();
-			TreeDataProviders.set(String(Handle), Provider);
-			TreeDataProvidersByViewId.set(ViewId, Provider);
-			SendTreeRegister(Context, Handle, ViewId, {});
+			const Handle = NextProviderHandle(;
+			TreeDataProviders.set(String(Handle), Provider;
+			TreeDataProvidersByViewId.set(ViewId, Provider;
+			SendTreeRegister(Context, Handle, ViewId, {};
 
 			// Subscribe to the provider's `onDidChangeTreeData` event.
 			// Extensions fire this through their own `EventEmitter` when
@@ -1705,9 +1705,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 								handle: Handle,
 								viewId: ViewId,
 								element: Element ?? null,
-							}).catch(() => {});
+							}).catch(() => {};
 						},
-					);
+					;
 					if (
 						Subscription &&
 						typeof (Subscription as any).dispose === "function"
@@ -1723,15 +1723,15 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return {
 				dispose: () => {
 					try {
-						TreeEventDispose?.dispose?.();
+						TreeEventDispose?.dispose?.(;
 					} catch {
 						/* swallow */
 					}
-					TreeDataProviders.delete(String(Handle));
-					TreeDataProvidersByViewId.delete(ViewId);
+					TreeDataProviders.delete(String(Handle);
+					TreeDataProvidersByViewId.delete(ViewId;
 					Context.MountainClient?.sendRequest("tree.unregister", [
 						Handle,
-					]).catch(() => {});
+					]).catch(() => {};
 				},
 			};
 		},
@@ -1750,10 +1750,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			// `$deserializeWebviewPanel(viewType, panel, state)` re-creates
 			// the panel by calling back into `serializer.deserializeWebviewPanel`.
 			const Key = `__webviewSerializer:${ViewType}`;
-			Context.ExtensionRegistry.set(Key, Serializer);
+			Context.ExtensionRegistry.set(Key, Serializer;
 			return {
 				dispose: () => {
-					Context.ExtensionRegistry.delete(Key);
+					Context.ExtensionRegistry.delete(Key;
 				},
 			};
 		},
@@ -1768,8 +1768,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				};
 			},
 		) => {
-			const Handle = NextProviderHandle();
-			WebviewViewProviders.set(String(Handle), Provider);
+			const Handle = NextProviderHandle(;
+			WebviewViewProviders.set(String(Handle), Provider;
 			// VS Code's `WebviewViewService.register` accepts a third
 			// `options` arg with `webviewOptions.retainContextWhenHidden`.
 			// Roo, Continue, Claude all pass `{ retainContextWhenHidden:
@@ -1799,8 +1799,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					ToWebviewUri,
 
 					SharedCspSource,
-				);
-			});
+				;
+			};
 
 			// Named-key payload so Mountain's `Webview.rs` case 1 passes
 			// through verbatim and SkyBridge's `sky://webview/registerView`
@@ -1811,19 +1811,19 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				handle: Handle,
 				viewId: ViewId,
 				retainContextWhenHidden: RetainContext,
-			}).catch(() => {});
+			}).catch(() => {};
 
 			return {
 				dispose: () => {
-					WebviewViewProviders.delete(String(Handle));
+					WebviewViewProviders.delete(String(Handle);
 
-					WebviewViewBuilders.delete(String(Handle));
+					WebviewViewBuilders.delete(String(Handle);
 
 					Context.MountainClient?.sendRequest(
 						"webview.unregisterView",
 
 						{ handle: Handle, viewId: ViewId },
-					).catch(() => {});
+					).catch(() => {};
 				},
 			};
 		},
@@ -1883,12 +1883,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			),
 
 		registerFileDecorationProvider: (Provider: any) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			Context.SendToMountain("register_file_decoration_provider", {
 				handle: Handle,
 				extensionId: "",
-			}).catch(() => {});
+			}).catch(() => {};
 
 			// Stash locally so `FileDecorationProvider$provideFileDecoration`
 			// from Mountain can look up by handle.
@@ -1896,99 +1896,99 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				`__fileDecorationProvider:${Handle}`,
 
 				Provider,
-			);
+			;
 
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(
 						`__fileDecorationProvider:${Handle}`,
-					);
+					;
 
 					Context.SendToMountain(
 						"unregister_file_decoration_provider",
 
 						{ handle: Handle },
-					).catch(() => {});
+					).catch(() => {};
 				},
 			};
 		},
 
 		registerUriHandler: (Handler: any) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			Context.SendToMountain("register_uri_handler", {
 				handle: Handle,
 				extensionId: "",
-			}).catch(() => {});
+			}).catch(() => {};
 
-			Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+			Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler;
 
 			return {
 				dispose: () => {
-					Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+					Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`;
 
 					Context.SendToMountain("unregister_uri_handler", {
 						handle: Handle,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 			};
 		},
 
 		registerTerminalLinkProvider: (Provider: any) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			Context.SendToMountain("register_terminal_link_provider", {
 				handle: Handle,
 				extensionId: "",
-			}).catch(() => {});
+			}).catch(() => {};
 
 			Context.ExtensionRegistry.set(
 				`__terminalLinkProvider:${Handle}`,
 
 				Provider,
-			);
+			;
 
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(
 						`__terminalLinkProvider:${Handle}`,
-					);
+					;
 
 					Context.SendToMountain(
 						"unregister_terminal_link_provider",
 
 						{ handle: Handle },
-					).catch(() => {});
+					).catch(() => {};
 				},
 			};
 		},
 
 		registerTerminalProfileProvider: (Id: string, Provider: any) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			Context.SendToMountain("register_terminal_profile_provider", {
 				handle: Handle,
 				profileId: Id,
 				extensionId: "",
-			}).catch(() => {});
+			}).catch(() => {};
 
 			Context.ExtensionRegistry.set(
 				`__terminalProfileProvider:${Handle}`,
 
 				Provider,
-			);
+			;
 
 			return {
 				dispose: () => {
 					Context.ExtensionRegistry.delete(
 						`__terminalProfileProvider:${Handle}`,
-					);
+					;
 
 					Context.SendToMountain(
 						"unregister_terminal_profile_provider",
 
 						{ handle: Handle },
-					).catch(() => {});
+					).catch(() => {};
 				},
 			};
 		},
@@ -2004,19 +2004,19 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			_Metadata?: unknown,
 		) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			Context.SendToMountain("register_external_uri_opener", {
 				handle: Handle,
 				openerId: Id,
 				extensionId: "",
-			}).catch(() => {});
+			}).catch(() => {};
 
 			return {
 				dispose: () => {
 					Context.SendToMountain("unregister_external_uri_opener", {
 						handle: Handle,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 			};
 		},
@@ -2030,7 +2030,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// Emitter by NotificationHandler). The Task's return value is
 		// forwarded verbatim.
 		withProgress: async (Options: any, Task: any) => {
-			const Handle = NextProviderHandle();
+			const Handle = NextProviderHandle(;
 
 			const Title =
 				(Options && typeof Options === "object" && Options.title) ||
@@ -2051,7 +2051,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						location: Location,
 						message: Value?.message,
 						increment: Increment,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 			};
 
@@ -2065,13 +2065,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				},
 
 				onCancellationRequested: (Listener: (E?: unknown) => void) => {
-					CancellationListeners.push(Listener);
+					CancellationListeners.push(Listener;
 
 					return {
 						dispose: () => {
-							const At = CancellationListeners.indexOf(Listener);
+							const At = CancellationListeners.indexOf(Listener;
 
-							if (At !== -1) CancellationListeners.splice(At, 1);
+							if (At !== -1) CancellationListeners.splice(At, 1;
 						},
 					};
 				},
@@ -2091,12 +2091,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 				for (const Listener of [...CancellationListeners]) {
 					try {
-						Listener(undefined);
+						Listener(undefined;
 					} catch {}
 				}
 			};
 
-			Context.Emitter.on("progress.cancel", OnProgressCancel);
+			Context.Emitter.on("progress.cancel", OnProgressCancel;
 
 			Context.SendToMountain("progress.start", {
 				handle: Handle,
@@ -2107,20 +2107,20 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					typeof Options === "object" &&
 					Options.cancellable,
 				),
-			}).catch(() => {});
+			}).catch(() => {};
 
 			try {
-				return await Task(Progress, CancellationToken);
+				return await Task(Progress, CancellationToken;
 			} finally {
 				Context.Emitter.removeListener(
 					"progress.cancel",
 
 					OnProgressCancel,
-				);
+				;
 
 				Context.SendToMountain("progress.end", {
 					handle: Handle,
-				}).catch(() => {});
+				}).catch(() => {};
 			}
 		},
 
@@ -2145,21 +2145,21 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				Disposed = true;
 				Context.SendToMountain("statusBar.clearMessage", {
 					id: HandleId,
-				}).catch(() => {});
+				}).catch(() => {};
 			};
 
 			Context.SendToMountain("statusBar.message", {
 				id: HandleId,
 				text: Text,
-			}).catch(() => {});
+			}).catch(() => {};
 
 			if (typeof HideAfter === "number" && HideAfter > 0) {
-				setTimeout(Clear, HideAfter);
+				setTimeout(Clear, HideAfter;
 			} else if (
 				HideAfter &&
 				typeof (HideAfter as PromiseLike<unknown>).then === "function"
 			) {
-				(HideAfter as PromiseLike<unknown>).then(Clear, Clear);
+				(HideAfter as PromiseLike<unknown>).then(Clear, Clear;
 			}
 
 			return { dispose: Clear };
@@ -2171,7 +2171,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// in `ExtensionHostInitData.workspace.folders`; route through the
 		// same `Window.ShowQuickPick` round-trip `showQuickPick` uses and
 		// map the chosen label back to its folder. Single-folder
-		// workspaces short-circuit to that folder (no picker needed);
+		// workspaces short-circuit to that folder (no picker needed;
 		// dismissal returns undefined.
 		showWorkspaceFolderPick: async (
 			Options?: unknown,
@@ -2202,8 +2202,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 				return typeof Shape?.name === "string" && Shape.name.length > 0
 					? Shape.name
-					: String(Shape?.uri?.path ?? Shape?.uri ?? Index);
-			});
+					: String(Shape?.uri?.path ?? Shape?.uri ?? Index;
+			};
 
 			try {
 				const Picked = await Context.MountainClient?.sendRequest(
@@ -2224,7 +2224,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							)?.ignoreFocusOut,
 						},
 					],
-				);
+				;
 
 				if (Picked == null) {
 					return undefined;
@@ -2239,7 +2239,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 								(PickedLabel as { label?: unknown })?.label ??
 									"",
 							),
-				);
+				;
 
 				return PickedIndex >= 0 ? Folders[PickedIndex] : undefined;
 			} catch {
@@ -2425,11 +2425,11 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					focused: true,
 					active: true,
 				}
-			);
+			;
 		},
 	};
 
-	return WrapWindowNamespace(Concrete);
+	return WrapWindowNamespace(Concrete;
 };
 
 export default CreateWindowNamespace;

@@ -124,7 +124,7 @@ export const FromAPI = (
 export const ToAPI = (dto: any): VSCode.TreeItem => {
 	const Label = dto.label.label;
 
-	const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState);
+	const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState;
 
 	Item.id = dto.id;
 
@@ -132,7 +132,7 @@ export const ToAPI = (dto: any): VSCode.TreeItem => {
 
 	// FIX: Conditionally assign resourceUri only if it exists in the DTO.
 	if (dto.resourceUri) {
-		Item.resourceUri = UriToAPI(dto.resourceUri);
+		Item.resourceUri = UriToAPI(dto.resourceUri;
 	}
 
 	return Item;

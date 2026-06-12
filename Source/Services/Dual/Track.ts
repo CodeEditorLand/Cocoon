@@ -84,7 +84,7 @@ export class NotImplementedError extends Error {
 	constructor(readonly Method: string) {
 		super(
 			`Method '${Method}' is not implemented in Land: no Mountain Rust handler, no stock VS Code lift, no Cocoon bespoke fallback.`,
-		);
+		;
 
 		this.name = "NotImplementedError";
 	}
@@ -99,7 +99,7 @@ export class NotImplementedError extends Error {
 if (process.env["Trace"]) {
 	process.stdout.write(
 		`[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}\n`,
-	);
+	;
 }
 
 /**
@@ -133,22 +133,22 @@ if (process.env["Trace"]) {
 const IsBypassValue = (Raw: string | undefined): boolean => {
 	if (!Raw) return false;
 
-	const Normalised = Raw.trim().toLowerCase();
+	const Normalised = Raw.trim().toLowerCase(;
 
 	return (
 		Normalised === "false" ||
 		Normalised === "0" ||
 		Normalised === "no" ||
 		Normalised === "off"
-	);
+	;
 };
 
 const ParseDomain = (Method: string): string => {
-	const Dot = Method.indexOf(".");
+	const Dot = Method.indexOf(".";
 
 	if (Dot <= 0) return "";
 
-	return Method.slice(0, Dot).toUpperCase();
+	return Method.slice(0, Dot).toUpperCase(;
 };
 
 /**
@@ -163,23 +163,23 @@ export const IsRustDeferralEnabled = (Method: string): boolean => {
 	const MethodKey = `Defer${Method.replace(/[.:]/g, "_")}`;
 
 	if (process.env[MethodKey] !== undefined) {
-		return !IsBypassValue(process.env[MethodKey]);
+		return !IsBypassValue(process.env[MethodKey];
 	}
 
 	// Per-domain override.
-	const Domain = ParseDomain(Method);
+	const Domain = ParseDomain(Method;
 
 	if (Domain) {
 		const DomainKey = `Defer${Domain}`;
 
 		if (process.env[DomainKey] !== undefined) {
-			return !IsBypassValue(process.env[DomainKey]);
+			return !IsBypassValue(process.env[DomainKey];
 		}
 	}
 
 	// Global override.
 	if (process.env["Defer"] !== undefined) {
-		return !IsBypassValue(process.env["Defer"]);
+		return !IsBypassValue(process.env["Defer"];
 	}
 
 	return true;
@@ -191,12 +191,12 @@ if (process.env["Trace"]) {
 	const ActiveBypasses = Object.keys(process.env)
 		.filter((K) => K === "Defer" || K.startsWith("Defer"))
 		.filter((K) => IsBypassValue(process.env[K]))
-		.join(",");
+		.join(",";
 
 	if (ActiveBypasses) {
 		process.stdout.write(
 			`[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}\n`,
-		);
+		;
 	}
 }
 
@@ -231,7 +231,7 @@ export function IsUnknownMethodError(Err: unknown): boolean {
 		Message.includes("Unknown IPC command") ||
 		Message.includes("no handler for method") ||
 		Message.includes("not routed to any domain")
-	);
+	;
 }
 
 /**
@@ -265,12 +265,12 @@ export async function TryMountainThenNode<T>(
 	// Mountain round-trip and run the Node fallback directly. Logged
 	// distinctly so the env-toggled path is observable.
 	if (!IsRustDeferralEnabled(Method)) {
-		LogDualTrack(Method, "node-bypass");
+		LogDualTrack(Method, "node-bypass";
 
 		try {
-			return await NodeFallback(Arguments);
+			return await NodeFallback(Arguments;
 		} catch (NodeErr: unknown) {
-			LogDualTrack(Method, "error");
+			LogDualTrack(Method, "error";
 
 			throw NodeErr;
 		}
@@ -284,14 +284,14 @@ export async function TryMountainThenNode<T>(
 	// correctly - the only cost is one extra fallback invocation until
 	// the next `sh Maintain/Script/GenerateRouteManifest.sh` rebuild.
 	if (!MountainMethods.has(Method)) {
-		LogDualTrack(Method, "node-fallback");
+		LogDualTrack(Method, "node-fallback";
 
 		try {
-			return await NodeFallback(Arguments);
+			return await NodeFallback(Arguments;
 		} catch (NodeErr: unknown) {
 			// Distinguish "Cocoon's fallback failed" from "no fallback
 			// exists" - the latter is the Tier-4 unavailable case.
-			LogDualTrack(Method, "error");
+			LogDualTrack(Method, "error";
 
 			throw NodeErr;
 		}
@@ -302,9 +302,9 @@ export async function TryMountainThenNode<T>(
 			Method,
 
 			Arguments,
-		);
+		;
 
-		LogDualTrack(Method, "mountain");
+		LogDualTrack(Method, "mountain";
 
 		return MountainResult as T;
 	} catch (Err: unknown) {
@@ -312,18 +312,18 @@ export async function TryMountainThenNode<T>(
 			// Manifest drift: manifest said Mountain has it, runtime
 			// says it doesn't. Fall back anyway and log so the next
 			// manifest regeneration picks up the gap.
-			LogDualTrack(Method, "node-fallback");
+			LogDualTrack(Method, "node-fallback";
 
 			try {
-				return await NodeFallback(Arguments);
+				return await NodeFallback(Arguments;
 			} catch (NodeErr: unknown) {
-				LogDualTrack(Method, "error");
+				LogDualTrack(Method, "error";
 
 				throw NodeErr;
 			}
 		}
 
-		LogDualTrack(Method, "error");
+		LogDualTrack(Method, "error";
 
 		throw Err;
 	}
@@ -361,24 +361,24 @@ export async function TryMountainWithEmptyFallback<T>(
 	// Env-controlled bypass mirrors `TryMountainThenNode`. When set,
 	// skip Mountain and rely on the Node fallback directly.
 	if (!IsRustDeferralEnabled(Method)) {
-		LogDualTrack(Method, "node-bypass");
+		LogDualTrack(Method, "node-bypass";
 
 		try {
-			return await NodeFallback(Arguments);
+			return await NodeFallback(Arguments;
 		} catch (NodeErr: unknown) {
-			LogDualTrack(Method, "error");
+			LogDualTrack(Method, "error";
 
 			throw NodeErr;
 		}
 	}
 
 	if (!MountainMethods.has(Method)) {
-		LogDualTrack(Method, "node-fallback");
+		LogDualTrack(Method, "node-fallback";
 
 		try {
-			return await NodeFallback(Arguments);
+			return await NodeFallback(Arguments;
 		} catch (NodeErr: unknown) {
-			LogDualTrack(Method, "error");
+			LogDualTrack(Method, "error";
 
 			throw NodeErr;
 		}
@@ -397,15 +397,15 @@ export async function TryMountainWithEmptyFallback<T>(
 
 		MountainSucceeded = true;
 
-		LogDualTrack(Method, "mountain");
+		LogDualTrack(Method, "mountain";
 	} catch (Err: unknown) {
 		if (!IsUnknownMethodError(Err)) {
-			LogDualTrack(Method, "error");
+			LogDualTrack(Method, "error";
 
 			throw Err;
 		}
 
-		LogDualTrack(Method, "node-fallback");
+		LogDualTrack(Method, "node-fallback";
 	}
 
 	// Empty-result guard: Mountain succeeded but the result looks empty.
@@ -417,15 +417,15 @@ export async function TryMountainWithEmptyFallback<T>(
 		IsEmpty(MountainResult)
 	) {
 		try {
-			const NodeResult = await NodeFallback(Arguments);
+			const NodeResult = await NodeFallback(Arguments;
 
-			const NodeIsEmpty = IsEmpty(NodeResult);
+			const NodeIsEmpty = IsEmpty(NodeResult;
 
 			if (!NodeIsEmpty) {
 				if (process.env["Trace"]) {
 					process.stdout.write(
 						`[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)\n`,
-					);
+					;
 				}
 
 				return NodeResult;
@@ -445,9 +445,9 @@ export async function TryMountainWithEmptyFallback<T>(
 
 	// Mountain rejected with "unknown method": run the fallback.
 	try {
-		return await NodeFallback(Arguments);
+		return await NodeFallback(Arguments;
 	} catch (NodeErr: unknown) {
-		LogDualTrack(Method, "error");
+		LogDualTrack(Method, "error";
 
 		throw NodeErr;
 	}
@@ -460,9 +460,9 @@ export async function TryMountainWithEmptyFallback<T>(
  * route=unavailable` so the build process can surface the gap.
  */
 export function MarkUnavailable(Method: string): never {
-	LogDualTrack(Method, "unavailable");
+	LogDualTrack(Method, "unavailable";
 
-	throw new NotImplementedError(Method);
+	throw new NotImplementedError(Method;
 }
 
 /**
@@ -495,16 +495,16 @@ export const SendToMountainOrLocal = (
 	OnLocalFallback?: () => void,
 ): Promise<void> => {
 	if (!IsRustDeferralEnabled(Method)) {
-		LogDualTrack(Method, "node-bypass");
+		LogDualTrack(Method, "node-bypass";
 
 		try {
-			OnLocalFallback?.();
+			OnLocalFallback?.(;
 		} catch {
 			// Local fallback errors must not crash the caller - same
 			// fire-and-forget semantics as the underlying SendToMountain.
 		}
 
-		return Promise.resolve();
+		return Promise.resolve(;
 	}
 
 	const Send = (
@@ -515,13 +515,13 @@ export const SendToMountainOrLocal = (
 
 	return Send.call(Context, Method, Payload).then(
 		() => {
-			LogDualTrack(Method, "mountain");
+			LogDualTrack(Method, "mountain";
 		},
 
 		(_Err: unknown) => {
-			LogDualTrack(Method, "error");
+			LogDualTrack(Method, "error";
 		},
-	);
+	;
 };
 
 export type DualTrackRoute =
@@ -540,5 +540,5 @@ export type DualTrackRoute =
 export const LogDualTrack = (Method: string, Route: DualTrackRoute): void => {
 	if (!process.env["Trace"]) return;
 
-	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`);
+	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`;
 };

@@ -29,18 +29,18 @@ export const MakeEventSubscriber =
 		const Bound =
 			ThisArg === undefined
 				? Callback
-				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg);
+				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg;
 
-		Context.Emitter.on(EventName, Bound as Listener<unknown>);
+		Context.Emitter.on(EventName, Bound as Listener<unknown>;
 
 		const Subscription = {
 			dispose: () => {
-				Context.Emitter.off(EventName, Bound as Listener<unknown>);
+				Context.Emitter.off(EventName, Bound as Listener<unknown>;
 			},
 		};
 
 		if (Disposables && typeof Disposables.push === "function") {
-			Disposables.push(Subscription);
+			Disposables.push(Subscription;
 		}
 
 		return Subscription;

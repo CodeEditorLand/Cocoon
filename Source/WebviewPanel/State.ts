@@ -137,19 +137,19 @@ export interface PanelState {
 export interface StateManager {
 	readonly SavePanelState: (
 		PanelState: PanelState,
-	) => Effect.Effect<void, Error>;
+	) => Promise<void>;
 
 	readonly RestorePanelState: (
 		Handle: string,
-	) => Effect.Effect<PanelState | null, Error>;
+	) => Promise<PanelState | null>;
 
-	readonly DeletePanelState: (Handle: string) => Effect.Effect<void, Error>;
+	readonly DeletePanelState: (Handle: string) => Promise<void>;
 
 	readonly GetAllPanelStates: (
 		ExtensionId: string,
-	) => Effect.Effect<readonly PanelState[], Error>;
+	) => Promise<readonly PanelState[]>;
 
-	readonly ClearAllPanelStates: () => Effect.Effect<void, Error>;
+	readonly ClearAllPanelStates: () => Promise<void>;
 }
 
 /**
@@ -162,14 +162,14 @@ const STATE_VERSION = 1;
  * @class StateService
  * @description Service for managing Webview panel state
  */
-export class StateService extends Effect.Service<StateService>()(
+export class StateService extends /* Effect.Service */(
 	"State/WebviewPanel",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			// In-memory cache of panel states - read path; Mountain storage
 			// is the durable copy keyed `webviewPanelState:<handle>`.
-			const StateCache = new Map<string, PanelState>();
+			const StateCache = new Map<string, PanelState>(;
 
 			/**
 			 * Resolve the live Mountain client published by
@@ -195,50 +195,44 @@ export class StateService extends Effect.Service<StateService>()(
 			 */
 			const ValidateState = (
 				State: unknown,
-			): Effect.Effect<PanelState, Error> =>
-				Effect.gen(function* () {
+			): Promise<PanelState> =>
+				async function() {
 					// Defensive: Check if state is an object
 					if (
 						typeof State !== "object" ||
 						State === null ||
 						Array.isArray(State)
 					) {
-						return yield* Effect.fail(
-							new Error("Panel state must be an object"),
-						);
+						throw new Error("Panel state must be an object"),
+						;
 					}
 
 					const S = State as Record<string, unknown>;
 
 					// Check required fields
 					if (typeof S.Version !== "number") {
-						return yield* Effect.fail(
-							new Error("Panel state missing Version"),
-						);
+						throw new Error("Panel state missing Version"),
+						;
 					}
 
 					if (typeof S.Handle !== "string") {
-						return yield* Effect.fail(
-							new Error("Panel state missing Handle"),
-						);
+						throw new Error("Panel state missing Handle"),
+						;
 					}
 
 					if (typeof S.ExtensionId !== "string") {
-						return yield* Effect.fail(
-							new Error("Panel state missing ExtensionId"),
-						);
+						throw new Error("Panel state missing ExtensionId"),
+						;
 					}
 
 					if (typeof S.ViewType !== "string") {
-						return yield* Effect.fail(
-							new Error("Panel state missing ViewType"),
-						);
+						throw new Error("Panel state missing ViewType"),
+						;
 					}
 
 					if (typeof S.Title !== "string") {
-						return yield* Effect.fail(
-							new Error("Panel state missing Title"),
-						);
+						throw new Error("Panel state missing Title"),
+						;
 					}
 
 					// Validate nested objects
@@ -247,23 +241,20 @@ export class StateService extends Effect.Service<StateService>()(
 						S.Position === null ||
 						Array.isArray(S.Position)
 					) {
-						return yield* Effect.fail(
-							new Error("Panel state has invalid Position"),
-						);
+						throw new Error("Panel state has invalid Position"),
+						;
 					}
 
 					const Position = S.Position as Record<string, unknown>;
 
 					if (typeof Position.ViewColumn !== "number") {
-						return yield* Effect.fail(
-							new Error("Panel state has invalid ViewColumn"),
-						);
+						throw new Error("Panel state has invalid ViewColumn"),
+						;
 					}
 
 					if (typeof Position.PreservedFocus !== "boolean") {
-						return yield* Effect.fail(
-							new Error("Panel state has invalid PreservedFocus"),
-						);
+						throw new Error("Panel state has invalid PreservedFocus"),
+						;
 					}
 
 					// Validate ViewState
@@ -272,9 +263,8 @@ export class StateService extends Effect.Service<StateService>()(
 						S.ViewState === null ||
 						Array.isArray(S.ViewState)
 					) {
-						return yield* Effect.fail(
-							new Error("Panel state has invalid ViewState"),
-						);
+						throw new Error("Panel state has invalid ViewState"),
+						;
 					}
 
 					const ViewState = S.ViewState as Record<string, unknown>;
@@ -284,13 +274,12 @@ export class StateService extends Effect.Service<StateService>()(
 						typeof ViewState.Visible !== "boolean" ||
 						typeof ViewState.ViewColumn !== "number"
 					) {
-						return yield* Effect.fail(
-							new Error("Panel state has invalid ViewState"),
-						);
+						throw new Error("Panel state has invalid ViewState"),
+						;
 					}
 
 					return S as PanelState;
-				});
+				};
 
 			/**
 			 * Create a PanelState object
@@ -345,9 +334,9 @@ export class StateService extends Effect.Service<StateService>()(
 			 */
 			const SavePanelState = (
 				PanelStateData: PanelState,
-			): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
-					StateCache.set(PanelStateData.Handle, PanelStateData);
+			): Promise<void> =>
+				async function() {
+					StateCache.set(PanelStateData.Handle, PanelStateData;
 
 					void GetMountainClient()
 						?.sendRequest("Storage.Set", [
@@ -355,8 +344,8 @@ export class StateService extends Effect.Service<StateService>()(
 
 							PanelStateData,
 						])
-						.catch(() => undefined);
-				});
+						.catch(() => undefined;
+				};
 
 			/**
 			 * Restore panel state - cache first, Mountain storage on miss
@@ -364,9 +353,9 @@ export class StateService extends Effect.Service<StateService>()(
 			 */
 			const RestorePanelState = (
 				Handle: string,
-			): Effect.Effect<PanelState | null, Error> =>
-				Effect.gen(function* () {
-					let State: unknown = StateCache.get(Handle);
+			): Promise<PanelState | null> =>
+				async function() {
+					let State: unknown = StateCache.get(Handle;
 
 					if (!State) {
 						State = yield* Effect.tryPromise({
@@ -377,7 +366,7 @@ export class StateService extends Effect.Service<StateService>()(
 									[StorageKey(Handle)],
 								)) ?? null,
 							catch: () => null,
-						}).pipe(Effect.orElseSucceed(() => null));
+						}).pipe(Effect.orElseSucceed(() => null);
 					}
 
 					if (!State) {
@@ -385,58 +374,58 @@ export class StateService extends Effect.Service<StateService>()(
 					}
 
 					// Validate loaded state
-					const ValidatedState = yield* ValidateState(State);
+					const ValidatedState = yield* ValidateState(State;
 
-					StateCache.set(Handle, ValidatedState);
+					StateCache.set(Handle, ValidatedState;
 
 					return ValidatedState;
-				});
+				};
 
 			/**
 			 * Delete panel state from cache and Mountain storage.
 			 */
 			const DeletePanelState = (
 				Handle: string,
-			): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
-					StateCache.delete(Handle);
+			): Promise<void> =>
+				async function() {
+					StateCache.delete(Handle;
 
 					void GetMountainClient()
 						?.sendRequest("Storage.Set", [StorageKey(Handle), null])
-						.catch(() => undefined);
-				});
+						.catch(() => undefined;
+				};
 
 			/**
 			 * Get all panel states for an extension
 			 */
 			const GetAllPanelStates = (
 				ExtensionId: string,
-			): Effect.Effect<readonly PanelState[], Error> =>
-				Effect.gen(function* () {
+			): Promise<readonly PanelState[]> =>
+				async function() {
 					return Array.from(StateCache.values()).filter(
 						(State) => State.ExtensionId === ExtensionId,
-					);
-				});
+					;
+				};
 
 			/**
 			 * Clear all panel states from cache and Mountain storage.
 			 */
-			const ClearAllPanelStates = (): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
-					const Handles = Array.from(StateCache.keys());
+			const ClearAllPanelStates = (): Promise<void> =>
+				async function() {
+					const Handles = Array.from(StateCache.keys();
 
-					StateCache.clear();
+					StateCache.clear(;
 
-					const Client = GetMountainClient();
+					const Client = GetMountainClient(;
 
 					for (const Handle of Handles) {
 						void Client?.sendRequest("Storage.Set", [
 							StorageKey(Handle),
 
 							null,
-						]).catch(() => undefined);
+						]).catch(() => undefined;
 					}
-				});
+				};
 
 			return {
 				SavePanelState,

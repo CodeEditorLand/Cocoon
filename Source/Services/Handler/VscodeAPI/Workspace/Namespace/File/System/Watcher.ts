@@ -46,15 +46,15 @@ export const CreateFileSystemWatcher = (
 		return StubWatcher;
 	}
 
-	const PatternString = ExtractGlobPattern(Pattern);
+	const PatternString = ExtractGlobPattern(Pattern;
 
 	if (!PatternString) {
 		return StubWatcher;
 	}
 
-	const Matcher = GlobToRegex(PatternString);
+	const Matcher = GlobToRegex(PatternString;
 
-	const Folders = ResolveWorkspaceFolders(Context);
+	const Folders = ResolveWorkspaceFolders(Context;
 
 	const Root =
 		(Pattern as any)?.baseUri?.fsPath ??
@@ -65,12 +65,12 @@ export const CreateFileSystemWatcher = (
 		return StubWatcher;
 	}
 
-	const Handle = NextProviderHandle();
+	const Handle = NextProviderHandle(;
 
 	// `**` anywhere in the pattern forces recursive watching; plain
 	// globs restricted to a single directory use NonRecursive so we
 	// don't subscribe to the whole tree just to watch one folder.
-	const IsRecursive = PatternString.includes("**");
+	const IsRecursive = PatternString.includes("**";
 
 	Context.MountainClient?.sendRequest("FileWatcher.Register", [
 		Handle,
@@ -80,7 +80,7 @@ export const CreateFileSystemWatcher = (
 		IsRecursive,
 
 		PatternString,
-	]).catch(() => {});
+	]).catch(() => {};
 
 	const EventName = `fileWatcher:${Handle}`;
 
@@ -100,15 +100,15 @@ export const CreateFileSystemWatcher = (
 						path: Event.path,
 						fsPath: Event.path,
 						toString: () => `file://${Event.path}`,
-					});
+					};
 				} catch {}
 			};
 
-			Context.Emitter.on(EventName, WrappedListener);
+			Context.Emitter.on(EventName, WrappedListener;
 
 			return {
 				dispose: () => {
-					Context.Emitter.removeListener(EventName, WrappedListener);
+					Context.Emitter.removeListener(EventName, WrappedListener;
 				},
 			};
 		};
@@ -127,11 +127,11 @@ export const CreateFileSystemWatcher = (
 		onDidDelete: MakeSubscriber("delete", IgnoreDeleteEvents === true),
 
 		dispose: () => {
-			Context.Emitter.removeAllListeners(EventName);
+			Context.Emitter.removeAllListeners(EventName;
 
 			Context.MountainClient?.sendRequest("FileWatcher.Unregister", [
 				Handle,
-			]).catch(() => {});
+			]).catch(() => {};
 		},
 	};
 };

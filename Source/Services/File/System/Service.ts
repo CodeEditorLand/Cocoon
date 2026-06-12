@@ -31,7 +31,7 @@ export interface IFileSystemService {
 	): Promise<void>;
 }
 
-export const IFileSystemService: unique symbol = Symbol.for("IFileSystemService");
+export const IFileSystemService: unique symbol = Symbol.for("IFileSystemService";
 
 // --- Implementation ---
 
@@ -40,15 +40,15 @@ export class FileSystemService implements IFileSystemService {
 
 	async stat(uri: any): Promise<any> {
 		const Path =
-			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "";
 
 		const Response = await this.mountainClient.sendRequest(
 			"FileSystem.Stat",
 
 			Path,
-		);
+		;
 
-		if (!Response) throw new Error(`File not found: ${Path}`);
+		if (!Response) throw new Error(`File not found: ${Path}`;
 
 		// Mountain returns: { type, is_file, is_directory, size, mtime }
 		// VS Code FileType: 0=Unknown, 1=File, 2=Directory, 64=SymbolicLink
@@ -65,7 +65,7 @@ export class FileSystemService implements IFileSystemService {
 
 	async readFile(uri: any): Promise<Uint8Array> {
 		if (uri.scheme !== "file") {
-			throw new Error(`Unsupported scheme: ${uri.scheme}`);
+			throw new Error(`Unsupported scheme: ${uri.scheme}`;
 		}
 
 		// Call Spine (v0.1 Filesystem Batch)
@@ -73,7 +73,7 @@ export class FileSystemService implements IFileSystemService {
 			"FileSystem.ReadFile",
 
 			uri.fsPath,
-		);
+		;
 
 		// Response payload is already a buffer/array from gRPC
 		return response;
@@ -81,23 +81,23 @@ export class FileSystemService implements IFileSystemService {
 
 	async writeFile(uri: any, content: Uint8Array): Promise<void> {
 		if (uri.scheme !== "file") {
-			throw new Error(`Unsupported scheme: ${uri.scheme}`);
+			throw new Error(`Unsupported scheme: ${uri.scheme}`;
 		}
 
 		// Call Spine (v0.1 Filesystem Batch)
 		await this.mountainClient.sendRequest("FileSystem.WriteFile", {
 			path: uri.fsPath,
 			content: Array.from(content), // Serialize buffer to array
-		});
+		};
 	}
 
 	async readDirectory(uri: any): Promise<[string, any][]> {
 		if (uri.scheme !== "file") {
-			throw new Error(`Unsupported scheme: ${uri.scheme}`);
+			throw new Error(`Unsupported scheme: ${uri.scheme}`;
 		}
 
 		const Path =
-			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "";
 
 		// Mountain now returns [{name, type}] where type 1=File 2=Directory
 		const Entries: Array<{ name: string; type: number }> =
@@ -105,11 +105,11 @@ export class FileSystemService implements IFileSystemService {
 				"FileSystem.ReadDirectory",
 
 				Path,
-			);
+			;
 
 		return (Entries ?? []).map((E) =>
 			typeof E === "string" ? [E, 1] : [E.name, E.type],
-		);
+		;
 	}
 
 	async createDirectory(uri: any): Promise<void> {
@@ -117,11 +117,11 @@ export class FileSystemService implements IFileSystemService {
 			"FileSystem.CreateDirectory",
 
 			uri.fsPath,
-		);
+		;
 	}
 
 	async delete(uri: any, _options: { recursive: boolean }): Promise<void> {
-		await this.mountainClient.sendRequest("FileSystem.Delete", uri.fsPath);
+		await this.mountainClient.sendRequest("FileSystem.Delete", uri.fsPath;
 	}
 
 	async rename(
@@ -135,7 +135,7 @@ export class FileSystemService implements IFileSystemService {
 		await this.mountainClient.sendRequest("FileSystem.Rename", {
 			from: source.fsPath,
 			to: target.fsPath,
-		});
+		};
 	}
 }
 
@@ -145,9 +145,9 @@ export class FileSystemService implements IFileSystemService {
 export const FileSystemServiceLayer = Layer.effect(
 	IFileSystemService,
 
-	Effect.gen(function* () {
+	async function() {
 		const mountainClient = yield* IMountainClientService;
 
-		return new FileSystemService(mountainClient);
+		return new FileSystemService(mountainClient;
 	}),
-);
+;

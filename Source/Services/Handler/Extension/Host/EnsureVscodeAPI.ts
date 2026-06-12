@@ -20,22 +20,22 @@ const EnsureVscodeAPIRegistered = async (
 	Context: HandlerContext,
 ): Promise<void> => {
 	// Install hooks *before* anything else - idempotent, runs once.
-	await InstallVscodeModuleHooks();
+	await InstallVscodeModuleHooks(;
 
 	if ((globalThis as any).__cocoonVscodeAPI) return;
 
 	try {
 		const VsCodeTypes =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
 
 		const { URI } =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 
 		const { CancellationTokenSource } =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
 
 		const { Emitter } =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 
 		// Defensive RelativePattern wrapper. Stock `extHostTypes.RelativePattern`
 		// (extHostTypes.ts:1914) throws `Illegal argument: base` unless the
@@ -67,12 +67,12 @@ const EnsureVscodeAPIRegistered = async (
 				const ReviveInput =
 					typeof WithUri.uri === "string"
 						? URI.parse(WithUri.uri)
-						: URI.revive(WithUri.uri as any);
+						: URI.revive(WithUri.uri as any;
 
 				return { ...(Base as object), uri: ReviveInput };
 			}
 
-			const Revived = URI.revive(Base as any);
+			const Revived = URI.revive(Base as any;
 
 			return Revived ?? Base;
 		};
@@ -84,7 +84,7 @@ const EnsureVscodeAPIRegistered = async (
 
 			Pattern: string,
 		) {
-			const Safe = HydrateRelativePatternBase(Base);
+			const Safe = HydrateRelativePatternBase(Base;
 
 			return Reflect.construct(
 				StockRelativePattern,
@@ -92,12 +92,12 @@ const EnsureVscodeAPIRegistered = async (
 				[Safe, Pattern],
 
 				PatchedRelativePattern,
-			);
+			;
 		};
 
 		PatchedRelativePattern.prototype = StockRelativePattern.prototype;
 
-		Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
+		Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern;
 
 		// Spread every named export from extHostTypes - classes, enums,
 		// constants - so extensions that do `class X extends vscode.Y`
@@ -141,7 +141,7 @@ const EnsureVscodeAPIRegistered = async (
 		// minimal stub suffices.
 		class CancellationError extends Error {
 			constructor() {
-				super("Canceled");
+				super("Canceled";
 
 				this.name = "Canceled";
 			}
@@ -334,7 +334,7 @@ const EnsureVscodeAPIRegistered = async (
 						typeof Message === "string"
 							? Message
 							: ((Message as { message?: string })?.message ??
-								String(Message));
+								String(Message);
 
 					if (!Arguments.length) return Raw;
 
@@ -346,9 +346,9 @@ const EnsureVscodeAPIRegistered = async (
 
 							return Replacement === undefined
 								? ""
-								: String(Replacement);
+								: String(Replacement;
 						},
-					);
+					;
 				},
 
 				bundle: undefined,
@@ -515,7 +515,7 @@ const EnsureVscodeAPIRegistered = async (
 
 		process.stdout.write(
 			"[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI\n",
-		);
+		;
 
 		// Diagnostic: log which critical base classes are resolved at shim
 		// registration time. vscode-languageclient does
@@ -564,23 +564,23 @@ const EnsureVscodeAPIRegistered = async (
 			"Disposable",
 		];
 
-		const Missing = CriticalNames.filter((Name) => API[Name] === undefined);
+		const Missing = CriticalNames.filter((Name) => API[Name] === undefined;
 
 		if (Missing.length) {
 			process.stderr.write(
 				`[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}\n`,
-			);
+			;
 		} else {
 			CocoonDevLog(
 				"ext-host",
 
 				"[ExtensionHostHandler] vscode API shim critical symbols OK",
-			);
+			;
 		}
 	} catch (Err: unknown) {
 		process.stderr.write(
 			`[ExtensionHostHandler] Failed to create vscode API shim: ${Err instanceof Error ? Err.message : String(Err)}\n`,
-		);
+		;
 	}
 };
 

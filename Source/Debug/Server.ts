@@ -47,7 +47,7 @@ import * as Http from "node:http";
 type LayerMode = "off" | "mountain" | "cocoon" | "both";
 
 function ParseMode(): LayerMode {
-	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase();
+	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase(;
 
 	if (
 		Raw === "" ||
@@ -130,40 +130,40 @@ export function RegisterHooks(Next: CommandHooks): void {
  * resolved port (or `null` if the server did not start).
  */
 export function Start(): number | null {
-	if (ServerInstance) return CocoonPort();
+	if (ServerInstance) return CocoonPort(;
 
-	const Mode = ParseMode();
+	const Mode = ParseMode(;
 
 	if (!CocoonEnabled(Mode)) return null;
 
-	const Port = CocoonPort();
+	const Port = CocoonPort(;
 
 	const Server = Http.createServer((Req, Res) => {
 		HandleRequest(Req, Res).catch((Err) => {
 			try {
 				Res.statusCode = 500;
 
-				Res.setHeader("content-type", "application/json");
+				Res.setHeader("content-type", "application/json";
 
-				Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) }));
+				Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) });
 			} catch {
 				/* ignore */
 			}
-		});
-	});
+		};
+	};
 
 	Server.on("error", (Err: NodeJS.ErrnoException) => {
 		// EADDRINUSE → previous instance left lingering; surface a clear log.
 		process.stderr.write(
 			`[CocoonDebug] listener error on ${Port}: ${Err.code ?? Err.message}\n`,
-		);
-	});
+		;
+	};
 
 	Server.listen(Port, "127.0.0.1", () => {
 		process.stderr.write(
 			`[CocoonDebug] Cocoon layer listening on http://127.0.0.1:${Port} (mode=${Mode})\n`,
-		);
-	});
+		;
+	};
 
 	ServerInstance = Server;
 
@@ -175,7 +175,7 @@ export function Stop(): void {
 	if (!ServerInstance) return;
 
 	try {
-		ServerInstance.close();
+		ServerInstance.close(;
 	} catch {
 		/* ignore */
 	}
@@ -190,12 +190,12 @@ export function Stop(): void {
 async function ReadJsonBody(Req: Http.IncomingMessage): Promise<unknown> {
 	const Chunks: Buffer[] = [];
 
-	for await (const C of Req) Chunks.push(C as Buffer);
+	for await (const C of Req) Chunks.push(C as Buffer;
 
 	if (Chunks.length === 0) return {};
 
 	try {
-		return JSON.parse(Buffer.concat(Chunks).toString("utf8"));
+		return JSON.parse(Buffer.concat(Chunks).toString("utf8");
 	} catch {
 		return {};
 	}
@@ -208,15 +208,15 @@ function SendJson(
 
 	Body: unknown,
 ): void {
-	const Text = JSON.stringify(Body);
+	const Text = JSON.stringify(Body;
 
 	Res.statusCode = Status;
 
-	Res.setHeader("content-type", "application/json");
+	Res.setHeader("content-type", "application/json";
 
-	Res.setHeader("content-length", Buffer.byteLength(Text).toString());
+	Res.setHeader("content-length", Buffer.byteLength(Text).toString();
 
-	Res.end(Text);
+	Res.end(Text;
 }
 
 async function HandleRequest(
@@ -224,11 +224,11 @@ async function HandleRequest(
 
 	Res: Http.ServerResponse,
 ): Promise<void> {
-	const Url = new URL(Req.url ?? "/", "http://127.0.0.1");
+	const Url = new URL(Req.url ?? "/", "http://127.0.0.1";
 
 	const Path = Url.pathname;
 
-	const Method = (Req.method ?? "GET").toUpperCase();
+	const Method = (Req.method ?? "GET").toUpperCase(;
 
 	// ---------- discovery -------------------------------------------------
 	if (Method === "GET" && Path === "/health") {
@@ -247,7 +247,7 @@ async function HandleRequest(
 				"command",
 				"processes",
 			],
-		});
+		};
 	}
 
 	if (Method === "GET" && Path === "/layers") {
@@ -258,7 +258,7 @@ async function HandleRequest(
 			},
 			cocoon: { enabled: CocoonEnabled(ParseMode()), port: CocoonPort() },
 			mode: ParseMode(),
-		});
+		};
 	}
 
 	// ---------- EH eval ---------------------------------------------------
@@ -269,9 +269,9 @@ async function HandleRequest(
 			target?: string;
 		};
 
-		const Js = String(Body.js ?? "");
+		const Js = String(Body.js ?? "";
 
-		if (!Js) return SendJson(Res, 400, { error: "missing js" });
+		if (!Js) return SendJson(Res, 400, { error: "missing js" };
 
 		const Target = Body.target ?? "extension-host";
 
@@ -282,21 +282,21 @@ async function HandleRequest(
 		)
 			return SendJson(Res, 400, {
 				error: `unsupported target: ${Target}`,
-			});
+			};
 
 		try {
 			// Indirect eval so the script runs in the global scope.
-			const Result = await (0, eval)(Js);
+			const Result = await (0, eval)(Js;
 
 			return SendJson(Res, 200, {
 				ok: true,
 				result: SafeSerialize(Result),
-			});
+			};
 		} catch (Err) {
 			return SendJson(Res, 500, {
 				ok: false,
 				error: String((Err as Error)?.stack ?? Err),
-			});
+			};
 		}
 	}
 
@@ -308,11 +308,11 @@ async function HandleRequest(
 			return SendJson(Res, 200, {
 				extensions: Ids,
 				source: Hooks.ListExtensions ? "hook" : "unavailable",
-			});
+			};
 		} catch (Err) {
 			return SendJson(Res, 500, {
 				error: String((Err as Error)?.message ?? Err),
-			});
+			};
 		}
 	}
 
@@ -323,11 +323,11 @@ async function HandleRequest(
 			return SendJson(Res, 200, {
 				commands: Ids,
 				source: Hooks.ListCommands ? "hook" : "unavailable",
-			});
+			};
 		} catch (Err) {
 			return SendJson(Res, 500, {
 				error: String((Err as Error)?.message ?? Err),
-			});
+			};
 		}
 	}
 
@@ -338,34 +338,34 @@ async function HandleRequest(
 			args?: unknown[];
 		};
 
-		const Id = String(Body.id ?? "");
+		const Id = String(Body.id ?? "";
 
 		const Args = Array.isArray(Body.args) ? Body.args : [];
 
-		if (!Id) return SendJson(Res, 400, { error: "missing id" });
+		if (!Id) return SendJson(Res, 400, { error: "missing id" };
 
 		if (!Hooks.ExecuteCommand)
 			return SendJson(Res, 503, {
 				error: "ExecuteCommand hook not registered",
-			});
+			};
 
 		try {
-			const Result = await Hooks.ExecuteCommand(Id, Args);
+			const Result = await Hooks.ExecuteCommand(Id, Args;
 
 			return SendJson(Res, 200, {
 				ok: true,
 				result: SafeSerialize(Result),
-			});
+			};
 		} catch (Err) {
 			return SendJson(Res, 500, {
 				ok: false,
 				error: String((Err as Error)?.stack ?? Err),
-			});
+			};
 		}
 	}
 
 	if (Method === "GET" && Path === "/processes") {
-		const Mem = process.memoryUsage();
+		const Mem = process.memoryUsage(;
 
 		return SendJson(Res, 200, {
 			pid: process.pid,
@@ -376,10 +376,10 @@ async function HandleRequest(
 			heapTotalMb: Math.round(Mem.heapTotal / 1024 / 1024),
 			arch: process.arch,
 			platform: process.platform,
-		});
+		};
 	}
 
-	SendJson(Res, 404, { error: "not found", method: Method, path: Path });
+	SendJson(Res, 404, { error: "not found", method: Method, path: Path };
 }
 
 /**
@@ -390,10 +390,10 @@ function SafeSerialize(V: unknown): unknown {
 	if (V === undefined) return null;
 
 	try {
-		JSON.stringify(V);
+		JSON.stringify(V;
 
 		return V;
 	} catch {
-		return String(V);
+		return String(V;
 	}
 }

@@ -7,7 +7,6 @@
  * Source: src/vs/workbench/api/common/extHostProgressService.ts
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 /**
@@ -28,7 +27,7 @@ export const WithProgress = <T>(
 	},
 
 	Logger: {
-		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 	},
 
 	Options: VSCode.ProgressOptions,
@@ -38,13 +37,13 @@ export const WithProgress = <T>(
 
 		Token: VSCode.CancellationToken,
 	) => Promise<T>,
-): Effect.Effect<T, Error> =>
-	Effect.gen(function* () {
+): Promise<T> =>
+	async function() {
 		const ProgressId = `progress-${crypto.randomUUID()}`;
 
 		yield* Logger.Info(
 			`[WindowService] Starting progress: ${Options.location} (${ProgressId})`,
-		);
+		;
 
 		// Create a minimal cancellation token (cancellation via Mountain is a future TODO)
 		const CancellationToken: VSCode.CancellationToken = {
@@ -65,7 +64,7 @@ export const WithProgress = <T>(
 					id: ProgressId,
 					message: Value.message,
 					increment: Value.increment,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 		};
 
@@ -79,7 +78,7 @@ export const WithProgress = <T>(
 					cancellable: Options.cancellable ?? false,
 				}),
 			catch: () => new Error("Failed to start progress"),
-		});
+		};
 
 		// Execute the task
 		const Result = yield* Effect.tryPromise({
@@ -87,9 +86,9 @@ export const WithProgress = <T>(
 			catch: (Error_) => {
 				throw new Error(
 					`Progress task failed: ${(Error_ as Error).message}`,
-				);
+				;
 			},
-		});
+		};
 
 		// Notify Mountain to dismiss the progress indicator
 		yield* Effect.tryPromise({
@@ -98,7 +97,7 @@ export const WithProgress = <T>(
 					id: ProgressId,
 				}),
 			catch: () => new Error("Failed to complete progress"),
-		});
+		};
 
 		return Result;
-	});
+	};

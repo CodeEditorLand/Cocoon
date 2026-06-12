@@ -21,7 +21,6 @@
  * - CreateWebviewPanel: COMPLETE → WebviewPanel.ts
  */
 
-import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
@@ -52,18 +51,18 @@ export type { VSCodeWindowAPI } from "./Interfaces.js";
  * document display by delegating to Mountain's native UI implementation via
  * gRPC.
  */
-export class WindowService extends Effect.Service<WindowService>()(
+export class WindowService extends /* Effect.Service */(
 	"Service/Window",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
 
 			const Workspace_ =
-				yield* Context.Tag<Workspace>("Service/Workspace");
+				yield* Symbol<Workspace>("Service/Workspace";
 
-			const Logger_ = yield* Context.Tag<Logger>("Service/Logger");
+			const Logger_ = yield* Symbol<Logger>("Service/Logger";
 
 			// Resolve the Mountain gRPC client (used by delegated operations)
 			const MountainGRPC = yield* MountainGRPCClientService;
@@ -76,14 +75,14 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 			// Event stream for window state changes
 			const OnDidChangeWindowStateStream =
-				CreateEventStream<VSCode.WindowState>();
+				CreateEventStream<VSCode.WindowState>(;
 
 			/**
 			 * Accept window state change notification from Mountain.
 			 * Fires the onDidChangeWindowState event stream for all subscribers.
 			 */
 			const AcceptWindowStateChange = (State: VSCode.WindowState) =>
-				Effect.gen(function* () {
+				async function() {
 					if (
 						_windowState.focused !== State.focused ||
 						_windowState.active !== State.active
@@ -92,11 +91,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 						yield* Logger_.Debug(
 							`[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`,
-						);
+						;
 
-						OnDidChangeWindowStateStream.Fire(State);
+						OnDidChangeWindowStateStream.Fire(State;
 					}
-				});
+				};
 
 			// Build the service implementation object
 			const ServiceImplementation: Window = {

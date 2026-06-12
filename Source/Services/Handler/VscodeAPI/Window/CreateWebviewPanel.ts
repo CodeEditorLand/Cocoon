@@ -86,7 +86,7 @@ export default (
 		title: Title,
 		showOptions: ShowOptions,
 		options: CurrentOptions,
-	}).catch(() => {});
+	}).catch(() => {};
 
 	// Forward reference for the ViewStateListener closure. The listener
 	// dereferences `PanelRef.value` to access the live Panel object; this
@@ -146,14 +146,14 @@ export default (
 
 		for (const Listener of ViewStateListeners.slice()) {
 			try {
-				Listener(Snapshot);
+				Listener(Snapshot;
 			} catch {
 				/* one bad listener mustn't break the chain */
 			}
 		}
 	};
 
-	Context.Emitter.on(ViewStateChannel, ViewStateListener);
+	Context.Emitter.on(ViewStateChannel, ViewStateListener;
 
 	// Per-handle dispose bridge. Mountain fires `webview.dispose:<handle>`
 	// when the workbench's WebviewInput is disposed (user closes the tab,
@@ -163,10 +163,10 @@ export default (
 	const DisposeChannel = `webview.dispose:${Handle}`;
 
 	const DisposeListener = () => {
-		DisposeInternal();
+		DisposeInternal(;
 	};
 
-	Context.Emitter.on(DisposeChannel, DisposeListener);
+	Context.Emitter.on(DisposeChannel, DisposeListener;
 
 	const DisposeInternal = () => {
 		if (Disposed) return;
@@ -177,19 +177,19 @@ export default (
 		// listeners so a listener that disposes the panel a second time
 		// doesn't re-enter.
 		try {
-			Context.Emitter.removeListener(ViewStateChannel, ViewStateListener);
+			Context.Emitter.removeListener(ViewStateChannel, ViewStateListener;
 		} catch {
 			/* swallow */
 		}
 
 		try {
-			Context.Emitter.removeListener(DisposeChannel, DisposeListener);
+			Context.Emitter.removeListener(DisposeChannel, DisposeListener;
 		} catch {
 			/* swallow */
 		}
 
 		try {
-			Context.Emitter.removeAllListeners(`webview.message:${Handle}`);
+			Context.Emitter.removeAllListeners(`webview.message:${Handle}`;
 		} catch {
 			/* swallow */
 		}
@@ -203,11 +203,11 @@ export default (
 		Context.MountainClient?.sendRequest("webview.dispose", {
 			handle: Handle,
 			viewId: ViewType,
-		}).catch(() => {});
+		}).catch(() => {};
 
 		for (const Listener of DisposeListeners.slice()) {
 			try {
-				Listener();
+				Listener(;
 			} catch {
 				/* swallow */
 			}
@@ -226,7 +226,7 @@ export default (
 		set title(Value: string) {
 			if (Disposed) return;
 
-			const Next = String(Value ?? "");
+			const Next = String(Value ?? "";
 
 			if (Next === CurrentTitle) return;
 
@@ -237,7 +237,7 @@ export default (
 				handle: Handle,
 				viewId: ViewType,
 				title: Next,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		get iconPath() {
@@ -253,7 +253,7 @@ export default (
 				handle: Handle,
 				viewId: ViewType,
 				iconPath: Value,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		webview: {
@@ -270,7 +270,7 @@ export default (
 					handle: Handle,
 					viewId: ViewType,
 					options: Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 
 			get html() {
@@ -294,7 +294,7 @@ export default (
 					handle: Handle,
 					viewId: ViewType,
 					html: Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 
 			get cspSource() {
@@ -321,7 +321,7 @@ export default (
 						"webview.postMessage",
 
 						{ handle: Handle, viewId: ViewType, message: Message },
-					);
+					;
 
 					return true;
 				} catch {
@@ -332,12 +332,12 @@ export default (
 			onDidReceiveMessage: (Listener: (Message: unknown) => any) => {
 				const Event = `webview.message:${Handle}`;
 
-				Context.Emitter.on(Event, Listener);
+				Context.Emitter.on(Event, Listener;
 
 				return {
 					dispose: () => {
 						try {
-							Context.Emitter.removeListener(Event, Listener);
+							Context.Emitter.removeListener(Event, Listener;
 						} catch {
 							/* swallow */
 						}
@@ -379,33 +379,33 @@ export default (
 				viewId: ViewType,
 				viewColumn: Column,
 				preserveFocus: PreserveFocus,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		dispose: () => {
-			DisposeInternal();
+			DisposeInternal(;
 		},
 
 		onDidDispose: (Listener: () => any) => {
-			DisposeListeners.push(Listener);
+			DisposeListeners.push(Listener;
 
 			return {
 				dispose: () => {
-					const Index = DisposeListeners.indexOf(Listener);
+					const Index = DisposeListeners.indexOf(Listener;
 
-					if (Index >= 0) DisposeListeners.splice(Index, 1);
+					if (Index >= 0) DisposeListeners.splice(Index, 1;
 				},
 			};
 		},
 
 		onDidChangeViewState: (Listener: (State: unknown) => any) => {
-			ViewStateListeners.push(Listener);
+			ViewStateListeners.push(Listener;
 
 			return {
 				dispose: () => {
-					const Index = ViewStateListeners.indexOf(Listener);
+					const Index = ViewStateListeners.indexOf(Listener;
 
-					if (Index >= 0) ViewStateListeners.splice(Index, 1);
+					if (Index >= 0) ViewStateListeners.splice(Index, 1;
 				},
 			};
 		},

@@ -23,11 +23,11 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
  * Infer the languageId from a URI string based on file extension.
  */
 const InferLanguageIdentifier = (Uri: string): string => {
-	const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/);
+	const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/;
 
 	if (!ExtensionMatch?.[1]) return "plaintext";
 
-	const Extension = ExtensionMatch[1]!.toLowerCase();
+	const Extension = ExtensionMatch[1]!.toLowerCase(;
 
 	const LanguageMap: Record<string, string> = {
 		ts: "typescript",
@@ -125,11 +125,11 @@ const BuildTextDocument = (
 
 	LanguageIdentifier?: string,
 ): TextDocumentShape => {
-	const Lines = Content.split(/\r?\n/);
+	const Lines = Content.split(/\r?\n/;
 
-	const FileName = Uri.replace(/^file:\/\//, "");
+	const FileName = Uri.replace(/^file:\/\//, "";
 
-	const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri);
+	const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri;
 
 	return {
 		uri: {
@@ -181,20 +181,20 @@ const BuildTextDocument = (
 					StartCharacter,
 
 					EndCharacter,
-				);
+				;
 			}
 
 			const Result: string[] = [];
 
-			Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
+			Result.push((Lines[StartLine] ?? "").substring(StartCharacter);
 
 			for (let Index = StartLine + 1; Index < EndLine; Index++) {
-				Result.push(Lines[Index] ?? "");
+				Result.push(Lines[Index] ?? "";
 			}
 
-			Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
+			Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter);
 
-			return Result.join("\n");
+			return Result.join("\n";
 		},
 
 		lineAt: (
@@ -321,7 +321,7 @@ interface TextDocumentShape {
 }
 
 /** Track document versions keyed by URI */
-const DocumentVersionMap: Map<string, number> = new Map();
+const DocumentVersionMap: Map<string, number> = new Map(;
 
 /**
  * Handle document content change from Mountain.
@@ -363,7 +363,7 @@ const HandleDocumentChange = (
 		EventData?.content ?? EventData?.Content ?? EventData?.text;
 
 	if (Uri && Content !== undefined) {
-		DocumentContentCache.set(Uri, Content);
+		DocumentContentCache.set(Uri, Content;
 	} else if (Uri && (EventData?.changes || Parameters?.changes)) {
 		// Incremental changes - apply edits to cached content
 		const Existing = DocumentContentCache.get(Uri) ?? "";
@@ -379,7 +379,7 @@ const HandleDocumentChange = (
 		// Apply changes in reverse order (largest offset first) to avoid index shifts
 		const Sorted = [...Changes].sort(
 			(A: any, B: any) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0),
-		);
+		;
 
 		for (const Change of Sorted) {
 			const Offset = Change.rangeOffset ?? 0;
@@ -391,27 +391,27 @@ const HandleDocumentChange = (
 			Updated =
 				Updated.substring(0, Offset) +
 				Text +
-				Updated.substring(Offset + Length);
+				Updated.substring(Offset + Length;
 		}
 
-		DocumentContentCache.set(Uri, Updated);
+		DocumentContentCache.set(Uri, Updated;
 	}
 
 	// Emit workspace event with updated content
 	if (Uri && WorkspaceEventEmitter) {
 		const CurrentVersion = (DocumentVersionMap.get(Uri) ?? 1) + 1;
 
-		DocumentVersionMap.set(Uri, CurrentVersion);
+		DocumentVersionMap.set(Uri, CurrentVersion;
 
 		const CachedContent = DocumentContentCache.get(Uri) ?? "";
 
-		const Document = BuildTextDocument(Uri, CachedContent, CurrentVersion);
+		const Document = BuildTextDocument(Uri, CachedContent, CurrentVersion;
 
 		WorkspaceEventEmitter.emit("didChangeTextDocument", {
 			document: Document,
 			contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
 			reason: undefined,
-		});
+		};
 	}
 };
 
@@ -447,7 +447,7 @@ const HandleDocumentOpen = (
 		let Content: string | undefined;
 
 		if (Array.isArray(Lines)) {
-			Content = Lines.join(EOL);
+			Content = Lines.join(EOL;
 		} else {
 			Content = Model?.content ?? Model?.Content ?? Model?.text;
 		}
@@ -456,15 +456,15 @@ const HandleDocumentOpen = (
 			Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
 
 		if (Uri && Content !== undefined) {
-			DocumentContentCache.set(Uri, Content);
+			DocumentContentCache.set(Uri, Content;
 
-			DocumentVersionMap.set(Uri, 1);
+			DocumentVersionMap.set(Uri, 1;
 
 			CocoonDevLog(
 				"document",
 
 				`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`,
-			);
+			;
 
 			if (WorkspaceEventEmitter) {
 				const Document = BuildTextDocument(
@@ -475,9 +475,9 @@ const HandleDocumentOpen = (
 					1,
 
 					LanguageIdentifier,
-				);
+				;
 
-				WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
+				WorkspaceEventEmitter.emit("didOpenTextDocument", Document;
 			}
 		}
 	}
@@ -512,14 +512,14 @@ const HandleDocumentClose = (
 
 				const Version = DocumentVersionMap.get(Uri) ?? 1;
 
-				const Document = BuildTextDocument(Uri, CachedContent, Version);
+				const Document = BuildTextDocument(Uri, CachedContent, Version;
 
-				WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
+				WorkspaceEventEmitter.emit("didCloseTextDocument", Document;
 			}
 
-			DocumentContentCache.delete(Uri);
+			DocumentContentCache.delete(Uri;
 
-			DocumentVersionMap.delete(Uri);
+			DocumentVersionMap.delete(Uri;
 		}
 	}
 };
@@ -549,16 +549,16 @@ const HandleDocumentSave = (
 					Item?.uri?.external ??
 					Item?.uri ??
 					Item?.Uri ??
-					"");
+					"";
 
 		if (Uri) {
 			const CachedContent = DocumentContentCache.get(Uri) ?? "";
 
 			const Version = DocumentVersionMap.get(Uri) ?? 1;
 
-			const Document = BuildTextDocument(Uri, CachedContent, Version);
+			const Document = BuildTextDocument(Uri, CachedContent, Version;
 
-			WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
+			WorkspaceEventEmitter.emit("didSaveTextDocument", Document;
 		}
 	}
 };

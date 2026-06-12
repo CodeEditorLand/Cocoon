@@ -10,21 +10,21 @@ import { URL } from "node:url";
 import { CocoonDevLog } from "../../Services/Dev/Log.js";
 import RouteRequest from "../../Services/Handler/Request/Routing/Handler.js";
 
-const _Port = parseInt(process.env["COCOON_WS_PORT"] ?? "0", 10);
+const _Port = parseInt(process.env["COCOON_WS_PORT"] ?? "0", 10;
 
-const _SecretHex = (process.env["COCOON_WS_SECRET"] ?? "").toLowerCase();
+const _SecretHex = (process.env["COCOON_WS_SECRET"] ?? "").toLowerCase(;
 
 function _Match(c: string): boolean {
 	if (!_SecretHex || !c) return false;
 
 	try {
-		const A = Buffer.from(_SecretHex, "hex");
+		const A = Buffer.from(_SecretHex, "hex";
 
-		const B = Buffer.from(c.toLowerCase(), "hex");
+		const B = Buffer.from(c.toLowerCase(), "hex";
 
 		if (A.length !== B.length) return false;
 
-		return timingSafeEqual(A, B);
+		return timingSafeEqual(A, B;
 	} catch {
 		return false;
 	}
@@ -49,14 +49,14 @@ async function _Handle(ws: any, raw: string): Promise<void> {
 		if (!method) return;
 
 		if (id === null) {
-			RouteRequest(method, m.params ?? {}).catch(() => {});
+			RouteRequest(method, m.params ?? {}).catch(() => {};
 
 			return;
 		}
 
-		const result = await RouteRequest(method, m.params ?? {});
+		const result = await RouteRequest(method, m.params ?? {};
 
-		ws.send(JSON.stringify({ id, result: result ?? null }));
+		ws.send(JSON.stringify({ id, result: result ?? null });
 	} catch (e) {
 		if (id !== null)
 			ws.send(
@@ -64,7 +64,7 @@ async function _Handle(ws: any, raw: string): Promise<void> {
 					id,
 					error: e instanceof Error ? e.message : String(e),
 				}),
-			);
+			;
 	}
 }
 
@@ -74,16 +74,16 @@ export async function StartWebSocketServer(): Promise<void> {
 			"ws",
 
 			"[WS] COCOON_WS_PORT/SECRET unset - WS server skipped",
-		);
+		;
 
 		return;
 	}
 
-	const { WebSocketServer } = await import("ws");
+	const { WebSocketServer } = await import("ws";
 
-	const http = createServer();
+	const http = createServer(;
 
-	const wss = new WebSocketServer({ noServer: true });
+	const wss = new WebSocketServer({ noServer: true };
 
 	http.on("upgrade", (req, sock, head) => {
 		let cand = "";
@@ -110,41 +110,41 @@ export async function StartWebSocketServer(): Promise<void> {
 		if (!_Match(cand)) {
 			sock.write(
 				"HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n",
-			);
+			;
 
-			sock.destroy();
+			sock.destroy(;
 
 			return;
 		}
 
 		wss.handleUpgrade(req, sock, head, (c) =>
 			wss.emit("connection", c, req),
-		);
-	});
+		;
+	};
 
 	wss.on("connection", (ws: any) => {
-		CocoonDevLog("ws", "[WS] client connected");
+		CocoonDevLog("ws", "[WS] client connected";
 
-		ws.on("message", (raw: any) => void _Handle(ws, raw.toString()));
+		ws.on("message", (raw: any) => void _Handle(ws, raw.toString());
 
-		ws.on("close", () => CocoonDevLog("ws", "[WS] disconnected"));
+		ws.on("close", () => CocoonDevLog("ws", "[WS] disconnected");
 
 		ws.on("error", (e: Error) =>
 			CocoonDevLog("ws", "[WS] error: " + e.message),
-		);
-	});
+		;
+	};
 
 	await new Promise<void>((res, rej) => {
 		http.listen(_Port, "127.0.0.1", () => {
 			process.stdout.write(
 				"[LandFix:WS] WebSocket server on 127.0.0.1:" + _Port + "\n",
-			);
+			;
 
-			res();
-		});
+			res(;
+		};
 
-		http.once("error", rej);
-	});
+		http.once("error", rej;
+	};
 }
 
 export default StartWebSocketServer;

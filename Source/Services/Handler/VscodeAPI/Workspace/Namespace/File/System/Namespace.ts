@@ -72,14 +72,14 @@ const UriToString = (Value: unknown): string => {
 			typeof WithToString.toString === "function" &&
 			WithToString.toString !== Object.prototype.toString
 		) {
-			const Rendered = WithToString.toString();
+			const Rendered = WithToString.toString(;
 
 			if (Rendered && Rendered !== "[object Object]") return Rendered;
 		}
 
-		const Hydrated = StockToUri(Value);
+		const Hydrated = StockToUri(Value;
 
-		if (Hydrated) return Hydrated.toString();
+		if (Hydrated) return Hydrated.toString(;
 
 		const WithParts = Value as {
 			scheme?: unknown;
@@ -126,7 +126,7 @@ const UriToString = (Value: unknown): string => {
 		}
 	}
 
-	return String(Value);
+	return String(Value;
 };
 
 type StatShape = {
@@ -167,7 +167,7 @@ const LogRoute = (
 
 	process.stdout.write(
 		`[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${UriToString(Uri)}\n`,
-	);
+	;
 };
 
 const ThrowFileNotFound = (Uri: unknown): never => {
@@ -175,11 +175,11 @@ const ThrowFileNotFound = (Uri: unknown): never => {
 
 	const FileNotFound = Api?.FileSystemError?.FileNotFound;
 
-	if (typeof FileNotFound === "function") throw FileNotFound(Uri);
+	if (typeof FileNotFound === "function") throw FileNotFound(Uri;
 
 	const Synthetic: any = new Error(
 		`EntryNotFound (FileSystemError): ${UriToString(Uri)}`,
-	);
+	;
 
 	Synthetic.code = "FileNotFound";
 
@@ -210,23 +210,23 @@ const MetadataToStat = (Metadata: {
 	mtime: Math.floor(Metadata.mtimeMs),
 
 	ctime: Math.floor(Metadata.ctimeMs),
-});
+};
 
 export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 	stat: async (Uri: any): Promise<StatShape> => {
-		const Decision = Route(Uri);
+		const Decision = Route(Uri;
 
-		LogRoute("stat", Uri, Decision);
+		LogRoute("stat", Uri, Decision;
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
 
 			try {
-				const Metadata = await FsPromises.lstat(Path);
+				const Metadata = await FsPromises.lstat(Path;
 
-				return MetadataToStat(Metadata);
+				return MetadataToStat(Metadata;
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri;
 
 				throw Err;
 			}
@@ -241,21 +241,21 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 				ctime: 0,
 				mtime: 0,
 			}
-		);
+		;
 	},
 
 	readFile: async (Uri: any): Promise<Uint8Array> => {
-		const Decision = Route(Uri);
+		const Decision = Route(Uri;
 
-		LogRoute("readFile", Uri, Decision);
+		LogRoute("readFile", Uri, Decision;
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
 
 			try {
-				return await FsPromises.readFile(Path);
+				return await FsPromises.readFile(Path;
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri;
 
 				throw Err;
 			}
@@ -266,29 +266,29 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		// be able to pass directly to `JSON.parse(...)` - a plain
 		// `Uint8Array` fails because its `.toString()` is comma-joined.
 		// Node `Buffer` extends `Uint8Array` and decodes UTF-8 by default.
-		const UriString = UriToString(Uri);
+		const UriString = UriToString(Uri;
 
 		try {
 			const Raw = await Context.MountainClient?.sendRequest(
 				"FileSystem.ReadFile",
 
 				[UriString],
-			);
+			;
 
-			if (Raw == null) return Buffer.alloc(0);
+			if (Raw == null) return Buffer.alloc(0;
 
 			if (Array.isArray(Raw))
-				return Buffer.from(Raw as readonly number[]);
+				return Buffer.from(Raw as readonly number[];
 
-			if (Raw instanceof Uint8Array) return Buffer.from(Raw);
+			if (Raw instanceof Uint8Array) return Buffer.from(Raw;
 
-			return Buffer.from(String(Raw), "utf8");
+			return Buffer.from(String(Raw), "utf8";
 		} catch (Err: unknown) {
-			const Message = Err instanceof Error ? Err.message : String(Err);
+			const Message = Err instanceof Error ? Err.message : String(Err;
 
 			const Code = (Err as { code?: number | string } | null)?.code;
 
-			const TraceFsRead = process.env["Trace"]?.includes("fs-read");
+			const TraceFsRead = process.env["Trace"]?.includes("fs-read";
 
 			if (
 				Code === -32004 ||
@@ -303,26 +303,26 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 				if (TraceFsRead) {
 					process.stdout.write(
 						`[LandFix:FsRead] 404 → FileNotFound for ${UriString}\n`,
-					);
+					;
 				}
 
-				ThrowFileNotFound(Uri);
+				ThrowFileNotFound(Uri;
 			}
 
 			// Non-404 failures surface unconditionally - these indicate
 			// genuine IO / permission / protocol problems.
 			process.stdout.write(
 				`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}\n`,
-			);
+			;
 
 			throw Err;
 		}
 	},
 
 	writeFile: async (Uri: any, Content: Uint8Array): Promise<void> => {
-		const Decision = Route(Uri);
+		const Decision = Route(Uri;
 
-		LogRoute("writeFile", Uri, Decision);
+		LogRoute("writeFile", Uri, Decision;
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
@@ -332,15 +332,15 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			// writeFile). Silent failure is correct when the parent
 			// already exists; a real permission failure will surface on
 			// the write itself.
-			const Parent = PathDirname(Path);
+			const Parent = PathDirname(Path;
 
 			if (Parent && Parent !== Path) {
 				await FsPromises.mkdir(Parent, { recursive: true }).catch(
 					() => {},
-				);
+				;
 			}
 
-			await FsPromises.writeFile(Path, Content);
+			await FsPromises.writeFile(Path, Content;
 
 			return;
 		}
@@ -351,19 +351,19 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		// emit BOM-prefixed UTF-16). Forward as a number array so Mountain
 		// can write the exact bytes the extension produced. Mountain's
 		// `FileSystem.WriteFile` accepts both shapes.
-		const Bytes: number[] = Array.from(Content);
+		const Bytes: number[] = Array.from(Content;
 
 		await Call<void>(Context, "FileSystem.WriteFile", [
 			UriToString(Uri),
 
 			Bytes,
-		]);
+		];
 	},
 
 	readDirectory: async (Uri: any): Promise<Array<[string, number]>> => {
-		const Decision = Route(Uri);
+		const Decision = Route(Uri;
 
-		LogRoute("readDirectory", Uri, Decision);
+		LogRoute("readDirectory", Uri, Decision;
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
@@ -371,7 +371,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			try {
 				const Entries = await FsPromises.readdir(Path, {
 					withFileTypes: true,
-				});
+				};
 
 				return Entries.map((Entry) => {
 					const Type = Entry.isSymbolicLink()
@@ -381,9 +381,9 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 							: FileType.File;
 
 					return [Entry.name, Type] as [string, number];
-				});
+				};
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri;
 
 				throw Err;
 			}
@@ -399,21 +399,21 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 	},
 
 	createDirectory: async (Uri: any): Promise<void> => {
-		const Decision = Route(Uri);
+		const Decision = Route(Uri;
 
-		LogRoute("createDirectory", Uri, Decision);
+		LogRoute("createDirectory", Uri, Decision;
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
 
-			await FsPromises.mkdir(Path, { recursive: true });
+			await FsPromises.mkdir(Path, { recursive: true };
 
 			return;
 		}
 
 		await Call<void>(Context, "FileSystem.CreateDirectory", [
 			UriToString(Uri),
-		]);
+		];
 	},
 
 	delete: async (
@@ -421,9 +421,9 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 
 		Options?: { recursive?: boolean; useTrash?: boolean },
 	): Promise<void> => {
-		const Decision = Route(Uri);
+		const Decision = Route(Uri;
 
-		LogRoute("delete", Uri, Decision);
+		LogRoute("delete", Uri, Decision;
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
@@ -432,11 +432,11 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 				await FsPromises.rm(Path, {
 					recursive: Options?.recursive ?? false,
 					force: false,
-				});
+				};
 
 				return;
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri;
 
 				throw Err;
 			}
@@ -446,7 +446,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			UriToString(Uri),
 
 			Options?.recursive ?? false,
-		]);
+		];
 	},
 
 	rename: async (
@@ -459,16 +459,16 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 		// Rename routes tier-wise on the SOURCE uri; cross-scheme rename
 		// is technically a Mountain problem because native `fs.rename`
 		// can't move file://foo to vscode-userdata://User/bar.
-		const SourceRoute = Route(Source);
+		const SourceRoute = Route(Source;
 
-		const TargetRoute = Route(Target);
+		const TargetRoute = Route(Target;
 
 		const Decision: FileSystemRoute =
 			SourceRoute === "native" && TargetRoute === "native"
 				? "native"
 				: "mountain";
 
-		LogRoute("rename", Source, Decision);
+		LogRoute("rename", Source, Decision;
 
 		if (Decision === "native") {
 			const SourcePath = ExtractFsPath(Source)!;
@@ -476,11 +476,11 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			const TargetPath = ExtractFsPath(Target)!;
 
 			try {
-				await FsPromises.rename(SourcePath, TargetPath);
+				await FsPromises.rename(SourcePath, TargetPath;
 
 				return;
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Source;
 
 				throw Err;
 			}
@@ -490,7 +490,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			UriToString(Source),
 
 			UriToString(Target),
-		]);
+		];
 	},
 
 	copy: async (
@@ -500,16 +500,16 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 
 		_Options?: { overwrite?: boolean },
 	): Promise<void> => {
-		const SourceRoute = Route(Source);
+		const SourceRoute = Route(Source;
 
-		const TargetRoute = Route(Target);
+		const TargetRoute = Route(Target;
 
 		const Decision: FileSystemRoute =
 			SourceRoute === "native" && TargetRoute === "native"
 				? "native"
 				: "mountain";
 
-		LogRoute("copy", Source, Decision);
+		LogRoute("copy", Source, Decision;
 
 		if (Decision === "native") {
 			const SourcePath = ExtractFsPath(Source)!;
@@ -517,20 +517,20 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			const TargetPath = ExtractFsPath(Target)!;
 
 			// Ensure parent exists, matching writeFile's contract.
-			const Parent = PathDirname(TargetPath);
+			const Parent = PathDirname(TargetPath;
 
 			if (Parent && Parent !== TargetPath) {
 				await FsPromises.mkdir(Parent, { recursive: true }).catch(
 					() => {},
-				);
+				;
 			}
 
 			try {
-				await FsPromises.copyFile(SourcePath, TargetPath);
+				await FsPromises.copyFile(SourcePath, TargetPath;
 
 				return;
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Source);
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Source;
 
 				throw Err;
 			}
@@ -540,7 +540,7 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 			UriToString(Source),
 
 			UriToString(Target),
-		]);
+		];
 	},
 
 	isWritableFileSystem: (Scheme: string): boolean => {
@@ -552,4 +552,4 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 
 		return true;
 	},
-});
+};

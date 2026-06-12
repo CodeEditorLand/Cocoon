@@ -96,7 +96,7 @@ export default (
 		let TotalMessageSize = 0;
 
 		for (const Message of Messages) {
-			const Result = SerializeMessage(Message);
+			const Result = SerializeMessage(Message;
 
 			if (!Result.Success) {
 				return {
@@ -112,7 +112,7 @@ export default (
 				};
 			}
 
-			SerializedMessages.push(Result.Data!);
+			SerializedMessages.push(Result.Data!;
 
 			TotalMessageSize += Result.Data!.length;
 		}
@@ -145,9 +145,9 @@ export default (
 			CompressionHint: Hint,
 		};
 
-		const BatchMetadataJSON = JSON.stringify(BatchMetadata);
+		const BatchMetadataJSON = JSON.stringify(BatchMetadata;
 
-		const BatchMetadataBuffer = VSBuffer.FromString(BatchMetadataJSON);
+		const BatchMetadataBuffer = VSBuffer.FromString(BatchMetadataJSON;
 
 		// Calculate total buffer size
 		OriginalSize =
@@ -158,35 +158,35 @@ export default (
 			TotalMessageSize;
 
 		// Allocate buffer
-		const Buffer = VSBuffer.Allocate(OriginalSize);
+		const Buffer = VSBuffer.Allocate(OriginalSize;
 
 		let Offset = 0;
 
 		// Write message count
-		Buffer.writeUInt32LE(Offset, Messages.length);
+		Buffer.writeUInt32LE(Offset, Messages.length;
 
 		Offset += 4;
 
 		// Write metadata length
-		Buffer.writeUInt32LE(Offset, BatchMetadataBuffer.length);
+		Buffer.writeUInt32LE(Offset, BatchMetadataBuffer.length;
 
 		Offset += 4;
 
 		// Write metadata
-		Buffer.setBytes(Offset, BatchMetadataBuffer.byteBuffer);
+		Buffer.setBytes(Offset, BatchMetadataBuffer.byteBuffer;
 
 		Offset += BatchMetadataBuffer.length;
 
 		// Write message headers (lengths)
 		for (const SerializedMessage of SerializedMessages) {
-			Buffer.writeUInt32LE(Offset, SerializedMessage.length);
+			Buffer.writeUInt32LE(Offset, SerializedMessage.length;
 
 			Offset += 4;
 		}
 
 		// Write message data
 		for (const MessageData of SerializedMessages) {
-			Buffer.setBytes(Offset, MessageData);
+			Buffer.setBytes(Offset, MessageData;
 
 			Offset += MessageData.length;
 		}
@@ -195,7 +195,7 @@ export default (
 
 		const ResultData = Buffer.slice(0, FinalSize).byteBuffer;
 
-		Warnings.push(`Successfully batched ${Messages.length} messages`);
+		Warnings.push(`Successfully batched ${Messages.length} messages`;
 
 		return {
 			Success: true,

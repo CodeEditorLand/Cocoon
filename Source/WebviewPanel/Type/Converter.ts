@@ -135,17 +135,17 @@ export interface TypeConverter {
  * @class TypeConverterService
  * @description Service for Webview type conversions
  */
-export class TypeConverterService extends Effect.Service<TypeConverterService>()(
+export class TypeConverterService extends /* Effect.Service */(
 	"TypeConverter/WebviewPanel",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			/**
 			 * Convert VSCode Uri to string representation
 			 */
 			const ConvertUriToString = (Uri: Uri): string => {
 				// Convert VSCode Uri to string for DTO transport
-				return Uri.toString();
+				return Uri.toString(;
 			};
 
 			/**

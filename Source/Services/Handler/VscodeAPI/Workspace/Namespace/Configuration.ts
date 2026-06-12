@@ -51,13 +51,13 @@ export type ConfigurationState = {
 export const CreateConfigurationState = (
 	Context: HandlerContext,
 ): ConfigurationState => {
-	const ConfigCache = new Map<string, unknown>();
+	const ConfigCache = new Map<string, unknown>(;
 
-	const ConfigInFlight = new Set<string>();
+	const ConfigInFlight = new Set<string>(;
 
 	const ConfigListeners = new Set<
 		(Event: ConfigurationChangeEvent) => void
-	>();
+	>(;
 
 	const FireConfigChange = (ChangedKey: string): void => {
 		if (ConfigListeners.size === 0) return;
@@ -70,7 +70,7 @@ export const CreateConfigurationState = (
 
 		for (const Listener of ConfigListeners) {
 			try {
-				Listener(Event);
+				Listener(Event;
 			} catch {
 				// Never let a bad listener abort the fan-out.
 			}
@@ -80,7 +80,7 @@ export const CreateConfigurationState = (
 	const PrimeConfig = (Key: string): void => {
 		if (ConfigInFlight.has(Key)) return;
 
-		ConfigInFlight.add(Key);
+		ConfigInFlight.add(Key;
 
 		void Call<{ value?: unknown } | unknown>(
 			Context,
@@ -89,7 +89,7 @@ export const CreateConfigurationState = (
 
 			[Key],
 		).then((Value) => {
-			ConfigInFlight.delete(Key);
+			ConfigInFlight.delete(Key;
 
 			if (Value === undefined) return;
 
@@ -113,12 +113,12 @@ export const CreateConfigurationState = (
 				Shape?.["defaultValue"] ??
 				Value;
 
-			const Prior = ConfigCache.get(Key);
+			const Prior = ConfigCache.get(Key;
 
-			ConfigCache.set(Key, Resolved);
+			ConfigCache.set(Key, Resolved;
 
-			if (Prior !== Resolved) FireConfigChange(Key);
-		});
+			if (Prior !== Resolved) FireConfigChange(Key;
+		};
 	};
 
 	const TypeSafeDefault = (Decl: {
@@ -222,10 +222,10 @@ export const CreateConfigurationState = (
 					const Value =
 						"default" in Declaration
 							? Declaration.default
-							: TypeSafeDefault(Declaration);
+							: TypeSafeDefault(Declaration;
 
 					if (Value !== undefined) {
-						ConfigCache.set(DottedKey, Value);
+						ConfigCache.set(DottedKey, Value;
 
 						Seeded++;
 					}
@@ -244,7 +244,7 @@ export const CreateConfigurationState = (
 			"config-prime",
 
 			`[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`,
-		);
+		;
 	};
 
 	// Listen for Mountain-side `configuration.change` notifications (routed
@@ -288,23 +288,23 @@ export const CreateConfigurationState = (
 		if (Keys.length === 1 && Keys[0] === "*") {
 			const CachedKeys = [...ConfigCache.keys()];
 
-			ConfigCache.clear();
+			ConfigCache.clear(;
 
 			for (const Key of CachedKeys) {
-				PrimeConfig(Key);
+				PrimeConfig(Key;
 			}
 
 			return;
 		}
 
 		for (const Key of Keys) {
-			ConfigCache.delete(Key);
+			ConfigCache.delete(Key;
 
-			FireConfigChange(Key);
+			FireConfigChange(Key;
 
-			PrimeConfig(Key);
+			PrimeConfig(Key;
 		}
-	});
+	};
 
 	return {
 		ConfigCache,
@@ -348,9 +348,9 @@ const SynthesiseSubtree = (
 
 		Matched = true;
 
-		const Local = CachedKey.slice(Prefix.length);
+		const Local = CachedKey.slice(Prefix.length;
 
-		const Parts = Local.split(".");
+		const Parts = Local.split(".";
 
 		let Current: Record<string, unknown> = Subtree;
 
@@ -407,10 +407,10 @@ export const BuildGetConfiguration =
 					State.ConfigCache,
 
 					LangSection,
-				);
+				;
 
 				if (LangSubtree !== undefined) {
-					const Parts = Key.split(".");
+					const Parts = Key.split(".";
 
 					let Cur: unknown = LangSubtree;
 
@@ -429,12 +429,12 @@ export const BuildGetConfiguration =
 
 				// Trigger a background prime for the language-scoped key
 				if (!State.ConfigCache.has(Full)) {
-					State.PrimeConfig(Full);
+					State.PrimeConfig(Full;
 				}
 			}
 
 			if (State.ConfigCache.has(Full)) {
-				const Cached = State.ConfigCache.get(Full);
+				const Cached = State.ConfigCache.get(Full;
 
 				// When Mountain's inspector reports a branch key as
 				// `null`/`undefined` (no user override), prefer the
@@ -443,14 +443,14 @@ export const BuildGetConfiguration =
 				// shadow the leaf defaults and the extension's
 				// `cfg.codeLens.enabled` read would throw on `null`.
 				if (Cached === null || Cached === undefined) {
-					const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+					const Subtree = SynthesiseSubtree(State.ConfigCache, Full;
 
 					if (Subtree !== undefined) {
 						CocoonDevLog(
 							"config-prime",
 
 							`[ConfigPrime] synthesise key=${Full} source=null-shadowed`,
-						);
+						;
 
 						return Subtree as T;
 					}
@@ -469,14 +469,14 @@ export const BuildGetConfiguration =
 			// synthesise `{ format, enabled, ... }` from cached leaves so
 			// extensions that do `cfg.blame.format` get the expected shape
 			// rather than `TypeError: Cannot read properties of undefined`.
-			const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+			const Subtree = SynthesiseSubtree(State.ConfigCache, Full;
 
 			if (Subtree !== undefined) {
 				CocoonDevLog(
 					"config-prime",
 
 					`[ConfigPrime] synthesise key=${Full} source=miss`,
-				);
+				;
 
 				// When the caller provided a default (declared complete shape),
 				// merge it under the synthesised partial so all expected keys
@@ -499,7 +499,7 @@ export const BuildGetConfiguration =
 				return Subtree as T;
 			}
 
-			State.PrimeConfig(Full);
+			State.PrimeConfig(Full;
 
 			return DefaultValue;
 		},
@@ -522,15 +522,15 @@ export const BuildGetConfiguration =
 				Value,
 
 				TargetIndex,
-			]);
+			];
 
 			// Write through so the next `get()` reflects the change and
 			// so listeners fire without waiting for a Mountain round-trip.
-			const Prior = State.ConfigCache.get(Full);
+			const Prior = State.ConfigCache.get(Full;
 
-			State.ConfigCache.set(Full, Value);
+			State.ConfigCache.set(Full, Value;
 
-			if (Prior !== Value) State.FireConfigChange(Full);
+			if (Prior !== Value) State.FireConfigChange(Full;
 		},
 		has: (Key: string): boolean => {
 			const Full = Section ? `${Section}.${Key}` : Key;
@@ -542,7 +542,7 @@ export const BuildGetConfiguration =
 				return true;
 			}
 
-			State.PrimeConfig(Full);
+			State.PrimeConfig(Full;
 
 			return false;
 		},
@@ -554,10 +554,10 @@ export const BuildGetConfiguration =
 			if (State.ConfigCache.has(Full)) {
 				Cached = State.ConfigCache.get(Full) as T;
 			} else {
-				const Subtree = SynthesiseSubtree(State.ConfigCache, Full);
+				const Subtree = SynthesiseSubtree(State.ConfigCache, Full;
 
 				if (Subtree === undefined) {
-					State.PrimeConfig(Full);
+					State.PrimeConfig(Full;
 
 					return undefined;
 				}
@@ -578,7 +578,7 @@ export const BuildGetConfiguration =
 				languageIds: [] as string[],
 			};
 		},
-	});
+	};
 
 export const BuildOnDidChangeConfiguration =
 	(State: ConfigurationState) =>
@@ -595,18 +595,18 @@ export const BuildOnDidChangeConfiguration =
 		// `this.onDidChangeConfiguration(evt)` accesses its own class members.
 		// Without the bind, `this` is undefined in the callback and
 		// `this.refreshLogging()` throws.
-		const Bound = ThisArg === undefined ? Listener : Listener.bind(ThisArg);
+		const Bound = ThisArg === undefined ? Listener : Listener.bind(ThisArg;
 
-		State.ConfigListeners.add(Bound);
+		State.ConfigListeners.add(Bound;
 
 		const Subscription = {
 			dispose: () => {
-				State.ConfigListeners.delete(Bound);
+				State.ConfigListeners.delete(Bound;
 			},
 		};
 
 		if (Disposables && typeof Disposables.push === "function") {
-			Disposables.push(Subscription);
+			Disposables.push(Subscription;
 		}
 
 		return Subscription;

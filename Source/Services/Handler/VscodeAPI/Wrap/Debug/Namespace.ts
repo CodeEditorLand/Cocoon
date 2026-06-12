@@ -14,6 +14,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapDebugNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("debug", Concrete);
+	WrapNamespaceWithHeuristics("debug", Concrete;
 
 export default WrapDebugNamespace;

@@ -36,10 +36,10 @@ const FormatTimestamp = (): string => {
 	// `2024-01-15 10:23:45.123` - matches upstream `AbstractLogger`'s
 	// timestamp output so users see the same format they get from the
 	// built-in log channels.
-	const Now = new Date();
+	const Now = new Date(;
 
 	const Pad = (N: number, Width: number = 2) =>
-		String(N).padStart(Width, "0");
+		String(N).padStart(Width, "0";
 
 	return (
 		Now.getFullYear() +
@@ -55,7 +55,7 @@ const FormatTimestamp = (): string => {
 		Pad(Now.getSeconds()) +
 		"." +
 		Pad(Now.getMilliseconds(), 3)
-	);
+	;
 };
 
 const FormatLog = (Level: string, Message: string): string =>
@@ -83,14 +83,14 @@ export default (
 		handle: Handle,
 		name: Name,
 		log: IsLog,
-	}).catch(() => {});
+	}).catch(() => {};
 
 	const Append = (Value: string): void => {
 		Context.SendToMountain("outputChannel.append", {
 			handle: Handle,
 			name: Name,
 			value: Value,
-		}).catch(() => {});
+		}).catch(() => {};
 	};
 
 	const ShouldLog = (Level: LogLevel): boolean =>
@@ -116,14 +116,14 @@ export default (
 
 		for (const L of LevelListeners.slice()) {
 			try {
-				L(Resolved);
+				L(Resolved;
 			} catch {
 				/* swallow */
 			}
 		}
 	};
 
-	Context.Emitter?.on?.(LevelChannel, LevelListener);
+	Context.Emitter?.on?.(LevelChannel, LevelListener;
 
 	const Channel: Record<string, unknown> = {
 		name: Name,
@@ -135,7 +135,7 @@ export default (
 		clear: () => {
 			Context.SendToMountain("outputChannel.clear", {
 				handle: Handle,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		// `show(preserveFocus?)` is the modern signature; the historic
@@ -150,13 +150,13 @@ export default (
 			Context.SendToMountain("outputChannel.show", {
 				handle: Handle,
 				preserveFocus: Preserve,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		hide: () => {
 			Context.SendToMountain("outputChannel.hide", {
 				handle: Handle,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		// Stock VS Code's `replace(value)` does NOT prepend a newline;
@@ -167,19 +167,19 @@ export default (
 			Context.SendToMountain("outputChannel.replace", {
 				handle: Handle,
 				value: Value,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		dispose: () => {
 			try {
-				Context.Emitter?.off?.(LevelChannel, LevelListener);
+				Context.Emitter?.off?.(LevelChannel, LevelListener;
 			} catch {
 				/* swallow */
 			}
 
 			Context.SendToMountain("outputChannel.dispose", {
 				handle: Handle,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		get logLevel() {
@@ -187,13 +187,13 @@ export default (
 		},
 
 		onDidChangeLogLevel: (Listener: (Level: LogLevel) => unknown) => {
-			LevelListeners.push(Listener);
+			LevelListeners.push(Listener;
 
 			return {
 				dispose: () => {
-					const Index = LevelListeners.indexOf(Listener);
+					const Index = LevelListeners.indexOf(Listener;
 
-					if (Index >= 0) LevelListeners.splice(Index, 1);
+					if (Index >= 0) LevelListeners.splice(Index, 1;
 				},
 			};
 		},
@@ -205,36 +205,36 @@ export default (
 		trace: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Trace))
-					Append(FormatLog("trace", Message));
+					Append(FormatLog("trace", Message);
 			} else {
-				Append(`${Message}\n`);
+				Append(`${Message}\n`;
 			}
 		},
 
 		debug: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Debug))
-					Append(FormatLog("debug", Message));
+					Append(FormatLog("debug", Message);
 			} else {
-				Append(`${Message}\n`);
+				Append(`${Message}\n`;
 			}
 		},
 
 		info: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Info))
-					Append(FormatLog("info", Message));
+					Append(FormatLog("info", Message);
 			} else {
-				Append(`${Message}\n`);
+				Append(`${Message}\n`;
 			}
 		},
 
 		warn: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Warning))
-					Append(FormatLog("warning", Message));
+					Append(FormatLog("warning", Message);
 			} else {
-				Append(`${Message}\n`);
+				Append(`${Message}\n`;
 			}
 		},
 
@@ -242,12 +242,12 @@ export default (
 			const Text =
 				MessageOrError instanceof Error
 					? (MessageOrError.stack ?? MessageOrError.message)
-					: String(MessageOrError);
+					: String(MessageOrError;
 
 			if (IsLog) {
-				if (ShouldLog(LogLevel.Error)) Append(FormatLog("error", Text));
+				if (ShouldLog(LogLevel.Error)) Append(FormatLog("error", Text);
 			} else {
-				Append(`${Text}\n`);
+				Append(`${Text}\n`;
 			}
 		},
 	};

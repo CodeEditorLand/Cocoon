@@ -185,7 +185,7 @@ export function GetMessageType(
 		return ProtocolMessageType.Notification;
 	}
 
-	throw new Error("Invalid IPC protocol message");
+	throw new Error("Invalid IPC protocol message";
 }
 
 /**
@@ -206,7 +206,7 @@ export function ValidateMessage(message: unknown): boolean {
 			Array.isArray(msg.Parameters) &&
 			"Id" in msg &&
 			typeof msg.Id === "string"
-		);
+		;
 	}
 
 	// Response validation
@@ -278,9 +278,9 @@ export function CreateSuccessResponse<T>(id: string, data: T): IPCResponse {
  * Serialize protocol message to VSBuffer
  */
 export function SerializeMessage(message: ProtocolMessage): VSBuffer {
-	const json = JSON.stringify(message);
+	const json = JSON.stringify(message;
 
-	return VSBuffer.fromString(json);
+	return VSBuffer.fromString(json;
 }
 
 /**
@@ -288,19 +288,19 @@ export function SerializeMessage(message: ProtocolMessage): VSBuffer {
  */
 export function DeserializeMessage(buffer: VSBuffer): ProtocolMessage {
 	try {
-		const json = buffer.toString();
+		const json = buffer.toString(;
 
 		const message = JSON.parse(json) as ProtocolMessage;
 
 		if (!ValidateMessage(message.Message)) {
-			throw new Error("Invalid message structure");
+			throw new Error("Invalid message structure";
 		}
 
 		return message;
 	} catch (error) {
 		throw new Error(
 			`Failed to deserialize IPC message: ${error instanceof Error ? error.message : String(error)}`,
-		);
+		;
 	}
 }
 
@@ -314,7 +314,7 @@ export function IsRequest(message: IPCProtocolMessage): message is IPCRequest {
 		"Method" in message &&
 		"Parameters" in message &&
 		!("Success" in message)
-	);
+	;
 }
 
 /**
@@ -328,7 +328,7 @@ export function IsResponse(
 		"Success" in message &&
 		!("Method" in message) &&
 		!("Channel" in message)
-	);
+	;
 }
 
 /**
@@ -342,5 +342,5 @@ export function IsNotification(
 		"Type" in message &&
 		!("Id" in message) &&
 		!("Success" in message)
-	);
+	;
 }

@@ -40,7 +40,7 @@ export const BuildOpenTextDocument =
 
 			const UntitledKey = `untitled:Untitled-${Date.now()}`;
 
-			Context.DocumentContentCache.set(UntitledKey, InlineContent);
+			Context.DocumentContentCache.set(UntitledKey, InlineContent;
 
 			// Add to workspace.textDocuments so extensions iterating all open docs see it.
 			if (!Array.isArray((Context as any).__textDocuments))
@@ -58,12 +58,12 @@ export const BuildOpenTextDocument =
 				external: UntitledKey,
 			};
 
-			const Lines = InlineContent.split("\n");
+			const Lines = InlineContent.split("\n";
 
 			const LineStarts: number[] = [0];
 
 			for (let I = 0; I < InlineContent.length; I++) {
-				if (InlineContent.charCodeAt(I) === 10) LineStarts.push(I + 1);
+				if (InlineContent.charCodeAt(I) === 10) LineStarts.push(I + 1;
 			}
 
 			const PositionAt = (Off: number) => {
@@ -81,9 +81,9 @@ export const BuildOpenTextDocument =
 			};
 
 			const OffsetAt = (P: any) => {
-				const L = Math.max(0, Math.min(P?.line ?? 0, Lines.length - 1));
+				const L = Math.max(0, Math.min(P?.line ?? 0, Lines.length - 1);
 
-				return Math.max(0, (LineStarts[L] ?? 0) + (P?.character ?? 0));
+				return Math.max(0, (LineStarts[L] ?? 0) + (P?.character ?? 0);
 			};
 
 			const Doc = {
@@ -112,7 +112,7 @@ export const BuildOpenTextDocument =
 				offsetAt: OffsetAt,
 
 				lineAt: (N: any) => {
-					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+					const Ln = typeof N === "number" ? N : (N?.line ?? 0;
 
 					const T = Lines[Ln] ?? "";
 
@@ -143,7 +143,7 @@ export const BuildOpenTextDocument =
 				save: async () => false,
 			};
 
-			(Context as any).__textDocuments.push(Doc);
+			(Context as any).__textDocuments.push(Doc;
 
 			// Fire didOpenTextDocument so extensions subscribed to onDidOpenTextDocument see it.
 			setImmediate(() => {
@@ -152,9 +152,9 @@ export const BuildOpenTextDocument =
 						"didOpenTextDocument",
 
 						Doc,
-					);
+					;
 				} catch {}
-			});
+			};
 
 			return Doc;
 		}
@@ -162,15 +162,15 @@ export const BuildOpenTextDocument =
 		const UriString =
 			typeof UriOrPath === "string"
 				? UriOrPath
-				: (UriOrPath?.toString?.() ?? "");
+				: (UriOrPath?.toString?.() ?? "";
 
 		// `untitled:` scheme - blank document, no backend needed.
 		if (UriString.startsWith("untitled:") || UriString === "") {
 			const Content = Context.DocumentContentCache.get(UriString) ?? "";
 
-			const ULines = Content.split("\n");
+			const ULines = Content.split("\n";
 
-			const UntitledLang = DeriveLanguageIdFromUri(UriString);
+			const UntitledLang = DeriveLanguageIdFromUri(UriString;
 
 			return {
 				uri: UriOrPath ?? {
@@ -223,11 +223,11 @@ export const BuildOpenTextDocument =
 					for (let I = 0; I < (P?.line ?? 0); I++)
 						O += (ULines[I]?.length ?? 0) + 1;
 
-					return O + (P?.character ?? 0);
+					return O + (P?.character ?? 0;
 				},
 
 				lineAt: (N: any) => {
-					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
+					const Ln = typeof N === "number" ? N : (N?.line ?? 0;
 
 					const T = ULines[Ln] ?? "";
 
@@ -261,7 +261,7 @@ export const BuildOpenTextDocument =
 
 		// Cache hit short-circuits every backend - typed model registry
 		// already holds the latest contents.
-		const Cached = Context.DocumentContentCache.get(UriString);
+		const Cached = Context.DocumentContentCache.get(UriString;
 
 		let Text: string;
 
@@ -278,28 +278,28 @@ export const BuildOpenTextDocument =
 				if (typeof Raw === "string") return Raw;
 
 				if (Array.isArray(Raw)) {
-					return Buffer.from(Raw as number[]).toString("utf8");
+					return Buffer.from(Raw as number[]).toString("utf8";
 				}
 
 				if (Raw instanceof Uint8Array) {
-					return Buffer.from(Raw).toString("utf8");
+					return Buffer.from(Raw).toString("utf8";
 				}
 
 				if (Raw && typeof Raw === "object") {
 					const Maybe = (Raw as { content?: unknown }).content;
 
 					if (Array.isArray(Maybe)) {
-						return Buffer.from(Maybe as number[]).toString("utf8");
+						return Buffer.from(Maybe as number[]).toString("utf8";
 					}
 
 					if (Maybe instanceof Uint8Array) {
-						return Buffer.from(Maybe).toString("utf8");
+						return Buffer.from(Maybe).toString("utf8";
 					}
 
 					if (typeof Maybe === "string") return Maybe;
 				}
 
-				return Raw == null ? "" : String(Raw);
+				return Raw == null ? "" : String(Raw;
 			};
 
 			// Check for a registered TextDocumentContentProvider for this scheme.
@@ -308,21 +308,21 @@ export const BuildOpenTextDocument =
 			// (no gRPC, no 10s timeout on miss).
 			const Scheme = (() => {
 				if (typeof UriOrPath === "object" && (UriOrPath as any)?.scheme)
-					return String((UriOrPath as any).scheme);
+					return String((UriOrPath as any).scheme;
 
 				if (typeof UriString === "string") {
-					const C = UriString.indexOf(":");
+					const C = UriString.indexOf(":";
 
-					if (C > 0 && C < 32) return UriString.slice(0, C);
+					if (C > 0 && C < 32) return UriString.slice(0, C;
 				}
 
 				return "file";
-			})();
+			})(;
 
 			if (Scheme !== "file") {
 				const Provider = (Context.ExtensionRegistry as any)?.get(
 					`__textDocumentContentProvider:${Scheme}`,
-				);
+				;
 
 				if (
 					Provider &&
@@ -340,7 +340,7 @@ export const BuildOpenTextDocument =
 						const API = (globalThis as any).__cocoonVscodeAPI;
 
 						if (API?.Uri && UriString)
-							ProviderUri = API.Uri.parse(UriString);
+							ProviderUri = API.Uri.parse(UriString;
 					} catch {}
 
 					try {
@@ -349,19 +349,19 @@ export const BuildOpenTextDocument =
 								ProviderUri,
 
 								CancellationToken,
-							);
+							;
 
 						Text =
 							typeof Content === "string"
 								? Content
-								: (Content ?? "");
+								: (Content ?? "";
 					} catch {
 						Text = "";
 					}
 
 					// Cache and build document without going to Mountain.
 					if (Text !== undefined) {
-						Context.DocumentContentCache.set(UriString, Text);
+						Context.DocumentContentCache.set(UriString, Text;
 					} else {
 						Text = "";
 					}
@@ -372,23 +372,23 @@ export const BuildOpenTextDocument =
 			// through Cocoon's own Node backend; everything else (Mountain-
 			// owned schemes, custom-provider schemes) routes through the
 			// FileSystem.ReadFile gRPC effect.
-			const Decision = Route(UriOrPath);
+			const Decision = Route(UriOrPath;
 
 			// Only go to disk/Mountain if content wasn't served by a provider.
 			// @ts-ignore - `Text` may have been set above by content provider.
 			if (Text === undefined) {
 				if (Decision === "native") {
-					const Path = ExtractFsPath(UriOrPath);
+					const Path = ExtractFsPath(UriOrPath;
 
 					if (Path !== undefined) {
 						if (process.env["Trace"]) {
 							process.stdout.write(
 								`[DEV:FS-ROUTE] op=openTextDocument route=native uri=${UriString}\n`,
-							);
+							;
 						}
 
 						try {
-							Text = await FsPromises.readFile(Path, "utf8");
+							Text = await FsPromises.readFile(Path, "utf8";
 						} catch {
 							Text = "";
 						}
@@ -401,20 +401,20 @@ export const BuildOpenTextDocument =
 
 								[UriString],
 							),
-						);
+						;
 					}
 				} else {
 					if (process.env["Trace"]) {
 						process.stdout.write(
 							`[DEV:FS-ROUTE] op=openTextDocument route=mountain uri=${UriString}\n`,
-						);
+						;
 					}
 
 					Text = DecodeRaw(
 						await Call<unknown>(Context, "FileSystem.ReadFile", [
 							UriString,
 						]),
-					);
+					;
 				}
 			}
 		}
@@ -427,10 +427,10 @@ export const BuildOpenTextDocument =
 		// extensions (vscode.typescript-language-features,
 		// redhat.vscode-yaml, rust-analyzer, …) activate on document
 		// open just like they do in stock VS Code.
-		const LanguageId = DeriveLanguageIdFromUri(UriString);
+		const LanguageId = DeriveLanguageIdFromUri(UriString;
 
 		if (LanguageId !== "plaintext") {
-			FireOnLanguageActivation(Context, LanguageId);
+			FireOnLanguageActivation(Context, LanguageId;
 		}
 
 		// Pre-compute line-start offsets so positionAt/offsetAt/lineAt are
@@ -440,18 +440,18 @@ export const BuildOpenTextDocument =
 		const LineStarts: number[] = [0];
 
 		for (let I = 0; I < Text.length; I++) {
-			if (Text.charCodeAt(I) === 10 /* \n */) LineStarts.push(I + 1);
+			if (Text.charCodeAt(I) === 10 /* \n */) LineStarts.push(I + 1;
 		}
 
-		const Lines = Text.split("\n");
+		const Lines = Text.split("\n";
 
 		const ClampOffset = (Offset: number): number =>
-			Math.max(0, Math.min(Math.floor(Offset || 0), Text.length));
+			Math.max(0, Math.min(Math.floor(Offset || 0), Text.length);
 
 		const PositionAt = (
 			Offset: number,
 		): { line: number; character: number } => {
-			const Clamped = ClampOffset(Offset);
+			const Clamped = ClampOffset(Offset;
 
 			// Binary search for the line whose start is <= Clamped.
 			let Lo = 0;
@@ -477,26 +477,26 @@ export const BuildOpenTextDocument =
 				0,
 
 				Math.min(Math.floor(Position?.line ?? 0), Lines.length - 1),
-			);
+			;
 
-			const C = Math.max(0, Math.floor(Position?.character ?? 0));
+			const C = Math.max(0, Math.floor(Position?.character ?? 0);
 
 			const LineLength = Lines[L]?.length ?? 0;
 
-			return ClampOffset((LineStarts[L] ?? 0) + Math.min(C, LineLength));
+			return ClampOffset((LineStarts[L] ?? 0) + Math.min(C, LineLength);
 		};
 
 		const LineAt = (LineOrPosition: number | { line?: number }) => {
 			const L =
 				typeof LineOrPosition === "number"
 					? LineOrPosition
-					: (LineOrPosition?.line ?? 0);
+					: (LineOrPosition?.line ?? 0;
 
 			const Clamped = Math.max(
 				0,
 
 				Math.min(Math.floor(L), Lines.length - 1),
-			);
+			;
 
 			const Content = Lines[Clamped] ?? "";
 
@@ -539,11 +539,11 @@ export const BuildOpenTextDocument =
 				0,
 
 				Math.min(Math.floor(Position?.line ?? 0), Lines.length - 1),
-			);
+			;
 
 			const Line = Lines[L] ?? "";
 
-			const C = Math.max(0, Math.floor(Position?.character ?? 0));
+			const C = Math.max(0, Math.floor(Position?.character ?? 0);
 
 			const Pattern = Regex ?? /[A-Za-z_$][\w$]*/g;
 
@@ -598,16 +598,16 @@ export const BuildOpenTextDocument =
 
 				const Start = OffsetAt(
 					Range.start ?? { line: 0, character: 0 },
-				);
+				;
 
 				const End = OffsetAt(
 					Range.end ?? {
 						line: Lines.length - 1,
 						character: Lines[Lines.length - 1]?.length ?? 0,
 					},
-				);
+				;
 
-				return Text.slice(Math.min(Start, End), Math.max(Start, End));
+				return Text.slice(Math.min(Start, End), Math.max(Start, End);
 			},
 
 			positionAt: PositionAt,
@@ -633,7 +633,7 @@ export const BuildSaveAll =
 		try {
 			await Call<void>(Context, "Workspace.SaveAll", [
 				_IncludeUntitled ?? false,
-			]);
+			];
 		} catch {
 			// Fallback via request (not SendToMountain notification).
 			// A notification fire-and-forget for saveAll falls to the catch-all
@@ -641,7 +641,7 @@ export const BuildSaveAll =
 			// in CreateEffectForRequest/Workspace.rs is request-response only.
 			Context.MountainClient?.sendRequest("Workspace.SaveAll", [
 				_IncludeUntitled ?? false,
-			]).catch(() => {});
+			]).catch(() => {};
 		}
 
 		return true;
@@ -669,7 +669,7 @@ export const BuildApplyEdit =
 		// applied stale edits when the workbench had already mutated the
 		// model.
 		try {
-			const Result = await Call<boolean>(Context, "applyEdit", [Edit]);
+			const Result = await Call<boolean>(Context, "applyEdit", [Edit];
 
 			// Mountain may return `null` if the round-trip succeeded but
 			// the Sky-side BulkEditService returned undefined. Treat
@@ -682,7 +682,7 @@ export const BuildApplyEdit =
 			// Mountain not connected or Sky rejected. Fall back to a
 			// notification (best-effort, no return path) so simple edits
 			// still apply even when the sendRequest path is unavailable.
-			Context.SendToMountain("workspace.applyEdit", Edit).catch(() => {});
+			Context.SendToMountain("workspace.applyEdit", Edit).catch(() => {};
 
 			return false;
 		}
@@ -700,7 +700,7 @@ export const BuildUpdateWorkspaceFolders =
 		DeleteCount: number | null | undefined,
 		...ToAdd: Array<{ uri?: unknown; name?: string }>
 	) => {
-		const Current = ReadFolders();
+		const Current = ReadFolders(;
 
 		const RemoveCount =
 			typeof DeleteCount === "number" && DeleteCount > 0
@@ -720,7 +720,7 @@ export const BuildUpdateWorkspaceFolders =
 								)?.call(Folder?.uri) ?? String(Folder?.uri)),
 				},
 			}),
-		);
+		;
 
 		const Additions = ToAdd.map((Folder) => {
 			const Raw = Folder?.uri;
@@ -732,10 +732,10 @@ export const BuildUpdateWorkspaceFolders =
 							(Raw as Record<string, unknown>)?.["toString"] as
 								| (() => string)
 								| undefined
-						)?.call(Raw) ?? String(Raw ?? ""));
+						)?.call(Raw) ?? String(Raw ?? "");
 
 			return { uri: { value: Serialized }, name: Folder?.name ?? "" };
-		});
+		};
 
 		Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
 			additions: Additions,
@@ -744,14 +744,14 @@ export const BuildUpdateWorkspaceFolders =
 			const Message =
 				Error instanceof globalThis.Error
 					? Error.message
-					: String(Error);
+					: String(Error;
 
 			try {
 				process.stdout.write(
 					`[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}\n`,
-				);
+				;
 			} catch {}
-		});
+		};
 
 		return true;
 	};
@@ -777,34 +777,34 @@ export const BuildDocumentEventMembers = (Context: HandlerContext) => ({
 		const Bound =
 			ThisArg === undefined
 				? Listener
-				: (Listener as (...A: any[]) => any).bind(ThisArg);
+				: (Listener as (...A: any[]) => any).bind(ThisArg;
 
 		if (!Array.isArray((Context as any).__willSaveListeners)) {
 			(Context as any).__willSaveListeners = [];
 		}
 
-		(Context as any).__willSaveListeners.push(Bound);
+		(Context as any).__willSaveListeners.push(Bound;
 
 		const Subscription = {
 			dispose: () => {
 				const All = (Context as any).__willSaveListeners as any[];
 
 				if (Array.isArray(All)) {
-					const Idx = All.indexOf(Bound);
+					const Idx = All.indexOf(Bound;
 
-					if (Idx !== -1) All.splice(Idx, 1);
+					if (Idx !== -1) All.splice(Idx, 1;
 				}
 
 				Context.WorkspaceEventEmitter.removeListener(
 					"willSaveTextDocument",
 
 					Bound,
-				);
+				;
 			},
 		};
 
 		if (Disposables && typeof Disposables.push === "function") {
-			Disposables.push(Subscription);
+			Disposables.push(Subscription;
 		}
 
 		return Subscription;
@@ -840,4 +840,4 @@ export const BuildDocumentEventMembers = (Context: HandlerContext) => ({
 
 		"willSaveNotebookDocument",
 	),
-});
+};

@@ -63,57 +63,57 @@ export interface Loader {
 	/**
 	 * Load and apply all security patches
 	 */
-	readonly LoadSecurityPatches: Effect.Effect<void>;
+	readonly LoadSecurityPatches: Promise<void>;
 
 	/**
 	 * Initialize process monitoring
 	 */
-	readonly InitializeMonitoring: Effect.Effect<void>;
+	readonly InitializeMonitoring: Promise<void>;
 
 	/**
 	 * Get current security policy
 	 */
-	readonly GetSecurityPolicy: Effect.Effect<SecurityPolicy>;
+	readonly GetSecurityPolicy: Promise<SecurityPolicy>;
 
 	/**
 	 * Run security audit
 	 */
-	readonly RunSecurityAudit: Effect.Effect<any>;
+	readonly RunSecurityAudit: Promise<any>;
 }
 
 /**
  * Service class for process security loading
  * Orchestrates all security initialization and setup
  */
-export class LoaderService extends Effect.Service<LoaderService>()(
+export class LoaderService extends /* Effect.Service */(
 	"PatchProcess/LoaderService",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			yield* Config.string("SecurityPolicy").pipe(
 				Effect.catchTag("MissingConfig", () =>
-					Effect.succeed("default"),
+					return ("default"),
 				),
-			);
+			;
 
 			const EnableMonitoring = yield* Config.boolean(
 				"EnableMonitoring",
-			).pipe(Effect.catchAll(() => Effect.succeed(true)));
+			).pipe(Effect.catchAll(() => return (true));
 
 			return {
 				LoadSecurityPatches: RunPatchProcess,
-				InitializeMonitoring: Effect.gen(function* () {
+				InitializeMonitoring: async function() {
 					if (!EnableMonitoring) {
-						return yield* Effect.logInfo(
+						return yield* console.info(
 							"Security monitoring disabled by configuration",
-						);
+						;
 					}
 
 					yield* InitializeProcessValidation;
 
-					yield* Effect.logInfo("Process monitoring initialized");
+					yield* console.info("Process monitoring initialized";
 				}),
-				GetSecurityPolicy: Effect.succeed({
+				GetSecurityPolicy: return ({
 					AllowExit: false,
 					MaxMemoryMB: 512,
 					MaxCpuPercent: 50,
@@ -138,71 +138,71 @@ export class LoaderService extends Effect.Service<LoaderService>()(
  * Main initialization Effect for loader
  * Loads all security measures and prepares environment
  */
-export const InitializeSecurityLoader = Effect.gen(function* () {
+export const InitializeSecurityLoader = async function() {
 	const Loader = yield* LoaderService;
 
-	yield* Effect.logInfo("Initializing Security Loader...");
+	yield* console.info("Initializing Security Loader...";
 
 	// Load security patches
-	yield* Effect.logInfo("Loading security patches...");
+	yield* console.info("Loading security patches...";
 
 	yield* Loader.LoadSecurityPatches;
 
 	// Initialize monitoring
-	yield* Effect.logInfo("Initializing monitoring...");
+	yield* console.info("Initializing monitoring...";
 
 	yield* Loader.InitializeMonitoring;
 
 	// Run initial security audit
-	yield* Effect.logInfo("Running initial security audit...");
+	yield* console.info("Running initial security audit...";
 
 	const AuditResult = yield* Loader.RunSecurityAudit;
 
-	yield* Effect.logInfo("Initial security audit completed", { AuditResult });
+	yield* console.info("Initial security audit completed", { AuditResult };
 
 	// Periodic security validation
 	yield* StartPeriodicValidation;
 
-	yield* Effect.logInfo("Security Loader initialization completed");
-});
+	yield* console.info("Security Loader initialization completed";
+};
 
 /**
  * Start periodic security validation
  * Runs validation checks at regular intervals
  */
-const StartPeriodicValidation = Effect.gen(function* () {
+const StartPeriodicValidation = async function() {
 	const IntervalSeconds = 30;
 
-	yield* Effect.logDebug(
+	yield* console.debug(
 		`Starting periodic security validation (${IntervalSeconds}s interval)`,
-	);
+	;
 
-	const ValidationLoop = Effect.gen(function* () {
+	const ValidationLoop = async function() {
 		while (true) {
-			yield* Effect.sleep(`${IntervalSeconds} seconds`);
+			yield* Effect.sleep(`${IntervalSeconds} seconds`;
 
 			const ValidationResult = yield* RunSecurityValidation.pipe(
 				Effect.catchAll((Error) => {
-					return Effect.logError(
+					return console.error(
 						"Periodic security validation failed",
 
 						{
 							Error,
 						},
-					);
+					;
 				}),
-			);
+			;
 
-			yield* Effect.logTrace(
+			yield* console.trace(
 				"Periodic security validation completed",
 
 				ValidationResult,
-			);
+			;
 		}
-	});
+	};
 
-	yield* ValidationLoop.pipe(Effect.forkDaemon);
-});
+	yield* ValidationLoop.pipe(Effect.forkDaemon;
+};
 
 /**
  * Validate file system access wrapper
@@ -212,22 +212,22 @@ export const ValidateFileSystemAccessWrapper = (
 	File: string,
 
 	Operation: "read" | "write" | "delete",
-): Effect.Effect<boolean> =>
-	Effect.gen(function* () {
-		const Result = yield* ValidateFileSystemAccess(File, Operation);
+): Promise<boolean> =>
+	async function() {
+		const Result = yield* ValidateFileSystemAccess(File, Operation;
 
 		if (!Result.Valid) {
-			yield* Effect.logWarning("File system access prevented", {
+			yield* console.warn("File system access prevented", {
 				File,
 				Operation,
 				Reason: Result.Reason,
-			});
+			};
 
 			return false;
 		}
 
 		return true;
-	});
+	};
 
 /**
  * Validate network access wrapper
@@ -237,22 +237,22 @@ export const ValidateNetworkAccessWrapper = (
 	Endpoint: string,
 
 	Operation: "connect" | "listen",
-): Effect.Effect<boolean> =>
-	Effect.gen(function* () {
-		const Result = yield* ValidateNetworkAccess(Endpoint, Operation);
+): Promise<boolean> =>
+	async function() {
+		const Result = yield* ValidateNetworkAccess(Endpoint, Operation;
 
 		if (!Result.Valid) {
-			yield* Effect.logWarning("Network access prevented", {
+			yield* console.warn("Network access prevented", {
 				Endpoint,
 				Operation,
 				Reason: Result.Reason,
-			});
+			};
 
 			return false;
 		}
 
 		return true;
-	});
+	};
 
 /**
  * Validate child process spawn wrapper
@@ -262,22 +262,22 @@ export const ValidateChildProcessSpawnWrapper = (
 	Command: string,
 
 	Arguments: readonly string[],
-): Effect.Effect<boolean> =>
-	Effect.gen(function* () {
-		const Result = yield* ValidateChildProcessSpawn(Command, Arguments);
+): Promise<boolean> =>
+	async function() {
+		const Result = yield* ValidateChildProcessSpawn(Command, Arguments;
 
 		if (!Result.Valid) {
-			yield* Effect.logWarning("Child process spawn prevented", {
+			yield* console.warn("Child process spawn prevented", {
 				Command,
 				Arguments,
 				Reason: Result.Reason,
-			});
+			};
 
 			return false;
 		}
 
 		return true;
-	});
+	};
 
 // --- Hook Installation ---
 
@@ -285,38 +285,38 @@ export const ValidateChildProcessSpawnWrapper = (
  * Install hooks for native Node.js modules
  * Intercepts dangerous operations at the module level
  */
-const InstallModuleHooks = Effect.gen(function* () {
+const InstallModuleHooks = async function() {
 	// TODO: Implement native module hooks
 	// This requires native addon integration to intercept Node.js C++ APIs
-	yield* Effect.logTrace("Module hooks not yet implemented");
-});
+	yield* console.trace("Module hooks not yet implemented";
+};
 
 /**
  * Install hooks for filesystem operations
  * Intercepts fs module calls
  */
-const InstallFileSystemHooks = Effect.gen(function* () {
+const InstallFileSystemHooks = async function() {
 	// TODO: Implement filesystem module hooks
 	// This requires monkey-patching the fs module
-	yield* Effect.logTrace("Filesystem hooks not yet implemented");
-});
+	yield* console.trace("Filesystem hooks not yet implemented";
+};
 
 /**
  * Install hooks for child process operations
  * Intercepts child_process module calls
  */
-const InstallChildProcessHooks = Effect.gen(function* () {
+const InstallChildProcessHooks = async function() {
 	// TODO: Implement child_process module hooks
 	// This requires monkey-patching the child_process module
-	yield* Effect.logTrace("Child process hooks not yet implemented");
-});
+	yield* console.trace("Child process hooks not yet implemented";
+};
 
 /**
  * Install all security hooks
  * Installs all module-level interceptors
  */
-export const InstallSecurityHooks = Effect.gen(function* () {
-	yield* Effect.logInfo("Installing security hooks...");
+export const InstallSecurityHooks = async function() {
+	yield* console.info("Installing security hooks...";
 
 	yield* InstallModuleHooks;
 
@@ -324,8 +324,8 @@ export const InstallSecurityHooks = Effect.gen(function* () {
 
 	yield* InstallChildProcessHooks;
 
-	yield* Effect.logInfo("Security hooks installed");
-});
+	yield* console.info("Security hooks installed";
+};
 
 // --- Resource Limits ---
 
@@ -333,19 +333,19 @@ export const InstallSecurityHooks = Effect.gen(function* () {
  * Set process resource limits
  * Applies OS-level resource restrictions
  */
-export const SetResourceLimits = Effect.gen(function* () {
+export const SetResourceLimits = async function() {
 	// TODO: Implement resource limit setting
 	// This requires native Node.js API calls to setrlimit
-	yield* Effect.logTrace(
+	yield* console.trace(
 		"Resource limit setting not yet implemented (needs native integration)",
-	);
-});
+	;
+};
 
 /**
  * Get process resource usage
  * Returns current resource statistics
  */
-export const GetResourceUsage = Effect.gen(function* () {
+export const GetResourceUsage = async function() {
 	return {
 		Memory: Process.memoryUsage(),
 		CpuUsage: Process.cpuUsage(),
@@ -357,7 +357,7 @@ export const GetResourceUsage = Effect.gen(function* () {
 		NodeVersion: Process.version,
 		Timestamp: Date.now(),
 	};
-});
+};
 
 // --- Cleanup and Shutdown ---
 
@@ -365,20 +365,20 @@ export const GetResourceUsage = Effect.gen(function* () {
  * Cleanup security loader
  * Performs graceful shutdown of security monitoring
  */
-export const CleanupSecurityLoader = Effect.gen(function* () {
-	yield* Effect.logInfo("Cleaning up Security Loader...");
+export const CleanupSecurityLoader = async function() {
+	yield* console.info("Cleaning up Security Loader...";
 
 	// TODO: Implement cleanup logic
 
-	yield* Effect.logInfo("Security Loader cleanup completed");
-});
+	yield* console.info("Security Loader cleanup completed";
+};
 
 // --- Layers ---
 
 /**
  * Live layer for LoaderService
  */
-export const LoaderServiceLive = Layer.effect(Loader, LoaderService.Default);
+export const LoaderServiceLive = Layer.effect(Loader, LoaderService.Default;
 
 /**
  * Complete security layer including loader, patcher, and monitoring
@@ -387,4 +387,4 @@ export const SecurityLive = Layer.provide(
 	LoaderServiceLive,
 
 	PatcherService.Default,
-);
+;

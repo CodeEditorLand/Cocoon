@@ -30,12 +30,12 @@
  * ```typescript
  * import { CocoonEchoClient } from '../../Services/EchoAction.js';
  *
- * const client = new CocoonEchoClient('http://127.0.0.1:50051', 'cocoon-host-1');
- * await client.connect();
- * await client.register();
+ * const client = new CocoonEchoClient('http://127.0.0.1:50051', 'cocoon-host-1';
+ * await client.connect(;
+ * await client.register(;
  *
  * // Send EchoAction
- * const response = await client.sendRpc('CommandService.Execute', payload);
+ * const response = await client.sendRpc('CommandService.Execute', payload;
  * ```
  *
  * @category Services
@@ -81,10 +81,10 @@ export class CocoonEchoClient {
 	private heartbeatIntervalId: NodeJS.Timeout | null = null;
 
 	/** Logger */
-	private logger = Logger.create("CocoonEchoClient");
+	private logger = Logger.create("CocoonEchoClient";
 
 	/** Metrics */
-	private metrics = MetricsCollector.getInstance();
+	private metrics = MetricsCollector.getInstance(;
 
 	/** Registered host information */
 	private hostInfo: {
@@ -107,7 +107,7 @@ export class CocoonEchoClient {
 
 		this.hostId = hostId || `cocoon-${uuidv4()}`;
 
-		this.logger.info(`Cocoon Echo Client created: ${this.hostId}`);
+		this.logger.info(`Cocoon Echo Client created: ${this.hostId}`;
 	}
 
 	/**
@@ -115,29 +115,29 @@ export class CocoonEchoClient {
 	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async connect(): Promise<void> {
-		this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`);
+		this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`;
 
 		return new Promise((resolve, _reject) => {
 			this.client = new EchoActionServiceClient(
 				this.mountainUrl,
 
 				credentials.createInsecure(),
-			);
+			;
 
 			// Test connection by making a simple call
 			// For now, we'll just mark as connected
 			this.isConnected = true;
 
-			this.connectionStartTime = new Date();
+			this.connectionStartTime = new Date(;
 
-			this.lastHeartbeat = new Date();
+			this.lastHeartbeat = new Date(;
 
-			this.logger.info("Successfully connected to Mountain");
+			this.logger.info("Successfully connected to Mountain";
 
-			this.metrics.increment("echo_client.connect_success");
+			this.metrics.increment("echo_client.connect_success";
 
-			resolve();
-		});
+			resolve(;
+		};
 	}
 
 	/**
@@ -145,11 +145,11 @@ export class CocoonEchoClient {
 	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async disconnect(): Promise<void> {
-		this.logger.info("Disconnecting from Mountain");
+		this.logger.info("Disconnecting from Mountain";
 
 		// Stop heartbeat
 		if (this.heartbeatIntervalId) {
-			clearInterval(this.heartbeatIntervalId);
+			clearInterval(this.heartbeatIntervalId;
 
 			this.heartbeatIntervalId = null;
 		}
@@ -162,9 +162,9 @@ export class CocoonEchoClient {
 
 		this.hostInfo = null;
 
-		this.logger.info("Disconnected from Mountain");
+		this.logger.info("Disconnected from Mountain";
 
-		this.metrics.increment("echo_client.disconnect");
+		this.metrics.increment("echo_client.disconnect";
 	}
 
 	/**
@@ -179,10 +179,10 @@ export class CocoonEchoClient {
 		heartbeatIntervalSec: number;
 	}> {
 		if (!this.client) {
-			throw new Error("Not connected to Mountain");
+			throw new Error("Not connected to Mountain";
 		}
 
-		this.logger.info(`Registering Cocoon host: ${this.hostId}`);
+		this.logger.info(`Registering Cocoon host: ${this.hostId}`;
 
 		const request: RegisterExtensionHostRequest = {
 			host_id: this.hostId,
@@ -226,18 +226,18 @@ export class CocoonEchoClient {
 
 		return new Promise((resolve, reject) => {
 			if (!this.client) {
-				reject(new Error("Client not initialized"));
+				reject(new Error("Client not initialized");
 
 				return;
 			}
 
 			this.client.register_extension_host(request, (err, response) => {
 				if (err) {
-					this.logger.error(`Registration failed: ${err.message}`);
+					this.logger.error(`Registration failed: ${err.message}`;
 
-					this.metrics.increment("echo_client.register_failure");
+					this.metrics.increment("echo_client.register_failure";
 
-					reject(new Error(`Failed to register: ${err.message}`));
+					reject(new Error(`Failed to register: ${err.message}`);
 
 					return;
 				}
@@ -251,23 +251,23 @@ export class CocoonEchoClient {
 
 					this.logger.info(
 						`Cocoon host registered: ${response.host_registry_id}`,
-					);
+					;
 
-					this.metrics.increment("echo_client.register_success");
+					this.metrics.increment("echo_client.register_success";
 
 					// Start heartbeat loop
-					this.startHeartbeatLoop();
+					this.startHeartbeatLoop(;
 
-					resolve(this.hostInfo);
+					resolve(this.hostInfo;
 				} else {
-					this.logger.error("Registration returned false");
+					this.logger.error("Registration returned false";
 
-					this.metrics.increment("echo_client.register_failure");
+					this.metrics.increment("echo_client.register_failure";
 
-					reject(new Error("Registration failed"));
+					reject(new Error("Registration failed");
 				}
-			});
-		});
+			};
+		};
 	}
 
 	/**
@@ -276,18 +276,18 @@ export class CocoonEchoClient {
 	 */
 	async sendEchoAction(action: EchoAction): Promise<EchoActionResponse> {
 		if (!this.client) {
-			throw new Error("Not connected to Mountain");
+			throw new Error("Not connected to Mountain";
 		}
 
 		this.logger.debug(
 			`Sending EchoAction: type=${action.actionType}, target=${action.target}`,
-		);
+		;
 
-		const startTime = Date.now();
+		const startTime = Date.now(;
 
 		return new Promise((resolve, reject) => {
 			if (!this.client) {
-				reject(new Error("Client not initialized"));
+				reject(new Error("Client not initialized");
 
 				return;
 			}
@@ -296,7 +296,7 @@ export class CocoonEchoClient {
 				const duration = Date.now() - startTime;
 
 				if (err) {
-					this.logger.error(`EchoAction failed: ${err.message}`);
+					this.logger.error(`EchoAction failed: ${err.message}`;
 
 					this.metrics.recordTiming(
 						"echo_action.duration_ms",
@@ -307,37 +307,37 @@ export class CocoonEchoClient {
 							success: "false",
 							type: action.actionType,
 						},
-					);
+					;
 
-					reject(new Error(`EchoAction failed: ${err.message}`));
+					reject(new Error(`EchoAction failed: ${err.message}`);
 
 					return;
 				}
 
 				if (!response) {
-					reject(new Error("No response received"));
+					reject(new Error("No response received");
 
 					return;
 				}
 
 				this.logger.debug(
 					`EchoAction response: success=${response.success}`,
-				);
+				;
 
 				this.metrics.recordTiming("echo_action.duration_ms", duration, {
 					success: response.success.toString(),
 					type: action.actionType,
-				});
+				};
 
 				if (!response.success) {
-					reject(new Error(`EchoAction failed: ${response.error}`));
+					reject(new Error(`EchoAction failed: ${response.error}`);
 
 					return;
 				}
 
-				resolve(response);
-			});
-		});
+				resolve(response;
+			};
+		};
 	}
 
 	/**
@@ -381,9 +381,9 @@ export class CocoonEchoClient {
 			timestamp: Date.now(),
 		};
 
-		const response = await this.sendEchoAction(action);
+		const response = await this.sendEchoAction(action;
 
-		return Buffer.from(response.result);
+		return Buffer.from(response.result;
 	}
 
 	/**
@@ -420,7 +420,7 @@ export class CocoonEchoClient {
 			timestamp: Date.now(),
 		};
 
-		await this.sendEchoAction(action);
+		await this.sendEchoAction(action;
 	}
 
 	/**
@@ -457,7 +457,7 @@ export class CocoonEchoClient {
 			timestamp: Date.now(),
 		};
 
-		await this.sendEchoAction(action);
+		await this.sendEchoAction(action;
 	}
 
 	/**
@@ -489,9 +489,9 @@ export class CocoonEchoClient {
 			timestamp: Date.now(),
 		};
 
-		const response = await this.sendEchoAction(action);
+		const response = await this.sendEchoAction(action;
 
-		return JSON.parse(response.result.toString());
+		return JSON.parse(response.result.toString();
 	}
 
 	/**
@@ -506,14 +506,14 @@ export class CocoonEchoClient {
 		const intervalMs = (this.hostInfo.heartbeatIntervalSec || 30) * 1000;
 
 		this.heartbeatIntervalId = setInterval(() => {
-			this.lastHeartbeat = new Date();
+			this.lastHeartbeat = new Date(;
 
 			// DEPENDENCY: Echo heartbeat action - needs Echo backend implementation
 			// Current: log heartbeat for debugging
-			this.logger.debug("Heartbeat sent");
+			this.logger.debug("Heartbeat sent";
 
-			this.metrics.increment("echo_client.heartbeat");
-		}, intervalMs);
+			this.metrics.increment("echo_client.heartbeat";
+		}, intervalMs;
 	}
 
 	/**
@@ -534,7 +534,7 @@ export class CocoonEchoClient {
 		let uptime: number | null = null;
 
 		if (this.connectionStartTime) {
-			uptime = Date.now() - this.connectionStartTime.getTime();
+			uptime = Date.now() - this.connectionStartTime.getTime(;
 		}
 
 		return {
@@ -555,15 +555,15 @@ export class CocoonEchoClient {
 	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async reconnect(): Promise<void> {
-		this.logger.warn("Attempting to reconnect to Mountain");
+		this.logger.warn("Attempting to reconnect to Mountain";
 
-		await this.disconnect();
+		await this.disconnect(;
 
-		await this.connect();
+		await this.connect(;
 
-		await this.register();
+		await this.register(;
 
-		this.logger.info("Successfully reconnected to Mountain");
+		this.logger.info("Successfully reconnected to Mountain";
 	}
 }
 
@@ -633,11 +633,11 @@ export const CocoonEchoClientFactory = {
 
 		hostId?: string,
 	): Promise<CocoonEchoClient> {
-		const client = new CocoonEchoClient(mountainUrl, hostId);
+		const client = new CocoonEchoClient(mountainUrl, hostId;
 
-		await client.connect();
+		await client.connect(;
 
-		await client.register();
+		await client.register(;
 
 		return client;
 	},

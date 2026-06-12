@@ -91,7 +91,7 @@ export class ServerStartError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message);
+		super(message;
 	}
 }
 
@@ -103,7 +103,7 @@ export class ServerStopError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message);
+		super(message;
 	}
 }
 
@@ -111,7 +111,7 @@ export class ServerNotRunningError extends Error {
 	readonly _tag = "ServerNotRunningError";
 
 	constructor() {
-		super("Server is not running");
+		super("Server is not running";
 	}
 }
 
@@ -182,14 +182,14 @@ function makeRPCServer(): RPCServerService {
 	function setState(next: ServerState): void {
 		state = next;
 
-		stateHistory.push(next);
+		stateHistory.push(next;
 	}
 
 	const start = async (config?: ServerConfig): Promise<void> => {
-		const startTimeMs = Date.now();
+		const startTimeMs = Date.now(;
 
 		if (state._tag === "Running") {
-			telemetry.log("warn", "[RPCServer] Server already running");
+			telemetry.log("warn", "[RPCServer] Server already running";
 
 			return;
 		}
@@ -200,7 +200,7 @@ function makeRPCServer(): RPCServerService {
 			process.env["COCOON_GRPC_PORT"] || "50052",
 
 			10,
-		);
+		;
 
 		currentConfig = config ?? {
 			host: "0.0.0.0",
@@ -214,29 +214,29 @@ function makeRPCServer(): RPCServerService {
 			enableTls: false,
 		};
 
-		setState({ _tag: "Starting", startTime: startTimeMs });
+		setState({ _tag: "Starting", startTime: startTimeMs };
 
 		CocoonDevLog(
 			"grpc",
 
 			`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
-		);
+		;
 
 		telemetry.log(
 			"info",
 
 			`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
-		);
+		;
 
 		try {
-			grpcServer = new GRPCServerService();
+			grpcServer = new GRPCServerService(;
 
 			// Set port from config (GRPCServerService defaults to 50052)
 			(grpcServer as any).port = currentConfig.port;
 
-			await grpcServer.start();
+			await grpcServer.start(;
 
-			serverStartTime = Date.now();
+			serverStartTime = Date.now(;
 
 			metrics = {
 				uptime: 0,
@@ -255,50 +255,50 @@ function makeRPCServer(): RPCServerService {
 				address: currentConfig.host,
 				port: currentConfig.port,
 				startedAt: serverStartTime,
-			});
+			};
 
 			telemetry.log(
 				"info",
 
 				`[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`,
-			);
+			;
 		} catch (error) {
-			setState({ _tag: "Error", error: String(error) });
+			setState({ _tag: "Error", error: String(error) };
 
 			telemetry.log(
 				"error",
 
 				`[RPCServer] Failed to start gRPC server: ${String(error)}`,
-			);
+			;
 
-			throw new ServerStartError("Failed to start gRPC server", error);
+			throw new ServerStartError("Failed to start gRPC server", error;
 		}
 	};
 
 	const stop = async (): Promise<void> => {
 		if (state._tag !== "Running") {
-			telemetry.log("warn", "[RPCServer] Server is not running");
+			telemetry.log("warn", "[RPCServer] Server is not running";
 
-			throw new ServerNotRunningError();
+			throw new ServerNotRunningError(;
 		}
 
-		setState({ _tag: "Stopping" });
+		setState({ _tag: "Stopping" };
 
-		telemetry.log("info", "[RPCServer] Stopping gRPC server...");
+		telemetry.log("info", "[RPCServer] Stopping gRPC server...";
 
 		if (grpcServer) {
-			await grpcServer.stop();
+			await grpcServer.stop(;
 
 			grpcServer = undefined;
 		}
 
-		setState({ _tag: "Stopped" });
+		setState({ _tag: "Stopped" };
 
-		telemetry.log("info", "[RPCServer] Server stopped successfully");
+		telemetry.log("info", "[RPCServer] Server stopped successfully";
 	};
 
 	const handleRequest = async (request: RPCRequest): Promise<RPCResponse> => {
-		const requestStartTime = Date.now();
+		const requestStartTime = Date.now(;
 
 		if (state._tag !== "Running") {
 			return {
@@ -318,21 +318,21 @@ function makeRPCServer(): RPCServerService {
 			"debug",
 
 			`[RPCServer] Handling request: ${request.method} (${request.requestId})`,
-		);
+		;
 
 		try {
 			// Simulate request handling (in production, this routes to actual RPC handlers)
 			metrics.requestsHandled = metrics.requestsHandled + 1;
 
 			// Simulate processing time
-			await new Promise<void>((r) => setTimeout(r, 5));
+			await new Promise<void>((r) => setTimeout(r, 5);
 
 			const processingTime = Date.now() - requestStartTime;
 
-			latencies.push(processingTime);
+			latencies.push(processingTime;
 
 			if (latencies.length > 100) {
-				latencies.shift();
+				latencies.shift(;
 			}
 
 			metrics.averageLatency =
@@ -342,7 +342,7 @@ function makeRPCServer(): RPCServerService {
 				"debug",
 
 				`[RPCServer] Request completed: ${request.method} (${processingTime}ms)`,
-			);
+			;
 
 			// Return mock response (in production, this calls actual handler)
 			return {
@@ -361,7 +361,7 @@ function makeRPCServer(): RPCServerService {
 				"error",
 
 				`[RPCServer] Request failed: ${request.method} (${error})`,
-			);
+			;
 
 			return {
 				requestId: request.requestId,
@@ -379,7 +379,7 @@ function makeRPCServer(): RPCServerService {
 
 	const getMetrics = (): ServerMetrics => {
 		if (state._tag !== "Running") {
-			throw new ServerNotRunningError();
+			throw new ServerNotRunningError(;
 		}
 
 		metrics.uptime = Date.now() - serverStartTime;
@@ -403,7 +403,7 @@ function makeRPCServer(): RPCServerService {
 }
 
 // Singleton instance
-export const RPCServerLive: RPCServerService = makeRPCServer();
+export const RPCServerLive: RPCServerService = makeRPCServer(;
 
 // ============================================================================
 // MOCK FOR TESTING
@@ -430,13 +430,13 @@ export const makeMockRPCServer = (): RPCServerService => {
 				startedAt: Date.now(),
 			};
 
-			mockHistory.push(mockState);
+			mockHistory.push(mockState;
 		},
 
 		stop: async (): Promise<void> => {
 			mockState = { _tag: "Stopped" };
 
-			mockHistory.push(mockState);
+			mockHistory.push(mockState;
 		},
 
 		handleRequest: async (request: RPCRequest): Promise<RPCResponse> => ({
@@ -456,4 +456,4 @@ export const makeMockRPCServer = (): RPCServerService => {
 	};
 };
 
-export const RPCServerMock: RPCServerService = makeMockRPCServer();
+export const RPCServerMock: RPCServerService = makeMockRPCServer(;

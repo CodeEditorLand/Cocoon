@@ -32,10 +32,10 @@ export default (
 			distinct_id: DistinctIdentifier,
 			properties: Event.Enrich(Entry.Properties),
 		})),
-	});
+	};
 
 	try {
-		const Address = new URL("/batch/", Host);
+		const Address = new URL("/batch/", Host;
 
 		const Request = NodeHttps.request(
 			{
@@ -51,19 +51,19 @@ export default (
 			},
 
 			(Response) => {
-				Response.resume();
+				Response.resume(;
 			},
-		);
+		;
 
-		Request.on("error", () => {});
+		Request.on("error", () => {};
 
 		Request.on("timeout", () => {
-			Request.destroy();
-		});
+			Request.destroy(;
+		};
 
-		Request.write(Payload);
+		Request.write(Payload;
 
-		Request.end();
+		Request.end(;
 	} catch {
 		// URL parse or synchronous throw - drop the batch silently.
 	}

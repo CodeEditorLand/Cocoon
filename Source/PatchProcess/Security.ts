@@ -244,13 +244,13 @@ export const ValidatePathAccess = (
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
 	// Normalize the path
-	const NormalizedPath = Path.normalize(PathString);
+	const NormalizedPath = Path.normalize(PathString;
 
-	const ResolvedPath = Path.resolve(NormalizedPath);
+	const ResolvedPath = Path.resolve(NormalizedPath;
 
 	// Check denied paths first (blacklist overrides whitelist)
 	for (const DeniedPath of Policy.DeniedPaths) {
-		const ResolvedDeniedPath = Path.resolve(DeniedPath);
+		const ResolvedDeniedPath = Path.resolve(DeniedPath;
 
 		if (
 			ResolvedPath === ResolvedDeniedPath ||
@@ -267,7 +267,7 @@ export const ValidatePathAccess = (
 
 	// Check allowed paths
 	for (const AllowedPath of Policy.AllowedPaths) {
-		const ResolvedAllowedPath = Path.resolve(AllowedPath);
+		const ResolvedAllowedPath = Path.resolve(AllowedPath;
 
 		if (
 			ResolvedPath === ResolvedAllowedPath ||
@@ -299,7 +299,7 @@ export const ValidateNetworkAccess = (
 
 	// Parse endpoint URL
 	try {
-		void new URL.URL(Endpoint);
+		void new URL.URL(Endpoint;
 	} catch (Error) {
 		// Not a valid URL, try parsing as hostname:port
 		return true;
@@ -307,7 +307,7 @@ export const ValidateNetworkAccess = (
 
 	// Check against allowed patterns
 	for (const Pattern of Policy.AllowedEndpoints) {
-		const Regex = new RegExp(Pattern);
+		const Regex = new RegExp(Pattern;
 
 		if (Regex.test(Endpoint)) {
 			return true;
@@ -401,54 +401,53 @@ export const ValidateEnvironmentVariable = (
  * Monitor memory usage and enforce limits
  * Returns Effect that checks memory and throws if limit exceeded
  */
-export const EnforceMemoryLimit = Effect.gen(function* () {
+export const EnforceMemoryLimit = async function() {
 	const Policy = DefaultSecurityPolicy;
 
 	if (Policy.MaxMemoryMB <= 0) {
-		return yield* Effect.logTrace("No memory limit configured");
+		return yield* console.trace("No memory limit configured";
 	}
 
 	// Get current memory usage
-	const MemoryUsage = process.memoryUsage();
+	const MemoryUsage = process.memoryUsage(;
 
-	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024);
+	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024;
 
 	if (UsedMemoryMB > Policy.MaxMemoryMB) {
-		yield* Effect.logError(
+		yield* console.error(
 			`Memory limit exceeded: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`,
-		);
+		;
 
-		return yield* Effect.fail(
-			new MemoryLimitExceededError({
+		throw new MemoryLimitExceededError({
 				LimitMB: Policy.MaxMemoryMB,
 				AttemptedMB: UsedMemoryMB,
 				ProcessId: process.pid,
 			}),
-		);
+		;
 	}
 
-	yield* Effect.logTrace(
+	yield* console.trace(
 		`Memory usage within limits: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`,
-	);
-});
+	;
+};
 
 /**
  * Monitor CPU usage and enforce limits
  * TODO: Implement actual CPU monitoring via native module
  */
-export const EnforceCpuLimit = Effect.gen(function* () {
+export const EnforceCpuLimit = async function() {
 	const Policy = DefaultSecurityPolicy;
 
 	if (Policy.MaxCpuPercent <= 0) {
-		return yield* Effect.logTrace("No CPU limit configured");
+		return yield* console.trace("No CPU limit configured";
 	}
 
 	// TODO: Implement actual CPU monitoring
 	// This would require a native module to get accurate CPU usage
-	yield* Effect.logDebug(
+	yield* console.debug(
 		`CPU limit configured: ${Policy.MaxCpuPercent}% (monitoring not yet implemented)`,
-	);
-});
+	;
+};
 
 // --- Security Audit ---
 
@@ -456,7 +455,7 @@ export const EnforceCpuLimit = Effect.gen(function* () {
  * Perform security audit of current process
  * Returns security assessment report
  */
-export const PerformSecurityAudit = Effect.gen(function* () {
+export const PerformSecurityAudit = async function() {
 	const Policy = DefaultSecurityPolicy;
 
 	const Report = {
@@ -475,10 +474,10 @@ export const PerformSecurityAudit = Effect.gen(function* () {
 		Timestamp: Date.now(),
 	};
 
-	yield* Effect.logInfo("Security audit completed", { Report });
+	yield* console.info("Security audit completed", { Report };
 
 	return Report;
-});
+};
 
 /**
  * Get security policy hash for comparison
@@ -487,9 +486,9 @@ export const PerformSecurityAudit = Effect.gen(function* () {
 export const GetPolicyHash = (
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): string => {
-	const PolicyString = JSON.stringify(Policy, Object.keys(Policy).sort());
+	const PolicyString = JSON.stringify(Policy, Object.keys(Policy).sort();
 
-	return Buffer.from(PolicyString).toString("base64").slice(0, 16);
+	return Buffer.from(PolicyString).toString("base64").slice(0, 16;
 };
 
 /**

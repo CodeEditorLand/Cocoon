@@ -33,7 +33,7 @@ type GlobMatcher = (Path: string) => boolean;
  */
 function CompileGlob(Pattern: string): GlobMatcher | undefined {
 	try {
-		const Parsed = GlobParsePattern(Pattern);
+		const Parsed = GlobParsePattern(Pattern;
 
 		if (typeof Parsed === "function") return Parsed;
 	} catch {
@@ -41,9 +41,9 @@ function CompileGlob(Pattern: string): GlobMatcher | undefined {
 	}
 
 	try {
-		const Regex = GlobToRegex(Pattern);
+		const Regex = GlobToRegex(Pattern;
 
-		return (Path: string) => Regex.test(Path);
+		return (Path: string) => Regex.test(Path;
 	} catch {
 		return undefined;
 	}
@@ -60,9 +60,9 @@ export const FindFilesLocal = async (
 
 	MaxResults?: number,
 ): Promise<Array<{ scheme: string; path: string; fsPath: string }>> => {
-	const IncludePattern = ExtractGlobPattern(Include);
+	const IncludePattern = ExtractGlobPattern(Include;
 
-	const ExcludePattern = ExtractGlobPattern(Exclude);
+	const ExcludePattern = ExtractGlobPattern(Exclude;
 
 	const Cap =
 		typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 10_000;
@@ -70,24 +70,24 @@ export const FindFilesLocal = async (
 	if (process.env["Trace"]?.includes("wsns"))
 		process.stdout.write(
 			`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}\n`,
-		);
+		;
 
 	if (!IncludePattern) {
 		if (process.env["Trace"]?.includes("wsns"))
 			process.stdout.write(
 				"[LandFix:WsNs] findFiles: no include pattern → []\n",
-			);
+			;
 
 		return [];
 	}
 
-	const IncludeMatcher = CompileGlob(IncludePattern);
+	const IncludeMatcher = CompileGlob(IncludePattern;
 
 	if (!IncludeMatcher) {
 		if (process.env["Trace"]?.includes("wsns"))
 			process.stdout.write(
 				`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)\n`,
-			);
+			;
 
 		return [];
 	}
@@ -96,9 +96,9 @@ export const FindFilesLocal = async (
 		? CompileGlob(ExcludePattern)
 		: undefined;
 
-	const { readdir } = await import("node:fs/promises");
+	const { readdir } = await import("node:fs/promises";
 
-	const { join, relative, sep } = await import("node:path");
+	const { join, relative, sep } = await import("node:path";
 
 	const Results: Array<{
 		scheme: string;
@@ -189,12 +189,12 @@ export const FindFilesLocal = async (
 			)
 				continue;
 
-			const Full = join(Current, Name);
+			const Full = join(Current, Name;
 
-			const RelativeFromRoot = relative(Root, Full).split(sep).join("/");
+			const RelativeFromRoot = relative(Root, Full).split(sep).join("/";
 
 			if (Entry.isDirectory()) {
-				SubDirectories.push(Full);
+				SubDirectories.push(Full;
 
 				continue;
 			}
@@ -209,7 +209,7 @@ export const FindFilesLocal = async (
 			// behaviour as stock VS Code. A POJO `{scheme,path,fsPath}`
 			// serialises to `"[object Object]"`, which Mountain rejects
 			// as a sandbox denial.
-			Results.push(StockUri.file(Full));
+			Results.push(StockUri.file(Full);
 		}
 
 		// Bounded parallel descent: 4 concurrent readdir()s per level keeps
@@ -221,9 +221,9 @@ export const FindFilesLocal = async (
 			Index < SubDirectories.length;
 			Index += Concurrency
 		) {
-			const Batch = SubDirectories.slice(Index, Index + Concurrency);
+			const Batch = SubDirectories.slice(Index, Index + Concurrency;
 
-			await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
+			await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1));
 
 			if (Results.length >= Cap) {
 				Truncated = "cap";
@@ -245,49 +245,49 @@ export const FindFilesLocal = async (
 	// `ExtensionHostInitData` workspace snapshot, then to the process
 	// working directory as the last-resort root.
 	const EffectiveFolders =
-		Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context);
+		Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context;
 
 	const Roots: string[] = [];
 
 	for (const Folder of EffectiveFolders) {
-		const FsPath = FolderToFsPath(Folder?.uri);
+		const FsPath = FolderToFsPath(Folder?.uri;
 
 		if (!FsPath) {
 			if (process.env["Trace"]?.includes("wsns"))
 				process.stdout.write(
 					`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})\n`,
-				);
+				;
 
 			continue;
 		}
 
-		Roots.push(FsPath);
+		Roots.push(FsPath;
 	}
 
 	if (Roots.length === 0) {
 		if (process.env["Trace"]?.includes("wsns"))
 			process.stdout.write(
 				"[LandFix:WsNs] findFiles: no workspace folders resolved → walking process.cwd()\n",
-			);
+			;
 
-		Roots.push(process.cwd());
+		Roots.push(process.cwd();
 	}
 
 	for (const Root of Roots) {
-		await Walk(Root, Root, 0);
+		await Walk(Root, Root, 0;
 	}
 
 	if (Truncated) {
 		if (process.env["Trace"]?.includes("wsns"))
 			process.stdout.write(
 				`[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)\n`,
-			);
+			;
 	}
 
 	if (process.env["Trace"]?.includes("wsns"))
 		process.stdout.write(
 			`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}\n`,
-		);
+		;
 
 	return Results;
 };

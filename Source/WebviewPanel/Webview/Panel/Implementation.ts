@@ -78,12 +78,12 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 	private _viewColumn: ViewColumn;
 
-	private readonly OnDidDisposeEmitter = CreateEventStream<void>();
+	private readonly OnDidDisposeEmitter = CreateEventStream<void>(;
 
 	public readonly onDidDispose: Event<void>;
 
 	private readonly OnDidChangeViewStateEmitter =
-		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>();
+		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>(;
 
 	public readonly onDidChangeViewState: Event<WebviewPanelOnDidChangeViewStateEvent>;
 
@@ -122,7 +122,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 			Extension,
 
 			InitialOptions,
-		);
+		;
 
 		this._title = InitialTitle;
 
@@ -165,7 +165,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 			this.Handle,
 
 			Value,
-		]).catch(() => {});
+		]).catch(() => {};
 	}
 
 	// FIX: The public property must conform to the interface, even if the
@@ -202,7 +202,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 			this.Handle,
 
 			IconPathDTO,
-		]).catch(() => {});
+		]).catch(() => {};
 	}
 
 	public reveal(ViewColumn?: ViewColumn, PreserveFocus?: boolean): void {
@@ -218,7 +218,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 			ViewColumnDTO,
 
 			PreserveFocus,
-		]).catch(() => {});
+		]).catch(() => {};
 	}
 
 	public dispose(): void {
@@ -228,19 +228,19 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 		this.IsDisposed = true;
 
-		this.OnDidDisposeEmitter.Fire();
+		this.OnDidDisposeEmitter.Fire(;
 
-		this.OnDidDisposeCallback();
+		this.OnDidDisposeCallback(;
 
-		(this.webview as WebviewImplementation).dispose();
+		(this.webview as WebviewImplementation).dispose(;
 
 		void this.IPC.SendNotification("$disposeWebview", [this.Handle]).catch(
 			() => {},
-		);
+		;
 	}
 
 	public fireDidReceiveMessage(Message: any): void {
-		(this.webview as WebviewImplementation).fireDidReceiveMessage(Message);
+		(this.webview as WebviewImplementation).fireDidReceiveMessage(Message;
 	}
 
 	public updateViewState(NewState: {
@@ -268,7 +268,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 			// but allows the program to proceed, as the structure is otherwise correct.
 			this.OnDidChangeViewStateEmitter.Fire({
 				webviewPanel: this as any,
-			});
+			};
 		}
 	}
 }

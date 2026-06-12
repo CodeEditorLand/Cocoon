@@ -62,12 +62,12 @@ export default (
 		}
 
 		// Wrap data in VSBuffer
-		const Buffer = VSBuffer.Wrap(Data);
+		const Buffer = VSBuffer.Wrap(Data;
 
 		let Offset = 0;
 
 		// Read message count
-		const MessageCount = Buffer.readUInt32LE(Offset);
+		const MessageCount = Buffer.readUInt32LE(Offset;
 
 		Offset += 4;
 
@@ -100,7 +100,7 @@ export default (
 		}
 
 		// Read metadata length
-		const MetadataLength = Buffer.readUInt32LE(Offset);
+		const MetadataLength = Buffer.readUInt32LE(Offset;
 
 		Offset += 4;
 
@@ -119,12 +119,12 @@ export default (
 		}
 
 		// Read and validate metadata
-		const MetadataBuffer = Buffer.slice(Offset, Offset + MetadataLength);
+		const MetadataBuffer = Buffer.slice(Offset, Offset + MetadataLength;
 
 		Offset += MetadataLength;
 
 		try {
-			JSON.parse(MetadataBuffer.toString());
+			JSON.parse(MetadataBuffer.toString();
 		} catch (Error) {
 			return {
 				Success: false,
@@ -157,11 +157,11 @@ export default (
 				};
 			}
 
-			const MessageLength = Buffer.readUInt32LE(Offset);
+			const MessageLength = Buffer.readUInt32LE(Offset;
 
 			Offset += 4;
 
-			MessageHeaders.push({ length: MessageLength, offset: Offset });
+			MessageHeaders.push({ length: MessageLength, offset: Offset };
 
 			if (Offset + MessageLength > Data.length) {
 				return {
@@ -188,12 +188,12 @@ export default (
 				Header.offset + Header.length,
 			).byteBuffer;
 
-			const Result = DeserializeMessage(MessageData);
+			const Result = DeserializeMessage(MessageData;
 
 			if (!Result.Success) {
 				Warnings.push(
 					`Failed to deserialize message ${Index}: ${Result.Error}`,
-				);
+				;
 
 				continue;
 			}
@@ -202,18 +202,18 @@ export default (
 			if (Result.Message && "Messages" in Result.Message) {
 				Warnings.push(
 					`Unexpected batch message found at index ${Index}`,
-				);
+				;
 
 				continue;
 			}
 
-			Messages.push(Result.Message as IMessage);
+			Messages.push(Result.Message as IMessage;
 		}
 
 		if (Messages.length !== MessageCount) {
 			Warnings.push(
 				`Expected ${MessageCount} messages, successfully deserialized ${Messages.length}`,
-			);
+			;
 		}
 
 		return {

@@ -8,7 +8,6 @@
  * Source: src/vs/workbench/api/common/extHostWindow.ts (createStatusBarItem)
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 /**
@@ -36,23 +35,23 @@ export const CreateStatusBarItem = (
 			text: string;
 
 			tooltip: string | undefined;
-		}) => Effect.Effect<unknown, Error>;
+		}) => Promise<unknown>;
 	},
 
-	Logger: { Info: (Message: string) => Effect.Effect<void> },
+	Logger: { Info: (Message: string) => Promise<void> },
 
 	Id?: string,
 
 	Alignment?: VSCode.StatusBarAlignment,
 
 	Priority?: number,
-): Effect.Effect<VSCode.StatusBarItem, Error> =>
-	Effect.gen(function* () {
+): Promise<VSCode.StatusBarItem> =>
+	async function() {
 		const ItemId = Id ?? `statusbar-${crypto.randomUUID()}`;
 
 		yield* Logger.Info(
 			`[WindowService] Creating status bar item with id '${ItemId}'`,
-		);
+		;
 
 		// Track status bar item state locally
 		const State = {
@@ -76,10 +75,10 @@ export const CreateStatusBarItem = (
 			id: ItemId,
 			text: "",
 			tooltip: undefined,
-		});
+		};
 
 		// Return a status bar item proxy synchronising mutations to Mountain
-		return yield* Effect.succeed({
+		return {
 			get id() {
 				return State.id;
 			},
@@ -104,7 +103,7 @@ export const CreateStatusBarItem = (
 				MountainClient.sendNotification("setStatusBarText", {
 					itemId: ItemId,
 					text: Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			get tooltip() {
 				return State.tooltip;
@@ -137,7 +136,7 @@ export const CreateStatusBarItem = (
 					itemId: ItemId,
 					text: State.text,
 					visible: true,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			hide(): void {
 				State.isVisible = false;
@@ -146,15 +145,15 @@ export const CreateStatusBarItem = (
 					itemId: ItemId,
 					text: State.text,
 					visible: false,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			dispose(): void {
 				State.isVisible = false;
 
 				MountainClient.sendNotification("disposeStatusBarItem", {
 					itemId: ItemId,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			accessibilityInformation: undefined,
-		} as VSCode.StatusBarItem);
-	});
+		} as VSCode.StatusBarItem;
+	};

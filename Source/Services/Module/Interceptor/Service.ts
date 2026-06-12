@@ -53,19 +53,19 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"service",
 
 			"[ModuleInterceptorService] Initializing module interceptor",
-		);
+		;
 
-		this.config = this.loadDefaultConfig();
+		this.config = this.loadDefaultConfig(;
 
-		this.moduleCache = new Map();
+		this.moduleCache = new Map(;
 
-		this.securitySandbox = this.createSecuritySandbox();
+		this.securitySandbox = this.createSecuritySandbox(;
 
 		CocoonDevLog(
 			"service",
 
 			"[ModuleInterceptorService] Module interceptor initialized",
-		);
+		;
 	}
 
 	/**
@@ -115,27 +115,27 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 * Create security sandbox with safe functions
 	 */
 	private createSecuritySandbox(): Map<string, Function> {
-		const sandbox = new Map<string, Function>();
+		const sandbox = new Map<string, Function>(;
 
 		// Safe JavaScript globals
-		sandbox.set("console.log", console.log.bind(console));
+		sandbox.set("console.log", console.log.bind(console);
 
-		sandbox.set("console.error", console.error.bind(console));
+		sandbox.set("console.error", console.error.bind(console);
 
-		sandbox.set("console.warn", console.warn.bind(console));
+		sandbox.set("console.warn", console.warn.bind(console);
 
-		sandbox.set("setTimeout", setTimeout.bind(global));
+		sandbox.set("setTimeout", setTimeout.bind(global);
 
-		sandbox.set("setInterval", setInterval.bind(global));
+		sandbox.set("setInterval", setInterval.bind(global);
 
-		sandbox.set("clearTimeout", clearTimeout.bind(global));
+		sandbox.set("clearTimeout", clearTimeout.bind(global);
 
-		sandbox.set("clearInterval", clearInterval.bind(global));
+		sandbox.set("clearInterval", clearInterval.bind(global);
 
 		// Safe utility functions
-		sandbox.set("JSON.parse", JSON.parse);
+		sandbox.set("JSON.parse", JSON.parse;
 
-		sandbox.set("JSON.stringify", JSON.stringify);
+		sandbox.set("JSON.stringify", JSON.stringify;
 
 		return sandbox;
 	}
@@ -148,38 +148,38 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"service",
 
 			`[ModuleInterceptorService] Intercepting require: ${modulePath} from ${parentPath}`,
-		);
+		;
 
 		// Check module cache first
 		if (this.moduleCache.has(modulePath)) {
-			return this.moduleCache.get(modulePath);
+			return this.moduleCache.get(modulePath;
 		}
 
 		// Validate module access
 		if (!this.validateModuleAccess(modulePath, parentPath)) {
-			throw new Error(`Module access denied: ${modulePath}`);
+			throw new Error(`Module access denied: ${modulePath}`;
 		}
 
 		// Analyze module security
-		const moduleSecurity = this.analyzeModuleSecurity(modulePath);
+		const moduleSecurity = this.analyzeModuleSecurity(modulePath;
 
 		if (!moduleSecurity.isSafe) {
 			throw new Error(
 				`Module security violation: ${modulePath} - ${moduleSecurity.reason}`,
-			);
+			;
 		}
 
 		// Load and intercept module
-		const interceptedModule = this.loadAndInterceptModule(modulePath);
+		const interceptedModule = this.loadAndInterceptModule(modulePath;
 
 		// Cache the module
-		this.moduleCache.set(modulePath, interceptedModule);
+		this.moduleCache.set(modulePath, interceptedModule;
 
 		CocoonDevLog(
 			"service",
 
 			`[ModuleInterceptorService] Module ${modulePath} intercepted successfully`,
-		);
+		;
 
 		return interceptedModule;
 	}
@@ -198,7 +198,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				"service",
 
 				`[ModuleInterceptorService] Blocked module access: ${modulePath}`,
-			);
+			;
 
 			return false;
 		}
@@ -214,7 +214,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				"service",
 
 				`[ModuleInterceptorService] Node built-in module access denied: ${modulePath}`,
-			);
+			;
 
 			return false;
 		}
@@ -256,7 +256,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"querystring",
 		];
 
-		return builtins.includes(modulePath);
+		return builtins.includes(modulePath;
 	}
 
 	/**
@@ -272,16 +272,16 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				"service",
 
 				`[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`,
-			);
+			;
 
 			// Load module source code with enhanced error handling
-			const fs = require("fs");
+			const fs = require("fs";
 
-			const path = require("path");
+			const path = require("path";
 
-			const resolvedPath = require.resolve(modulePath);
+			const resolvedPath = require.resolve(modulePath;
 
-			const sourceCode = fs.readFileSync(resolvedPath, "utf8");
+			const sourceCode = fs.readFileSync(resolvedPath, "utf8";
 
 			// Enhanced AST parsing with comprehensive options
 			const ast = acorn.parse(sourceCode, {
@@ -292,7 +292,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				allowReturnOutsideFunction: true,
 				ranges: true,
 				locations: true,
-			});
+			};
 
 			// Advanced security analysis with multiple detection layers
 			const securityIssues: string[] = [];
@@ -316,11 +316,11 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							) {
 								securityIssues.push(
 									`CRITICAL: Dangerous function call: ${functionName}`,
-								);
+								;
 							} else if (this.isDangerousFunction(functionName)) {
 								securityWarnings.push(
 									`WARNING: Dangerous function call: ${functionName}`,
-								);
+								;
 							}
 						}
 
@@ -334,7 +334,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 						) {
 							securityIssues.push(
 								`CRITICAL: Dynamic code execution via eval constructor`,
-							);
+							;
 						}
 					},
 
@@ -357,7 +357,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							) {
 								securityIssues.push(
 									`CRITICAL: Dangerous property access: ${objectName}.${propertyName}`,
-								);
+								;
 							} else if (
 								this.isDangerousPropertyAccess(
 									objectName,
@@ -367,7 +367,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							) {
 								securityWarnings.push(
 									`WARNING: Dangerous property access: ${objectName}.${propertyName}`,
-								);
+								;
 							}
 						}
 					},
@@ -394,7 +394,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 								) {
 									securityIssues.push(
 										`CRITICAL: Dangerous assignment: ${objectName}.${propertyName}`,
-									);
+									;
 								} else if (
 									this.isDangerousAssignment(
 										objectName,
@@ -404,7 +404,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 								) {
 									securityWarnings.push(
 										`WARNING: Dangerous assignment: ${objectName}.${propertyName}`,
-									);
+									;
 								}
 							}
 						}
@@ -417,7 +417,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 						if (this.isDangerousImport(importSource)) {
 							securityIssues.push(
 								`CRITICAL: Dangerous import: ${importSource}`,
-							);
+							;
 						}
 					},
 
@@ -429,14 +429,14 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 							if (this.isDangerousConstructor(constructorName)) {
 								securityIssues.push(
 									`CRITICAL: Dangerous constructor: ${constructorName}`,
-								);
+								;
 							}
 						}
 					},
 				},
 
 				this,
-			);
+			;
 
 			// Layer 2: Pattern-based security analysis
 			this.performPatternAnalysis(
@@ -445,7 +445,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				securityIssues,
 
 				securityWarnings,
-			);
+			;
 
 			// Combine results
 			const allIssues = [...securityIssues, ...securityWarnings];
@@ -461,7 +461,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				"service",
 
 				`[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`,
-			);
+			;
 
 			return {
 				isSafe,
@@ -475,7 +475,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				`[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`,
 
 				error,
-			);
+			;
 
 			return {
 				isSafe: false,
@@ -511,7 +511,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"vm.runInContext",
 		];
 
-		return criticalFunctions.includes(functionName);
+		return criticalFunctions.includes(functionName;
 	}
 
 	/**
@@ -532,7 +532,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"global.eval",
 		];
 
-		return dangerousFunctions.includes(functionName);
+		return dangerousFunctions.includes(functionName;
 	}
 
 	/**
@@ -559,7 +559,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			(access) =>
 				access.object === objectName &&
 				access.property === propertyName,
-		);
+		;
 	}
 
 	/**
@@ -590,7 +590,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			(access) =>
 				access.object === objectName &&
 				access.property === propertyName,
-		);
+		;
 	}
 
 	/**
@@ -615,7 +615,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			(assignment) =>
 				assignment.object === objectName &&
 				assignment.property === propertyName,
-		);
+		;
 	}
 
 	/**
@@ -636,7 +636,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			(assignment) =>
 				assignment.object === objectName &&
 				assignment.property === propertyName,
-		);
+		;
 	}
 
 	/**
@@ -667,7 +667,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"sys",
 		];
 
-		return dangerousImports.includes(importSource);
+		return dangerousImports.includes(importSource;
 	}
 
 	/**
@@ -684,7 +684,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"require",
 		];
 
-		return dangerousConstructors.includes(constructorName);
+		return dangerousConstructors.includes(constructorName;
 	}
 
 	/**
@@ -725,7 +725,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 
 		for (const { pattern, description } of dangerousPatterns) {
 			if (pattern.test(sourceCode)) {
-				securityIssues.push(`CRITICAL: ${description} detected`);
+				securityIssues.push(`CRITICAL: ${description} detected`;
 			}
 		}
 	}
@@ -736,14 +736,14 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	private loadAndInterceptModule(modulePath: string): any {
 		try {
 			// Load the original module
-			const originalModule = require(modulePath);
+			const originalModule = require(modulePath;
 
 			// Create security wrapper
 			const interceptedModule = this.createSecurityWrapper(
 				originalModule,
 
 				modulePath,
-			);
+			;
 
 			return interceptedModule;
 		} catch (error) {
@@ -752,7 +752,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				`[ModuleInterceptorService] Failed to load module ${modulePath}:`,
 
 				error,
-			);
+			;
 			throw error;
 		}
 	}
@@ -778,7 +778,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 					modulePath,
 
 					key,
-				);
+				;
 			} else {
 				wrapper[key] = originalValue;
 			}
@@ -801,7 +801,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			CocoonDevLog(
 				"service",
 				`[ModuleInterceptorService] Calling ${modulePath}.${functionName}`,
-			);
+			;
 
 			// TODO: Implement function-level security checks
 			// Specification: ARCHITECTURE-SPECIFICATION.md (Function Security)
@@ -809,7 +809,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			// Dependencies: Performance monitoring, security rules
 			// Validation: Test with various function calls
 
-			return originalFn.apply(null, args);
+			return originalFn.apply(null, args;
 		};
 	}
 
@@ -820,18 +820,18 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		CocoonDevLog(
 			"service",
 			`[ModuleInterceptorService] Resolving module: ${modulePath} from ${parentPath}`,
-		);
+		;
 
 		try {
 			// Use Node.js module resolution
 			const resolvedPath = require.resolve(modulePath, {
 				paths: [parentPath],
-			});
+			};
 
 			CocoonDevLog(
 				"service",
 				`[ModuleInterceptorService] Resolved ${modulePath} to ${resolvedPath}`,
-			);
+			;
 
 			return resolvedPath;
 		} catch (error) {
@@ -840,7 +840,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 				`[ModuleInterceptorService] Failed to resolve module ${modulePath}:`,
 
 				error,
-			);
+			;
 			throw error;
 		}
 	}
@@ -852,7 +852,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		CocoonDevLog(
 			"service",
 			`[ModuleInterceptorService] Creating extension context for ${extensionId}`,
-		);
+		;
 
 		const context = {
 			extensionId,
@@ -873,7 +873,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		CocoonDevLog(
 			"service",
 			`[ModuleInterceptorService] Extension context created for ${extensionId}`,
-		);
+		;
 
 		return context;
 	}
@@ -885,17 +885,17 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 		CocoonDevLog(
 			"service",
 			"[ModuleInterceptorService] Updating configuration",
-		);
+		;
 
 		this.config = { ...this.config, ...newConfig };
 
 		// Clear cache on config change
-		this.moduleCache.clear();
+		this.moduleCache.clear(;
 
 		CocoonDevLog(
 			"service",
 			"[ModuleInterceptorService] Configuration updated",
-		);
+		;
 	}
 
 	/**
@@ -924,8 +924,8 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 export const ModuleInterceptorServiceLayer = Layer.effect(
 	IModuleInterceptorService,
 
-	Effect.sync(() => new ModuleInterceptorService()),
-);
+	new ModuleInterceptorService(),
+;
 
 /**
  * Live implementation
@@ -933,7 +933,7 @@ export const ModuleInterceptorServiceLayer = Layer.effect(
 export const ModuleInterceptorServiceLive = Layer.effect(
 	IModuleInterceptorService,
 
-	Effect.sync(() => new ModuleInterceptorService()),
-);
+	new ModuleInterceptorService(),
+;
 
 export default ModuleInterceptorService;

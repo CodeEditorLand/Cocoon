@@ -47,21 +47,21 @@ export interface Logger {
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
-	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 }
 
 /**
@@ -118,23 +118,23 @@ export class Memento {
 					"Storage.GetItems",
 
 					[],
-				);
+				;
 
 				const Prefix = `${ExtensionId}:`;
 
 				if (Array.isArray(AllItems)) {
 					const Entries = (AllItems as [string, unknown][]).filter(
 						([K]) => typeof K === "string" && K.startsWith(Prefix),
-					);
+					;
 
 					for (const [K, V] of Entries) {
-						this.Storage.set(K.slice(Prefix.length), V);
+						this.Storage.set(K.slice(Prefix.length), V;
 					}
 				}
 			} catch {
 				// ignore - storage load failure is non-fatal
 			}
-		})();
+		})(;
 	}
 
 	/**
@@ -146,7 +146,7 @@ export class Memento {
 	get<T>(key: string, defaultValue?: T): T | undefined {
 		const Map = this.Storage;
 
-		const Value = Map.get(key);
+		const Value = Map.get(key;
 
 		return Value !== undefined ? (Value as T) : defaultValue;
 	}
@@ -158,7 +158,7 @@ export class Memento {
 	keys(): readonly string[] {
 		const Map = this.Storage;
 
-		return Array.from(Map.keys());
+		return Array.from(Map.keys();
 	}
 
 	/**
@@ -169,7 +169,7 @@ export class Memento {
 	 */
 	async update(key: string, value: unknown): Promise<void> {
 		// lean: direct map mutation
-		this.Storage.set(key, value);
+		this.Storage.set(key, value;
 
 		// Persist to Mountain's storage, namespaced by extension ID.
 		if (this._MountainClient) {
@@ -179,12 +179,12 @@ export class Memento {
 
 					value,
 				])
-				.catch(() => undefined);
+				.catch(() => undefined;
 		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Memento updated: ${this.ExtensionId}.${key}`,
-		);
+		;
 	}
 
 	/**
@@ -207,23 +207,23 @@ export class Memento {
 								(K) =>
 									typeof K === "string" &&
 									K.startsWith(Prefix),
-							);
+							;
 
 						for (const K of Keys) {
 							void this._MountainClient!.sendRequest(
 								"Storage.Set",
 
 								[K, null],
-							).catch(() => undefined);
+							).catch(() => undefined;
 						}
 					}
 				})
-				.catch(() => undefined);
+				.catch(() => undefined;
 		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Memento cleared: ${this.ExtensionId}`,
-		);
+		;
 	}
 }
 
@@ -244,7 +244,7 @@ export class ExtensionSecretStorage {
 
 	private readonly DidChangeListener = new Set<
 		(Event: VSCode.SecretStorageChangeEvent) => unknown
-	>();
+	>(;
 
 	constructor(
 		ExtensionId: string,
@@ -272,7 +272,7 @@ export class ExtensionSecretStorage {
 					"secrets.get",
 
 					{ key, extensionId: this.ExtensionId },
-				);
+				;
 
 				return result as string | undefined;
 			} catch (error) {
@@ -280,7 +280,7 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Failed to get secret: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				);
+				;
 
 				return undefined;
 			}
@@ -288,7 +288,7 @@ export class ExtensionSecretStorage {
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret get: ${this.ExtensionId}.${key}`,
-		);
+		;
 
 		return undefined;
 	}
@@ -305,13 +305,13 @@ export class ExtensionSecretStorage {
 					key,
 					value,
 					extensionId: this.ExtensionId,
-				});
+				};
 
 				this.Logger.Debug(
 					`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
-				);
+				;
 
-				this.EmitDidChange(key);
+				this.EmitDidChange(key;
 
 				return;
 			} catch (error) {
@@ -319,7 +319,7 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Failed to store secret: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				);
+				;
 
 				throw error;
 			}
@@ -327,9 +327,9 @@ export class ExtensionSecretStorage {
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
-		);
+		;
 
-		this.EmitDidChange(key);
+		this.EmitDidChange(key;
 	}
 
 	/**
@@ -342,13 +342,13 @@ export class ExtensionSecretStorage {
 				await this.MountainClient.sendRequest("secrets.delete", {
 					key,
 					extensionId: this.ExtensionId,
-				});
+				};
 
 				this.Logger.Debug(
 					`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
-				);
+				;
 
-				this.EmitDidChange(key);
+				this.EmitDidChange(key;
 
 				return;
 			} catch (error) {
@@ -356,7 +356,7 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Failed to delete secret: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				);
+				;
 
 				throw error;
 			}
@@ -364,9 +364,9 @@ export class ExtensionSecretStorage {
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
-		);
+		;
 
-		this.EmitDidChange(key);
+		this.EmitDidChange(key;
 	}
 
 	/**
@@ -378,11 +378,11 @@ export class ExtensionSecretStorage {
 	 */
 	get onDidChange(): VSCode.Event<VSCode.SecretStorageChangeEvent> {
 		return (Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
-			this.DidChangeListener.add(Listener);
+			this.DidChangeListener.add(Listener;
 
 			const Disposable = {
 				dispose: () => {
-					this.DidChangeListener.delete(Listener);
+					this.DidChangeListener.delete(Listener;
 				},
 			} as VSCode.Disposable;
 
@@ -397,13 +397,13 @@ export class ExtensionSecretStorage {
 	private EmitDidChange(key: string): void {
 		for (const Listener of this.DidChangeListener) {
 			try {
-				Listener({ key });
+				Listener({ key };
 			} catch (error) {
 				this.Logger.Error(
 					`[ExtensionContext] Secret change listener failed: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				);
+				;
 			}
 		}
 	}
@@ -442,7 +442,7 @@ export interface ExtensionContextService {
 		ExtensionId: string,
 
 		ExtensionDescription: IExtensionDescription,
-	) => Effect.Effect<VSCode.ExtensionContext, Error>;
+	) => Promise<VSCode.ExtensionContext>;
 }
 
 /**
@@ -460,22 +460,20 @@ export interface ExtensionContextService {
  * - MIGRATION: Add extension version migration support (LOW)
  * - TELEMETRY: Track extension activation metrics (LOW)
  */
-export class ExtensionContextService extends Effect.Service<ExtensionContextService>()(
+export class ExtensionContextService extends /* Effect.Service */(
 	"Service/ExtensionContext",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
 
-			yield* Context.Tag<Configuration>("Service/Configuration");
+			yield* Symbol<Configuration>("Service/Configuration";
 
-			const Logger = yield* Context.Tag<Logger>("Service/Logger");
+			const Logger = yield* Symbol<Logger>("Service/Logger";
 
 			// Global subscription tracking for all extensions
-			const GlobalSubscriptionsRef = yield* Ref.make(
-				new Map<string, Set<VSCode.Disposable>>(),
-			);
+			const GlobalSubscriptionsRef = { current: new Map<string, Set<VSCode.Disposable>>(), };
 
 			/**
 			 * Create extension context for activation
@@ -490,11 +488,11 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 				ExtensionId: string,
 
 				ExtensionDescription: IExtensionDescription,
-			): Effect.Effect<VSCode.ExtensionContext, Error> =>
-				Effect.gen(function* () {
+			): Promise<VSCode.ExtensionContext> =>
+				async function() {
 					Logger.Info(
 						`[ExtensionContext] Creating context for extension: ${ExtensionId}`,
-					);
+					;
 
 					// Create storage paths. Both dirs are pre-created on the
 					// filesystem so extensions that `fs.readFile(<path>)` on
@@ -518,9 +516,9 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 					const GlobalStoragePath = `${GlobalStorageRoot}/${ExtensionId}`;
 
 					try {
-						mkdirSync(GlobalStoragePath, { recursive: true });
+						mkdirSync(GlobalStoragePath, { recursive: true };
 
-						mkdirSync(StoragePath, { recursive: true });
+						mkdirSync(StoragePath, { recursive: true };
 					} catch {
 						// Storage dirs are best-effort - if mkdir fails
 						// (read-only mount, perms, ...) extensions will see
@@ -537,7 +535,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 						Logger,
 
 						MountainClient,
-					);
+					;
 
 					const GlobalState = new Memento(
 						new Map<string, unknown>(),
@@ -547,7 +545,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 						Logger,
 
 						MountainClient,
-					);
+					;
 
 					// Create secret storage
 					const SecretStorage = new ExtensionSecretStorage(
@@ -556,20 +554,20 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 						Logger,
 
 						MountainClient,
-					);
+					;
 
 					// Create subscription list for this extension
-					const Subscriptions = new Set<VSCode.Disposable>();
+					const Subscriptions = new Set<VSCode.Disposable>(;
 
-					yield* Ref.update(GlobalSubscriptionsRef, (GlobalMap) => {
-						const NewMap = new Map(GlobalMap);
+					yield* GlobalSubscriptionsRef.current = GlobalMap(GlobalSubscriptionsRef.current) => {
+						const NewMap = new Map(GlobalMap;
 
 						if (!NewMap.has(ExtensionId)) {
-							NewMap.set(ExtensionId, Subscriptions);
+							NewMap.set(ExtensionId, Subscriptions;
 						}
 
 						return NewMap;
-					});
+					};
 
 					/**
 					 * asAbsolutePath implementation
@@ -580,7 +578,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 							ExtensionDescription.extensionLocation,
 
 							relativePath,
-						);
+						;
 
 						return Uri.fsPath;
 					};
@@ -628,40 +626,40 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 					// TODO: LOW: Implement extension migration on version changes
 					// Check for previous version and run migration if needed
-					// const previousVersion = GlobalState.get('version');
+					// const previousVersion = GlobalState.get('version';
 					// if (previousVersion !== ExtensionDescription.version) {
-					//     yield* runMigration(ExtensionId, previousVersion, ExtensionDescription.version);
-					//     yield* Effect.promise(() => GlobalState.update('version', ExtensionDescription.version));
+					//     yield* runMigration(ExtensionId, previousVersion, ExtensionDescription.version;
+					//     yield* Effect.promise(() => GlobalState.update('version', ExtensionDescription.version);
 					// }
 
 					Logger.Debug(
 						`[ExtensionContext] Context created: ${ExtensionId} at ${ExtensionPath}`,
-					);
+					;
 
 					return ExtensionContext;
-				});
+				};
 
 			/**
 			 * Dispose all extension subscriptions
 			 *
 			 * TODO: Add cleanup method to clean up extension state on deactivation
 			 */
-			void ((ExtensionId: string): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
+			void ((ExtensionId: string): Promise<void> =>
+				async function() {
 					const GlobalSubscriptions = yield* Ref.get(
 						GlobalSubscriptionsRef,
-					);
+					;
 
-					const Subscriptions = GlobalSubscriptions.get(ExtensionId);
+					const Subscriptions = GlobalSubscriptions.get(ExtensionId;
 
 					if (Subscriptions) {
 						Logger.Info(
 							`[ExtensionContext] Disposing ${Subscriptions.size} subscriptions for ${ExtensionId}`,
-						);
+						;
 
 						// Dispose all subscriptions
 						for (const Subscription of Subscriptions) {
-							Subscription.dispose();
+							Subscription.dispose(;
 						}
 
 						// Clear from registry
@@ -669,19 +667,19 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 							GlobalSubscriptionsRef,
 
 							(GlobalMap) => {
-								const NewMap = new Map(GlobalMap);
+								const NewMap = new Map(GlobalMap;
 
-								NewMap.delete(ExtensionId);
+								NewMap.delete(ExtensionId;
 
 								return NewMap;
 							},
-						);
+						;
 					}
 
 					Logger.Debug(
 						`[ExtensionContext] Extension ${ExtensionId} disposed`,
-					);
-				}));
+					;
+				});
 
 			// Return the service implementation with PascalCase methods
 			const ServiceImplementation: ExtensionContextService = {
@@ -690,7 +688,7 @@ export class ExtensionContextService extends Effect.Service<ExtensionContextServ
 
 			Logger.Info(
 				`[ExtensionContext] ExtensionContextService initialized`,
-			);
+			;
 
 			return ServiceImplementation;
 		}),

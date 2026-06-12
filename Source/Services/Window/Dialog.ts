@@ -11,8 +11,6 @@
  * TODO(EFX-30): Convert Effect.gen wrappers → async/await when Window/Index.ts callers migrate.
  */
 
-import { Context, Effect, Layer } from "effect";
-
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
 import { DialogError } from "./Errors.js";
 
@@ -24,32 +22,32 @@ export interface DialogService {
 		message: string,
 
 		items?: readonly string[],
-	) => Effect.Effect<string | undefined, DialogError>;
+	) => Promise<string | undefined>;
 
 	readonly ShowWarningMessage: (
 		message: string,
 
 		items?: readonly string[],
-	) => Effect.Effect<string | undefined, DialogError>;
+	) => Promise<string | undefined>;
 
 	readonly ShowErrorMessage: (
 		message: string,
 
 		items?: readonly string[],
-	) => Effect.Effect<string | undefined, DialogError>;
+	) => Promise<string | undefined>;
 }
 
 /**
  * Tag for DialogService context
  */
-export const DialogService = Context.Tag<DialogService>(
+export const DialogService = Symbol<DialogService>(
 	"Service/Window/Dialog",
-);
+;
 
 /**
  * Create dialog service layer
  */
-export const DialogLive = Effect.gen(function* () {
+export const DialogLive = async function() {
 	const MountainClient = yield* IMountainClientService;
 
 	const ShowMessage = (
@@ -60,8 +58,8 @@ export const DialogLive = Effect.gen(function* () {
 		message: string,
 
 		items: readonly string[],
-	): Effect.Effect<string | undefined, DialogError> =>
-		Effect.gen(function* () {
+	): Promise<string | undefined> =>
+		async function() {
 			const Response = yield* Effect.tryPromise({
 				try: () =>
 					(
@@ -81,48 +79,48 @@ export const DialogLive = Effect.gen(function* () {
 						},
 					]),
 				catch: (cause) => new DialogError(operation, cause),
-			});
+			};
 
 			// Mountain returns the selected action title string or null.
 			const Selected =
 				typeof Response === "string"
 					? Response
-					: ((Response as { title?: string } | null)?.title ?? null);
+					: ((Response as { title?: string } | null)?.title ?? null;
 
 			return Selected
 				? (items.find((Item) => Item === Selected) ?? Selected)
 				: undefined;
-		});
+		};
 
 	const ShowInformationMessage = (
 		message: string,
 
 		items: readonly string[] = [],
-	): Effect.Effect<string | undefined, DialogError> =>
-		ShowMessage("showInformationMessage", "info", message, items);
+	): Promise<string | undefined> =>
+		ShowMessage("showInformationMessage", "info", message, items;
 
 	const ShowWarningMessage = (
 		message: string,
 
 		items: readonly string[] = [],
-	): Effect.Effect<string | undefined, DialogError> =>
-		ShowMessage("showWarningMessage", "warning", message, items);
+	): Promise<string | undefined> =>
+		ShowMessage("showWarningMessage", "warning", message, items;
 
 	const ShowErrorMessage = (
 		message: string,
 
 		items: readonly string[] = [],
-	): Effect.Effect<string | undefined, DialogError> =>
-		ShowMessage("showErrorMessage", "error", message, items);
+	): Promise<string | undefined> =>
+		ShowMessage("showErrorMessage", "error", message, items;
 
 	return DialogService.of({
 		ShowInformationMessage,
 		ShowWarningMessage,
 		ShowErrorMessage,
-	});
-});
+	};
+};
 
 /**
  * Layer for dialog service
  */
-export const DialogLayer = Layer.effect(DialogService, DialogLive);
+export const DialogLayer = Layer.effect(DialogService, DialogLive;

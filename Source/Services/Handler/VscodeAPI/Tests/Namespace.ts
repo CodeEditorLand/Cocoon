@@ -110,7 +110,7 @@ type TestRunRequest = {
 const NoOp = () => {};
 
 const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
-	const Items = new Map<string, TestItem>();
+	const Items = new Map<string, TestItem>(;
 
 	const Collection: TestItemCollection = {
 		get size() {
@@ -122,25 +122,25 @@ const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
 
 			(Item as { parent?: TestItem }).parent = Owner ?? undefined;
 
-			Items.set(Item.id, Item);
+			Items.set(Item.id, Item;
 		},
 
 		delete(Id) {
-			Items.delete(Id);
+			Items.delete(Id;
 		},
 
 		get(Id) {
-			return Items.get(Id);
+			return Items.get(Id;
 		},
 
 		replace(Next) {
-			Items.clear();
+			Items.clear(;
 
 			for (const Item of Next) {
 				if (Item?.id) {
 					(Item as { parent?: TestItem }).parent = Owner ?? undefined;
 
-					Items.set(Item.id, Item);
+					Items.set(Item.id, Item;
 				}
 			}
 		},
@@ -148,7 +148,7 @@ const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
 		forEach(Cb) {
 			for (const Item of Items.values()) {
 				try {
-					Cb(Item, Collection);
+					Cb(Item, Collection;
 				} catch {
 					/* per-item callback failure must not break iteration */
 				}
@@ -177,7 +177,7 @@ const MakeTestItem = (Id: string, Label: string, Uri: unknown): TestItem => {
 	};
 
 	(Item as { children: TestItemCollection }).children =
-		MakeTestItemCollection(Item);
+		MakeTestItemCollection(Item;
 
 	return Item;
 };
@@ -203,7 +203,7 @@ const MakeTestRun = (
 
 	Persist: boolean,
 ) => {
-	const Results = new Map<string, RunResult>();
+	const Results = new Map<string, RunResult>(;
 
 	const OutputBuffer: string[] = [];
 
@@ -224,7 +224,7 @@ const MakeTestRun = (
 					MaybeMessage && State !== "passed" && State !== "skipped"
 						? MaybeMessage
 						: undefined,
-			});
+			};
 		};
 
 	const Run = {
@@ -260,7 +260,7 @@ const MakeTestRun = (
 			if (Ended) return;
 
 			if (typeof Output === "string" && Output.length > 0) {
-				OutputBuffer.push(Output);
+				OutputBuffer.push(Output;
 			}
 		},
 
@@ -275,7 +275,7 @@ const MakeTestRun = (
 					runName: Name,
 					results: Object.fromEntries(Results),
 					output: OutputBuffer.join(""),
-				});
+				};
 			} catch {
 				/* listener threw */
 			}
@@ -288,11 +288,11 @@ const MakeTestRun = (
 const CreateTestsNamespace = (Context: HandlerContext) => {
 	const EventSubscriber =
 		(EventName: string) => (Listener: (...Arguments: any[]) => any) => {
-			Context.Emitter.on(EventName, Listener);
+			Context.Emitter.on(EventName, Listener;
 
 			return {
 				dispose: () => {
-					Context.Emitter.off(EventName, Listener);
+					Context.Emitter.off(EventName, Listener;
 				},
 			};
 		};
@@ -305,15 +305,15 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 			// id returns the existing one (matches stock VS Code, which
 			// throws on duplicate id; we soften to idempotent registration
 			// because extensions in dev-reload occasionally call twice).
-			const Existing = Context.ExtensionRegistry.get(ControllerKey);
+			const Existing = Context.ExtensionRegistry.get(ControllerKey;
 
 			if (Existing) {
 				return Existing;
 			}
 
-			const Items = MakeTestItemCollection(null);
+			const Items = MakeTestItemCollection(null;
 
-			const Profiles = new Map<number, unknown>();
+			const Profiles = new Map<number, unknown>(;
 
 			let ProfileSeq = 0;
 
@@ -355,11 +355,11 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 						configureHandler: undefined,
 
 						dispose: () => {
-							Profiles.delete(ProfileId);
+							Profiles.delete(ProfileId;
 						},
 					};
 
-					Profiles.set(ProfileId, Profile);
+					Profiles.set(ProfileId, Profile;
 
 					return Profile;
 				},
@@ -401,13 +401,13 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 					),
 
 				dispose: () => {
-					Context.ExtensionRegistry.delete(ControllerKey);
+					Context.ExtensionRegistry.delete(ControllerKey;
 
-					Profiles.clear();
+					Profiles.clear(;
 				},
 			};
 
-			Context.ExtensionRegistry.set(ControllerKey, Controller);
+			Context.ExtensionRegistry.set(ControllerKey, Controller;
 
 			return Controller;
 		},

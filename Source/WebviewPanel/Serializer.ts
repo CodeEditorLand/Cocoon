@@ -119,13 +119,13 @@ export interface MountainDTO {
 export interface Serializer {
 	readonly SerializeToDTO: (
 		State: PanelState,
-	) => Effect.Effect<MountainDTO, Error>;
+	) => Promise<MountainDTO>;
 
 	readonly DeserializeFromDTO: (
 		DTO: unknown,
-	) => Effect.Effect<PanelState, Error>;
+	) => Promise<PanelState>;
 
-	readonly ValidateDTO: (DTO: unknown) => Effect.Effect<MountainDTO, Error>;
+	readonly ValidateDTO: (DTO: unknown) => Promise<MountainDTO>;
 }
 
 /**
@@ -138,87 +138,77 @@ const DTO_VERSION = 1;
  * @class SerializerService
  * @description Service for serializing Webview state to/from Mountain DTOs
  */
-export class SerializerService extends Effect.Service<SerializerService>()(
+export class SerializerService extends /* Effect.Service */(
 	"Serializer/WebviewPanel",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			/**
 			 * Validate a MountainDTO structure
 			 */
 			const ValidateDTO = (
 				DTO: unknown,
-			): Effect.Effect<MountainDTO, Error> =>
-				Effect.gen(function* () {
+			): Promise<MountainDTO> =>
+				async function() {
 					// Defensive: Check if DTO is an object
 					if (
 						typeof DTO !== "object" ||
 						DTO === null ||
 						Array.isArray(DTO)
 					) {
-						return yield* Effect.fail(
-							new Error("Mountain DTO must be an object"),
-						);
+						throw new Error("Mountain DTO must be an object"),
+						;
 					}
 
 					const D = DTO as Record<string, unknown>;
 
 					// Check required fields
 					if (typeof D.Version !== "number") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO missing Version"),
-						);
+						throw new Error("Mountain DTO missing Version"),
+						;
 					}
 
 					if (typeof D.Handle !== "string") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO missing Handle"),
-						);
+						throw new Error("Mountain DTO missing Handle"),
+						;
 					}
 
 					if (typeof D.ExtensionId !== "string") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO missing ExtensionId"),
-						);
+						throw new Error("Mountain DTO missing ExtensionId"),
+						;
 					}
 
 					if (typeof D.ViewType !== "string") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO missing ViewType"),
-						);
+						throw new Error("Mountain DTO missing ViewType"),
+						;
 					}
 
 					if (typeof D.Title !== "string") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO missing Title"),
-						);
+						throw new Error("Mountain DTO missing Title"),
+						;
 					}
 
 					// Validate numeric fields
 					if (typeof D.ViewColumn !== "number") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO has invalid ViewColumn"),
-						);
+						throw new Error("Mountain DTO has invalid ViewColumn"),
+						;
 					}
 
 					if (typeof D.PreservedFocus !== "boolean") {
-						return yield* Effect.fail(
-							new Error(
+						throw new Error(
 								"Mountain DTO has invalid PreservedFocus",
 							),
-						);
+						;
 					}
 
 					if (typeof D.IsActive !== "boolean") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO has invalid IsActive"),
-						);
+						throw new Error("Mountain DTO has invalid IsActive"),
+						;
 					}
 
 					if (typeof D.IsVisible !== "boolean") {
-						return yield* Effect.fail(
-							new Error("Mountain DTO has invalid IsVisible"),
-						);
+						throw new Error("Mountain DTO has invalid IsVisible"),
+						;
 					}
 
 					// Validate Options object
@@ -227,9 +217,8 @@ export class SerializerService extends Effect.Service<SerializerService>()(
 						D.Options === null ||
 						Array.isArray(D.Options)
 					) {
-						return yield* Effect.fail(
-							new Error("Mountain DTO has invalid Options"),
-						);
+						throw new Error("Mountain DTO has invalid Options"),
+						;
 					}
 
 					const Options = D.Options as Record<string, unknown>;
@@ -238,23 +227,22 @@ export class SerializerService extends Effect.Service<SerializerService>()(
 						typeof Options.EnableScripts !== "undefined" &&
 						typeof Options.EnableScripts !== "boolean"
 					) {
-						return yield* Effect.fail(
-							new Error(
+						throw new Error(
 								"Mountain DTO has invalid EnableScripts option",
 							),
-						);
+						;
 					}
 
 					return D as MountainDTO;
-				});
+				};
 
 			/**
 			 * Serialize PanelState to MountainDTO
 			 */
 			const SerializeToDTO = (
 				State: PanelState,
-			): Effect.Effect<MountainDTO, Error> =>
-				Effect.gen(function* () {
+			): Promise<MountainDTO> =>
+				async function() {
 					// Create DTO from PanelState
 					const DTO: MountainDTO = {
 						Version: DTO_VERSION,
@@ -283,17 +271,17 @@ export class SerializerService extends Effect.Service<SerializerService>()(
 					};
 
 					return DTO;
-				});
+				};
 
 			/**
 			 * Deserialize MountainDTO to PanelState
 			 */
 			const DeserializeFromDTO = (
 				DTO: unknown,
-			): Effect.Effect<PanelState, Error> =>
-				Effect.gen(function* () {
+			): Promise<PanelState> =>
+				async function() {
 					// Validate DTO structure
-					const ValidatedDTO = yield* ValidateDTO(DTO);
+					const ValidatedDTO = yield* ValidateDTO(DTO;
 
 					// Convert DTO to PanelState
 					const State: PanelState = {
@@ -329,7 +317,7 @@ export class SerializerService extends Effect.Service<SerializerService>()(
 					};
 
 					return State;
-				});
+				};
 
 			return {
 				SerializeToDTO,

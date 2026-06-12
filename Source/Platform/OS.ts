@@ -193,7 +193,7 @@ let _userAgent: string | undefined = undefined;
  * Initialize OS detection
  */
 function InitializeDetection(): void {
-	const nodeProcess: INodeProcess | undefined = GetNodeProcess();
+	const nodeProcess: INodeProcess | undefined = GetNodeProcess(;
 
 	// Native environment detection
 	if (typeof nodeProcess === "object") {
@@ -205,7 +205,7 @@ function InitializeDetection(): void {
 
 		_isElectron = typeof nodeProcess?.versions?.electron === "string";
 
-		_isCI = CheckCIEnvironment(nodeProcess.env);
+		_isCI = CheckCIEnvironment(nodeProcess.env;
 
 		// Determine platform number
 		if (_isMacintosh) {
@@ -224,10 +224,10 @@ function InitializeDetection(): void {
 				: OperatingSystem.Linux;
 
 		// Detect architecture
-		_architecture = DetectArchitecture(nodeProcess.arch);
+		_architecture = DetectArchitecture(nodeProcess.arch;
 
 		// Detect locale and language
-		DetectLocaleAndLanguage(nodeProcess.env);
+		DetectLocaleAndLanguage(nodeProcess.env;
 	}
 
 	// Web environment detection
@@ -263,9 +263,9 @@ function InitializeDetection(): void {
 
 		_locale = navigator.language || DEFAULT_LOCALE;
 
-		_architecture = DetectWebArchitecture();
+		_architecture = DetectWebArchitecture(;
 	} else {
-		process.stderr.write("[OS] Unable to resolve platform\n");
+		process.stderr.write("[OS] Unable to resolve platform\n";
 	}
 }
 
@@ -304,7 +304,7 @@ function CheckCIEnvironment(env: IProcessEnvironment): boolean {
 		env["JENKINS_URL"] ||
 		env["TRAVIS"] ||
 		env["CIRCLECI"]
-	);
+	;
 }
 
 /**
@@ -339,7 +339,7 @@ function DetectArchitecture(arch: string): OSArchitecture {
 function DetectWebArchitecture(): OSArchitecture {
 	// In Cocoon (Node.js) use process.arch directly - fastest, no API call.
 	if (typeof process !== "undefined" && process.arch) {
-		return DetectArchitecture(process.arch);
+		return DetectArchitecture(process.arch;
 	}
 
 	// Browser fallback: navigator.userAgentData is async-only; return
@@ -356,7 +356,7 @@ function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
 
 	if (rawNlsConfig) {
 		try {
-			const nlsConfig = JSON.parse(rawNlsConfig);
+			const nlsConfig = JSON.parse(rawNlsConfig;
 
 			_locale = nlsConfig.userLocale || DEFAULT_LOCALE;
 
@@ -399,13 +399,13 @@ function DetectLittleEndian(): boolean {
 
 	_isLittleEndianComputed = true;
 
-	const test = new Uint8Array(2);
+	const test = new Uint8Array(2;
 
 	test[0] = 1;
 
 	test[1] = 2;
 
-	const view = new Uint16Array(test.buffer);
+	const view = new Uint16Array(test.buffer;
 
 	_isLittleEndian = view[0] === (2 << 8) + 1;
 
@@ -415,9 +415,9 @@ function DetectLittleEndian(): boolean {
 /**
  * Initialize detection on module load
  */
-InitializeDetection();
+InitializeDetection(;
 
-_isLittleEndian = DetectLittleEndian();
+_isLittleEndian = DetectLittleEndian(;
 
 /**
  * Get platform number
@@ -523,14 +523,14 @@ export function NormalizePath(path: string | null | undefined): string {
 		return "";
 	}
 
-	const separator = GetPathSeparator();
+	const separator = GetPathSeparator(;
 
 	if (_isWindows) {
 		// Convert forward slashes to backslashes (Windows)
-		return path.replace(/\//g, separator);
+		return path.replace(/\//g, separator;
 	} else {
 		// Convert backslashes to forward slashes (Unix/macOS/Linux)
-		return path.replace(/\\/g, separator);
+		return path.replace(/\\/g, separator;
 	}
 }
 
@@ -542,7 +542,7 @@ export function NormalizePathToUnix(path: string | null | undefined): string {
 		return "";
 	}
 
-	return path.replace(/\\/g, "/");
+	return path.replace(/\\/g, "/";
 }
 
 /**
@@ -555,7 +555,7 @@ export function NormalizePathToWindows(
 		return "";
 	}
 
-	return path.replace(/\//g, PATH_SEPARATOR_WINDOWS);
+	return path.replace(/\//g, PATH_SEPARATOR_WINDOWS;
 }
 
 /**
@@ -570,14 +570,14 @@ export function JoinPath(...segments: (string | null | undefined)[]): string {
 		return "";
 	}
 
-	const separator = GetPathSeparator();
+	const separator = GetPathSeparator(;
 
-	let result = validSegments.join(separator === "/" ? "/" : "\\");
+	let result = validSegments.join(separator === "/" ? "/" : "\\";
 
 	// Remove duplicate separators
-	result = result.replace(/\/+/g, separator === "/" ? "/" : "\\");
+	result = result.replace(/\/+/g, separator === "/" ? "/" : "\\";
 
-	result = result.replace(/\\+/g, "\\");
+	result = result.replace(/\\+/g, "\\";
 
 	return result;
 }
@@ -669,23 +669,23 @@ export function PlatformToString(platform: PlatformNumber): PlatformName {
 export function StringToPlatform(
 	platform: string,
 ): Option.Option<PlatformNumber> {
-	const normalized = String(platform);
+	const normalized = String(platform;
 
 	switch (normalized) {
 		case "Web":
-			return Option.some(PlatformNumber.Web);
+			return Option.some(PlatformNumber.Web;
 
 		case "Mac":
-			return Option.some(PlatformNumber.Mac);
+			return Option.some(PlatformNumber.Mac;
 
 		case "Linux":
-			return Option.some(PlatformNumber.Linux);
+			return Option.some(PlatformNumber.Linux;
 
 		case "Windows":
-			return Option.some(PlatformNumber.Windows);
+			return Option.some(PlatformNumber.Windows;
 
 		default:
-			return Option.none();
+			return Option.none(;
 	}
 }
 
@@ -705,7 +705,7 @@ export function IsEnglishVariant(): boolean {
 	} else if (_language.length >= 3) {
 		return (
 			_language[0] === "e" && _language[1] === "n" && _language[2] === "-"
-		);
+		;
 	}
 
 	return false;
@@ -714,15 +714,15 @@ export function IsEnglishVariant(): boolean {
 /**
  * Effect-TS: Get OS information as Effect
  */
-export function GetOSInfoEffect(): Effect.Effect<OSInfo> {
-	return Effect.succeed(GetOSInfo());
+export function GetOSInfoEffect(): Promise<OSInfo> {
+	return return (GetOSInfo();
 }
 
 /**
  * Effect-TS: Detect platform as Effect
  */
-export function DetectPlatformEffect(): Effect.Effect<PlatformNumber> {
-	return Effect.succeed(GetPlatformNumber());
+export function DetectPlatformEffect(): Promise<PlatformNumber> {
+	return return (GetPlatformNumber();
 }
 
 /**
@@ -730,12 +730,12 @@ export function DetectPlatformEffect(): Effect.Effect<PlatformNumber> {
  */
 export function NormalizePathEffect(
 	path: string,
-): Effect.Effect<string, Error> {
+): Promise<string> {
 	if (!path) {
-		return Effect.fail(new Error("Path cannot be null or undefined"));
+		return throw (new Error("Path cannot be null or undefined");
 	}
 
-	return Effect.succeed(NormalizePath(path));
+	return return (NormalizePath(path);
 }
 
 /**
@@ -748,10 +748,10 @@ export function IsAbsolutePath(path: string): boolean {
 
 	if (_isWindows) {
 		// Windows: drive letter (C:\) or UNC path (\\server\share)
-		return /^[a-zA-Z]:\\/.test(path) || /^\\\\[^\\]/.test(path);
+		return /^[a-zA-Z]:\\/.test(path) || /^\\\\[^\\]/.test(path;
 	} else {
 		// Unix/macOS/Linux: starts with /
-		return path.startsWith("/");
+		return path.startsWith("/";
 	}
 }
 

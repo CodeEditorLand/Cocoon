@@ -17,7 +17,7 @@ import { Result } from "../Utility/Result.js";
 
 // Real VS Code CancellationTokenSource - replaces the hand-rolled class below.
 const { CancellationTokenSource } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
 
 /**
  * Represents a unique request identifier
@@ -145,11 +145,11 @@ export class IPCHandler {
 	private activeRequestCount: number;
 
 	constructor(logger: Logger, config?: Partial<HandlerConfig>) {
-		this.handlers = new Map();
+		this.handlers = new Map(;
 
-		this.pendingRequests = new Map();
+		this.pendingRequests = new Map(;
 
-		this.handlerStats = new Map();
+		this.handlerStats = new Map(;
 
 		this.logger = logger;
 
@@ -165,7 +165,7 @@ export class IPCHandler {
 			maxConcurrentRequests: config?.maxConcurrentRequests ?? 100,
 		};
 
-		this.logger.info("IPCHandler initialized", config);
+		this.logger.info("IPCHandler initialized", config;
 	}
 
 	/**
@@ -185,17 +185,17 @@ export class IPCHandler {
 	): Promise<Result<void, Error>> {
 		try {
 			if (!method || method.trim().length === 0) {
-				return Result.Err(new Error("Method name cannot be empty"));
+				return Result.Err(new Error("Method name cannot be empty");
 			}
 
 			if (typeof handler !== "function") {
-				return Result.Err(new Error("Handler must be a function"));
+				return Result.Err(new Error("Handler must be a function");
 			}
 
 			if (this.handlers.has(method)) {
 				const warning = `Handler for method '${method}' already exists. Overwriting.`;
 
-				this.logger.warn(warning);
+				this.logger.warn(warning;
 			}
 
 			const registration: HandlerRegistration = {
@@ -216,29 +216,29 @@ export class IPCHandler {
 					failedCalls: 0,
 					averageLatency: 0,
 					lastCalled: 0,
-				});
+				};
 			}
 
-			this.handlers.set(method, registration);
+			this.handlers.set(method, registration;
 
 			this.logger.info(
 				`Handler registered successfully for method: ${method}`,
 
 				{ description: options?.description },
-			);
+			;
 
-			return Result.Ok(undefined);
+			return Result.Ok(undefined;
 		} catch (error) {
 			const err =
-				error instanceof Error ? error : new Error(String(error));
+				error instanceof Error ? error : new Error(String(error);
 
 			this.logger.error(
 				`Failed to register handler for method: ${method}`,
 
 				err,
-			);
+			;
 
-			return Result.Err(err);
+			return Result.Err(err;
 		}
 	}
 
@@ -256,47 +256,47 @@ export class IPCHandler {
 	): Promise<Response<TOutput>> {
 		const requestId = request.id;
 
-		const startTime = performance.now();
+		const startTime = performance.now(;
 
 		try {
 			// Validate request
 			if (!request || !request.id || !request.method) {
-				throw new Error("Invalid request: missing required fields");
+				throw new Error("Invalid request: missing required fields";
 			}
 
 			// Check concurrent request limit
 			if (this.activeRequestCount >= this.config.maxConcurrentRequests) {
 				throw new Error(
 					`Maximum concurrent requests (${this.config.maxConcurrentRequests}) reached`,
-				);
+				;
 			}
 
 			this.activeRequestCount++;
 
 			// Create cancellation token if not provided
-			const tokenSource = new CancellationTokenSource();
+			const tokenSource = new CancellationTokenSource(;
 
-			this.pendingRequests.set(requestId, tokenSource);
+			this.pendingRequests.set(requestId, tokenSource;
 
 			// Check if request is already cancelled
 			if (token?.isCancellationRequested) {
-				throw new Error("Request was cancelled before execution");
+				throw new Error("Request was cancelled before execution";
 			}
 
 			// Find handler
-			const registration = this.handlers.get(request.method);
+			const registration = this.handlers.get(request.method;
 
 			if (!registration) {
 				throw new Error(
 					`No handler registered for method: ${request.method}`,
-				);
+				;
 			}
 
 			this.logger.debug(
 				`Processing request for method: ${request.method}`,
 
 				{ requestId, type: request.type },
-			);
+			;
 
 			// Execute handler with timeout
 			const timeout = this.config.defaultTimeout;
@@ -309,22 +309,22 @@ export class IPCHandler {
 				tokenSource.token,
 
 				timeout,
-			);
+			;
 
 			// Update statistics
 			if (this.config.enableMetrics) {
-				this.UpdateStats(request.method, startTime, true);
+				this.UpdateStats(request.method, startTime, true;
 			}
 
 			return response;
 		} catch (error) {
 			// Update statistics on error
 			if (this.config.enableMetrics) {
-				this.UpdateStats(request.method, startTime, false);
+				this.UpdateStats(request.method, startTime, false;
 			}
 
 			const err =
-				error instanceof Error ? error : new Error(String(error));
+				error instanceof Error ? error : new Error(String(error);
 
 			this.logger.error(
 				`Request failed for method: ${request.method}`,
@@ -332,7 +332,7 @@ export class IPCHandler {
 				err,
 
 				{ requestId },
-			);
+			;
 
 			return {
 				id: requestId,
@@ -346,7 +346,7 @@ export class IPCHandler {
 		} finally {
 			this.activeRequestCount--;
 
-			this.pendingRequests.delete(requestId);
+			this.pendingRequests.delete(requestId;
 		}
 	}
 
@@ -359,29 +359,29 @@ export class IPCHandler {
 	public CancelOperation(requestId: RequestId): Result<boolean, Error> {
 		try {
 			if (!requestId) {
-				return Result.Err(new Error("Request ID cannot be empty"));
+				return Result.Err(new Error("Request ID cannot be empty");
 			}
 
-			const tokenSource = this.pendingRequests.get(requestId);
+			const tokenSource = this.pendingRequests.get(requestId;
 
 			if (!tokenSource) {
 				return Result.Ok(false); // Not found, assume not running
 			}
 
-			tokenSource.cancel();
+			tokenSource.cancel(;
 
-			this.pendingRequests.delete(requestId);
+			this.pendingRequests.delete(requestId;
 
-			this.logger.info(`Operation cancelled successfully`, { requestId });
+			this.logger.info(`Operation cancelled successfully`, { requestId };
 
-			return Result.Ok(true);
+			return Result.Ok(true;
 		} catch (error) {
 			const err =
-				error instanceof Error ? error : new Error(String(error));
+				error instanceof Error ? error : new Error(String(error);
 
-			this.logger.error(`Failed to cancel operation`, err, { requestId });
+			this.logger.error(`Failed to cancel operation`, err, { requestId };
 
-			return Result.Err(err);
+			return Result.Err(err;
 		}
 	}
 
@@ -394,29 +394,29 @@ export class IPCHandler {
 	public UnregisterHandler(method: string): Result<boolean, Error> {
 		try {
 			if (!method) {
-				return Result.Err(new Error("Method name cannot be empty"));
+				return Result.Err(new Error("Method name cannot be empty");
 			}
 
-			const existed = this.handlers.delete(method);
+			const existed = this.handlers.delete(method;
 
-			this.handlerStats.delete(method);
+			this.handlerStats.delete(method;
 
 			this.logger.info(`Handler unregistered for method: ${method}`, {
 				existed,
-			});
+			};
 
-			return Result.Ok(existed);
+			return Result.Ok(existed;
 		} catch (error) {
 			const err =
-				error instanceof Error ? error : new Error(String(error));
+				error instanceof Error ? error : new Error(String(error);
 
 			this.logger.error(
 				`Failed to unregister handler for method: ${method}`,
 
 				err,
-			);
+			;
 
-			return Result.Err(err);
+			return Result.Err(err;
 		}
 	}
 
@@ -427,7 +427,7 @@ export class IPCHandler {
 	 * @returns Handler statistics or undefined
 	 */
 	public GetHandlerStats(method: string): HandlerStats | undefined {
-		return this.handlerStats.get(method);
+		return this.handlerStats.get(method;
 	}
 
 	/**
@@ -436,33 +436,33 @@ export class IPCHandler {
 	 * @returns Array of method names
 	 */
 	public GetRegisteredMethods(): string[] {
-		return Array.from(this.handlers.keys());
+		return Array.from(this.handlers.keys();
 	}
 
 	/**
 	 * Clears all registered handlers and pending requests
 	 */
 	public Dispose(): void {
-		this.logger.info("Disposing IPCHandler");
+		this.logger.info("Disposing IPCHandler";
 
 		// Cancel all pending requests
 		for (const tokenSource of this.pendingRequests.values()) {
 			try {
-				tokenSource.cancel();
+				tokenSource.cancel(;
 			} catch (error) {
 				this.logger.warn(
 					"Failed to cancel pending request during disposal",
 
 					error,
-				);
+				;
 			}
 		}
 
-		this.handlers.clear();
+		this.handlers.clear(;
 
-		this.pendingRequests.clear();
+		this.pendingRequests.clear(;
 
-		this.handlerStats.clear();
+		this.handlerStats.clear(;
 
 		this.activeRequestCount = 0;
 	}
@@ -492,7 +492,7 @@ export class IPCHandler {
 					timeoutMs,
 				),
 			),
-		]);
+		];
 	}
 
 	/**
@@ -505,7 +505,7 @@ export class IPCHandler {
 
 		success: boolean,
 	): void {
-		const stats = this.handlerStats.get(method);
+		const stats = this.handlerStats.get(method;
 
 		if (!stats) return;
 
@@ -522,9 +522,9 @@ export class IPCHandler {
 		stats.averageLatency =
 			(stats.averageLatency * (totalCalls - 1) + latency) / totalCalls;
 
-		stats.lastCalled = Date.now();
+		stats.lastCalled = Date.now(;
 
-		this.handlerStats.set(method, stats);
+		this.handlerStats.set(method, stats;
 	}
 }
 
@@ -538,5 +538,5 @@ export function CreateIPCHandler(
 
 	config?: Partial<HandlerConfig>,
 ): IPCHandler {
-	return new IPCHandler(logger, config);
+	return new IPCHandler(logger, config;
 }

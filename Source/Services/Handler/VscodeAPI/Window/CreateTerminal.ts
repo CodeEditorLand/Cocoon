@@ -41,7 +41,7 @@ export default (
 		handle: Handle,
 		name: Name,
 		options: Options ?? {},
-	}).catch(() => {});
+	}).catch(() => {};
 
 	let ProcessIdPromise: Promise<number | undefined> | undefined;
 
@@ -54,7 +54,7 @@ export default (
 					"Terminal.GetProcessId",
 
 					[Handle],
-				);
+				;
 
 				if (typeof Response === "number") return Response;
 
@@ -69,7 +69,7 @@ export default (
 			} catch {
 				return undefined;
 			}
-		})();
+		})(;
 
 		return ProcessIdPromise;
 	};
@@ -103,7 +103,7 @@ export default (
 					CurrentState = { ...CurrentState, shell: Update.shell };
 				}
 			},
-		);
+		;
 	} catch {
 		/* swallow - emitter may not be ready yet */
 	}
@@ -112,7 +112,7 @@ export default (
 		name: Name,
 
 		get processId() {
-			return ResolveProcessId();
+			return ResolveProcessId(;
 		},
 
 		get state() {
@@ -143,26 +143,26 @@ export default (
 			Context.SendToMountain("terminal.sendText", {
 				handle: Handle,
 				text: Payload,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		show: (PreserveFocus?: boolean) => {
 			Context.SendToMountain("terminal.show", {
 				handle: Handle,
 				preserveFocus: PreserveFocus,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		hide: () => {
 			Context.SendToMountain("terminal.hide", {
 				handle: Handle,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		dispose: () => {
 			Context.SendToMountain("terminal.dispose", {
 				handle: Handle,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		resize: async (Columns: number, Rows: number) => {
@@ -173,7 +173,7 @@ export default (
 					Columns,
 
 					Rows,
-				]);
+				];
 			} catch {
 				/* silent - best-effort UI adaptation */
 			}

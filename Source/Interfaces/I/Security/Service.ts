@@ -162,4 +162,4 @@ export interface ISecurityService {
 /**
  * Effect context for SecurityService
  */
-export const ISecurityService: unique symbol = Symbol.for("ISecurityService");
+export const ISecurityService: unique symbol = Symbol.for("ISecurityService";

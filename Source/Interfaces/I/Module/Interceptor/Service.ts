@@ -116,6 +116,4 @@ export interface IModuleInterceptorService {
 /**
  * Effect context for ModuleInterceptorService
  */
-export const IModuleInterceptorService = Context.Tag<IModuleInterceptorService>(
-	"IModuleInterceptorService",
-);
+export const IModuleInterceptorService: unique symbol = Symbol.for("IModuleInterceptorService");

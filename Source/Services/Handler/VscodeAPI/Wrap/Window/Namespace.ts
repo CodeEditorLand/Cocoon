@@ -17,6 +17,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapWindowNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("window", Concrete);
+	WrapNamespaceWithHeuristics("window", Concrete;
 
 export default WrapWindowNamespace;

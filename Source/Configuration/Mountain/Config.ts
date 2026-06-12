@@ -138,7 +138,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_PORT) {
-		const port = parseInt(process.env.MOUNTAIN_PORT, 10);
+		const port = parseInt(process.env.MOUNTAIN_PORT, 10;
 
 		if (!isNaN(port) && port > 0 && port <= 65535) {
 			config.port = port;
@@ -146,7 +146,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_CONNECTION_TIMEOUT) {
-		const timeout = parseInt(process.env.MOUNTAIN_CONNECTION_TIMEOUT, 10);
+		const timeout = parseInt(process.env.MOUNTAIN_CONNECTION_TIMEOUT, 10;
 
 		if (!isNaN(timeout) && timeout > 0) {
 			config.connectionTimeout = timeout;
@@ -154,7 +154,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_MAX_RETRIES) {
-		const retries = parseInt(process.env.MOUNTAIN_MAX_RETRIES, 10);
+		const retries = parseInt(process.env.MOUNTAIN_MAX_RETRIES, 10;
 
 		if (!isNaN(retries) && retries > 0) {
 			config.maxRetries = retries;
@@ -162,7 +162,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_RETRY_DELAY) {
-		const delay = parseInt(process.env.MOUNTAIN_RETRY_DELAY, 10);
+		const delay = parseInt(process.env.MOUNTAIN_RETRY_DELAY, 10;
 
 		if (!isNaN(delay) && delay > 0) {
 			config.retryDelay = delay;
@@ -175,7 +175,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_KEEP_ALIVE_INTERVAL) {
-		const interval = parseInt(process.env.MOUNTAIN_KEEP_ALIVE_INTERVAL, 10);
+		const interval = parseInt(process.env.MOUNTAIN_KEEP_ALIVE_INTERVAL, 10;
 
 		if (!isNaN(interval) && interval > 0) {
 			config.keepAliveInterval = interval;
@@ -183,7 +183,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_MAX_MESSAGE_SIZE) {
-		const size = parseInt(process.env.MOUNTAIN_MAX_MESSAGE_SIZE, 10);
+		const size = parseInt(process.env.MOUNTAIN_MAX_MESSAGE_SIZE, 10;
 
 		if (!isNaN(size) && size > 0) {
 			config.maxMessageSize = size;
@@ -208,7 +208,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_AUTO_RECONNECT_DELAY) {
-		const delay = parseInt(process.env.MOUNTAIN_AUTO_RECONNECT_DELAY, 10);
+		const delay = parseInt(process.env.MOUNTAIN_AUTO_RECONNECT_DELAY, 10;
 
 		if (!isNaN(delay) && delay > 0) {
 			config.autoReconnectDelay = delay;
@@ -220,7 +220,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 			process.env.MOUNTAIN_MAX_AUTO_RECONNECT_ATTEMPTS,
 
 			10,
-		);
+		;
 
 		if (!isNaN(attempts) && attempts > 0) {
 			config.maxAutoReconnectAttempts = attempts;
@@ -238,42 +238,42 @@ export function validateMountainConfig(config: MountainConfig): string[] {
 
 	// Validate host
 	if (!config.host || typeof config.host !== "string") {
-		errors.push("Host must be a non-empty string");
+		errors.push("Host must be a non-empty string";
 	}
 
 	// Validate port
 	if (!config.port || config.port < 1 || config.port > 65535) {
-		errors.push("Port must be between 1 and 65535");
+		errors.push("Port must be between 1 and 65535";
 	}
 
 	// Validate timeouts
 	if (config.connectionTimeout <= 0) {
-		errors.push("Connection timeout must be positive");
+		errors.push("Connection timeout must be positive";
 	}
 
 	if (config.retryDelay <= 0) {
-		errors.push("Retry delay must be positive");
+		errors.push("Retry delay must be positive";
 	}
 
 	if (config.keepAliveInterval <= 0) {
-		errors.push("Keep-alive interval must be positive");
+		errors.push("Keep-alive interval must be positive";
 	}
 
 	if (config.maxMessageSize <= 0) {
-		errors.push("Max message size must be positive");
+		errors.push("Max message size must be positive";
 	}
 
 	if (config.autoReconnectDelay <= 0) {
-		errors.push("Auto-reconnect delay must be positive");
+		errors.push("Auto-reconnect delay must be positive";
 	}
 
 	if (config.maxAutoReconnectAttempts <= 0) {
-		errors.push("Max auto-reconnect attempts must be positive");
+		errors.push("Max auto-reconnect attempts must be positive";
 	}
 
 	// Validate TLS configuration
 	if (config.useTls && !config.tlsCertPath) {
-		errors.push("TLS certificate path is required when TLS is enabled");
+		errors.push("TLS certificate path is required when TLS is enabled";
 	}
 
 	return errors;
@@ -287,10 +287,10 @@ export function createMountainConfig(
 ): MountainConfig {
 	const config = { ...defaultMountainConfig, ...overrides };
 
-	const errors = validateMountainConfig(config);
+	const errors = validateMountainConfig(config;
 
 	if (errors.length > 0) {
-		throw new Error(`Invalid Mountain configuration: ${errors.join(", ")}`);
+		throw new Error(`Invalid Mountain configuration: ${errors.join(", ")}`;
 	}
 
 	return config;

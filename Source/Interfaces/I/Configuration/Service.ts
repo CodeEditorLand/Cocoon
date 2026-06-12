@@ -87,6 +87,4 @@ export interface IConfigurationService {
 /**
  * Effect context for ConfigurationService
  */
-export const IConfigurationService = Context.Tag<IConfigurationService>(
-	"IConfigurationService",
-);
+export const IConfigurationService: unique symbol = Symbol.for("IConfigurationService");

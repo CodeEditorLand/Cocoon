@@ -58,13 +58,13 @@ export interface IMountainClientService {
 	};
 }
 
-export const IMountainClientService = Effect.Service<IMountainClientService>()(
+export const IMountainClientService = /* Effect.Service */(
 	"Service/MountainClient",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			// Implementation will be provided in MountainClientService.ts
 			return {} as IMountainClientService;
 		}),
 	},
-);
+;

@@ -105,7 +105,7 @@ export type TierStorageValue = "Mountain" | "Node";
 
 export type TierModelValue = "Mountain" | "Node";
 
-// `WebSocket` forwards to Cocoon over the Mist WS transport (B7-S6);
+// `WebSocket` forwards to Cocoon over the Mist WS transport (B7-S6;
 // requires TierWebSocket=Mist, falls back to Tauri IPC when disconnected.
 export type TierTasksValue = "Mountain" | "Node" | "WebSocket";
 
@@ -234,6 +234,6 @@ const Tier = {
 } as const;
 
 // One-shot boot banner -------------------------------------------------------
-LandFixLog.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`);
+LandFixLog.Info("Tier", `Cocoon tier set resolved: ${JSON.stringify(Tier)}`;
 
 export default Tier;

@@ -42,7 +42,7 @@ const ThemeColorId = (Value: unknown): string | undefined => {
 const SerializeColor = (Value: unknown): unknown => {
 	if (typeof Value === "string") return Value;
 
-	const Id = ThemeColorId(Value);
+	const Id = ThemeColorId(Value;
 
 	return Id === undefined ? undefined : { id: Id };
 };
@@ -102,7 +102,7 @@ export default (
 		Alignment,
 
 		Priority: ResolvedPriority,
-	} = ResolveOverload(AlignmentOrId, PriorityOrAlignment, Priority);
+	} = ResolveOverload(AlignmentOrId, PriorityOrAlignment, Priority;
 
 	let CurrentText = "";
 
@@ -146,7 +146,7 @@ export default (
 						}
 					: undefined;
 
-		const BackgroundId = ThemeColorId(CurrentBackgroundColor);
+		const BackgroundId = ThemeColorId(CurrentBackgroundColor;
 
 		Context.SendToMountain("statusBar.update", {
 			handle: Handle,
@@ -165,7 +165,7 @@ export default (
 			visible: true,
 			name: CurrentName,
 			accessibilityInformation: CurrentAccessibility,
-		}).catch(() => {});
+		}).catch(() => {};
 	};
 
 	const Item: Record<string, unknown> = {
@@ -187,13 +187,13 @@ export default (
 		set text(Value: unknown) {
 			if (Disposed) return;
 
-			const Next = String(Value ?? "");
+			const Next = String(Value ?? "";
 
 			if (Next === CurrentText) return;
 
 			CurrentText = Next;
 
-			Push();
+			Push(;
 		},
 
 		get tooltip() {
@@ -205,7 +205,7 @@ export default (
 
 			CurrentTooltip = Value;
 
-			Push();
+			Push(;
 		},
 
 		get command() {
@@ -217,7 +217,7 @@ export default (
 
 			CurrentCommand = Value;
 
-			Push();
+			Push(;
 		},
 
 		get backgroundColor() {
@@ -227,14 +227,14 @@ export default (
 		set backgroundColor(Value: unknown) {
 			if (Disposed) return;
 
-			const Id = ThemeColorId(Value);
+			const Id = ThemeColorId(Value;
 
 			CurrentBackgroundColor =
 				Id !== undefined && Id in PairedStatusBarForeground
 					? Value
 					: undefined;
 
-			Push();
+			Push(;
 		},
 
 		get color() {
@@ -246,7 +246,7 @@ export default (
 
 			CurrentColor = Value;
 
-			Push();
+			Push(;
 		},
 
 		get name() {
@@ -258,7 +258,7 @@ export default (
 
 			CurrentName = typeof Value === "string" ? Value : undefined;
 
-			Push();
+			Push(;
 		},
 
 		get accessibilityInformation() {
@@ -270,7 +270,7 @@ export default (
 
 			CurrentAccessibility = Value;
 
-			Push();
+			Push(;
 		},
 
 		show: () => {
@@ -280,7 +280,7 @@ export default (
 
 			CurrentVisible = true;
 
-			Push();
+			Push(;
 		},
 
 		hide: () => {
@@ -294,7 +294,7 @@ export default (
 				handle: Handle,
 				id: Id,
 				visible: false,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 
 		// `dispose()` is idempotent in stock VS Code - calling it twice
@@ -311,7 +311,7 @@ export default (
 			Context.SendToMountain("statusBar.dispose", {
 				handle: Handle,
 				id: Id,
-			}).catch(() => {});
+			}).catch(() => {};
 		},
 	};
 

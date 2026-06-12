@@ -20,11 +20,11 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 	// Cocoon runs as an ESM bundle (bundle: true in ESBuild). Bare `require`
 	// is not defined here - we must go through createRequire. This is what
 	// failed Effect-TS Stage 4 in past runs.
-	const ModuleModule = await import("module");
+	const ModuleModule = await import("module";
 
 	const CreateRequire = ModuleModule.createRequire;
 
-	const LocalRequire = CreateRequire(import.meta.url);
+	const LocalRequire = CreateRequire(import.meta.url;
 
 	try {
 		// CJS path: patch Module._load so any require('vscode') returns the shim.
@@ -56,7 +56,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 					"ext-host",
 
 					"[ExtensionHostHandler] require('vscode') called before shim registered - returning lazy facade",
-				);
+				;
 
 				// Lazy facade: every trap reads through to the live
 				// `globalThis.__cocoonVscodeAPI` at access time, so extensions
@@ -70,7 +70,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 				return new Proxy(Object.create(null), {
 					get: (_Target, Property) => {
-						const Live = Resolve();
+						const Live = Resolve(;
 
 						return Reflect.has(Live, Property)
 							? Reflect.get(Live, Property, Live)
@@ -87,29 +87,29 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 							Resolve(),
 
 							Property,
-						);
+						;
 
 						return Descriptor
 							? { ...Descriptor, configurable: true }
 							: undefined;
 					},
-				});
+				};
 			}
 
-			return OriginalLoad.call(this, Request, Parent, IsMain);
+			return OriginalLoad.call(this, Request, Parent, IsMain;
 		};
 
 		CocoonDevLog(
 			"ext-host",
 
 			"[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted",
-		);
+		;
 	} catch (Err: unknown) {
 		CocoonDevLog(
 			"ext-host",
 
 			`[ExtensionHostHandler] Failed to patch Module._load: ${Err instanceof Error ? Err.message : String(Err)}`,
-		);
+		;
 	}
 
 	try {
@@ -437,7 +437,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 			const NamedExports = VscodeExportNames.map(
 				(Name) => `export const ${Name} = API.${Name};`,
-			).join("\n");
+			).join("\n";
 
 			// The virtual bridge module. Reads once at evaluation time, which
 			// happens after EnsureVscodeAPIRegistered sets `__cocoonVscodeAPI`,
@@ -451,7 +451,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 				"export default API;",
 
 				"export const __esModule = true;",
-			].join("\n");
+			].join("\n";
 
 			const LoaderSource = `
 				const BRIDGE_URL = 'vscode-shim:///vscode';
@@ -465,7 +465,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
 					}
 
-					return NextResolve(Specifier, Context);
+					return NextResolve(Specifier, Context;
 				}
 
 				export async function load(Url, Context, NextLoad) {
@@ -475,7 +475,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
 					}
 
-					return NextLoad(Url, Context);
+					return NextLoad(Url, Context;
 				}
 
 			`;
@@ -483,19 +483,19 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
 
 			try {
-				NodeModule.register(LoaderURL, import.meta.url);
+				NodeModule.register(LoaderURL, import.meta.url;
 
 				CocoonDevLog(
 					"ext-host",
 
 					"[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted",
-				);
+				;
 			} catch (RegisterErr: unknown) {
 				CocoonDevLog(
 					"ext-host",
 
 					`[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail): ${RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)}`,
-				);
+				;
 			}
 		}
 	} catch (Err: unknown) {
@@ -503,7 +503,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			"ext-host",
 
 			`[ExtensionHostHandler] ESM loader setup skipped: ${Err instanceof Error ? Err.message : String(Err)}`,
-		);
+		;
 	}
 };
 

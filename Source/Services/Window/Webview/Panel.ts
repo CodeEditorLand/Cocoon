@@ -8,7 +8,6 @@
  * Source: src/vs/workbench/api/common/extHostWebview.ts (createWebviewPanel)
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
@@ -59,13 +58,13 @@ export const CreateWebviewPanel = (
 			retainContextWhenHidden: boolean;
 
 			localResourceRoots: string[] | undefined;
-		}) => Effect.Effect<unknown, Error>;
+		}) => Promise<unknown>;
 	},
 
 	Logger: {
-		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Debug: (Message: string, ...Data: unknown[]) => Promise<void>;
 	},
 
 	ViewType: string,
@@ -77,13 +76,13 @@ export const CreateWebviewPanel = (
 		| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
 
 	Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
-): Effect.Effect<VSCode.WebviewPanel, Error> =>
-	Effect.gen(function* () {
+): Promise<VSCode.WebviewPanel> =>
+	async function() {
 		const PanelId = `webview-${crypto.randomUUID()}`;
 
 		yield* Logger.Info(
 			`[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`,
-		);
+		;
 
 		// Parse show options
 		const ViewColumn =
@@ -110,7 +109,7 @@ export const CreateWebviewPanel = (
 			: undefined;
 
 		// Convert ViewColumn to DTO format
-		const ViewColumnDTO = ViewColumnFromAPI(ViewColumn);
+		const ViewColumnDTO = ViewColumnFromAPI(ViewColumn;
 
 		// Register the panel with Mountain
 		yield* GRPCClient.createWebviewPanel({
@@ -124,20 +123,20 @@ export const CreateWebviewPanel = (
 			localResourceRoots: Options?.localResourceRoots?.map((Uri) =>
 				Uri.toString(),
 			),
-		});
+		};
 
 		// Build IPC proxy for webview <-> extension message passing
 		const IPCProxy: WebviewIPC = {
 			SendNotification: (Method: string, Params: unknown[]) => {
 				void Logger.Debug(
 					`[WindowService] Webview notification: ${Method}`,
-				).pipe(Effect.runPromise).catch(() => {});
+				).catch(() => {};
 
 				return MountainClient.sendNotification("webview.postMessage", {
 					panelId: PanelId,
 					method: Method,
 					params: Params,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			SendRequest: <T>(_Method: string, _Params: unknown[]): Promise<T> =>
 				// Webview sendRequest is fire-and-forget from extension side;
@@ -163,7 +162,7 @@ export const CreateWebviewPanel = (
 				// Dispose callback: notify Mountain to destroy the webview panel
 				MountainClient.sendNotification("webview.dispose", {
 					panelId: PanelId,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 
 			ViewType,
@@ -173,7 +172,7 @@ export const CreateWebviewPanel = (
 			PanelOptionsDTO ?? {},
 
 			ViewColumn,
-		);
+		;
 
-		return yield* Effect.succeed(WebviewPanel);
-	});
+		return WebviewPanel;
+	};

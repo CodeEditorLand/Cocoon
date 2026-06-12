@@ -36,8 +36,6 @@
  * any namespace-specific overrides.
  */
 
-import { Effect } from "effect";
-
 // Telemetry import kept lazy so prod bundles drop the bridge.
 // `process.env.NODE_ENV !== "production"` is define-substituted to
 // `false` literal by esbuild for prod, dead-coding the whole emit
@@ -57,7 +55,7 @@ if (process.env["NODE_ENV"] !== "production") {
 		.then((Module) => {
 			LazyCaptureEvent = Module.CaptureEvent as CaptureEventFn;
 		})
-		.catch(() => {});
+		.catch(() => {};
 }
 
 /** Stable disposable shape used by every event/registration heuristic. */
@@ -65,8 +63,8 @@ const NoopDisposable = { dispose: () => {} };
 
 /**
  * Classes the heuristic recognises. `Sync` controls whether the
- * Proxy-returned function calls `Effect.runSync` (sync return shape)
- * or `Effect.runPromise` (Thenable return shape). The wrong choice
+ * Proxy-returned function calls `` (sync return shape)
+ * or `` (Thenable return shape). The wrong choice
  * here breaks consumers: an `onDid*` returning `Promise<Disposable>`
  * fails `disposables.push(...)`, and a `request*Trust(...)` returning
  * a sync `true` fails `await`-driven flows.
@@ -101,7 +99,7 @@ const IsTrustFamily = (Property: string): boolean =>
 	Property === "requestResourceTrust" ||
 	Property === "isResourceTrusted" ||
 	Property === "requestWorkspaceTrust" ||
-	/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property);
+	/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property;
 
 /** Heuristic classifier given only the property name. Pure function. */
 const ClassifyProperty = (Property: string): Heuristic => {
@@ -195,14 +193,14 @@ const RecordGap = (
 		Key,
 
 		`${NamespaceName}.${Property} → ${Kind}`,
-	);
+	;
 
 	if (process.env["NODE_ENV"] !== "production") {
 		LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
 			namespace: NamespaceName,
 			method: Property,
 			kind: Kind,
-		});
+		};
 	}
 };
 
@@ -210,7 +208,7 @@ const RecordGap = (
  * Build the function the Proxy hands back for an unknown property.
  * The function's body is an Effect program wrapped in
  * `Effect.withSpan` - OTEL pickup is automatic when the Cocoon runtime
- * gains an OTLP exporter Layer. `Effect.runSync` / `Effect.runPromise`
+ * gains an OTLP exporter Layer. `` / ``
  * select the return shape from the heuristic's `Sync` flag.
  */
 const BuildHeuristicMethod =
@@ -221,26 +219,26 @@ const BuildHeuristicMethod =
 		// Direct call - no Effect fiber on every VS Code API invocation.
 		try {
 			try {
-				RecordGap(NamespaceName, Property, Heuristic.Kind);
+				RecordGap(NamespaceName, Property, Heuristic.Kind;
 			} catch {}
 
-			return Heuristic.Produce(...Arguments);
+			return Heuristic.Produce(...Arguments;
 		} catch {
 			switch (Heuristic.Kind) {
 				case "trust":
-					return Heuristic.Sync ? true : Promise.resolve(true);
+					return Heuristic.Sync ? true : Promise.resolve(true;
 
 				case "event":
 				case "register":
 					return NoopDisposable;
 
 				case "bool-check":
-					return Heuristic.Sync ? false : Promise.resolve(false);
+					return Heuristic.Sync ? false : Promise.resolve(false;
 
 				default:
 					return Heuristic.Sync
 						? undefined
-						: Promise.resolve(undefined);
+						: Promise.resolve(undefined;
 			}
 		}
 	};
@@ -258,7 +256,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 ): T =>
 	new Proxy(ConcreteNamespace, {
 		get(Target, Property: string | symbol) {
-			const Key = String(Property);
+			const Key = String(Property;
 
 			if (Property === "then" || Property === Symbol.toPrimitive)
 				return undefined;
@@ -276,9 +274,9 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			if (Existing !== undefined || Reflect.has(Target, Key))
 				return Existing;
 
-			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
+			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key;
 
-			return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
+			return BuildHeuristicMethod(NamespaceName, Key, Heuristic;
 		},
 
 		// `'x' in ns` guards must agree with the `get` trap: every string
@@ -288,7 +286,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 		has(Target, Property) {
 			return (
 				Reflect.has(Target, Property) || typeof Property === "string"
-			);
+			;
 		},
 
 		// `Object.getOwnPropertyDescriptor(ns, 'x')` mirrors the `get`
@@ -297,7 +295,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 		// invariants - so `Object.keys(ns)` still under-reports; that is
 		// the safe trade.
 		getOwnPropertyDescriptor(Target, Property) {
-			const Real = Reflect.getOwnPropertyDescriptor(Target, Property);
+			const Real = Reflect.getOwnPropertyDescriptor(Target, Property;
 
 			if (Real !== undefined) return Real;
 
@@ -323,6 +321,6 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 							),
 			};
 		},
-	});
+	};
 
 export default WrapNamespaceWithHeuristics;

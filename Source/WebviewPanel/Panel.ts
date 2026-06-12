@@ -137,12 +137,12 @@ export class Panel implements VSCodeWebviewPanel {
 
 	private _viewColumn: ViewColumn;
 
-	private readonly OnDidDisposeEmitter = CreateEventStream<void>();
+	private readonly OnDidDisposeEmitter = CreateEventStream<void>(;
 
 	public readonly onDidDispose: Event<void>;
 
 	private readonly OnDidChangeViewStateEmitter =
-		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>();
+		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>(;
 
 	public readonly onDidChangeViewState: Event<WebviewPanelOnDidChangeViewStateEvent>;
 
@@ -191,7 +191,7 @@ export class Panel implements VSCodeWebviewPanel {
 			Extension,
 
 			InitialOptions,
-		);
+		;
 
 		this._title = InitialTitle;
 
@@ -235,7 +235,7 @@ export class Panel implements VSCodeWebviewPanel {
 			Options.Options ?? {},
 
 			ViewColumnValue,
-		);
+		;
 
 		return PanelInstance;
 	}
@@ -264,7 +264,7 @@ export class Panel implements VSCodeWebviewPanel {
 
 		void this.ipcService
 			.SendNotification("$setWebviewTitle", [this.handle, Value])
-			.catch(() => {});
+			.catch(() => {};
 	}
 
 	get iconPath(): Uri | { readonly light: Uri; readonly dark: Uri } {
@@ -287,7 +287,7 @@ export class Panel implements VSCodeWebviewPanel {
 
 				InternalValue,
 			])
-			.catch(() => {});
+			.catch(() => {};
 	}
 
 	/**
@@ -304,7 +304,7 @@ export class Panel implements VSCodeWebviewPanel {
 
 				PreserveFocus,
 			])
-			.catch(() => {});
+			.catch(() => {};
 	}
 
 	/**
@@ -317,13 +317,13 @@ export class Panel implements VSCodeWebviewPanel {
 
 		this.IsDisposed = true;
 
-		this.OnDidDisposeEmitter.Fire();
+		this.OnDidDisposeEmitter.Fire(;
 
-		(this.webview as WebviewImplementation).dispose();
+		(this.webview as WebviewImplementation).dispose(;
 
 		void this.ipcService
 			.SendNotification("$disposeWebview", [this.handle])
-			.catch(() => {});
+			.catch(() => {};
 	}
 
 	/**
@@ -333,7 +333,7 @@ export class Panel implements VSCodeWebviewPanel {
 		if (!this.IsDisposed) {
 			(this.webview as WebviewImplementation).fireDidReceiveMessage(
 				Message,
-			);
+			;
 		}
 	}
 
@@ -357,7 +357,7 @@ export class Panel implements VSCodeWebviewPanel {
 		if (Changed) {
 			this.OnDidChangeViewStateEmitter.Fire({
 				webviewPanel: this as any,
-			});
+			};
 		}
 	}
 }

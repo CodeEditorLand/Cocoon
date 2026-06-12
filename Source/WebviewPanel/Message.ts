@@ -131,85 +131,80 @@ export type WebviewMessage = RequestMessage | ResponseMessage | EventMessage;
  */
 export type MessageHandler = (
 	Message: WebviewMessage,
-) => Effect.Effect<void, Error>;
+) => Promise<void>;
 
 /**
  * @interface MessageRouter
  * @description Routes messages to appropriate handlers based on type
  */
 export interface MessageRouter {
-	readonly Handle: (Message: WebviewMessage) => Effect.Effect<void, Error>;
+	readonly Handle: (Message: WebviewMessage) => Promise<void>;
 
 	readonly RegisterHandler: (
 		Type: string,
 
 		Handler: MessageHandler,
-	) => Effect.Effect<void, never>;
+	) => Promise<void>;
 
-	readonly UnregisterHandler: (Type: string) => Effect.Effect<void, never>;
+	readonly UnregisterHandler: (Type: string) => Promise<void>;
 }
 
 /**
  * @class MessageService
  * @description Service for message passing and routing
  */
-export class MessageService extends Effect.Service<MessageService>()(
+export class MessageService extends /* Effect.Service */(
 	"Message/WebviewPanel",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			const HandlersRef = yield* Effect.tryMap(
-				Effect.sync(() => new Map<string, MessageHandler>()),
+				new Map<string, MessageHandler>(),
 
 				(error) => new Error(`Failed to create handlers map: ${error}`),
-			);
+			;
 
 			/**
 			 * Validate a message structure
 			 */
 			const ValidateMessage = (
 				Message: unknown,
-			): Effect.Effect<WebviewMessage, Error> =>
-				Effect.gen(function* () {
+			): Promise<WebviewMessage> =>
+				async function() {
 					// Defensive: Check if message is an object
 					if (
 						typeof Message !== "object" ||
 						Message === null ||
 						Array.isArray(Message)
 					) {
-						return yield* Effect.fail(
-							new Error("Message must be an object"),
-						);
+						throw new Error("Message must be an object"),
+						;
 					}
 
 					const Msg = Message as Record<string, unknown>;
 
 					// Check required fields
 					if (typeof Msg.Type !== "string") {
-						return yield* Effect.fail(
-							new Error("Message missing Type"),
-						);
+						throw new Error("Message missing Type"),
+						;
 					}
 
 					if (
 						typeof Msg.Payload !== "object" ||
 						Msg.Payload === null
 					) {
-						return yield* Effect.fail(
-							new Error("Message missing Payload"),
-						);
+						throw new Error("Message missing Payload"),
+						;
 					}
 
 					if (typeof Msg.Timestamp !== "number") {
-						return yield* Effect.fail(
-							new Error("Message missing Timestamp"),
-						);
+						throw new Error("Message missing Timestamp"),
+						;
 					}
 
 					if (typeof Msg.Id !== "string") {
-						return yield* Effect.fail(
-							new Error("Message missing Id"),
-						);
+						throw new Error("Message missing Id"),
+						;
 					}
 
 					// Type-specific validation
@@ -220,21 +215,19 @@ export class MessageService extends Effect.Service<MessageService>()(
 							typeof Payload.Method !== "string" ||
 							!Array.isArray(payload.Parameters)
 						) {
-							return yield* Effect.fail(
-								new Error(
+							throw new Error(
 									"Request message has invalid payload",
 								),
-							);
+							;
 						}
 					} else if (Msg.Type === "Response") {
 						const Payload = Msg.Payload as Record<string, unknown>;
 
 						if (typeof Payload.Success !== "boolean") {
-							return yield* Effect.fail(
-								new Error(
+							throw new Error(
 									"Response message has invalid payload",
 								),
-							);
+							;
 						}
 					} else if (Msg.Type === "Event") {
 						const EventPayload = Msg.Payload as Record<
@@ -243,18 +236,16 @@ export class MessageService extends Effect.Service<MessageService>()(
 						>;
 
 						if (typeof EventPayload.EventName !== "string") {
-							return yield* Effect.fail(
-								new Error("Event message has invalid payload"),
-							);
+							throw new Error("Event message has invalid payload"),
+							;
 						}
 					} else {
-						return yield* Effect.fail(
-							new Error(`Unknown message type: ${Msg.Type}`),
-						);
+						throw new Error(`Unknown message type: ${Msg.Type}`),
+						;
 					}
 
 					return Msg as WebviewMessage;
-				});
+				};
 
 			/**
 			 * Create a new message
@@ -268,7 +259,7 @@ export class MessageService extends Effect.Service<MessageService>()(
 				Payload: Payload as object,
 				Timestamp: Date.now(),
 				Id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-			});
+			};
 
 			/**
 			 * Send a message to a Webview
@@ -277,11 +268,11 @@ export class MessageService extends Effect.Service<MessageService>()(
 				Webview: VSCodeWebview,
 
 				Message: WebviewMessage,
-			): Effect.Effect<boolean, never> =>
+			): Promise<boolean> =>
 				Effect.tryPromise({
 					try: () => Webview.postMessage(Message),
 					catch: () => false,
-				});
+				};
 
 			/**
 			 * Register a handler for a specific message type
@@ -290,58 +281,57 @@ export class MessageService extends Effect.Service<MessageService>()(
 				Type: string,
 
 				Handler: MessageHandler,
-			): Effect.Effect<void, never> =>
-				Effect.sync(() => {
+			): Promise<void> =>
+				{
 					(
 						HandlersRef as { current: Map<string, MessageHandler> }
-					).current.set(Type, Handler);
-				});
+					.current.set(Type, Handler;
+				};
 
 			/**
 			 * Unregister a handler for a specific message type
 			 */
 			const UnregisterHandler = (
 				Type: string,
-			): Effect.Effect<void, never> =>
-				Effect.sync(() => {
+			): Promise<void> =>
+				{
 					(
 						HandlersRef as { current: Map<string, MessageHandler> }
-					).current.delete(Type);
-				});
+					.current.delete(Type;
+				};
 
 			/**
 			 * Route a message to its handler
 			 */
 			const RouteMessage = (
 				Message: WebviewMessage,
-			): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
+			): Promise<void> =>
+				async function() {
 					const Handlers = (
 						HandlersRef as { current: Map<string, MessageHandler> }
 					).current;
 
-					const Handler = Handlers.get(Message.Type);
+					const Handler = Handlers.get(Message.Type;
 
 					if (!Handler) {
-						return yield* Effect.fail(
-							new Error(
+						throw new Error(
 								`No handler registered for type: ${Message.Type}`,
 							),
-						);
+						;
 					}
 
-					yield* Handler(Message);
-				});
+					yield* Handler(Message;
+				};
 
 			/**
 			 * Handle an incoming message with validation
 			 */
-			const Handle = (Message: unknown): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
-					const ValidatedMessage = yield* ValidateMessage(Message);
+			const Handle = (Message: unknown): Promise<void> =>
+				async function() {
+					const ValidatedMessage = yield* ValidateMessage(Message;
 
-					yield* RouteMessage(ValidatedMessage);
-				});
+					yield* RouteMessage(ValidatedMessage;
+				};
 
 			return {
 				CreateMessage,

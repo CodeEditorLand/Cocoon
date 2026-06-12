@@ -373,10 +373,10 @@ const CHANNEL_ID_PREFIX = "chan";
  */
 export class ChannelRegistry {
 	/** Map of channel name to channel configuration */
-	private channels: Map<string, RegisteredChannel> = new Map();
+	private channels: Map<string, RegisteredChannel> = new Map(;
 
 	/** Map of correlation ID to pending requests */
-	private pendingRequests: Map<string, PendingRequest> = new Map();
+	private pendingRequests: Map<string, PendingRequest> = new Map(;
 
 	/** Registry statistics */
 	private stats: {
@@ -401,24 +401,24 @@ export class ChannelRegistry {
 	RegisterChannel(options: ChannelOptions): void {
 		// Validate channel name
 		if (!options.name) {
-			throw new Error("Channel name cannot be empty");
+			throw new Error("Channel name cannot be empty";
 		}
 
 		if (options.name.length > MAX_CHANNEL_NAME_LENGTH) {
 			throw new Error(
 				`Channel name exceeds maximum length of ${MAX_CHANNEL_NAME_LENGTH}`,
-			);
+			;
 		}
 
 		if (!CHANNEL_NAME_PATTERN.test(options.name)) {
 			throw new Error(
 				"Channel name must contain only alphanumeric characters, hyphens, and underscores",
-			);
+			;
 		}
 
 		// Check for duplicate channel
 		if (this.channels.has(options.name)) {
-			throw new Error(`Channel '${options.name}' is already registered`);
+			throw new Error(`Channel '${options.name}' is already registered`;
 		}
 
 		// Create and register the channel
@@ -476,7 +476,7 @@ export class ChannelRegistry {
 			},
 		};
 
-		this.channels.set(options.name, channel);
+		this.channels.set(options.name, channel;
 
 		this.stats.totalChannels++;
 	}
@@ -487,7 +487,7 @@ export class ChannelRegistry {
 	 * @returns true if channel was unregistered, false if not found
 	 */
 	UnregisterChannel(name: string): boolean {
-		const channel = this.channels.get(name);
+		const channel = this.channels.get(name;
 
 		if (!channel) {
 			return false;
@@ -499,14 +499,14 @@ export class ChannelRegistry {
 		// Clear pending requests for this channel
 		for (const [correlationId, pending] of this.pendingRequests) {
 			if (pending.channel === name) {
-				clearTimeout(pending.timeoutHandle);
+				clearTimeout(pending.timeoutHandle;
 
-				this.pendingRequests.delete(correlationId);
+				this.pendingRequests.delete(correlationId;
 			}
 		}
 
 		// Remove channel
-		this.channels.delete(name);
+		this.channels.delete(name;
 
 		this.stats.totalChannels--;
 
@@ -519,7 +519,7 @@ export class ChannelRegistry {
 	 * @returns Registered channel or undefined if not found
 	 */
 	GetChannel(name: string): RegisteredChannel | undefined {
-		return this.channels.get(name);
+		return this.channels.get(name;
 	}
 
 	/**
@@ -528,7 +528,7 @@ export class ChannelRegistry {
 	 * @returns true if channel exists
 	 */
 	HasChannel(name: string): boolean {
-		return this.channels.has(name);
+		return this.channels.has(name;
 	}
 
 	/**
@@ -536,7 +536,7 @@ export class ChannelRegistry {
 	 * @returns Array of channel names
 	 */
 	GetAllChannelNames(): string[] {
-		return Array.from(this.channels.keys());
+		return Array.from(this.channels.keys();
 	}
 
 	/**
@@ -547,7 +547,7 @@ export class ChannelRegistry {
 		const states: ChannelState[] = [];
 
 		for (const channel of this.channels.values()) {
-			states.push(this.ExtractChannelState(channel));
+			states.push(this.ExtractChannelState(channel);
 		}
 
 		return states;
@@ -566,7 +566,7 @@ export class ChannelRegistry {
 	 */
 	ClearAll(): void {
 		for (const name of this.channels.keys()) {
-			this.UnregisterChannel(name);
+			this.UnregisterChannel(name;
 		}
 
 		this.stats.totalChannels = 0;
@@ -582,9 +582,9 @@ export class ChannelRegistry {
 	 * @returns Unique channel ID
 	 */
 	private GenerateChannelId(name: string): string {
-		const timestamp = Date.now();
+		const timestamp = Date.now(;
 
-		const random = Math.random().toString(36).substring(2, 9);
+		const random = Math.random().toString(36).substring(2, 9;
 
 		return `${CHANNEL_ID_PREFIX}-${name}-${timestamp}-${random}`;
 	}
@@ -661,7 +661,7 @@ export class ChannelManager {
 	private component: SystemComponent;
 
 	/** Active delivery tracking */
-	private deliveries: Map<string, DeliveryTracking> = new Map();
+	private deliveries: Map<string, DeliveryTracking> = new Map(;
 
 	/** Message history for debugging (limited size) */
 	private messageHistory: IPCMessage[] = [];
@@ -681,7 +681,7 @@ export class ChannelManager {
 	) {
 		this.component = component;
 
-		this.registry = new ChannelRegistry();
+		this.registry = new ChannelRegistry(;
 
 		this.maxHistoryLength = options.maxHistoryLength || 1000;
 	}
@@ -693,9 +693,9 @@ export class ChannelManager {
 	 * @throws {Error} If channel configuration is invalid
 	 */
 	CreateChannel(options: ChannelOptions): string {
-		this.registry.RegisterChannel(options);
+		this.registry.RegisterChannel(options;
 
-		const channel = this.registry.GetChannel(options.name);
+		const channel = this.registry.GetChannel(options.name;
 
 		return channel!.id;
 	}
@@ -706,14 +706,14 @@ export class ChannelManager {
 	 * @returns Delivery result
 	 */
 	async RouteMessage(message: IPCMessage): Promise<DeliveryResult> {
-		const startTime = Date.now();
+		const startTime = Date.now(;
 
-		const deliveryId = this.GenerateDeliveryId();
+		const deliveryId = this.GenerateDeliveryId(;
 
 		try {
 			// Validate message structure
 			if (!this.ValidateMessageStructure(message)) {
-				this.AddToHistory(message);
+				this.AddToHistory(message;
 
 				return {
 					status: DeliveryStatus.Failed,
@@ -727,10 +727,10 @@ export class ChannelManager {
 			}
 
 			// Get target channel
-			const channel = this.registry.GetChannel(message.channel);
+			const channel = this.registry.GetChannel(message.channel;
 
 			if (!channel) {
-				this.AddToHistory(message);
+				this.AddToHistory(message;
 
 				return {
 					status: DeliveryStatus.Failed,
@@ -745,7 +745,7 @@ export class ChannelManager {
 
 			// Check if channel is active
 			if (!channel.active) {
-				this.AddToHistory(message);
+				this.AddToHistory(message;
 
 				return {
 					status: DeliveryStatus.Failed,
@@ -760,7 +760,7 @@ export class ChannelManager {
 
 			// Validate message using channel validator
 			if (!channel.validator(message)) {
-				this.AddToHistory(message);
+				this.AddToHistory(message;
 
 				channel.metrics.errorCount++;
 
@@ -777,7 +777,7 @@ export class ChannelManager {
 
 			// Check rate limit
 			if (channel.rateLimit > 0 && !this.CheckRateLimit(channel)) {
-				this.AddToHistory(message);
+				this.AddToHistory(message;
 
 				return {
 					status: DeliveryStatus.Failed,
@@ -792,7 +792,7 @@ export class ChannelManager {
 
 			// Check queue size
 			if (channel.queue.length >= channel.maxPending) {
-				this.AddToHistory(message);
+				this.AddToHistory(message;
 
 				return {
 					status: DeliveryStatus.Failed,
@@ -821,12 +821,12 @@ export class ChannelManager {
 
 			channel.metrics.queueSize = channel.queue.length;
 
-			channel.metrics.lastActivity = Date.now();
+			channel.metrics.lastActivity = Date.now(;
 
 			channel.metrics.messagesByPriority[message.priority]++;
 
 			// Execute message processing
-			const result = await this.ProcessMessage(message, channel, context);
+			const result = await this.ProcessMessage(message, channel, context;
 
 			// Update delivery status
 			const latency = Date.now() - startTime;
@@ -839,9 +839,9 @@ export class ChannelManager {
 					: DeliveryStatus.Failed,
 				latency,
 				timestamp: Date.now(),
-			});
+			};
 
-			this.AddToHistory(message);
+			this.AddToHistory(message;
 
 			return {
 				status: result
@@ -883,15 +883,15 @@ export class ChannelManager {
 
 		handler: MessageHandler,
 	): void {
-		const channel = this.registry.GetChannel(channelName);
+		const channel = this.registry.GetChannel(channelName;
 
 		if (!channel) {
-			throw new Error(`Channel '${channelName}' not found`);
+			throw new Error(`Channel '${channelName}' not found`;
 		}
 
 		const key = `${channelName}:${messageType}`;
 
-		channel.handlers.set(key, handler);
+		channel.handlers.set(key, handler;
 	}
 
 	/**
@@ -904,7 +904,7 @@ export class ChannelManager {
 
 		messageType: "request" | "response" | "event",
 	): void {
-		const channel = this.registry.GetChannel(channelName);
+		const channel = this.registry.GetChannel(channelName;
 
 		if (!channel) {
 			return;
@@ -912,7 +912,7 @@ export class ChannelManager {
 
 		const key = `${channelName}:${messageType}`;
 
-		channel.handlers.delete(key);
+		channel.handlers.delete(key;
 	}
 
 	/**
@@ -945,7 +945,7 @@ export class ChannelManager {
 	 * @returns Array of messages
 	 */
 	GetMessageHistory(limit: number = 100): IPCMessage[] {
-		return this.messageHistory.slice(-limit);
+		return this.messageHistory.slice(-limit;
 	}
 
 	/**
@@ -959,9 +959,9 @@ export class ChannelManager {
 	 * Shutdown the channel manager and cleanup resources.
 	 */
 	Shutdown(): void {
-		this.registry.ClearAll();
+		this.registry.ClearAll(;
 
-		this.deliveries.clear();
+		this.deliveries.clear(;
 
 		this.messageHistory = [];
 	}
@@ -1034,10 +1034,10 @@ export class ChannelManager {
 		try {
 			const key = `${channel.name}:${message.type}`;
 
-			const handler = channel.handlers.get(key);
+			const handler = channel.handlers.get(key;
 
 			if (handler) {
-				await handler(message, context);
+				await handler(message, context;
 
 				channel.metrics.messagesProcessed++;
 
@@ -1051,7 +1051,7 @@ export class ChannelManager {
 
 			process.stderr.write(
 				`[IPC:Channel] Error processing message: ${error instanceof Error ? error.message : String(error)}\n`,
-			);
+			;
 
 			return false;
 		}
@@ -1077,14 +1077,14 @@ export class ChannelManager {
 			...result,
 			messageId,
 			channel,
-		});
+		};
 
 		// Clean up old deliveries (older than 1 hour)
-		const now = Date.now();
+		const now = Date.now(;
 
 		for (const [id, delivery] of this.deliveries) {
 			if (now - delivery.timestamp > 3600000) {
-				this.deliveries.delete(id);
+				this.deliveries.delete(id;
 			}
 		}
 	}
@@ -1094,10 +1094,10 @@ export class ChannelManager {
 	 * @param message Message to add
 	 */
 	private AddToHistory(message: IPCMessage): void {
-		this.messageHistory.push(message);
+		this.messageHistory.push(message;
 
 		if (this.messageHistory.length > this.maxHistoryLength) {
-			this.messageHistory.shift();
+			this.messageHistory.shift(;
 		}
 	}
 
@@ -1106,9 +1106,9 @@ export class ChannelManager {
 	 * @returns Delivery ID
 	 */
 	private GenerateDeliveryId(): string {
-		const timestamp = Date.now();
+		const timestamp = Date.now(;
 
-		const random = Math.random().toString(36).substring(2, 9);
+		const random = Math.random().toString(36).substring(2, 9;
 
 		return `${DELIVERY_ID_PREFIX}-${timestamp}-${random}`;
 	}
@@ -1123,9 +1123,9 @@ export class ChannelManager {
  * @returns Message ID
  */
 export function GenerateMessageId(): string {
-	const timestamp = Date.now();
+	const timestamp = Date.now(;
 
-	const random = Math.random().toString(36).substring(2, 15);
+	const random = Math.random().toString(36).substring(2, 15;
 
 	return `${MESSAGE_ID_PREFIX}-${timestamp}-${random}`;
 }
@@ -1135,9 +1135,9 @@ export function GenerateMessageId(): string {
  * @returns Correlation ID
  */
 export function GenerateCorrelationId(): string {
-	const timestamp = Date.now();
+	const timestamp = Date.now(;
 
-	const random = Math.random().toString(36).substring(2, 15);
+	const random = Math.random().toString(36).substring(2, 15;
 
 	return `${CORRELATION_ID_PREFIX}-${timestamp}-${random}`;
 }

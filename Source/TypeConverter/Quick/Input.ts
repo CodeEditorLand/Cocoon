@@ -17,10 +17,10 @@ export const SerializeItems = <T extends QuickPickItem | string>(
 		const Base =
 			typeof Item === "string"
 				? { label: Item }
-				: (Item as QuickPickItem);
+				: (Item as QuickPickItem;
 
 		return { ...Base, handle: Index };
-	});
+	};
 };
 
 /**
@@ -44,5 +44,5 @@ export const SerializeButtons = (Buttons?: readonly QuickInputButton[]) => {
 			tooltip: Button.tooltip,
 			handle: Index,
 		};
-	});
+	};
 };

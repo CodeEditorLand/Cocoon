@@ -14,7 +14,7 @@ import { resolve } from "node:path";
 import { RunExtHostCodegen } from "./Run/Ext/Host/Codegen.js";
 
 const Main = async (): Promise<void> => {
-	const Cwd = process.cwd();
+	const Cwd = process.cwd(;
 
 	const SourceRoot = resolve(
 		Cwd,
@@ -32,32 +32,32 @@ const Main = async (): Promise<void> => {
 		"Editor",
 
 		"src",
-	);
+	;
 
-	const OutputRoot = resolve(Cwd, "Source");
+	const OutputRoot = resolve(Cwd, "Source";
 
-	const Result = await RunExtHostCodegen({ SourceRoot, OutputRoot });
+	const Result = await RunExtHostCodegen({ SourceRoot, OutputRoot };
 
 	if ("_tag" in Result) {
 		// eslint-disable-next-line no-console
-		console.error(`[Cocoon/Codegen] FAILED: ${Result._tag}`);
+		console.error(`[Cocoon/Codegen] FAILED: ${Result._tag}`;
 
-		process.exit(1);
+		process.exit(1;
 	}
 
 	if (Result.Failures.length > 0) {
 		// eslint-disable-next-line no-console
 		console.error(
 			`[Cocoon/Codegen] completed with ${Result.Failures.length} failures`,
-		);
+		;
 
-		process.exit(2);
+		process.exit(2;
 	}
 
 	// eslint-disable-next-line no-console
 	console.log(
 		`[Cocoon/Codegen] OK - ${Result.RecordsEmitted} ExtHost decorators in ${Result.DurationMilliseconds}ms`,
-	);
+	;
 };
 
-void Main();
+void Main(;

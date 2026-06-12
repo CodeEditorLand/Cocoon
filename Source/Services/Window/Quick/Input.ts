@@ -7,7 +7,6 @@
  * Source: src/vs/workbench/api/common/extHostWindow.ts (showQuickPick, showInputBox)
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 import {
@@ -32,19 +31,19 @@ export const ShowQuickPick = <T extends string>(
 		sendRequest: (method: string, params: unknown[]) => Promise<unknown>;
 	},
 
-	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Logger: { Debug: (Message: string) => Promise<void> },
 
 	Items: readonly T[] | VSCode.QuickPickItem[],
 
 	Options?: VSCode.QuickPickOptions,
-): Effect.Effect<T | VSCode.QuickPickItem | undefined, Error> =>
-	Effect.gen(function* () {
+): Promise<T | VSCode.QuickPickItem | undefined> =>
+	async function() {
 		yield* Logger.Debug(
 			`[WindowService] Showing quick pick with ${Items.length} items`,
-		);
+		;
 
 		// Serialize items using TypeConverter
-		const ItemsDTO = SerializeItems(Items);
+		const ItemsDTO = SerializeItems(Items;
 
 		const ButtonsDTO = Options?.buttons
 			? SerializeButtons(Options.buttons)
@@ -72,7 +71,7 @@ export const ShowQuickPick = <T extends string>(
 					"UserInterface.ShowQuickPick",
 
 					[RequestPayload.items, RequestPayload.options],
-				);
+				;
 
 				if (Response === null || Response === undefined) {
 					return undefined;
@@ -83,9 +82,9 @@ export const ShowQuickPick = <T extends string>(
 			catch: (Error_) => {
 				throw new Error(
 					`Failed to show quick pick: ${(Error_ as Error).message}`,
-				);
+				;
 			},
-		});
+		};
 
 		// Return the first selected item (single selection mode)
 		if (!SelectedItems || SelectedItems.length === 0) {
@@ -102,8 +101,8 @@ export const ShowQuickPick = <T extends string>(
 		// If items are QuickPickItem[], find the matching item by label
 		return (Items as VSCode.QuickPickItem[]).find(
 			(Item) => Item.label === SelectedValue,
-		);
-	});
+		;
+	};
 
 /**
  * Show an input box for free-form text entry.
@@ -121,15 +120,15 @@ export const ShowInputBox = (
 	},
 
 	Logger: {
-		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Debug: (Message: string, ...Data: unknown[]) => Promise<void>;
 	},
 
 	Options?: VSCode.InputBoxOptions,
-): Effect.Effect<string | undefined, Error> =>
-	Effect.gen(function* () {
+): Promise<string | undefined> =>
+	async function() {
 		yield* Logger.Debug(
 			`[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`,
-		);
+		;
 
 		// Construct request payload - options serialized directly
 		const RequestPayload = Options
@@ -154,7 +153,7 @@ export const ShowInputBox = (
 					"UserInterface.ShowInputBox",
 
 					[RequestPayload],
-				);
+				;
 
 				if (Response === null || Response === undefined) {
 					return undefined;
@@ -165,9 +164,9 @@ export const ShowInputBox = (
 			catch: (Error_) => {
 				throw new Error(
 					`Failed to show input box: ${(Error_ as Error).message}`,
-				);
+				;
 			},
-		});
+		};
 
 		return Result;
-	});
+	};

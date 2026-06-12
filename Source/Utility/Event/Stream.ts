@@ -17,11 +17,11 @@ export interface EventStream<T> {
 }
 
 export const CreateEventStream = <T>(): EventStream<T> => {
-	const VSCodeEmitter = new Emitter<T>();
+	const VSCodeEmitter = new Emitter<T>(;
 
-	const Fire = (Data: T): void => VSCodeEmitter.fire(Data);
+	const Fire = (Data: T): void => VSCodeEmitter.fire(Data;
 
-	const Shutdown = (): void => VSCodeEmitter.dispose();
+	const Shutdown = (): void => VSCodeEmitter.dispose(;
 
 	return {
 		Fire,

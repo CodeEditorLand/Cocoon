@@ -4,10 +4,10 @@
  */
 
 export class MetricsCollector {
-	private readonly Metrics: Map<string, number> = new Map();
+	private readonly Metrics: Map<string, number> = new Map(;
 
 	Record(Name: string, Value: number): void {
-		this.Metrics.set(Name, (this.Metrics.get(Name) || 0) + Value);
+		this.Metrics.set(Name, (this.Metrics.get(Name) || 0) + Value;
 	}
 
 	Get(Name: string): number {
@@ -15,10 +15,10 @@ export class MetricsCollector {
 	}
 
 	GetAll(): Record<string, number> {
-		return Object.fromEntries(this.Metrics);
+		return Object.fromEntries(this.Metrics;
 	}
 
 	Reset(): void {
-		this.Metrics.clear();
+		this.Metrics.clear(;
 	}
 }

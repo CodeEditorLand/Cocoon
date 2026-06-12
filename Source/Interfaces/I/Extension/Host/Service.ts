@@ -96,6 +96,4 @@ export interface IExtensionHostService {
 /**
  * Effect context for ExtensionHostService
  */
-export const IExtensionHostService = Context.Tag<IExtensionHostService>(
-	"IExtensionHostService",
-);
+export const IExtensionHostService: unique symbol = Symbol.for("IExtensionHostService");

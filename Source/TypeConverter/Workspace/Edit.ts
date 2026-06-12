@@ -65,9 +65,9 @@ export const FromAPI = (
 	const Result: IWorkspaceEditDTO = { edits: [] };
 
 	for (const [URI, URIEditArray] of Edit.entries()) {
-		const Resource = UriFromAPI(URI);
+		const Resource = UriFromAPI(URI;
 
-		const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
+		const VersionId = VersionProvider?.GetTextDocumentVersion(URI;
 
 		for (const SingleEdit of URIEditArray) {
 			if (SingleEdit instanceof VSCodeTextEdit) {
@@ -84,7 +84,7 @@ export const FromAPI = (
 					textEditDto.versionId = VersionId;
 				}
 
-				Result.edits.push(textEditDto);
+				Result.edits.push(textEditDto;
 			} else {
 				// This branch handles potential future file operations added to `entries`,
 				// though the current public API only provides TextEdits.
@@ -101,15 +101,15 @@ export const FromAPI = (
 };
 
 export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
-	const Result = new VSCodeWorkspaceEdit();
+	const Result = new VSCodeWorkspaceEdit(;
 
 	for (const Edit of DTO.edits) {
 		if (Edit._type === "text") {
-			const URI = UriToAPI(Edit.resource);
+			const URI = UriToAPI(Edit.resource;
 
 			const TextEditArray = [TextEditToAPI(Edit.edit)];
 
-			Result.set(URI, TextEditArray);
+			Result.set(URI, TextEditArray;
 		} else if (Edit._type === "file") {
 			if (Edit.oldResource && Edit.newResource) {
 				Result.renameFile(
@@ -118,11 +118,11 @@ export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
 					UriToAPI(Edit.newResource),
 
 					Edit.options,
-				);
+				;
 			} else if (Edit.newResource) {
-				Result.createFile(UriToAPI(Edit.newResource), Edit.options);
+				Result.createFile(UriToAPI(Edit.newResource), Edit.options;
 			} else if (Edit.oldResource) {
-				Result.deleteFile(UriToAPI(Edit.oldResource), Edit.options);
+				Result.deleteFile(UriToAPI(Edit.oldResource), Edit.options;
 			}
 		}
 	}

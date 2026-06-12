@@ -55,9 +55,9 @@ export default {
 										})
 									: {};
 							} catch (_Error) {
-								console.log(_Error);
+								console.log(_Error;
 							}
-						});
+						};
 
 						break;
 

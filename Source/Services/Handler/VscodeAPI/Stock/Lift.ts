@@ -83,10 +83,10 @@ export function ToUri(Input: unknown): URI | undefined {
 
 		try {
 			if (Input.startsWith("file:") || Input.includes("://")) {
-				return URI.parse(Input);
+				return URI.parse(Input;
 			}
 
-			return URI.file(Input);
+			return URI.file(Input;
 		} catch {
 			return undefined;
 		}
@@ -122,7 +122,7 @@ export function ToUri(Input: unknown): URI | undefined {
 					typeof WithScheme.fragment === "string"
 						? WithScheme.fragment
 						: "",
-			});
+			};
 		} catch {
 			return undefined;
 		}
@@ -138,13 +138,13 @@ export function ToUri(Input: unknown): URI | undefined {
  * descendant of `from`.
  */
 export function RelativePath(From: unknown, To: unknown): string | undefined {
-	const FromUri = ToUri(From);
+	const FromUri = ToUri(From;
 
-	const ToUriValue = ToUri(To);
+	const ToUriValue = ToUri(To;
 
 	if (!FromUri || !ToUriValue) return undefined;
 
-	return StockRelativePath(FromUri, ToUriValue);
+	return StockRelativePath(FromUri, ToUriValue;
 }
 
 /**
@@ -159,13 +159,13 @@ export function IsEqualOrParent(
 
 	Candidate: unknown,
 ): boolean {
-	const R = ToUri(Resource);
+	const R = ToUri(Resource;
 
-	const C = ToUri(Candidate);
+	const C = ToUri(Candidate;
 
 	if (!R || !C) return false;
 
-	return StockIsEqualOrParent(R, C);
+	return StockIsEqualOrParent(R, C;
 }
 
 /**
@@ -174,19 +174,19 @@ export function IsEqualOrParent(
  * implementations.
  */
 export function Basename(Resource: unknown): string {
-	const U = ToUri(Resource);
+	const U = ToUri(Resource;
 
 	return U ? StockBasename(U) : "";
 }
 
 export function Dirname(Resource: unknown): URI | undefined {
-	const U = ToUri(Resource);
+	const U = ToUri(Resource;
 
 	return U ? StockDirname(U) : undefined;
 }
 
 export function Extname(Resource: unknown): string {
-	const U = ToUri(Resource);
+	const U = ToUri(Resource;
 
 	return U ? StockExtname(U) : "";
 }
@@ -195,7 +195,7 @@ export function JoinPath(
 	Resource: unknown,
 	...Parts: string[]
 ): URI | undefined {
-	const U = ToUri(Resource);
+	const U = ToUri(Resource;
 
 	return U ? StockJoinPath(U, ...Parts) : undefined;
 }
@@ -229,7 +229,7 @@ export function GlobMatch(
 
 	Path: string,
 ): boolean {
-	return StockGlobMatch(Pattern as any, Path);
+	return StockGlobMatch(Pattern as any, Path;
 }
 
 export function GlobParsePattern(
@@ -243,5 +243,5 @@ export function GlobParsePattern(
 export function GlobIsEmpty(
 	Pattern: string | { base: string; pattern: string },
 ): boolean {
-	return StockGlobIsEmpty(Pattern as any);
+	return StockGlobIsEmpty(Pattern as any;
 }

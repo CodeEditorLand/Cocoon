@@ -47,21 +47,21 @@ const AllowList: ReadonlySet<string> | undefined = (() => {
 
 	const Tags = Raw.split(",")
 		.map((Entry) => Entry.trim())
-		.filter((Entry) => Entry.length > 0);
+		.filter((Entry) => Entry.length > 0;
 
-	return Tags.length === 0 ? undefined : new Set(Tags);
-})();
+	return Tags.length === 0 ? undefined : new Set(Tags;
+})(;
 
 const PadTwo = (Value: number): string =>
-	Value < 10 ? `0${Value}` : String(Value);
+	Value < 10 ? `0${Value}` : String(Value;
 
 const PadThree = (Value: number): string =>
-	Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value);
+	Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value;
 
 const FormatTimestamp = (): string => {
-	const Now = new Date();
+	const Now = new Date(;
 
-	if (Long) return Now.toISOString();
+	if (Long) return Now.toISOString(;
 
 	return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
 		Now.getSeconds(),
@@ -71,7 +71,7 @@ const FormatTimestamp = (): string => {
 const SerializeContext = (
 	Context: Readonly<Record<string, unknown>>,
 ): string => {
-	const Seen = new WeakSet<object>();
+	const Seen = new WeakSet<object>(;
 
 	try {
 		return JSON.stringify(Context, (_Key, Value: unknown) => {
@@ -79,18 +79,18 @@ const SerializeContext = (
 				return { name: Value.name, message: Value.message };
 			}
 
-			if (typeof Value === "bigint") return String(Value);
+			if (typeof Value === "bigint") return String(Value;
 
 			if (typeof Value === "function") return "[Function]";
 
 			if (typeof Value === "object" && Value !== null) {
 				if (Seen.has(Value)) return "[Circular]";
 
-				Seen.add(Value);
+				Seen.add(Value;
 			}
 
 			return Value;
-		});
+		};
 	} catch {
 		return '"[Unserializable]"';
 	}
@@ -131,7 +131,7 @@ const Emit = (
 	if (AllowList && !AllowList.has(Tag)) return;
 
 	try {
-		Stream.write(FormatLine(Level, Tag, Message, Context));
+		Stream.write(FormatLine(Level, Tag, Message, Context);
 	} catch {
 		// Defensive: a closed stdout (broken pipe on shutdown) must not crash
 		// the extension host mid-log. Swallow the write error silently.
@@ -145,7 +145,7 @@ const Info = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-	Emit(process.stdout, "info", Tag, Message, Context);
+	Emit(process.stdout, "info", Tag, Message, Context;
 };
 
 const Warn = (
@@ -155,7 +155,7 @@ const Warn = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-	Emit(process.stdout, "warn", Tag, Message, Context);
+	Emit(process.stdout, "warn", Tag, Message, Context;
 };
 
 const ErrorLog = (
@@ -165,7 +165,7 @@ const ErrorLog = (
 
 	Context?: Readonly<Record<string, unknown>>,
 ): void => {
-	Emit(process.stderr, "error", Tag, Message, Context);
+	Emit(process.stderr, "error", Tag, Message, Context;
 };
 
 const Debug = (
@@ -177,13 +177,13 @@ const Debug = (
 ): void => {
 	if (!DebugEnabled) return;
 
-	Emit(process.stdout, "debug", Tag, Message, Context);
+	Emit(process.stdout, "debug", Tag, Message, Context;
 };
 
 // Dedup key set for *-Once variants. Keys combine Tag + Key so different
 // tags with the same key still both log; extension activations that fire
 // many times per boot no longer flood the log with identical lines.
-const SeenOnce = new Set<string>();
+const SeenOnce = new Set<string>(;
 
 const DebugOnce = (
 	Tag: string,
@@ -200,9 +200,9 @@ const DebugOnce = (
 
 	if (SeenOnce.has(Combined)) return;
 
-	SeenOnce.add(Combined);
+	SeenOnce.add(Combined;
 
-	Emit(process.stdout, "debug", Tag, Message, Context);
+	Emit(process.stdout, "debug", Tag, Message, Context;
 };
 
 const InfoOnce = (
@@ -218,9 +218,9 @@ const InfoOnce = (
 
 	if (SeenOnce.has(Combined)) return;
 
-	SeenOnce.add(Combined);
+	SeenOnce.add(Combined;
 
-	Emit(process.stdout, "info", Tag, Message, Context);
+	Emit(process.stdout, "info", Tag, Message, Context;
 };
 
 const LandFixLog = {

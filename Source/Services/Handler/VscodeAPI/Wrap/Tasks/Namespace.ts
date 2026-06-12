@@ -10,6 +10,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapTasksNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("tasks", Concrete);
+	WrapNamespaceWithHeuristics("tasks", Concrete;
 
 export default WrapTasksNamespace;

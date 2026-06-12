@@ -29,19 +29,19 @@ const CreateCommandsNamespace = (
 
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
-			LanguageProviderRegistry.RegisterCommand(Command, Callback);
+			LanguageProviderRegistry.RegisterCommand(Command, Callback;
 
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
-			}).catch(() => {});
+			}).catch(() => {};
 
 			return {
 				dispose: () => {
-					LanguageProviderRegistry.UnregisterCommand(Command);
+					LanguageProviderRegistry.UnregisterCommand(Command;
 
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 			};
 		},
@@ -73,7 +73,7 @@ const CreateCommandsNamespace = (
 						setEndOfLine: () => {},
 					};
 
-					return Callback(undefined, NoopBuilder, ...Arguments);
+					return Callback(undefined, NoopBuilder, ...Arguments;
 				}
 
 				// Drive the callback INSIDE `editor.edit()` so the buffered
@@ -88,8 +88,8 @@ const CreateCommandsNamespace = (
 
 						Builder,
 						...Arguments,
-					);
-				});
+					;
+				};
 
 				// If the callback returned a promise (e.g. async refactor that
 				// awaits an LSP response BEFORE issuing edits), await it so
@@ -99,26 +99,26 @@ const CreateCommandsNamespace = (
 					typeof (ExtensionResult as PromiseLike<unknown>).then ===
 						"function"
 				) {
-					return await (ExtensionResult as Promise<unknown>);
+					return await (ExtensionResult as Promise<unknown>;
 				}
 
 				return ExtensionResult;
 			};
 
-			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
+			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback;
 
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "textEditor",
-			}).catch(() => {});
+			}).catch(() => {};
 
 			return {
 				dispose: () => {
-					LanguageProviderRegistry.UnregisterCommand(Command);
+					LanguageProviderRegistry.UnregisterCommand(Command;
 
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 			};
 		},
@@ -135,15 +135,15 @@ const CreateCommandsNamespace = (
 			// `[DEV:FS-ROUTE]`.
 			const Decision = Route(Command, {
 				Has: LanguageProviderRegistry.HasCommand,
-			});
+			};
 
-			LogRoute(Command, Decision);
+			LogRoute(Command, Decision;
 
 			if (Decision === "local") {
 				const LocalResult = LanguageProviderRegistry.ExecuteCommand(
 					Command,
 					...Arguments,
-				);
+				;
 
 				if (LocalResult !== undefined) {
 					// Symmetric with the Mountain branch: fire the
@@ -157,7 +157,7 @@ const CreateCommandsNamespace = (
 						Context.Emitter.emit("commands.executed", {
 							command: Command,
 							arguments: Arguments,
-						});
+						};
 					} catch {
 						/* listener threw - swallow */
 					}
@@ -179,7 +179,7 @@ const CreateCommandsNamespace = (
 					"Command.Execute",
 
 					[Command, ...Arguments],
-				);
+				;
 			} catch {
 				return undefined;
 			}
@@ -191,7 +191,7 @@ const CreateCommandsNamespace = (
 					"Command.GetAll",
 
 					[FilterInternal ?? false],
-				);
+				;
 
 				if (Array.isArray(Response)) return Response as string[];
 
@@ -222,13 +222,13 @@ const CreateCommandsNamespace = (
 						| { command: string; arguments: unknown[] }
 						| undefined;
 
-					if (E?.command) Listener(E);
+					if (E?.command) Listener(E;
 				} catch {
 					/* swallow */
 				}
 			};
 
-			Context.Emitter.on("commands.executed", Wrapped);
+			Context.Emitter.on("commands.executed", Wrapped;
 
 			return {
 				dispose: () => {
@@ -237,7 +237,7 @@ const CreateCommandsNamespace = (
 							"commands.executed",
 
 							Wrapped,
-						);
+						;
 					} catch {
 						/* swallow */
 					}
@@ -256,23 +256,23 @@ const CreateCommandsNamespace = (
 
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
-			LanguageProviderRegistry.RegisterCommand(Command, Callback);
+			LanguageProviderRegistry.RegisterCommand(Command, Callback;
 
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "diffInformation",
-			}).catch(() => {});
+			}).catch(() => {};
 
 			return {
 				dispose: () => {
-					LanguageProviderRegistry.UnregisterCommand(Command);
+					LanguageProviderRegistry.UnregisterCommand(Command;
 
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
-					}).catch(() => {});
+					}).catch(() => {};
 				},
 			};
 		},
-	});
+	};
 
 export default CreateCommandsNamespace;

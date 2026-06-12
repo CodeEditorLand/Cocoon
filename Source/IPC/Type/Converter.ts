@@ -90,7 +90,7 @@ import type { Uri } from "vscode";
 
 // URI class for runtime use - the `import type` above is erased at runtime.
 const { URI } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 
 // ============================================================================
 // DTO Type Definitions (generated from Mountain Rust DTOs)
@@ -361,36 +361,32 @@ const MAX_EXTENSION_IDENTIFIER_LENGTH = 128;
  */
 const ValidateWindowStateDTO = (
 	dto: WindowStateDTO,
-): Effect.Effect<WindowStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<WindowStateDTO> =>
+	async function() {
 		if (typeof dto.IsFocused !== "boolean") {
-			return yield* Effect.fail(
-				new Error("WindowStateDTO.IsFocused must be a boolean"),
-			);
+			throw new Error("WindowStateDTO.IsFocused must be a boolean"),
+			;
 		}
 
 		if (typeof dto.IsFullScreen !== "boolean") {
-			return yield* Effect.fail(
-				new Error("WindowStateDTO.IsFullScreen must be a boolean"),
-			);
+			throw new Error("WindowStateDTO.IsFullScreen must be a boolean"),
+			;
 		}
 
 		if (typeof dto.ZoomLevel !== "number") {
-			return yield* Effect.fail(
-				new Error("WindowStateDTO.ZoomLevel must be a number"),
-			);
+			throw new Error("WindowStateDTO.ZoomLevel must be a number"),
+			;
 		}
 
 		if (dto.ZoomLevel < MIN_ZOOM_LEVEL || dto.ZoomLevel > MAX_ZOOM_LEVEL) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`WindowStateDTO.ZoomLevel must be between ${MIN_ZOOM_LEVEL} and ${MAX_ZOOM_LEVEL}, got ${dto.ZoomLevel}`,
 				),
-			);
+			;
 		}
 
 		return dto;
-	});
+	};
 
 /**
  * Validate DocumentStateDTO fields
@@ -398,108 +394,96 @@ const ValidateWindowStateDTO = (
  */
 const ValidateDocumentStateDTO = (
 	dto: DocumentStateDTO,
-): Effect.Effect<DocumentStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<DocumentStateDTO> =>
+	async function() {
 		// Validate URI
 		if (typeof dto.URI !== "string" || dto.URI.trim().length === 0) {
-			return yield* Effect.fail(
-				new Error("DocumentStateDTO.URI cannot be empty"),
-			);
+			throw new Error("DocumentStateDTO.URI cannot be empty"),
+			;
 		}
 
 		try {
 			// Attempt to parse as URI to validate format
-			new URL(dto.URI);
+			new URL(dto.URI;
 		} catch {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`DocumentStateDTO.URI has invalid format: ${dto.URI}`,
 				),
-			);
+			;
 		}
 
 		// Validate LanguageIdentifier
 		if (typeof dto.LanguageIdentifier !== "string") {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"DocumentStateDTO.LanguageIdentifier must be a string",
 				),
-			);
+			;
 		}
 
 		if (dto.LanguageIdentifier.length > MAX_LANGUAGE_ID_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`DocumentStateDTO.LanguageIdentifier exceeds maximum length of ${MAX_LANGUAGE_ID_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate Version
 		if (typeof dto.Version !== "number" || dto.Version < 1) {
-			return yield* Effect.fail(
-				new Error("DocumentStateDTO.Version must be a positive number"),
-			);
+			throw new Error("DocumentStateDTO.Version must be a positive number"),
+			;
 		}
 
 		// Validate Lines array
 		if (!Array.isArray(dto.Lines)) {
-			return yield* Effect.fail(
-				new Error("DocumentStateDTO.Lines must be an array"),
-			);
+			throw new Error("DocumentStateDTO.Lines must be an array"),
+			;
 		}
 
 		if (dto.Lines.length > MAX_DOCUMENT_LINES) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`DocumentStateDTO.Lines exceeds maximum line count of ${MAX_DOCUMENT_LINES}`,
 				),
-			);
+			;
 		}
 
 		for (let i = 0; i < dto.Lines.length; i++) {
 			const line = dto.Lines[i]!;
 
 			if (typeof line !== "string") {
-				return yield* Effect.fail(
-					new Error(`DocumentStateDTO.Lines[${i}] must be a string`),
-				);
+				throw new Error(`DocumentStateDTO.Lines[${i}] must be a string`),
+				;
 			}
 
 			if (line.length > MAX_LINE_LENGTH) {
-				return yield* Effect.fail(
-					new Error(
+				throw new Error(
 						`DocumentStateDTO.Lines[${i}] exceeds maximum length of ${MAX_LINE_LENGTH} bytes`,
 					),
-				);
+				;
 			}
 		}
 
 		// Validate EOL
 		if (dto.EOL !== "\n" && dto.EOL !== "\r\n") {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"DocumentStateDTO.EOL must be either '\\n' or '\\r\\n'",
 				),
-			);
+			;
 		}
 
 		// Validate IsDirty
 		if (typeof dto.IsDirty !== "boolean") {
-			return yield* Effect.fail(
-				new Error("DocumentStateDTO.IsDirty must be a boolean"),
-			);
+			throw new Error("DocumentStateDTO.IsDirty must be a boolean"),
+			;
 		}
 
 		// Validate Encoding
 		if (typeof dto.Encoding !== "string" || dto.Encoding.length === 0) {
-			return yield* Effect.fail(
-				new Error("DocumentStateDTO.Encoding cannot be empty"),
-			);
+			throw new Error("DocumentStateDTO.Encoding cannot be empty"),
+			;
 		}
 
 		return dto;
-	});
+	};
 
 /**
  * Validate WebviewStateDTO fields
@@ -507,133 +491,117 @@ const ValidateDocumentStateDTO = (
  */
 const ValidateWebviewStateDTO = (
 	dto: WebviewStateDTO,
-): Effect.Effect<WebviewStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<WebviewStateDTO> =>
+	async function() {
 		// Validate Handle
 		if (typeof dto.Handle !== "string" || dto.Handle.trim().length === 0) {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.Handle cannot be empty"),
-			);
+			throw new Error("WebviewStateDTO.Handle cannot be empty"),
+			;
 		}
 
 		if (dto.Handle.length > MAX_HANDLE_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`WebviewStateDTO.Handle exceeds maximum length of ${MAX_HANDLE_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate ViewType
 		if (typeof dto.ViewType !== "string") {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.ViewType must be a string"),
-			);
+			throw new Error("WebviewStateDTO.ViewType must be a string"),
+			;
 		}
 
 		if (dto.ViewType.length > MAX_VIEW_TYPE_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`WebviewStateDTO.ViewType exceeds maximum length of ${MAX_VIEW_TYPE_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate Title
 		if (typeof dto.Title !== "string") {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.Title must be a string"),
-			);
+			throw new Error("WebviewStateDTO.Title must be a string"),
+			;
 		}
 
 		if (dto.Title.length > MAX_WEBVIEW_TITLE_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`WebviewStateDTO.Title exceeds maximum length of ${MAX_WEBVIEW_TITLE_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate ContentOptions
 		if (!dto.ContentOptions || typeof dto.ContentOptions !== "object") {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.ContentOptions must be an object"),
-			);
+			throw new Error("WebviewStateDTO.ContentOptions must be an object"),
+			;
 		}
 
 		if (typeof dto.ContentOptions.EnableScripts !== "boolean") {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"WebviewStateDTO.ContentOptions.EnableScripts must be a boolean",
 				),
-			);
+			;
 		}
 
 		if (!Array.isArray(dto.ContentOptions.LocalResourceRoots)) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"WebviewStateDTO.ContentOptions.LocalResourceRoots must be an array",
 				),
-			);
+			;
 		}
 
 		// Validate PanelOptions
 		if (dto.PanelOptions !== null && typeof dto.PanelOptions !== "object") {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"WebviewStateDTO.PanelOptions must be an object or null",
 				),
-			);
+			;
 		}
 
 		// Validate SideCarIdentifier
 		if (typeof dto.SideCarIdentifier !== "string") {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.SideCarIdentifier must be a string"),
-			);
+			throw new Error("WebviewStateDTO.SideCarIdentifier must be a string"),
+			;
 		}
 
 		if (dto.SideCarIdentifier.length > MAX_SIDECAR_IDENTIFIER_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`WebviewStateDTO.SideCarIdentifier exceeds maximum length of ${MAX_SIDECAR_IDENTIFIER_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate ExtensionIdentifier
 		if (typeof dto.ExtensionIdentifier !== "string") {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"WebviewStateDTO.ExtensionIdentifier must be a string",
 				),
-			);
+			;
 		}
 
 		if (dto.ExtensionIdentifier.length > MAX_EXTENSION_IDENTIFIER_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`WebviewStateDTO.ExtensionIdentifier exceeds maximum length of ${MAX_EXTENSION_IDENTIFIER_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate IsActive
 		if (typeof dto.IsActive !== "boolean") {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.IsActive must be a boolean"),
-			);
+			throw new Error("WebviewStateDTO.IsActive must be a boolean"),
+			;
 		}
 
 		// Validate IsVisible
 		if (typeof dto.IsVisible !== "boolean") {
-			return yield* Effect.fail(
-				new Error("WebviewStateDTO.IsVisible must be a boolean"),
-			);
+			throw new Error("WebviewStateDTO.IsVisible must be a boolean"),
+			;
 		}
 
 		return dto;
-	});
+	};
 
 /**
  * Validate TerminalStateDTO fields
@@ -641,91 +609,81 @@ const ValidateWebviewStateDTO = (
  */
 const ValidateTerminalStateDTO = (
 	dto: TerminalStateDTO,
-): Effect.Effect<TerminalStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<TerminalStateDTO> =>
+	async function() {
 		// Validate Identifier
 		if (typeof dto.Identifier !== "number" || dto.Identifier <= 0) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					"TerminalStateDTO.Identifier must be a positive number",
 				),
-			);
+			;
 		}
 
 		// Validate Name
 		if (typeof dto.Name !== "string") {
-			return yield* Effect.fail(
-				new Error("TerminalStateDTO.Name must be a string"),
-			);
+			throw new Error("TerminalStateDTO.Name must be a string"),
+			;
 		}
 
 		if (dto.Name.length > MAX_TERMINAL_NAME_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`TerminalStateDTO.Name exceeds maximum length of ${MAX_TERMINAL_NAME_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate ShellPath
 		if (typeof dto.ShellPath !== "string") {
-			return yield* Effect.fail(
-				new Error("TerminalStateDTO.ShellPath must be a string"),
-			);
+			throw new Error("TerminalStateDTO.ShellPath must be a string"),
+			;
 		}
 
 		if (dto.ShellPath.length > MAX_SHELL_PATH_LENGTH) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`TerminalStateDTO.ShellPath exceeds maximum length of ${MAX_SHELL_PATH_LENGTH} bytes`,
 				),
-			);
+			;
 		}
 
 		// Validate ShellArguments
 		if (!Array.isArray(dto.ShellArguments)) {
-			return yield* Effect.fail(
-				new Error("TerminalStateDTO.ShellArguments must be an array"),
-			);
+			throw new Error("TerminalStateDTO.ShellArguments must be an array"),
+			;
 		}
 
 		if (dto.ShellArguments.length > MAX_SHELL_ARGUMENTS) {
-			return yield* Effect.fail(
-				new Error(
+			throw new Error(
 					`TerminalStateDTO.ShellArguments exceeds maximum count of ${MAX_SHELL_ARGUMENTS}`,
 				),
-			);
+			;
 		}
 
 		for (let i = 0; i < dto.ShellArguments.length; i++) {
 			const arg = dto.ShellArguments[i]!;
 
 			if (typeof arg !== "string") {
-				return yield* Effect.fail(
-					new Error(
+				throw new Error(
 						`TerminalStateDTO.ShellArguments[${i}] must be a string`,
 					),
-				);
+				;
 			}
 
 			if (arg.length > MAX_ARGUMENT_LENGTH) {
-				return yield* Effect.fail(
-					new Error(
+				throw new Error(
 						`TerminalStateDTO.ShellArguments[${i}] exceeds maximum length of ${MAX_ARGUMENT_LENGTH} bytes`,
 					),
-				);
+				;
 			}
 		}
 
 		// Validate IsPTY
 		if (typeof dto.IsPTY !== "boolean") {
-			return yield* Effect.fail(
-				new Error("TerminalStateDTO.IsPTY must be a boolean"),
-			);
+			throw new Error("TerminalStateDTO.IsPTY must be a boolean"),
+			;
 		}
 
 		return dto;
-	});
+	};
 
 // ============================================================================
 // Conversion Functions: Wind → Mountain DTO (ConvertToDTO)
@@ -736,24 +694,24 @@ const ValidateTerminalStateDTO = (
  */
 export const WindowStateConvertToDTO = (
 	state: WindowState,
-): Effect.Effect<WindowStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<WindowStateDTO> =>
+	async function() {
 		const dto: WindowStateDTO = {
 			IsFocused: state.isFocused,
 			IsFullScreen: state.isFullScreen,
 			ZoomLevel: state.zoomLevel,
 		};
 
-		return yield* ValidateWindowStateDTO(dto);
-	});
+		return yield* ValidateWindowStateDTO(dto;
+	};
 
 /**
  * Convert Wind's DocumentState to Mountain's DocumentStateDTO
  */
 export const DocumentStateConvertToDTO = (
 	state: DocumentState,
-): Effect.Effect<DocumentStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<DocumentStateDTO> =>
+	async function() {
 		const dto: DocumentStateDTO = {
 			URI: state.uri.toString(),
 			LanguageIdentifier: state.languageIdentifier,
@@ -765,16 +723,16 @@ export const DocumentStateConvertToDTO = (
 			VersionIdentifier: state.versionIdentifier,
 		};
 
-		return yield* ValidateDocumentStateDTO(dto);
-	});
+		return yield* ValidateDocumentStateDTO(dto;
+	};
 
 /**
  * Convert Wind's WebviewState to Mountain's WebviewStateDTO
  */
 export const WebviewStateConvertToDTO = (
 	state: WebviewState,
-): Effect.Effect<WebviewStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<WebviewStateDTO> =>
+	async function() {
 		const dto: WebviewStateDTO = {
 			Handle: state.handle,
 			ViewType: state.viewType,
@@ -790,16 +748,16 @@ export const WebviewStateConvertToDTO = (
 			IsVisible: state.isVisible,
 		};
 
-		return yield* ValidateWebviewStateDTO(dto);
-	});
+		return yield* ValidateWebviewStateDTO(dto;
+	};
 
 /**
  * Convert Wind's TerminalState to Mountain's TerminalStateDTO
  */
 export const TerminalStateConvertToDTO = (
 	state: TerminalState,
-): Effect.Effect<TerminalStateDTO, Error> =>
-	Effect.gen(function* () {
+): Promise<TerminalStateDTO> =>
+	async function() {
 		const dto: TerminalStateDTO = {
 			Identifier: state.identifier,
 			Name: state.name,
@@ -811,8 +769,8 @@ export const TerminalStateConvertToDTO = (
 			IsPTY: state.isPTY,
 		};
 
-		return yield* ValidateTerminalStateDTO(dto);
-	});
+		return yield* ValidateTerminalStateDTO(dto;
+	};
 
 // ============================================================================
 // Conversion Functions: Mountain DTO → Wind (ConvertFromDTO)
@@ -823,25 +781,25 @@ export const TerminalStateConvertToDTO = (
  */
 export const WindowStateConvertFromDTO = (
 	dto: WindowStateDTO,
-): Effect.Effect<WindowState, Error> =>
-	Effect.gen(function* () {
-		const validated = yield* ValidateWindowStateDTO(dto);
+): Promise<WindowState> =>
+	async function() {
+		const validated = yield* ValidateWindowStateDTO(dto;
 
 		return {
 			isFocused: validated.IsFocused,
 			isFullScreen: validated.IsFullScreen,
 			zoomLevel: validated.ZoomLevel,
 		};
-	});
+	};
 
 /**
  * Convert Mountain's DocumentStateDTO to Wind's DocumentState
  */
 export const DocumentStateConvertFromDTO = (
 	dto: DocumentStateDTO,
-): Effect.Effect<DocumentState, Error> =>
-	Effect.gen(function* () {
-		const validated = yield* ValidateDocumentStateDTO(dto);
+): Promise<DocumentState> =>
+	async function() {
+		const validated = yield* ValidateDocumentStateDTO(dto;
 
 		// Parse URI using the real VS Code URI class from @codeeditorland/output.
 		const uri = URI.parse(validated.URI) as unknown as Uri;
@@ -859,16 +817,16 @@ export const DocumentStateConvertFromDTO = (
 			encoding: validated.Encoding,
 			versionIdentifier: validated.VersionIdentifier,
 		};
-	});
+	};
 
 /**
  * Convert Mountain's WebviewStateDTO to Wind's WebviewState
  */
 export const WebviewStateConvertFromDTO = (
 	dto: WebviewStateDTO,
-): Effect.Effect<WebviewState, Error> =>
-	Effect.gen(function* () {
-		const validated = yield* ValidateWebviewStateDTO(dto);
+): Promise<WebviewState> =>
+	async function() {
+		const validated = yield* ValidateWebviewStateDTO(dto;
 
 		return {
 			handle: validated.Handle,
@@ -884,16 +842,16 @@ export const WebviewStateConvertFromDTO = (
 			isActive: validated.IsActive,
 			isVisible: validated.IsVisible,
 		};
-	});
+	};
 
 /**
  * Convert Mountain's TerminalStateDTO to Wind's TerminalState
  */
 export const TerminalStateConvertFromDTO = (
 	dto: TerminalStateDTO,
-): Effect.Effect<TerminalState, Error> =>
-	Effect.gen(function* () {
-		const validated = yield* ValidateTerminalStateDTO(dto);
+): Promise<TerminalState> =>
+	async function() {
+		const validated = yield* ValidateTerminalStateDTO(dto;
 
 		return {
 			identifier: validated.Identifier,
@@ -905,7 +863,7 @@ export const TerminalStateConvertFromDTO = (
 			environmentVariables: validated.EnvironmentVariables,
 			isPTY: validated.IsPTY,
 		};
-	});
+	};
 
 // ============================================================================
 // Generic DTO Validation Function
@@ -917,8 +875,8 @@ export const TerminalStateConvertFromDTO = (
  */
 export const ValidateDTO = <T extends Record<string, unknown>>(
 	dto: T & { readonly __typename?: string },
-): Effect.Effect<T, Error> =>
-	Effect.gen(function* () {
+): Promise<T> =>
+	async function() {
 		// Infer DTO type from __typename field or structure
 		const typename =
 			dto.__typename || (dto as { readonly URI?: string }).URI
@@ -937,28 +895,27 @@ export const ValidateDTO = <T extends Record<string, unknown>>(
 			case "WindowStateDTO":
 				return yield* ValidateWindowStateDTO(
 					dto as unknown as WindowStateDTO,
-				) as unknown as Effect.Effect<T, Error>;
+				) as unknown as Promise<T>;
 
 			case "DocumentStateDTO":
 				return yield* ValidateDocumentStateDTO(
 					dto as unknown as DocumentStateDTO,
-				) as unknown as Effect.Effect<T, Error>;
+				) as unknown as Promise<T>;
 
 			case "WebviewStateDTO":
 				return yield* ValidateWebviewStateDTO(
 					dto as unknown as WebviewStateDTO,
-				) as unknown as Effect.Effect<T, Error>;
+				) as unknown as Promise<T>;
 
 			case "TerminalStateDTO":
 				return yield* ValidateTerminalStateDTO(
 					dto as unknown as TerminalStateDTO,
-				) as unknown as Effect.Effect<T, Error>;
+				) as unknown as Promise<T>;
 
 			default:
-				return yield* Effect.fail(
-					new Error(
+				throw new Error(
 						`Unknown DTO type: ${typename}. Cannot validate.`,
 					),
-				);
+				;
 		}
-	});
+	};

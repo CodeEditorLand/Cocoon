@@ -60,15 +60,15 @@ export function ExtractScheme(Uri: unknown): string {
 	}
 
 	if (typeof Uri === "string") {
-		const Colon = Uri.indexOf(":");
+		const Colon = Uri.indexOf(":";
 
 		if (Colon > 0 && Colon < 32) {
-			const Scheme = Uri.slice(0, Colon);
+			const Scheme = Uri.slice(0, Colon;
 
 			// Accept only ASCII identifier-like schemes; anything else is
 			// a bare path with a colon (Windows drive letters).
 			if (/^[a-zA-Z][a-zA-Z0-9+\-.]*$/.test(Scheme)) {
-				return Scheme.toLowerCase();
+				return Scheme.toLowerCase(;
 			}
 		}
 
@@ -103,9 +103,9 @@ export function ExtractFsPath(Uri: unknown): string | undefined {
 		if (Uri.startsWith("file://")) {
 			// Strip `file://` and decode any percent-encoded chars.
 			try {
-				return decodeURIComponent(Uri.slice("file://".length));
+				return decodeURIComponent(Uri.slice("file://".length);
 			} catch {
-				return Uri.slice("file://".length);
+				return Uri.slice("file://".length;
 			}
 		}
 
@@ -136,7 +136,7 @@ export function ExtractFsPath(Uri: unknown): string | undefined {
  * is O(1).
  */
 export function Route(Uri: unknown): FileSystemRoute {
-	const Scheme = ExtractScheme(Uri);
+	const Scheme = ExtractScheme(Uri;
 
 	// Tier override: Layer2 = always Mountain, Layer4 = always native
 	// when possible. Custom-provider claims on `file` OUTRANK Layer4

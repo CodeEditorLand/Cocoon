@@ -15,7 +15,7 @@ import type { HandlerContext } from "../../../Handler/Context.js";
 export const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
-		Context.WorkspaceEventEmitter.on(EventName, Listener);
+		Context.WorkspaceEventEmitter.on(EventName, Listener;
 
 		return {
 			dispose: () => {
@@ -23,7 +23,7 @@ export const EventSubscriber =
 					EventName,
 
 					Listener,
-				);
+				;
 			},
 		};
 	};
@@ -82,7 +82,7 @@ export const DefaultExcludeSegments = new Set([
 	"build",
 
 	".DS_Store",
-]);
+];
 
 /**
  * Normalise VS Code's GlobPattern overloads to a plain string. Accepts a raw
@@ -113,15 +113,15 @@ export const FolderToFsPath = (FolderUri: unknown): string | undefined => {
 			? FolderUri
 			: ((FolderUri as Record<string, unknown>)?.["fsPath"] ??
 				(FolderUri as Record<string, unknown>)?.["path"] ??
-				(FolderUri as Record<string, unknown>)?.["external"]);
+				(FolderUri as Record<string, unknown>)?.["external"];
 
 	if (typeof Raw !== "string" || Raw.length === 0) return undefined;
 
 	if (Raw.startsWith("file:")) {
 		try {
-			return decodeURIComponent(new URL(Raw).pathname);
+			return decodeURIComponent(new URL(Raw).pathname;
 		} catch {
-			return Raw.replace(/^file:\/\//, "");
+			return Raw.replace(/^file:\/\//, "";
 		}
 	}
 
@@ -149,7 +149,7 @@ export const ResolveWorkspaceFolders = (
 
 	return (InitWorkspace.folders ?? []).map(
 		(Folder): WorkspaceFolderRecord => {
-			const FsPath = FolderToFsPath(Folder?.uri);
+			const FsPath = FolderToFsPath(Folder?.uri;
 
 			const Record: WorkspaceFolderRecord = { ...Folder };
 
@@ -157,5 +157,5 @@ export const ResolveWorkspaceFolders = (
 
 			return Record;
 		},
-	);
+	;
 };

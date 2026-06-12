@@ -79,7 +79,7 @@ export class ExtensionNotFoundError extends Error {
 	readonly _tag = "ExtensionNotFoundError";
 
 	constructor(readonly extensionId: string) {
-		super(`Extension not found: ${extensionId}`);
+		super(`Extension not found: ${extensionId}`;
 	}
 }
 
@@ -93,7 +93,7 @@ export class ExtensionActivationError extends Error {
 	) {
 		super(
 			`Failed to activate extension '${extensionId}': ${String(cause)}`,
-		);
+		;
 	}
 }
 
@@ -107,7 +107,7 @@ export class ExtensionDeactivationError extends Error {
 	) {
 		super(
 			`Failed to deactivate extension '${extensionId}': ${String(cause)}`,
-		);
+		;
 	}
 }
 
@@ -154,19 +154,19 @@ export const Extension = ExtensionTag;
 
 function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 	// Storage for extensions — plain Map replaces SubscriptionRef<HashMap>
-	const extensions = new Map<string, ExtensionHost>();
+	const extensions = new Map<string, ExtensionHost>(;
 
 	// Atom: Get all extensions
 	const getAll = async (): Promise<ReadonlyArray<ExtensionHost>> => {
-		return Array.from(extensions.values());
+		return Array.from(extensions.values();
 	};
 
 	// Atom: Get extension by ID
 	const getById = async (id: string): Promise<ExtensionHost> => {
-		const extension = extensions.get(id);
+		const extension = extensions.get(id;
 
 		if (extension === undefined) {
-			throw new ExtensionNotFoundError(id);
+			throw new ExtensionNotFoundError(id;
 		}
 
 		return extension;
@@ -174,12 +174,12 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 
 	// Atom: Activate an extension
 	const activate = async (id: string): Promise<ActivateResult> => {
-		const startTime = Date.now();
+		const startTime = Date.now(;
 
-		const current = extensions.get(id);
+		const current = extensions.get(id;
 
 		if (current === undefined) {
-			throw new ExtensionNotFoundError(id);
+			throw new ExtensionNotFoundError(id;
 		}
 
 		// Check if already active
@@ -199,13 +199,13 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 		extensions.set(id, {
 			...current,
 			state: { _tag: "Activating", startTime },
-		});
+		};
 
-		telemetry.log("info", `[Extension] Activating extension: ${id}`);
+		telemetry.log("info", `[Extension] Activating extension: ${id}`;
 
 		try {
 			// Simulate activation (in production, this would load the extension module)
-			await new Promise<void>((r) => setTimeout(r, 10));
+			await new Promise<void>((r) => setTimeout(r, 10);
 
 			const activationTime = Date.now() - startTime;
 
@@ -215,13 +215,13 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 				state: { _tag: "Active", activatedAt: startTime },
 				activatedAt: startTime,
 				activationTime,
-			});
+			};
 
 			telemetry.log(
 				"info",
 
 				`[Extension] Activated extension: ${id} (${activationTime}ms)`,
-			);
+			;
 
 			return {
 				extensionId: id,
@@ -273,24 +273,24 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 			extensions.set(id, {
 				...latest,
 				state: { _tag: "Error", error: String(error) },
-			});
+			};
 
 			telemetry.log(
 				"error",
 
 				`[Extension] Failed to activate ${id}: ${String(error)}`,
-			);
+			;
 
-			throw new ExtensionActivationError(id, error);
+			throw new ExtensionActivationError(id, error;
 		}
 	};
 
 	// Atom: Deactivate an extension
 	const deactivate = async (id: string): Promise<DeactivateResult> => {
-		const current = extensions.get(id);
+		const current = extensions.get(id;
 
 		if (current === undefined) {
-			throw new ExtensionNotFoundError(id);
+			throw new ExtensionNotFoundError(id;
 		}
 
 		// Check if already deactivated
@@ -307,29 +307,29 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 			} satisfies DeactivateResult;
 		}
 
-		telemetry.log("info", `[Extension] Deactivating extension: ${id}`);
+		telemetry.log("info", `[Extension] Deactivating extension: ${id}`;
 
 		try {
 			// Update state to deactivating
 			extensions.set(id, {
 				...current,
 				state: { _tag: "Deactivating" },
-			});
+			};
 
 			// Simulate deactivation
-			await new Promise<void>((r) => setTimeout(r, 5));
+			await new Promise<void>((r) => setTimeout(r, 5);
 
 			// Update state to deactivated
 			extensions.set(id, {
 				...current,
 				state: { _tag: "Deactivated" },
-			});
+			};
 
 			telemetry.log(
 				"info",
 
 				`[Extension] Deactivated extension: ${id}`,
-			);
+			;
 
 			return {
 				extensionId: id,
@@ -347,15 +347,15 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 				"error",
 
 				`[Extension] Failed to deactivate ${id}: ${String(error)}`,
-			);
+			;
 
-			throw new ExtensionDeactivationError(id, error);
+			throw new ExtensionDeactivationError(id, error;
 		}
 	};
 
 	// Atom: Check if extension is active
 	const isActive = async (id: string): Promise<boolean> => {
-		const extension = extensions.get(id);
+		const extension = extensions.get(id;
 
 		if (extension === undefined) {
 			return false;
@@ -406,9 +406,9 @@ let _instance: ExtensionService | undefined;
 
 export async function getExtension(): Promise<ExtensionService> {
 	if (_instance === undefined) {
-		const telemetry = await getTelemetry();
+		const telemetry = await getTelemetry(;
 
-		_instance = makeExtensionService(telemetry);
+		_instance = makeExtensionService(telemetry;
 	}
 
 	return _instance;
@@ -434,16 +434,16 @@ export const makeMockExtension = (
 		state: { _tag: "Idle" } as ExtensionState,
 		activatedAt: undefined,
 		activationTime: undefined,
-	}));
+	});
 
 	return {
 		getAll: async () => mockExtensions,
 
 		getById: async (id: string) => {
-			const ext = mockExtensions.find((e) => e.id === id);
+			const ext = mockExtensions.find((e) => e.id === id;
 
 			if (!ext) {
-				throw new ExtensionNotFoundError(id);
+				throw new ExtensionNotFoundError(id;
 			}
 
 			return ext;

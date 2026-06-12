@@ -211,24 +211,24 @@ export function DeriveLanguageIdFromUri(UriString: string): string {
 	// Strip scheme + query + hash so we're left with the path.
 	let Path = UriString;
 
-	const SchemeEnd = Path.indexOf("://");
+	const SchemeEnd = Path.indexOf("://";
 
-	if (SchemeEnd !== -1) Path = Path.slice(SchemeEnd + 3);
+	if (SchemeEnd !== -1) Path = Path.slice(SchemeEnd + 3;
 
-	const QueryStart = Path.indexOf("?");
+	const QueryStart = Path.indexOf("?";
 
-	if (QueryStart !== -1) Path = Path.slice(0, QueryStart);
+	if (QueryStart !== -1) Path = Path.slice(0, QueryStart;
 
-	const HashStart = Path.indexOf("#");
+	const HashStart = Path.indexOf("#";
 
-	if (HashStart !== -1) Path = Path.slice(0, HashStart);
+	if (HashStart !== -1) Path = Path.slice(0, HashStart;
 
 	// Exact-filename fast path (Dockerfile, Makefile, CMakeLists.txt).
-	const LastSlash = Math.max(Path.lastIndexOf("/"), Path.lastIndexOf("\\"));
+	const LastSlash = Math.max(Path.lastIndexOf("/"), Path.lastIndexOf("\\");
 
-	const FileName = LastSlash === -1 ? Path : Path.slice(LastSlash + 1);
+	const FileName = LastSlash === -1 ? Path : Path.slice(LastSlash + 1;
 
-	const Lower = FileName.toLowerCase();
+	const Lower = FileName.toLowerCase(;
 
 	switch (Lower) {
 		case "dockerfile":
@@ -251,11 +251,11 @@ export function DeriveLanguageIdFromUri(UriString: string): string {
 			return "properties";
 	}
 
-	const Dot = FileName.lastIndexOf(".");
+	const Dot = FileName.lastIndexOf(".";
 
 	if (Dot === -1 || Dot === FileName.length - 1) return "plaintext";
 
-	const Extension = FileName.slice(Dot + 1).toLowerCase();
+	const Extension = FileName.slice(Dot + 1).toLowerCase(;
 
 	return STATIC_EXTENSION_TO_LANGUAGE[Extension] ?? "plaintext";
 }
@@ -267,7 +267,7 @@ export function DeriveLanguageIdFromUri(UriString: string): string {
  * marks the language as "already fired"; matching extensions stay
  * activated for the rest of the session.
  */
-const FiredLanguages = new Set<string>();
+const FiredLanguages = new Set<string>(;
 
 export function FireOnLanguageActivation(
 	Context: HandlerContext,
@@ -278,7 +278,7 @@ export function FireOnLanguageActivation(
 
 	if (FiredLanguages.has(LanguageId)) return;
 
-	FiredLanguages.add(LanguageId);
+	FiredLanguages.add(LanguageId;
 
 	const Event = `onLanguage:${LanguageId}`;
 
@@ -294,14 +294,14 @@ export function FireOnLanguageActivation(
 			const Message =
 				Error instanceof globalThis.Error
 					? Error.message
-					: String(Error);
+					: String(Error;
 
 			CocoonDevLog(
 				"language-activation",
 
 				`[LanguageActivation] onLanguage:${LanguageId} failed: ${Message}`,
-			);
-		});
+			;
+		};
 
 		return;
 	}
@@ -316,6 +316,6 @@ export function FireOnLanguageActivation(
 			"language-activation",
 
 			`[LanguageActivation] ${Event} matches ${Matching.length} extension(s); activate router is absent - extensions will activate on their next event instead`,
-		);
+		;
 	}
 }

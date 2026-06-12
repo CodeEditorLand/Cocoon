@@ -109,4 +109,4 @@ export interface IAPIFactory {
 /**
  * Effect context for APIFactory
  */
-export const IAPIFactory: unique symbol = Symbol.for("IAPIFactory");
+export const IAPIFactory: unique symbol = Symbol.for("IAPIFactory";

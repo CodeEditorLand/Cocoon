@@ -70,7 +70,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 			if (Item.length === 0) return Item;
 
 			try {
-				return StockUri.parse(Item);
+				return StockUri.parse(Item;
 			} catch {
 				return Item;
 			}
@@ -78,7 +78,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 
 		if (Item && typeof Item === "object") {
 			try {
-				const Hydrated = StockToUri(Item);
+				const Hydrated = StockToUri(Item;
 
 				if (Hydrated) return Hydrated;
 			} catch {
@@ -89,7 +89,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 		}
 
 		return Item;
-	});
+	};
 };
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
@@ -135,14 +135,14 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		FallbackIndex: number,
 	): { uri: unknown; name: string; index: number } | null => {
-		const Hydrated = StockToUri(Raw?.uri);
+		const Hydrated = StockToUri(Raw?.uri;
 
 		if (!Hydrated) return null;
 
 		const Name =
 			typeof Raw?.name === "string" && Raw.name.length > 0
 				? Raw.name
-				: (Hydrated.fsPath.split(/[\\/]/).pop() ?? "");
+				: (Hydrated.fsPath.split(/[\\/]/).pop() ?? "";
 
 		const Index =
 			typeof Raw?.index === "number" ? Raw.index : FallbackIndex;
@@ -187,9 +187,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		const Out: Array<{ uri: unknown; name: string; index: number }> = [];
 
 		for (let I = 0; I < Raw.length; I++) {
-			const Hydrated = HydrateFolder(Raw[I] as any, I);
+			const Hydrated = HydrateFolder(Raw[I] as any, I;
 
-			if (Hydrated) Out.push(Hydrated);
+			if (Hydrated) Out.push(Hydrated;
 		}
 
 		if (Out.length > 0) {
@@ -217,7 +217,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		return Live.name ?? InitWorkspace.name;
 	};
 
-	const ConfigState = CreateConfigurationState(Context);
+	const ConfigState = CreateConfigurationState(Context;
 
 	// Expose the shared Configuration cache + priming helpers on the
 	// globalThis so `ExtensionHostHandler.ActivateExtension` can seed
@@ -231,11 +231,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 	const Concrete = {
 		get workspaceFolders() {
-			return ReadFolders();
+			return ReadFolders(;
 		},
 
 		get name() {
-			return ReadName();
+			return ReadName(;
 		},
 
 		workspaceFile: undefined,
@@ -301,13 +301,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.exclude,
 
 						Opts?.maxResults,
-					);
+					;
 				},
 
 				(R) => !Array.isArray(R) || R.length === 0,
-			);
+			;
 
-			return HydrateUriResults(Raw);
+			return HydrateUriResults(Raw;
 		},
 
 		// `findFiles2` - VS Code 1.90+ multi-pattern signature.
@@ -356,13 +356,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.exclude,
 
 						Opts?.maxResults,
-					);
+					;
 				},
 
 				(R) => !Array.isArray(R) || R.length === 0,
-			);
+			;
 
-			return HydrateUriResults(Raw);
+			return HydrateUriResults(Raw;
 		},
 
 		// `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
@@ -405,7 +405,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						O,
 
 						Callback,
-					);
+					;
 				},
 
 				(R) => {
@@ -452,7 +452,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						O,
 
 						Callback,
-					);
+					;
 				},
 
 				(R) => {
@@ -512,7 +512,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			try {
 				await Context.MountainClient?.sendRequest("Workspace.Save", {
 					uri: Uri,
-				});
+				};
 
 				return Uri;
 			} catch {
@@ -526,7 +526,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					"Workspace.SaveAs",
 
 					{ uri: Uri },
-				);
+				;
 
 				return (Result as { uri?: unknown })?.uri ?? Uri;
 			} catch {
@@ -555,12 +555,12 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 							?.fsPath ??
 						(PathOrUri as { fsPath?: string; path?: string })
 							?.path ??
-						String(PathOrUri));
+						String(PathOrUri);
 
-			const Folders = ReadFolders();
+			const Folders = ReadFolders(;
 
 			for (const Folder of Folders) {
-				const Relative = StockRelativePath(Folder.uri, PathOrUri);
+				const Relative = StockRelativePath(Folder.uri, PathOrUri;
 
 				if (Relative !== undefined) {
 					if (IncludeWorkspaceFolder && Folders.length > 1) {
@@ -642,25 +642,25 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		) => {
 			const List: ((...A: any[]) => any)[] = ((
 				Context as any
-			).__willSaveListeners ??= []);
+			).__willSaveListeners ??= [];
 
-			List.push(Listener);
+			List.push(Listener;
 
 			// Also subscribe to the WorkspaceEventEmitter so the event emitter
 			// pattern used by extensions like TypeScript's `onWillSave` works.
-			Context.WorkspaceEventEmitter.on("willSaveTextDocument", Listener);
+			Context.WorkspaceEventEmitter.on("willSaveTextDocument", Listener;
 
 			return {
 				dispose: () => {
-					const Idx = List.indexOf(Listener);
+					const Idx = List.indexOf(Listener;
 
-					if (Idx !== -1) List.splice(Idx, 1);
+					if (Idx !== -1) List.splice(Idx, 1;
 
 					Context.WorkspaceEventEmitter.removeListener(
 						"willSaveTextDocument",
 
 						Listener,
-					);
+					;
 				},
 			};
 		},
@@ -684,7 +684,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 				"didChangeWorkspaceFolders",
 
 				Listener,
-			);
+			;
 
 			return {
 				dispose: () => {
@@ -692,7 +692,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						"didChangeWorkspaceFolders",
 
 						Listener,
-					);
+					;
 				},
 			};
 		},
@@ -858,7 +858,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		fs: BuildFileSystemNamespace(Context),
 	};
 
-	return WrapWorkspaceNamespace(Concrete);
+	return WrapWorkspaceNamespace(Concrete;
 };
 
 export default CreateWorkspaceNamespace;

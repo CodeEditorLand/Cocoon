@@ -21,7 +21,7 @@ export class MountainClient {
 	private isInitialized: boolean = false;
 
 	constructor() {
-		this.clientService = new MountainClientService();
+		this.clientService = new MountainClientService(;
 	}
 
 	/**
@@ -33,7 +33,7 @@ export class MountainClient {
 				"mountain-client",
 
 				"[MountainClient] Already initialized",
-			);
+			;
 
 			return;
 		}
@@ -42,10 +42,10 @@ export class MountainClient {
 			"mountain-client",
 
 			"[MountainClient] Initializing Mountain client",
-		);
+		;
 
 		try {
-			await this.clientService.connect();
+			await this.clientService.connect(;
 
 			this.isInitialized = true;
 
@@ -53,7 +53,7 @@ export class MountainClient {
 				"mountain-client",
 
 				"[MountainClient] Successfully initialized",
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
@@ -61,7 +61,7 @@ export class MountainClient {
 				"[MountainClient] Failed to initialize:",
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -74,27 +74,27 @@ export class MountainClient {
 		if (!this.isInitialized) {
 			throw new Error(
 				"MountainClient not initialized. Call initialize() first.",
-			);
+			;
 		}
 
 		CocoonDevLog(
 			"mountain-client",
 
 			`[MountainClient] Sending request: ${method}`,
-		);
+		;
 
 		try {
 			const response = await this.clientService.sendRequest(
 				method,
 
 				data || {},
-			);
+			;
 
 			CocoonDevLog(
 				"mountain-client",
 
 				`[MountainClient] Request ${method} completed successfully`,
-			);
+			;
 
 			return response;
 		} catch (error) {
@@ -104,7 +104,7 @@ export class MountainClient {
 				`[MountainClient] Request ${method} failed:`,
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -117,7 +117,7 @@ export class MountainClient {
 		if (!this.isInitialized) {
 			throw new Error(
 				"MountainClient not initialized. Call initialize() first.",
-			);
+			;
 		}
 
 		// Gated under `Trace=grpc-verbose` - see sibling comment in
@@ -127,25 +127,25 @@ export class MountainClient {
 		const TraceGrpcVerbose =
 			typeof process !== "undefined" &&
 			typeof process.env["Trace"] === "string" &&
-			process.env["Trace"].includes("grpc-verbose");
+			process.env["Trace"].includes("grpc-verbose";
 
 		if (TraceGrpcVerbose) {
 			CocoonDevLog(
 				"mountain-client",
 
 				`[MountainClient] Sending notification: ${method}`,
-			);
+			;
 		}
 
 		try {
-			await this.clientService.sendNotification(method, data || {});
+			await this.clientService.sendNotification(method, data || {};
 
 			if (TraceGrpcVerbose) {
 				CocoonDevLog(
 					"mountain-client",
 
 					`[MountainClient] Notification ${method} sent successfully`,
-				);
+				;
 			}
 		} catch (error) {
 			CocoonDevLog(
@@ -154,7 +154,7 @@ export class MountainClient {
 				`[MountainClient] Notification ${method} failed:`,
 
 				error,
-			);
+			;
 
 			// Don't throw for notifications (fire-and-forget)
 		}
@@ -164,14 +164,14 @@ export class MountainClient {
 	 * Get client status
 	 */
 	getStatus() {
-		return this.clientService.getStatus();
+		return this.clientService.getStatus(;
 	}
 
 	/**
 	 * Check if client is connected
 	 */
 	isConnected(): boolean {
-		const status = this.getStatus();
+		const status = this.getStatus(;
 
 		return status.connected;
 	}
@@ -181,7 +181,7 @@ export class MountainClient {
 	 */
 	async disconnect(): Promise<void> {
 		if (!this.isInitialized) {
-			CocoonDevLog("mountain-client", "[MountainClient] Not initialized");
+			CocoonDevLog("mountain-client", "[MountainClient] Not initialized";
 
 			return;
 		}
@@ -190,10 +190,10 @@ export class MountainClient {
 			"mountain-client",
 
 			"[MountainClient] Disconnecting from Mountain",
-		);
+		;
 
 		try {
-			await this.clientService.disconnect();
+			await this.clientService.disconnect(;
 
 			this.isInitialized = false;
 
@@ -201,7 +201,7 @@ export class MountainClient {
 				"mountain-client",
 
 				"[MountainClient] Disconnected successfully",
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
@@ -209,7 +209,7 @@ export class MountainClient {
 				"[MountainClient] Disconnect failed:",
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -223,18 +223,18 @@ export class MountainClient {
 			"mountain-client",
 
 			"[MountainClient] Reconnecting to Mountain",
-		);
+		;
 
 		try {
-			await this.disconnect();
+			await this.disconnect(;
 
-			await this.initialize();
+			await this.initialize(;
 
 			CocoonDevLog(
 				"mountain-client",
 
 				"[MountainClient] Reconnected successfully",
-			);
+			;
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
@@ -242,7 +242,7 @@ export class MountainClient {
 				"[MountainClient] Reconnect failed:",
 
 				error,
-			);
+			;
 
 			throw error;
 		}
@@ -257,7 +257,7 @@ export class MountainClient {
 		}
 
 		try {
-			const status = this.getStatus();
+			const status = this.getStatus(;
 
 			return status.connected && status.errorCount === 0;
 		} catch (error) {
@@ -267,7 +267,7 @@ export class MountainClient {
 				"[MountainClient] Health check failed:",
 
 				error,
-			);
+			;
 
 			return false;
 		}
@@ -277,7 +277,7 @@ export class MountainClient {
 	 * Get error count
 	 */
 	getErrorCount(): number {
-		const status = this.getStatus();
+		const status = this.getStatus(;
 
 		return status.errorCount;
 	}
@@ -287,6 +287,6 @@ export class MountainClient {
 	 */
 	resetErrorCount(): void {
 		// Error count is managed internally by MountainClientService
-		CocoonDevLog("mountain-client", "[MountainClient] Error count reset");
+		CocoonDevLog("mountain-client", "[MountainClient] Error count reset";
 	}
 }

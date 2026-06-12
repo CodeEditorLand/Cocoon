@@ -46,44 +46,44 @@ export interface IPlatformService {
 	readonly _serviceBrand: undefined;
 
 	// Initialization
-	initialize(): Effect.Effect<void, Error>;
+	initialize(): Promise<void>;
 
 	// OS operations
-	detectPlatform(): Effect.Effect<OSModule.PlatformNumber, Error>;
+	detectPlatform(): Promise<OSModule.PlatformNumber>;
 
-	getOSInfo(): Effect.Effect<OSModule.OSInfo, Error>;
+	getOSInfo(): Promise<OSModule.OSInfo>;
 
-	isWindows(): Effect.Effect<boolean>;
+	isWindows(): Promise<boolean>;
 
-	isMacintosh(): Effect.Effect<boolean>;
+	isMacintosh(): Promise<boolean>;
 
-	isLinux(): Effect.Effect<boolean>;
+	isLinux(): Promise<boolean>;
 
-	normalizePath(path: string): Effect.Effect<string, Error>;
+	normalizePath(path: string): Promise<string>;
 
-	joinPath(...segments: string[]): Effect.Effect<string>;
+	joinPath(...segments: string[]): Promise<string>;
 
 	// Environment operations
-	getEnvironmentVariable(name: string): Effect.Effect<Option.Option<string>>;
+	getEnvironmentVariable(name: string): Promise<Option.Option<string>>;
 
 	setEnvironmentVariable(
 		name: string,
 
 		value: string,
-	): Effect.Effect<void, Error>;
+	): Promise<void>;
 
-	getEnvironmentInfo(): Effect.Effect<
+	getEnvironmentInfo(): Promise<
 		EnvironmentModule.EnvironmentInfo,
 		Error
 	>;
 
-	getLanguage(): Effect.Effect<string>;
+	getLanguage(): Promise<string>;
 
-	getLocale(): Effect.Effect<string>;
+	getLocale(): Promise<string>;
 
-	getHomeDirectory(): Effect.Effect<string>;
+	getHomeDirectory(): Promise<string>;
 
-	getTempDirectory(): Effect.Effect<string>;
+	getTempDirectory(): Promise<string>;
 
 	// Process operations
 	spawnProcess(
@@ -92,7 +92,7 @@ export interface IPlatformService {
 		args: string[],
 
 		options: ProcessModule.ProcessSpawnOptions,
-	): Effect.Effect<ProcessModule.ProcessInfo | null, Error>;
+	): Promise<ProcessModule.ProcessInfo | null>;
 
 	executeCommand(
 		command: string,
@@ -100,32 +100,32 @@ export interface IPlatformService {
 		args: string[],
 
 		options?: ProcessModule.ProcessSpawnOptions,
-	): Effect.Effect<
+	): Promise<
 		{ stdout: string; stderr: string; exitCode: number | null },
 		Error
 	>;
 
-	killProcess(pid: number): Effect.Effect<boolean>;
+	killProcess(pid: number): Promise<boolean>;
 
 	getProcess(
 		pid: number,
-	): Effect.Effect<Option.Option<ProcessModule.ProcessInfo>>;
+	): Promise<Option.Option<ProcessModule.ProcessInfo>>;
 
 	// Type conversion operations
 	convertOSInfoToDTO(
 		osInfo: OSModule.OSInfo,
-	): Effect.Effect<TypeConverterModule.MountainPlatformInfoDTO>;
+	): Promise<TypeConverterModule.MountainPlatformInfoDTO>;
 
 	convertEnvironmentInfoToDTO(
 		envInfo: EnvironmentModule.EnvironmentInfo,
-	): Effect.Effect<TypeConverterModule.MountainEnvironmentInfoDTO>;
+	): Promise<TypeConverterModule.MountainEnvironmentInfoDTO>;
 
 	convertProcessInfoToDTO(
 		procInfo: ProcessModule.ProcessInfo,
-	): Effect.Effect<TypeConverterModule.MountainProcessInfoDTO>;
+	): Promise<TypeConverterModule.MountainProcessInfoDTO>;
 
 	// Health and monitoring
-	getHealthStatus(): Effect.Effect<{
+	getHealthStatus(): Promise<{
 		status: "healthy" | "degraded" | "unhealthy";
 
 		uptime: number;
@@ -134,7 +134,7 @@ export interface IPlatformService {
 	}>;
 
 	// Cleanup
-	dispose(): Effect.Effect<void>;
+	dispose(): Promise<void>;
 }
 
 /**
@@ -147,7 +147,7 @@ export class PlatformService implements IPlatformService {
 
 	private initialized: boolean = false;
 
-	private cache: Map<string, { value: any; timestamp: number }> = new Map();
+	private cache: Map<string, { value: any; timestamp: number }> = new Map(;
 
 	private readonly CACHE_TTL = 60000; // 60 seconds
 
@@ -158,35 +158,35 @@ export class PlatformService implements IPlatformService {
 	/**
 	 * Initialize platform service
 	 */
-	initialize(): Effect.Effect<void, Error> {
-		return Effect.sync(() => {
-			if (this.initialized) {
-				console.log("[PlatformService] Already initialized");
+	initialize(): Promise<void> {
+		return {
+			if (this.initialized {
+				console.log("[PlatformService] Already initialized";
 
 				return;
 			}
 
-			this.startTime = Date.now();
+			this.startTime = Date.now(;
 
 			// Perform initial platform detection
-			const platform = OSModule.GetPlatformNumber();
+			const platform = OSModule.GetPlatformNumber(;
 
-			const osInfo = OSModule.GetOSInfo();
+			const osInfo = OSModule.GetOSInfo(;
 
-			const envInfo = EnvironmentModule.GetEnvironmentInfo();
+			const envInfo = EnvironmentModule.GetEnvironmentInfo(;
 
 			// Cache initial values
 			this.cache.set("platform", {
 				value: platform,
 				timestamp: Date.now(),
-			});
+			};
 
-			this.cache.set("osInfo", { value: osInfo, timestamp: Date.now() });
+			this.cache.set("osInfo", { value: osInfo, timestamp: Date.now() };
 
 			this.cache.set("envInfo", {
 				value: envInfo,
 				timestamp: Date.now(),
-			});
+			};
 
 			this.initialized = true;
 
@@ -194,25 +194,25 @@ export class PlatformService implements IPlatformService {
 				platform,
 				osInfo,
 				envInfo,
-			});
-		});
+			};
+		};
 	}
 
 	/**
 	 * Get cached value or compute new one
 	 */
 	private getCached<T>(key: string, compute: () => T): T {
-		const cached = this.cache.get(key);
+		const cached = this.cache.get(key;
 
-		const now = Date.now();
+		const now = Date.now(;
 
 		if (cached && now - cached.timestamp < this.CACHE_TTL) {
 			return cached.value as T;
 		}
 
-		const value = compute();
+		const value = compute(;
 
-		this.cache.set(key, { value, timestamp: now });
+		this.cache.set(key, { value, timestamp: now };
 
 		return value;
 	}
@@ -221,71 +221,70 @@ export class PlatformService implements IPlatformService {
 	 * Clear cache
 	 */
 	private clearCache(): void {
-		this.cache.clear();
+		this.cache.clear(;
 	}
 
 	/**
 	 * Detect platform
 	 */
-	detectPlatform(): Effect.Effect<OSModule.PlatformNumber, Error> {
-		return Effect.sync(() => {
-			return this.getCached("platform", () =>
+	detectPlatform(): Promise<OSModule.PlatformNumber> {
+		return {
+			return this.getCached("platform", ( =>
 				OSModule.GetPlatformNumber(),
-			);
-		});
+			;
+		};
 	}
 
 	/**
 	 * Get OS information
 	 */
-	getOSInfo(): Effect.Effect<OSModule.OSInfo, Error> {
-		return Effect.sync(() => {
-			return this.getCached("osInfo", () => OSModule.GetOSInfo());
-		});
+	getOSInfo(): Promise<OSModule.OSInfo> {
+		return {
+			return this.getCached("osInfo", ( => OSModule.GetOSInfo();
+		};
 	}
 
 	/**
 	 * Check if Windows
 	 */
-	isWindows(): Effect.Effect<boolean> {
-		return Effect.sync(() => OSModule.IsWindows());
+	isWindows(): Promise<boolean> {
+		return OSModule.IsWindows(;
 	}
 
 	/**
 	 * Check if Macintosh
 	 */
-	isMacintosh(): Effect.Effect<boolean> {
-		return Effect.sync(() => OSModule.IsMacintosh());
+	isMacintosh(): Promise<boolean> {
+		return OSModule.IsMacintosh(;
 	}
 
 	/**
 	 * Check if Linux
 	 */
-	isLinux(): Effect.Effect<boolean> {
-		return Effect.sync(() => OSModule.IsLinux());
+	isLinux(): Promise<boolean> {
+		return OSModule.IsLinux(;
 	}
 
 	/**
 	 * Normalize path for current platform
 	 */
-	normalizePath(path: string): Effect.Effect<string, Error> {
-		return Effect.sync(() => OSModule.NormalizePath(path));
+	normalizePath(path: string): Promise<string> {
+		return OSModule.NormalizePath(path;
 	}
 
 	/**
 	 * Join path segments
 	 */
-	joinPath(...segments: string[]): Effect.Effect<string> {
-		return Effect.sync(() => OSModule.JoinPath(...segments));
+	joinPath(...segments: string[]): Promise<string> {
+		return OSModule.JoinPath(...segments;
 	}
 
 	/**
 	 * Get environment variable
 	 */
-	getEnvironmentVariable(name: string): Effect.Effect<Option.Option<string>> {
-		return Effect.sync(() =>
-			EnvironmentModule.GetEnvironmentVariable(name),
-		);
+	getEnvironmentVariable(name: string): Promise<Option.Option<string>> {
+		return EnvironmentModule.GetEnvironmentVariable(name,
+		;
 	}
 
 	/**
@@ -295,57 +294,57 @@ export class PlatformService implements IPlatformService {
 		name: string,
 
 		value: string,
-	): Effect.Effect<void, Error> {
-		return Effect.sync(() => {
-			if (!EnvironmentModule.SetEnvironmentVariable(name, value)) {
-				throw new Error(`Failed to set environment variable: ${name}`);
+	): Promise<void> {
+		return {
+			if (!EnvironmentModule.SetEnvironmentVariable(name, value) {
+				throw new Error(`Failed to set environment variable: ${name}`;
 			}
 
 			// Invalidate environment cache
-			this.cache.delete("envInfo");
-		});
+			this.cache.delete("envInfo";
+		};
 	}
 
 	/**
 	 * Get environment information
 	 */
-	getEnvironmentInfo(): Effect.Effect<
+	getEnvironmentInfo(): Promise<
 		EnvironmentModule.EnvironmentInfo,
 		Error
 	> {
-		return Effect.sync(() => {
-			return this.getCached("envInfo", () =>
+		return {
+			return this.getCached("envInfo", ( =>
 				EnvironmentModule.GetEnvironmentInfo(),
-			);
-		});
+			;
+		};
 	}
 
 	/**
 	 * Get language
 	 */
-	getLanguage(): Effect.Effect<string> {
-		return Effect.sync(() => EnvironmentModule.GetLanguage());
+	getLanguage(): Promise<string> {
+		return EnvironmentModule.GetLanguage(;
 	}
 
 	/**
 	 * Get locale
 	 */
-	getLocale(): Effect.Effect<string> {
-		return Effect.sync(() => EnvironmentModule.GetLocale());
+	getLocale(): Promise<string> {
+		return EnvironmentModule.GetLocale(;
 	}
 
 	/**
 	 * Get home directory
 	 */
-	getHomeDirectory(): Effect.Effect<string> {
-		return Effect.sync(() => EnvironmentModule.GetHomeDirectory());
+	getHomeDirectory(): Promise<string> {
+		return EnvironmentModule.GetHomeDirectory(;
 	}
 
 	/**
 	 * Get temp directory
 	 */
-	getTempDirectory(): Effect.Effect<string> {
-		return Effect.sync(() => EnvironmentModule.GetTempDirectory());
+	getTempDirectory(): Promise<string> {
+		return EnvironmentModule.GetTempDirectory(;
 	}
 
 	/**
@@ -357,11 +356,11 @@ export class PlatformService implements IPlatformService {
 		args: string[],
 
 		options: ProcessModule.ProcessSpawnOptions,
-	): Effect.Effect<ProcessModule.ProcessInfo | null, Error> {
+	): Promise<ProcessModule.ProcessInfo | null> {
 		return Effect.tryPromise({
 			try: () => ProcessModule.SpawnProcess(command, args, options),
 			catch: (error) => new Error(`Failed to spawn process: ${error}`),
-		});
+		};
 	}
 
 	/**
@@ -373,7 +372,7 @@ export class PlatformService implements IPlatformService {
 		args: string[],
 
 		options?: ProcessModule.ProcessSpawnOptions,
-	): Effect.Effect<
+	): Promise<
 		{ stdout: string; stderr: string; exitCode: number | null },
 		Error
 	> {
@@ -381,14 +380,14 @@ export class PlatformService implements IPlatformService {
 			try: () =>
 				ProcessModule.ExecuteCommand(command, args, options || {}),
 			catch: (error) => new Error(`Failed to execute command: ${error}`),
-		});
+		};
 	}
 
 	/**
 	 * Kill process
 	 */
-	killProcess(pid: number): Effect.Effect<boolean> {
-		return Effect.sync(() => ProcessModule.KillProcess(pid));
+	killProcess(pid: number): Promise<boolean> {
+		return ProcessModule.KillProcess(pid;
 	}
 
 	/**
@@ -396,8 +395,8 @@ export class PlatformService implements IPlatformService {
 	 */
 	getProcess(
 		pid: number,
-	): Effect.Effect<Option.Option<ProcessModule.ProcessInfo>> {
-		return Effect.sync(() => ProcessModule.GetProcess(pid));
+	): Promise<Option.Option<ProcessModule.ProcessInfo>> {
+		return ProcessModule.GetProcess(pid;
 	}
 
 	/**
@@ -405,10 +404,9 @@ export class PlatformService implements IPlatformService {
 	 */
 	convertOSInfoToDTO(
 		osInfo: OSModule.OSInfo,
-	): Effect.Effect<TypeConverterModule.MountainPlatformInfoDTO> {
-		return Effect.sync(() =>
-			TypeConverterModule.ConvertOSInfoToDTO(osInfo),
-		);
+	): Promise<TypeConverterModule.MountainPlatformInfoDTO> {
+		return TypeConverterModule.ConvertOSInfoToDTO(osInfo,
+		;
 	}
 
 	/**
@@ -416,10 +414,9 @@ export class PlatformService implements IPlatformService {
 	 */
 	convertEnvironmentInfoToDTO(
 		envInfo: EnvironmentModule.EnvironmentInfo,
-	): Effect.Effect<TypeConverterModule.MountainEnvironmentInfoDTO> {
-		return Effect.sync(() =>
-			TypeConverterModule.ConvertEnvironmentInfoToDTO(envInfo),
-		);
+	): Promise<TypeConverterModule.MountainEnvironmentInfoDTO> {
+		return TypeConverterModule.ConvertEnvironmentInfoToDTO(envInfo,
+		;
 	}
 
 	/**
@@ -427,24 +424,23 @@ export class PlatformService implements IPlatformService {
 	 */
 	convertProcessInfoToDTO(
 		procInfo: ProcessModule.ProcessInfo,
-	): Effect.Effect<TypeConverterModule.MountainProcessInfoDTO> {
-		return Effect.sync(() =>
-			TypeConverterModule.ConvertProcessInfoToDTO(procInfo),
-		);
+	): Promise<TypeConverterModule.MountainProcessInfoDTO> {
+		return TypeConverterModule.ConvertProcessInfoToDTO(procInfo,
+		;
 	}
 
 	/**
 	 * Get health status
 	 */
-	getHealthStatus(): Effect.Effect<{
+	getHealthStatus(): Promise<{
 		status: "healthy" | "degraded" | "unhealthy";
 
 		uptime: number;
 
 		lastUpdate: number;
 	}> {
-		return Effect.sync(() => {
-			const uptime = Date.now() - this.startTime;
+		return {
+			const uptime = Date.now( - this.startTime;
 
 			const lastUpdate = Math.max(
 				this.getCacheTimestamp("osInfo"),
@@ -452,7 +448,7 @@ export class PlatformService implements IPlatformService {
 				this.getCacheTimestamp("envInfo"),
 
 				this.getCacheTimestamp("platform"),
-			);
+			;
 
 			// Determine health status
 			let status: "healthy" | "degraded" | "unhealthy" = "healthy";
@@ -468,14 +464,14 @@ export class PlatformService implements IPlatformService {
 				uptime,
 				lastUpdate,
 			};
-		});
+		};
 	}
 
 	/**
 	 * Get cache timestamp by key
 	 */
 	private getCacheTimestamp(key: string): number {
-		const cached = this.cache.get(key);
+		const cached = this.cache.get(key;
 
 		return cached ? cached.timestamp : 0;
 	}
@@ -483,18 +479,18 @@ export class PlatformService implements IPlatformService {
 	/**
 	 * Dispose platform service
 	 */
-	dispose(): Effect.Effect<void> {
-		return Effect.sync(() => {
-			console.log("[PlatformService] Disposing...");
+	dispose(): Promise<void> {
+		return {
+			console.log("[PlatformService] Disposing...";
 
 			// Clean up all processes
-			ProcessModule.CleanupAllProcesses();
+			ProcessModule.CleanupAllProcesses(;
 
 			// Clear cache
-			this.clearCache();
+			this.clearCache(;
 
-			console.log("[PlatformService] Disposed");
-		});
+			console.log("[PlatformService] Disposed";
+		};
 	}
 }
 
@@ -502,7 +498,7 @@ export class PlatformService implements IPlatformService {
  * Platform Service Tag for Effect-TS dependency injection
  */
 export const PlatformServiceTag =
-	Context.GenericTag<IPlatformService>("PlatformService");
+	Context.GenericTag<IPlatformService>("PlatformService";
 
 /**
  * Platform Service Layer
@@ -511,7 +507,7 @@ export const PlatformServiceLayer = Layer.sync(
 	PlatformServiceTag,
 
 	() => new PlatformService(),
-);
+;
 
 /**
  * Live platform service layer
@@ -525,7 +521,7 @@ export const TestPlatformService = Layer.succeed(
 	PlatformServiceTag,
 
 	new PlatformService(),
-);
+;
 
 /**
  * Convenience functions using PlatformService context
@@ -534,7 +530,7 @@ export const TestPlatformService = Layer.succeed(
 /**
  * Get platform number from context
  */
-export function DetectPlatform(): Effect.Effect<
+export function DetectPlatform(): Promise<
 	OSModule.PlatformNumber,
 	never,
 	IPlatformService
@@ -543,13 +539,13 @@ export function DetectPlatform(): Effect.Effect<
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.detectPlatform(),
-	);
+	;
 }
 
 /**
  * Get OS info from context
  */
-export function GetOSInfo(): Effect.Effect<
+export function GetOSInfo(): Promise<
 	OSModule.OSInfo,
 	never,
 	IPlatformService
@@ -558,7 +554,7 @@ export function GetOSInfo(): Effect.Effect<
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.getOSInfo(),
-	);
+	;
 }
 
 /**
@@ -566,12 +562,12 @@ export function GetOSInfo(): Effect.Effect<
  */
 export function NormalizePath(
 	path: string,
-): Effect.Effect<string, never, IPlatformService> {
+): Promise<string> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.normalizePath(path),
-	);
+	;
 }
 
 /**
@@ -579,12 +575,12 @@ export function NormalizePath(
  */
 export function GetEnvironmentVariable(
 	name: string,
-): Effect.Effect<Option.Option<string>, never, IPlatformService> {
+): Promise<Option.Option<string>> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.getEnvironmentVariable(name),
-	);
+	;
 }
 
 /**
@@ -594,13 +590,13 @@ export function SetEnvironmentVariable(
 	name: string,
 
 	value: string,
-): Effect.Effect<void, never, IPlatformService> {
+): Promise<void> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) =>
 			service.setEnvironmentVariable(name, value),
-	);
+	;
 }
 
 /**
@@ -612,7 +608,7 @@ export function ExecuteCommand(
 	args?: string[],
 
 	options?: ProcessModule.ProcessSpawnOptions,
-): Effect.Effect<
+): Promise<
 	{ stdout: string; stderr: string; exitCode: number | null },
 	never,
 	IPlatformService
@@ -622,7 +618,7 @@ export function ExecuteCommand(
 
 		(service: IPlatformService) =>
 			service.executeCommand(command, args || [], options),
-	);
+	;
 }
 
 /**
@@ -634,19 +630,19 @@ export function SpawnProcess(
 	args: string[],
 
 	options: ProcessModule.ProcessSpawnOptions,
-): Effect.Effect<ProcessModule.ProcessInfo | null, never, IPlatformService> {
+): Promise<ProcessModule.ProcessInfo | null> {
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) =>
 			service.spawnProcess(command, args, options),
-	);
+	;
 }
 
 /**
  * Get service health status using platform context
  */
-export function GetHealthStatus(): Effect.Effect<
+export function GetHealthStatus(): Promise<
 	{
 		status: "healthy" | "degraded" | "unhealthy";
 
@@ -661,18 +657,18 @@ export function GetHealthStatus(): Effect.Effect<
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.getHealthStatus(),
-	);
+	;
 }
 
 /**
  * Initialize platform service
  */
-export function InitializePlatformService(): Effect.Effect<void, never> {
-	return Effect.sync(() => {
-		const service = new PlatformService();
+export function InitializePlatformService(): Promise<void> {
+	return {
+		const service = new PlatformService(;
 
-		return Effect.runPromise(service.initialize());
-	}).pipe(Effect.flatMap(() => Effect.void));
+		return (service.initialize();
+	}).pipe(Effect.flatMap(() => Effect.void);
 }
 
 /**

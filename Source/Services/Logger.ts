@@ -42,35 +42,35 @@ export interface Logger {
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
-	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
 	readonly Fatal: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
-	readonly SetExtensionId: (ExtensionId: string) => Effect.Effect<void>;
+	readonly SetExtensionId: (ExtensionId: string) => Promise<void>;
 
-	readonly GetExtensionId: () => Effect.Effect<string>;
+	readonly GetExtensionId: () => Promise<string>;
 }
 
 // Runtime Tag for the Logger interface - needed because esbuild erases
 // type-only exports but consumers import { Logger } at runtime.
-export const Logger: unique symbol = Symbol.for("Service/Logger");
+export const Logger: unique symbol = Symbol.for("Service/Logger";
 
 /**
  * @class LoggerService
@@ -88,20 +88,16 @@ export const Logger: unique symbol = Symbol.for("Service/Logger");
  * FUTURE: Log filtering - filter by extension ID and log level
  * PERFORMANCE: Telemetry - track log count per level for monitoring
  */
-export class LoggerService extends Effect.Service<LoggerService>()(
+export class LoggerService extends /* Effect.Service */(
 	"Service/Logger",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			// Current extension ID context
-			const ExtensionIdRef = yield* Ref.make<string | undefined>(
-				undefined,
-			);
+			const ExtensionIdRef = { current: undefined, };
 
 			// Log level configuration
-			const LogLevelRef = yield* Ref.make<
-				"trace" | "debug" | "info" | "warn" | "error" | "fatal"
-			>("info");
+			const LogLevelRef = { current: "info" };
 
 			/**
 			 * Format log message with context
@@ -115,7 +111,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 
 				ExtensionId?: string,
 			) => {
-				const Timestamp = new Date().toISOString();
+				const Timestamp = new Date().toISOString(;
 
 				const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
 
@@ -136,7 +132,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 						? process.stderr
 						: process.stdout;
 
-				Stream.write(`${Line}\n`);
+				Stream.write(`${Line}\n`;
 			};
 
 			/**
@@ -145,27 +141,27 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const Trace = (
 				Message: string,
 				...Data: unknown[]
-			): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					const LogLevel = yield* Ref.get(LogLevelRef);
+			): Promise<void> =>
+				async function() {
+					const LogLevel = LogLevelRef.current;
 
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+					const ExtensionId = ExtensionIdRef.current;
 
 					if (LogLevel === "trace") {
 						ForwardToMountain(
 							"trace",
 
 							FormatMessage(Message, "trace", ExtensionId),
-						);
+						;
 
-						return yield* Effect.logTrace(Message).pipe(
+						return yield* console.trace(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
 								data: Data.length === 1 ? Data[0] : Data,
 							}),
-						);
+						;
 					}
-				});
+				};
 
 			/**
 			 * Debug level logging
@@ -173,27 +169,27 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const Debug = (
 				Message: string,
 				...Data: unknown[]
-			): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					const LogLevel = yield* Ref.get(LogLevelRef);
+			): Promise<void> =>
+				async function() {
+					const LogLevel = LogLevelRef.current;
 
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+					const ExtensionId = ExtensionIdRef.current;
 
 					if (LogLevel === "trace" || LogLevel === "debug") {
 						ForwardToMountain(
 							"debug",
 
 							FormatMessage(Message, "debug", ExtensionId),
-						);
+						;
 
-						return yield* Effect.logDebug(Message).pipe(
+						return yield* console.debug(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
 								data: Data.length === 1 ? Data[0] : Data,
 							}),
-						);
+						;
 					}
-				});
+				};
 
 			/**
 			 * Info level logging
@@ -201,23 +197,23 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const Info = (
 				Message: string,
 				...Data: unknown[]
-			): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+			): Promise<void> =>
+				async function() {
+					const ExtensionId = ExtensionIdRef.current;
 
 					ForwardToMountain(
 						"info",
 
 						FormatMessage(Message, "info", ExtensionId),
-					);
+					;
 
-					return yield* Effect.logInfo(Message).pipe(
+					return yield* console.info(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					);
-				});
+					;
+				};
 
 			/**
 			 * Warning level logging
@@ -225,23 +221,23 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const Warn = (
 				Message: string,
 				...Data: unknown[]
-			): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+			): Promise<void> =>
+				async function() {
+					const ExtensionId = ExtensionIdRef.current;
 
 					ForwardToMountain(
 						"warn",
 
 						FormatMessage(Message, "warn", ExtensionId),
-					);
+					;
 
-					return yield* Effect.logWarning(Message).pipe(
+					return yield* console.warn(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					);
-				});
+					;
+				};
 
 			/**
 			 * Error level logging
@@ -249,23 +245,23 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const Error = (
 				Message: string,
 				...Data: unknown[]
-			): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+			): Promise<void> =>
+				async function() {
+					const ExtensionId = ExtensionIdRef.current;
 
 					ForwardToMountain(
 						"error",
 
 						FormatMessage(Message, "error", ExtensionId),
-					);
+					;
 
-					return yield* Effect.logError(Message).pipe(
+					return yield* console.error(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					);
-				});
+					;
+				};
 
 			/**
 			 * Fatal level logging
@@ -273,41 +269,41 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			const Fatal = (
 				Message: string,
 				...Data: unknown[]
-			): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+			): Promise<void> =>
+				async function() {
+					const ExtensionId = ExtensionIdRef.current;
 
 					ForwardToMountain(
 						"fatal",
 
 						FormatMessage(Message, "fatal", ExtensionId),
-					);
+					;
 
-					return yield* Effect.logFatal(Message).pipe(
+					return yield* console.error(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					);
-				});
+					;
+				};
 
 			/**
 			 * Set extension ID context for logging
 			 */
-			const SetExtensionId = (ExtensionId: string): Effect.Effect<void> =>
-				Effect.gen(function* () {
-					yield* Ref.set(ExtensionIdRef, ExtensionId);
-				});
+			const SetExtensionId = (ExtensionId: string): Promise<void> =>
+				async function() {
+					ExtensionIdRef.current = ExtensionId;
+				};
 
 			/**
 			 * Get current extension ID context
 			 */
-			const GetExtensionId = (): Effect.Effect<string> =>
-				Effect.gen(function* () {
-					const ExtensionId = yield* Ref.get(ExtensionIdRef);
+			const GetExtensionId = (): Promise<string> =>
+				async function() {
+					const ExtensionId = ExtensionIdRef.current;
 
 					return ExtensionId ?? "cocoon-core";
-				});
+				};
 
 			// Return the service implementation
 			const ServiceImplementation: Logger = {

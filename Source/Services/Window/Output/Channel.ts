@@ -8,7 +8,7 @@
  *
  * TODO(EFX-30): Convert Effect.gen → async/await when callers migrate.
  */
-import { Effect } from "effect";
+
 import type * as VSCode from "vscode";
 
 /**
@@ -27,17 +27,17 @@ export const CreateOutputChannel = (
 	},
 
 	Logger: {
-		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 	},
 
 	Name: string,
-): Effect.Effect<VSCode.OutputChannel, Error> =>
-	Effect.gen(function* () {
+): Promise<VSCode.OutputChannel> =>
+	async function() {
 		const ChannelId = `output-${crypto.randomUUID()}`;
 
 		yield* Logger.Info(
 			`[WindowService] Creating output channel: ${Name} (${ChannelId})`,
-		);
+		;
 
 		// Notify Mountain to create the output channel (Sky renders it)
 		yield* Effect.tryPromise({
@@ -47,7 +47,7 @@ export const CreateOutputChannel = (
 					name: Name,
 				}),
 			catch: () => new Error("Failed to create output channel"),
-		});
+		};
 
 		// Return output channel proxy forwarding mutations to Mountain
 		// EFX-30: caller still expects Effect.Effect — keep wrapper until Window/Index.ts migrates
@@ -57,18 +57,18 @@ export const CreateOutputChannel = (
 				MountainClient.sendNotification("output.append", {
 					channel: ChannelId,
 					value: Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			appendLine(Value: string): void {
 				MountainClient.sendNotification("output.appendLine", {
 					channel: ChannelId,
 					value: Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			clear(): void {
 				MountainClient.sendNotification("output.clear", {
 					channel: ChannelId,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			show(
 				_ColumnOrPreserveFocus?: boolean | VSCode.ViewColumn,
@@ -77,26 +77,26 @@ export const CreateOutputChannel = (
 			): void {
 				MountainClient.sendNotification("output.show", {
 					channel: ChannelId,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			hide(): void {
 				MountainClient.sendNotification("output.show", {
 					channel: ChannelId,
 					visible: false,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			dispose(): void {
 				MountainClient.sendNotification("output.dispose", {
 					channel: ChannelId,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 			replace(_Value: string): void {
 				MountainClient.sendNotification("output.replace", {
 					channel: ChannelId,
 					value: _Value,
-				}).catch(() => {});
+				}).catch(() => {};
 			},
 		};
 
-		return yield* Effect.succeed(Channel);
-	});
+		return Channel;
+	};

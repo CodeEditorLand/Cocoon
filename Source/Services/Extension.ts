@@ -49,21 +49,21 @@ export interface Logger {
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
 	readonly Debug: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 
-	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
-	) => Effect.Effect<void>;
+	) => Promise<void>;
 }
 
 /**
@@ -217,36 +217,36 @@ export interface IExtension<T = unknown> {
 export interface ExtensionService {
 	readonly GetExtension: <T>(
 		ExtensionId: string,
-	) => Effect.Effect<IExtension<T> | undefined, never>;
+	) => Promise<IExtension<T> | undefined>;
 
-	readonly GetAllExtensions: () => Effect.Effect<
+	readonly GetAllExtensions: () => Promise<
 		readonly IExtension[],
 		never
 	>;
 
 	readonly GetExtensionPath: (
 		ExtensionId: string,
-	) => Effect.Effect<string | undefined, never>;
+	) => Promise<string | undefined>;
 
 	readonly OnDidChange: VSCode.Event<void>;
 
 	readonly ResolveDependencies: (
 		ExtensionId: string,
-	) => Effect.Effect<DependencyResolutionResult, never>;
+	) => Promise<DependencyResolutionResult>;
 
 	readonly MarkActivated: (
 		ExtensionId: string,
 
 		Exports: unknown,
-	) => Effect.Effect<void, Error>;
+	) => Promise<void>;
 
 	readonly MarkDeactivated: (
 		ExtensionId: string,
-	) => Effect.Effect<void, Error>;
+	) => Promise<void>;
 
 	readonly GetActivationMetrics: (
 		ExtensionId: string,
-	) => Effect.Effect<ActivationMetrics | undefined, never>;
+	) => Promise<ActivationMetrics | undefined>;
 }
 
 /**
@@ -294,29 +294,29 @@ export interface ActivationMetrics {
  * - LOW: Implement extension search by capabilities/features
  * - MEDIUM: Integrate Mountain gRPC for extension discovery (currently stubbed)
  */
-export class ExtensionService extends Effect.Service<ExtensionService>()(
+export class ExtensionService extends /* Effect.Service */(
 	"Service/Extension",
 
 	{
-		effect: Effect.gen(function* () {
+		effect: async function() {
 			// Resolve service dependencies
 			yield* IMountainClientService;
 
-			const Configuration = yield* Context.Tag<Configuration>(
+			const Configuration = yield* Symbol<Configuration>(
 				"Service/Configuration",
-			);
+			;
 
-			const Logger = yield* Context.Tag<Logger>("Service/Logger");
+			const Logger = yield* Symbol<Logger>("Service/Logger";
 
 			// Plain Maps - no Ref overhead on every extension lookup.
-			const _registry = new Map<string, IExtensionDescription>();
+			const _registry = new Map<string, IExtensionDescription>(;
 
-			const _activation = new Map<string, boolean>();
+			const _activation = new Map<string, boolean>(;
 
-			const _exports = new Map<string, unknown>();
+			const _exports = new Map<string, unknown>(;
 
 			// Change event listeners
-			const OnDidChangeListeners = new Set<() => void>();
+			const OnDidChangeListeners = new Set<() => void>(;
 
 			/**
 			 * Discover extensions from configuration
@@ -327,21 +327,21 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 * - Local filesystem scan
 			 * - Marketplace (online)
 			 */
-			const DiscoverExtensions = (): Effect.Effect<void, Error> =>
-				Effect.gen(function* () {
+			const DiscoverExtensions = (): Promise<void> =>
+				async function() {
 					Logger.Debug(
 						"[ExtensionService] Discovering extensions from configuration",
-					);
+					;
 
 					// Load extensions from configuration
 					const ExtensionsConfig = Configuration.GetValue<
 						Record<string, any>
-					>("extensions", {});
+					>("extensions", {};
 
 					const NewRegistry = new Map<
 						string,
 						IExtensionDescription
-					>();
+					>(;
 
 					// Process configured extensions
 					for (const [
@@ -440,17 +440,17 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 										: undefined,
 							};
 
-							NewRegistry.set(ExtensionId, Description);
+							NewRegistry.set(ExtensionId, Description;
 
 							Logger.Debug(
 								`[ExtensionService] Extension discovered: ${ExtensionId}`,
-							);
+							;
 						} catch (error) {
 							Logger.Error(
 								`[ExtensionService] Failed to parse extension config for ${ExtensionId}`,
 
 								error as Error,
-							);
+							;
 						}
 					}
 
@@ -471,18 +471,18 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									JSON.stringify(_registry.get(key)),
 						)
 					) {
-						_registry.clear();
+						_registry.clear(;
 
-						NewRegistry.forEach((v, k) => _registry.set(k, v));
+						NewRegistry.forEach((v, k) => _registry.set(k, v);
 
 						Logger.Info(
 							`[ExtensionService] Extensions discovered: ${NewRegistry.size} extensions`,
-						);
+						;
 
 						// Emit change event
-						OnDidChangeListeners.forEach((Listener) => Listener());
+						OnDidChangeListeners.forEach((Listener) => Listener();
 					}
-				});
+				};
 
 			/**
 			 * Get a specific extension by ID
@@ -494,9 +494,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 */
 			const GetExtension = <T>(
 				ExtensionId: string,
-			): Effect.Effect<IExtension<T> | undefined, never> =>
-				Effect.succeed(() => {
-					const Description = _registry.get(ExtensionId);
+			): Promise<IExtension<T> | undefined> =>
+				return (() => {
+					const Description = _registry.get(ExtensionId;
 
 					if (!Description) {
 						return undefined;
@@ -543,7 +543,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									? (Raw.publisher as string)
 									: PublisherFallback,
 						} as IExtensionDescription;
-					})();
+					})(;
 
 					const ExtensionObject: IExtension<T> = {
 						id: Description.identifier,
@@ -556,14 +556,14 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						activate: async () => {
 							Logger.Warn(
 								`[ExtensionService] activate() called on ${ExtensionId}, but activation is handled by ExtensionHostService`,
-							);
+							;
 
 							return _exports.get(ExtensionId) as T;
 						},
 					};
 
 					return ExtensionObject;
-				})();
+				})(;
 
 			/**
 			 * Get all extensions
@@ -571,11 +571,11 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 * TODO: LOW: Implement filtering by extension kind (UI/Workspace)
 			 * TODO: LOW: Implement sorting by activation priority
 			 */
-			const GetAllExtensions = (): Effect.Effect<
+			const GetAllExtensions = (): Promise<
 				readonly IExtension[],
 				never
 			> =>
-				Effect.succeed(() => {
+				return (() => {
 					const Extensions = Array.from(_registry.entries()).map(
 						([id, description]): IExtension => {
 							// LAND-FIX: SafePackageJSON guard mirrored
@@ -619,30 +619,30 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								exports: _exports.get(id),
 							};
 						},
-					);
+					;
 
 					return Extensions;
-				})();
+				})(;
 
 			/**
 			 * Get extension path by ID
 			 */
 			const GetExtensionPath = (
 				ExtensionId: string,
-			): Effect.Effect<string | undefined, never> =>
-				Effect.succeed(
+			): Promise<string | undefined> =>
+				return (
 					_registry.get(ExtensionId)?.extensionLocation?.fsPath,
-				);
+				;
 
 			/**
 			 * Register event handler for extension changes
 			 */
 			const OnDidChange = (Listener: () => any): VSCode.Disposable => {
-				OnDidChangeListeners.add(Listener);
+				OnDidChangeListeners.add(Listener;
 
 				const Disposable = {
 					dispose: () => {
-						OnDidChangeListeners.delete(Listener);
+						OnDidChangeListeners.delete(Listener;
 					},
 				} as VSCode.Disposable;
 
@@ -658,30 +658,30 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				ExtensionId: string,
 
 				Exports: unknown,
-			): Effect.Effect<void, Error> =>
-				Effect.sync(() => {
-					_activation.set(ExtensionId, true);
+			): Promise<void> =>
+				{
+					_activation.set(ExtensionId, true;
 
-					_exports.set(ExtensionId, Exports);
+					_exports.set(ExtensionId, Exports;
 
 					Logger.Info(
 						`[ExtensionService] Extension activated: ${ExtensionId}`,
-					);
-				});
+					;
+				};
 
 			const MarkDeactivated = (
 				ExtensionId: string,
-			): Effect.Effect<void, Error> =>
-				Effect.sync(() => {
-					_activation.set(ExtensionId, false);
+			): Promise<void> =>
+				{
+					_activation.set(ExtensionId, false;
 
 					Logger.Debug(
 						`[ExtensionService] Extension deactivated: ${ExtensionId}`,
-					);
-				});
+					;
+				};
 
 			// Discover extensions on initialization
-			yield* DiscoverExtensions();
+			yield* DiscoverExtensions(;
 
 			// Return the service implementation with PascalCase methods
 			const ServiceImplementation: ExtensionService = {

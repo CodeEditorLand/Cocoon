@@ -120,15 +120,15 @@ const MakeMultiStub = (): any => {
 		has(Target, Property) {
 			return (
 				Reflect.has(Target, Property) || typeof Property === "string"
-			);
+			;
 		},
-	});
+	};
 
 	return StubProxy;
 };
 
 // One shared Stub is enough - it's stateless and idempotent.
-const Stub = MakeMultiStub();
+const Stub = MakeMultiStub(;
 
 const MakePermissiveExports = (): any => {
 	const Base: Record<string, unknown> = {
@@ -167,13 +167,13 @@ const MakePermissiveExports = (): any => {
 			// permissive proxy so chained access succeeds AND the result is
 			// also iterable/callable (covers `gitAPI.repositories` access).
 			if (Property.startsWith("get") || Property.startsWith("create")) {
-				return (..._Args: unknown[]) => MakePermissiveExports();
+				return (..._Args: unknown[]) => MakePermissiveExports(;
 			}
 
 			// Fallback - the multi-stub: callable, iterable, chainable.
 			return Stub;
 		},
-	});
+	};
 };
 
 // Mountain ships `extensionLocation` as either a `file://` URL string or an
@@ -193,7 +193,7 @@ const NormalizeLocation = (
 
 	const MakeUri = (Path: string): any => {
 		if (UriFactoryAvailable) {
-			return VsCodeUri.file(Path);
+			return VsCodeUri.file(Path;
 		}
 
 		return {
@@ -226,19 +226,19 @@ const NormalizeLocation = (
 
 		if (Raw.startsWith("file:")) {
 			try {
-				Path = decodeURIComponent(new URL(Raw).pathname);
+				Path = decodeURIComponent(new URL(Raw).pathname;
 			} catch (Error: unknown) {
 				LandFixLog.Warn(
 					"ExtNs",
 
 					`URL parse failed for ${Raw}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}; using fallback strip`,
-				);
+				;
 
-				Path = Raw.replace(/^file:\/\//, "");
+				Path = Raw.replace(/^file:\/\//, "";
 			}
 		}
 
-		Path = Path.replace(/\/$/, "");
+		Path = Path.replace(/\/$/, "";
 
 		if (UriFactoryAvailable) {
 			LandFixLog.DebugOnce(
@@ -247,7 +247,7 @@ const NormalizeLocation = (
 				`string:${Path}`,
 
 				`string extensionLocation ${Raw} → path=${Path} (factory=real)`,
-			);
+			;
 		} else {
 			LandFixLog.InfoOnce(
 				"ExtNs",
@@ -255,7 +255,7 @@ const NormalizeLocation = (
 				`string-fallback:${Path}`,
 
 				`string extensionLocation ${Raw} → path=${Path} (factory=FALLBACK)`,
-			);
+			;
 		}
 
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
@@ -269,7 +269,7 @@ const NormalizeLocation = (
 			(typeof Obj["path"] === "string" && (Obj["path"] as string)) ||
 			(typeof Obj["external"] === "string"
 				? NormalizeLocation(Obj["external"]).ExtensionPath
-				: "");
+				: "";
 
 		if (UriFactoryAvailable) {
 			LandFixLog.DebugOnce(
@@ -278,7 +278,7 @@ const NormalizeLocation = (
 				`object:${Path}`,
 
 				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=real)`,
-			);
+			;
 		} else {
 			LandFixLog.InfoOnce(
 				"ExtNs",
@@ -286,7 +286,7 @@ const NormalizeLocation = (
 				`object-fallback:${Path}`,
 
 				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=FALLBACK)`,
-			);
+			;
 		}
 
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
@@ -296,7 +296,7 @@ const NormalizeLocation = (
 		"ExtNs",
 
 		`extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`,
-	);
+	;
 
 	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 };
@@ -310,11 +310,11 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 	const Exports =
 		RealExports !== undefined && RealExports !== null
 			? RealExports
-			: MakePermissiveExports();
+			: MakePermissiveExports(;
 
 	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
 		Raw?.extensionLocation,
-	);
+	;
 
 	// Defensive packageJSON: extensions like `muhammad-sammy.csharp`
 	// invoke `semver.parse(extension.packageJSON.version)` on their own
@@ -390,7 +390,7 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 // getters so ToExtensionObject isn't fed Raw = undefined on
 // extensionLocation - otherwise NormalizeLocation emits a WARN and returns
 // a bogus extension with empty path.
-const IsExtensionKey = (Key: string) => !Key.startsWith("__");
+const IsExtensionKey = (Key: string) => !Key.startsWith("__";
 
 // Defensive `all`/`allAcrossExtensionHosts` iteration helper. Extensions
 // like `csharp` iterate `vscode.extensions.all` and immediately call
@@ -408,7 +408,7 @@ const SafeExtensionList = (Context: HandlerContext): unknown[] => {
 		if (!IsExtensionKey(Id)) continue;
 
 		try {
-			Out.push(ToExtensionObject(Context, Id, Raw));
+			Out.push(ToExtensionObject(Context, Id, Raw);
 		} catch {
 			/* skip the bad entry; the rest of the registry is
 			 * still iterable */
@@ -423,12 +423,12 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 		getExtension: (Identifier: string) => {
 			if (!IsExtensionKey(Identifier)) return undefined;
 
-			const Raw = Context.ExtensionRegistry.get(Identifier);
+			const Raw = Context.ExtensionRegistry.get(Identifier;
 
 			if (!Raw) return undefined;
 
 			try {
-				return ToExtensionObject(Context, Identifier, Raw);
+				return ToExtensionObject(Context, Identifier, Raw;
 			} catch {
 				// `getExtension` returning `undefined` matches stock VS
 				// Code's contract for "extension not found" - safer
@@ -437,13 +437,13 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 			}
 		},
 		get all() {
-			return SafeExtensionList(Context);
+			return SafeExtensionList(Context;
 		},
 		// Some extensions (html-language-features) iterate
 		// `extensions.allAcrossExtensionHosts`; return the same array as `all`
 		// so `for (...of...)` does not throw on `is not iterable`.
 		get allAcrossExtensionHosts() {
-			return SafeExtensionList(Context);
+			return SafeExtensionList(Context;
 		},
 		onDidChange: (Listener: () => void) => {
 			// Wrap the user's listener so a throw inside it doesn't
@@ -454,21 +454,21 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 			// catching here is the "Promise.allSettled" equivalent.
 			const SafeListener = () => {
 				try {
-					Listener();
+					Listener(;
 				} catch {
 					/* extension's onDidChange callback threw - swallow
 					 * to keep the registry's other subscribers alive */
 				}
 			};
 
-			Context.Emitter.on("deltaExtensions", SafeListener);
+			Context.Emitter.on("deltaExtensions", SafeListener;
 
 			return {
 				dispose: () => {
-					Context.Emitter.off("deltaExtensions", SafeListener);
+					Context.Emitter.off("deltaExtensions", SafeListener;
 				},
 			};
 		},
-	});
+	};
 
 export default CreateExtensionsNamespace;

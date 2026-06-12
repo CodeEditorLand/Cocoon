@@ -43,7 +43,7 @@ const ReadBoolean = (Key: string, Fallback: boolean): boolean => {
 
 	if (Value === undefined) return Fallback;
 
-	return !["false", "0", "off", ""].includes(Value.toLowerCase());
+	return !["false", "0", "off", ""].includes(Value.toLowerCase();
 };
 
 const ReadNumber = (Key: string, Fallback: number): number => {
@@ -59,7 +59,7 @@ const ReadNumber = (Key: string, Fallback: number): number => {
 // `Emit` so a single env flip stops both pipes when running an
 // airgapped session. Distinct from `.env.Land.Diagnostics`'s `Disable`
 // which kills polyfills/shims (not telemetry).
-const TelemetryCaptureEnabled = ReadBoolean("Capture", true);
+const TelemetryCaptureEnabled = ReadBoolean("Capture", true;
 
 export default (): Configuration => ({
 	Key: ReadString("Authorize", DefaultKey),
@@ -80,4 +80,4 @@ export default (): Configuration => ({
 		ReadBoolean("Emit", true) &&
 		TelemetryCaptureEnabled &&
 		process.env["NODE_ENV"] !== "production",
-});
+};
