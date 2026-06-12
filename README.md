@@ -67,22 +67,22 @@ environment, allowing Land to leverage the vast VS Code extension ecosystem
 while adding fiber-level supervision, structured concurrency, and resource
 safety.
 
-VS Code's extension host is a single `Node.js` event loop — one hung `Promise`
+VS Code's extension host is a single `Node.js` event loop - one hung `Promise`
 blocks every other extension. Cocoon solves this by giving each extension its
 own `Effect-TS` fiber with cancellation, back-pressure, and preemption. A crash
 in one extension doesn't bring down the rest.
 
 **Cocoon is engineered to:**
 
-1. **Host VS Code Extensions** — Run existing VS Code extensions unmodified
+1. **Host VS Code Extensions** - Run existing VS Code extensions unmodified
    through a comprehensive API shim layer that mirrors `vscode.d.ts`.
-2. **Provide Fiber-Level Isolation** — Each extension runs in its own supervised
+2. **Provide Fiber-Level Isolation** - Each extension runs in its own supervised
    `Effect-TS` fiber with independent lifecycle, cancellation tokens, and error
    boundaries.
-3. **Enforce Process Hardening** — Patch `process.exit`, block native modules,
+3. **Enforce Process Hardening** - Patch `process.exit`, block native modules,
    intercept uncaught exceptions, and terminate if the parent `Mountain` process
    exits.
-4. **Bridge via gRPC & WebSocket** — Communicate with `Mountain` through `gRPC`
+4. **Bridge via gRPC & WebSocket** - Communicate with `Mountain` through `gRPC`
    (`Vine` protocol on port `:50052`) and with `Sky` through a `WebSocket`
    JSON-RPC transport with cryptographic authentication.
 
@@ -90,42 +90,42 @@ in one extension doesn't bring down the rest.
 
 ## Key Features&#x2001;🔐
 
-**`Effect-TS` Fiber Supervision** — Every extension activation runs in its own
+**`Effect-TS` Fiber Supervision** - Every extension activation runs in its own
 `Effect` fiber with structured concurrency. Cancellation propagates cleanly
 through the fiber tree, hung operations are preemptible, and fiber crashes are
 trapped at the supervision boundary rather than taking down the host process.
 
-**Full `vscode` API Shimming** — The `APIFactory` service constructs a complete
+**Full `vscode` API Shimming** - The `APIFactory` service constructs a complete
 `vscode` API object with namespaces for `window`, `workspace`, `commands`,
 `languages`, `debug`, `scm`, `tasks`, `env`, `extensions`, `authentication`,
 `tests`, and `comments`. Extension code runs against this shim without
 modification.
 
-**Process Security Hardening** — The `PatchProcess` module runs before any
+**Process Security Hardening** - The `PatchProcess` module runs before any
 extension activates, intercepting `process.exit`, `process.crash`, native module
 loads, uncaught exceptions, and unhandled rejections. A configurable
 `SecurityPolicy` controls exit permissions, memory limits, network access, file
 system access, and child process spawning.
 
-**Code Generation Pipeline** — The `Codegen` module walks the VS Code
+**Code Generation Pipeline** - The `Codegen` module walks the VS Code
 extension-host source tree (`Wind`) and emits `IExtHost*Upstream` schemas
 grounded in real upstream source, reusing every `Wind` extractor and resolver
 verbatim.
 
-**Multi-Transport Communications** — `gRPC` (`Vine` protocol to `Mountain`),
+**Multi-Transport Communications** - `gRPC` (`Vine` protocol to `Mountain`),
 `WebSocket` JSON-RPC (to `Sky` with hex-secret auth via URL param,
 `Sec-WebSocket-Protocol`, or `X-Land-Secret` header), and `IPC` (buffered
 multi-channel RPC for local communication).
 
-**Bidirectional Streaming** — The `gRPC` server implements the `Vine` protocol
+**Bidirectional Streaming** - The `gRPC` server implements the `Vine` protocol
 with bidirectional streaming, allowing `Mountain` to push notifications and
 events into Cocoon asynchronously without polling.
 
-**Telemetry & Observability** — `PostHog` event buffering and batching with
+**Telemetry & Observability** - `PostHog` event buffering and batching with
 identity management, plus `OTLP` fire-and-forget span export for distributed
 tracing. Tree-shaken from production builds via `esbuild` `define` substitution.
 
-**Dual-Layer Debug Server** — An HTTP inspection surface (`:9934`) matching
+**Dual-Layer Debug Server** - An HTTP inspection surface (`:9934`) matching
 `Mountain`'s `DebugServer` wire protocol, supporting `/health`, `/layers`,
 `/execute` (eval in extension host scope), and `/extensions` endpoints for
 runtime introspection.
@@ -143,7 +143,7 @@ runtime introspection.
 
 ---
 
-## Architecture
+## System Architecture
 
 `Cocoon` operates as a standalone `Node.js` process orchestrated by and
 communicating with `Mountain`.
@@ -336,6 +336,38 @@ execution environments for Land's extension model:
 
 ---
 
+## Getting Started&#x2001;🚀
+
+### Prerequisites
+
+- **Node.js** v18 or later
+- **pnpm** (monorepo package manager)
+
+### Build / Install
+
+`Cocoon` is developed as a core component of the **Land** project. It is built
+as part of the monorepo and requires the `Bundle=true` build variable, which
+triggers the `Rest` element to prepare the necessary VS Code platform code.
+
+### Key Dependencies
+
+| Package                            | Purpose                                               |
+| ---------------------------------- | ----------------------------------------------------- |
+| `effect` (v3.21.3)                 | Core library for the entire application structure     |
+| `@effect/platform` (v0.96.1)       | `Effect-TS` platform abstractions                     |
+| `@effect/platform-node` (v0.107.0) | `Node.js`-specific `Effect-TS` platform               |
+| `@grpc/grpc-js` (v1.14.4)          | `gRPC` communication                                  |
+| `@grpc/proto-loader` (v0.8.1)      | `.proto` file loading for `gRPC`                      |
+| `@codeeditorland/output` (v0.0.1)  | Compiled VS Code platform code from `Land/Dependency` |
+| `google-protobuf` & `protobufjs`   | Protocol buffers for `gRPC`                           |
+
+**Debugging Cocoon:** Attach a standard `Node.js` debugger. `Mountain` must
+launch Cocoon with debug flags (e.g., `--inspect-brk=PORT_NUMBER`). Logs from
+Cocoon are automatically piped to `Mountain`'s console via the `PatchProcess`
+module.
+
+---
+
 ## Security&#x2001;🔒
 
 Cocoon enforces security at multiple layers:
@@ -367,38 +399,6 @@ Cocoon is designed to be compatible with:
 | **Mountain** | Integrates via `gRPC` using the `Vine` protocol on port `:50052` with bidirectional streaming         |
 | **Sky**      | Direct `WebSocket` `JSON-RPC` transport with cryptographic authentication                             |
 | **Output**   | Consumes compiled VS Code platform code from `@codeeditorland/output`                                 |
-
----
-
-## Getting Started&#x2001;🚀
-
-### Prerequisites
-
-- **Node.js** v18 or later
-- **pnpm** (monorepo package manager)
-
-### Build / Install
-
-`Cocoon` is developed as a core component of the **Land** project. It is built
-as part of the monorepo and requires the `Bundle=true` build variable, which
-triggers the `Rest` element to prepare the necessary VS Code platform code.
-
-### Key Dependencies
-
-| Package                            | Purpose                                               |
-| ---------------------------------- | ----------------------------------------------------- |
-| `effect` (v3.21.3)                 | Core library for the entire application structure     |
-| `@effect/platform` (v0.96.1)       | `Effect-TS` platform abstractions                     |
-| `@effect/platform-node` (v0.107.0) | `Node.js`-specific `Effect-TS` platform               |
-| `@grpc/grpc-js` (v1.14.4)          | `gRPC` communication                                  |
-| `@grpc/proto-loader` (v0.8.1)      | `.proto` file loading for `gRPC`                      |
-| `@codeeditorland/output` (v0.0.1)  | Compiled VS Code platform code from `Land/Dependency` |
-| `google-protobuf` & `protobufjs`   | Protocol buffers for `gRPC`                           |
-
-**Debugging Cocoon:** Attach a standard `Node.js` debugger. `Mountain` must
-launch Cocoon with debug flags (e.g., `--inspect-brk=PORT_NUMBER`). Logs from
-Cocoon are automatically piped to `Mountain`'s console via the `PatchProcess`
-module.
 
 ---
 
