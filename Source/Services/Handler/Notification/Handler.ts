@@ -1313,19 +1313,17 @@ const HandleSpecificNotification = (
 			// `workspaceFolders` getter and folder-change listeners stay in
 			// lockstep with the shim Context.
 			try {
-				(globalThis as any).__COCOON_WORKSPACE_BRIDGE__
-					?.AcceptWorkspaceData?.({
-						id:
-							(Context as any)?.InitWorkspace?.id ?? "workspace",
-						name:
-							(Context as any)?.InitWorkspace?.name ??
-							"Workspace",
-						folders: MergedHydrated.map((Folder) => ({
-							uri: Folder.uri.toString(),
-							name: Folder.name,
-							index: Folder.index,
-						})),
-					});
+				(
+					globalThis as any
+				).__COCOON_WORKSPACE_BRIDGE__?.AcceptWorkspaceData?.({
+					id: (Context as any)?.InitWorkspace?.id ?? "workspace",
+					name: (Context as any)?.InitWorkspace?.name ?? "Workspace",
+					folders: MergedHydrated.map((Folder) => ({
+						uri: Folder.uri.toString(),
+						name: Folder.name,
+						index: Folder.index,
+					})),
+				});
 			} catch {}
 			// BATCH-15: run the workspaceContains activation pass. Lazy-load to
 			// avoid a circular import with the handler suite at module init.
@@ -1797,8 +1795,10 @@ const HandleSpecificNotification = (
 						.__COCOON_WORKSPACE_BRIDGE__;
 					if (Bridge && TextEditorStub && UriKey) {
 						Bridge.RegisterTextEditor?.(UriKey, TextEditorStub);
+
 						Bridge.AcceptEditorState?.(
 							UriKey,
+
 							Visible.map(
 								(E: unknown) =>
 									(
@@ -2777,6 +2777,7 @@ const HandleSpecificNotification = (
 					get html() {
 						return (this as { __html?: string }).__html ?? "";
 					},
+
 					set html(Value: string) {
 						(this as { __html?: string }).__html = Value;
 

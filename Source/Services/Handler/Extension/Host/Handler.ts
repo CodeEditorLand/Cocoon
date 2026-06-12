@@ -298,10 +298,7 @@ const HandleActivateByEvent = async (
 			);
 
 			if (Err instanceof Error && Err.stack) {
-				const Stack = Err.stack
-					.split("\n")
-					.slice(0, 10)
-					.join("\n");
+				const Stack = Err.stack.split("\n").slice(0, 10).join("\n");
 
 				CocoonDevLog(
 					"ext-activate",

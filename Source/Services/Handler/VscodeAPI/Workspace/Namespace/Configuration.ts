@@ -123,22 +123,30 @@ export const CreateConfigurationState = (
 
 	const TypeSafeDefault = (Decl: {
 		type?: string | string[];
+
 		default?: unknown;
+
 		items?: unknown;
 	}): unknown => {
 		const T = Array.isArray(Decl.type) ? Decl.type[0] : Decl.type;
+
 		switch (T) {
 			case "array":
 				return [];
+
 			case "object":
 				return {};
+
 			case "boolean":
 				return false;
+
 			case "number":
 			case "integer":
 				return 0;
+
 			case "string":
 				return "";
+
 			default:
 				return undefined;
 		}

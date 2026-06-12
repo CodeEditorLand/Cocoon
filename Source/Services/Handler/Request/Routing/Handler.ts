@@ -214,9 +214,8 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			try {
 				Children =
 					(await Promise.race([
-						Promise.resolve(
-							Provider.getChildren?.(Element),
-						),
+						Promise.resolve(Provider.getChildren?.(Element)),
+
 						_ChildrenTimeout,
 					])) ?? [];
 			} catch (Reason) {
