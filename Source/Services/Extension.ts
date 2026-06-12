@@ -36,7 +36,6 @@
  * FUTURE: Schema validation - validate package.json against schema
  */
 
-import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces

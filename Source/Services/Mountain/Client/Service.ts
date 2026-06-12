@@ -47,7 +47,7 @@ import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import { Effect, Layer } from "effect";
+
 import { v4 as uuidv4 } from "uuid";
 
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";

@@ -5,7 +5,6 @@
  * Following Wind Effect-TS atomic module pattern.
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 /**

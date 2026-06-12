@@ -33,7 +33,6 @@
 
 import { mkdirSync } from "node:fs";
 
-import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces

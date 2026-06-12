@@ -32,8 +32,6 @@
  * TESTING: Add jest unit tests for env parsing edge cases
  */
 
-import { Effect, Option } from "effect";
-
 /**
  * Process environment interface
  */

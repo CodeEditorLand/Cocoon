@@ -17,8 +17,6 @@
  * Manages PTY processes via Mountain.
  */
 
-import { Context, Effect, Layer } from "effect";
-
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
 import { CocoonDevLog } from "../Dev/Log.js";
 
@@ -40,10 +38,7 @@ export interface ITerminalService {
 	kill(terminalId: number): Promise<void>;
 }
 
-export const ITerminalService = Context.Tag("ITerminalService")<
-	ITerminalService,
-	ITerminalService
->();
+export const ITerminalService: unique symbol = Symbol.for("ITerminalService");
 
 // --- Implementation ---
 

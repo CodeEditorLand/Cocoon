@@ -5,8 +5,6 @@
  * Provides robust error recovery, circuit breaker logic, and automatic retry mechanisms.
  */
 
-import { Context } from "effect";
-
 // Circuit breaker state
 export interface CircuitBreakerState {
 	serviceName: string;

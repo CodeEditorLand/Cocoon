@@ -8,8 +8,6 @@
  * Specification: IMPLEMENTATION-SPECIFICATION.md (Security Service)
  */
 
-import { Effect, Layer } from "effect";
-
 import { CocoonDevLog } from "../Dev/Log.js";
 
 // Security policy interface

@@ -33,8 +33,6 @@
  * VERSIONING: Migration - support v1->v2 DTO conversion
  */
 
-import { Option } from "effect";
-
 /**
  * Mountain DTOs - These should match actual Tauri backend definitions
  *

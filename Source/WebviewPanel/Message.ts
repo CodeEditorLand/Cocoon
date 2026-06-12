@@ -55,7 +55,6 @@
  * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
-import { Effect } from "effect";
 import type { Webview as VSCodeWebview } from "vscode";
 
 /**

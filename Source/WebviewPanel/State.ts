@@ -54,8 +54,6 @@
  * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
-import { Effect } from "effect";
-
 /**
  * @interface PanelPosition
  * @description Position information for panel placement

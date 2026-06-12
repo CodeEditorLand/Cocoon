@@ -13,7 +13,6 @@
  */
 
 import { CocoonDevLog } from "Dev/Log.js";
-import { Effect, Layer } from "effect";
 
 /**
  * Health status enumeration

@@ -3,8 +3,6 @@
  * @description Extension host initialization data service tag.
  */
 
-import { Context, Effect, Layer } from "effect";
-
 export interface InitData {
 	readonly commit: string;
 
@@ -19,10 +17,8 @@ export interface InitData {
 	readonly environment: Record<string, unknown>;
 }
 
-export class InitDataService extends Context.Tag("Cocoon/InitData")<
-	InitDataService,
-	InitData
->() {}
+// InitDataService was a Context.Tag; now a plain type
+export type InitDataService = InitData;
 
 // Atom I5: single source of truth is .env.Land → Maintain/Script/
 // TierEnvironment.sh → process.env. `ProductVersion` / `ProductCommit`

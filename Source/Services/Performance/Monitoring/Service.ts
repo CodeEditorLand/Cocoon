@@ -10,8 +10,6 @@
  * and O(1) operations.
  */
 
-import { Effect, Layer } from "effect";
-
 // ============================================================================
 // TYPE STUBS - kept for interface compatibility with Service/Mapping.ts
 // ============================================================================

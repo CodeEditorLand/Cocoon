@@ -31,8 +31,6 @@
  * SECURITY: Check /sys/kernel/security for SELinux/AppArmor presence
  */
 
-import { Effect, Option } from "effect";
-
 /**
  * Platform enumeration matching VSCode patterns
  */

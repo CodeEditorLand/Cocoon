@@ -4,8 +4,6 @@
  * Interface definition for Terminal Service.
  */
 
-import { Context } from "effect";
-
 export interface ITerminalService {
 	createTerminal(
 		name: string,
@@ -22,4 +20,4 @@ export interface ITerminalService {
 	kill(terminalId: number): Promise<void>;
 }
 
-export const ITerminalService = Context.Tag<ITerminalService>();
+export const ITerminalService: unique symbol = Symbol.for("ITerminalService");

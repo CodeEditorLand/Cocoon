@@ -86,7 +86,6 @@
  * FUTURE: Telemetry - track conversion metrics
  */
 
-import { Effect } from "effect";
 import type { Uri } from "vscode";
 
 // URI class for runtime use - the `import type` above is erased at runtime.

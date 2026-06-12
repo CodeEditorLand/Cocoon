@@ -5,8 +5,6 @@
  * Provides real-time performance metrics collection and optimization insights.
  */
 
-import { Context } from "effect";
-
 // Performance metrics interface
 export interface PerformanceMetrics {
 	extensionLoadTime: number;
@@ -101,5 +99,4 @@ export interface IPerformanceMonitoringService {
 /**
  * Effect context for PerformanceMonitoringService
  */
-export const IPerformanceMonitoringService =
-	Context.Tag<IPerformanceMonitoringService>("IPerformanceMonitoringService");
+export const IPerformanceMonitoringService: unique symbol = Symbol.for("IPerformanceMonitoringService");

@@ -49,7 +49,6 @@ import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../../../Interfaces/IGRPC/Server/Service.js";
 import { CocoonDevLog } from "../../Dev/Log.js";

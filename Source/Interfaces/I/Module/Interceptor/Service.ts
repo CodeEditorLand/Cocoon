@@ -5,8 +5,6 @@
  * Provides security sandboxing and module resolution for extensions.
  */
 
-import { Context } from "effect";
-
 // Module interception types
 export interface ModuleInterceptionRequest {
 	moduleId: string;

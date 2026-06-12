@@ -31,8 +31,6 @@
  * VSCODE-LIFT: See src/vs/base/common/log.js for log formatting
  */
 
-import { Context, Effect, Ref } from "effect";
-
 /**
  * @interface Logger
  * @description
@@ -72,7 +70,7 @@ export interface Logger {
 
 // Runtime Tag for the Logger interface - needed because esbuild erases
 // type-only exports but consumers import { Logger } at runtime.
-export const Logger = Context.Tag<Logger>("Service/Logger");
+export const Logger: unique symbol = Symbol.for("Service/Logger");
 
 /**
  * @class LoggerService

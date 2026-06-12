@@ -4,8 +4,6 @@
  * Window state management - plain mutable state, no Effect-TS Ref.
  */
 
-import { Context, Effect, Layer } from "effect";
-
 import type { WindowStateConfig } from "./Types.js";
 
 export interface WindowStateService {

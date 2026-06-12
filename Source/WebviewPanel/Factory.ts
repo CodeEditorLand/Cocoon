@@ -51,7 +51,7 @@
 
 import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import { Effect, Ref } from "effect";
+
 import type { WebviewPanel as VSCodeWebviewPanel } from "vscode";
 
 import { Panel as PanelModule, type Panel } from "./Panel.js";

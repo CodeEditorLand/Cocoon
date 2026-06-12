@@ -34,8 +34,6 @@
  * DOCUMENTATION: API docs - generate with TypeDoc
  */
 
-import { Context, Effect, Layer, Option } from "effect";
-
 import * as EnvironmentModule from "./Environment.js";
 import * as OSModule from "./OS.js";
 import * as ProcessModule from "./Process.js";

@@ -7,8 +7,6 @@
  * FUTURE: Module pre-loading - add preloadModules() for optimization
  */
 
-import { Context } from "effect";
-
 // Module interception types
 export interface ModuleInterceptionRequest {
 	moduleId: string;
@@ -120,5 +118,4 @@ export interface IModuleInterceptor {
 /**
  * Effect context for ModuleInterceptor
  */
-export const IModuleInterceptor =
-	Context.Tag<IModuleInterceptor>("IModuleInterceptor");
+export const IModuleInterceptor: unique symbol = Symbol.for("IModuleInterceptor");

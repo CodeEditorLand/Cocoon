@@ -36,8 +36,6 @@
  * Low-level Client: /Element/Cocoon/Source/Services/MountainClientService.ts
  */
 
-import { Context, Effect, Layer } from "effect";
-
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
 import { Logger } from "../../Logger.js";
 

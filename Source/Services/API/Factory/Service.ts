@@ -5,8 +5,6 @@
  * Wires API calls to the Universal Spine via MountainClientService.
  */
 
-import { Context, Effect, Layer } from "effect";
-
 import { IConfigurationService } from "../../../Interfaces/I/Configuration/Service.js";
 import { IFileSystemService } from "../../../Interfaces/I/File/System/Service.js";
 import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
@@ -132,7 +130,7 @@ export interface IAPIFactoryService {
 	createAPI(): any;
 }
 
-export const IAPIFactoryService = Context.Tag<IAPIFactoryService>();
+export const IAPIFactoryService: unique symbol = Symbol.for("IAPIFactoryService");
 
 // --- API Implementation ---
 

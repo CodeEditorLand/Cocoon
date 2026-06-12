@@ -43,8 +43,6 @@
 
 import * as Process from "node:process";
 
-import { Config, Effect, Layer } from "effect";
-
 import { PatcherService, RunPatchProcess } from "./Patcher.js";
 import { PerformSecurityAudit, SecurityPolicy } from "./Security.js";
 import {

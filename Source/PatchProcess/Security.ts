@@ -44,8 +44,6 @@
 import * as Path from "node:path";
 import * as URL from "node:url";
 
-import { Data, Effect } from "effect";
-
 // --- Security Policy Definition ---
 
 /**

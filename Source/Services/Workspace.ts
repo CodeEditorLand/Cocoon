@@ -57,7 +57,6 @@
  *   channel, not the Mountain gRPC channel.
  */
 
-import { Context, Effect } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces

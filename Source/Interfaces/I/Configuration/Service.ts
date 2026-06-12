@@ -5,8 +5,6 @@
  * Based on VSCode's configuration patterns.
  */
 
-import { Context } from "effect";
-
 // Configuration scopes matching VSCode patterns
 export enum ConfigurationScope {
 	APPLICATION = "APPLICATION",

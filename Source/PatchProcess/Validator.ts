@@ -43,8 +43,6 @@
 
 import * as Process from "node:process";
 
-import { Data, Effect, Queue } from "effect";
-
 import {
 	DefaultSecurityPolicy,
 	SecurityPolicy,

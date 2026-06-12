@@ -34,8 +34,6 @@
  * LOGGING: Buffer output - use RingBuffer for process stdout/stderr
  */
 
-import { Effect, Option } from "effect";
-
 /**
  * Process exit status
  */

@@ -7,8 +7,6 @@
  * Based on enterprise error handling patterns with exponential backoff.
  */
 
-import { Effect, Layer } from "effect";
-
 import { CocoonDevLog } from "../../Dev/Log.js";
 
 // Circuit breaker state

@@ -71,7 +71,6 @@
  * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
-import { Effect } from "effect";
 import type { Uri, ViewColumn } from "vscode";
 
 import { MountainDTO } from "../Serializer.js";

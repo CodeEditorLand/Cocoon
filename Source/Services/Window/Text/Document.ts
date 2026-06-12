@@ -8,7 +8,6 @@
  * (showTextDocument, showInformationMessage, showWarningMessage, showErrorMessage)
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";

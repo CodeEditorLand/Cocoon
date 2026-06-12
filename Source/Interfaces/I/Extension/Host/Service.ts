@@ -5,8 +5,6 @@
  * Based on VSCode's extension host patterns.
  */
 
-import { Context } from "effect";
-
 // Types matching VSCode patterns
 export interface IExtensionDescription {
 	identifier: string;

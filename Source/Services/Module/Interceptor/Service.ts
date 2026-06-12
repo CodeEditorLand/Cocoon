@@ -10,7 +10,6 @@
 
 import * as acorn from "acorn";
 import * as walk from "acorn-walk";
-import { Context, Effect, Layer } from "effect";
 
 import {
 	IModuleInterceptorService,

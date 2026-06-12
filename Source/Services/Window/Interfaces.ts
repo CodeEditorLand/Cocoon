@@ -7,7 +7,6 @@
  * Source: src/vs/workbench/api/common/extHostWindow.ts (ExtHostWindowShape)
  */
 
-import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
 /**

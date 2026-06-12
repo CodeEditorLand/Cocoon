@@ -5,8 +5,6 @@
  * Provides the extension runtime environment (Module interception + API injection).
  */
 
-import { Effect, Layer } from "effect";
-
 import { IExtensionHostService } from "../../../Interfaces/I/Extension/Host/Service.js";
 import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
 import { IAPIFactoryService } from "../../API/Factory/Service.js";

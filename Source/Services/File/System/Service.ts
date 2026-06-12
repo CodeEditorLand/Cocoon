@@ -5,8 +5,6 @@
  * Handles URI schemes and maps 'file://' requests to Mountain's FS Spine.
  */
 
-import { Context, Effect, Layer } from "effect";
-
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
 
 // --- Interfaces ---
@@ -33,7 +31,7 @@ export interface IFileSystemService {
 	): Promise<void>;
 }
 
-export const IFileSystemService = Context.Tag<IFileSystemService>();
+export const IFileSystemService: unique symbol = Symbol.for("IFileSystemService");
 
 // --- Implementation ---
 
