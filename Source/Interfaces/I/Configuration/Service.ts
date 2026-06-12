@@ -87,4 +87,6 @@ export interface IConfigurationService {
 /**
  * Effect context for ConfigurationService
  */
-export const IConfigurationService: unique symbol = Symbol.for("IConfigurationService");
+export const IConfigurationService: unique symbol = Symbol.for(
+	"IConfigurationService",
+);

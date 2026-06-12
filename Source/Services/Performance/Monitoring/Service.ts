@@ -15,6 +15,7 @@
 // ============================================================================
 
 export interface PerformanceMetrics {
+
 	readonly extensionLoadTime: number;
 
 	readonly apiCallLatency: number;
@@ -33,6 +34,7 @@ export interface PerformanceMetrics {
 }
 
 export interface PerformanceAlert {
+
 	readonly id: string;
 
 	readonly type: "warning" | "critical" | "info";
@@ -49,6 +51,7 @@ export interface PerformanceAlert {
 }
 
 export interface OptimizationSuggestion {
+
 	readonly id: string;
 
 	readonly description: string;
@@ -65,6 +68,7 @@ export interface OptimizationSuggestion {
 // ============================================================================
 
 export class PerformanceMonitoringService {
+
 	declare private _serviceBrand: undefined;
 
 	private monitoringActive = false;

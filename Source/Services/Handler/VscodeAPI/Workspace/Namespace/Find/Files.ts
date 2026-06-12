@@ -14,8 +14,11 @@
  */
 
 import GlobToRegex from "../../../../../../Utility/Glob/To/Regex.js";
+
 import type { HandlerContext } from "../../../../Handler/Context.js";
+
 import { GlobParsePattern, Uri as StockUri } from "../../../Stock/Lift.js";
+
 import {
 	DefaultExcludeSegments,
 	ExtractGlobPattern,
@@ -32,6 +35,7 @@ type GlobMatcher = (Path: string) => boolean;
  * an empty result set.
  */
 function CompileGlob(Pattern: string): GlobMatcher | undefined {
+
 	try {
 		const Parsed = GlobParsePattern(Pattern;
 
@@ -74,6 +78,7 @@ export const FindFilesLocal = async (
 
 	if (!IncludePattern) {
 		if (process.env["Trace"]?.includes("wsns"))
+
 			process.stdout.write(
 				"[LandFix:WsNs] findFiles: no include pattern → []\n",
 			;
@@ -85,6 +90,7 @@ export const FindFilesLocal = async (
 
 	if (!IncludeMatcher) {
 		if (process.env["Trace"]?.includes("wsns"))
+
 			process.stdout.write(
 				`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)\n`,
 			;
@@ -187,6 +193,7 @@ export const FindFilesLocal = async (
 				typeof Entry.isSymbolicLink === "function" &&
 				Entry.isSymbolicLink()
 			)
+
 				continue;
 
 			const Full = join(Current, Name;
@@ -254,6 +261,7 @@ export const FindFilesLocal = async (
 
 		if (!FsPath) {
 			if (process.env["Trace"]?.includes("wsns"))
+
 				process.stdout.write(
 					`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})\n`,
 				;

@@ -105,4 +105,6 @@ export interface IErrorHandlingService {
 /**
  * Effect context for ErrorHandlingService
  */
-export const IErrorHandlingService: unique symbol = Symbol.for("IErrorHandlingService");
+export const IErrorHandlingService: unique symbol = Symbol.for(
+	"IErrorHandlingService",
+);

@@ -11,12 +11,14 @@
 import type * as VSCode from "vscode";
 
 import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
+
 import { WebviewPanelImplementation } from "../../../WebviewPanel/Webview/Panel/Implementation.js";
 
 /**
  * IPC proxy shape used inside WebviewPanelImplementation.
  */
 interface WebviewIPC {
+
 	SendNotification: (Method: string, Params: unknown[]) => Promise<void>;
 
 	SendRequest: <T>(Method: string, Params: unknown[]) => Promise<T>;
@@ -78,9 +80,10 @@ export const CreateWebviewPanel = (
 	Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
 ): Promise<VSCode.WebviewPanel> =>
 	async function() {
+
 		const PanelId = `webview-${crypto.randomUUID()}`;
 
-		yield* Logger.Info(
+		await Logger.Info(
 			`[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`,
 		;
 
@@ -112,7 +115,7 @@ export const CreateWebviewPanel = (
 		const ViewColumnDTO = ViewColumnFromAPI(ViewColumn;
 
 		// Register the panel with Mountain
-		yield* GRPCClient.createWebviewPanel({
+		await GRPCClient.createWebviewPanel({
 			viewType: ViewType,
 			title: Title ?? "",
 			iconPath: undefined,

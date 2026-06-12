@@ -11,6 +11,7 @@
 export const SerializeFilters = (Filters?: {
 	readonly [Name: string]: readonly string[];
 }) => {
+
 	if (!Filters) {
 		return undefined;
 	}

@@ -57,6 +57,7 @@ import {
  * Result of a validation operation
  */
 export interface ValidationResult {
+
 	readonly Valid: boolean;
 
 	readonly Reason?: string;
@@ -70,6 +71,7 @@ export interface ValidationResult {
  * Process validation state tracking
  */
 interface ProcessValidationState {
+
 	readonly ProcessId: number;
 
 	readonly StartTime: number;
@@ -91,6 +93,7 @@ interface ProcessValidationState {
  * Tagged error for validation failures
  */
 export class ValidationError extends Data.TaggedError("ValidationError")<{
+
 	readonly ProcessId: number;
 
 	readonly ValidationType: string;
@@ -99,6 +102,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 
 	readonly Severity: "warning" | "error" | "critical";
 }> {
+
 	public override readonly message: string;
 
 	constructor(Properties: any) {
@@ -218,9 +222,9 @@ export const InitializeProcessValidation = async function() {
 
 	ProcessValidationStates.set(Process.pid, State;
 
-	ValidationAlertQueue = yield* Queue.unbounded<ValidationResult>(;
+	ValidationAlertQueue = await Queue.unbounded<ValidationResult>(;
 
-	yield* console.info("Process validation initialized", {
+	await console.info("Process validation initialized", {
 		ProcessId: Process.pid,
 	};
 
@@ -280,7 +284,7 @@ export const ValidateFileSystemAccess = (
 
 			Metrics.RecordValidation(StartTime, false;
 
-			yield* console.warn("File system access denied", {
+			await console.warn("File system access denied", {
 				File,
 				Operation,
 				ProcessId: Process.pid,
@@ -291,7 +295,9 @@ export const ValidateFileSystemAccess = (
 
 		const Result: ValidationResult = {
 			Valid: true,
+
 			Severity: "info",
+
 			Timestamp: Date.now(),
 		};
 
@@ -350,7 +356,7 @@ export const ValidateNetworkAccess = (
 
 			Metrics.RecordValidation(StartTime, false;
 
-			yield* console.warn("Network access denied", {
+			await console.warn("Network access denied", {
 				Endpoint,
 				Operation,
 				ProcessId: Process.pid,
@@ -361,7 +367,9 @@ export const ValidateNetworkAccess = (
 
 		const Result: ValidationResult = {
 			Valid: true,
+
 			Severity: "info",
+
 			Timestamp: Date.now(),
 		};
 
@@ -420,7 +428,7 @@ export const ValidateChildProcessSpawn = (
 
 			Metrics.RecordValidation(StartTime, false;
 
-			yield* console.warn("Child process spawn denied", {
+			await console.warn("Child process spawn denied", {
 				Command,
 				Arguments,
 				ProcessId: Process.pid,
@@ -433,7 +441,9 @@ export const ValidateChildProcessSpawn = (
 
 		const Result: ValidationResult = {
 			Valid: true,
+
 			Severity: "info",
+
 			Timestamp: Date.now(),
 		};
 
@@ -483,7 +493,7 @@ export const ValidateMemoryUsage = async function() {
 
 		Metrics.RecordValidation(StartTime, false;
 
-		yield* console.error("Memory limit exceeded", {
+		await console.error("Memory limit exceeded", {
 			UsedMemoryMB,
 			MaxMemoryMB,
 			ProcessId: Process.pid,
@@ -494,7 +504,9 @@ export const ValidateMemoryUsage = async function() {
 
 	const Result: ValidationResult = {
 		Valid: true,
+
 		Severity: "info",
+
 		Timestamp: Date.now(),
 	};
 
@@ -536,7 +548,7 @@ export const DetectSuspiciousBehavior = async function() {
 
 	// Detect rapid file access (possible scanning)
 	if (UptimeMinutes > 0 && AccessRate / UptimeMinutes > 100) {
-		yield* console.warn("Suspicious file access rate detected", {
+		await console.warn("Suspicious file access rate detected", {
 			AccessRate,
 			UptimeMinutes,
 			ProcessId: Process.pid,
@@ -545,7 +557,7 @@ export const DetectSuspiciousBehavior = async function() {
 
 	// Detect many network connections (possible exfiltration)
 	if (UptimeMinutes > 0 && NetworkRate / UptimeMinutes > 10) {
-		yield* console.warn("Suspicious network activity detected", {
+		await console.warn("Suspicious network activity detected", {
 			NetworkRate,
 			UptimeMinutes,
 			ProcessId: Process.pid,
@@ -554,7 +566,7 @@ export const DetectSuspiciousBehavior = async function() {
 
 	// Detect excessive child processes
 	if (State.ChildProcessCount > 50) {
-		yield* console.warn("Excessive child process spawning", {
+		await console.warn("Excessive child process spawning", {
 			ChildProcessCount: State.ChildProcessCount,
 			ProcessId: Process.pid,
 		};
@@ -562,7 +574,7 @@ export const DetectSuspiciousBehavior = async function() {
 
 	// Detect many security violations
 	if (State.ViolationCount > 10) {
-		yield* console.error("Multiple security violations detected", {
+		await console.error("Multiple security violations detected", {
 			ViolationCount: State.ViolationCount,
 			ProcessId: Process.pid,
 		};
@@ -570,8 +582,11 @@ export const DetectSuspiciousBehavior = async function() {
 
 	return {
 		AccessRate,
+
 		NetworkRate,
+
 		ChildProcessCount: State.ChildProcessCount,
+
 		ViolationCount: State.ViolationCount,
 	};
 };
@@ -617,18 +632,21 @@ export const ClearProcessValidationState = (
  * Performs all validation checks in sequence
  */
 export const RunSecurityValidation = async function() {
-	yield* ValidateMemoryUsage;
+	await ValidateMemoryUsage;
 
-	const BehaviorCheck = yield* DetectSuspiciousBehavior;
+	const BehaviorCheck = await DetectSuspiciousBehavior;
 
 	const Result = {
 		ProcessId: Process.pid,
+
 		Timestamp: Date.now(),
+
 		BehaviorCheck,
+
 		Metrics: GetValidationMetrics(),
 	};
 
-	yield* console.info(
+	await console.info(
 		"Comprehensive security validation completed",
 
 		Result,

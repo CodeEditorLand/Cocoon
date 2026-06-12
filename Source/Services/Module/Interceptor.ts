@@ -22,6 +22,7 @@
  */
 
 import * as acorn from "acorn";
+
 import * as walk from "acorn-walk";
 
 import {
@@ -31,10 +32,12 @@ import {
 	SecurityLevel,
 	SecurityPolicy,
 } from "../../Interfaces/I/Module/Interceptor.js";
+
 import { CocoonDevLog } from "../Dev/Log.js";
 
 // Module interception configuration
 interface ModuleInterceptorConfig {
+
 	allowNodeBuiltins: boolean;
 
 	allowFileSystemAccess: boolean;
@@ -50,6 +53,7 @@ interface ModuleInterceptorConfig {
 
 // Module cache entry with security metadata
 interface ModuleCacheEntry {
+
 	module: any;
 
 	securityLevel: SecurityLevel;
@@ -64,6 +68,7 @@ type ASTNode = any;
 
 // Module loading telemetry
 interface ModuleTelemetry {
+
 	totalModulesLoaded: number;
 
 	blockedModules: number;
@@ -79,6 +84,7 @@ interface ModuleTelemetry {
  * ModuleInterceptor implementation
  */
 export class ModuleInterceptor implements IModuleInterceptor {
+
 	private readonly _serviceBrand: undefined;
 
 	private config: ModuleInterceptorConfig;
@@ -1698,19 +1704,13 @@ export class ModuleInterceptor implements IModuleInterceptor {
 /**
  * Service layer for ModuleInterceptor
  */
-export const ModuleInterceptorLayer = Layer.effect(
-	IModuleInterceptor,
-
-	new ModuleInterceptor(),
+export const ModuleInterceptorLayer = new ModuleInterceptor(),
 ;
 
 /**
  * Live implementation
  */
-export const ModuleInterceptorLive = Layer.effect(
-	IModuleInterceptor,
-
-	new ModuleInterceptor(),
+export const ModuleInterceptorLive = new ModuleInterceptor(),
 ;
 
 export default ModuleInterceptor;

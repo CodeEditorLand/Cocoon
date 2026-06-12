@@ -116,4 +116,6 @@ export interface IModuleInterceptorService {
 /**
  * Effect context for ModuleInterceptorService
  */
-export const IModuleInterceptorService: unique symbol = Symbol.for("IModuleInterceptorService");
+export const IModuleInterceptorService: unique symbol = Symbol.for(
+	"IModuleInterceptorService",
+);

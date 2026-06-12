@@ -13,6 +13,7 @@ import { URI } from "../../../Platform/VSCode/Type.js";
  * @returns A `vscode.Uri` or `undefined`.
  */
 export const ToURI = (DTO: any): Uri | undefined => {
+
 	if (!DTO) {
 		return undefined;
 	}

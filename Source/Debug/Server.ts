@@ -47,6 +47,7 @@ import * as Http from "node:http";
 type LayerMode = "off" | "mountain" | "cocoon" | "both";
 
 function ParseMode(): LayerMode {
+
 	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase(;
 
 	if (

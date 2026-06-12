@@ -6,12 +6,16 @@
  */
 
 import { IExtensionHostService } from "../../../Interfaces/I/Extension/Host/Service.js";
+
 import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
+
 import { IAPIFactoryService } from "../../API/Factory/Service.js";
+
 import { CocoonDevLog } from "../../Dev/Log.js";
 
 // Types matching VSCode patterns
 interface IExtensionDescription {
+
 	identifier: string;
 
 	extensionLocation: string;
@@ -22,12 +26,14 @@ interface IExtensionDescription {
 }
 
 interface IExtensionContextShape {
+
 	subscriptions: Array<{ dispose(): unknown }>;
 
 	[Key: string]: unknown;
 }
 
 interface ActivatedExtension {
+
 	activationTimes: {
 		codeLoadingTime: number;
 
@@ -45,6 +51,7 @@ interface ActivatedExtension {
  * ExtensionHostService implementation
  */
 export class ExtensionHostService implements IExtensionHostService {
+
 	readonly _serviceBrand: undefined;
 
 	// Extensions registry
@@ -309,13 +316,10 @@ export class ExtensionHostService implements IExtensionHostService {
 /**
  * Service Layer
  */
-export const ExtensionHostLayer = Layer.effect(
-	IExtensionHostService,
+export const ExtensionHostLayer = async function() {
+		const moduleInterceptor = await IModuleInterceptorService;
 
-	async function() {
-		const moduleInterceptor = yield* IModuleInterceptorService;
-
-		const apiFactory = yield* IAPIFactoryService;
+		const apiFactory = await IAPIFactoryService;
 
 		return new ExtensionHostService(moduleInterceptor, apiFactory;
 	}),

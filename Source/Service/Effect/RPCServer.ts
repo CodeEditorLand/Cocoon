@@ -6,7 +6,9 @@
  */
 
 import { CocoonDevLog } from "../Services/Dev/Log.js";
+
 import { GRPCServerService } from "../Services/gRPC/Server/Service.js";
+
 import { TelemetryLive } from "./Telemetry.js";
 
 // ============================================================================
@@ -15,8 +17,11 @@ import { TelemetryLive } from "./Telemetry.js";
 
 export type ServerState =
 	| { readonly _tag: "Idle" }
+
 	| { readonly _tag: "Starting"; readonly startTime: number }
+
 	| {
+
 			readonly _tag: "Running";
 
 			readonly address: string;
@@ -25,11 +30,15 @@ export type ServerState =
 
 			readonly startedAt: number;
 	  }
+
 	| { readonly _tag: "Stopping" }
+
 	| { readonly _tag: "Stopped" }
+
 	| { readonly _tag: "Error"; readonly error: string };
 
 export interface ServerConfig {
+
 	readonly host: string;
 
 	readonly port: number;
@@ -46,6 +55,7 @@ export interface ServerConfig {
 }
 
 export interface ServerMetrics {
+
 	readonly uptime: number;
 
 	readonly connections: number;
@@ -58,6 +68,7 @@ export interface ServerMetrics {
 }
 
 export interface RPCRequest {
+
 	readonly method: string;
 
 	readonly params: Readonly<Record<string, unknown>>;
@@ -68,6 +79,7 @@ export interface RPCRequest {
 }
 
 export interface RPCResponse {
+
 	readonly requestId: string;
 
 	readonly success: boolean;
@@ -84,6 +96,7 @@ export interface RPCResponse {
 // ============================================================================
 
 export class ServerStartError extends Error {
+
 	readonly _tag = "ServerStartError";
 
 	constructor(

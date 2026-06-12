@@ -38,6 +38,7 @@
  * Process exit status
  */
 export interface ProcessExitStatus {
+
 	code: number | null;
 
 	signal: NodeJS.Signals | null;
@@ -49,6 +50,7 @@ export interface ProcessExitStatus {
  * Process spawn options
  */
 export interface ProcessSpawnOptions {
+
 	cwd?: string;
 
 	env?: Record<string, string>;
@@ -72,6 +74,7 @@ export interface ProcessSpawnOptions {
  * Process monitoring options
  */
 export interface ProcessMonitorOptions {
+
 	heartbeatInterval?: number;
 
 	killTimeout?: number;
@@ -87,6 +90,7 @@ export interface ProcessMonitorOptions {
  * Process information
  */
 export interface ProcessInfo {
+
 	pid: number;
 
 	command: string;
@@ -112,6 +116,7 @@ export interface ProcessInfo {
  * Process signal
  */
 export enum ProcessSignal {
+
 	SIGHUP = "SIGHUP",
 
 	SIGINT = "SIGINT",
@@ -837,9 +842,11 @@ export function SpawnProcessEffect(
 
 	options: ProcessSpawnOptions,
 ): Promise<ProcessInfo | null> {
-	return Effect.tryPromise({
-		try: () => SpawnProcess(command, args, options),
-		catch: (error) => new Error(`Failed to spawn process: ${error}`),
+	return (async () => {
+	try {
+		return await SpawnProcess(command, args, options);
+	} catch (_e) {
+		return new Error(`Failed to spawn process: ${error}`),
 	};
 }
 
@@ -851,14 +858,17 @@ export function ExecuteCommandEffect(
 
 	args: string[],
 
-	options: ProcessSpawnOptions = {},
-): Promise<
+	options: ProcessSpawnOptions = {};
+	}
+})(): Promise<
 	{ stdout: string; stderr: string; exitCode: number | null },
 	Error
 > {
-	return Effect.tryPromise({
-		try: () => ExecuteCommand(command, args, options),
-		catch: (error) => new Error(`Failed to execute command: ${error}`),
+	return (async () => {
+	try {
+		return await ExecuteCommand(command, args, options);
+	} catch (_e) {
+		return new Error(`Failed to execute command: ${error}`),
 	};
 }
 
@@ -868,8 +878,9 @@ export function ExecuteCommandEffect(
 export function SendSignalEffect(
 	pid: number,
 
-	signal: NodeJS.Signals,
-): Promise<void> {
+	signal: NodeJS.Signals;
+	}
+})(): Promise<void> {
 	return Effect.try(() => {
 		if (!SendSignal(pid, signal)) {
 			throw new Error(

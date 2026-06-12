@@ -44,6 +44,7 @@
  * Platform information DTO for Mountain
  */
 export interface MountainPlatformInfoDTO {
+
 	platform_number: number; // 0=Web, 1=Mac, 2=Linux, 3=Windows
 
 	platform_name: string; // 'Web' | 'Windows' | 'Mac' | 'Linux'
@@ -77,6 +78,7 @@ export interface MountainPlatformInfoDTO {
  * Environment variable DTO for Mountain
  */
 export interface MountainEnvironmentVariableDTO {
+
 	name: string;
 
 	value: string;
@@ -92,6 +94,7 @@ export interface MountainEnvironmentVariableDTO {
  * Environment info DTO for Mountain
  */
 export interface MountainEnvironmentInfoDTO {
+
 	language: string;
 
 	locale: string;
@@ -121,6 +124,7 @@ export interface MountainEnvironmentInfoDTO {
  * Process info DTO for Mountain
  */
 export interface MountainProcessInfoDTO {
+
 	pid: number;
 
 	command: string;
@@ -152,6 +156,7 @@ export interface MountainProcessInfoDTO {
  * Process spawn options DTO for Mountain
  */
 export interface MountainProcessSpawnOptionsDTO {
+
 	cwd?: string;
 
 	env_variables: { [key: string]: string };
@@ -175,6 +180,7 @@ export interface MountainProcessSpawnOptionsDTO {
  * Process signal DTO for Mountain
  */
 export interface MountainProcessSignalDTO {
+
 	pid: number;
 
 	signal: string;
@@ -192,6 +198,7 @@ export interface MountainProcessSignalDTO {
  * Convert PlatformNumber to Mountain DTO format
  */
 export function ConvertPlatformNumberToDTO(platformNumber: number): number {
+
 	// Ensure platform number is valid enum value
 	if (platformNumber < 0 || platformNumber > 3) {
 		console.warn(
@@ -523,9 +530,11 @@ export function ConvertProcessInfoToDTO(procInfo: any): MountainProcessInfoDTO {
 		end_time:
 			procInfo.status === "stopped"
 				? (procInfo.endTime ?? now)
+
 				: undefined,
 
 		status: ["running", "stopped", "error"].includes(procInfo.status)
+
 			? procInfo.status
 			: "error",
 

@@ -1,15 +1,20 @@
 // ── NodeModuleInterceptor: patch Module._load before ANY extension
 // code loads `fs` or `child_process`. Must execute synchronously at
 // the top of the bootstrap, before any other import or logic.
+//
+// Shim tier: active when TierShim ≠ None (Proxy/Replace/Own/Preempt).
+// esbuild dead-code-eliminates this import when TierShim=None.
 import installNodeModuleInterceptor from "../../../Shim/NodeModuleInterceptor.js";
 
 installNodeModuleInterceptor();
 
 // Import Tier dispatcher *after* __LandTiers is populated.
 import "../../../Utility/Tier.js";
+
 import "../../../Debug/Server.js";
 
 import { runBootstrap } from "../../../Effect/Bootstrap.js";
+
 // Dual-layer DebugServer (Cocoon half). Activated by the unified
 // `DebugServer` env var ("cocoon" | "both"). Safe no-op otherwise.
 import { StartWebSocketServer } from "../../WebSocket/Server.js";

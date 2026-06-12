@@ -35,6 +35,7 @@
  * Platform enumeration matching VSCode patterns
  */
 export enum PlatformNumber {
+
 	Web = 0,
 
 	Mac = 1,
@@ -53,6 +54,7 @@ export type PlatformName = "Web" | "Windows" | "Mac" | "Linux";
  * Operating system enumeration
  */
 export enum OperatingSystem {
+
 	Windows = 1,
 
 	Macintosh = 2,
@@ -64,6 +66,7 @@ export enum OperatingSystem {
  * OS architecture
  */
 export enum OSArchitecture {
+
 	X64 = "x64",
 
 	ARM64 = "arm64",
@@ -103,6 +106,7 @@ export const DEFAULT_LOCALE = "en-US";
  * Process environment interface (simplified from VSCode)
  */
 export interface IProcessEnvironment {
+
 	[key: string]: string | undefined;
 }
 
@@ -110,6 +114,7 @@ export interface IProcessEnvironment {
  * Node process interface (simplified from VSCode)
  */
 export interface INodeProcess {
+
 	platform: string;
 
 	arch: string;
@@ -133,6 +138,7 @@ export interface INodeProcess {
  * OS information structure
  */
 export interface OSInfo {
+
 	platform: PlatformName;
 
 	operatingSystem: OperatingSystem;
@@ -193,6 +199,7 @@ let _userAgent: string | undefined = undefined;
  * Initialize OS detection
  */
 function InitializeDetection(): void {
+
 	const nodeProcess: INodeProcess | undefined = GetNodeProcess(;
 
 	// Native environment detection

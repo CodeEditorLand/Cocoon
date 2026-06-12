@@ -9,6 +9,7 @@
 
 // Module interception types
 export interface ModuleInterceptionRequest {
+
 	moduleId: string;
 
 	parentModule?: string;
@@ -19,6 +20,7 @@ export interface ModuleInterceptionRequest {
 }
 
 export interface ModuleInterceptionResult {
+
 	success: boolean;
 
 	module?: any;
@@ -29,6 +31,7 @@ export interface ModuleInterceptionResult {
 }
 
 export enum SecurityLevel {
+
 	TRUSTED = "TRUSTED",
 
 	SANDBOXED = "SANDBOXED",
@@ -39,6 +42,7 @@ export enum SecurityLevel {
 }
 
 export interface SecurityPolicy {
+
 	extensionId: string;
 
 	allowedModules: string[];
@@ -53,6 +57,7 @@ export interface SecurityPolicy {
 }
 
 export interface IModuleInterceptor {
+
 	readonly _serviceBrand: undefined;
 
 	/**

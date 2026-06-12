@@ -67,6 +67,7 @@ import {
 	MountainMethods,
 	RouteManifestSummary,
 } from "../../Generated/RouteManifest.js";
+
 import type { HandlerContext } from "../Handler/Handler/Context.js";
 
 /**
@@ -77,6 +78,7 @@ import type { HandlerContext } from "../Handler/Handler/Context.js";
  * so we notify the build process which APIs are still unavailable.
  */
 export class NotImplementedError extends Error {
+
 	readonly code = "NotImplemented";
 
 	readonly _tag = "NotImplementedError";

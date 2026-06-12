@@ -23,6 +23,7 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
  * Infer the languageId from a URI string based on file extension.
  */
 const InferLanguageIdentifier = (Uri: string): string => {
+
 	const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/;
 
 	if (!ExtensionMatch?.[1]) return "plaintext";

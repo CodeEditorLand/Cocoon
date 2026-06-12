@@ -37,8 +37,10 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
+
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
+
 import { CocoonDevLog } from "./Dev/Log.js";
 
 /**
@@ -47,6 +49,7 @@ import { CocoonDevLog } from "./Dev/Log.js";
  * its callback, argument transformations, and associated extension metadata.
  */
 export interface InternalCommandMetadata {
+
 	readonly Id: string;
 
 	readonly Callback: (...Args: any[]) => any;
@@ -63,6 +66,7 @@ export interface InternalCommandMetadata {
  * @description Disposable interface for cleanup
  */
 export interface IDisposable {
+
 	dispose(): void;
 }
 
@@ -71,6 +75,7 @@ export interface IDisposable {
  * @description Logger interface for service logging
  */
 export interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -96,6 +101,7 @@ export interface Logger {
  * @description Window interface for accessing active text editor
  */
 export interface Window {
+
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
 }
 
@@ -108,6 +114,7 @@ export interface Window {
  * Specification: Dependency/Editor/extHostCommands.ts (ExtHostCommandsShape)
  */
 export interface Command {
+
 	readonly RegisterCommand: (
 		Id: string,
 
@@ -160,11 +167,11 @@ export class CommandService extends /* Effect.Service */(
 	{
 		effect: async function() {
 			// Resolve service dependencies
-			const MountainClient = yield* IMountainClientService;
+			const MountainClient = await IMountainClientService;
 
-			const Logger = yield* Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger";
 
-			const Window = yield* Symbol<Window>("Service/Window";
+			const Window = await Symbol<Window>("Service/Window";
 
 			// Command registry - maps command ID to registered command metadata
 			const _commandRegistry = new Map<string, InternalCommandMetadata>(;
@@ -248,33 +255,21 @@ export class CommandService extends /* Effect.Service */(
 						Id,
 					} = Command;
 
-					yield* Logger.Trace(
+					await Logger.Trace(
 						`[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`,
 					;
 
-					const Result = yield* Effect.tryPromise({
-						try: () =>
-							Promise.resolve(Callback.apply(ThisArg, Arguments)),
-						catch: (Cause) => {
-							TrackCommandExecution(
-								Id,
-
-								"local",
-
-								Date.now() - StartTime,
-
-								false,
-							;
-
-							throw Cause;
-						},
-					};
-
-					const Duration = Date.now() - StartTime;
+					const Result = await (async () => {
+	try {
+		return await Promise.resolve(Callback.apply(ThisArg, Arguments));
+	} catch (_e) {
+		throw _e;
+	}
+})() - StartTime;
 
 					TrackCommandExecution(Id, "local", Duration, true;
 
-					yield* Logger.Debug(
+					await Logger.Debug(
 						`[CommandService] Command '${Id}' executed in ${Duration}ms`,
 					;
 
@@ -301,7 +296,7 @@ export class CommandService extends /* Effect.Service */(
 					if (Registry.has(Id)) {
 						const Command = Registry.get(Id)!;
 
-						const Result = yield* ExecuteLocalCommand(
+						const Result = await ExecuteLocalCommand(
 							Command,
 
 							Arguments,
@@ -311,7 +306,7 @@ export class CommandService extends /* Effect.Service */(
 					}
 
 					// Fall back to remote execution on Mountain
-					yield* Logger.Info(
+					await Logger.Info(
 						`[CommandService] Command '${Id}' not registered locally, executing via Mountain gRPC`,
 					;
 
@@ -320,24 +315,16 @@ export class CommandService extends /* Effect.Service */(
 					try {
 						// Routed by Mountain via Track::SideCarRequest →
 						// Command.Execute effect.
-						const result = yield* Effect.tryPromise({
-							try: () =>
-								MountainClient.sendRequest("Command.Execute", [
+						const result = await (async () => {
+	try {
+		return await MountainClient.sendRequest("Command.Execute", [
 									Id,
 									...Arguments,
-								]),
-							catch: (Cause) =>
-								Cause instanceof Error
-									? Cause
-									: new Error(String(Cause)),
-						};
-
-						TrackCommandExecution(
-							Id,
-
-							"remote",
-
-							Date.now() - startTime,
+								]);
+	} catch (_e) {
+		throw _e;
+	}
+})() - startTime,
 
 							true,
 						;
@@ -354,7 +341,7 @@ export class CommandService extends /* Effect.Service */(
 							false,
 						;
 
-						yield* Logger.Error(
+						await Logger.Error(
 							`[CommandService] Failed to execute remote command '${Id}'`,
 
 							error as Error,
@@ -383,7 +370,7 @@ export class CommandService extends /* Effect.Service */(
 				async function() {
 					// TODO: SECURITY: Validate command ID format before registration (MEDIUM)
 					if (!Id || typeof Id !== "string") {
-						yield* Logger.Error(
+						await Logger.Error(
 							`[CommandService] Invalid command ID: ${Id}`,
 						;
 
@@ -392,16 +379,20 @@ export class CommandService extends /* Effect.Service */(
 
 					const Metadata: InternalCommandMetadata = {
 						Id,
+
 						Callback,
+
 						ThisArg,
+
 						Extension: undefined,
+
 						RegisteredAt: Date.now(),
 					};
 
 					// Register in local registry
 					_commandRegistry.set(Id, Metadata;
 
-					yield* Logger.Info(
+					await Logger.Info(
 						`[CommandService] Command '${Id}' registered locally`,
 					;
 
@@ -472,7 +463,7 @@ export class CommandService extends /* Effect.Service */(
 						;
 					};
 
-					return yield* RegisterCommand(Id, AdaptedCallback, ThisArg;
+					return await RegisterCommand(Id, AdaptedCallback, ThisArg;
 				};
 
 			/**
@@ -491,22 +482,21 @@ export class CommandService extends /* Effect.Service */(
 					try {
 						// Routed by Mountain via Track::SideCarRequest →
 						// Command.GetAll effect; returns the native registry ids.
-						const Response = yield* Effect.tryPromise({
-							try: () =>
-								MountainClient.sendRequest("Command.GetAll", [
+						const Response = await (async () => {
+	try {
+		return await MountainClient.sendRequest("Command.GetAll", [
 									FilterInternal,
-								]),
-							catch: (Cause) =>
-								Cause instanceof Error
-									? Cause
-									: new Error(String(Cause)),
-						};
+								]);
+	} catch (_e) {
+		throw _e;
+	}
+})()
 
-						const RemoteCommands: string[] = Array.isArray(Response)
 							? (Response as string[])
+
 							: [];
 
-						yield* Logger.Info(
+						await Logger.Info(
 							`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`,
 						;
 
@@ -524,7 +514,7 @@ export class CommandService extends /* Effect.Service */(
 
 						return AllCommands;
 					} catch (error) {
-						yield* Logger.Warn(
+						await Logger.Warn(
 							`[CommandService] Error getting remote commands, using local only`,
 
 							error as Error,
@@ -550,7 +540,7 @@ export class CommandService extends /* Effect.Service */(
 
 			const Registry = _commandRegistry;
 
-			yield* Logger.Info(
+			await Logger.Info(
 				`[CommandService] CommandService initialized with ${Registry.size} registered commands`,
 			;
 

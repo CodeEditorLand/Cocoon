@@ -24,20 +24,30 @@
 import type * as VSCode from "vscode";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { CreateEventStream } from "../../Utility/Event/Stream.js";
+
 import { MountainGRPCClientService } from "../Mountain/gRPC/Client.js";
+
 import { ShowOpenDialog, ShowSaveDialog } from "./File/Dialogs.js";
+
 import type { Logger, Window, Workspace } from "./Interfaces.js";
+
 import { CreateOutputChannel } from "./Output/Channel.js";
+
 import { WithProgress } from "./Progress.js";
+
 import { ShowInputBox, ShowQuickPick } from "./Quick/Input.js";
+
 import { CreateStatusBarItem } from "./Status/Bar.js";
+
 import {
 	ShowErrorMessage,
 	ShowInformationMessage,
 	ShowTextDocument,
 	ShowWarningMessage,
 } from "./Text/Document.js";
+
 import { CreateWebviewPanel } from "./Webview/Panel.js";
 
 export type { Logger, Window, Workspace } from "./Interfaces.js";
@@ -57,15 +67,15 @@ export class WindowService extends /* Effect.Service */(
 	{
 		effect: async function() {
 			// Resolve service dependencies
-			const MountainClient = yield* IMountainClientService;
+			const MountainClient = await IMountainClientService;
 
 			const Workspace_ =
-				yield* Symbol<Workspace>("Service/Workspace";
+				await Symbol<Workspace>("Service/Workspace";
 
-			const Logger_ = yield* Symbol<Logger>("Service/Logger";
+			const Logger_ = await Symbol<Logger>("Service/Logger";
 
 			// Resolve the Mountain gRPC client (used by delegated operations)
-			const MountainGRPC = yield* MountainGRPCClientService;
+			const MountainGRPC = await MountainGRPCClientService;
 
 			// Window state tracking - plain variable, no Ref overhead
 			let _windowState: VSCode.WindowState = {
@@ -89,7 +99,7 @@ export class WindowService extends /* Effect.Service */(
 					) {
 						_windowState = State;
 
-						yield* Logger_.Debug(
+						await Logger_.Debug(
 							`[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`,
 						;
 

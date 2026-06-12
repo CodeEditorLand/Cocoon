@@ -5,6 +5,7 @@
  */
 
 import { MountainClientService as RealMountainClient } from "../../Services/Mountain/Client/Service.js";
+
 import { TelemetryLive } from "../Telemetry.js";
 
 // ============================================================================
@@ -13,18 +14,24 @@ import { TelemetryLive } from "../Telemetry.js";
 
 export type ConnectionState =
 	| { readonly _tag: "Disconnected" }
+
 	| { readonly _tag: "Connecting"; readonly attempt: number }
+
 	| {
+
 			readonly _tag: "Connected";
 
 			readonly serverVersion: string;
 
 			readonly connectedAt: number;
 	  }
+
 	| { readonly _tag: "Disconnecting" }
+
 	| { readonly _tag: "Error"; readonly error: string };
 
 export interface ClientConfig {
+
 	readonly host: string;
 
 	readonly port: number;
@@ -41,6 +48,7 @@ export interface ClientConfig {
 }
 
 export interface ClientMetrics {
+
 	readonly totalRequests: number;
 
 	readonly successfulRequests: number;
@@ -53,6 +61,7 @@ export interface ClientMetrics {
 }
 
 export interface RPCResponse<T = unknown> {
+
 	readonly success: boolean;
 
 	readonly data: T;
@@ -65,6 +74,7 @@ export interface RPCResponse<T = unknown> {
 // ============================================================================
 
 export class ConnectionError extends Error {
+
 	readonly _tag = "ConnectionError";
 
 	constructor(

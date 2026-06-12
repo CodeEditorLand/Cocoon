@@ -5,6 +5,7 @@
  */
 
 export interface ITerminalService {
+
 	createTerminal(
 		name: string,
 

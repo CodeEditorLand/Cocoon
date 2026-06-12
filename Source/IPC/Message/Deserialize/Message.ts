@@ -10,13 +10,16 @@ import {
 	MessageFlags,
 	PROTOCOL_VERSION,
 } from "../Constants.js";
+
 import {
 	CompressionHint,
 	type IDeserializationResult,
 	type IMessage,
 	type MessageMetadata,
 } from "../Types.js";
+
 import { ValidateMetadata } from "../Validation.js";
+
 import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
@@ -29,6 +32,7 @@ import VSBuffer from "../VSBuffer.js";
  * @returns IDeserializationResult with message and validation information
  */
 export default (Data: Uint8Array): IDeserializationResult => {
+
 	const Warnings: string[] = [];
 
 	try {

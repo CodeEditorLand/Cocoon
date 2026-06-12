@@ -8,8 +8,11 @@
  */
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapNamespaceWithHeuristics from "../Wrap/Namespace/With/Heuristics.js";
+
 import WrapScmNamespace from "../Wrap/Scm/Namespace.js";
 
 /**
@@ -28,6 +31,7 @@ const ScmTraceEnabled =
 	typeof process !== "undefined" && typeof process.env["Trace"] === "string";
 
 const ScmTrace = (Message: string): void => {
+
 	if (!ScmTraceEnabled) return;
 
 	try {
@@ -116,6 +120,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 			// click" field; preserve as-is so vscode.git's handler can
 			// reconstruct the diff inputs.
 			if (Holder["resourceUri"] !== undefined)
+
 				Projected["resourceUri"] = Holder["resourceUri"];
 
 			// URI POJOs may travel as the arg itself.
@@ -123,22 +128,28 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 				Projected["scheme"] = Holder["scheme"];
 
 				if (Holder["authority"] !== undefined)
+
 					Projected["authority"] = Holder["authority"];
 
 				if (Holder["path"] !== undefined)
+
 					Projected["path"] = Holder["path"];
 
 				if (Holder["query"] !== undefined)
+
 					Projected["query"] = Holder["query"];
 
 				if (Holder["fragment"] !== undefined)
+
 					Projected["fragment"] = Holder["fragment"];
 			}
 
 			if (typeof Holder["fsPath"] === "string")
+
 				Projected["fsPath"] = Holder["fsPath"];
 
 			if (typeof Holder["external"] === "string")
+
 				Projected["external"] = Holder["external"];
 
 			// Pass through known-safe scalar metadata so handlers that
@@ -269,6 +280,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								(RootUri as { scheme?: unknown })?.scheme ?? "",
 							authority:
 								(RootUri as { authority?: unknown })
+
 									?.authority ?? "",
 							path: (RootUri as { path?: unknown })?.path ?? "",
 							query:

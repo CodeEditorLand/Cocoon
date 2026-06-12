@@ -9,6 +9,7 @@
  * Error when window operation fails
  */
 export class WindowOperationError extends Error {
+
 	readonly _tag = "WindowOperationError";
 
 	readonly operation: string;

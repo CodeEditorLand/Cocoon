@@ -7,6 +7,7 @@
 
 // Performance metrics interface
 export interface PerformanceMetrics {
+
 	extensionLoadTime: number;
 
 	apiCallLatency: number;
@@ -26,6 +27,7 @@ export interface PerformanceMetrics {
 
 // Performance alert interface
 export interface PerformanceAlert {
+
 	id: string;
 
 	type: "warning" | "critical" | "info";
@@ -43,6 +45,7 @@ export interface PerformanceAlert {
 
 // Optimization suggestion interface
 export interface OptimizationSuggestion {
+
 	id: string;
 
 	description: string;
@@ -55,6 +58,7 @@ export interface OptimizationSuggestion {
 }
 
 export interface IPerformanceMonitoringService {
+
 	readonly _serviceBrand: undefined;
 
 	/**

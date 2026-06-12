@@ -19,6 +19,7 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 const enum StatusBarAlignment {
+
 	Left = 1,
 
 	Right = 2,
@@ -28,18 +29,21 @@ const enum StatusBarAlignment {
 // each forces the paired foreground so text stays legible on the
 // error/warning fill.
 const PairedStatusBarForeground: Record<string, string> = {
+
 	"statusBarItem.errorBackground": "statusBarItem.errorForeground",
 
 	"statusBarItem.warningBackground": "statusBarItem.warningForeground",
 };
 
 const ThemeColorId = (Value: unknown): string | undefined => {
+
 	const Id = (Value as { id?: unknown } | null)?.id;
 
 	return typeof Id === "string" ? Id : undefined;
 };
 
 const SerializeColor = (Value: unknown): unknown => {
+
 	if (typeof Value === "string") return Value;
 
 	const Id = ThemeColorId(Value;
@@ -161,6 +165,7 @@ export default (
 			color:
 				BackgroundId === undefined
 					? SerializeColor(CurrentColor)
+
 					: { id: PairedStatusBarForeground[BackgroundId] },
 			visible: true,
 			name: CurrentName,

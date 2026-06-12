@@ -8,7 +8,9 @@
  */
 
 import LandFixLog from "../../../../Utility/Land/Fix/Log.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapExtensionsNamespace from "../Wrap/Extensions/Namespace.js";
 
 // When an extension reads `vscode.extensions.getExtension('X').exports`,
@@ -36,6 +38,7 @@ import WrapExtensionsNamespace from "../Wrap/Extensions/Namespace.js";
 const NoopDisposable = { dispose: () => {} };
 
 const MakeMultiStub = (): any => {
+
 	const StubTarget: any = function MultiStub() {
 		return StubProxy;
 	};

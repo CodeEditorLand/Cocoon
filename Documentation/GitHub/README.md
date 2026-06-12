@@ -1,20 +1,22 @@
-# Cocoon — TypeScript Runtime Element
+# Cocoon - TypeScript Runtime Element
 
-Cocoon is the TypeScript runtime environment for CodeEditorLand, providing Node.js module interception and filesystem/process shimming.
+Cocoon is the TypeScript runtime environment for CodeEditorLand, providing
+Node.js module interception and filesystem/process shimming.
 
-Refer to the [Architecture.md](./Architecture.md) for detailed layer diagrams and component maps.
+Refer to the [Architecture.md](./Architecture.md) for detailed layer diagrams
+and component maps.
 
 ---
 
 ## Shim Compatibility
 
-| 🟠 Low-Level Shim | 🔵 Coverage Shim |
-|-------------------|-----------------|
+| 🟠 Low-Level Shim             | 🔵 Coverage Shim                |
+| ----------------------------- | ------------------------------- |
 | Tier: `TierShim=Own\|Preempt` | Tier: `TierShim=Proxy\|Replace` |
-| Engine prototype hooks | Service routing + audit |
+| Engine prototype hooks        | Service routing + audit         |
 
 > This Element supports the Land deep-shim interception system. Gated behind
-> `TierShim` env var (default: `None` — zero overhead).
+> `TierShim` env var (default: `None` - zero overhead).
 
 ---
 

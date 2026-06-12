@@ -9,6 +9,7 @@
  */
 
 import { NextProviderHandle } from "../../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../../Handler/Context.js";
 
 const MakeProvider =
@@ -28,6 +29,7 @@ const MakeProvider =
 		OnDispose?: (Handle: number, Key: string) => void,
 	) =>
 	(Key: string, _Provider: any, _Options?: any) => {
+
 		const Handle = NextProviderHandle(;
 
 		Context.SendToMountain(RegisterMethod, {

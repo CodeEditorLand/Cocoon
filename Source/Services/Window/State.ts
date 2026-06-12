@@ -7,6 +7,7 @@
 import type { WindowStateConfig } from "./Types.js";
 
 export interface WindowStateService {
+
 	readonly getState: Promise<WindowStateConfig>;
 
 	readonly setState: (
@@ -31,14 +32,11 @@ function makeWindowStateService(): WindowStateService {
 
 				return newState;
 			},
-		onStateChange: Effect.void,
+		onStateChange: undefined,
 	};
 }
 
 export const WindowStateLive = return (makeWindowStateService();
 
-export const WindowStateLayer = Layer.succeed(
-	WindowStateService,
-
-	makeWindowStateService(),
+export const WindowStateLayer = makeWindowStateService(),
 ;

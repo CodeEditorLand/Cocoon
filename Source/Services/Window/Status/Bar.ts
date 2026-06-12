@@ -47,9 +47,10 @@ export const CreateStatusBarItem = (
 	Priority?: number,
 ): Promise<VSCode.StatusBarItem> =>
 	async function() {
+
 		const ItemId = Id ?? `statusbar-${crypto.randomUUID()}`;
 
-		yield* Logger.Info(
+		await Logger.Info(
 			`[WindowService] Creating status bar item with id '${ItemId}'`,
 		;
 
@@ -71,7 +72,7 @@ export const CreateStatusBarItem = (
 		};
 
 		// Register the item with Mountain
-		yield* GRPCClient.createStatusBarItem({
+		await GRPCClient.createStatusBarItem({
 			id: ItemId,
 			text: "",
 			tooltip: undefined,

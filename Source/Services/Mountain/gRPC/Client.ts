@@ -37,12 +37,14 @@
  */
 
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
+
 import { Logger } from "../../Logger.js";
 
 /**
  * Options for showing a text document
  */
 export interface ShowTextDocumentOptions {
+
 	uri: string;
 
 	viewColumn?: number;
@@ -62,6 +64,7 @@ export interface ShowTextDocumentOptions {
  * Status bar item configuration
  */
 export interface StatusBarItemOptions {
+
 	id: string;
 
 	text: string;
@@ -73,6 +76,7 @@ export interface StatusBarItemOptions {
  * Webview panel configuration
  */
 export interface WebviewPanelOptions {
+
 	viewType: string;
 
 	title: string;
@@ -96,6 +100,7 @@ export interface WebviewPanelOptions {
  * Text edit for applying document edits
  */
 export interface TextEdit {
+
 	range: {
 		start: { line: number; character: number };
 
@@ -110,6 +115,7 @@ export interface TextEdit {
  * Provides Effect-based wrappers for Mountain's Vine protocol operations
  */
 export interface MountainGRPCClientService {
+
 	readonly _serviceBrand: undefined;
 
 	// ==================== Window Operations ====================
@@ -361,13 +367,10 @@ export const MountainGRPCClientService =
  * Live implementation of MountainGRPCClientService
  * Uses the underlying IMountainClientService for gRPC communication
  */
-const MountainGRPCClientLive = Layer.effect(
-	MountainGRPCClientService,
+const MountainGRPCClientLive = async function() {
+		const mountainClient = await IMountainClientService;
 
-	async function() {
-		const mountainClient = yield* IMountainClientService;
-
-		const logger = yield* Logger.Logger;
+		const logger = await Logger.Logger;
 
 		const service: MountainGRPCClientService = {
 			_serviceBrand: undefined,
@@ -376,26 +379,23 @@ const MountainGRPCClientLive = Layer.effect(
 
 			showTextDocument: (uri, options = {}) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] showTextDocument: ${uri}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("showTextDocument", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("showTextDocument", {
 								uri: { value: uri },
 								viewColumn: options.viewColumn
 									? options.viewColumn - 2
 									: undefined, // Convert ViewColumn enum (1-based to 0-based)
 								preserveFocus: options.preserveFocus ?? true,
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to show text document: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					if (!result?.success) {
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() {
 						throw new Error(`Failed to show text document: ${uri}`),
 						;
 					}
@@ -405,17 +405,17 @@ const MountainGRPCClientLive = Layer.effect(
 
 			showInformationMessage: (message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] showInformationMessage: ${message}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("showInformation", {
-								message,
-							}),
-						catch: (error) =>
-							new Error(
+					let result;
+try {
+	result = await mountainClient.sendRequest("showInformation", {
+								message,;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to show information message: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -432,17 +432,17 @@ const MountainGRPCClientLive = Layer.effect(
 
 			showWarningMessage: (message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] showWarningMessage: ${message}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("showWarning", {
-								message,
-							}),
-						catch: (error) =>
-							new Error(
+					let result;
+try {
+	result = await mountainClient.sendRequest("showWarning", {
+								message,;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -459,17 +459,17 @@ const MountainGRPCClientLive = Layer.effect(
 
 			showErrorMessage: (message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] showErrorMessage: ${message}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("showError", {
-								message,
-							}),
-						catch: (error) =>
-							new Error(
+					let result;
+try {
+	result = await mountainClient.sendRequest("showError", {
+								message,;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to show error message: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -486,19 +486,19 @@ const MountainGRPCClientLive = Layer.effect(
 
 			createStatusBarItem: (options) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] createStatusBarItem: ${options.id}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("createStatusBarItem", {
+					let result;
+try {
+	result = await mountainClient.sendRequest("createStatusBarItem", {
 								id: options.id,
 								text: options.text,
-								tooltip: options.tooltip ?? "",
-							}),
-						catch: (error) =>
-							new Error(
+								tooltip: options.tooltip ?? "",;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -515,34 +515,35 @@ const MountainGRPCClientLive = Layer.effect(
 
 			setStatusBarText: (itemId, text) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("setStatusBarText", {
+					await (async () => {
+	try {
+		return await mountainClient.sendRequest("setStatusBarText", {
 								itemId,
 								text,
-							}),
-						catch: (error) =>
-							new Error(
+							});
+	} catch (_e) {
+		return new Error(
 								`Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			createWebviewPanel: (options) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] createWebviewPanel: ${options.viewType}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("createWebviewPanel", {
+					let result;
+try {
+	result = await mountainClient.sendRequest("createWebviewPanel", {
 								viewType: options.viewType,
 								title: options.title,
 								iconPath: options.iconPath ?? "",
@@ -555,10 +556,10 @@ const MountainGRPCClientLive = Layer.effect(
 								retainContextWhenHidden:
 									options.retainContextWhenHidden ?? false,
 								localResourceRoots:
-									options.localResourceRoots ?? [],
-							}),
-						catch: (error) =>
-							new Error(
+									options.localResourceRoots ?? [],;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -575,36 +576,37 @@ const MountainGRPCClientLive = Layer.effect(
 
 			setWebviewHtml: (handle, html) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] setWebviewHtml: handle=${handle}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("setWebviewHtml", {
+					await (async () => {
+	try {
+		return await mountainClient.sendRequest("setWebviewHtml", {
 								handle,
 								html,
-							}),
-						catch: (error) =>
-							new Error(
+							});
+	} catch (_e) {
+		return new Error(
 								`Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			postWebviewMessage: (handle, message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] postWebviewMessage: handle=${handle}`,
 					;
 
 					const isString = typeof message === "string";
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendNotification(
+					await (async () => {
+	try {
+		return await mountainClient.sendNotification(
 								"onDidReceiveMessage",
 
 								{
@@ -616,32 +618,33 @@ const MountainGRPCClientLive = Layer.effect(
 										? undefined
 										: message,
 								},
-							),
-						catch: (error) =>
-							new Error(
+							);
+	} catch (_e) {
+		return new Error(
 								`Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			// ==================== Workspace Operations ====================
 
 			findFiles: (pattern, include) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] findFiles: ${pattern}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("findFiles", {
+					let result;
+try {
+	result = await mountainClient.sendRequest("findFiles", {
 								pattern,
-								include: include ?? true,
-							}),
-						catch: (error) =>
-							new Error(
+								include: include ?? true,;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to find files: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -651,19 +654,19 @@ const MountainGRPCClientLive = Layer.effect(
 
 			findTextInFiles: (pattern, include, exclude) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] findTextInFiles: ${pattern}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("findTextInFiles", {
+					let result;
+try {
+	result = await mountainClient.sendRequest("findTextInFiles", {
 								pattern,
 								include: include ?? [],
-								exclude: exclude ?? [],
-							}),
-						catch: (error) =>
-							new Error(
+								exclude: exclude ?? [],;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -673,25 +676,22 @@ const MountainGRPCClientLive = Layer.effect(
 
 			openDocument: (uri, viewColumn) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] openDocument: ${uri}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("openDocument", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("openDocument", {
 								uri: { value: uri },
 								viewColumn: viewColumn
 									? viewColumn - 2
 									: undefined,
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to open document: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					if (!result?.success) {
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() {
 						throw new Error(`Failed to open document: ${uri}`),
 						;
 					}
@@ -701,17 +701,17 @@ const MountainGRPCClientLive = Layer.effect(
 
 			saveAll: (includeUntitled = false) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("saveAll", {
-								includeUntitled,
-							}),
-						catch: (error) =>
-							new Error(
+					let result;
+try {
+	result = await mountainClient.sendRequest("saveAll", {
+								includeUntitled,;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to save all: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -726,7 +726,7 @@ const MountainGRPCClientLive = Layer.effect(
 
 			applyEdit: (uri, edits) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] applyEdit: ${uri}`,
 					;
 
@@ -786,19 +786,16 @@ const MountainGRPCClientLive = Layer.effect(
 						};
 					}
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("applyEdit", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("applyEdit", {
 								uri: { value: uri },
 								edits: SafeEdits,
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					if (!result?.success) {
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() {
 						throw new Error(`Failed to apply edit to: ${uri}`),
 						;
 					}
@@ -810,35 +807,36 @@ const MountainGRPCClientLive = Layer.effect(
 
 			registerCommand: (commandId, extensionId, title) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] registerCommand: ${commandId}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendNotification("registerCommand", {
+					await (async () => {
+	try {
+		return await mountainClient.sendNotification("registerCommand", {
 								commandId,
 								extensionId,
 								title,
-							}),
-						catch: (error) =>
-							new Error(
+							});
+	} catch (_e) {
+		return new Error(
 								`Failed to register command: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			executeCommand: (commandId, ...args) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] executeCommand: ${commandId}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("executeCommand", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("executeCommand", {
 								commandId,
 								arguments: args.map((arg) => {
 									if (typeof arg === "string") {
@@ -859,15 +857,11 @@ const MountainGRPCClientLive = Layer.effect(
 
 									return { stringValue: String(arg) };
 								}),
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to execute command: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					// Check if response contains an error
-					if (result?.error) {
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() {
 						throw new Error(
 								`Command execution failed: ${result.error.Message}`,
 							),
@@ -880,41 +874,43 @@ const MountainGRPCClientLive = Layer.effect(
 
 			unregisterCommand: (commandId) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] unregisterCommand: ${commandId}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendNotification(
+					await (async () => {
+	try {
+		return await mountainClient.sendNotification(
 								"unregisterCommand",
 
 								{
 									commandId,
 								},
-							),
-						catch: (error) =>
-							new Error(
+							);
+	} catch (_e) {
+		return new Error(
 								`Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			// ==================== Secret Storage ====================
 
 			getSecret: (key) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] getSecret: ${key}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("getSecret", { key }),
-						catch: (error) =>
-							new Error(
+					let result;
+try {
+	result = await mountainClient.sendRequest("getSecret", { key;
+} catch (_e) {
+	// error handled below
+new Error(
 								`Failed to get secret: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
@@ -924,65 +920,64 @@ const MountainGRPCClientLive = Layer.effect(
 
 			storeSecret: (key, value) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] storeSecret: ${key}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendNotification("storeSecret", {
+					await (async () => {
+	try {
+		return await mountainClient.sendNotification("storeSecret", {
 								key,
 								value,
-							}),
-						catch: (error) =>
-							new Error(
+							});
+	} catch (_e) {
+		return new Error(
 								`Failed to store secret: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			deleteSecret: (key) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] deleteSecret: ${key}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendNotification("deleteSecret", {
+					await (async () => {
+	try {
+		return await mountainClient.sendNotification("deleteSecret", {
 								key,
-							}),
-						catch: (error) =>
-							new Error(
+							});
+	} catch (_e) {
+		return new Error(
 								`Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			// ==================== File System Operations ====================
 
 			readFile: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] readFile: ${uri}`,
 					;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("readFile", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("readFile", {
 								uri: { value: uri },
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					if (!result?.content) {
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() {
 						throw new Error(`Failed to read file: ${uri}`),
 						;
 					}
@@ -992,42 +987,40 @@ const MountainGRPCClientLive = Layer.effect(
 
 			writeFile: (uri, content, encoding = "utf8") =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClient] writeFile: ${uri}`,
 					;
 
-					yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendNotification("writeFile", {
+					await (async () => {
+	try {
+		return await mountainClient.sendNotification("writeFile", {
 								uri: { value: uri },
 								content,
 								encoding,
-							}),
-						catch: (error) =>
-							new Error(
+							});
+	} catch (_e) {
+		return new Error(
 								`Failed to write file: ${error instanceof Error ? error.message : String(error)}`,
 							),
 					};
 
-					return;
-				}),
+					return;;
+	}
+})(),
 
 			stat: (uri) =>
 				async function() {
-					yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`;
+					await logger.debug(`[MountainGRPCClient] stat: ${uri}`;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("stat", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("stat", {
 								uri: { value: uri },
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to stat file: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					if (!result) {
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() {
 						throw new Error(`Failed to stat file: ${uri}`),
 						;
 					}
@@ -1037,20 +1030,17 @@ const MountainGRPCClientLive = Layer.effect(
 
 			readdir: (uri) =>
 				async function() {
-					yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`;
+					await logger.debug(`[MountainGRPCClient] readdir: ${uri}`;
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							mountainClient.sendRequest("readdir", {
+					const result = await (async () => {
+	try {
+		return await mountainClient.sendRequest("readdir", {
 								uri: { value: uri },
-							}),
-						catch: (error) =>
-							new Error(
-								`Failed to read directory: ${error instanceof Error ? error.message : String(error)}`,
-							),
-					};
-
-					return (result?.entries as string[]) ?? [];
+							});
+	} catch (_e) {
+		throw _e;
+	}
+})() ?? [];
 				}),
 		};
 
@@ -1062,11 +1052,8 @@ const MountainGRPCClientLive = Layer.effect(
  * Mock implementation for testing
  * Provides in-memory implementations of all operations
  */
-const MountainGRPCClientMock = Layer.effect(
-	MountainGRPCClientService,
-
-	async function() {
-		const logger = yield* Logger.Logger;
+const MountainGRPCClientMock = async function() {
+		const logger = await Logger.Logger;
 
 		// In-memory storage for mock data
 		const mockSecrets = new Map<string, string>(;
@@ -1083,7 +1070,7 @@ const MountainGRPCClientMock = Layer.effect(
 			// Window Operations
 			showTextDocument: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] showTextDocument: ${uri}`,
 					;
 
@@ -1092,7 +1079,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			showInformationMessage: (message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] showInformationMessage: ${message}`,
 					;
 
@@ -1101,7 +1088,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			showWarningMessage: (message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] showWarningMessage: ${message}`,
 					;
 
@@ -1110,7 +1097,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			showErrorMessage: (message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] showErrorMessage: ${message}`,
 					;
 
@@ -1119,7 +1106,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			createStatusBarItem: (options) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] createStatusBarItem: ${options.id}`,
 					;
 
@@ -1132,7 +1119,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			setStatusBarText: (itemId, text) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] setStatusBarText: ${itemId}`,
 					;
 
@@ -1143,7 +1130,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			createWebviewPanel: (options) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`,
 					;
 
@@ -1156,7 +1143,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			setWebviewHtml: (handle, html) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] setWebviewHtml: ${handle}`,
 					;
 
@@ -1171,7 +1158,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			postWebviewMessage: (handle, message) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] postWebviewMessage: ${handle}`,
 					;
 
@@ -1181,7 +1168,7 @@ const MountainGRPCClientMock = Layer.effect(
 			// Workspace Operations
 			findFiles: (pattern) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] findFiles: ${pattern}`,
 					;
 
@@ -1190,7 +1177,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			findTextInFiles: (pattern) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] findTextInFiles: ${pattern}`,
 					;
 
@@ -1199,7 +1186,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			openDocument: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] openDocument: ${uri}`,
 					;
 
@@ -1208,14 +1195,14 @@ const MountainGRPCClientMock = Layer.effect(
 
 			saveAll: () =>
 				async function() {
-					yield* logger.debug("[MountainGRPCClientMock] saveAll";
+					await logger.debug("[MountainGRPCClientMock] saveAll";
 
 					return;
 				}),
 
 			applyEdit: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] applyEdit: ${uri}`,
 					;
 
@@ -1225,7 +1212,7 @@ const MountainGRPCClientMock = Layer.effect(
 			// Command Operations
 			registerCommand: (commandId) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] registerCommand: ${commandId}`,
 					;
 
@@ -1234,7 +1221,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			executeCommand: (commandId) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] executeCommand: ${commandId}`,
 					;
 
@@ -1243,7 +1230,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			unregisterCommand: (commandId) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] unregisterCommand: ${commandId}`,
 					;
 
@@ -1253,7 +1240,7 @@ const MountainGRPCClientMock = Layer.effect(
 			// Secret Storage
 			getSecret: (key) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] getSecret: ${key}`,
 					;
 
@@ -1262,7 +1249,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			storeSecret: (key, value) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] storeSecret: ${key}`,
 					;
 
@@ -1273,7 +1260,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			deleteSecret: (key) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] deleteSecret: ${key}`,
 					;
 
@@ -1285,7 +1272,7 @@ const MountainGRPCClientMock = Layer.effect(
 			// File System Operations
 			readFile: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] readFile: ${uri}`,
 					;
 
@@ -1294,7 +1281,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			writeFile: (uri, content) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] writeFile: ${uri}`,
 					;
 
@@ -1303,7 +1290,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			stat: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] stat: ${uri}`,
 					;
 
@@ -1317,7 +1304,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			readdir: (uri) =>
 				async function() {
-					yield* logger.debug(
+					await logger.debug(
 						`[MountainGRPCClientMock] readdir: ${uri}`,
 					;
 

@@ -12,6 +12,7 @@
 import type * as VSCode from "vscode";
 
 import { ToDTO as OpenDialogOptionToDTO } from "../../../TypeConverter/Dialog/Open/Dialog/Option.js";
+
 import { ToDTO as SaveDialogOptionToDTO } from "../../../TypeConverter/Dialog/Save/Dialog/Option.js";
 
 /**
@@ -35,37 +36,36 @@ export const ShowOpenDialog = (
 	Options?: VSCode.OpenDialogOptions,
 ): Promise<VSCode.Uri[] | undefined> =>
 	async function() {
-		yield* Logger.Debug(`[WindowService] Showing open dialog`;
+
+		await Logger.Debug(`[WindowService] Showing open dialog`;
 
 		// Serialize options using TypeConverter
 		const OptionsDTO = OpenDialogOptionToDTO(Options;
 
 		// Delegates to Mountain's native file dialog implementation via gRPC
-		const Result = yield* Effect.tryPromise({
-			try: async () => {
-				const Response = await MountainClient.sendRequest(
-					"UserInterface.ShowOpenDialog",
+		let Result: VSCode.Uri[] | undefined;
+		try {
+			const Response = await MountainClient.sendRequest(
+				"UserInterface.ShowOpenDialog",
 
-					[OptionsDTO],
-				;
+				[OptionsDTO],
+			);
 
-				if (Response === null || Response === undefined) {
-					return undefined;
-				}
-
+			if (Response === null || Response === undefined) {
+				Result = undefined;
+			} else {
 				// Response is an array of file paths - convert to VSCode URIs
 				const FilePaths = Response as string[];
 
-				const { Uri } = await import("vscode";
+				const { Uri } = await import("vscode");
 
-				return FilePaths.map((Path) => Uri.file(Path);
-			},
-			catch: (Error_) => {
-				throw new Error(
-					`Failed to show open dialog: ${(Error_ as Error).message}`,
-				;
-			},
-		};
+				Result = FilePaths.map((Path) => Uri.file(Path));
+			}
+		} catch (Error_) {
+			throw new Error(
+				`Failed to show open dialog: ${(Error_ as Error).message}`,
+			);
+		}
 
 		return Result;
 	};
@@ -91,43 +91,41 @@ export const ShowSaveDialog = (
 	Options?: VSCode.SaveDialogOptions,
 ): Promise<VSCode.Uri | undefined> =>
 	async function() {
-		yield* Logger.Debug(`[WindowService] Showing save dialog`;
+		await Logger.Debug(`[WindowService] Showing save dialog`;
 
 		// Serialize options using TypeConverter
 		const OptionsDTO = SaveDialogOptionToDTO(Options;
 
 		// Delegates to Mountain's native file dialog implementation via gRPC
-		const ResultURI = yield* Effect.tryPromise({
-			try: async () => {
-				const Response = await MountainClient.sendRequest(
-					"UserInterface.ShowSaveDialog",
+		let Result: VSCode.Uri | undefined;
+		try {
+			const Response = await MountainClient.sendRequest(
+				"UserInterface.ShowSaveDialog",
 
-					[OptionsDTO],
-				;
+				[OptionsDTO],
+			);
 
-				if (Response === null || Response === undefined) {
-					return undefined;
-				}
-
+			if (Response === null || Response === undefined) {
+				Result = undefined;
+			} else {
 				// Response is a file path string - convert to VSCode URI
 				const FilePath = Response as string;
 
-				const { Uri } = await import("vscode";
+				const { Uri } = await import("vscode");
 
-				return Uri.file(FilePath;
-			},
-			catch: (Error_) => {
-				throw new Error(
-					`Failed to show save dialog: ${(Error_ as Error).message}`,
-				;
-			},
-		};
+				Result = Uri.file(FilePath);
+			}
+		} catch (Error_) {
+			throw new Error(
+				`Failed to show save dialog: ${(Error_ as Error).message}`,
+			);
+		}
 
-		return ResultURI
+		return Result
 			? await(async () => {
-					const { Uri } = await import("vscode";
+					const { Uri } = await import("vscode");
 
-					return Uri.parse(ResultURI.toString();
+					return Uri.parse(Result.toString());
 				})()
 			: undefined;
 	};

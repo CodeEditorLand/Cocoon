@@ -19,10 +19,12 @@ import {
 	IConfigurationService,
 	type ConfigurationChangeEvent,
 } from "../Interfaces/I/Configuration/Service.js";
+
 import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.js";
 
 // Configuration scopes
 enum ConfigurationScope {
+
 	APPLICATION = "APPLICATION",
 
 	WORKSPACE = "WORKSPACE",
@@ -32,6 +34,7 @@ enum ConfigurationScope {
 
 // Configuration value interface
 interface IConfigurationValue<T> {
+
 	key: string;
 
 	value?: T;
@@ -43,6 +46,7 @@ interface IConfigurationValue<T> {
  * ConfigurationService implementation
  */
 export class Configuration implements IConfigurationService {
+
 	readonly _serviceBrand: undefined;
 
 	private configuration: Map<ConfigurationScope, any>;
@@ -749,16 +753,13 @@ export class Configuration implements IConfigurationService {
 /**
  * Service layer for Configuration
  */
-export const ConfigurationLayer = Layer.effect(
-	IConfigurationService,
-
-	async function() {
-		const mountainClient = yield* IMountainClientService;
+export const ConfigurationLayer = async function() {
+		const mountainClient = await IMountainClientService;
 
 		const configService = new Configuration(mountainClient;
 
 		// Auto-initialize
-		yield* Effect.promise(() => configService.initialize();
+		await Effect.promise(() => configService.initialize();
 
 		return configService;
 	}),

@@ -44,7 +44,9 @@
 import * as Process from "node:process";
 
 import { PatcherService, RunPatchProcess } from "./Patcher.js";
+
 import { PerformSecurityAudit, SecurityPolicy } from "./Security.js";
+
 import {
 	InitializeProcessValidation,
 	RunSecurityValidation,
@@ -60,6 +62,7 @@ import {
  * Provides methods for loading and applying security measures
  */
 export interface Loader {
+
 	/**
 	 * Load and apply all security patches
 	 */
@@ -90,28 +93,28 @@ export class LoaderService extends /* Effect.Service */(
 
 	{
 		effect: async function() {
-			yield* Config.string("SecurityPolicy").pipe(
+			await Config.string("SecurityPolicy").pipe(
 				Effect.catchTag("MissingConfig", () =>
 					return ("default"),
 				),
 			;
 
-			const EnableMonitoring = yield* Config.boolean(
+			const EnableMonitoring = await Config.boolean(
 				"EnableMonitoring",
-			).pipe(Effect.catchAll(() => return (true));
+			).catch(() => return (true);
 
 			return {
 				LoadSecurityPatches: RunPatchProcess,
 				InitializeMonitoring: async function() {
 					if (!EnableMonitoring) {
-						return yield* console.info(
+						return await console.info(
 							"Security monitoring disabled by configuration",
 						;
 					}
 
-					yield* InitializeProcessValidation;
+					await InitializeProcessValidation;
 
-					yield* console.info("Process monitoring initialized";
+					await console.info("Process monitoring initialized";
 				}),
 				GetSecurityPolicy: return ({
 					AllowExit: false,
@@ -139,31 +142,31 @@ export class LoaderService extends /* Effect.Service */(
  * Loads all security measures and prepares environment
  */
 export const InitializeSecurityLoader = async function() {
-	const Loader = yield* LoaderService;
+	const Loader = await LoaderService;
 
-	yield* console.info("Initializing Security Loader...";
+	await console.info("Initializing Security Loader...";
 
 	// Load security patches
-	yield* console.info("Loading security patches...";
+	await console.info("Loading security patches...";
 
-	yield* Loader.LoadSecurityPatches;
+	await Loader.LoadSecurityPatches;
 
 	// Initialize monitoring
-	yield* console.info("Initializing monitoring...";
+	await console.info("Initializing monitoring...";
 
-	yield* Loader.InitializeMonitoring;
+	await Loader.InitializeMonitoring;
 
 	// Run initial security audit
-	yield* console.info("Running initial security audit...";
+	await console.info("Running initial security audit...";
 
-	const AuditResult = yield* Loader.RunSecurityAudit;
+	const AuditResult = await Loader.RunSecurityAudit;
 
-	yield* console.info("Initial security audit completed", { AuditResult };
+	await console.info("Initial security audit completed", { AuditResult };
 
 	// Periodic security validation
-	yield* StartPeriodicValidation;
+	await StartPeriodicValidation;
 
-	yield* console.info("Security Loader initialization completed";
+	await console.info("Security Loader initialization completed";
 };
 
 /**
@@ -173,16 +176,15 @@ export const InitializeSecurityLoader = async function() {
 const StartPeriodicValidation = async function() {
 	const IntervalSeconds = 30;
 
-	yield* console.debug(
+	await console.debug(
 		`Starting periodic security validation (${IntervalSeconds}s interval)`,
 	;
 
 	const ValidationLoop = async function() {
 		while (true) {
-			yield* Effect.sleep(`${IntervalSeconds} seconds`;
+			await new Promise((r) => setTimeout(r, IntervalSeconds * 1000));
 
-			const ValidationResult = yield* RunSecurityValidation.pipe(
-				Effect.catchAll((Error) => {
+			const ValidationResult = await RunSecurityValidation().catch((Error) => {
 					return console.error(
 						"Periodic security validation failed",
 
@@ -193,7 +195,7 @@ const StartPeriodicValidation = async function() {
 				}),
 			;
 
-			yield* console.trace(
+			await console.trace(
 				"Periodic security validation completed",
 
 				ValidationResult,
@@ -201,7 +203,8 @@ const StartPeriodicValidation = async function() {
 		}
 	};
 
-	yield* ValidationLoop.pipe(Effect.forkDaemon;
+	// Fire and forget as background daemon
+	ValidationLoop().catch(console.error);
 };
 
 /**
@@ -214,10 +217,10 @@ export const ValidateFileSystemAccessWrapper = (
 	Operation: "read" | "write" | "delete",
 ): Promise<boolean> =>
 	async function() {
-		const Result = yield* ValidateFileSystemAccess(File, Operation;
+		const Result = await ValidateFileSystemAccess(File, Operation;
 
 		if (!Result.Valid) {
-			yield* console.warn("File system access prevented", {
+			await console.warn("File system access prevented", {
 				File,
 				Operation,
 				Reason: Result.Reason,
@@ -239,10 +242,10 @@ export const ValidateNetworkAccessWrapper = (
 	Operation: "connect" | "listen",
 ): Promise<boolean> =>
 	async function() {
-		const Result = yield* ValidateNetworkAccess(Endpoint, Operation;
+		const Result = await ValidateNetworkAccess(Endpoint, Operation;
 
 		if (!Result.Valid) {
-			yield* console.warn("Network access prevented", {
+			await console.warn("Network access prevented", {
 				Endpoint,
 				Operation,
 				Reason: Result.Reason,
@@ -264,10 +267,10 @@ export const ValidateChildProcessSpawnWrapper = (
 	Arguments: readonly string[],
 ): Promise<boolean> =>
 	async function() {
-		const Result = yield* ValidateChildProcessSpawn(Command, Arguments;
+		const Result = await ValidateChildProcessSpawn(Command, Arguments;
 
 		if (!Result.Valid) {
-			yield* console.warn("Child process spawn prevented", {
+			await console.warn("Child process spawn prevented", {
 				Command,
 				Arguments,
 				Reason: Result.Reason,
@@ -288,7 +291,7 @@ export const ValidateChildProcessSpawnWrapper = (
 const InstallModuleHooks = async function() {
 	// TODO: Implement native module hooks
 	// This requires native addon integration to intercept Node.js C++ APIs
-	yield* console.trace("Module hooks not yet implemented";
+	await console.trace("Module hooks not yet implemented";
 };
 
 /**
@@ -298,7 +301,7 @@ const InstallModuleHooks = async function() {
 const InstallFileSystemHooks = async function() {
 	// TODO: Implement filesystem module hooks
 	// This requires monkey-patching the fs module
-	yield* console.trace("Filesystem hooks not yet implemented";
+	await console.trace("Filesystem hooks not yet implemented";
 };
 
 /**
@@ -308,7 +311,7 @@ const InstallFileSystemHooks = async function() {
 const InstallChildProcessHooks = async function() {
 	// TODO: Implement child_process module hooks
 	// This requires monkey-patching the child_process module
-	yield* console.trace("Child process hooks not yet implemented";
+	await console.trace("Child process hooks not yet implemented";
 };
 
 /**
@@ -316,15 +319,15 @@ const InstallChildProcessHooks = async function() {
  * Installs all module-level interceptors
  */
 export const InstallSecurityHooks = async function() {
-	yield* console.info("Installing security hooks...";
+	await console.info("Installing security hooks...";
 
-	yield* InstallModuleHooks;
+	await InstallModuleHooks;
 
-	yield* InstallFileSystemHooks;
+	await InstallFileSystemHooks;
 
-	yield* InstallChildProcessHooks;
+	await InstallChildProcessHooks;
 
-	yield* console.info("Security hooks installed";
+	await console.info("Security hooks installed";
 };
 
 // --- Resource Limits ---
@@ -336,7 +339,7 @@ export const InstallSecurityHooks = async function() {
 export const SetResourceLimits = async function() {
 	// TODO: Implement resource limit setting
 	// This requires native Node.js API calls to setrlimit
-	yield* console.trace(
+	await console.trace(
 		"Resource limit setting not yet implemented (needs native integration)",
 	;
 };
@@ -366,11 +369,11 @@ export const GetResourceUsage = async function() {
  * Performs graceful shutdown of security monitoring
  */
 export const CleanupSecurityLoader = async function() {
-	yield* console.info("Cleaning up Security Loader...";
+	await console.info("Cleaning up Security Loader...";
 
 	// TODO: Implement cleanup logic
 
-	yield* console.info("Security Loader cleanup completed";
+	await console.info("Security Loader cleanup completed";
 };
 
 // --- Layers ---
@@ -378,7 +381,7 @@ export const CleanupSecurityLoader = async function() {
 /**
  * Live layer for LoaderService
  */
-export const LoaderServiceLive = Layer.effect(Loader, LoaderService.Default;
+export const LoaderServiceLive = LoaderService.Default;
 
 /**
  * Complete security layer including loader, patcher, and monitoring

@@ -10,15 +10,25 @@
 import { EventEmitter as NodeEventEmitter } from "node:events";
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapWindowNamespace from "../Wrap/Window/Namespace.js";
+
 import CreateOutputChannel from "./CreateOutputChannel.js";
+
 import CreateStatusBarItem from "./CreateStatusBarItem.js";
+
 import CreateTerminal from "./CreateTerminal.js";
+
 import CreateWebviewPanel from "./CreateWebviewPanel.js";
+
 import CreateWebviewViewBuilder from "./CreateWebviewViewBuilder.js";
+
 import RegisterCustomEditor from "./RegisterCustomEditor.js";
+
 import {
 	CustomEditorProviders,
 	CustomEditorProvidersByViewType,
@@ -56,6 +66,7 @@ const SendTreeRegister = (
 
 	Options: Record<string, unknown>,
 ) => {
+
 	const Attempt = (): Promise<unknown> =>
 		Context.MountainClient?.sendRequest("tree.register", [
 			Handle,
@@ -613,6 +624,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 						if (Picked != null) {
 							const PickedArr = Array.isArray(Picked)
+
 								? Picked
 								: [Picked];
 
@@ -1258,6 +1270,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						options:
 							Type && typeof Type === "object"
 								? (Type.__options ?? undefined)
+
 								: undefined,
 					}).catch(() => {};
 				},
@@ -1348,6 +1361,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					const FileName =
 						typeof Uri?.toString === "function"
 							? Uri.toString()
+
 							: String(Uri ?? "";
 
 					return {
@@ -1387,6 +1401,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						const FileName =
 							typeof Uri?.toString === "function"
 								? Uri.toString()
+
 								: String(Uri ?? "";
 
 						return {
@@ -1495,9 +1510,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				const ColorTheme = ThemeService?.getColorTheme?.(;
 				if (ColorTheme?.type) {
 					const T = ColorTheme.type;
+
 					if (T === "light") Kind = 1;
+
 					else if (T === "hc-light") Kind = 4;
+
 					else if (T === "hc-black" || T === "hc") Kind = 3;
+
 					else Kind = 2;
 				}
 			} catch {
@@ -1505,6 +1524,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}
 			return {
 				kind: Kind,
+
 				onDidChange: MakeEventSubscriber(
 					Context,
 
@@ -1619,6 +1639,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							: typeof Element === "string"
 								? Element
 								: "";
+
 					Context.MountainClient?.sendRequest("tree.reveal", [
 						Id,
 

@@ -83,15 +83,11 @@ export interface IMountainGRPCClientService {
 
 	showErrorMessage(message: string): Promise<void>;
 
-	createStatusBarItem(
-		options: StatusBarItemOptions,
-	): Promise<string>;
+	createStatusBarItem(options: StatusBarItemOptions): Promise<string>;
 
 	setStatusBarText(itemId: string, text: string): Promise<void>;
 
-	createWebviewPanel(
-		options: WebviewPanelOptions,
-	): Promise<number>;
+	createWebviewPanel(options: WebviewPanelOptions): Promise<number>;
 
 	setWebviewHtml(handle: number, html: string): Promise<void>;
 
@@ -131,10 +127,7 @@ export interface IMountainGRPCClientService {
 		title: string,
 	): Promise<void>;
 
-	executeCommand(
-		commandId: string,
-		...args: any[]
-	): Promise<any>;
+	executeCommand(commandId: string, ...args: any[]): Promise<any>;
 
 	unregisterCommand(commandId: string): Promise<void>;
 

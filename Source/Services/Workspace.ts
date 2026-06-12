@@ -64,6 +64,7 @@ import { MountainGRPCClientService } from "./Mountain/gRPC/Client.js";
 
 // Temporary placeholder types - TODO: Replace with proper interfaces
 interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -85,6 +86,7 @@ interface Logger {
 }
 
 interface ConfigurationService {
+
 	readonly getValue: <T>(key: string, scope?: number, defaultValue?: T) => T;
 
 	readonly updateValue: <T>(
@@ -105,6 +107,7 @@ interface ConfigurationService {
  * Specification: src/vs/workbench/api/common/extHostWorkspace.ts (ExtHostWorkspaceShape)
  */
 export interface Workspace {
+
 	readonly name: string | undefined;
 
 	readonly workspaceFile: VSCode.Uri | undefined;
@@ -175,6 +178,7 @@ export interface Workspace {
  * ARCHITECTURE-PATTERN: src/vs/workbench/services/extensions/common/workspace.ts
  */
 interface InternalWorkspace {
+
 	readonly ID: string;
 
 	readonly Name: string;
@@ -215,11 +219,11 @@ export class WorkspaceService extends /* Effect.Service */(
 	{
 		effect: async function() {
 			// Resolve service dependencies
-			const Configuration = yield* Symbol<ConfigurationService>(
+			const Configuration = await Symbol<ConfigurationService>(
 				"Service/Configuration",
 			;
 
-			const Logger = yield* Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger";
 
 			/**
 			 * Parse a URI string into a `vscode.Uri`-shaped object. The
@@ -363,7 +367,7 @@ export class WorkspaceService extends /* Effect.Service */(
 
 					_internalWorkspace = NewWorkspace;
 
-					yield* Logger.Info(
+					await Logger.Info(
 						`[WorkspaceService] Workspace updated: ${NewWorkspace.Name} with ${Folders.length} folders`,
 					;
 
@@ -428,7 +432,7 @@ export class WorkspaceService extends /* Effect.Service */(
 					_activeTextEditor = NewActiveEditor;
 
 					if (OldActiveEditor !== NewActiveEditor) {
-						yield* Logger.Debug(
+						await Logger.Debug(
 							`[WorkspaceService] Active text editor changed: ${NewActiveEditor?.document.uri.toString() ?? "none"}`,
 						;
 
@@ -500,7 +504,7 @@ export class WorkspaceService extends /* Effect.Service */(
 
 					// Implement actual gRPC call to Mountain
 					// ARCHITECTURE-PATTERN: Mountain needs to implement file search
-					const mountainClient = yield* MountainGRPCClientService;
+					const mountainClient = await MountainGRPCClientService;
 
 					const pattern =
 						typeof include === "string" ? include : include.pattern;
@@ -511,7 +515,7 @@ export class WorkspaceService extends /* Effect.Service */(
 							: exclude.pattern
 						: undefined;
 
-					const files = yield* mountainClient.findFiles(
+					const files = await mountainClient.findFiles(
 						pattern,
 
 						excludePatterns,
@@ -544,7 +548,7 @@ export class WorkspaceService extends /* Effect.Service */(
 					Logger.Debug(`[WorkspaceService] Finding text in files`;
 
 					// Implement actual gRPC call to Mountain
-					const mountainClient = yield* MountainGRPCClientService;
+					const mountainClient = await MountainGRPCClientService;
 
 					const pattern = query.pattern;
 
@@ -572,7 +576,7 @@ export class WorkspaceService extends /* Effect.Service */(
 								]
 						: undefined;
 
-					const matches = yield* mountainClient.findTextInFiles(
+					const matches = await mountainClient.findTextInFiles(
 						pattern,
 
 						includePatterns,
@@ -645,10 +649,10 @@ export class WorkspaceService extends /* Effect.Service */(
 					;
 
 					// Implement actual gRPC call to Mountain
-					const mountainClient = yield* MountainGRPCClientService;
+					const mountainClient = await MountainGRPCClientService;
 
 					// Open document in Mountain
-					yield* mountainClient.openDocument(Uri.toString();
+					await mountainClient.openDocument(Uri.toString();
 
 					// Fetch actual file content via fs.readFile to build a real TextDocument
 					let DocumentContent = Content ?? "";
@@ -656,7 +660,7 @@ export class WorkspaceService extends /* Effect.Service */(
 					let DocumentLanguage = Language ?? "plaintext";
 
 					if (Uri.scheme === "file") {
-						const FileBytes = yield* Effect.either(
+						const FileBytes = await Effect.either(
 							mountainClient.readFile(Uri.toString()),
 						;
 
@@ -739,6 +743,7 @@ export class WorkspaceService extends /* Effect.Service */(
 								const Len = DocumentLines[I]!.length + 1;
 
 								if (Remaining < Len)
+
 									return { line: I, character: Remaining };
 
 								Remaining -= Len;
@@ -771,9 +776,9 @@ export class WorkspaceService extends /* Effect.Service */(
 					;
 
 					// Implement actual gRPC call to Mountain
-					const mountainClient = yield* MountainGRPCClientService;
+					const mountainClient = await MountainGRPCClientService;
 
-					yield* mountainClient.saveAll(includeUntitled ?? false;
+					await mountainClient.saveAll(includeUntitled ?? false;
 
 					return true;
 				};
@@ -796,7 +801,7 @@ export class WorkspaceService extends /* Effect.Service */(
 					// TODO: Use proper TypeConverter/WorkspaceEdit.ts for serialization
 					// For now, apply edits per document
 
-					const mountainClient = yield* MountainGRPCClientService;
+					const mountainClient = await MountainGRPCClientService;
 
 					// Get all document edits
 					for (const entry of edit.entries() ?? []) {
@@ -816,7 +821,7 @@ export class WorkspaceService extends /* Effect.Service */(
 							newText: e.newText,
 						});
 
-						yield* mountainClient.applyEdit(
+						await mountainClient.applyEdit(
 							uri.toString(),
 
 							textEdits,

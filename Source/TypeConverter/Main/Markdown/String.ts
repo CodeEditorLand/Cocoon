@@ -7,7 +7,9 @@ import type {
 	IMarkdownString,
 	MarkdownStringTrustedOptions,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/htmlContent.js";
+
 import type { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+
 import type { Uri, MarkdownString as VSCodeMarkdownString } from "vscode";
 
 import { MarkdownString } from "../../../Platform/VSCode/Type.js";

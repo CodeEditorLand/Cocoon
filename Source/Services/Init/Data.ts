@@ -31,10 +31,15 @@ const ResolvedCommit = process.env["ProductCommit"] ?? "dev";
 
 export const InitDataLive = {
 	commit: ResolvedCommit,
+
 	version: ResolvedVersion,
+
 	parentPid: process.pid,
+
 	extensions: [],
+
 	workspace: null,
+
 	environment: {},
 };
 

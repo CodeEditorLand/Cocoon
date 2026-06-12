@@ -37,6 +37,7 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import FiddeeRoot from "../../Platform/FiddeeRoot.js";
 
 /**
@@ -44,6 +45,7 @@ import FiddeeRoot from "../../Platform/FiddeeRoot.js";
  * @description Logger interface for service logging
  */
 export interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -69,6 +71,7 @@ export interface Logger {
  * @description Configuration service interface
  */
 export interface Configuration {
+
 	readonly GetValue: <T>(key: string, defaultValue?: T) => T;
 
 	readonly UpdateValue: <T>(key: string, value: T) => Promise<void>;
@@ -83,6 +86,7 @@ export interface Configuration {
  * Specification: src/vs/workbench/api/common/extHostMemento.ts
  */
 export class Memento {
+
 	private readonly Storage: Map<string, unknown>;
 
 	private readonly ExtensionId: string;
@@ -191,7 +195,7 @@ export class Memento {
 	 * Clear all values in memento storage
 	 */
 	clear(): void {
-		this.Storage.clear(); // lean: was Ref.set(new Map())
+		this.Storage.clear(); // lean: was (void)(new Map())
 
 		// Remove all namespaced keys from Mountain's storage.
 		if (this._MountainClient) {
@@ -466,11 +470,11 @@ export class ExtensionContextService extends /* Effect.Service */(
 	{
 		effect: async function() {
 			// Resolve service dependencies
-			const MountainClient = yield* IMountainClientService;
+			const MountainClient = await IMountainClientService;
 
-			yield* Symbol<Configuration>("Service/Configuration";
+			await Symbol<Configuration>("Service/Configuration";
 
-			const Logger = yield* Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger";
 
 			// Global subscription tracking for all extensions
 			const GlobalSubscriptionsRef = { current: new Map<string, Set<VSCode.Disposable>>(), };
@@ -559,7 +563,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 					// Create subscription list for this extension
 					const Subscriptions = new Set<VSCode.Disposable>(;
 
-					yield* GlobalSubscriptionsRef.current = GlobalMap(GlobalSubscriptionsRef.current) => {
+					await GlobalSubscriptionsRef.current = GlobalMap(GlobalSubscriptionsRef.current) => {
 						const NewMap = new Map(GlobalMap;
 
 						if (!NewMap.has(ExtensionId)) {
@@ -586,6 +590,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 					// Build extension context object
 					const ExtensionContext: VSCode.ExtensionContext = {
 						subscriptions: [] as VSCode.Disposable[], // VSCode's array-based subscriptions
+
 						workspaceState: {
 							get: (key, defaultValue) =>
 								WorkspaceState.get(key, defaultValue),
@@ -628,8 +633,8 @@ export class ExtensionContextService extends /* Effect.Service */(
 					// Check for previous version and run migration if needed
 					// const previousVersion = GlobalState.get('version';
 					// if (previousVersion !== ExtensionDescription.version) {
-					//     yield* runMigration(ExtensionId, previousVersion, ExtensionDescription.version;
-					//     yield* Effect.promise(() => GlobalState.update('version', ExtensionDescription.version);
+					//     await runMigration(ExtensionId, previousVersion, ExtensionDescription.version;
+					//     await Effect.promise(() => GlobalState.update('version', ExtensionDescription.version);
 					// }
 
 					Logger.Debug(
@@ -646,7 +651,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 			 */
 			void ((ExtensionId: string): Promise<void> =>
 				async function() {
-					const GlobalSubscriptions = yield* Ref.get(
+					const GlobalSubscriptions = await (
 						GlobalSubscriptionsRef,
 					;
 
@@ -663,7 +668,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 						}
 
 						// Clear from registry
-						yield* Ref.update(
+						await (void)(
 							GlobalSubscriptionsRef,
 
 							(GlobalMap) => {

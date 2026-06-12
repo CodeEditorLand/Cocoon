@@ -22,11 +22,15 @@
  */
 
 import { promises as FsPromises } from "node:fs";
+
 import { dirname as PathDirname } from "node:path";
 
 import type { HandlerContext } from "../../../../../Handler/Context.js";
+
 import { ToUri as StockToUri } from "../../../../Stock/Lift.js";
+
 import { Call } from "../../Helpers.js";
+
 import {
 	ExtractFsPath,
 	ExtractScheme,
@@ -57,6 +61,7 @@ import {
  *      Mountain will reject "[object Object]" with a clear error).
  */
 const UriToString = (Value: unknown): string => {
+
 	if (Value == null) return "";
 
 	if (typeof Value === "string") {
@@ -200,8 +205,10 @@ const MetadataToStat = (Metadata: {
 	ctimeMs: number;
 }): StatShape => ({
 	type: Metadata.isSymbolicLink()
+
 		? FileType.SymbolicLink
 		: Metadata.isDirectory()
+
 			? FileType.Directory
 			: FileType.File,
 
@@ -375,8 +382,10 @@ export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 
 				return Entries.map((Entry) => {
 					const Type = Entry.isSymbolicLink()
+
 						? FileType.SymbolicLink
 						: Entry.isDirectory()
+
 							? FileType.Directory
 							: FileType.File;
 

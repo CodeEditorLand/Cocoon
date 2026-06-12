@@ -42,6 +42,7 @@
  */
 
 import * as Path from "node:path";
+
 import * as URL from "node:url";
 
 // --- Security Policy Definition ---
@@ -51,6 +52,7 @@ import * as URL from "node:url";
  * Defines restrictions and resource limits
  */
 export interface SecurityPolicy {
+
 	/**
 	 * Whether this process is allowed to exit gracefully
 	 */
@@ -112,6 +114,7 @@ export interface SecurityPolicy {
  * Extensions run in a secure sandbox environment
  */
 export const DefaultSecurityPolicy: SecurityPolicy = {
+
 	AllowExit: false,
 
 	MaxMemoryMB: 512,
@@ -140,6 +143,7 @@ export const DefaultSecurityPolicy: SecurityPolicy = {
  * Less restrictive for trusted code
  */
 export const TrustedSecurityPolicy: SecurityPolicy = {
+
 	AllowExit: false,
 
 	MaxMemoryMB: 1024,
@@ -171,6 +175,7 @@ export const TrustedSecurityPolicy: SecurityPolicy = {
 export class MemoryLimitExceededError extends Data.TaggedError(
 	"MemoryLimitExceededError",
 )<{
+
 	readonly LimitMB: number;
 
 	readonly AttemptedMB: number;
@@ -184,6 +189,7 @@ export class MemoryLimitExceededError extends Data.TaggedError(
 export class FileAccessDeniedError extends Data.TaggedError(
 	"FileAccessDeniedError",
 )<{
+
 	readonly Path: string;
 
 	readonly Operation: "read" | "write" | "delete";
@@ -197,6 +203,7 @@ export class FileAccessDeniedError extends Data.TaggedError(
 export class NetworkAccessDeniedError extends Data.TaggedError(
 	"NetworkAccessDeniedError",
 )<{
+
 	readonly Endpoint: string;
 
 	readonly AttemptedOperation: "connect" | "listen";
@@ -210,6 +217,7 @@ export class NetworkAccessDeniedError extends Data.TaggedError(
 export class ChildProcessDeniedError extends Data.TaggedError(
 	"ChildProcessDeniedError",
 )<{
+
 	readonly Command: string;
 
 	readonly Arguments: readonly string[];
@@ -223,6 +231,7 @@ export class ChildProcessDeniedError extends Data.TaggedError(
 export class CpuLimitExceededError extends Data.TaggedError(
 	"CpuLimitExceededError",
 )<{
+
 	readonly LimitPercent: number;
 
 	readonly CurrentUsage: number;
@@ -243,6 +252,7 @@ export const ValidatePathAccess = (
 
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
+
 	// Normalize the path
 	const NormalizedPath = Path.normalize(PathString;
 
@@ -405,7 +415,7 @@ export const EnforceMemoryLimit = async function() {
 	const Policy = DefaultSecurityPolicy;
 
 	if (Policy.MaxMemoryMB <= 0) {
-		return yield* console.trace("No memory limit configured";
+		return await console.trace("No memory limit configured";
 	}
 
 	// Get current memory usage
@@ -414,7 +424,7 @@ export const EnforceMemoryLimit = async function() {
 	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024;
 
 	if (UsedMemoryMB > Policy.MaxMemoryMB) {
-		yield* console.error(
+		await console.error(
 			`Memory limit exceeded: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`,
 		;
 
@@ -426,7 +436,7 @@ export const EnforceMemoryLimit = async function() {
 		;
 	}
 
-	yield* console.trace(
+	await console.trace(
 		`Memory usage within limits: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`,
 	;
 };
@@ -439,12 +449,12 @@ export const EnforceCpuLimit = async function() {
 	const Policy = DefaultSecurityPolicy;
 
 	if (Policy.MaxCpuPercent <= 0) {
-		return yield* console.trace("No CPU limit configured";
+		return await console.trace("No CPU limit configured";
 	}
 
 	// TODO: Implement actual CPU monitoring
 	// This would require a native module to get accurate CPU usage
-	yield* console.debug(
+	await console.debug(
 		`CPU limit configured: ${Policy.MaxCpuPercent}% (monitoring not yet implemented)`,
 	;
 };
@@ -474,7 +484,7 @@ export const PerformSecurityAudit = async function() {
 		Timestamp: Date.now(),
 	};
 
-	yield* console.info("Security audit completed", { Report };
+	await console.info("Security audit completed", { Report };
 
 	return Report;
 };

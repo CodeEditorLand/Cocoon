@@ -38,6 +38,7 @@ const FindMatchingBrace = (
 
 	Close: string,
 ): number => {
+
 	let Depth = 1;
 
 	for (let I = Start + 1; I < Input.length; I++) {
@@ -50,6 +51,7 @@ const FindMatchingBrace = (
 		}
 
 		if (Character === Open) Depth++;
+
 		else if (Character === Close) {
 			Depth--;
 
@@ -65,6 +67,7 @@ const FindMatchingBrace = (
  * nested `{...}` and `(...)`. `"a,{b,c},d"` → `["a", "{b,c}", "d"]`.
  */
 const SplitTopLevelCommas = (Body: string): string[] => {
+
 	const Parts: string[] = [];
 
 	let Depth = 0;
@@ -81,7 +84,9 @@ const SplitTopLevelCommas = (Body: string): string[] => {
 		}
 
 		if (Character === "{" || Character === "(") Depth++;
+
 		else if (Character === "}" || Character === ")") Depth--;
+
 		else if (Character === "," && Depth === 0) {
 			Parts.push(Body.slice(Start, I);
 
@@ -131,7 +136,9 @@ const ExpandBraces = (Input: string): string[] => {
 		if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
 			const Width =
 				RangeMatch[1]!.startsWith("0") || RangeMatch[2]!.startsWith("0")
+
 					? Math.max(RangeMatch[1]!.length, RangeMatch[2]!.length)
+
 					: 0;
 
 			const Direction = Start <= End ? 1 : -1;

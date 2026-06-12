@@ -698,11 +698,13 @@ export const WindowStateConvertToDTO = (
 	async function() {
 		const dto: WindowStateDTO = {
 			IsFocused: state.isFocused,
+
 			IsFullScreen: state.isFullScreen,
+
 			ZoomLevel: state.zoomLevel,
 		};
 
-		return yield* ValidateWindowStateDTO(dto;
+		return await ValidateWindowStateDTO(dto;
 	};
 
 /**
@@ -723,7 +725,7 @@ export const DocumentStateConvertToDTO = (
 			VersionIdentifier: state.versionIdentifier,
 		};
 
-		return yield* ValidateDocumentStateDTO(dto;
+		return await ValidateDocumentStateDTO(dto;
 	};
 
 /**
@@ -748,7 +750,7 @@ export const WebviewStateConvertToDTO = (
 			IsVisible: state.isVisible,
 		};
 
-		return yield* ValidateWebviewStateDTO(dto;
+		return await ValidateWebviewStateDTO(dto;
 	};
 
 /**
@@ -769,7 +771,7 @@ export const TerminalStateConvertToDTO = (
 			IsPTY: state.isPTY,
 		};
 
-		return yield* ValidateTerminalStateDTO(dto;
+		return await ValidateTerminalStateDTO(dto;
 	};
 
 // ============================================================================
@@ -783,7 +785,7 @@ export const WindowStateConvertFromDTO = (
 	dto: WindowStateDTO,
 ): Promise<WindowState> =>
 	async function() {
-		const validated = yield* ValidateWindowStateDTO(dto;
+		const validated = await ValidateWindowStateDTO(dto;
 
 		return {
 			isFocused: validated.IsFocused,
@@ -799,7 +801,7 @@ export const DocumentStateConvertFromDTO = (
 	dto: DocumentStateDTO,
 ): Promise<DocumentState> =>
 	async function() {
-		const validated = yield* ValidateDocumentStateDTO(dto;
+		const validated = await ValidateDocumentStateDTO(dto;
 
 		// Parse URI using the real VS Code URI class from @codeeditorland/output.
 		const uri = URI.parse(validated.URI) as unknown as Uri;
@@ -826,7 +828,7 @@ export const WebviewStateConvertFromDTO = (
 	dto: WebviewStateDTO,
 ): Promise<WebviewState> =>
 	async function() {
-		const validated = yield* ValidateWebviewStateDTO(dto;
+		const validated = await ValidateWebviewStateDTO(dto;
 
 		return {
 			handle: validated.Handle,
@@ -851,7 +853,7 @@ export const TerminalStateConvertFromDTO = (
 	dto: TerminalStateDTO,
 ): Promise<TerminalState> =>
 	async function() {
-		const validated = yield* ValidateTerminalStateDTO(dto;
+		const validated = await ValidateTerminalStateDTO(dto;
 
 		return {
 			identifier: validated.Identifier,
@@ -893,22 +895,22 @@ export const ValidateDTO = <T extends Record<string, unknown>>(
 
 		switch (typename) {
 			case "WindowStateDTO":
-				return yield* ValidateWindowStateDTO(
+				return await ValidateWindowStateDTO(
 					dto as unknown as WindowStateDTO,
 				) as unknown as Promise<T>;
 
 			case "DocumentStateDTO":
-				return yield* ValidateDocumentStateDTO(
+				return await ValidateDocumentStateDTO(
 					dto as unknown as DocumentStateDTO,
 				) as unknown as Promise<T>;
 
 			case "WebviewStateDTO":
-				return yield* ValidateWebviewStateDTO(
+				return await ValidateWebviewStateDTO(
 					dto as unknown as WebviewStateDTO,
 				) as unknown as Promise<T>;
 
 			case "TerminalStateDTO":
-				return yield* ValidateTerminalStateDTO(
+				return await ValidateTerminalStateDTO(
 					dto as unknown as TerminalStateDTO,
 				) as unknown as Promise<T>;
 

@@ -15,13 +15,20 @@
  */
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import ActivateExtension, {
+
 	ActiveExtensionContexts,
+
 	DisposeExtensionContext,
+
 	IsExtensionActivating,
+
 	ResetStoragePrime,
 } from "./ActivateExtension.js";
+
 import EnsureVscodeAPIRegistered from "./EnsureVscodeAPI.js";
 
 /**
@@ -49,6 +56,7 @@ const HandleInitializeExtensionHost = async (
 
 	Parameters: any,
 ): Promise<string> => {
+
 	const Extensions: any[] = Parameters?.extensions ?? [];
 
 	CocoonDevLog(
@@ -295,6 +303,7 @@ const HandleActivateByEvent = async (
 			InProgress.has(ExtId) ||
 			IsExtensionActivating(ExtId)
 		)
+
 			return;
 
 		// Depth guard: max 20 levels of transitive deps before bail-out.

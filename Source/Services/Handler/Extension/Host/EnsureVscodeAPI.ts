@@ -12,13 +12,17 @@
  */
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import InstallVscodeModuleHooks from "./VscodeModuleHooks.js";
 
 const EnsureVscodeAPIRegistered = async (
 	Context: HandlerContext,
 ): Promise<void> => {
+
 	// Install hooks *before* anything else - idempotent, runs once.
 	await InstallVscodeModuleHooks(;
 
@@ -67,6 +71,7 @@ const EnsureVscodeAPIRegistered = async (
 				const ReviveInput =
 					typeof WithUri.uri === "string"
 						? URI.parse(WithUri.uri)
+
 						: URI.revive(WithUri.uri as any;
 
 				return { ...(Base as object), uri: ReviveInput };
@@ -357,27 +362,53 @@ const EnsureVscodeAPIRegistered = async (
 			},
 
 			notebooks: {
-				createNotebookController: () => ({
-					id: "",
-					notebookType: "",
-					supportedLanguages: [] as string[],
-					label: "",
-					supportsExecutionOrder: false,
-					executeHandler: () => {},
-					dispose: () => {},
-					createNotebookCellExecution: () => ({
-						start: () => {},
-						end: () => {},
-						replaceOutput: async () => {},
-						appendOutput: async () => {},
-						clearOutput: async () => {},
-						replaceOutputItems: async () => {},
-						appendOutputItems: async () => {},
-						executionOrder: undefined,
-					}),
-					onDidChangeSelectedNotebooks: () => ({ dispose: () => {} }),
-					updateNotebookAffinity: () => {},
-				}),
+				createNotebookController: (
+					id: string,
+
+					notebookType: string,
+
+					label: string,
+				) => {
+					// Stub: notebook controllers are not yet wired to the workbench.
+					// The returned disposable cleans up on deactivation. Extensions
+					// that call `vscode.notebooks.createNotebookController(...)` and
+					// set `executeHandler` will receive a controller object whose
+					// executeHandler callback is stored but never invoked — real
+					// execution requires wiring through the Jupyter kernel pipeline
+					// in Cocoon → Mountain → Sky.
+					return {
+						id,
+
+						notebookType,
+
+						supportedLanguages: [] as string[],
+
+						label,
+
+						supportsExecutionOrder: false,
+
+						executeHandler: () => {},
+
+						dispose: () => {},
+
+						createNotebookCellExecution: () => ({
+							start: () => {},
+							end: () => {},
+							replaceOutput: async () => {},
+							appendOutput: async () => {},
+							clearOutput: async () => {},
+							replaceOutputItems: async () => {},
+							appendOutputItems: async () => {},
+							executionOrder: undefined,
+						}),
+
+						onDidChangeSelectedNotebooks: () => ({
+							dispose: () => {},
+						}),
+
+						updateNotebookAffinity: () => {},
+					};
+				},
 
 				registerNotebookCellStatusBarItemProvider: () => ({
 					dispose: () => {},

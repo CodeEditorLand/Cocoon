@@ -8,6 +8,7 @@
  */
 
 export interface IGRPCServerService {
+
 	readonly _serviceBrand: undefined;
 
 	/**

@@ -11,6 +11,7 @@ import { CocoonDevLog } from "../../Dev/Log.js";
 
 // Circuit breaker state
 export interface CircuitBreakerState {
+
 	serviceName: string;
 
 	state: "CLOSED" | "OPEN" | "HALF_OPEN";
@@ -28,6 +29,7 @@ export interface CircuitBreakerState {
 
 // Error handling configuration
 export interface ErrorHandlingConfig {
+
 	maxRetries: number;
 
 	retryDelay: number;
@@ -41,6 +43,7 @@ export interface ErrorHandlingConfig {
 
 // Error handling result
 export interface ErrorHandlingResult<T> {
+
 	success: boolean;
 
 	result?: T;
@@ -58,6 +61,7 @@ export interface ErrorHandlingResult<T> {
  * ErrorHandlingService implementation
  */
 export class ErrorHandlingService {
+
 	public readonly _serviceBrand: undefined;
 
 	private circuitBreakers: Map<string, CircuitBreakerState> = new Map(;
@@ -719,17 +723,9 @@ export class ErrorHandlingService {
 /**
  * Service layer for ErrorHandlingService
  */
-export const ErrorHandlingServiceLayer = Layer.effect(
-	"ErrorHandlingService",
-
-	new ErrorHandlingService(),
-;
+export const ErrorHandlingServiceLayer = new ErrorHandlingService();
 
 /**
  * Live implementation
  */
-export const ErrorHandlingServiceLive = Layer.effect(
-	"ErrorHandlingService",
-
-	new ErrorHandlingService(),
-;
+export const ErrorHandlingServiceLive = new ErrorHandlingService();

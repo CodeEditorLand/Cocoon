@@ -35,14 +35,18 @@
  */
 
 import * as EnvironmentModule from "./Environment.js";
+
 import * as OSModule from "./OS.js";
+
 import * as ProcessModule from "./Process.js";
+
 import * as TypeConverterModule from "./Type/Converter.js";
 
 /**
  * Platform Service interface
  */
 export interface IPlatformService {
+
 	readonly _serviceBrand: undefined;
 
 	// Initialization
@@ -74,6 +78,7 @@ export interface IPlatformService {
 
 	getEnvironmentInfo(): Promise<
 		EnvironmentModule.EnvironmentInfo,
+
 		Error
 	>;
 
@@ -102,6 +107,7 @@ export interface IPlatformService {
 		options?: ProcessModule.ProcessSpawnOptions,
 	): Promise<
 		{ stdout: string; stderr: string; exitCode: number | null },
+
 		Error
 	>;
 
@@ -141,6 +147,7 @@ export interface IPlatformService {
  * Platform Service implementation
  */
 export class PlatformService implements IPlatformService {
+
 	readonly _serviceBrand: undefined;
 
 	private startTime: number = 0;
@@ -357,9 +364,11 @@ export class PlatformService implements IPlatformService {
 
 		options: ProcessModule.ProcessSpawnOptions,
 	): Promise<ProcessModule.ProcessInfo | null> {
-		return Effect.tryPromise({
-			try: () => ProcessModule.SpawnProcess(command, args, options),
-			catch: (error) => new Error(`Failed to spawn process: ${error}`),
+		return (async () => {
+	try {
+		return await ProcessModule.SpawnProcess(command, args, options);
+	} catch (_e) {
+		return new Error(`Failed to spawn process: ${error}`),
 		};
 	}
 
@@ -371,22 +380,19 @@ export class PlatformService implements IPlatformService {
 
 		args: string[],
 
-		options?: ProcessModule.ProcessSpawnOptions,
-	): Promise<
+		options?: ProcessModule.ProcessSpawnOptions;
+	}
+})(): Promise<
 		{ stdout: string; stderr: string; exitCode: number | null },
 		Error
 	> {
-		return Effect.tryPromise({
-			try: () =>
-				ProcessModule.ExecuteCommand(command, args, options || {}),
-			catch: (error) => new Error(`Failed to execute command: ${error}`),
-		};
+		return (async () => {
+	try {
+		return await ProcessModule.ExecuteCommand(command, args, options || {});
+	} catch (_e) {
+		throw _e;
 	}
-
-	/**
-	 * Kill process
-	 */
-	killProcess(pid: number): Promise<boolean> {
+})(): Promise<boolean> {
 		return ProcessModule.KillProcess(pid;
 	}
 
@@ -517,10 +523,7 @@ export const LivePlatformService = PlatformServiceLayer;
 /**
  * Test platform service layer (for testing)
  */
-export const TestPlatformService = Layer.succeed(
-	PlatformServiceTag,
-
-	new PlatformService(),
+export const TestPlatformService = new PlatformService(),
 ;
 
 /**
@@ -532,7 +535,9 @@ export const TestPlatformService = Layer.succeed(
  */
 export function DetectPlatform(): Promise<
 	OSModule.PlatformNumber,
+
 	never,
+
 	IPlatformService
 > {
 	return Effect.flatMap(
@@ -668,7 +673,7 @@ export function InitializePlatformService(): Promise<void> {
 		const service = new PlatformService(;
 
 		return (service.initialize();
-	}).pipe(Effect.flatMap(() => Effect.void);
+	}).then(() => undefined);
 }
 
 /**

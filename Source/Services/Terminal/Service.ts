@@ -18,11 +18,13 @@
  */
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { CocoonDevLog } from "../Dev/Log.js";
 
 // --- Interfaces ---
 
 export interface ITerminalService {
+
 	createTerminal(
 		name: string,
 
@@ -104,11 +106,8 @@ export class TerminalService implements ITerminalService {
 /**
  * Service Layer
  */
-export const TerminalServiceLayer = Layer.effect(
-	ITerminalService,
-
-	async function() {
-		const mountainClient = yield* IMountainClientService;
+export const TerminalServiceLayer = async function() {
+		const mountainClient = await IMountainClientService;
 
 		return new TerminalService(mountainClient;
 	}),

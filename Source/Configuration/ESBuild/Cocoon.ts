@@ -9,8 +9,7 @@ export { default as TargetConfig } from "./Config/Target/Config.js";
 export { default as CompileConfig } from "./Config/Compile/Config.js";
 
 /**
- * ESBuild config for Cocoon. Handles TypeScript generators with yield*
- * in ESM environments. This is the canonical external list for Cocoon's
+ * ESBuild config for Cocoon. Handles TypeScript generators with await * in ESM environments. This is the canonical external list for Cocoon's
  * build pipeline. Actual builds use TargetConfig.ts and CompileConfig.ts
  * which inherit this external array.
  */

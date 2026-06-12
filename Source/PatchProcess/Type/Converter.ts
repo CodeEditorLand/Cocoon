@@ -44,6 +44,7 @@
 import * as Process from "node:process";
 
 import { SecurityPolicy } from "../Security.js";
+
 import { ProcessValidationState, ValidationResult } from "../Validator.js";
 
 // --- Mountain DTO Types ---
@@ -53,6 +54,7 @@ import { ProcessValidationState, ValidationResult } from "../Validator.js";
  * Uses PascalCase naming convention for Rust compatibility
  */
 export interface SecurityPolicyDTO {
+
 	readonly AllowExit: boolean;
 
 	readonly MaxMemoryMB: number;
@@ -84,6 +86,7 @@ export interface SecurityPolicyDTO {
  * Mountain DTO for process state
  */
 export interface ProcessStateDTO {
+
 	readonly Pid: number;
 
 	readonly Ppid: number;
@@ -119,6 +122,7 @@ export interface ProcessStateDTO {
  * Mountain DTO for validation state
  */
 export interface ValidationStateDTO {
+
 	readonly TotalValidations: number;
 
 	readonly FailedValidations: number;
@@ -142,6 +146,7 @@ export interface ValidationStateDTO {
  * Mountain DTO for security event
  */
 export interface SecurityEventDTO {
+
 	readonly EventId: string;
 
 	readonly EventType: string;
@@ -161,6 +166,7 @@ export interface SecurityEventDTO {
  * Mountain DTO for validation result
  */
 export interface ValidationResultDTO {
+
 	readonly ProcessId: number;
 
 	readonly ValidationType: string;
@@ -182,6 +188,7 @@ export interface ValidationResultDTO {
  * Tagged error for conversion failures
  */
 export class ConversionError extends Data.TaggedError("ConversionError")<{
+
 	readonly SourceType: string;
 
 	readonly TargetType: string;
@@ -190,6 +197,7 @@ export class ConversionError extends Data.TaggedError("ConversionError")<{
 
 	readonly Data?: unknown;
 }> {
+
 	public override readonly message: string;
 
 	constructor(Properties: any) {
@@ -257,15 +265,25 @@ export const DTOToSecurityPolicy = (
 
 		return {
 			AllowExit: DTO.AllowExit,
+
 			MaxMemoryMB: DTO.MaxMemoryMB,
+
 			MaxCpuPercent: DTO.MaxCpuPercent,
+
 			AllowNetwork: DTO.AllowNetwork,
+
 			AllowedEndpoints: Object.freeze(DTO.AllowedEndpoints),
+
 			AllowChildProcesses: DTO.AllowChildProcesses,
+
 			AllowedChildCommands: Object.freeze(DTO.AllowedChildCommands),
+
 			AllowedPaths: Object.freeze(DTO.AllowedPaths),
+
 			DeniedPaths: Object.freeze(DTO.DeniedPaths),
+
 			MaxFileDescriptors: DTO.MaxFileDescriptors,
+
 			MaxTimers: DTO.MaxTimers,
 		};
 	};
@@ -358,6 +376,7 @@ export const DTOToProcessState = (
 
 		return {
 			ProcessId: DTO.Pid,
+
 			StartTime: DTO.StartTime,
 		};
 	};

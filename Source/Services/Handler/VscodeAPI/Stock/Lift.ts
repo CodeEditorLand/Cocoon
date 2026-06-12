@@ -46,6 +46,7 @@ import {
 	match as StockGlobMatch,
 	parse as StockGlobParse,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/glob.js";
+
 import {
 	basename as StockBasename,
 	dirname as StockDirname,
@@ -54,6 +55,7 @@ import {
 	joinPath as StockJoinPath,
 	relativePath as StockRelativePath,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
+
 import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 
 /**
@@ -65,6 +67,7 @@ import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/comm
  * during a fallback that already has a safe no-op return).
  */
 export function ToUri(Input: unknown): URI | undefined {
+
 	if (Input == null) return undefined;
 
 	if (Input instanceof URI) return Input;

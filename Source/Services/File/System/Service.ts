@@ -10,6 +10,7 @@ import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Se
 // --- Interfaces ---
 
 export interface IFileSystemService {
+
 	stat(uri: any): Promise<any>;
 
 	readFile(uri: any): Promise<Uint8Array>;
@@ -142,11 +143,8 @@ export class FileSystemService implements IFileSystemService {
 /**
  * Service Layer
  */
-export const FileSystemServiceLayer = Layer.effect(
-	IFileSystemService,
-
-	async function() {
-		const mountainClient = yield* IMountainClientService;
+export const FileSystemServiceLayer = async function() {
+		const mountainClient = await IMountainClientService;
 
 		return new FileSystemService(mountainClient;
 	}),

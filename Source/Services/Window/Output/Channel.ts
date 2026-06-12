@@ -33,27 +33,24 @@ export const CreateOutputChannel = (
 	Name: string,
 ): Promise<VSCode.OutputChannel> =>
 	async function() {
+
 		const ChannelId = `output-${crypto.randomUUID()}`;
 
-		yield* Logger.Info(
+		await Logger.Info(
 			`[WindowService] Creating output channel: ${Name} (${ChannelId})`,
 		;
 
 		// Notify Mountain to create the output channel (Sky renders it)
-		yield* Effect.tryPromise({
-			try: () =>
-				MountainClient.sendNotification("output.create", {
+		await (async () => {
+	try {
+		return await MountainClient.sendNotification("output.create", {
 					id: ChannelId,
 					name: Name,
-				}),
-			catch: () => new Error("Failed to create output channel"),
-		};
-
-		// Return output channel proxy forwarding mutations to Mountain
-		// EFX-30: caller still expects Effect.Effect — keep wrapper until Window/Index.ts migrates
-		const Channel: VSCode.OutputChannel = {
-			name: Name,
-			append(Value: string): void {
+				});
+	} catch (_e) {
+		throw _e;
+	}
+})(): void {
 				MountainClient.sendNotification("output.append", {
 					channel: ChannelId,
 					value: Value,

@@ -13,6 +13,7 @@
 import { CocoonDevLog } from "../../../Dev/Log.js";
 
 const InstallVscodeModuleHooks = async (): Promise<void> => {
+
 	if ((globalThis as any).__cocoonModuleHooksInstalled) return;
 
 	(globalThis as any).__cocoonModuleHooksInstalled = true;

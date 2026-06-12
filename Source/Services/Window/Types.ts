@@ -221,24 +221,15 @@ export interface ProgressOptionsPayload {
  * Logger interface for Window service
  */
 export interface Logger {
-	readonly Trace: (
-		Message: string,
-		...Data: unknown[]
-	) => Promise<void>;
+	readonly Trace: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-	readonly Debug: (
-		Message: string,
-		...Data: unknown[]
-	) => Promise<void>;
+	readonly Debug: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Info: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Warn: (Message: string, ...Data: unknown[]) => Promise<void>;
 
-	readonly Error: (
-		Message: string,
-		...Data: unknown[]
-	) => Promise<void>;
+	readonly Error: (Message: string, ...Data: unknown[]) => Promise<void>;
 }
 
 /**

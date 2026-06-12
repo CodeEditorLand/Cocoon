@@ -43,22 +43,34 @@
  */
 
 import { EventEmitter } from "events";
+
 import { createRequire } from "module";
+
 import { dirname } from "path";
+
 import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
+
 import * as protoLoader from "@grpc/proto-loader";
 
 import { IGRPCServerService } from "../../../Interfaces/IGRPC/Server/Service.js";
+
 import { CocoonDevLog } from "../../Dev/Log.js";
+
 import DocumentContentHandler from "../../Handler/Document/Content/Handler.js";
+
 import ExtensionHostHandler from "../../Handler/Extension/Host/Handler.js";
+
 // Import handler modules
 import type { HandlerContext } from "../../Handler/Handler/Context.js";
+
 import InvokeLanguageProvider from "../../Handler/Language/Provider/Handler.js";
+
 import HandleSpecificNotification from "../../Handler/Notification/Handler.js";
+
 import RouteRequest from "../../Handler/Request/Routing/Handler.js";
+
 // Import generated interfaces from Vine.proto
 import {
 	CancelOperationRequest,
@@ -232,30 +244,39 @@ export class GRPCServerService
 					get() {
 						return Self.extensionHostInitData;
 					},
+
 					set(Value: any) {
 						Self.extensionHostInitData = Value;
 					},
+
 					enumerable: true,
+
 					configurable: true,
 				},
 				ExtensionHostReady: {
 					get() {
 						return Self.extensionHostReady;
 					},
+
 					set(Value: boolean) {
 						Self.extensionHostReady = Value;
 					},
+
 					enumerable: true,
+
 					configurable: true,
 				},
 				MountainClient: {
 					get() {
 						return Self.mountainClient;
 					},
+
 					set(Value: any) {
 						Self.mountainClient = Value;
 					},
+
 					enumerable: true,
+
 					configurable: true,
 				},
 			},
@@ -572,6 +593,7 @@ export class GRPCServerService
 							detail:
 								error instanceof Error
 									? (error.stack ?? error.message)
+
 									: String(error),
 						}),
 					),
@@ -597,7 +619,9 @@ export class GRPCServerService
 
 			const keepaliveRequest: GenericRequest = {
 				RequestIdentifier: BigInt(0),
+
 				Method: "keepalive.ping",
+
 				Parameter: Buffer.from(JSON.stringify({})),
 			};
 
@@ -759,6 +783,7 @@ export class GRPCServerService
 							detail:
 								error instanceof Error
 									? (error.stack ?? error.message)
+
 									: String(error),
 						}),
 					),
@@ -1100,6 +1125,7 @@ export class GRPCServerService
 
 			if (TaskMethod === "fetchTasks" || TaskMethod === "provideTasks") {
 				const Filter = Array.isArray(parameters)
+
 					? parameters[0]
 					: parameters;
 
@@ -1303,6 +1329,7 @@ export class GRPCServerService
 					"resolveDebugConfigurationWithSubstitutedVariables"
 			) {
 				const Args = Array.isArray(parameters)
+
 					? parameters
 					: [parameters];
 
@@ -1315,6 +1342,7 @@ export class GRPCServerService
 					Context.ExtensionRegistry as any
 				).entries()) {
 					if (!String(Key).startsWith("__debugConfigProvider:"))
+
 						continue;
 
 					try {

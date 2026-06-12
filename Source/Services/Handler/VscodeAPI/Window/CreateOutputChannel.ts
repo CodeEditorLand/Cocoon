@@ -19,6 +19,7 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 const enum LogLevel {
+
 	Off = 0,
 
 	Trace = 1,
@@ -33,6 +34,7 @@ const enum LogLevel {
 }
 
 const FormatTimestamp = (): string => {
+
 	// `2024-01-15 10:23:45.123` - matches upstream `AbstractLogger`'s
 	// timestamp output so users see the same format they get from the
 	// built-in log channels.

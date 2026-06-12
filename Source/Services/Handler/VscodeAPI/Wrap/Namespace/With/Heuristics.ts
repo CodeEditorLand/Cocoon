@@ -51,6 +51,7 @@ type CaptureEventFn = (
 let LazyCaptureEvent: CaptureEventFn | undefined;
 
 if (process.env["NODE_ENV"] !== "production") {
+
 	void import("../../../../../../Telemetry/Post/Hog/Bridge.js")
 		.then((Module) => {
 			LazyCaptureEvent = Module.CaptureEvent as CaptureEventFn;

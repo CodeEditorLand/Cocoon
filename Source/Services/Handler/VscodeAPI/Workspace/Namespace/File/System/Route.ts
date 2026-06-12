@@ -35,6 +35,7 @@
  */
 
 import Tier from "../../../../../../../Utility/Tier.js";
+
 import { ClaimedFileSystemSchemes } from "../../Providers.js";
 
 export type FileSystemRoute = "native" | "mountain";
@@ -48,6 +49,7 @@ export type FileSystemRoute = "native" | "mountain";
  * - Plain filesystem path (`/<home>/foo`): implicit `"file"`
  */
 export function ExtractScheme(Uri: unknown): string {
+
 	if (Uri && typeof Uri === "object") {
 		const WithScheme = Uri as { scheme?: unknown };
 

@@ -96,4 +96,6 @@ export interface IExtensionHostService {
 /**
  * Effect context for ExtensionHostService
  */
-export const IExtensionHostService: unique symbol = Symbol.for("IExtensionHostService");
+export const IExtensionHostService: unique symbol = Symbol.for(
+	"IExtensionHostService",
+);

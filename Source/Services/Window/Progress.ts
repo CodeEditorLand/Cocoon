@@ -39,9 +39,10 @@ export const WithProgress = <T>(
 	) => Promise<T>,
 ): Promise<T> =>
 	async function() {
+
 		const ProgressId = `progress-${crypto.randomUUID()}`;
 
-		yield* Logger.Info(
+		await Logger.Info(
 			`[WindowService] Starting progress: ${Options.location} (${ProgressId})`,
 		;
 
@@ -69,20 +70,18 @@ export const WithProgress = <T>(
 		};
 
 		// Notify Mountain to show the progress indicator
-		yield* Effect.tryPromise({
-			try: () =>
-				MountainClient.sendNotification("progress.start", {
+		await (async () => {
+	try {
+		return await MountainClient.sendNotification("progress.start", {
 					id: ProgressId,
 					location: Options.location,
 					title: Options.title,
 					cancellable: Options.cancellable ?? false,
-				}),
-			catch: () => new Error("Failed to start progress"),
-		};
-
-		// Execute the task
-		const Result = yield* Effect.tryPromise({
-			try: () => Task(ProgressReporter, CancellationToken),
+				});
+	} catch (_e) {
+		throw _e;
+	}
+})() => Task(ProgressReporter, CancellationToken),
 			catch: (Error_) => {
 				throw new Error(
 					`Progress task failed: ${(Error_ as Error).message}`,
@@ -91,13 +90,12 @@ export const WithProgress = <T>(
 		};
 
 		// Notify Mountain to dismiss the progress indicator
-		yield* Effect.tryPromise({
-			try: () =>
-				MountainClient.sendNotification("progress.complete", {
+		await (async () => {
+	try {
+		return await MountainClient.sendNotification("progress.complete", {
 					id: ProgressId,
-				}),
-			catch: () => new Error("Failed to complete progress"),
-		};
-
-		return Result;
-	};
+				});
+	} catch (_e) {
+		throw _e;
+	}
+})()

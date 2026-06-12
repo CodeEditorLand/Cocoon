@@ -15,6 +15,7 @@ import type { HandlerContext } from "../../../Handler/Context.js";
 export const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
+
 		Context.WorkspaceEventEmitter.on(EventName, Listener;
 
 		return {

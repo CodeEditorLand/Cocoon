@@ -57,6 +57,7 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+
 import type {
 	Event,
 	Uri,
@@ -68,6 +69,7 @@ import type {
 } from "vscode";
 
 import { CreateEventStream } from "../Utility/Event/Stream.js";
+
 import { WebviewImplementation, type IPC } from "./Webview/Implementation.js";
 
 /**
@@ -75,6 +77,7 @@ import { WebviewImplementation, type IPC } from "./Webview/Implementation.js";
  * @description Configuration options for panel initialization
  */
 export interface PanelOptions {
+
 	readonly Handle: string;
 
 	readonly Extension: IExtensionDescription;
@@ -109,6 +112,7 @@ export interface PanelOptions {
  * @description Current view state of the panel
  */
 export interface ViewState {
+
 	readonly Active: boolean;
 
 	readonly Visible: boolean;
@@ -122,6 +126,7 @@ export interface ViewState {
  * @description Webview Panel with complete lifecycle management
  */
 export class Panel implements VSCodeWebviewPanel {
+
 	private IsDisposed = false;
 
 	private _title: string;
@@ -129,6 +134,7 @@ export class Panel implements VSCodeWebviewPanel {
 	private _iconPath:
 		| Uri
 		| { readonly light: Uri; readonly dark: Uri }
+
 		| undefined;
 
 	private _active: boolean;

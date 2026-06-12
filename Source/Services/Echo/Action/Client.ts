@@ -43,6 +43,7 @@
  */
 
 import { credentials } from "@grpc/grpc-js";
+
 import { v4 as uuidv4 } from "uuid";
 
 import {
@@ -51,7 +52,9 @@ import {
 	EchoActionServiceClient,
 	RegisterExtensionHostRequest,
 } from "../../../../Proto/vine.js";
+
 import { Logger } from "../../../Platform/Logger.js";
+
 import { MetricsCollector } from "../../Metrics/Collector.js";
 
 /**
@@ -59,6 +62,7 @@ import { MetricsCollector } from "../../Metrics/Collector.js";
  * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
  */
 export class CocoonEchoClient {
+
 	/** Mountain gRPC URL */
 	private readonly mountainUrl: string;
 

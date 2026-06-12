@@ -35,6 +35,7 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 type Comment = {
+
 	body: string | { value: string };
 
 	mode?: number;
@@ -51,6 +52,7 @@ type Comment = {
 };
 
 type CommentThread = {
+
 	uri: unknown;
 
 	range: unknown;
@@ -71,6 +73,7 @@ type CommentThread = {
 };
 
 const ThreadKey = (Uri: unknown, Range: unknown): string => {
+
 	const UriStr =
 		typeof Uri === "string"
 			? Uri

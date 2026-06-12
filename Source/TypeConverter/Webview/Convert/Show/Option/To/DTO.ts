@@ -9,6 +9,7 @@ import type * as VSCode from "vscode";
 import { FromAPI as ViewColumnFromAPI } from "../../../../../Main/View/Column.js";
 
 interface IEditorOptions {
+
 	preserveFocus?: boolean;
 
 	selection?: any;
@@ -30,6 +31,7 @@ export const ConvertShowOptionToDTO = (
 
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions => {
+
 	const DTO: {
 		viewColumn?: number;
 

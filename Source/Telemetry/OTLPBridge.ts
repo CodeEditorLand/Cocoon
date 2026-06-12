@@ -18,6 +18,7 @@
  */
 
 import * as NodeHttp from "node:http";
+
 import * as NodeHttps from "node:https";
 
 import ReadConfiguration from "./PostHog/Configuration.js";

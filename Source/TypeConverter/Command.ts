@@ -6,7 +6,9 @@
  */
 
 import type { IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
+
 import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
+
 import type * as VSCode from "vscode";
 
 /**
@@ -14,6 +16,7 @@ import type * as VSCode from "vscode";
  * @description Represents and validates a single argument for a built-in API command.
  */
 export class APICommandArgument<V, D> {
+
 	constructor(
 		public readonly Name: string,
 
@@ -30,6 +33,7 @@ export class APICommandArgument<V, D> {
  * @description Represents and converts the result of a built-in API command.
  */
 export class APICommandResult<V, R> {
+
 	constructor(
 		public readonly Name: string,
 
@@ -42,6 +46,7 @@ export class APICommandResult<V, R> {
  * @description A descriptor for a built-in API command, detailing its signature.
  */
 export class APICommand {
+
 	constructor(
 		public readonly Id: string,
 
@@ -60,6 +65,7 @@ export class APICommand {
  * @description Represents the serializable DTO for a command sent over IPC.
  */
 export interface InternalCommand {
+
 	id: string;
 
 	title: string;
@@ -74,6 +80,7 @@ export interface InternalCommand {
  * @description The CommandConverter implementation.
  */
 export class Command {
+
 	private readonly DelegatingCommandId: string;
 
 	private readonly DelegatedCommands = new Map<string, VSCode.Command>(;

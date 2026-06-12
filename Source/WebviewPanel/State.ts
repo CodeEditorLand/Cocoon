@@ -59,6 +59,7 @@
  * @description Position information for panel placement
  */
 export interface PanelPosition {
+
 	readonly ViewColumn: number;
 
 	readonly PreservedFocus: boolean;
@@ -69,6 +70,7 @@ export interface PanelPosition {
  * @description Current view state of panel
  */
 export interface PanelViewState {
+
 	readonly Active: boolean;
 
 	readonly Visible: boolean;
@@ -81,6 +83,7 @@ export interface PanelViewState {
  * @description Panel options stored in state
  */
 export interface PanelOptions {
+
 	readonly EnableScripts?: boolean;
 
 	readonly RetainContextWhenHidden?: boolean;
@@ -97,6 +100,7 @@ export interface PanelOptions {
  * @description Complete state of a Webview panel for persistence
  */
 export interface PanelState {
+
 	readonly Version: number;
 
 	readonly Handle: string;
@@ -135,6 +139,7 @@ export interface PanelState {
  * @description Contract for Webview state management
  */
 export interface StateManager {
+
 	readonly SavePanelState: (
 		PanelState: PanelState,
 	) => Promise<void>;
@@ -358,15 +363,15 @@ export class StateService extends /* Effect.Service */(
 					let State: unknown = StateCache.get(Handle;
 
 					if (!State) {
-						State = yield* Effect.tryPromise({
-							try: async () =>
-								(await GetMountainClient()?.sendRequest(
-									"Storage.Get",
+						try {
+							State = (await GetMountainClient()?.sendRequest(
+								"Storage.Get",
 
-									[StorageKey(Handle)],
-								)) ?? null,
-							catch: () => null,
-						}).pipe(Effect.orElseSucceed(() => null);
+								[StorageKey(Handle)],
+							)) ?? null;
+						} catch (_e) {
+							State = null;
+						}
 					}
 
 					if (!State) {
@@ -374,7 +379,7 @@ export class StateService extends /* Effect.Service */(
 					}
 
 					// Validate loaded state
-					const ValidatedState = yield* ValidateState(State;
+					const ValidatedState = await ValidateState(State;
 
 					StateCache.set(Handle, ValidatedState;
 

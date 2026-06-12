@@ -42,10 +42,13 @@
 import type { EventEmitter } from "events";
 
 import { CocoonDevLog } from "../../Dev/Log.js";
+
 import type { HandlerContext } from "../Handler/Context.js";
+
 import * as WindowNamespaceModule from "../VscodeAPI/Window/Namespace.js";
 
 type WorkspaceFolderWire = {
+
 	uri?: string;
 
 	name?: string;
@@ -54,6 +57,7 @@ type WorkspaceFolderWire = {
 };
 
 type WorkspaceDeltaPayload = {
+
 	added?: WorkspaceFolderWire[];
 
 	removed?: WorkspaceFolderWire[];
@@ -74,6 +78,7 @@ type WorkspaceDeltaPayload = {
  * reference and we only register once per process.
  */
 type UriObject = {
+
 	scheme: string;
 
 	authority: string;
@@ -103,6 +108,7 @@ let LazyURIImport: Promise<void> | undefined;
 let WarnedLazyURIUnavailable = false;
 
 const WarnLazyURIUnavailable = (Reason: string): void => {
+
 	if (WarnedLazyURIUnavailable) return;
 
 	WarnedLazyURIUnavailable = true;
@@ -229,6 +235,7 @@ if (
 			const Stack =
 				Error instanceof globalThis.Error
 					? Error.stack?.split("\n").slice(0, 6).join(" | ")
+
 					: String(Error;
 
 			process.stdout.write(
@@ -241,6 +248,7 @@ if (
 			const Stack =
 				Reason instanceof globalThis.Error
 					? Reason.stack?.split("\n").slice(0, 6).join(" | ")
+
 					: String(Reason;
 
 			// Benign first-boot probes: extensions read state files that
@@ -575,6 +583,7 @@ const BuildTextDocumentShim = (
 
 			while ((M = R.exec(L)) !== null) {
 				if (M.index <= C && M.index + M[0].length >= C)
+
 					return {
 						start: { line: Pos?.line ?? 0, character: M.index },
 						end: {
@@ -905,6 +914,7 @@ const HandleSpecificNotification = (
 		// that task's CancellationToken.
 		case "progress.cancel": {
 			const CancelPayload = Array.isArray(Parameters)
+
 				? Parameters[0]
 				: Parameters;
 
@@ -933,10 +943,12 @@ const HandleSpecificNotification = (
 			// Payload shape: [uriComponents, { versionId, changes, isDirty }]
 			if (Context) {
 				const UriPart = Array.isArray(Parameters)
+
 					? Parameters[0]
 					: Parameters;
 
 				const EventPart = Array.isArray(Parameters)
+
 					? Parameters[1]
 					: Parameters;
 
@@ -987,6 +999,7 @@ const HandleSpecificNotification = (
 			// Previously always an empty array; now reflects the real open set.
 			if (Context) {
 				const OpenModels = Array.isArray(Parameters)
+
 					? Parameters
 					: [Parameters];
 
@@ -1134,6 +1147,7 @@ const HandleSpecificNotification = (
 										M.index <= C &&
 										M.index + M[0].length >= C
 									)
+
 										return {
 											start: {
 												line: Pos?.line ?? 0,
@@ -1214,6 +1228,7 @@ const HandleSpecificNotification = (
 						Model?.LanguageIdentifier ??
 						Model?.languageId ??
 						Model?.language;
+
 					if (typeof Id === "string" && Id.length > 0) {
 						LanguageIdentifiers.add(Id;
 					}
@@ -1254,8 +1269,10 @@ const HandleSpecificNotification = (
 			// Remove from workspace.textDocuments
 			if (Context) {
 				const CloseModels = Array.isArray(Parameters)
+
 					? Parameters
 					: [Parameters];
+
 				const ClosedUris = new Set(
 					CloseModels.map(
 						(M: any) => M?.uri ?? M?.Uri ?? M?.fileName ?? "",
@@ -1326,14 +1343,18 @@ const HandleSpecificNotification = (
 			// check `document.isDirty` after saving see the correct state.
 			if (Context) {
 				const SavePayload = Array.isArray(Parameters)
+
 					? Parameters[0]
 					: Parameters;
+
 				const SaveUri =
 					SavePayload?.uri ??
 					SavePayload?.Uri ??
 					SavePayload?.external;
+
 				if (SaveUri) {
 					const TextDocs = (Context as any).__textDocuments ?? [];
+
 					const SaveDoc = TextDocs.find(
 						(D: any) =>
 							D?.uri?.toString?.() === SaveUri ||
@@ -1478,7 +1499,9 @@ const HandleSpecificNotification = (
 			// throws so one buggy extension still can't crash the host.
 			const Event = {
 				added: AddedHydrated,
+
 				removed: RemovedHydrated,
+
 				folders: MergedHydrated,
 			};
 			SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event;
@@ -1537,10 +1560,12 @@ const HandleSpecificNotification = (
 						Payload?.document;
 			const DeriveLang = (UriStr: string | undefined): string => {
 				if (!UriStr) return "plaintext";
+
 				const Ext =
 					(UriStr.split(".").pop() ?? "")
 						.toLowerCase()
 						.split("?")[0] ?? "";
+
 				const Map: Record<string, string> = {
 					rs: "rust",
 
@@ -1636,6 +1661,7 @@ const HandleSpecificNotification = (
 
 					proto: "proto",
 				};
+
 				return Map[Ext] ?? "plaintext";
 			};
 			const LanguageId: string =
@@ -1734,6 +1760,7 @@ const HandleSpecificNotification = (
 
 						while ((M = R.exec(L)) !== null) {
 							if (M.index <= C && M.index + M[0].length >= C)
+
 								return {
 									start: {
 										line: Pos.line,
@@ -2126,6 +2153,7 @@ const HandleSpecificNotification = (
 				if (!Array.isArray((Context as any).__terminals)) {
 					(Context as any).__terminals = [];
 				}
+
 				const Already = ((Context as any).__terminals as any[]).some(
 					(T: any) => T?.handle === OpenId || T?.id === OpenId,
 				;
@@ -2148,6 +2176,7 @@ const HandleSpecificNotification = (
 						hide: () => {},
 						dispose: () => {},
 					};
+
 					(Context as any).__terminals.push(Stub;
 					(Context as any).__activeTerminal = Stub;
 					Emitter.emit("window.didOpenTerminal", Stub;
@@ -2598,6 +2627,7 @@ const HandleSpecificNotification = (
 					Emitter.emit("commands.executed", {
 						command: CommandId,
 						arguments: Array.isArray(ExecPayload?.arguments)
+
 							? ExecPayload.arguments
 							: [],
 					};
@@ -2626,6 +2656,7 @@ const HandleSpecificNotification = (
 					(Context as any).__activeTerminal?.id === CloseId
 				) {
 					(Context as any).__activeTerminal = undefined;
+
 					Emitter.emit("window.didChangeActiveTerminal", undefined;
 				}
 				for (const Term of Removed) {
@@ -2647,6 +2678,7 @@ const HandleSpecificNotification = (
 				(typeof ActivePayload === "number" ? ActivePayload : null;
 			if (ActiveId === null || ActiveId === undefined) {
 				(Context as any).__activeTerminal = undefined;
+
 				Emitter.emit("window.didChangeActiveTerminal", undefined;
 			} else {
 				const Found = ((Context as any).__terminals ?? []).find(
@@ -2654,6 +2686,7 @@ const HandleSpecificNotification = (
 				;
 				if (Found) {
 					(Context as any).__activeTerminal = Found;
+
 					Emitter.emit("window.didChangeActiveTerminal", Found;
 				}
 			}
@@ -2683,6 +2716,7 @@ const HandleSpecificNotification = (
 						cwd: undefined,
 						executeCommand: () => ({ read: async function* () {} }),
 					};
+
 					Emitter.emit("window.didChangeTerminalShellIntegration", {
 						terminal: ActivatedTerm,
 						shellIntegration: ActivatedTerm.shellIntegration,
@@ -2713,12 +2747,15 @@ const HandleSpecificNotification = (
 				const PrevState = StateTerm.state ?? {
 					isInteractedWith: false,
 				};
+
 				const NextState = {
 					...PrevState,
 
 					isInteractedWith: Interacted,
 				};
+
 				StateTerm.state = NextState;
+
 				try {
 					Emitter.emit("window.didChangeTerminalState", StateTerm;
 				} catch {
@@ -2848,6 +2885,7 @@ const HandleSpecificNotification = (
 				: Parameters;
 			if (Context) {
 				const Current = (Context as any).__activeDebugSession;
+
 				if (Current?.id && Payload?.id && Current.id === Payload.id) {
 					(Context as any).__activeDebugSession = undefined;
 				}
@@ -3072,6 +3110,7 @@ const HandleSpecificNotification = (
 				?.__treeViewEmitters;
 			if (ViewId && ViewEmitters) {
 				const Emitter2 = ViewEmitters.get(ViewId) as any;
+
 				Emitter2?.emit("treeView.selectionChanged", {
 					selection: P?.selection ?? [],
 				};

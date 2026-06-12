@@ -23,10 +23,13 @@
 import { promises as FsPromises } from "node:fs";
 
 import type { HandlerContext } from "../../../../../../../Handler/Context.js";
+
 import { FolderToFsPath } from "../../../../Helpers.js";
+
 import { FindFilesLocal } from "../../../Files.js";
 
 interface QueryShape {
+
 	pattern?: string;
 
 	isRegExp?: boolean;
@@ -37,6 +40,7 @@ interface QueryShape {
 }
 
 interface OptionsShape {
+
 	include?: unknown;
 
 	exclude?: unknown;
@@ -51,6 +55,7 @@ interface OptionsShape {
 }
 
 interface TextSearchMatch {
+
 	uri: unknown;
 
 	ranges: Array<{
@@ -77,6 +82,7 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	const Q =
 		typeof Query === "string"
 			? { pattern: Query }
+
 			: ((Query ?? {}) as QueryShape;
 
 	// The only legitimate empty outcome: a genuinely empty query string.

@@ -45,6 +45,7 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
  * Service mapping and request routing is fully implemented.
  */
 const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
+
 	CocoonDevLog(
 		"request-route",
 
@@ -54,6 +55,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	// Service routing table with pattern matching
 	const RoutePatterns: Record<
 		string,
+
 		(method: string, params: any) => Promise<any>
 	> = {
 		"extension.\\w+": async (Method: string, Params: any) => {
@@ -77,15 +79,23 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				}
 
 				case "extension.deactivate": {
-					const ExtensionHostService =
-						await ServiceMapping.getService(IExtensionHostService;
+						const ExtensionHostService =
+							await ServiceMapping.getService(IExtensionHostService;
 
-					await ExtensionHostService.deactivateExtension(
-						Params.extensionId,
-					;
+						await ExtensionHostService.deactivateExtension(
+							Params.extensionId,
+						);
 
-					return { success: true };
-				}
+						// Unify with the main ActiveExtensionContexts map so
+						// route-triggered deactivation disposes main-path
+						// subscriptions too (watchers, status-bar items, etc.).
+						const { DisposeExtensionContext } =
+							await import("../../../Handler/Extension/Host/ActivateExtension.js";
+
+						DisposeExtensionContext(Params.extensionId);
+
+						return { success: true };
+					}
 
 				case "extension.get": {
 					const ExtensionHostService =

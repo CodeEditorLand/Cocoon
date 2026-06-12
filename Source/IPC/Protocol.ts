@@ -23,13 +23,16 @@
  */
 
 import { type VSBuffer } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/buffer.js";
+
 import { type CancellationToken } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+
 import { type IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
 
 /**
  * Request message sent from extension host to request data or actions
  */
 export interface IPCRequest {
+
 	readonly Id: string;
 
 	readonly Channel: string;
@@ -45,6 +48,7 @@ export interface IPCRequest {
  * Response message sent back for a request
  */
 export interface IPCResponse {
+
 	readonly Id: string;
 
 	readonly Success: boolean;
@@ -60,6 +64,7 @@ export interface IPCResponse {
  * Notification message (fire-and-forget, no response expected)
  */
 export interface IPCNotification {
+
 	readonly Channel: string;
 
 	readonly Type: string;
@@ -76,6 +81,7 @@ export type IPCProtocolMessage = IPCRequest | IPCResponse | IPCNotification;
  * Message type enum for protocol routing
  */
 export enum ProtocolMessageType {
+
 	Request = "request",
 
 	Response = "response",
@@ -87,6 +93,7 @@ export enum ProtocolMessageType {
  * Protocol message with type discriminator
  */
 export interface ProtocolMessage {
+
 	readonly Type: ProtocolMessageType;
 
 	readonly Message: IPCProtocolMessage;
@@ -112,6 +119,7 @@ export type NotificationHandler<T = unknown> = (
  * Channel handler registration
  */
 export interface ChannelHandler {
+
 	readonly Channel: string;
 
 	readonly Method: string;
@@ -125,6 +133,7 @@ export interface ChannelHandler {
  * Notification subscription
  */
 export interface NotificationSubscription {
+
 	readonly Channel: string;
 
 	readonly Type: string;
@@ -138,6 +147,7 @@ export interface NotificationSubscription {
  * Protocol configuration options
  */
 export interface ProtocolOptions {
+
 	readonly Timeout: number;
 
 	readonly MaxMessageSize: number;
@@ -151,6 +161,7 @@ export interface ProtocolOptions {
  * Default protocol configuration
  */
 export const DEFAULT_PROTOCOL_OPTIONS: ProtocolOptions = {
+
 	Timeout: 30000,
 
 	MaxMessageSize: 10485760, // 10MB
@@ -164,6 +175,7 @@ export const DEFAULT_PROTOCOL_OPTIONS: ProtocolOptions = {
  * Create a unique request ID for correlation
  */
 export function CreateRequestId(): string {
+
 	return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
@@ -173,6 +185,7 @@ export function CreateRequestId(): string {
 export function GetMessageType(
 	message: IPCProtocolMessage,
 ): ProtocolMessageType {
+
 	if ("Id" in message && "Channel" in message && "Method" in message) {
 		return ProtocolMessageType.Request;
 	}

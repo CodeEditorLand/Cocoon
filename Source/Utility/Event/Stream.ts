@@ -9,6 +9,7 @@ import {
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 
 export interface EventStream<T> {
+
 	readonly Fire: (Data: T) => void;
 
 	readonly event: Event<T>;
@@ -17,6 +18,7 @@ export interface EventStream<T> {
 }
 
 export const CreateEventStream = <T>(): EventStream<T> => {
+
 	const VSCodeEmitter = new Emitter<T>(;
 
 	const Fire = (Data: T): void => VSCodeEmitter.fire(Data;

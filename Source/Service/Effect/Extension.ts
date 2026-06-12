@@ -12,6 +12,7 @@ import { getTelemetry, type TelemetryService } from "./Telemetry.js";
 // ============================================================================
 
 export interface ExtensionManifest {
+
 	readonly id: string;
 
 	readonly name: string;
@@ -34,6 +35,7 @@ export interface ExtensionManifest {
 }
 
 export interface ExtensionHost {
+
 	readonly id: string;
 
 	readonly manifest: ExtensionManifest;
@@ -47,13 +49,19 @@ export interface ExtensionHost {
 
 export type ExtensionState =
 	| { readonly _tag: "Idle" }
+
 	| { readonly _tag: "Activating"; readonly startTime: number }
+
 	| { readonly _tag: "Active"; readonly activatedAt: number }
+
 	| { readonly _tag: "Deactivating" }
+
 	| { readonly _tag: "Deactivated" }
+
 	| { readonly _tag: "Error"; readonly error: string };
 
 export interface ActivateResult {
+
 	readonly extensionId: string;
 
 	readonly success: boolean;
@@ -64,6 +72,7 @@ export interface ActivateResult {
 }
 
 export interface DeactivateResult {
+
 	readonly extensionId: string;
 
 	readonly success: boolean;
@@ -76,6 +85,7 @@ export interface DeactivateResult {
 // ============================================================================
 
 export class ExtensionNotFoundError extends Error {
+
 	readonly _tag = "ExtensionNotFoundError";
 
 	constructor(readonly extensionId: string) {

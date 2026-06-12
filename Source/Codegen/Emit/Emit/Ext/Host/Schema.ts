@@ -11,10 +11,12 @@
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
+
 import { dirname, join } from "node:path";
 
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import type { CodegenProblem } from "@codeeditorland/wind/Target/Codegen/Type/CodegenProblem.js";
+
 import type {
 	InterfaceMemberParameter,
 	InterfaceMemberRecord,
@@ -24,6 +26,7 @@ import type {
 import type { ExtHostDecoratorRecord } from "../../../../Type/Ext/Host/Decorator/Record.js";
 
 const FormatDocComment = (doc: string | null, indent: string): string => {
+
 	if (!doc) return "";
 
 	const Lines = doc.split(/\r?\n/;

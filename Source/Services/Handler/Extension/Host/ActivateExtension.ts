@@ -14,7 +14,9 @@
 import * as NodeFS from "node:fs";
 
 import FiddeeRoot from "../../../../Platform/FiddeeRoot.js";
+
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
 
 /**
@@ -266,6 +268,7 @@ const CreateExtensionContext = (
 				get persistent() {
 					return Persistent;
 				},
+
 				set persistent(Value: boolean) {
 					Persistent = !!Value;
 
@@ -800,6 +803,7 @@ const ActivateExtension = async (
 			// Dynamic import resolves file extensions and handles ESM natively.
 			// Prefer file:// URL to avoid Windows drive-letter quirks.
 			const ImportURL = ModulePath.startsWith("/")
+
 				? `file://${ModulePath}`
 				: ModulePath;
 
@@ -822,6 +826,7 @@ const ActivateExtension = async (
 
 				if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
 					const ImportURL = ModulePath.startsWith("/")
+
 						? `file://${ModulePath}`
 						: ModulePath;
 
@@ -1006,6 +1011,7 @@ const ActivateExtension = async (
 						const UriShape =
 							typeof UriField === "string"
 								? `string("${UriField.slice(0, 80)}")`
+
 								: typeof UriField === "object" &&
 									  UriField !== null
 									? `object(scheme=${UriField.scheme ?? "<missing>"} fsPath=${

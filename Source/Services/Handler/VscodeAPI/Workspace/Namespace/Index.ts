@@ -9,22 +9,30 @@
  */
 
 import { TryMountainWithEmptyFallback } from "../../../../Dual/Track.js";
+
 import type { HandlerContext } from "../../../Handler/Context.js";
+
 import {
 	IsEqualOrParent as StockIsEqualOrParent,
 	RelativePath as StockRelativePath,
 	ToUri as StockToUri,
 	Uri as StockUri,
 } from "../../Stock/Lift.js";
+
 import {
 	BuildGetConfiguration,
 	BuildOnDidChangeConfiguration,
 	CreateConfigurationState,
 } from "./Configuration.js";
+
 import { BuildFileSystemNamespace } from "./File/System/Namespace.js";
+
 import { CreateFileSystemWatcher } from "./File/System/Watcher.js";
+
 import { FindFilesLocal } from "./Find/Files.js";
+
 import { FindTextInFilesNodeFallback } from "./Find/Text/In/Files/Fallback.js";
+
 import {
 	BuildRegisterFileSystemProvider,
 	BuildRegisterNotebookContentProvider,
@@ -34,6 +42,7 @@ import {
 	BuildRegisterTaskProvider,
 	BuildRegisterTextDocumentContentProvider,
 } from "./Providers.js";
+
 import {
 	BuildApplyEdit,
 	BuildDocumentEventMembers,
@@ -41,6 +50,7 @@ import {
 	BuildSaveAll,
 	BuildUpdateWorkspaceFolders,
 } from "./Text/Document.js";
+
 import WrapWorkspaceNamespace from "./Wrap/Workspace/Namespace.js";
 
 /**
@@ -57,6 +67,7 @@ import WrapWorkspaceNamespace from "./Wrap/Workspace/Namespace.js";
  * a no-op via `URI.from()`.
  */
 const HydrateUriResults = (Raw: unknown[]): unknown[] => {
+
 	if (!Array.isArray(Raw)) return [];
 
 	return Raw.map((Item) => {
@@ -289,6 +300,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 					const Opts = _O as
 						| { exclude?: unknown; maxResults?: number }
+
 						| undefined;
 
 					return FindFilesLocal(
@@ -344,6 +356,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 					const Opts = _O as
 						| { exclude?: unknown; maxResults?: number }
+
 						| undefined;
 
 					return FindFilesLocal(

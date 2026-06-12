@@ -13,8 +13,11 @@
  */
 
 import CreateBuffer, { type Buffer } from "../../PostHog/Buffer.js";
+
 import ReadConfiguration from "../../PostHog/Configuration.js";
+
 import EventModule, { type Properties } from "../../PostHog/Event.js";
+
 import ResolveDistinctIdentifier from "../../PostHog/Identifier.js";
 
 const Configuration = ReadConfiguration(;

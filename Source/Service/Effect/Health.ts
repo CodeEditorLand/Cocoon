@@ -29,6 +29,7 @@ import { getTelemetry } from "./Telemetry.js";
 export type HealthStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
 
 export interface ServiceHealth {
+
 	readonly serviceName: string;
 
 	readonly status: HealthStatus;
@@ -43,6 +44,7 @@ export interface ServiceHealth {
 }
 
 export interface SystemHealth {
+
 	readonly overallStatus: HealthStatus;
 
 	readonly services: ReadonlyArray<ServiceHealth>;
@@ -61,6 +63,7 @@ export interface SystemHealth {
 }
 
 export interface HealthService {
+
 	readonly checkService: (serviceName: string) => Promise<ServiceHealth>;
 
 	readonly checkAllServices: () => Promise<SystemHealth>;
@@ -202,8 +205,11 @@ const makeHealthChecker = (): HealthService => ({
 
 		const services = [
 			"environment",
+
 			"telemetry",
+
 			"grpc",
+
 			"extension",
 		] as const;
 

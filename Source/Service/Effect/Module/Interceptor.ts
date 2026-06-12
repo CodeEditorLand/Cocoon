@@ -6,6 +6,7 @@
  */
 
 import { CocoonDevLog } from "../../Services/Dev/Log.js";
+
 import { getTelemetry, type TelemetryService } from "../Telemetry.js";
 
 // ============================================================================
@@ -13,6 +14,7 @@ import { getTelemetry, type TelemetryService } from "../Telemetry.js";
 // ============================================================================
 
 export enum SecurityLevel {
+
 	TRUSTED = "TRUSTED",
 
 	SANDBOXED = "SANDBOXED",
@@ -23,6 +25,7 @@ export enum SecurityLevel {
 }
 
 export interface SecurityPolicy {
+
 	extensionId: string;
 
 	allowedModules: ReadonlyArray<string>;
@@ -37,6 +40,7 @@ export interface SecurityPolicy {
 }
 
 export interface ModuleInterceptionRequest {
+
 	moduleId: string;
 
 	parentModule?: string;
@@ -47,6 +51,7 @@ export interface ModuleInterceptionRequest {
 }
 
 export interface ModuleInterceptionResult {
+
 	success: boolean;
 
 	module?: unknown;
@@ -57,6 +62,7 @@ export interface ModuleInterceptionResult {
 }
 
 export interface InterceptionStats {
+
 	totalInterceptions: number;
 
 	blockedModules: number;
@@ -71,6 +77,7 @@ export interface InterceptionStats {
 // ============================================================================
 
 export class ModuleNotFoundError extends Error {
+
 	readonly _tag = "ModuleNotFoundError";
 
 	constructor(

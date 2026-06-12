@@ -13,6 +13,7 @@
  */
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
 
 /** Cached node:fs/promises module - loaded once on first cache-miss read. */
@@ -33,6 +34,7 @@ let FsPromisesModule: typeof import("node:fs/promises") | null = null;
 const NormalizeRange = (
 	VsRange: any,
 ): {
+
 	StartLineNumber: number;
 
 	StartColumn: number;
@@ -41,6 +43,7 @@ const NormalizeRange = (
 
 	EndColumn: number;
 } => {
+
 	return {
 		StartLineNumber: (VsRange?.start?.line ?? 0) + 1,
 
@@ -56,6 +59,7 @@ const NormalizeRange = (
  * Map file extension to VS Code language identifier.
  */
 const ResolveLanguageIdentifier = (Extension: string): string => {
+
 	switch (Extension) {
 		case "rs":
 			return "rust";
@@ -102,6 +106,7 @@ const BuildVsDocument = async (
 
 	DocumentContentCache: Map<string, string>,
 ): Promise<any> => {
+
 	const { Position, Range } =
 		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
 
@@ -552,8 +557,10 @@ const InvokeLanguageProvider = async (
 						Documentation:
 							typeof Item.documentation === "string"
 								? { Value: Item.documentation }
+
 								: Item.documentation?.value !== undefined
 									? { Value: Item.documentation.value }
+
 									: undefined,
 						InsertText:
 							typeof Item.insertText === "string"

@@ -58,6 +58,7 @@ type TestRunState =
 	| "passed";
 
 type TestItem = {
+
 	readonly id: string;
 
 	readonly uri: unknown;
@@ -84,6 +85,7 @@ type TestItem = {
 };
 
 type TestItemCollection = {
+
 	size: number;
 
 	add(Item: TestItem): void;
@@ -100,6 +102,7 @@ type TestItemCollection = {
 };
 
 type TestRunRequest = {
+
 	include?: readonly TestItem[];
 
 	exclude?: readonly TestItem[];
@@ -110,6 +113,7 @@ type TestRunRequest = {
 const NoOp = () => {};
 
 const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
+
 	const Items = new Map<string, TestItem>(;
 
 	const Collection: TestItemCollection = {

@@ -16,6 +16,7 @@ import { MAX_MESSAGE_SIZE } from "./Constants.js";
  * Provides efficient binary data operations with defensive bounds checking
  */
 export default class VSBuffer {
+
 	/** Internal buffer storage (private to enforce encapsulation) */
 	private readonly buffer: Uint8Array;
 

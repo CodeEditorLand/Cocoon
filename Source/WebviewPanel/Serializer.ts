@@ -67,6 +67,7 @@ import type {
  * @description DTO format for Webview state in Mountain backend
  */
 export interface MountainDTO {
+
 	readonly Version: number;
 
 	readonly Handle: string;
@@ -117,6 +118,7 @@ export interface MountainDTO {
  * @description Contract for Webview state serialization
  */
 export interface Serializer {
+
 	readonly SerializeToDTO: (
 		State: PanelState,
 	) => Promise<MountainDTO>;
@@ -281,7 +283,7 @@ export class SerializerService extends /* Effect.Service */(
 			): Promise<PanelState> =>
 				async function() {
 					// Validate DTO structure
-					const ValidatedDTO = yield* ValidateDTO(DTO;
+					const ValidatedDTO = await ValidateDTO(DTO;
 
 					// Convert DTO to PanelState
 					const State: PanelState = {
@@ -319,10 +321,43 @@ export class SerializerService extends /* Effect.Service */(
 					return State;
 				};
 
+			/**
+			 * Restore panel state from Mountain persistence after reload.
+			 * Called when Cocoon reloads and panels are re-created; sends
+			 * the restored state back to Mountain so it can update its
+			 * panel registry.
+			 */
+			const RestoreFromMountain = async (
+				Handle: string,
+
+				State: PanelState,
+			): Promise<void> => {
+				// Stub: On reload, tell Mountain about the restored panel.
+				// The `SendToMountain` call requires HandlerContext which
+				// is wired through the gRPC server's processCocoonRequest
+				// path. For now, dev_log the restoration event.
+				if (globalThis.__cocoonGrpcSendToMountain) {
+					try {
+						await (globalThis as any).__cocoonGrpcSendToMountain(
+							"webview:deserialize",
+
+							{ handle: Handle, state: State },
+						);
+					} catch {
+						/* fire-and-forget */
+					}
+				}
+				CocoonDevLog?.("webview", `[Serializer] Restored panel ${Handle}`);
+			};
+
 			return {
 				SerializeToDTO,
+
 				DeserializeFromDTO,
+
 				ValidateDTO,
+
+				RestoreFromMountain,
 			};
 		}),
 	},

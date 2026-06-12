@@ -11,6 +11,7 @@
 import type * as VSCode from "vscode";
 
 import { FromAPI as ViewColumnFromAPI } from "../../../TypeConverter/Main/View/Column.js";
+
 import type { Workspace } from "../Interfaces.js";
 
 /**
@@ -58,10 +59,11 @@ export const ShowTextDocument = (
 	PreserveFocus?: boolean,
 ): Promise<VSCode.TextEditor> =>
 	async function() {
+
 		// Extract URI from either Uri or TextDocument
 		const Uri = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
 
-		yield* Logger.Info(
+		await Logger.Info(
 			`[WindowService] Showing text document: ${Uri.toString()}` +
 				(ColumnOrOptions ? ` with options` : ""),
 		;
@@ -91,7 +93,7 @@ export const ShowTextDocument = (
 		}
 
 		// Delegate to Mountain's native showTextDocument via gRPC
-		yield* GRPCClient.showTextDocument(Uri.toString(), {
+		await GRPCClient.showTextDocument(Uri.toString(), {
 			viewColumn: ViewColumnDTO ? ViewColumnDTO + 2 : undefined,
 			preserveFocus: PreserveFocusValue === true,
 			preview: Preview === true,
@@ -100,12 +102,13 @@ export const ShowTextDocument = (
 						line: Selection.start.line,
 						character: Selection.start.character,
 					}
+
 				: undefined,
 		};
 
 		const EditorId = "editor-" + Uri.toString().slice(-8;
 
-		yield* Logger.Debug(
+		await Logger.Debug(
 			`[WindowService] Showed text document with ID: ${EditorId}`,
 		;
 
@@ -145,20 +148,25 @@ export const ShowInformationMessage = (
 	...Items: string[]
 ): Promise<string | undefined> =>
 	async function() {
-		yield* Logger.Debug(
+		await Logger.Debug(
 			`[WindowService] Showing information message: ${Message}`,
 		;
 
-		const InfoResponse = yield* Effect.tryPromise({
-			try: () =>
-				GRPCClient.sendRequest("Window.ShowMessage", [
+		let InfoResponse;
+try {
+	InfoResponse = await GRPCClient.sendRequest("Window.ShowMessage", [
 					{
 						message: Message,
 						level: "info",
-						items: Items.map((I) => ({ title: I })),
+						items: Items.map((I) => ({ title: I;
+} catch (_e) {
+	// error handled below
+}),
+
 						options: {},
 					},
 				]),
+
 			catch: () => null,
 		};
 
@@ -195,20 +203,25 @@ export const ShowWarningMessage = (
 	...Items: string[]
 ): Promise<string | undefined> =>
 	async function() {
-		yield* Logger.Debug(
+		await Logger.Debug(
 			`[WindowService] Showing warning message: ${Message}`,
 		;
 
-		const WarnResponse = yield* Effect.tryPromise({
-			try: () =>
-				GRPCClient.sendRequest("Window.ShowMessage", [
+		let WarnResponse;
+try {
+	WarnResponse = await GRPCClient.sendRequest("Window.ShowMessage", [
 					{
 						message: Message,
 						level: "warn",
-						items: Items.map((I) => ({ title: I })),
+						items: Items.map((I) => ({ title: I;
+} catch (_e) {
+	// error handled below
+}),
+
 						options: {},
 					},
 				]),
+
 			catch: () => null,
 		};
 
@@ -244,20 +257,25 @@ export const ShowErrorMessage = (
 	...Items: string[]
 ): Promise<string | undefined> =>
 	async function() {
-		yield* Logger.Debug(
+		await Logger.Debug(
 			`[WindowService] Showing error message: ${Message}`,
 		;
 
-		const ErrorResponse = yield* Effect.tryPromise({
-			try: () =>
-				GRPCClient.sendRequest("Window.ShowMessage", [
+		let ErrorResponse;
+try {
+	ErrorResponse = await GRPCClient.sendRequest("Window.ShowMessage", [
 					{
 						message: Message,
 						level: "error",
-						items: Items.map((I) => ({ title: I })),
+						items: Items.map((I) => ({ title: I;
+} catch (_e) {
+	// error handled below
+}),
+
 						options: {},
 					},
 				]),
+
 			catch: () => null,
 		};
 

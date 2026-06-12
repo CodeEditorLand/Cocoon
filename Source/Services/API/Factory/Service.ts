@@ -6,10 +6,15 @@
  */
 
 import { IConfigurationService } from "../../../Interfaces/I/Configuration/Service.js";
+
 import { IFileSystemService } from "../../../Interfaces/I/File/System/Service.js";
+
 import { IModuleInterceptorService } from "../../../Interfaces/I/Module/Interceptor/Service.js";
+
 import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Service.js";
+
 import { ITerminalService } from "../../../Interfaces/I/Terminal/Service.js";
+
 import * as LanguageProviderRegistry from "../../Language/Provider/Registry.js";
 
 // Real VS Code type constructors from @codeeditorland/output (compiled from VS Code source).
@@ -561,12 +566,15 @@ const createVSCodeAPI = (
 								commandId: command,
 								arguments: args.map((Arg) => {
 									if (typeof Arg === "string")
+
 										return { stringValue: Arg };
 
 									if (typeof Arg === "number")
+
 										return { intValue: Arg };
 
 									if (typeof Arg === "boolean")
+
 										return { boolValue: Arg };
 
 									return { stringValue: JSON.stringify(Arg) };
@@ -704,7 +712,9 @@ const createVSCodeAPI = (
 
 			return {
 				getLanguages: () => [],
+
 				setTextDocumentLanguage: async () => undefined,
+
 				match: () => 0,
 
 				createDiagnosticCollection: (name?: string) => {
@@ -903,19 +913,16 @@ export class APIFactoryService implements IAPIFactoryService {
 /**
  * Service Layer
  */
-export const APIFactoryLayer = Layer.effect(
-	IAPIFactoryService,
+export const APIFactoryLayer = async function() {
+		const mountainClient = await IMountainClientService;
 
-	async function() {
-		const mountainClient = yield* IMountainClientService;
+		const configService = await IConfigurationService;
 
-		const configService = yield* IConfigurationService;
+		const fsService = await IFileSystemService;
 
-		const fsService = yield* IFileSystemService;
+		const terminalService = await ITerminalService;
 
-		const terminalService = yield* ITerminalService;
-
-		const moduleInterceptor = yield* IModuleInterceptorService;
+		const moduleInterceptor = await IModuleInterceptorService;
 
 		return new APIFactoryService(
 			mountainClient,

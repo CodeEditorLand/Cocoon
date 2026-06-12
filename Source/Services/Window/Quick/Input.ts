@@ -38,7 +38,8 @@ export const ShowQuickPick = <T extends string>(
 	Options?: VSCode.QuickPickOptions,
 ): Promise<T | VSCode.QuickPickItem | undefined> =>
 	async function() {
-		yield* Logger.Debug(
+
+		await Logger.Debug(
 			`[WindowService] Showing quick pick with ${Items.length} items`,
 		;
 
@@ -60,31 +61,30 @@ export const ShowQuickPick = <T extends string>(
 						ignoreFocusLost: Options.ignoreFocusLost,
 						canPickMany: Options.canPickMany,
 					}
+
 				: undefined,
 			buttons: ButtonsDTO,
 		};
 
 		// Delegates to Mountain's native quick pick implementation via gRPC
-		const SelectedItems = yield* Effect.tryPromise({
-			try: async () => {
-				const Response = await MountainClient.sendRequest(
-					"UserInterface.ShowQuickPick",
+		let SelectedItems: string[] | undefined;
+		try {
+			const Response = await MountainClient.sendRequest(
+				"UserInterface.ShowQuickPick",
 
-					[RequestPayload.items, RequestPayload.options],
-				;
+				[RequestPayload.items, RequestPayload.options],
+			);
 
-				if (Response === null || Response === undefined) {
-					return undefined;
-				}
-
-				return Response as string[];
-			},
-			catch: (Error_) => {
-				throw new Error(
-					`Failed to show quick pick: ${(Error_ as Error).message}`,
-				;
-			},
-		};
+			if (Response === null || Response === undefined) {
+				SelectedItems = undefined;
+			} else {
+				SelectedItems = Response as string[];
+			}
+		} catch (Error_) {
+			throw new Error(
+				`Failed to show quick pick: ${(Error_ as Error).message}`,
+			);
+		}
 
 		// Return the first selected item (single selection mode)
 		if (!SelectedItems || SelectedItems.length === 0) {
@@ -126,7 +126,7 @@ export const ShowInputBox = (
 	Options?: VSCode.InputBoxOptions,
 ): Promise<string | undefined> =>
 	async function() {
-		yield* Logger.Debug(
+		await Logger.Debug(
 			`[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`,
 		;
 
@@ -142,31 +142,30 @@ export const ShowInputBox = (
 					ignoreFocusLost: Options.ignoreFocusLost,
 					validateInput: Options.validateInput
 						? Options.validateInput.toString()
+
 						: undefined,
 				}
 			: undefined;
 
 		// Delegates to Mountain's native input box implementation via gRPC
-		const Result = yield* Effect.tryPromise({
-			try: async () => {
-				const Response = await MountainClient.sendRequest(
-					"UserInterface.ShowInputBox",
+		let Result: string | undefined;
+		try {
+			const Response = await MountainClient.sendRequest(
+				"UserInterface.ShowInputBox",
 
-					[RequestPayload],
-				;
+				[RequestPayload],
+			);
 
-				if (Response === null || Response === undefined) {
-					return undefined;
-				}
-
-				return Response as string;
-			},
-			catch: (Error_) => {
-				throw new Error(
-					`Failed to show input box: ${(Error_ as Error).message}`,
-				;
-			},
-		};
+			if (Response === null || Response === undefined) {
+				Result = undefined;
+			} else {
+				Result = Response as string;
+			}
+		} catch (Error_) {
+			throw new Error(
+				`Failed to show input box: ${(Error_ as Error).message}`,
+			);
+		}
 
 		return Result;
 	};

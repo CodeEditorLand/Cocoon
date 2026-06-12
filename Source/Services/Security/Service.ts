@@ -12,6 +12,7 @@ import { CocoonDevLog } from "../Dev/Log.js";
 
 // Security policy interface
 export interface SecurityPolicy {
+
 	extensionId: string;
 
 	allowedModules: string[];
@@ -35,6 +36,7 @@ export interface SecurityPolicy {
 
 // Security event interface
 export interface SecurityEvent {
+
 	id: string;
 
 	type: "access" | "violation" | "authentication" | "authorization";
@@ -56,6 +58,7 @@ export interface SecurityEvent {
 
 // Audit log interface
 export interface AuditLog {
+
 	events: SecurityEvent[];
 
 	summary: {
@@ -73,6 +76,7 @@ export interface AuditLog {
 
 // Incident response interface
 export interface IncidentResponse {
+
 	id: string;
 
 	severity: "low" | "medium" | "high" | "critical";
@@ -92,6 +96,7 @@ export interface IncidentResponse {
  * SecurityService implementation
  */
 export class SecurityService {
+
 	private policies: Map<string, SecurityPolicy> = new Map(;
 
 	private auditLog: SecurityEvent[] = [];
@@ -912,17 +917,9 @@ export class SecurityService {
 /**
  * Service layer for SecurityService
  */
-export const SecurityServiceLayer = Layer.effect(
-	"SecurityService",
-
-	new SecurityService(),
-;
+export const SecurityServiceLayer = new SecurityService();
 
 /**
  * Live implementation
  */
-export const SecurityServiceLive = Layer.effect(
-	"SecurityService",
-
-	new SecurityService(),
-;
+export const SecurityServiceLive = new SecurityService();

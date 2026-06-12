@@ -74,6 +74,7 @@
 import type { Uri, ViewColumn } from "vscode";
 
 import { MountainDTO } from "../Serializer.js";
+
 import type {
 	PanelState as InternalPanelState,
 	PanelOptions,
@@ -86,6 +87,7 @@ import type {
  * @description Contract for Webview type conversions
  */
 export interface TypeConverter {
+
 	readonly ConvertUriToString: (Uri: Uri) => string;
 
 	readonly ConvertStringToUri: (String: string) => Uri;
@@ -286,14 +288,23 @@ export class TypeConverterService extends /* Effect.Service */(
 
 			return {
 				ConvertUriToString,
+
 				ConvertStringToUri,
+
 				ConvertViewColumnToNumber,
+
 				ConvertNumberToViewColumn,
+
 				ConvertPanelOptionsToDTO,
+
 				ConvertDTOToPanelOptions,
+
 				ConvertPositionToDTO,
+
 				ConvertDTOToPosition,
+
 				ConvertViewStateToDTO,
+
 				ConvertDTOToViewState,
 			};
 		}),

@@ -36,6 +36,7 @@
  * Process environment interface
  */
 export interface IProcessEnvironment {
+
 	[key: string]: string | undefined;
 }
 
@@ -43,6 +44,7 @@ export interface IProcessEnvironment {
  * Environment variable validation result
  */
 export interface EnvironmentValidationResult {
+
 	isValid: boolean;
 
 	value: string;
@@ -54,6 +56,7 @@ export interface EnvironmentValidationResult {
  * Environment variable validation rules
  */
 export interface EnvironmentValidationRule {
+
 	required?: boolean;
 
 	type?: "string" | "number" | "boolean" | "path" | "url";
@@ -73,6 +76,7 @@ export interface EnvironmentValidationRule {
  * Environment information structure
  */
 export interface EnvironmentInfo {
+
 	variables: Record<string, string>;
 
 	language: string;

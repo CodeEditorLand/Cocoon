@@ -12,12 +12,14 @@
  */
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { DialogError } from "./Errors.js";
 
 /**
  * Dialog service interface
  */
 export interface DialogService {
+
 	readonly ShowInformationMessage: (
 		message: string,
 
@@ -48,7 +50,7 @@ export const DialogService = Symbol<DialogService>(
  * Create dialog service layer
  */
 export const DialogLive = async function() {
-	const MountainClient = yield* IMountainClientService;
+	const MountainClient = await IMountainClientService;
 
 	const ShowMessage = (
 		operation: string,
@@ -60,24 +62,30 @@ export const DialogLive = async function() {
 		items: readonly string[],
 	): Promise<string | undefined> =>
 		async function() {
-			const Response = yield* Effect.tryPromise({
-				try: () =>
-					(
+			let Response;
+
+try {
+	Response = await (
 						MountainClient as unknown as {
 							sendRequest: (
 								method: string,
 
 								params: unknown,
-							) => Promise<unknown>;
-						}
-					).sendRequest("Window.ShowMessage", [
+							) => Promise<unknown>;;
+} catch (_e) {
+	// error handled below
+}.sendRequest("Window.ShowMessage", [
 						{
 							message,
+
 							level,
+
 							items: items.map((Item) => ({ title: Item })),
+
 							options: {},
 						},
 					]),
+
 				catch: (cause) => new DialogError(operation, cause),
 			};
 
@@ -123,4 +131,4 @@ export const DialogLive = async function() {
 /**
  * Layer for dialog service
  */
-export const DialogLayer = Layer.effect(DialogService, DialogLive;
+export const DialogLayer = DialogLive;

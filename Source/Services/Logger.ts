@@ -39,6 +39,7 @@
  * Specification: src/vs/base/common/log.js (ILogger)
  */
 export interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -154,7 +155,7 @@ export class LoggerService extends /* Effect.Service */(
 							FormatMessage(Message, "trace", ExtensionId),
 						;
 
-						return yield* console.trace(Message).pipe(
+						return await console.trace(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
 								data: Data.length === 1 ? Data[0] : Data,
@@ -182,7 +183,7 @@ export class LoggerService extends /* Effect.Service */(
 							FormatMessage(Message, "debug", ExtensionId),
 						;
 
-						return yield* console.debug(Message).pipe(
+						return await console.debug(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
 								data: Data.length === 1 ? Data[0] : Data,
@@ -207,7 +208,7 @@ export class LoggerService extends /* Effect.Service */(
 						FormatMessage(Message, "info", ExtensionId),
 					;
 
-					return yield* console.info(Message).pipe(
+					return await console.info(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
@@ -231,7 +232,7 @@ export class LoggerService extends /* Effect.Service */(
 						FormatMessage(Message, "warn", ExtensionId),
 					;
 
-					return yield* console.warn(Message).pipe(
+					return await console.warn(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
@@ -255,7 +256,7 @@ export class LoggerService extends /* Effect.Service */(
 						FormatMessage(Message, "error", ExtensionId),
 					;
 
-					return yield* console.error(Message).pipe(
+					return await console.error(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
@@ -279,7 +280,7 @@ export class LoggerService extends /* Effect.Service */(
 						FormatMessage(Message, "fatal", ExtensionId),
 					;
 
-					return yield* console.error(Message).pipe(
+					return await console.error(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
@@ -308,12 +309,19 @@ export class LoggerService extends /* Effect.Service */(
 			// Return the service implementation
 			const ServiceImplementation: Logger = {
 				Trace,
+
 				Debug,
+
 				Info,
+
 				Warn,
+
 				Error,
+
 				Fatal,
+
 				SetExtensionId,
+
 				GetExtensionId,
 			};
 
