@@ -1137,7 +1137,14 @@ const ActivateExtension = async (
 
 		Context.ActivatedExtensions.delete(ExtensionId);
 
-		ActiveExtensionContexts.delete(ExtensionId);
+		// A failed activate() may have pushed disposables onto its context
+		// before throwing; register the partial context so the shared sweep
+		// disposes them and clears the map entry.
+		if (RegisteredContext !== undefined) {
+			ActiveExtensionContexts.set(ExtensionId, RegisteredContext);
+		}
+
+		DisposeExtensionContext(ExtensionId);
 		const Message = Err instanceof Error ? Err.message : String(Err);
 		CocoonDevLog(
 			"ext-activate",
