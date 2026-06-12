@@ -5,8 +5,9 @@
  * Returns a proxy object backed by Mountain gRPC notifications.
  *
  * Source: src/vs/workbench/api/common/extHostOutputService.ts
+ *
+ * TODO(EFX-30): Convert Effect.gen → async/await when callers migrate.
  */
-
 import { Effect } from "effect";
 import type * as VSCode from "vscode";
 
@@ -49,7 +50,8 @@ export const CreateOutputChannel = (
 		});
 
 		// Return output channel proxy forwarding mutations to Mountain
-		return yield* Effect.succeed({
+		// EFX-30: caller still expects Effect.Effect — keep wrapper until Window/Index.ts migrates
+		const Channel: VSCode.OutputChannel = {
 			name: Name,
 			append(Value: string): void {
 				MountainClient.sendNotification("output.append", {
@@ -94,5 +96,7 @@ export const CreateOutputChannel = (
 					value: _Value,
 				}).catch(() => {});
 			},
-		} as VSCode.OutputChannel);
+		};
+
+		return yield* Effect.succeed(Channel);
 	});

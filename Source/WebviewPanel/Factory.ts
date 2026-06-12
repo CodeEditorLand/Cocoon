@@ -154,15 +154,13 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 
 					// Create dispose callback for registry cleanup
 					const OnDispose = () =>
-						Effect.runFork(
-							Ref.update(ActivePanelsRef, (Registry) => {
-								const Updated = new Map(Registry);
+						void Ref.update(ActivePanelsRef, (Registry) => {
+							const Updated = new Map(Registry);
 
-								Updated.delete(Handle);
+							Updated.delete(Handle);
 
-								return Updated;
-							}),
-						);
+							return Updated;
+						}).pipe(Effect.runPromise).catch(() => {});
 
 					// Create the panel instance
 					const PanelInstance = PanelModule.Create({

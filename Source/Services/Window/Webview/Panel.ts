@@ -129,11 +129,9 @@ export const CreateWebviewPanel = (
 		// Build IPC proxy for webview <-> extension message passing
 		const IPCProxy: WebviewIPC = {
 			SendNotification: (Method: string, Params: unknown[]) => {
-				void Effect.runPromise(
-					Logger.Debug(
-						`[WindowService] Webview notification: ${Method}`,
-					),
-				).catch(() => {});
+				void Logger.Debug(
+					`[WindowService] Webview notification: ${Method}`,
+				).pipe(Effect.runPromise).catch(() => {});
 
 				return MountainClient.sendNotification("webview.postMessage", {
 					panelId: PanelId,
