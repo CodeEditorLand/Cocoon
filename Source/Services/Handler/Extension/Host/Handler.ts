@@ -17,6 +17,8 @@
 import { CocoonDevLog } from "../../../Dev/Log.js";
 import type { HandlerContext } from "../../Handler/Context.js";
 import ActivateExtension, {
+	ActiveExtensionContexts,
+	DisposeExtensionContext,
 	IsExtensionActivating,
 	ResetStoragePrime,
 } from "./ActivateExtension.js";
@@ -60,6 +62,14 @@ const HandleInitializeExtensionHost = async (
 
 	// Host (re)initialization invalidates the coalesced storage dump.
 	ResetStoragePrime();
+
+	// Host re-init: dispose every previously-activated extension's
+	// `context.subscriptions` before the registry is rebuilt, so watchers,
+	// status-bar items, and providers from the prior host generation do not
+	// leak into the new one.
+	for (const ActivatedId of [...ActiveExtensionContexts.keys()]) {
+		DisposeExtensionContext(ActivatedId);
+	}
 
 	// Build extension registry and activation event index
 	Context.ExtensionRegistry.clear();
@@ -173,6 +183,13 @@ const HandleDeltaExtensions = async (
 		const Identifier = IdentifierOf(Extension);
 
 		Context.ExtensionRegistry.delete(Identifier);
+
+		// Deactivate: dispose the removed extension's
+		// `context.subscriptions` and drop its activated mark so a
+		// re-install can activate again.
+		DisposeExtensionContext(Identifier);
+
+		Context.ActivatedExtensions.delete(Identifier);
 	}
 
 	const DurationMs = Math.round(performance.now() - DeltaStart);

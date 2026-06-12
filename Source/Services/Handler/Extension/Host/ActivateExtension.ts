@@ -29,6 +29,54 @@ export const IsExtensionActivating = (ExtensionId: string): boolean =>
 	ActivatingExtensions.has(ExtensionId);
 
 /**
+ * Live `ExtensionContext` per activated extension id. Entries are added when
+ * an activation promotes to activated and removed on activation failure or
+ * disposal, so host shutdown / re-init can dispose every
+ * `context.subscriptions` an extension registered.
+ */
+export const ActiveExtensionContexts = new Map<string, unknown>();
+
+/**
+ * Dispose every disposable an extension pushed onto its
+ * `context.subscriptions` and drop the stored context. Safe to call for ids
+ * that never registered a context (declarative extensions, failed
+ * activations).
+ */
+export const DisposeExtensionContext = (ExtensionId: string): void => {
+	const ExtContext = ActiveExtensionContexts.get(ExtensionId);
+
+	ActiveExtensionContexts.delete(ExtensionId);
+
+	const Subscriptions = (
+		ExtContext as
+			| { subscriptions?: Array<{ dispose?: () => unknown }> }
+			| undefined
+	)?.subscriptions;
+
+	if (!Array.isArray(Subscriptions) || Subscriptions.length === 0) return;
+
+	let Disposed = 0;
+
+	for (const Subscription of Subscriptions) {
+		try {
+			Subscription?.dispose?.();
+
+			Disposed++;
+		} catch {
+			// One throwing disposable must not abort the rest of the sweep.
+		}
+	}
+
+	Subscriptions.length = 0;
+
+	CocoonDevLog(
+		"ext-host",
+
+		`[ExtensionHostHandler] Disposed ${Disposed} subscriptions for ${ExtensionId}`,
+	);
+};
+
+/**
  * Coalesced `Storage.GetItems` full dump shared by every activation in a
  * boot cycle. Reset on extension-host (re)start and on fetch rejection.
  */
@@ -582,10 +630,14 @@ const ActivateExtension = async (
 
 	ActivatingExtensions.add(ExtensionId);
 
-	const PromoteToActivated = (): void => {
+	const PromoteToActivated = (ExtContext?: unknown): void => {
 		ActivatingExtensions.delete(ExtensionId);
 
 		Context.ActivatedExtensions.add(ExtensionId);
+
+		if (ExtContext !== undefined) {
+			ActiveExtensionContexts.set(ExtensionId, ExtContext);
+		}
 	};
 
 	const StartMs = Date.now();
@@ -736,6 +788,11 @@ const ActivateExtension = async (
 		// PrePopulate is best-effort; never block activation on it.
 	}
 
+	// Context handed to `activate()`; registered in
+	// `ActiveExtensionContexts` at the promote step so deactivation can
+	// dispose its `subscriptions`.
+	let RegisteredContext: unknown;
+
 	try {
 		let ExtModule: { activate?: (ctx: unknown) => unknown };
 
@@ -791,6 +848,8 @@ const ActivateExtension = async (
 
 				ExtensionPath,
 			);
+
+			RegisteredContext = ExtContext;
 
 			// Pre-populate workspaceState/globalState caches BEFORE activate
 			// runs. Extensions read `context.workspaceState.get(key)`
@@ -1071,12 +1130,14 @@ const ActivateExtension = async (
 			);
 		}
 
-		PromoteToActivated();
+		PromoteToActivated(RegisteredContext);
 	} catch (Err: unknown) {
 		// Remove from both sets so a retry is possible
 		ActivatingExtensions.delete(ExtensionId);
 
 		Context.ActivatedExtensions.delete(ExtensionId);
+
+		ActiveExtensionContexts.delete(ExtensionId);
 		const Message = Err instanceof Error ? Err.message : String(Err);
 		CocoonDevLog(
 			"ext-activate",

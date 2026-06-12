@@ -98,8 +98,13 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		language: (Env["language"] as string) ?? "en",
 
 		machineId:
-			(Context.ExtensionHostInitData?.telemetry?.machineId as string) ??
 			(Env["machineId"] as string) ??
+			(Context.ExtensionHostInitData?.telemetryInfo?.machineId as
+				| string
+				| undefined) ??
+			(Context.ExtensionHostInitData?.telemetry?.machineId as
+				| string
+				| undefined) ??
 			"fiddee",
 
 		// Stable session identity: prefer Mountain's init payload
