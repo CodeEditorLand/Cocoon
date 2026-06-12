@@ -73,9 +73,6 @@ type WorkspaceDeltaPayload = {
  * fan out to extension callbacks. One handler is enough - Node dedupes via
  * reference and we only register once per process.
  */
-const { URI: LazyURI } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
-
 type UriObject = {
 	scheme: string;
 
@@ -91,6 +88,61 @@ type UriObject = {
 
 	toString(): string;
 };
+
+// Real `URI` class from the workbench bundle, imported lazily so an import
+// failure can never take down this module's load (a top-level `await import`
+// here previously either crashed the module or silently downgraded every
+// workspace URI to a stub - `URI.isUri()` then returned false inside
+// vscode.git). The import is cached in a module-level promise; while it is
+// pending or after it fails, `HydrateUri` falls back to `MakeUriStub` and a
+// one-time CocoonDevLog warn records the degradation.
+let LazyURI: { parse: (Raw: string) => UriObject } | undefined;
+
+let LazyURIImport: Promise<void> | undefined;
+
+let WarnedLazyURIUnavailable = false;
+
+const WarnLazyURIUnavailable = (Reason: string): void => {
+	if (WarnedLazyURIUnavailable) return;
+
+	WarnedLazyURIUnavailable = true;
+
+	CocoonDevLog(
+		"uri-hydrate",
+
+		`real URI class unavailable (${Reason}) - URIs degrade to stub objects`,
+	);
+};
+
+const EnsureLazyURI = (): void => {
+	if (LazyURI || LazyURIImport) return;
+
+	LazyURIImport = import(
+		"@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js"
+	)
+		.then((Module) => {
+			const Candidate = (
+				Module as { URI?: { parse: (Raw: string) => UriObject } }
+			).URI;
+
+			if (Candidate && typeof Candidate.parse === "function") {
+				LazyURI = Candidate;
+			} else {
+				WarnLazyURIUnavailable("module loaded without a URI export");
+			}
+		})
+		.catch((Error) => {
+			WarnLazyURIUnavailable(
+				Error instanceof globalThis.Error
+					? Error.message
+					: String(Error),
+			);
+		});
+};
+
+// Warm the cache at module load (non-blocking) so the pending-import window
+// where HydrateUri must hand out stubs is as short as possible.
+EnsureLazyURI();
 
 // Minimal stub for when LazyURI.parse is unavailable (import failed or not
 // yet resolved). Enough shape for extensions to call fsPath / toString().
@@ -108,15 +160,22 @@ const MakeUriStub = (Raw: string): UriObject => {
 };
 
 const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
+	EnsureLazyURI();
+
 	if (!Raw) return null;
 	if (typeof Raw === "string") {
+		if (!LazyURI) {
+			// Import still pending or failed - degrade to a stub so the
+			// folder is not silently dropped from the workspace list.
+			WarnLazyURIUnavailable("import pending or failed at parse time");
+
+			return MakeUriStub(Raw);
+		}
 		try {
-			return (
-				LazyURI as unknown as { parse: (s: string) => UriObject }
-			).parse(Raw);
+			return LazyURI.parse(Raw);
 		} catch {
-			// LazyURI unavailable or parse error - fall back to a stub so
-			// the folder is not silently dropped from the workspace list.
+			// Parse error - fall back to a stub so the folder is not
+			// silently dropped from the workspace list.
 			return MakeUriStub(Raw);
 		}
 	}
@@ -138,9 +197,13 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 
 		if (!RawStr) return null;
 
-		return (
-			LazyURI as unknown as { parse: (s: string) => UriObject }
-		).parse(RawStr);
+		if (!LazyURI) {
+			WarnLazyURIUnavailable("import pending or failed at parse time");
+
+			return MakeUriStub(RawStr);
+		}
+
+		return LazyURI.parse(RawStr);
 	} catch {
 		const FallbackStr =
 			Raw.toString !== Object.prototype.toString
@@ -200,33 +263,44 @@ if (
 					Text.includes("languageDetectionWorkerCache.json"));
 
 			// Extension-internal bugs: an extension's own code throws a
-			// TypeError whose stack lives entirely under
-			// `~/.fiddee/extensions/<extId>/` or
-			// `Dependency/.../extensions/<extId>/`. These are NOT Land
+			// TypeError whose stack lives entirely under an extension
+			// install root (`~/.fiddee/extensions/<extId>/`,
+			// `~/.land/extensions/<extId>/`, or the bundled
+			// `Dependency/.../extensions/<extId>/`). These are NOT Land
 			// bugs - the extension would throw on stock VS Code too,
 			// it's just visible because Cocoon catches every rejection.
-			// Common observed patterns:
-			//   - DEVSENSE.phptools-vscode: `Cannot read properties of
-			//     null (reading 'filter')` during php-tools state init.
-			//   - redhat.java: `Cannot set properties of undefined
-			//     (setting 'outputPath')` during java config write.
-			//   - GitHub.copilot: occasional null-deref on session
-			//     replay.
-			// Pattern-match on the stack trace's `extensions/<vendor>.<ext>`
-			// segment so the filter survives extension version bumps.
+			// Classified structurally (not via an extension-ID allowlist,
+			// which masked shim regressions inside listed extensions):
+			// benign requires EVERY path-bearing frame to sit inside an
+			// extension directory AND no frame to touch Cocoon's own
+			// source or compiled bundle (`…/Cocoon/Main.js`).
+			// Node-internal and `<anonymous>` frames are neutral.
+			const FrameLines = Text.split(" | ")
+				.map((Line) => Line.trim())
+				.filter((Line) => Line.startsWith("at "));
+
+			const IsExtensionFramePath = (Line: string): boolean =>
+				Line.includes("/.fiddee/extensions/") ||
+				Line.includes("/.land/extensions/") ||
+				Line.includes("/extensions/");
+
+			const IsCocoonFramePath = (Line: string): boolean =>
+				Line.includes("/Cocoon/") ||
+				Line.includes("@codeeditorland/");
+
+			const IsNeutralFramePath = (Line: string): boolean =>
+				Line.includes("node:") ||
+				Line.includes("<anonymous>") ||
+				!Line.includes("/");
+
+			const PathFrames = FrameLines.filter(
+				(Line) => !IsNeutralFramePath(Line),
+			);
+
 			const HasExtensionFrame =
-				Text.includes("/.fiddee/extensions/") ||
-				Text.includes("/.land/extensions/") ||
-				(Text.includes("/extensions/") &&
-					(Text.includes("DEVSENSE.phptools") ||
-						Text.includes("redhat.java") ||
-						Text.includes("redhat.vscode-yaml") ||
-						Text.includes("GitHub.copilot") ||
-						Text.includes("Anthropic.claude-code") ||
-						Text.includes("RooVeterinaryInc.roo-cline") ||
-						Text.includes("eamodio.gitlens") ||
-						Text.includes("vscodevim.vim") ||
-						Text.includes("Dart-Code.dart-code")));
+				PathFrames.length > 0 &&
+				!PathFrames.some(IsCocoonFramePath) &&
+				PathFrames.every(IsExtensionFramePath);
 
 			const IsBenignExtensionTypeError =
 				HasExtensionFrame &&
