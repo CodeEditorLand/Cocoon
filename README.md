@@ -24,7 +24,7 @@
 				<picture>
 					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/stars/CodeEditorLand/Cocoon?style=flat&label=Star&logo=github&color=black&labelColor=black&logoColor=white&logoWidth=0" />
 					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/stars/CodeEditorLand/Cocoon?style=flat&label=Star&logo=github&color=white&labelColor=white&logoColor=black&logoWidth=0" />
-					<img src="https://img.shields.io/github/stars/CodeEditorLand/Cocoon?style=flat&label=Star&logo=github&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Star" />
+					<img src="https://img.shields.io/github/stars/CodeEditorLand/Cocoon?style=flat&label=Star&logo=github&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Star" title="Star" />
 				</picture>
 			</a>
 			<br />
@@ -52,6 +52,8 @@ the rest."_
 [![NPM Version](https://img.shields.io/npm/v/@codeeditorland/cocoon.svg)](https://www.npmjs.com/package/@codeeditorland/cocoon)
 [![Node.js Version](https://img.shields.io/badge/Node.js-v18+-blue.svg)](https://nodejs.org/)
 [![Effect Version](https://img.shields.io/badge/Effect-v3-blueviolet.svg)](https://www.npmjs.com/package/effect)
+
+**[@codeeditorland/cocoon](https://www.npmjs.com/package/@codeeditorland/cocoon)**&#x2001;📦
 
 ---
 
@@ -369,16 +371,23 @@ Cocoon is designed to be compatible with:
 
 ---
 
-## Getting Started
+## Getting Started&#x2001;🚀
+
+### Prerequisites
+
+- **Node.js** v18 or later
+- **pnpm** (monorepo package manager)
+
+### Build / Install
 
 `Cocoon` is developed as a core component of the **Land** project. It is built
 as part of the monorepo and requires the `Bundle=true` build variable, which
 triggers the `Rest` element to prepare the necessary VS Code platform code.
 
-**Key Dependencies:**
+### Key Dependencies
 
 | Package                            | Purpose                                               |
-| :--------------------------------- | :---------------------------------------------------- |
+|------------------------------------|-------------------------------------------------------|
 | `effect` (v3.21.3)                 | Core library for the entire application structure     |
 | `@effect/platform` (v0.96.1)       | `Effect-TS` platform abstractions                      |
 | `@effect/platform-node` (v0.107.0) | `Node.js`-specific `Effect-TS` platform                |
@@ -435,7 +444,7 @@ module.
 
 ---
 
-## License
+## License&#x2001;⚖️
 
 This project is released into the public domain under the **Creative Commons CC0
 Universal** license. You are free to use, modify, distribute, and build upon
@@ -445,7 +454,7 @@ see the
 
 ---
 
-## Changelog
+## Changelog&#x2001;📜
 
 See
 [`CHANGELOG.md`](https://github.com/CodeEditorLand/Cocoon/tree/Current/CHANGELOG.md)
@@ -453,7 +462,7 @@ for a history of changes specific to **Cocoon** 🦋.
 
 ---
 
-## Funding
+## Funding & Acknowledgements&#x2001;🙏🏻
 
 This project is funded through
 [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
