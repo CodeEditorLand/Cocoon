@@ -54,7 +54,6 @@ import type { IExtensionDescription } from "@codeeditorland/output/Target/Micros
 import { Effect, Ref } from "effect";
 import type { WebviewPanel as VSCodeWebviewPanel } from "vscode";
 
-import type { IPC } from "../IPC.js";
 import { Panel as PanelModule, type Panel } from "./Panel.js";
 
 /**
@@ -166,7 +165,7 @@ export class FactoryService extends Effect.Service<FactoryService>()(
 						);
 
 					// Create the panel instance
-					const PanelInstance = yield* PanelModule.Create({
+					const PanelInstance = PanelModule.Create({
 						Handle,
 						Extension,
 						ViewType: Options.ViewType,

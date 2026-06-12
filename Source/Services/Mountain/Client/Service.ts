@@ -96,12 +96,16 @@ enum ConnectionState {
 }
 
 /**
- * Cancellation token for VS Code compatibility
+ * Cancellation token for VS Code compatibility. `onCancellationRequested`
+ * follows the vscode.CancellationToken event shape: call it with a listener,
+ * optionally receive a disposable back.
  */
 interface CancellationToken {
 	readonly isCancellationRequested: boolean;
 
-	onCancellationRequested?: () => void;
+	onCancellationRequested?: (
+		Listener: () => void,
+	) => { dispose(): void } | void;
 }
 
 /**
@@ -760,6 +764,29 @@ message RPCDataPayload {
 			startTime,
 		});
 
+		// Propagate caller-side cancellation to Mountain: the wire
+		// RequestIdentifier set on this GenericRequest is the same key
+		// Mountain's process_cocoon_request registers in ActiveOperations,
+		// so MountainService.CancelOperation aborts the in-flight dispatch.
+		// Best-effort - failures to deliver the cancel are swallowed.
+		let CancelSubscription: { dispose(): void } | undefined;
+
+		if (typeof cancellationToken?.onCancellationRequested === "function") {
+			const Subscription = cancellationToken.onCancellationRequested(
+				() => {
+					void this.cancelOperation(
+						requestIdentifier,
+
+						`CancellationToken fired for ${method}`,
+					).catch(() => {});
+				},
+			);
+
+			if (Subscription && typeof Subscription.dispose === "function") {
+				CancelSubscription = Subscription;
+			}
+		}
+
 		// Request send-log is also per-call spam (FileSystem.ReadFile alone
 		// fires 14k+ times during svelte/extension activation). Gate behind
 		// `grpc-verbose`. Failures / cancellations still log unconditionally
@@ -1078,6 +1105,8 @@ message RPCDataPayload {
 		} finally {
 			// Clean up request tracking
 			this.activeRequests.delete(BigInt(requestIdentifier));
+
+			CancelSubscription?.dispose();
 		}
 	}
 

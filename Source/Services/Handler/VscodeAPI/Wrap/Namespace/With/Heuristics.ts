@@ -280,6 +280,47 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 
 			return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
 		},
+
+		// `'x' in ns` guards must agree with the `get` trap: every string
+		// property resolves to either the concrete value or a heuristic
+		// stub, so report presence for all strings (target first so
+		// symbol-keyed and inherited members stay truthful).
+		has(Target, Property) {
+			return Reflect.has(Target, Property) || typeof Property === "string";
+		},
+
+		// `Object.getOwnPropertyDescriptor(ns, 'x')` mirrors the `get`
+		// trap for string props the target lacks. `ownKeys` is left as
+		// the target's own keys - adding phantom keys breaks Proxy
+		// invariants - so `Object.keys(ns)` still under-reports; that is
+		// the safe trade.
+		getOwnPropertyDescriptor(Target, Property) {
+			const Real = Reflect.getOwnPropertyDescriptor(Target, Property);
+
+			if (Real !== undefined) return Real;
+
+			if (typeof Property !== "string") return undefined;
+
+			return {
+				configurable: true,
+
+				enumerable: false,
+
+				writable: true,
+
+				value:
+					Property === "then"
+						? undefined
+						: BuildHeuristicMethod(
+								NamespaceName,
+
+								Property,
+
+								Overrides?.[Property] ??
+									ClassifyProperty(Property),
+							),
+			};
+		},
 	});
 
 export default WrapNamespaceWithHeuristics;

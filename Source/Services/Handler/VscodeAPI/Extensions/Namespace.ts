@@ -115,8 +115,10 @@ const MakeMultiStub = (): any => {
 		apply() {
 			return StubProxy;
 		},
-		has() {
-			return true;
+		// Mirror the Heuristics-wrapper convention: the `get` trap
+		// returns `undefined` for symbols, so `has` must not claim them.
+		has(Target, Property) {
+			return Reflect.has(Target, Property) || typeof Property === "string";
 		},
 	});
 

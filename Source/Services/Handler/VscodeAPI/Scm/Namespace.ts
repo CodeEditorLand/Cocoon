@@ -47,6 +47,31 @@ const ScmTrace = (Message: string): void => {
  * drop everything else. URI-shaped fields are passed through verbatim
  * - workbench-side hydration handles UriComponents either way.
  */
+/**
+ * Best-effort string form of a URI-like value (string, UriComponents
+ * POJO, or hydrated vscode.Uri). Returns undefined for non-URI shapes.
+ */
+const UriLikeToString = (Value: unknown): string | undefined => {
+	if (typeof Value === "string") return Value;
+
+	if (Value == null || typeof Value !== "object") return undefined;
+
+	const U = Value as Record<string, unknown>;
+
+	if (typeof U["external"] === "string") return U["external"];
+
+	if (typeof U["scheme"] === "string" && typeof U["path"] === "string") {
+		const Authority =
+			typeof U["authority"] === "string" ? U["authority"] : "";
+
+		return `${U["scheme"]}://${Authority}${U["path"]}`;
+	}
+
+	if (typeof U["fsPath"] === "string") return `file://${U["fsPath"]}`;
+
+	return undefined;
+};
+
 const SanitizeResourceState = (Raw: unknown): unknown => {
 	if (Raw == null || typeof Raw !== "object") return Raw;
 
@@ -130,6 +155,39 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 				"id",
 			] as const) {
 				if (Holder[Key] !== undefined) Projected[Key] = Holder[Key];
+			}
+
+			// Repository-like back-reference: vscode.git passes the
+			// Repository itself in `command.arguments`. Its cyclic graph
+			// cannot travel the wire, so project the repository root to a
+			// plain string the executing side can resolve back to the
+			// repository by URI.
+			const RepositoryRoot =
+				Holder["rootUri"] ??
+				(typeof Holder["root"] === "string"
+					? Holder["root"]
+					: undefined) ??
+				Holder["uri"];
+
+			const RepositoryRootString = UriLikeToString(RepositoryRoot);
+
+			if (RepositoryRootString !== undefined)
+				Projected["__celRepositoryRoot"] = RepositoryRootString;
+
+			// Carry every remaining top-level JSON-safe scalar verbatim so
+			// option-bag arguments (`{ preserveFocus: true }`, ref names,
+			// counts) survive the executeCommand round-trip.
+			for (const [Key, Value] of Object.entries(Holder)) {
+				if (Projected[Key] !== undefined) continue;
+
+				if (
+					Value === null ||
+					typeof Value === "string" ||
+					typeof Value === "number" ||
+					typeof Value === "boolean"
+				) {
+					Projected[Key] = Value;
+				}
 			}
 
 			return Projected;

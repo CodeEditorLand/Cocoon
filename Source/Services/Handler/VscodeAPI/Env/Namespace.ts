@@ -102,8 +102,21 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			(Env["machineId"] as string) ??
 			"fiddee",
 
+		// Stable session identity: prefer Mountain's init payload
+		// (`environment.sessionId`, then `telemetryInfo.sessionId` - the
+		// field Mountain actually populates today), then a spawn-time
+		// `CocoonSessionId` env var, then a per-process fallback. A
+		// regenerated id across orphan recovery desyncs Mountain's
+		// session bookkeeping.
 		sessionId:
 			(Env["sessionId"] as string) ??
+			(Context.ExtensionHostInitData?.telemetryInfo?.sessionId as
+				| string
+				| undefined) ??
+			(Context.ExtensionHostInitData?.telemetry?.sessionId as
+				| string
+				| undefined) ??
+			process.env["CocoonSessionId"] ??
 			`land-session-${Date.now().toString(36)}`,
 
 		// VS Code build identity strings. `vscode.tunnel-forwarding` and

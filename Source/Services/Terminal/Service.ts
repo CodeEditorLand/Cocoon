@@ -1,8 +1,8 @@
 /**
  * @module TerminalService
  * @deprecated 2026-05-26 - DEAD WRAPPER. `TerminalServiceLayer` (line ~99)
- *   is imported only by `Orchestration/Old/Style/Services.ts:135` which
- *   itself is not imported by any active Bootstrap path. The `resize`
+ *   has no importers (its last consumer, `Orchestration/Old/Style/Services.ts`,
+ *   was removed 2026-06-12). The `resize`
  *   and `kill` methods carry commented-out wire calls (`terminal.resize`,
  *   `terminal.kill`) that don't match any Mountain handler either -
  *   the real Mountain wire names are `localPty:resize` and

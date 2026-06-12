@@ -761,6 +761,25 @@ const HandleSpecificNotification = (
 
 			break;
 
+		// `window.withProgress` cancellation. Keyed by the handle the
+		// shim sent in its `progress.start` notification; the matching
+		// listener lives in `WindowNamespace.ts::withProgress` and flips
+		// that task's CancellationToken.
+		case "progress.cancel": {
+			const CancelPayload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+
+			const CancelHandle =
+				CancelPayload?.handle ?? CancelPayload?.id ?? CancelPayload;
+
+			if (CancelHandle !== undefined && CancelHandle !== null) {
+				Emitter.emit("progress.cancel", { handle: CancelHandle });
+			}
+
+			break;
+		}
+
 		case "$acceptModelChanged":
 		case "document.didChange":
 			HandleDocumentChange(
@@ -2720,6 +2739,29 @@ const HandleSpecificNotification = (
 			if (Context && Payload) {
 				(Context as any).__activeDebugSession = Payload;
 			}
+
+			// `onDebug` activation family: debug-session start is the
+			// available trigger on this side. Fire-and-forget so the
+			// listeners below receive the event without waiting on
+			// activation; already-active extensions are skipped by the
+			// activation handler's dedupe.
+			if (Context?.ActivateByEvent) {
+				void Context.ActivateByEvent("onDebug").catch(() => {});
+
+				const SessionType =
+					typeof Payload?.type === "string" ? Payload.type : "";
+
+				if (SessionType) {
+					void Context.ActivateByEvent(
+						`onDebugResolve:${SessionType}`,
+					).catch(() => {});
+
+					void Context.ActivateByEvent(
+						`onDebugAdapterProtocolTracker:${SessionType}`,
+					).catch(() => {});
+				}
+			}
+
 			Emitter.emit("debug.didStartSession", Payload);
 			break;
 		}

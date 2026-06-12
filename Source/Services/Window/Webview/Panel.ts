@@ -18,17 +18,9 @@ import { WebviewPanelImplementation } from "../../../WebviewPanel/Webview/Panel/
  * IPC proxy shape used inside WebviewPanelImplementation.
  */
 interface WebviewIPC {
-	SendNotification: (
-		Method: string,
+	SendNotification: (Method: string, Params: unknown[]) => Promise<void>;
 
-		Params: unknown[],
-	) => Effect.Effect<void, Error>;
-
-	SendRequest: <T>(
-		Method: string,
-
-		Params: unknown[],
-	) => Effect.Effect<T, Error>;
+	SendRequest: <T>(Method: string, Params: unknown[]) => Promise<T>;
 }
 
 /**
@@ -136,28 +128,23 @@ export const CreateWebviewPanel = (
 
 		// Build IPC proxy for webview <-> extension message passing
 		const IPCProxy: WebviewIPC = {
-			SendNotification: (Method: string, Params: unknown[]) =>
-				Effect.gen(function* () {
-					yield* Logger.Debug(
+			SendNotification: (Method: string, Params: unknown[]) => {
+				void Effect.runPromise(
+					Logger.Debug(
 						`[WindowService] Webview notification: ${Method}`,
-					);
+					),
+				).catch(() => {});
 
-					MountainClient.sendNotification("webview.postMessage", {
-						panelId: PanelId,
-						method: Method,
-						params: Params,
-					}).catch(() => {});
-				}),
-			SendRequest: <T>(
-				_Method: string,
-
-				_Params: unknown[],
-			): Effect.Effect<T, Error> =>
-				Effect.gen(function* () {
-					// Webview sendRequest is fire-and-forget from extension side;
-					// Sky resolves via onDidReceiveMessage.
-					return undefined as T;
-				}),
+				return MountainClient.sendNotification("webview.postMessage", {
+					panelId: PanelId,
+					method: Method,
+					params: Params,
+				}).catch(() => {});
+			},
+			SendRequest: <T>(_Method: string, _Params: unknown[]): Promise<T> =>
+				// Webview sendRequest is fire-and-forget from extension side;
+				// Sky resolves via onDidReceiveMessage.
+				Promise.resolve(undefined as T),
 		};
 
 		// Placeholder extension description - TODO: get from context

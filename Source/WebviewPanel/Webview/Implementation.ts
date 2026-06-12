@@ -7,12 +7,29 @@
 
 import { Schemas } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/network.js";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import { Effect } from "effect";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
-import type { IPC } from "../../IPC.js";
 import { ConvertContentOptionToDTO } from "../../TypeConverter/Webview/Convert/Content/Option/To/DTO.js";
 import { CreateEventStream } from "../../Utility/Event/Stream.js";
+
+/**
+ * @interface IPC
+ * @description Promise-based fire-and-forget IPC surface used by webview
+ * implementations to relay state changes to the Mountain host.
+ */
+export interface IPC {
+	readonly SendNotification: (
+		Method: string,
+
+		Params: unknown[],
+	) => Promise<void>;
+
+	readonly SendRequest: <T>(
+		Method: string,
+
+		Params: unknown[],
+	) => Promise<T>;
+}
 
 /**
  * @class WebviewImplementation
@@ -52,13 +69,11 @@ export class WebviewImplementation implements Webview {
 
 		this._html = Value;
 
-		const UpdateEffect = this.IPCService.SendNotification(
-			"$setWebviewHtml",
+		void this.IPCService.SendNotification("$setWebviewHtml", [
+			this.Handle,
 
-			[this.Handle, Value],
-		);
-
-		Effect.runFork(UpdateEffect);
+			Value,
+		]).catch(() => {});
 	}
 
 	public get options(): WebviewOptions {
@@ -76,13 +91,11 @@ export class WebviewImplementation implements Webview {
 			NewOptions,
 		);
 
-		const UpdateEffect = this.IPCService.SendNotification(
-			"$setWebviewOptions",
+		void this.IPCService.SendNotification("$setWebviewOptions", [
+			this.Handle,
 
-			[this.Handle, OptionsDTO],
-		);
-
-		Effect.runFork(UpdateEffect);
+			OptionsDTO,
+		]).catch(() => {});
 	}
 
 	public get cspSource(): string {
@@ -101,13 +114,11 @@ export class WebviewImplementation implements Webview {
 	public postMessage(Message: any): Promise<boolean> {
 		if (this.IsDisposed) return Promise.resolve(false);
 
-		const PostEffect = this.IPCService.SendRequest<boolean>(
-			"$postMessageToWebview",
+		return this.IPCService.SendRequest<boolean>("$postMessageToWebview", [
+			this.Handle,
 
-			[this.Handle, Message],
-		).pipe(Effect.catchAll(() => Effect.succeed(false)));
-
-		return Effect.runPromise(PostEffect);
+			Message,
+		]).catch(() => false);
 	}
 
 	public asWebviewUri(LocalResource: Uri): Uri {
@@ -121,7 +132,7 @@ export class WebviewImplementation implements Webview {
 
 	public fireDidReceiveMessage(Message: any): void {
 		if (!this.IsDisposed) {
-			Effect.runFork(this.OnDidReceiveMessageEmitter.Fire(Message));
+			this.OnDidReceiveMessageEmitter.Fire(Message);
 		}
 	}
 

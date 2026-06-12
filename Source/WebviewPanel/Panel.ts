@@ -57,7 +57,6 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import { Effect } from "effect";
 import type {
 	Event,
 	Uri,
@@ -68,9 +67,8 @@ import type {
 	WebviewPanelOptions,
 } from "vscode";
 
-import type { IPC } from "../IPC.js";
 import { CreateEventStream } from "../Utility/Event/Stream.js";
-import { WebviewImplementation } from "./Webview/Implementation.js";
+import { type IPC, WebviewImplementation } from "./Webview/Implementation.js";
 
 /**
  * @interface PanelOptions
@@ -213,35 +211,33 @@ export class Panel implements VSCodeWebviewPanel {
 	/**
 	 * Create a new Panel instance
 	 */
-	static Create(Options: PanelOptions): Effect.Effect<Panel, never> {
-		return Effect.sync(() => {
-			const ViewColumnValue = Options.ShowOptions.ViewColumn ?? 1;
+	static Create(Options: PanelOptions): Panel {
+		const ViewColumnValue = Options.ShowOptions.ViewColumn ?? 1;
 
-			// Create a minimal IPC service mock for initialization
-			// In production, this would be injected via dependency injection
-			const mockIPC: any = {
-				SendNotification: (channel: string, params: unknown[]) =>
-					Effect.void,
-			};
+		// Create a minimal IPC service mock for initialization
+		// In production, this would be injected via dependency injection
+		const mockIPC: any = {
+			SendNotification: (_channel: string, _params: unknown[]) =>
+				Promise.resolve(),
+		};
 
-			const PanelInstance = new Panel(
-				Options.Handle,
+		const PanelInstance = new Panel(
+			Options.Handle,
 
-				mockIPC as any,
+			mockIPC as any,
 
-				Options.Extension,
+			Options.Extension,
 
-				Options.ViewType,
+			Options.ViewType,
 
-				Options.Title,
+			Options.Title,
 
-				Options.Options ?? {},
+			Options.Options ?? {},
 
-				ViewColumnValue,
-			);
+			ViewColumnValue,
+		);
 
-			return PanelInstance;
-		});
+		return PanelInstance;
 	}
 
 	// VSCode WebviewPanel interface properties
@@ -266,13 +262,9 @@ export class Panel implements VSCodeWebviewPanel {
 
 		this._title = Value;
 
-		Effect.runFork(
-			this.ipcService.SendNotification("$setWebviewTitle", [
-				this.handle,
-
-				Value,
-			]),
-		);
+		void this.ipcService
+			.SendNotification("$setWebviewTitle", [this.handle, Value])
+			.catch(() => {});
 	}
 
 	get iconPath(): Uri | { readonly light: Uri; readonly dark: Uri } {
@@ -289,13 +281,13 @@ export class Panel implements VSCodeWebviewPanel {
 
 		this._iconPath = InternalValue;
 
-		Effect.runFork(
-			this.ipcService.SendNotification("$setWebviewIconPath", [
+		void this.ipcService
+			.SendNotification("$setWebviewIconPath", [
 				this.handle,
 
 				InternalValue,
-			]),
-		);
+			])
+			.catch(() => {});
 	}
 
 	/**
@@ -304,15 +296,15 @@ export class Panel implements VSCodeWebviewPanel {
 	reveal(ViewColumnParam?: ViewColumn, PreserveFocus?: boolean): void {
 		if (this.IsDisposed) return;
 
-		Effect.runFork(
-			this.ipcService.SendNotification("$revealWebviewPanel", [
+		void this.ipcService
+			.SendNotification("$revealWebviewPanel", [
 				this.handle,
 
 				ViewColumnParam,
 
 				PreserveFocus,
-			]),
-		);
+			])
+			.catch(() => {});
 	}
 
 	/**
@@ -329,9 +321,9 @@ export class Panel implements VSCodeWebviewPanel {
 
 		(this.webview as WebviewImplementation).dispose();
 
-		Effect.runFork(
-			this.ipcService.SendNotification("$disposeWebview", [this.handle]),
-		);
+		void this.ipcService
+			.SendNotification("$disposeWebview", [this.handle])
+			.catch(() => {});
 	}
 
 	/**

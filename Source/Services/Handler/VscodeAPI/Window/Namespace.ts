@@ -1929,8 +1929,10 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// in turn updates the status-bar progress indicator in Sky.
 		// VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
 		// We provide a real `report({ message, increment })` path and a
-		// no-op CancellationToken (no cancellation plumbing yet). The
-		// Task's return value is forwarded verbatim.
+		// CancellationToken driven by the `progress.cancel` notification
+		// (keyed by this task's start handle, relayed on the shared
+		// Emitter by NotificationHandler). The Task's return value is
+		// forwarded verbatim.
 		withProgress: async (Options: any, Task: any) => {
 			const Handle = NextProviderHandle();
 
@@ -1957,21 +1959,69 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				},
 			};
 
-			const CancellationToken = {
-				isCancellationRequested: false,
+			let CancellationRequested = false;
 
-				onCancellationRequested: () => ({ dispose: () => {} }),
+			const CancellationListeners: Array<(E?: unknown) => void> = [];
+
+			const CancellationToken = {
+				get isCancellationRequested() {
+					return CancellationRequested;
+				},
+
+				onCancellationRequested: (Listener: (E?: unknown) => void) => {
+					CancellationListeners.push(Listener);
+
+					return {
+						dispose: () => {
+							const At = CancellationListeners.indexOf(Listener);
+
+							if (At !== -1) CancellationListeners.splice(At, 1);
+						},
+					};
+				},
 			};
+
+			// `Context.Emitter` is the stable GRPCServerService instance,
+			// shared with NotificationHandler (HandlerContext objects are
+			// rebuilt per call, so the Emitter is the only safe channel).
+			const OnProgressCancel = (Payload: unknown) => {
+				const P = Payload as { handle?: unknown } | undefined;
+
+				if (String(P?.handle) !== String(Handle)) return;
+
+				if (CancellationRequested) return;
+
+				CancellationRequested = true;
+
+				for (const Listener of [...CancellationListeners]) {
+					try {
+						Listener(undefined);
+					} catch {}
+				}
+			};
+
+			Context.Emitter.on("progress.cancel", OnProgressCancel);
 
 			Context.SendToMountain("progress.start", {
 				handle: Handle,
 				title: Title,
 				location: Location,
+				cancellable: Boolean(
+					Options &&
+						typeof Options === "object" &&
+						Options.cancellable,
+				),
 			}).catch(() => {});
 
 			try {
 				return await Task(Progress, CancellationToken);
 			} finally {
+				Context.Emitter.removeListener(
+					"progress.cancel",
+
+					OnProgressCancel,
+				);
+
 				Context.SendToMountain("progress.end", {
 					handle: Handle,
 				}).catch(() => {});

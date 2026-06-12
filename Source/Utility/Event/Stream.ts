@@ -7,24 +7,21 @@ import {
 	Emitter,
 	type Event,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
-import { Effect } from "effect";
 
 export interface EventStream<T> {
-	readonly Fire: (Data: T) => Effect.Effect<void, never>;
+	readonly Fire: (Data: T) => void;
 
 	readonly event: Event<T>;
 
-	readonly Shutdown: () => Effect.Effect<void, never>;
+	readonly Shutdown: () => void;
 }
 
 export const CreateEventStream = <T>(): EventStream<T> => {
 	const VSCodeEmitter = new Emitter<T>();
 
-	const Fire = (Data: T): Effect.Effect<void, never> =>
-		Effect.sync(() => VSCodeEmitter.fire(Data));
+	const Fire = (Data: T): void => VSCodeEmitter.fire(Data);
 
-	const Shutdown = (): Effect.Effect<void, never> =>
-		Effect.sync(() => VSCodeEmitter.dispose());
+	const Shutdown = (): void => VSCodeEmitter.dispose();
 
 	return {
 		Fire,

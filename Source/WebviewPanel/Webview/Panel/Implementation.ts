@@ -40,7 +40,6 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import { Effect } from "effect";
 import type {
 	Event,
 	Uri,
@@ -52,11 +51,10 @@ import type {
 	WebviewPanelOptions,
 } from "vscode";
 
-import type { IPC } from "../../../IPC.js";
 import { FromAPI as UriFromAPI } from "../../../TypeConverter/Main/URI.js";
 import { ConvertShowOptionToDTO } from "../../../TypeConverter/Webview/Convert/Show/Option/To/DTO.js";
 import { CreateEventStream } from "../../../Utility/Event/Stream.js";
-import { WebviewImplementation } from "../Implementation.js";
+import { type IPC, WebviewImplementation } from "../Implementation.js";
 
 /**
  * @class WebviewPanelImplementation
@@ -163,9 +161,11 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 		this._title = Value;
 
-		Effect.runFork(
-			this.IPC.SendNotification("$setWebviewTitle", [this.Handle, Value]),
-		);
+		void this.IPC.SendNotification("$setWebviewTitle", [
+			this.Handle,
+
+			Value,
+		]).catch(() => {});
 	}
 
 	// FIX: The public property must conform to the interface, even if the
@@ -198,13 +198,11 @@ export class WebviewPanelImplementation implements WebviewPanel {
 					}
 			: undefined;
 
-		Effect.runFork(
-			this.IPC.SendNotification("$setWebviewIconPath", [
-				this.Handle,
+		void this.IPC.SendNotification("$setWebviewIconPath", [
+			this.Handle,
 
-				IconPathDTO,
-			]),
-		);
+			IconPathDTO,
+		]).catch(() => {});
 	}
 
 	public reveal(ViewColumn?: ViewColumn, PreserveFocus?: boolean): void {
@@ -214,15 +212,13 @@ export class WebviewPanelImplementation implements WebviewPanel {
 			? ConvertShowOptionToDTO(ViewColumn, PreserveFocus ?? false)
 			: undefined;
 
-		Effect.runFork(
-			this.IPC.SendNotification("$revealWebviewPanel", [
-				this.Handle,
+		void this.IPC.SendNotification("$revealWebviewPanel", [
+			this.Handle,
 
-				ViewColumnDTO,
+			ViewColumnDTO,
 
-				PreserveFocus,
-			]),
-		);
+			PreserveFocus,
+		]).catch(() => {});
 	}
 
 	public dispose(): void {
@@ -238,8 +234,8 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 		(this.webview as WebviewImplementation).dispose();
 
-		Effect.runFork(
-			this.IPC.SendNotification("$disposeWebview", [this.Handle]),
+		void this.IPC.SendNotification("$disposeWebview", [this.Handle]).catch(
+			() => {},
 		);
 	}
 

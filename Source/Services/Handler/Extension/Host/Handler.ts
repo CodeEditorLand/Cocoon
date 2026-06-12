@@ -23,6 +23,20 @@ import ActivateExtension, {
 import EnsureVscodeAPIRegistered from "./EnsureVscodeAPI.js";
 
 /**
+ * One-shot guard for the deferred `onStartupFinished` activation pass.
+ * Armed after the first `$activateByEvent` batch settles; re-armed on
+ * every InitializeExtensionHost so a host reload fires the pass again.
+ */
+let StartupFinishedScheduled = false;
+
+/**
+ * Delay between the initial activation batch settling and the
+ * `onStartupFinished` activation pass (loosely mirrors VS Code's
+ * deferred-startup semantics).
+ */
+const StartupFinishedDelayMs = 3_000;
+
+/**
  * Handle InitializeExtensionHost from Mountain.
  * Receives the full IExtensionHostInitData payload (extensions list,
  * workspace, environment, telemetry, paths). Stores init data and
@@ -73,6 +87,9 @@ const HandleInitializeExtensionHost = async (
 	}
 
 	Context.ExtensionHostReady = true;
+
+	// Re-arm the deferred `onStartupFinished` pass for this host generation.
+	StartupFinishedScheduled = false;
 
 	CocoonDevLog(
 		"ext-host",
@@ -373,6 +390,31 @@ const HandleActivateByEvent = async (
 			]);
 		}),
 	);
+
+	// `onStartupFinished` family: VS Code activates these extensions
+	// shortly after the eager startup batch settles. Schedule a single
+	// deferred local pass once the first `$activateByEvent` completes so
+	// extensions declaring only `onStartupFinished` are not stranded.
+	if (
+		!StartupFinishedScheduled &&
+		ActivationEvent !== "onStartupFinished" &&
+		(Context.ActivationEventIndex.get("onStartupFinished")?.length ?? 0) >
+			0
+	) {
+		StartupFinishedScheduled = true;
+
+		setTimeout(() => {
+			void HandleActivateByEvent(Context, {
+				activationEvent: "onStartupFinished",
+			}).catch((Err: unknown) => {
+				CocoonDevLog(
+					"ext-activate",
+
+					`[ExtensionHostHandler] onStartupFinished pass failed: ${Err instanceof Error ? Err.message : String(Err)}`,
+				);
+			});
+		}, StartupFinishedDelayMs);
+	}
 
 	// Keep legacy event for any listeners
 	Context.Emitter.emit("activateByEvent", {

@@ -532,7 +532,16 @@ export class GRPCServerService
 							? error.message
 							: "Unknown error",
 
-					Data: Buffer.from(JSON.stringify({})),
+					Data: Buffer.from(
+						JSON.stringify({
+							method: request.Method,
+
+							detail:
+								error instanceof Error
+									? (error.stack ?? error.message)
+									: String(error),
+						}),
+					),
 				},
 			};
 
@@ -710,7 +719,16 @@ export class GRPCServerService
 							? error.message
 							: "Unknown error",
 
-					Data: Buffer.from(JSON.stringify({})),
+					Data: Buffer.from(
+						JSON.stringify({
+							method: request.Method,
+
+							detail:
+								error instanceof Error
+									? (error.stack ?? error.message)
+									: String(error),
+						}),
+					),
 				},
 			};
 
@@ -954,6 +972,23 @@ export class GRPCServerService
 			const CommandArguments: unknown = Args[1];
 
 			if (CommandId) {
+				// `onCommand:<id>` activation: the owning extension may not
+				// be active yet (its registerCommand only runs inside
+				// activate()). Activate matching extensions before the
+				// registry lookup so the handler exists when invoked.
+				const PendingOnCommand = (
+					this.activationEventIndex.get(`onCommand:${CommandId}`) ??
+					[]
+				).filter((Id) => !this.activatedExtensions.has(Id));
+
+				if (PendingOnCommand.length > 0) {
+					await ExtensionHostHandler.HandleActivateByEvent(
+						this.GetHandlerContext(),
+
+						{ activationEvent: `onCommand:${CommandId}` },
+					).catch(() => {});
+				}
+
 				const LanguageProviderRegistry =
 					await import("../../Language/Provider/Registry.js");
 

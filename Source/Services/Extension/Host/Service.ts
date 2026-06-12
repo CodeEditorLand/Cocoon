@@ -23,6 +23,12 @@ interface IExtensionDescription {
 	activationEvents: string[];
 }
 
+interface IExtensionContextShape {
+	subscriptions: Array<{ dispose(): unknown }>;
+
+	[Key: string]: unknown;
+}
+
 interface ActivatedExtension {
 	activationTimes: {
 		codeLoadingTime: number;
@@ -33,6 +39,8 @@ interface ActivatedExtension {
 	};
 
 	exports?: any;
+
+	context?: IExtensionContextShape;
 }
 
 /**
@@ -96,13 +104,18 @@ export class ExtensionHostService implements IExtensionHostService {
 
 			const codeLoadingTime = Date.now() - moduleLoadStart;
 
-			// 5. Activate
+			// 5. Activate (context kept so deactivation can dispose
+			// everything the extension pushed onto `subscriptions`)
 			const activateCallStart = Date.now();
+
+			const context = this._createExtensionContext(extension);
 
 			const exports = await this._callActivate(
 				extensionModule,
 
 				extension,
+
+				context,
 			);
 
 			const activateCallTime = Date.now() - activateCallStart;
@@ -116,6 +129,7 @@ export class ExtensionHostService implements IExtensionHostService {
 					activateResolvedTime,
 				},
 				exports,
+				context,
 			});
 
 			CocoonDevLog(
@@ -205,22 +219,14 @@ export class ExtensionHostService implements IExtensionHostService {
 	}
 
 	/**
-	 * Call extension's activate function
+	 * Create extension context
+	 * We use a simplified context here, delegating complex parts to the API Factory if needed
 	 */
-	private async _callActivate(
-		extensionModule: any,
-
+	private _createExtensionContext(
 		extension: IExtensionDescription,
-	): Promise<any> {
-		if (typeof extensionModule.activate !== "function") {
-			// Allow extensions without activate (declarative only)
-			return undefined;
-		}
-
-		// Create extension context
-		// We use a simplified context here, delegating complex parts to the API Factory if needed
-		const context = {
-			subscriptions: [],
+	): IExtensionContextShape {
+		return {
+			subscriptions: [] as Array<{ dispose(): unknown }>,
 
 			extensionPath: extension.extensionLocation,
 
@@ -230,6 +236,22 @@ export class ExtensionHostService implements IExtensionHostService {
 
 			secrets: { get: () => {}, store: () => {}, delete: () => {} },
 		};
+	}
+
+	/**
+	 * Call extension's activate function
+	 */
+	private async _callActivate(
+		extensionModule: any,
+
+		_extension: IExtensionDescription,
+
+		context: IExtensionContextShape,
+	): Promise<any> {
+		if (typeof extensionModule.activate !== "function") {
+			// Allow extensions without activate (declarative only)
+			return undefined;
+		}
 
 		// Call activate function
 		return await extensionModule.activate(context);
@@ -239,7 +261,9 @@ export class ExtensionHostService implements IExtensionHostService {
 	 * Deactivate an extension
 	 */
 	async deactivateExtension(extensionId: string): Promise<void> {
-		if (!this.activatedExtensions.has(extensionId)) {
+		const activated = this.activatedExtensions.get(extensionId);
+
+		if (!activated) {
 			return;
 		}
 
@@ -247,6 +271,37 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Deactivating extension: ${extensionId}`,
+		);
+
+		// Dispose everything the extension pushed onto
+		// `context.subscriptions` (watchers, status-bar items, output
+		// channels) so a host reload does not leak them.
+		const subscriptions = activated.context?.subscriptions ?? [];
+
+		let disposed = 0;
+
+		for (const subscription of subscriptions) {
+			try {
+				subscription?.dispose?.();
+
+				disposed++;
+			} catch (error) {
+				CocoonDevLog(
+					"service",
+
+					`[ExtensionHost] Subscription dispose failed for ${extensionId}:`,
+
+					error,
+				);
+			}
+		}
+
+		subscriptions.length = 0;
+
+		CocoonDevLog(
+			"service",
+
+			`[ExtensionHost] Disposed ${disposed} subscription(s) for ${extensionId}`,
 		);
 
 		this.activatedExtensions.delete(extensionId);

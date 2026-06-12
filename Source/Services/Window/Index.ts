@@ -94,7 +94,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 							`[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`,
 						);
 
-						yield* OnDidChangeWindowStateStream.Fire(State);
+						OnDidChangeWindowStateStream.Fire(State);
 					}
 				});
 
