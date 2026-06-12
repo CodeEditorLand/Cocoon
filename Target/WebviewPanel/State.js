@@ -117,10 +117,7 @@ var StateService = class extends Effect.Service()(
       }), "RestorePanelState");
       const DeletePanelState = /* @__PURE__ */ __name((Handle) => Effect.gen(function* () {
         StateCache.delete(Handle);
-        void GetMountainClient()?.sendRequest("Storage.Set", [
-          StorageKey(Handle),
-          null
-        ]).catch(() => void 0);
+        void GetMountainClient()?.sendRequest("Storage.Set", [StorageKey(Handle), null]).catch(() => void 0);
       }), "DeletePanelState");
       const GetAllPanelStates = /* @__PURE__ */ __name((ExtensionId) => Effect.gen(function* () {
         return Array.from(StateCache.values()).filter(
