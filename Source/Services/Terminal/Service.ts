@@ -20,11 +20,13 @@
 import { Context, Effect, Layer } from "effect";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { CocoonDevLog } from "../Dev/Log.js";
 
 // --- Interfaces ---
 
 export interface ITerminalService {
+
 	createTerminal(
 		name: string,
 
@@ -42,12 +44,14 @@ export interface ITerminalService {
 
 export const ITerminalService = Context.Tag("ITerminalService")<
 	ITerminalService,
+
 	ITerminalService
 >();
 
 // --- Implementation ---
 
 export class TerminalService implements ITerminalService {
+
 	constructor(private mountainClient: IMountainClientService) {}
 
 	async createTerminal(

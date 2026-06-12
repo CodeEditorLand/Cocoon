@@ -4,10 +4,13 @@
  * Auth: secret via URL ?secret=, Sec-WebSocket-Protocol, or X-Land-Secret.
  */
 import { timingSafeEqual } from "node:crypto";
+
 import { createServer } from "node:http";
+
 import { URL } from "node:url";
 
 import { CocoonDevLog } from "../../Services/Dev/Log.js";
+
 import RouteRequest from "../../Services/Handler/Request/Routing/Handler.js";
 
 const _Port = parseInt(process.env["COCOON_WS_PORT"] ?? "0", 10);
@@ -15,6 +18,7 @@ const _Port = parseInt(process.env["COCOON_WS_PORT"] ?? "0", 10);
 const _SecretHex = (process.env["COCOON_WS_SECRET"] ?? "").toLowerCase();
 
 function _Match(c: string): boolean {
+
 	if (!_SecretHex || !c) return false;
 
 	try {
@@ -31,6 +35,7 @@ function _Match(c: string): boolean {
 }
 
 async function _Handle(ws: any, raw: string): Promise<void> {
+
 	let id: any = null;
 
 	try {
@@ -59,6 +64,7 @@ async function _Handle(ws: any, raw: string): Promise<void> {
 		ws.send(JSON.stringify({ id, result: result ?? null }));
 	} catch (e) {
 		if (id !== null)
+
 			ws.send(
 				JSON.stringify({
 					id,
@@ -69,6 +75,7 @@ async function _Handle(ws: any, raw: string): Promise<void> {
 }
 
 export async function StartWebSocketServer(): Promise<void> {
+
 	if (!_Port || !_SecretHex) {
 		CocoonDevLog(
 			"ws",

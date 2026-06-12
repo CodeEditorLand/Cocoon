@@ -58,6 +58,7 @@
  */
 
 import { Context, Effect } from "effect";
+
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
@@ -65,6 +66,7 @@ import { MountainGRPCClientService } from "./Mountain/gRPC/Client.js";
 
 // Temporary placeholder types - TODO: Replace with proper interfaces
 interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -86,6 +88,7 @@ interface Logger {
 }
 
 interface ConfigurationService {
+
 	readonly getValue: <T>(key: string, scope?: number, defaultValue?: T) => T;
 
 	readonly updateValue: <T>(
@@ -106,6 +109,7 @@ interface ConfigurationService {
  * Specification: src/vs/workbench/api/common/extHostWorkspace.ts (ExtHostWorkspaceShape)
  */
 export interface Workspace {
+
 	readonly name: string | undefined;
 
 	readonly workspaceFile: VSCode.Uri | undefined;
@@ -176,6 +180,7 @@ export interface Workspace {
  * ARCHITECTURE-PATTERN: src/vs/workbench/services/extensions/common/workspace.ts
  */
 interface InternalWorkspace {
+
 	readonly ID: string;
 
 	readonly Name: string;
@@ -424,6 +429,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					const NewActiveEditor = ActiveEditorId
 						? TextEditorsMap.get(ActiveEditorId)
+
 						: undefined;
 
 					_activeTextEditor = NewActiveEditor;
@@ -551,9 +557,11 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					const includePatterns = options?.include
 						? Array.isArray(options.include)
+
 							? options.include.map((p: any) =>
 									typeof p === "string" ? p : p.pattern,
 								)
+
 							: [
 									typeof options.include === "string"
 										? options.include
@@ -563,9 +571,11 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					const excludePatterns = options?.exclude
 						? Array.isArray(options.exclude)
+
 							? options.exclude.map((p: any) =>
 									typeof p === "string" ? p : p.pattern,
 								)
+
 							: [
 									typeof options.exclude === "string"
 										? options.exclude
@@ -593,6 +603,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 								with: () => ({ scheme: "file", path: m.uri }),
 								toString: () => m.uri,
 							}))
+
 						: null;
 				});
 
@@ -741,6 +752,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 								const Len = DocumentLines[I]!.length + 1;
 
 								if (Remaining < Len)
+
 									return { line: I, character: Remaining };
 
 								Remaining -= Len;
@@ -1062,6 +1074,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
  * TODO: Implement this as a namespace factory in APIFactoryService
  */
 export interface VSCodeWorkspaceAPI {
+
 	readonly name: string;
 
 	readonly workspaceFile: VSCode.Uri | undefined;

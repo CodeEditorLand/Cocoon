@@ -47,6 +47,7 @@ import * as Http from "node:http";
 type LayerMode = "off" | "mountain" | "cocoon" | "both";
 
 function ParseMode(): LayerMode {
+
 	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase();
 
 	if (
@@ -56,9 +57,11 @@ function ParseMode(): LayerMode {
 		Raw === "off" ||
 		Raw === "no"
 	)
+
 		return "off";
 
 	if (Raw === "mountain" || Raw === "m" || Raw === "native" || Raw === "rust")
+
 		return "mountain";
 
 	if (
@@ -68,21 +71,25 @@ function ParseMode(): LayerMode {
 		Raw === "extension-host" ||
 		Raw === "node"
 	)
+
 		return "cocoon";
 
 	if (Raw === "both" || Raw === "all" || Raw === "dual") return "both";
 
 	if (Raw === "1" || Raw === "true" || Raw === "on" || Raw === "yes")
+
 		return "mountain"; // legacy: 1 = mountain-only
 
 	return "off";
 }
 
 function CocoonEnabled(M: LayerMode): boolean {
+
 	return M === "cocoon" || M === "both";
 }
 
 function MountainPort(): number {
+
 	const V =
 		process.env.DebugServerPortMountain ?? process.env.DebugServerPort;
 
@@ -92,6 +99,7 @@ function MountainPort(): number {
 }
 
 function CocoonPort(): number {
+
 	const V = process.env.DebugServerPortCocoon;
 
 	const N = V ? Number.parseInt(V, 10) : Number.NaN;
@@ -107,6 +115,7 @@ let ServerInstance: Http.Server | null = null;
  * Set this from the bootstrap path *after* the command service is ready.
  */
 export interface CommandHooks {
+
 	/** Returns an array of registered command IDs. */
 	ListCommands?(): string[];
 
@@ -121,6 +130,7 @@ let Hooks: CommandHooks = {};
 
 /** Late-binding registration. Call after the command service is constructed. */
 export function RegisterHooks(Next: CommandHooks): void {
+
 	Hooks = { ...Hooks, ...Next };
 }
 
@@ -130,6 +140,7 @@ export function RegisterHooks(Next: CommandHooks): void {
  * resolved port (or `null` if the server did not start).
  */
 export function Start(): number | null {
+
 	if (ServerInstance) return CocoonPort();
 
 	const Mode = ParseMode();
@@ -172,6 +183,7 @@ export function Start(): number | null {
 
 /** Stops the listener. Used by tests and graceful shutdown. */
 export function Stop(): void {
+
 	if (!ServerInstance) return;
 
 	try {
@@ -188,6 +200,7 @@ export function Stop(): void {
 // ============================================================================
 
 async function ReadJsonBody(Req: Http.IncomingMessage): Promise<unknown> {
+
 	const Chunks: Buffer[] = [];
 
 	for await (const C of Req) Chunks.push(C as Buffer);
@@ -208,6 +221,7 @@ function SendJson(
 
 	Body: unknown,
 ): void {
+
 	const Text = JSON.stringify(Body);
 
 	Res.statusCode = Status;
@@ -224,6 +238,7 @@ async function HandleRequest(
 
 	Res: Http.ServerResponse,
 ): Promise<void> {
+
 	const Url = new URL(Req.url ?? "/", "http://127.0.0.1");
 
 	const Path = Url.pathname;
@@ -280,6 +295,7 @@ async function HandleRequest(
 			Target !== "eh" &&
 			Target !== "cocoon"
 		)
+
 			return SendJson(Res, 400, {
 				error: `unsupported target: ${Target}`,
 			});
@@ -345,6 +361,7 @@ async function HandleRequest(
 		if (!Id) return SendJson(Res, 400, { error: "missing id" });
 
 		if (!Hooks.ExecuteCommand)
+
 			return SendJson(Res, 503, {
 				error: "ExecuteCommand hook not registered",
 			});
@@ -387,6 +404,7 @@ async function HandleRequest(
  * cannot survive `JSON.stringify` (cycles, BigInt, functions, undefined).
  */
 function SafeSerialize(V: unknown): unknown {
+
 	if (V === undefined) return null;
 
 	try {

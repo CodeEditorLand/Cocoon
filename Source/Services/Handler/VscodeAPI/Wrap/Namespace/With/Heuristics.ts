@@ -53,6 +53,7 @@ type CaptureEventFn = (
 let LazyCaptureEvent: CaptureEventFn | undefined;
 
 if (process.env["NODE_ENV"] !== "production") {
+
 	void import("../../../../../../Telemetry/Post/Hog/Bridge.js")
 		.then((Module) => {
 			LazyCaptureEvent = Module.CaptureEvent as CaptureEventFn;
@@ -72,6 +73,7 @@ const NoopDisposable = { dispose: () => {} };
  * a sync `true` fails `await`-driven flows.
  */
 type Heuristic = {
+
 	readonly Kind:
 		| "trust"
 		| "event"
@@ -105,6 +107,7 @@ const IsTrustFamily = (Property: string): boolean =>
 
 /** Heuristic classifier given only the property name. Pure function. */
 const ClassifyProperty = (Property: string): Heuristic => {
+
 	if (IsTrustFamily(Property)) {
 		return {
 			Kind: "trust",
@@ -187,6 +190,7 @@ const RecordGap = (
 
 	Kind: Heuristic["Kind"],
 ): void => {
+
 	const Key = `${NamespaceName}.${Property}`;
 
 	LandFixLog.InfoOnce(
@@ -216,6 +220,7 @@ const RecordGap = (
 const BuildHeuristicMethod =
 	(NamespaceName: string, Property: string, Heuristic: Heuristic) =>
 	(...Arguments: unknown[]): unknown => {
+
 		const SpanName = `vscode.${NamespaceName}.${Property}`;
 
 		// Direct call - no Effect fiber on every VS Code API invocation.
@@ -261,6 +266,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			const Key = String(Property);
 
 			if (Property === "then" || Property === Symbol.toPrimitive)
+
 				return undefined;
 
 			const Existing = (Target as Record<string, unknown>)[Key];
@@ -274,6 +280,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			// (`editor.document.languageId`) crashes. Heuristics are only
 			// for properties the shim does not define at all.
 			if (Existing !== undefined || Reflect.has(Target, Key))
+
 				return Existing;
 
 			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);

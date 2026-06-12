@@ -4,11 +4,13 @@
  */
 
 import type { IWorkspaceFolderData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/workspace/common/workspace.js";
+
 import type { WorkspaceFolder } from "vscode";
 
 import { ToAPI as UriToAPI } from "../URI.js";
 
 export const FromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {
+
 	return {
 		uri: UriToAPI(DTO.uri),
 

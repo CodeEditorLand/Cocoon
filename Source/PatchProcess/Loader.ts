@@ -46,7 +46,9 @@ import * as Process from "node:process";
 import { Config, Effect, Layer } from "effect";
 
 import { PatcherService, RunPatchProcess } from "./Patcher.js";
+
 import { PerformSecurityAudit, SecurityPolicy } from "./Security.js";
+
 import {
 	InitializeProcessValidation,
 	RunSecurityValidation,
@@ -62,6 +64,7 @@ import {
  * Provides methods for loading and applying security measures
  */
 export interface Loader {
+
 	/**
 	 * Load and apply all security patches
 	 */

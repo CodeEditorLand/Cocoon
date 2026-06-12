@@ -15,7 +15,9 @@
  */
 
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapCommandsNamespace from "../Wrap/Commands/Namespace.js";
+
 import { LogRoute, Route } from "./Route.js";
 
 const CreateCommandsNamespace = (
@@ -220,6 +222,7 @@ const CreateCommandsNamespace = (
 				try {
 					const E = Payload as
 						| { command: string; arguments: unknown[] }
+
 						| undefined;
 
 					if (E?.command) Listener(E);

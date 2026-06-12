@@ -37,6 +37,7 @@
  */
 
 import { Context, Effect } from "effect";
+
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
@@ -47,6 +48,7 @@ import { IMountainClientService } from "../Interfaces/I/Mountain/Client/Service.
  * @description Logger interface for service logging
  */
 export interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -72,6 +74,7 @@ export interface Logger {
  * @description Configuration service interface
  */
 export interface Configuration {
+
 	readonly GetValue: <T>(key: string, defaultValue?: T) => T;
 
 	readonly UpdateValue: <T>(key: string, value: T) => Promise<void>;
@@ -82,6 +85,7 @@ export interface Configuration {
  * Specification: src/vs/platform/extensions/common/extensions.ts (IExtensionDescription)
  */
 export interface IExtensionDescription {
+
 	readonly identifier: string;
 
 	readonly displayName?: string;
@@ -118,6 +122,7 @@ export interface IExtensionDescription {
 		configuration?: {
 			properties: Record<
 				string,
+
 				{
 					type: string;
 
@@ -125,6 +130,7 @@ export interface IExtensionDescription {
 
 					description?: string;
 				}
+
 			>;
 		};
 
@@ -170,6 +176,7 @@ export interface IExtensionDescription {
  * Dependency resolution result
  */
 export interface DependencyResolutionResult {
+
 	/** Success flag */
 	readonly Success: boolean;
 
@@ -191,6 +198,7 @@ export interface DependencyResolutionResult {
  * This is the public-facing `vscode.Extension<T>` API
  */
 export interface IExtension<T = unknown> {
+
 	readonly id: string;
 
 	readonly extensionUri: VSCode.Uri;
@@ -216,12 +224,14 @@ export interface IExtension<T = unknown> {
  * Specification: src/vs/workbench/services/extensions/common/extensionDescriptionRegistry.ts
  */
 export interface ExtensionService {
+
 	readonly GetExtension: <T>(
 		ExtensionId: string,
 	) => Effect.Effect<IExtension<T> | undefined, never>;
 
 	readonly GetAllExtensions: () => Effect.Effect<
 		readonly IExtension[],
+
 		never
 	>;
 
@@ -254,6 +264,7 @@ export interface ExtensionService {
  * Activation metrics for performance monitoring
  */
 export interface ActivationMetrics {
+
 	/** Timestamp when activation started */
 	readonly StartTime: number;
 
@@ -416,6 +427,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									ExtensionLocation &&
 									ExtensionLocation.length > 0
 										? VSCode.Uri.parse(ExtensionLocation)
+
 										: VSCode.Uri.parse(
 												`file:///nonexistent/${ExtensionId}`,
 											),
@@ -525,6 +537,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						const PublisherFallback =
 							typeof Identifier === "string"
 								? (Identifier.split(".")[0] ?? "unknown")
+
 								: "unknown";
 
 						return {
@@ -533,15 +546,18 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								typeof Raw.name === "string" &&
 								(Raw.name as string).length > 0
 									? (Raw.name as string)
+
 									: Identifier,
 							version:
 								typeof Raw.version === "string" &&
 								(Raw.version as string).length > 0
 									? (Raw.version as string)
+
 									: "0.0.0",
 							publisher:
 								typeof Raw.publisher === "string"
 									? (Raw.publisher as string)
+
 									: PublisherFallback,
 						} as IExtensionDescription;
 					})();
@@ -590,6 +606,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 							const PublisherFallback =
 								typeof id === "string"
 									? (id.split(".")[0] ?? "unknown")
+
 									: "unknown";
 
 							const SafePackageJSON = {
@@ -598,15 +615,18 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									typeof Raw.name === "string" &&
 									(Raw.name as string).length > 0
 										? (Raw.name as string)
+
 										: id,
 								version:
 									typeof Raw.version === "string" &&
 									(Raw.version as string).length > 0
 										? (Raw.version as string)
+
 										: "0.0.0",
 								publisher:
 									typeof Raw.publisher === "string"
 										? (Raw.publisher as string)
+
 										: PublisherFallback,
 							} as IExtensionDescription;
 

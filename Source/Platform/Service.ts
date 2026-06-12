@@ -37,14 +37,18 @@
 import { Context, Effect, Layer, Option } from "effect";
 
 import * as EnvironmentModule from "./Environment.js";
+
 import * as OSModule from "./OS.js";
+
 import * as ProcessModule from "./Process.js";
+
 import * as TypeConverterModule from "./Type/Converter.js";
 
 /**
  * Platform Service interface
  */
 export interface IPlatformService {
+
 	readonly _serviceBrand: undefined;
 
 	// Initialization
@@ -76,6 +80,7 @@ export interface IPlatformService {
 
 	getEnvironmentInfo(): Effect.Effect<
 		EnvironmentModule.EnvironmentInfo,
+
 		Error
 	>;
 
@@ -104,6 +109,7 @@ export interface IPlatformService {
 		options?: ProcessModule.ProcessSpawnOptions,
 	): Effect.Effect<
 		{ stdout: string; stderr: string; exitCode: number | null },
+
 		Error
 	>;
 
@@ -143,6 +149,7 @@ export interface IPlatformService {
  * Platform Service implementation
  */
 export class PlatformService implements IPlatformService {
+
 	readonly _serviceBrand: undefined;
 
 	private startTime: number = 0;
@@ -313,6 +320,7 @@ export class PlatformService implements IPlatformService {
 	 */
 	getEnvironmentInfo(): Effect.Effect<
 		EnvironmentModule.EnvironmentInfo,
+
 		Error
 	> {
 		return Effect.sync(() => {
@@ -377,6 +385,7 @@ export class PlatformService implements IPlatformService {
 		options?: ProcessModule.ProcessSpawnOptions,
 	): Effect.Effect<
 		{ stdout: string; stderr: string; exitCode: number | null },
+
 		Error
 	> {
 		return Effect.tryPromise({
@@ -538,9 +547,12 @@ export const TestPlatformService = Layer.succeed(
  */
 export function DetectPlatform(): Effect.Effect<
 	OSModule.PlatformNumber,
+
 	never,
+
 	IPlatformService
 > {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -553,9 +565,12 @@ export function DetectPlatform(): Effect.Effect<
  */
 export function GetOSInfo(): Effect.Effect<
 	OSModule.OSInfo,
+
 	never,
+
 	IPlatformService
 > {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -569,6 +584,7 @@ export function GetOSInfo(): Effect.Effect<
 export function NormalizePath(
 	path: string,
 ): Effect.Effect<string, never, IPlatformService> {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -582,6 +598,7 @@ export function NormalizePath(
 export function GetEnvironmentVariable(
 	name: string,
 ): Effect.Effect<Option.Option<string>, never, IPlatformService> {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -597,6 +614,7 @@ export function SetEnvironmentVariable(
 
 	value: string,
 ): Effect.Effect<void, never, IPlatformService> {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -616,9 +634,12 @@ export function ExecuteCommand(
 	options?: ProcessModule.ProcessSpawnOptions,
 ): Effect.Effect<
 	{ stdout: string; stderr: string; exitCode: number | null },
+
 	never,
+
 	IPlatformService
 > {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -637,6 +658,7 @@ export function SpawnProcess(
 
 	options: ProcessModule.ProcessSpawnOptions,
 ): Effect.Effect<ProcessModule.ProcessInfo | null, never, IPlatformService> {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -650,15 +672,19 @@ export function SpawnProcess(
  */
 export function GetHealthStatus(): Effect.Effect<
 	{
+
 		status: "healthy" | "degraded" | "unhealthy";
 
 		uptime: number;
 
 		lastUpdate: number;
 	},
+
 	never,
+
 	IPlatformService
 > {
+
 	return Effect.flatMap(
 		Effect.service(PlatformServiceTag),
 
@@ -670,6 +696,7 @@ export function GetHealthStatus(): Effect.Effect<
  * Initialize platform service
  */
 export function InitializePlatformService(): Effect.Effect<void, never> {
+
 	return Effect.sync(() => {
 		const service = new PlatformService();
 
@@ -681,6 +708,7 @@ export function InitializePlatformService(): Effect.Effect<void, never> {
  * Export Platform service module
  */
 export const PlatformServiceModule = {
+
 	IPlatformService,
 
 	PlatformService,

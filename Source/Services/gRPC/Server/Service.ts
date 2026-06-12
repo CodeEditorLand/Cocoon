@@ -43,23 +43,36 @@
  */
 
 import { EventEmitter } from "events";
+
 import { createRequire } from "module";
+
 import { dirname } from "path";
+
 import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
+
 import * as protoLoader from "@grpc/proto-loader";
+
 import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../../../Interfaces/IGRPC/Server/Service.js";
+
 import { CocoonDevLog } from "../../Dev/Log.js";
+
 import DocumentContentHandler from "../../Handler/Document/Content/Handler.js";
+
 import ExtensionHostHandler from "../../Handler/Extension/Host/Handler.js";
+
 // Import handler modules
 import type { HandlerContext } from "../../Handler/Handler/Context.js";
+
 import InvokeLanguageProvider from "../../Handler/Language/Provider/Handler.js";
+
 import HandleSpecificNotification from "../../Handler/Notification/Handler.js";
+
 import RouteRequest from "../../Handler/Request/Routing/Handler.js";
+
 // Import generated interfaces from Vine.proto
 import {
 	CancelOperationRequest,
@@ -81,6 +94,7 @@ const require = createRequire(import.meta.url);
  * Request tracking entry for cancellation support
  */
 interface RequestTrackingEntry {
+
 	method: string;
 
 	startTime: number;
@@ -95,6 +109,7 @@ export class GRPCServerService
 	extends EventEmitter
 	implements IGRPCServerService
 {
+
 	readonly _serviceBrand: undefined;
 
 	private server: grpc.Server | null = null;
@@ -315,7 +330,9 @@ export class GRPCServerService
 		const Presented = Entries[0]?.toString() ?? "";
 
 		const Token = Presented.startsWith("Bearer ")
+
 			? Presented.slice("Bearer ".length)
+
 			: Presented;
 
 		return Token === this.authToken;
@@ -539,6 +556,7 @@ export class GRPCServerService
 							detail:
 								error instanceof Error
 									? (error.stack ?? error.message)
+
 									: String(error),
 						}),
 					),
@@ -726,6 +744,7 @@ export class GRPCServerService
 							detail:
 								error instanceof Error
 									? (error.stack ?? error.message)
+
 									: String(error),
 						}),
 					),
@@ -993,6 +1012,7 @@ export class GRPCServerService
 					await import("../../Language/Provider/Registry.js");
 
 				const ExtensionArguments = Array.isArray(CommandArguments)
+
 					? CommandArguments
 					: CommandArguments === undefined
 						? []
@@ -1030,6 +1050,7 @@ export class GRPCServerService
 				const Context = this.GetHandlerContext();
 
 				const Args = Array.isArray(parameters)
+
 					? parameters
 					: [parameters];
 
@@ -1069,6 +1090,7 @@ export class GRPCServerService
 
 			if (TaskMethod === "fetchTasks" || TaskMethod === "provideTasks") {
 				const Filter = Array.isArray(parameters)
+
 					? parameters[0]
 					: parameters;
 
@@ -1105,6 +1127,7 @@ export class GRPCServerService
 				const TaskId = String(Date.now());
 
 				const TaskDef = Array.isArray(parameters)
+
 					? parameters[0]
 					: parameters;
 
@@ -1272,6 +1295,7 @@ export class GRPCServerService
 					"resolveDebugConfigurationWithSubstitutedVariables"
 			) {
 				const Args = Array.isArray(parameters)
+
 					? parameters
 					: [parameters];
 
@@ -1284,6 +1308,7 @@ export class GRPCServerService
 					Context.ExtensionRegistry as any
 				).entries()) {
 					if (!String(Key).startsWith("__debugConfigProvider:"))
+
 						continue;
 
 					try {
@@ -1321,6 +1346,7 @@ export class GRPCServerService
 				// instantiated the adapter on `debug.didStartSession` and
 				// stashed it under `Context.__dapAdapters[sessionId]`.
 				const Args = Array.isArray(parameters)
+
 					? parameters
 					: [parameters];
 
@@ -1375,6 +1401,7 @@ export class GRPCServerService
 
 			if (DebugMethod === "provideDebugConfigurations") {
 				const Args = Array.isArray(parameters)
+
 					? parameters
 					: [parameters];
 
@@ -1386,6 +1413,7 @@ export class GRPCServerService
 					Context.ExtensionRegistry as any
 				).entries()) {
 					if (!String(Key).startsWith("__debugConfigProvider:"))
+
 						continue;
 
 					try {
@@ -1575,7 +1603,9 @@ export class GRPCServerService
 			this.errorCount++;
 
 			const RawParameter = Buffer.isBuffer(notification.Parameter)
+
 				? notification.Parameter.toString("utf8")
+
 				: String(notification.Parameter);
 
 			CocoonDevLog(

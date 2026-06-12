@@ -45,6 +45,7 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
  * Service mapping and request routing is fully implemented.
  */
 const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
+
 	CocoonDevLog(
 		"request-route",
 
@@ -54,6 +55,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	// Service routing table with pattern matching
 	const RoutePatterns: Record<
 		string,
+
 		(method: string, params: any) => Promise<any>
 	> = {
 		"extension.\\w+": async (Method: string, Params: any) => {

@@ -17,17 +17,22 @@
 
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { ExtractDecoratorMatches } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractDecoratorMatch.js";
+
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { ExtractInterfaceMembers } from "@codeeditorland/wind/Target/Codegen/Extract/ExtractInterfaceMembers.js";
+
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { ResolveInterfaceCrossFile } from "@codeeditorland/wind/Target/Codegen/Resolve/ResolveInterfaceCrossFile.js";
+
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import type { SourceFile } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 
 import type { ExtHostDecoratorRecord } from "../../../../Type/Ext/Host/Decorator/Record.js";
+
 import { IsExtHostFile } from "../../../Is/Ext/Host/File.js";
 
 const MainThreadCounterpartName = (decoratorName: string): string | null => {
+
 	if (!decoratorName.startsWith("IExtHost")) return null;
 
 	const Suffix = decoratorName.slice("IExtHost".length);
@@ -40,6 +45,7 @@ const FindInterfaceDocComment = (
 
 	interfaceName: string,
 ): string | null => {
+
 	const Pattern = new RegExp(
 		`((?:\\s*\\/\\*\\*[\\s\\S]*?\\*\\/\\s*)*)(?:export\\s+)?interface\\s+${interfaceName}\\b`,
 	);
@@ -67,6 +73,7 @@ const FindInterfaceDocComment = (
 export const IterateExtHostDecorators = async function* (
 	files: AsyncIterable<SourceFile>,
 ): AsyncIterableIterator<ExtHostDecoratorRecord> {
+
 	for await (const File of files) {
 		if (!IsExtHostFile(File.SourcePath)) continue;
 

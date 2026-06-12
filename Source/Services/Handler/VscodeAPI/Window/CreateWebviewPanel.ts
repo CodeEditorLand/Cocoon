@@ -22,6 +22,7 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 interface ShowOptionsLike {
+
 	readonly viewColumn?: number;
 
 	readonly preserveFocus?: boolean;
@@ -44,6 +45,7 @@ export default (
 
 	SharedCspSource: string,
 ): any => {
+
 	let CurrentHtml = "";
 
 	let CurrentTitle: string = Title;

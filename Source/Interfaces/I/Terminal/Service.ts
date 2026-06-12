@@ -7,6 +7,7 @@
 import { Context } from "effect";
 
 export interface ITerminalService {
+
 	createTerminal(
 		name: string,
 

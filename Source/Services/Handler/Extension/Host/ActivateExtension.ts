@@ -14,7 +14,9 @@
 import * as NodeFS from "node:fs";
 
 import FiddeeRoot from "../../../../Platform/FiddeeRoot.js";
+
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
 
 /**
@@ -43,6 +45,7 @@ export const ActiveExtensionContexts = new Map<string, unknown>();
  * activations).
  */
 export const DisposeExtensionContext = (ExtensionId: string): void => {
+
 	const ExtContext = ActiveExtensionContexts.get(ExtensionId);
 
 	ActiveExtensionContexts.delete(ExtensionId);
@@ -83,6 +86,7 @@ export const DisposeExtensionContext = (ExtensionId: string): void => {
 let StoragePrimePromise: Promise<unknown> | null = null;
 
 export const ResetStoragePrime = (): void => {
+
 	StoragePrimePromise = null;
 };
 
@@ -96,6 +100,7 @@ const CreateExtensionContext = (
 
 	ExtensionPath: string,
 ): unknown => {
+
 	const ExtId: string =
 		Extension?.identifier?.value ??
 		Extension?.identifier?.id ??
@@ -142,6 +147,7 @@ const CreateExtensionContext = (
 	// descriptor so every published field is present.
 	let FullPackageJSON: Record<string, unknown> = Extension as Record<
 		string,
+
 		unknown
 	>;
 
@@ -800,6 +806,7 @@ const ActivateExtension = async (
 			// Dynamic import resolves file extensions and handles ESM natively.
 			// Prefer file:// URL to avoid Windows drive-letter quirks.
 			const ImportURL = ModulePath.startsWith("/")
+
 				? `file://${ModulePath}`
 				: ModulePath;
 
@@ -822,6 +829,7 @@ const ActivateExtension = async (
 
 				if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
 					const ImportURL = ModulePath.startsWith("/")
+
 						? `file://${ModulePath}`
 						: ModulePath;
 
@@ -939,6 +947,7 @@ const ActivateExtension = async (
 								entries: Iterable<readonly [string, unknown]>,
 							) => void;
 					  }
+
 					| undefined;
 
 				const GlobalState = (ExtContext as any)?.globalState as
@@ -947,6 +956,7 @@ const ActivateExtension = async (
 								entries: Iterable<readonly [string, unknown]>,
 							) => void;
 					  }
+
 					| undefined;
 
 				WorkspaceState?.__primeCache?.(WorkspaceEntries);
@@ -997,6 +1007,7 @@ const ActivateExtension = async (
 						{};
 
 					const InitFolders = Array.isArray(InitWorkspace.folders)
+
 						? InitWorkspace.folders
 						: [];
 
@@ -1006,6 +1017,7 @@ const ActivateExtension = async (
 						const UriShape =
 							typeof UriField === "string"
 								? `string("${UriField.slice(0, 80)}")`
+
 								: typeof UriField === "object" &&
 									  UriField !== null
 									? `object(scheme=${UriField.scheme ?? "<missing>"} fsPath=${

@@ -22,23 +22,34 @@
  */
 
 import { Context, Effect } from "effect";
+
 import type * as VSCode from "vscode";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { CreateEventStream } from "../../Utility/Event/Stream.js";
+
 import { MountainGRPCClientService } from "../Mountain/gRPC/Client.js";
+
 import { ShowOpenDialog, ShowSaveDialog } from "./File/Dialogs.js";
+
 import type { Logger, Window, Workspace } from "./Interfaces.js";
+
 import { CreateOutputChannel } from "./Output/Channel.js";
+
 import { WithProgress } from "./Progress.js";
+
 import { ShowInputBox, ShowQuickPick } from "./Quick/Input.js";
+
 import { CreateStatusBarItem } from "./Status/Bar.js";
+
 import {
 	ShowErrorMessage,
 	ShowInformationMessage,
 	ShowTextDocument,
 	ShowWarningMessage,
 } from "./Text/Document.js";
+
 import { CreateWebviewPanel } from "./Webview/Panel.js";
 
 export type { Logger, Window, Workspace } from "./Interfaces.js";

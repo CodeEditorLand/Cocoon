@@ -8,8 +8,11 @@
  */
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapNamespaceWithHeuristics from "../Wrap/Namespace/With/Heuristics.js";
+
 import WrapScmNamespace from "../Wrap/Scm/Namespace.js";
 
 /**
@@ -28,6 +31,7 @@ const ScmTraceEnabled =
 	typeof process !== "undefined" && typeof process.env["Trace"] === "string";
 
 const ScmTrace = (Message: string): void => {
+
 	if (!ScmTraceEnabled) return;
 
 	try {
@@ -52,6 +56,7 @@ const ScmTrace = (Message: string): void => {
  * POJO, or hydrated vscode.Uri). Returns undefined for non-URI shapes.
  */
 const UriLikeToString = (Value: unknown): string | undefined => {
+
 	if (typeof Value === "string") return Value;
 
 	if (Value == null || typeof Value !== "object") return undefined;
@@ -73,6 +78,7 @@ const UriLikeToString = (Value: unknown): string | undefined => {
 };
 
 const SanitizeResourceState = (Raw: unknown): unknown => {
+
 	if (Raw == null || typeof Raw !== "object") return Raw;
 
 	const Source = Raw as Record<string, unknown>;
@@ -80,6 +86,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 	const Out: Record<string, unknown> = {};
 
 	if (Source["resourceUri"] !== undefined)
+
 		Out["resourceUri"] = Source["resourceUri"];
 
 	const Command = Source["command"];
@@ -100,7 +107,9 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 		// copy each argument and project just the safe primitive fields
 		// the diff handler actually consults.
 		const RawArgs = Array.isArray(C["arguments"])
+
 			? (C["arguments"] as unknown[])
+
 			: undefined;
 
 		const ProjectArg = (Arg: unknown): unknown => {
@@ -116,6 +125,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 			// click" field; preserve as-is so vscode.git's handler can
 			// reconstruct the diff inputs.
 			if (Holder["resourceUri"] !== undefined)
+
 				Projected["resourceUri"] = Holder["resourceUri"];
 
 			// URI POJOs may travel as the arg itself.
@@ -123,22 +133,28 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 				Projected["scheme"] = Holder["scheme"];
 
 				if (Holder["authority"] !== undefined)
+
 					Projected["authority"] = Holder["authority"];
 
 				if (Holder["path"] !== undefined)
+
 					Projected["path"] = Holder["path"];
 
 				if (Holder["query"] !== undefined)
+
 					Projected["query"] = Holder["query"];
 
 				if (Holder["fragment"] !== undefined)
+
 					Projected["fragment"] = Holder["fragment"];
 			}
 
 			if (typeof Holder["fsPath"] === "string")
+
 				Projected["fsPath"] = Holder["fsPath"];
 
 			if (typeof Holder["external"] === "string")
+
 				Projected["external"] = Holder["external"];
 
 			// Pass through known-safe scalar metadata so handlers that
@@ -172,6 +188,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 			const RepositoryRootString = UriLikeToString(RepositoryRoot);
 
 			if (RepositoryRootString !== undefined)
+
 				Projected["__celRepositoryRoot"] = RepositoryRootString;
 
 			// Carry every remaining top-level JSON-safe scalar verbatim so
@@ -231,6 +248,7 @@ const SanitizeResourceState = (Raw: unknown): unknown => {
 	}
 
 	if (Source["contextValue"] !== undefined)
+
 		Out["contextValue"] = Source["contextValue"];
 
 	return Out;
@@ -269,6 +287,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								(RootUri as { scheme?: unknown })?.scheme ?? "",
 							authority:
 								(RootUri as { authority?: unknown })
+
 									?.authority ?? "",
 							path: (RootUri as { path?: unknown })?.path ?? "",
 							query:
@@ -277,6 +296,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								(RootUri as { fragment?: unknown })?.fragment ??
 								"",
 						}
+
 					: RootUri;
 
 			// vscode.git fires `createResourceGroup(...)` and the
@@ -323,6 +343,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 			const Groups = new Map<
 				string,
 				{ label: string; resourceStates: unknown[] }
+
 			>();
 
 			// vscode.git's `Repository` ctor reads several methods/events on
@@ -436,7 +457,9 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 							// consumes: `{ resourceUri, command?, decorations?,
 							// contextValue? }`. Anything else gets dropped.
 							const SanitizedStates = Array.isArray(Value)
+
 								? Value.map((Raw) => SanitizeResourceState(Raw))
+
 								: [];
 
 							// Chain after `GroupReady` so the workbench cannot

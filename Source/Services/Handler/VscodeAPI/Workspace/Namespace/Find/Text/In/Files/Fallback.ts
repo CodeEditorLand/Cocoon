@@ -23,10 +23,13 @@
 import { promises as FsPromises } from "node:fs";
 
 import type { HandlerContext } from "../../../../../../../Handler/Context.js";
+
 import { FolderToFsPath } from "../../../../Helpers.js";
+
 import { FindFilesLocal } from "../../../Files.js";
 
 interface QueryShape {
+
 	pattern?: string;
 
 	isRegExp?: boolean;
@@ -37,6 +40,7 @@ interface QueryShape {
 }
 
 interface OptionsShape {
+
 	include?: unknown;
 
 	exclude?: unknown;
@@ -51,6 +55,7 @@ interface OptionsShape {
 }
 
 interface TextSearchMatch {
+
 	uri: unknown;
 
 	ranges: Array<{
@@ -74,9 +79,11 @@ const EscapeLiteral = (Text: string): string =>
 	Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const ExtractPattern = (Query: unknown): RegExp | undefined => {
+
 	const Q =
 		typeof Query === "string"
 			? { pattern: Query }
+
 			: ((Query ?? {}) as QueryShape);
 
 	// The only legitimate empty outcome: a genuinely empty query string.
@@ -106,6 +113,7 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 		// escaped form cannot throw - every metacharacter is neutralised.
 		const Literal = Q.isWordMatch
 			? `\\b${EscapeLiteral(Q.pattern)}\\b`
+
 			: EscapeLiteral(Q.pattern);
 
 		return new RegExp(Literal, Flags);
@@ -123,6 +131,7 @@ export async function FindTextInFilesNodeFallback(
 
 	Callback?: (Result: unknown) => void,
 ): Promise<{ limitHit: boolean }> {
+
 	const Pattern = ExtractPattern(Query);
 
 	if (!Pattern) return { limitHit: false };

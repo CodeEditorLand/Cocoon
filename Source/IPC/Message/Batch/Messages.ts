@@ -12,13 +12,17 @@
  */
 
 import { MAX_BATCH_COUNT, MAX_BATCH_SIZE } from "../Constants.js";
+
 import SerializeMessage from "../Serialize/Message.js";
+
 import {
 	CompressionHint,
 	type IMessage,
 	type ISerializationResult,
 } from "../Types.js";
+
 import { ValidateMessage } from "../Validation.js";
+
 import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
@@ -37,6 +41,7 @@ export default (
 
 	Hint: CompressionHint = CompressionHint.Balanced,
 ): ISerializationResult => {
+
 	const Warnings: string[] = [];
 
 	let OriginalSize = 0;

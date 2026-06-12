@@ -14,8 +14,11 @@
  */
 
 import GlobToRegex from "../../../../../../Utility/Glob/To/Regex.js";
+
 import type { HandlerContext } from "../../../../Handler/Context.js";
+
 import { GlobParsePattern, Uri as StockUri } from "../../../Stock/Lift.js";
+
 import {
 	DefaultExcludeSegments,
 	ExtractGlobPattern,
@@ -32,6 +35,7 @@ type GlobMatcher = (Path: string) => boolean;
  * an empty result set.
  */
 function CompileGlob(Pattern: string): GlobMatcher | undefined {
+
 	try {
 		const Parsed = GlobParsePattern(Pattern);
 
@@ -60,6 +64,7 @@ export const FindFilesLocal = async (
 
 	MaxResults?: number,
 ): Promise<Array<{ scheme: string; path: string; fsPath: string }>> => {
+
 	const IncludePattern = ExtractGlobPattern(Include);
 
 	const ExcludePattern = ExtractGlobPattern(Exclude);
@@ -68,12 +73,14 @@ export const FindFilesLocal = async (
 		typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 10_000;
 
 	if (process.env["Trace"]?.includes("wsns"))
+
 		process.stdout.write(
 			`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}\n`,
 		);
 
 	if (!IncludePattern) {
 		if (process.env["Trace"]?.includes("wsns"))
+
 			process.stdout.write(
 				"[LandFix:WsNs] findFiles: no include pattern → []\n",
 			);
@@ -85,6 +92,7 @@ export const FindFilesLocal = async (
 
 	if (!IncludeMatcher) {
 		if (process.env["Trace"]?.includes("wsns"))
+
 			process.stdout.write(
 				`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern} (both stock + fallback)\n`,
 			);
@@ -94,6 +102,7 @@ export const FindFilesLocal = async (
 
 	const ExcludeMatcher = ExcludePattern
 		? CompileGlob(ExcludePattern)
+
 		: undefined;
 
 	const { readdir } = await import("node:fs/promises");
@@ -187,6 +196,7 @@ export const FindFilesLocal = async (
 				typeof Entry.isSymbolicLink === "function" &&
 				Entry.isSymbolicLink()
 			)
+
 				continue;
 
 			const Full = join(Current, Name);
@@ -254,6 +264,7 @@ export const FindFilesLocal = async (
 
 		if (!FsPath) {
 			if (process.env["Trace"]?.includes("wsns"))
+
 				process.stdout.write(
 					`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})\n`,
 				);
@@ -266,6 +277,7 @@ export const FindFilesLocal = async (
 
 	if (Roots.length === 0) {
 		if (process.env["Trace"]?.includes("wsns"))
+
 			process.stdout.write(
 				"[LandFix:WsNs] findFiles: no workspace folders resolved → walking process.cwd()\n",
 			);
@@ -279,12 +291,14 @@ export const FindFilesLocal = async (
 
 	if (Truncated) {
 		if (process.env["Trace"]?.includes("wsns"))
+
 			process.stdout.write(
 				`[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)\n`,
 			);
 	}
 
 	if (process.env["Trace"]?.includes("wsns"))
+
 		process.stdout.write(
 			`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}\n`,
 		);

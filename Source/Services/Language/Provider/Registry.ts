@@ -30,6 +30,7 @@ const Callbacks = new Map<number, ProviderObject>();
  * Called by APIFactoryService when an extension calls register*Provider().
  */
 export function Register(Handle: number, Provider: ProviderObject): void {
+
 	Callbacks.set(Handle, Provider);
 }
 
@@ -38,6 +39,7 @@ export function Register(Handle: number, Provider: ProviderObject): void {
  * Called by the dispose() function returned to the extension.
  */
 export function Unregister(Handle: number): void {
+
 	Callbacks.delete(Handle);
 }
 
@@ -46,6 +48,7 @@ export function Unregister(Handle: number): void {
  * Called by GRPCServerService when Mountain invokes a provider.
  */
 export function Get(Handle: number): ProviderObject | undefined {
+
 	const Provider = Callbacks.get(Handle);
 
 	if (process.env.Trace) {
@@ -70,6 +73,7 @@ let NextHandle = 10000;
  * Returns the assigned handle so the caller can wire dispose().
  */
 export function RegisterAutoHandle(Provider: ProviderObject): number {
+
 	const Handle = NextHandle++;
 
 	Callbacks.set(Handle, Provider);
@@ -93,6 +97,7 @@ export function RegisterAutoHandle(Provider: ProviderObject): number {
  * between language-provider handles and stand-alone provider handles.
  */
 export function NextProviderHandle(): number {
+
 	return NextHandle++;
 }
 
@@ -104,6 +109,7 @@ const Commands = new Map<string, Function>();
  * Called by the vscode API shim when extensions call commands.registerCommand().
  */
 export function RegisterCommand(CommandId: string, Callback: Function): void {
+
 	Commands.set(CommandId, Callback);
 }
 
@@ -114,6 +120,7 @@ export function RegisterCommand(CommandId: string, Callback: Function): void {
  * Cocoon-local-vs-Mountain-remote split observable.
  */
 export function HasCommand(CommandId: string): boolean {
+
 	return Commands.has(CommandId);
 }
 
@@ -121,6 +128,7 @@ export function HasCommand(CommandId: string): boolean {
  * Execute a registered command by ID.
  */
 export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
+
 	const Handler = Commands.get(CommandId);
 
 	if (Handler) return Handler(...Args);
@@ -133,6 +141,7 @@ export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
  * extensions from `vscode.commands.registerCommand(...)`.
  */
 export function UnregisterCommand(CommandId: string): void {
+
 	Commands.delete(CommandId);
 }
 
@@ -140,6 +149,7 @@ export function UnregisterCommand(CommandId: string): void {
  * Return all currently registered command IDs.
  */
 export function ListCommands(): readonly string[] {
+
 	return Array.from(Commands.keys());
 }
 
@@ -148,5 +158,6 @@ export function ListCommands(): readonly string[] {
  * Useful for diagnostics.
  */
 export function ListHandles(): readonly number[] {
+
 	return Array.from(Callbacks.keys());
 }

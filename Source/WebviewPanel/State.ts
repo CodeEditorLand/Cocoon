@@ -61,6 +61,7 @@ import { Effect } from "effect";
  * @description Position information for panel placement
  */
 export interface PanelPosition {
+
 	readonly ViewColumn: number;
 
 	readonly PreservedFocus: boolean;
@@ -71,6 +72,7 @@ export interface PanelPosition {
  * @description Current view state of panel
  */
 export interface PanelViewState {
+
 	readonly Active: boolean;
 
 	readonly Visible: boolean;
@@ -83,6 +85,7 @@ export interface PanelViewState {
  * @description Panel options stored in state
  */
 export interface PanelOptions {
+
 	readonly EnableScripts?: boolean;
 
 	readonly RetainContextWhenHidden?: boolean;
@@ -99,6 +102,7 @@ export interface PanelOptions {
  * @description Complete state of a Webview panel for persistence
  */
 export interface PanelState {
+
 	readonly Version: number;
 
 	readonly Handle: string;
@@ -137,6 +141,7 @@ export interface PanelState {
  * @description Contract for Webview state management
  */
 export interface StateManager {
+
 	readonly SavePanelState: (
 		PanelState: PanelState,
 	) => Effect.Effect<void, Error>;
@@ -187,6 +192,7 @@ export class StateService extends Effect.Service<StateService>()(
 							parameters: unknown,
 						) => Promise<unknown>;
 				  }
+
 				| undefined => (globalThis as any).__COCOON_MOUNTAIN_CLIENT__;
 
 			const StorageKey = (Handle: string): string =>
@@ -352,6 +358,7 @@ export class StateService extends Effect.Service<StateService>()(
 					StateCache.set(PanelStateData.Handle, PanelStateData);
 
 					void GetMountainClient()
+
 						?.sendRequest("Storage.Set", [
 							StorageKey(PanelStateData.Handle),
 
@@ -404,6 +411,7 @@ export class StateService extends Effect.Service<StateService>()(
 					StateCache.delete(Handle);
 
 					void GetMountainClient()
+
 						?.sendRequest("Storage.Set", [StorageKey(Handle), null])
 						.catch(() => undefined);
 				});

@@ -23,6 +23,7 @@ export type AppServices =
  * Plain-object singletons - no Layer/pipe/provide machinery.
  */
 export const EffectServices = {
+
 	/**
 	 * Return all service singletons as a plain record.
 	 * Each value is already initialised; callers receive live instances directly.

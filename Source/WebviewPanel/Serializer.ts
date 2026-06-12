@@ -54,6 +54,7 @@
  */
 
 import { Effect } from "effect";
+
 import type { Uri } from "vscode";
 
 import type {
@@ -68,6 +69,7 @@ import type {
  * @description DTO format for Webview state in Mountain backend
  */
 export interface MountainDTO {
+
 	readonly Version: number;
 
 	readonly Handle: string;
@@ -118,6 +120,7 @@ export interface MountainDTO {
  * @description Contract for Webview state serialization
  */
 export interface Serializer {
+
 	readonly SerializeToDTO: (
 		State: PanelState,
 	) => Effect.Effect<MountainDTO, Error>;

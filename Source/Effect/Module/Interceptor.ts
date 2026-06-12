@@ -6,6 +6,7 @@
  */
 
 import { CocoonDevLog } from "../../Services/Dev/Log.js";
+
 import { getTelemetry, type TelemetryService } from "../Telemetry.js";
 
 // ============================================================================
@@ -13,6 +14,7 @@ import { getTelemetry, type TelemetryService } from "../Telemetry.js";
 // ============================================================================
 
 export enum SecurityLevel {
+
 	TRUSTED = "TRUSTED",
 
 	SANDBOXED = "SANDBOXED",
@@ -23,6 +25,7 @@ export enum SecurityLevel {
 }
 
 export interface SecurityPolicy {
+
 	extensionId: string;
 
 	allowedModules: ReadonlyArray<string>;
@@ -37,6 +40,7 @@ export interface SecurityPolicy {
 }
 
 export interface ModuleInterceptionRequest {
+
 	moduleId: string;
 
 	parentModule?: string;
@@ -47,6 +51,7 @@ export interface ModuleInterceptionRequest {
 }
 
 export interface ModuleInterceptionResult {
+
 	success: boolean;
 
 	module?: unknown;
@@ -57,6 +62,7 @@ export interface ModuleInterceptionResult {
 }
 
 export interface InterceptionStats {
+
 	totalInterceptions: number;
 
 	blockedModules: number;
@@ -71,6 +77,7 @@ export interface InterceptionStats {
 // ============================================================================
 
 export class ModuleNotFoundError extends Error {
+
 	readonly _tag = "ModuleNotFoundError";
 
 	constructor(
@@ -83,6 +90,7 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleAccessDeniedError extends Error {
+
 	readonly _tag = "ModuleAccessDeniedError";
 
 	constructor(
@@ -95,6 +103,7 @@ export class ModuleAccessDeniedError extends Error {
 }
 
 export class SecurityPolicyNotFoundError extends Error {
+
 	readonly _tag = "SecurityPolicyNotFoundError";
 
 	constructor(readonly extensionId: string) {
@@ -107,6 +116,7 @@ export class SecurityPolicyNotFoundError extends Error {
 // ============================================================================
 
 export interface ModuleInterceptorService {
+
 	/**
 	 * Initialize module interception service
 	 */
@@ -176,6 +186,7 @@ export interface ModuleInterceptorService {
 // ============================================================================
 
 export const ModuleInterceptorTag = {
+
 	_tag: "Cocoon/ModuleInterceptor",
 } as const;
 
@@ -186,6 +197,7 @@ export const ModuleInterceptor = ModuleInterceptorTag;
 // ============================================================================
 
 const defaultSecurityPolicy = {
+
 	allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
 
 	blockedModules: [
@@ -212,6 +224,7 @@ const defaultSecurityPolicy = {
 } satisfies Omit<SecurityPolicy, "extensionId">;
 
 async function makeModuleInterceptorService(): Promise<ModuleInterceptorService> {
+
 	const telemetry: TelemetryService = getTelemetry();
 
 	// Security policies for extensions
@@ -609,6 +622,7 @@ async function makeModuleInterceptorService(): Promise<ModuleInterceptorService>
 let _instance: ModuleInterceptorService | undefined;
 
 export async function getModuleInterceptor(): Promise<ModuleInterceptorService> {
+
 	if (_instance === undefined) {
 		_instance = await makeModuleInterceptorService();
 	}

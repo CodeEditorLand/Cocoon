@@ -57,7 +57,9 @@ import ModuleNS from "node:module";
 import { Config, Data, Effect } from "effect";
 
 import { ExitPreventedProblem } from "../../Archive/PatchProcess/ExitPreventedProblem.js";
+
 import { InitDataService } from "../Services/Init/Data.js";
+
 import { SecurityPolicy } from "./Security.js";
 
 const Module = ModuleNS as any;
@@ -69,6 +71,7 @@ const Module = ModuleNS as any;
  * Allows other security modules to interact with process controls
  */
 export interface Patcher {
+
 	/**
 	 * Original native process.exit function
 	 */
@@ -94,10 +97,12 @@ export interface Patcher {
  * Tagged error class for module loading patch problems
  */
 class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
+
 	readonly Context: string;
 
 	readonly Cause?: unknown;
 }> {
+
 	public override readonly message: string;
 
 	constructor(Properties: {
@@ -456,6 +461,7 @@ export const RunPatchProcess = Effect.gen(function* () {
  * Parse security policy from string configuration
  */
 function ParseSecurityPolicy(PolicyString: string): SecurityPolicy {
+
 	const Parts = PolicyString.split(",");
 
 	const Policy: SecurityPolicy = {

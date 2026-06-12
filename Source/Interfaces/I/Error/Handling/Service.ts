@@ -9,6 +9,7 @@ import { Context } from "effect";
 
 // Circuit breaker state
 export interface CircuitBreakerState {
+
 	serviceName: string;
 
 	state: "CLOSED" | "OPEN" | "HALF_OPEN";
@@ -26,6 +27,7 @@ export interface CircuitBreakerState {
 
 // Error handling configuration
 export interface ErrorHandlingConfig {
+
 	maxRetries: number;
 
 	retryDelay: number;
@@ -39,6 +41,7 @@ export interface ErrorHandlingConfig {
 
 // Error handling result
 export interface ErrorHandlingResult<T> {
+
 	success: boolean;
 
 	result?: T;
@@ -53,6 +56,7 @@ export interface ErrorHandlingResult<T> {
 }
 
 export interface IErrorHandlingService {
+
 	readonly _serviceBrand: undefined;
 
 	/**

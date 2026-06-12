@@ -19,6 +19,7 @@
 import type { HandlerContext } from "../../Handler/Context.js";
 
 const enum LogLevel {
+
 	Off = 0,
 
 	Trace = 1,
@@ -33,6 +34,7 @@ const enum LogLevel {
 }
 
 const FormatTimestamp = (): string => {
+
 	// `2024-01-15 10:23:45.123` - matches upstream `AbstractLogger`'s
 	// timestamp output so users see the same format they get from the
 	// built-in log channels.
@@ -70,6 +72,7 @@ export default (
 
 	Options?: string | { log?: boolean },
 ): Record<string, unknown> => {
+
 	const IsLog =
 		typeof Options === "object" && Options !== null
 			? Options.log === true
@@ -106,8 +109,10 @@ export default (
 		const Resolved =
 			typeof NextLevel === "number"
 				? (NextLevel as LogLevel)
+
 				: typeof NextLevel === "string"
 					? ((LogLevel as any)[NextLevel] ?? CurrentLevel)
+
 					: CurrentLevel;
 
 		if (Resolved === CurrentLevel) return;
@@ -205,6 +210,7 @@ export default (
 		trace: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Trace))
+
 					Append(FormatLog("trace", Message));
 			} else {
 				Append(`${Message}\n`);
@@ -214,6 +220,7 @@ export default (
 		debug: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Debug))
+
 					Append(FormatLog("debug", Message));
 			} else {
 				Append(`${Message}\n`);
@@ -223,6 +230,7 @@ export default (
 		info: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Info))
+
 					Append(FormatLog("info", Message));
 			} else {
 				Append(`${Message}\n`);
@@ -232,6 +240,7 @@ export default (
 		warn: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Warning))
+
 					Append(FormatLog("warning", Message));
 			} else {
 				Append(`${Message}\n`);
@@ -242,6 +251,7 @@ export default (
 			const Text =
 				MessageOrError instanceof Error
 					? (MessageOrError.stack ?? MessageOrError.message)
+
 					: String(MessageOrError);
 
 			if (IsLog) {

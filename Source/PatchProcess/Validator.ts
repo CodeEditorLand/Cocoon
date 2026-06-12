@@ -59,6 +59,7 @@ import {
  * Result of a validation operation
  */
 export interface ValidationResult {
+
 	readonly Valid: boolean;
 
 	readonly Reason?: string;
@@ -72,6 +73,7 @@ export interface ValidationResult {
  * Process validation state tracking
  */
 interface ProcessValidationState {
+
 	readonly ProcessId: number;
 
 	readonly StartTime: number;
@@ -93,6 +95,7 @@ interface ProcessValidationState {
  * Tagged error for validation failures
  */
 export class ValidationError extends Data.TaggedError("ValidationError")<{
+
 	readonly ProcessId: number;
 
 	readonly ValidationType: string;
@@ -101,6 +104,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 
 	readonly Severity: "warning" | "error" | "critical";
 }> {
+
 	public override readonly message: string;
 
 	constructor(Properties: any) {
@@ -116,6 +120,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 export class BehaviorViolationError extends Data.TaggedError(
 	"BehaviorViolationError",
 )<{
+
 	readonly ProcessId: number;
 
 	readonly ViolationType: string;
@@ -128,6 +133,7 @@ export class BehaviorViolationError extends Data.TaggedError(
 // --- Metrics Tracking ---
 
 interface ValidationMetrics {
+
 	readonly TotalValidations: number;
 
 	readonly FailedValidations: number;
@@ -138,6 +144,7 @@ interface ValidationMetrics {
 }
 
 class ValidationMetricsStore {
+
 	private static _instance: ValidationMetricsStore;
 
 	private _metrics: ValidationMetrics = {
@@ -583,6 +590,7 @@ export const DetectSuspiciousBehavior = Effect.gen(function* () {
  * Get validation metrics
  */
 export const GetValidationMetrics = (): ValidationMetrics => {
+
 	return ValidationMetricsStore.GetInstance().GetMetrics();
 };
 
@@ -601,6 +609,7 @@ export const ResetValidationMetrics = Effect.sync(() => {
 export const GetProcessValidationState = (
 	ProcessId: number = Process.pid,
 ): ProcessValidationState | undefined => {
+
 	return ProcessValidationStates.get(ProcessId);
 };
 
@@ -610,6 +619,7 @@ export const GetProcessValidationState = (
 export const ClearProcessValidationState = (
 	ProcessId: number = Process.pid,
 ): Effect.Effect<void> => {
+
 	return Effect.sync(() => {
 		ProcessValidationStates.delete(ProcessId);
 	});

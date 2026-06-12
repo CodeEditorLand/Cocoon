@@ -6,12 +6,14 @@
  */
 
 import { Effect } from "effect";
+
 import type * as VSCode from "vscode";
 
 /**
  * Window state configuration
  */
 export interface WindowStateConfig {
+
 	focused: boolean;
 
 	active: boolean;
@@ -21,6 +23,7 @@ export interface WindowStateConfig {
  * Status bar item state
  */
 export interface StatusBarState {
+
 	id: string;
 
 	name: string | undefined;
@@ -46,6 +49,7 @@ export interface StatusBarState {
  * Output channel state
  */
 export interface OutputChannelState {
+
 	name: string;
 
 	output: string[];
@@ -61,6 +65,7 @@ export interface OutputChannelState {
  * Webview panel state
  */
 export interface WebviewPanelState {
+
 	viewType: string;
 
 	title: string;
@@ -82,6 +87,7 @@ export interface WebviewPanelState {
  * Progress operation state
  */
 export interface ProgressState {
+
 	location: VSCode.ProgressLocation;
 
 	title?: string;
@@ -101,6 +107,7 @@ export interface ProgressState {
  * Text document display options
  */
 export interface TextDocumentOptions {
+
 	uri: string;
 
 	viewColumn?: number;
@@ -116,6 +123,7 @@ export interface TextDocumentOptions {
  * Dialog options payload
  */
 export interface DialogOptionsPayload {
+
 	message: string;
 
 	buttons?: string[];
@@ -131,6 +139,7 @@ export interface DialogOptionsPayload {
  * Quick pick options payload
  */
 export interface QuickPickOptionsPayload {
+
 	items: readonly (string | VSCode.QuickPickItem)[];
 
 	placeholder?: string;
@@ -150,6 +159,7 @@ export interface QuickPickOptionsPayload {
  * Input box options payload
  */
 export interface InputBoxOptionsPayload {
+
 	value?: string;
 
 	valueSelection?: [number, number];
@@ -171,6 +181,7 @@ export interface InputBoxOptionsPayload {
  * File dialog options payload
  */
 export interface FileDialogOptionsPayload {
+
 	title?: string;
 
 	defaultUri?: string;
@@ -194,6 +205,7 @@ export interface FileDialogOptionsPayload {
  * Webview panel creation options payload
  */
 export interface WebviewPanelOptionsPayload {
+
 	viewType: string;
 
 	title: string;
@@ -211,6 +223,7 @@ export interface WebviewPanelOptionsPayload {
  * Progress options payload
  */
 export interface ProgressOptionsPayload {
+
 	location: VSCode.ProgressLocation;
 
 	title?: string;
@@ -222,6 +235,7 @@ export interface ProgressOptionsPayload {
  * Logger interface for Window service
  */
 export interface Logger {
+
 	readonly Trace: (
 		Message: string,
 		...Data: unknown[]
@@ -246,6 +260,7 @@ export interface Logger {
  * Workspace interface for accessing text editors
  */
 export interface Workspace {
+
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
 
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];
@@ -255,6 +270,7 @@ export interface Workspace {
  * Window service interface
  */
 export interface Window {
+
 	readonly state: VSCode.WindowState;
 
 	readonly activeTextEditor: VSCode.TextEditor | undefined;

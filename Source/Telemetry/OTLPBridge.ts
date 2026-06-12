@@ -18,6 +18,7 @@
  */
 
 import * as NodeHttp from "node:http";
+
 import * as NodeHttps from "node:https";
 
 import ReadConfiguration from "./PostHog/Configuration.js";
@@ -27,6 +28,7 @@ const Configuration = ReadConfiguration();
 let OTLPAvailable = Configuration.OTLPEnabled;
 
 const RandomHex = (Bytes: number): string => {
+
 	let Output = "";
 
 	for (let Index = 0; Index < Bytes; Index = Index + 1) {
@@ -43,12 +45,14 @@ const RandomHex = (Bytes: number): string => {
 let TraceIdentifierCached: string | undefined;
 
 export const TraceIdentifier = (): string => {
+
 	if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
 
 	return TraceIdentifierCached;
 };
 
 const NowNano = (): bigint => {
+
 	const Hr = process.hrtime();
 
 	return BigInt(Hr[0]) * 1_000_000_000n + BigInt(Hr[1]);
@@ -65,6 +69,7 @@ export const CaptureSpan = (
 
 	Attributes: SpanAttributes = [],
 ): void => {
+
 	// Build-time gate: esbuild folds `process.env.NODE_ENV` to the
 	// literal `"production"` for prod, this comparison becomes
 	// `"production" !== "production"` → `false` → early-return. Every
@@ -184,6 +189,7 @@ export const WithSpan = async <Result>(
 
 	Attributes: SpanAttributes = [],
 ): Promise<Result> => {
+
 	const StartNano = NowNano();
 
 	try {

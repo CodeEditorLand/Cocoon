@@ -10,6 +10,7 @@
  */
 
 import { CocoonDevLog } from "../../../../../Dev/Log.js";
+
 import type { HandlerContext } from "../../../../Handler/Context.js";
 
 // The map is kept tight around the languages VS Code ships with +
@@ -18,6 +19,7 @@ import type { HandlerContext } from "../../../../Handler/Context.js";
 // manifest; those flow in via `ResolveLanguageIdFromRegistry` below
 // so the core table stays small and readable.
 const STATIC_EXTENSION_TO_LANGUAGE: Record<string, string> = {
+
 	// Web / script
 	ts: "typescript",
 
@@ -169,10 +171,12 @@ function ResolveLanguageIdFromRegistry(
 
 	FileExtension: string,
 ): string | undefined {
+
 	const ExtensionWithDot = `.${FileExtension}`;
 
 	for (const Description of Context.ExtensionRegistry.values()) {
 		const Contributes = (Description as { contributes?: unknown })
+
 			?.contributes as
 			| {
 					languages?: Array<{
@@ -183,6 +187,7 @@ function ResolveLanguageIdFromRegistry(
 						filenames?: string[];
 					}>;
 			  }
+
 			| undefined;
 
 		const Languages = Contributes?.languages;
@@ -206,6 +211,7 @@ function ResolveLanguageIdFromRegistry(
  * Returns `plaintext` when nothing matches.
  */
 export function DeriveLanguageIdFromUri(UriString: string): string {
+
 	if (!UriString) return "plaintext";
 
 	// Strip scheme + query + hash so we're left with the path.
@@ -274,6 +280,7 @@ export function FireOnLanguageActivation(
 
 	LanguageId: string,
 ): void {
+
 	if (!LanguageId || LanguageId === "plaintext") return;
 
 	if (FiredLanguages.has(LanguageId)) return;

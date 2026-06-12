@@ -56,6 +56,7 @@
  */
 
 import { Effect } from "effect";
+
 import type { Webview as VSCodeWebview } from "vscode";
 
 /**
@@ -63,6 +64,7 @@ import type { Webview as VSCodeWebview } from "vscode";
  * @description Base message structure for extension ↔ Webview communication
  */
 export interface Message {
+
 	readonly Type: string;
 
 	readonly Payload: unknown;
@@ -77,6 +79,7 @@ export interface Message {
  * @description Request message expecting a response
  */
 export interface RequestMessage extends Message {
+
 	readonly Type: "Request";
 
 	readonly RequestId: string;
@@ -93,6 +96,7 @@ export interface RequestMessage extends Message {
  * @description Response message to a previous request
  */
 export interface ResponseMessage extends Message {
+
 	readonly Type: "Response";
 
 	readonly RequestId: string;
@@ -111,6 +115,7 @@ export interface ResponseMessage extends Message {
  * @description Event message for one-way notification
  */
 export interface EventMessage extends Message {
+
 	readonly Type: "Event";
 
 	readonly Payload: {
@@ -139,6 +144,7 @@ export type MessageHandler = (
  * @description Routes messages to appropriate handlers based on type
  */
 export interface MessageRouter {
+
 	readonly Handle: (Message: WebviewMessage) => Effect.Effect<void, Error>;
 
 	readonly RegisterHandler: (

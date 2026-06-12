@@ -10,14 +10,23 @@
 import { EventEmitter as NodeEventEmitter } from "node:events";
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapWindowNamespace from "../Wrap/Window/Namespace.js";
+
 import CreateOutputChannel from "./CreateOutputChannel.js";
+
 import CreateStatusBarItem from "./CreateStatusBarItem.js";
+
 import CreateTerminal from "./CreateTerminal.js";
+
 import CreateWebviewPanel from "./CreateWebviewPanel.js";
+
 import CreateWebviewViewBuilder from "./CreateWebviewViewBuilder.js";
+
 import RegisterCustomEditor from "./RegisterCustomEditor.js";
+
 import {
 	CustomEditorProviders,
 	CustomEditorProvidersByViewType,
@@ -49,6 +58,7 @@ const MakeEventSubscriber =
 
 		Disposables?: { push: (D: { dispose: () => void }) => unknown },
 	) => {
+
 		// Honour VS Code's `(listener, thisArg?, disposables?)` event
 		// contract. Extensions (rust-analyzer, gitlens, ...) bind class
 		// methods via ThisArg and rely on the listener being bound; an
@@ -78,6 +88,7 @@ const MakeEventSubscriber =
 // module so existing imports (e.g. Notification/Handler.ts) remain unchanged.
 
 const CreateWindowNamespace = (Context: HandlerContext) => {
+
 	// `window.state` reports a concrete value from the very first read.
 	// Mountain only pushes `window.focused`/`window.blurred` notifications
 	// on changes, so seed the initial state once; the `state` getter below
@@ -536,6 +547,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 						if (Picked != null) {
 							const PickedArr = Array.isArray(Picked)
+
 								? Picked
 								: [Picked];
 
@@ -578,6 +590,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				) => {
 					const Bound = _ThisArg
 						? (Listener as any).bind(_ThisArg)
+
 						: Listener;
 
 					Listeners.push(Bound as (e: T) => void);
@@ -610,6 +623,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				) => {
 					const Bound = _ThisArg
 						? (Listener as any).bind(_ThisArg)
+
 						: Listener;
 
 					Listeners.push(Bound);
@@ -751,6 +765,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				) => {
 					const Bound = _ThisArg
 						? (Listener as any).bind(_ThisArg)
+
 						: Listener;
 
 					Listeners.push(Bound);
@@ -781,6 +796,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				) => {
 					const Bound = _ThisArg
 						? (Listener as any).bind(_ThisArg)
+
 						: Listener;
 
 					Listeners.push(Bound);
@@ -908,6 +924,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 							preserveFocus?: boolean;
 						})
+
 					: undefined;
 
 			const ViewColumn =
@@ -970,6 +987,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const RegisteredDocs: any[] = Array.isArray(
 				(Context as any).__textDocuments,
 			)
+
 				? (Context as any).__textDocuments
 				: [];
 
@@ -1109,6 +1127,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						let O = 0;
 
 						for (let I = 0; I < (P?.line ?? 0); I++)
+
 							O += (DocLines[I]?.length ?? 0) + 1;
 
 						return O + (P?.character ?? 0);
@@ -1150,6 +1169,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						options:
 							Type && typeof Type === "object"
 								? (Type.__options ?? undefined)
+
 								: undefined,
 					}).catch(() => {});
 				},
@@ -1240,6 +1260,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					const FileName =
 						typeof Uri?.toString === "function"
 							? Uri.toString()
+
 							: String(Uri ?? "");
 
 					return {
@@ -1279,6 +1300,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						const FileName =
 							typeof Uri?.toString === "function"
 								? Uri.toString()
+
 								: String(Uri ?? "");
 
 						return {

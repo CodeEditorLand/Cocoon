@@ -58,6 +58,7 @@ type TestRunState =
 	| "passed";
 
 type TestItem = {
+
 	readonly id: string;
 
 	readonly uri: unknown;
@@ -84,6 +85,7 @@ type TestItem = {
 };
 
 type TestItemCollection = {
+
 	size: number;
 
 	add(Item: TestItem): void;
@@ -100,6 +102,7 @@ type TestItemCollection = {
 };
 
 type TestRunRequest = {
+
 	include?: readonly TestItem[];
 
 	exclude?: readonly TestItem[];
@@ -110,6 +113,7 @@ type TestRunRequest = {
 const NoOp = () => {};
 
 const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
+
 	const Items = new Map<string, TestItem>();
 
 	const Collection: TestItemCollection = {
@@ -160,6 +164,7 @@ const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
 };
 
 const MakeTestItem = (Id: string, Label: string, Uri: unknown): TestItem => {
+
 	const Item: TestItem = {
 		id: Id,
 
@@ -183,6 +188,7 @@ const MakeTestItem = (Id: string, Label: string, Uri: unknown): TestItem => {
 };
 
 type RunResult = {
+
 	state: TestRunState;
 
 	duration?: number;
@@ -203,6 +209,7 @@ const MakeTestRun = (
 
 	Persist: boolean,
 ) => {
+
 	const Results = new Map<string, RunResult>();
 
 	const OutputBuffer: string[] = [];
@@ -286,6 +293,7 @@ const MakeTestRun = (
 };
 
 const CreateTestsNamespace = (Context: HandlerContext) => {
+
 	const EventSubscriber =
 		(EventName: string) => (Listener: (...Arguments: any[]) => any) => {
 			Context.Emitter.on(EventName, Listener);

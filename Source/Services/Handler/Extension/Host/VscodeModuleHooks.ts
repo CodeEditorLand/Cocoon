@@ -13,6 +13,7 @@
 import { CocoonDevLog } from "../../../Dev/Log.js";
 
 const InstallVscodeModuleHooks = async (): Promise<void> => {
+
 	if ((globalThis as any).__cocoonModuleHooksInstalled) return;
 
 	(globalThis as any).__cocoonModuleHooksInstalled = true;
@@ -73,7 +74,9 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 						const Live = Resolve();
 
 						return Reflect.has(Live, Property)
+
 							? Reflect.get(Live, Property, Live)
+
 							: undefined;
 					},
 
@@ -91,6 +94,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 						return Descriptor
 							? { ...Descriptor, configurable: true }
+
 							: undefined;
 					},
 				});

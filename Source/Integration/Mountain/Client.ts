@@ -9,13 +9,16 @@
  */
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { CocoonDevLog } from "../../Services/Dev/Log.js";
+
 import { MountainClientService } from "../../Services/Mountain/Client/Service.js";
 
 /**
  * MountainClient - High-level client for Mountain integration
  */
 export class MountainClient {
+
 	private clientService: IMountainClientService;
 
 	private isInitialized: boolean = false;

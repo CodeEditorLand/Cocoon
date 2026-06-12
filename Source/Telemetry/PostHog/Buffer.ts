@@ -8,16 +8,20 @@
  */
 
 import type { Configuration } from "./Configuration.js";
+
 import Event, { type Properties, type Event as QueuedEvent } from "./Event.js";
+
 import Transport from "./Transport.js";
 
 export type Buffer = {
+
 	readonly Enqueue: (Name: string, Properties: Properties) => void;
 
 	readonly Drain: () => void;
 };
 
 export default (Config: Configuration, DistinctIdentifier: string): Buffer => {
+
 	let Queue: QueuedEvent[] = [];
 
 	let FlushTimer: NodeJS.Timeout | undefined;

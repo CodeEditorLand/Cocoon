@@ -42,10 +42,13 @@
 import type { EventEmitter } from "events";
 
 import { CocoonDevLog } from "../../Dev/Log.js";
+
 import type { HandlerContext } from "../Handler/Context.js";
+
 import * as WindowNamespaceModule from "../VscodeAPI/Window/Namespace.js";
 
 type WorkspaceFolderWire = {
+
 	uri?: string;
 
 	name?: string;
@@ -54,6 +57,7 @@ type WorkspaceFolderWire = {
 };
 
 type WorkspaceDeltaPayload = {
+
 	added?: WorkspaceFolderWire[];
 
 	removed?: WorkspaceFolderWire[];
@@ -74,6 +78,7 @@ type WorkspaceDeltaPayload = {
  * reference and we only register once per process.
  */
 type UriObject = {
+
 	scheme: string;
 
 	authority: string;
@@ -103,6 +108,7 @@ let LazyURIImport: Promise<void> | undefined;
 let WarnedLazyURIUnavailable = false;
 
 const WarnLazyURIUnavailable = (Reason: string): void => {
+
 	if (WarnedLazyURIUnavailable) return;
 
 	WarnedLazyURIUnavailable = true;
@@ -115,6 +121,7 @@ const WarnLazyURIUnavailable = (Reason: string): void => {
 };
 
 const EnsureLazyURI = (): void => {
+
 	if (LazyURI || LazyURIImport) return;
 
 	LazyURIImport = import(
@@ -147,6 +154,7 @@ EnsureLazyURI();
 // Minimal stub for when LazyURI.parse is unavailable (import failed or not
 // yet resolved). Enough shape for extensions to call fsPath / toString().
 const MakeUriStub = (Raw: string): UriObject => {
+
 	const Path = Raw.replace(/^file:\/\//, "");
 	return {
 		scheme: Raw.startsWith("file://") ? "file" : "unknown",
@@ -171,6 +179,7 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 
 			return MakeUriStub(Raw);
 		}
+
 		try {
 			return LazyURI.parse(Raw);
 		} catch {
@@ -191,6 +200,7 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 		const RawStr =
 			Raw.toString !== Object.prototype.toString
 				? Raw.toString()
+
 				: (Raw as any).scheme && (Raw as any).path
 					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
 					: null;
@@ -208,6 +218,7 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 		const FallbackStr =
 			Raw.toString !== Object.prototype.toString
 				? Raw.toString()
+
 				: (Raw as any).scheme && (Raw as any).path
 					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
 					: null;
@@ -227,6 +238,7 @@ if (
 			const Stack =
 				Error instanceof globalThis.Error
 					? Error.stack?.split("\n").slice(0, 6).join(" | ")
+
 					: String(Error);
 
 			process.stdout.write(
@@ -239,6 +251,7 @@ if (
 			const Stack =
 				Reason instanceof globalThis.Error
 					? Reason.stack?.split("\n").slice(0, 6).join(" | ")
+
 					: String(Reason);
 
 			// Benign first-boot probes: extensions read state files that
@@ -448,6 +461,7 @@ const SafeEmit = (
 			const Summary =
 				typeof Err?.stack === "string"
 					? Err.stack.split("\n").slice(0, 3).join(" | ")
+
 					: typeof Err?.message === "string"
 						? Err.message
 						: String(Caught);
@@ -574,6 +588,7 @@ const BuildTextDocumentShim = (
 
 			while ((M = R.exec(L)) !== null) {
 				if (M.index <= C && M.index + M[0].length >= C)
+
 					return {
 						start: { line: Pos?.line ?? 0, character: M.index },
 						end: {
@@ -591,6 +606,7 @@ const BuildTextDocumentShim = (
 			let O = 0;
 
 			for (let I = 0; I < (P?.line ?? 0) && I < Lines.length; I++)
+
 				O += (Lines[I]?.length ?? 0) + 1;
 
 			return O + (P?.character ?? 0);
@@ -767,6 +783,7 @@ const HandleSpecificNotification = (
 		// that task's CancellationToken.
 		case "progress.cancel": {
 			const CancelPayload = Array.isArray(Parameters)
+
 				? Parameters[0]
 				: Parameters;
 
@@ -795,10 +812,12 @@ const HandleSpecificNotification = (
 			// Payload shape: [uriComponents, { versionId, changes, isDirty }]
 			if (Context) {
 				const UriPart = Array.isArray(Parameters)
+
 					? Parameters[0]
 					: Parameters;
 
 				const EventPart = Array.isArray(Parameters)
+
 					? Parameters[1]
 					: Parameters;
 
@@ -849,6 +868,7 @@ const HandleSpecificNotification = (
 			// Previously always an empty array; now reflects the real open set.
 			if (Context) {
 				const OpenModels = Array.isArray(Parameters)
+
 					? Parameters
 					: [Parameters];
 
@@ -922,11 +942,13 @@ const HandleSpecificNotification = (
 									0;
 
 								if (SL === EL)
+
 									return (Lines[SL] ?? "").slice(SC, EC);
 
 								const Parts = [(Lines[SL] ?? "").slice(SC)];
 
 								for (let I = SL + 1; I < EL; I++)
+
 									Parts.push(Lines[I] ?? "");
 
 								Parts.push((Lines[EL] ?? "").slice(0, EC));
@@ -996,6 +1018,7 @@ const HandleSpecificNotification = (
 										M.index <= C &&
 										M.index + M[0].length >= C
 									)
+
 										return {
 											start: {
 												line: Pos?.line ?? 0,
@@ -1029,6 +1052,7 @@ const HandleSpecificNotification = (
 									I < (P?.line ?? 0) && I < Lines.length;
 									I++
 								)
+
 									O += (Lines[I]?.length ?? 0) + 1;
 
 								return O + (P?.character ?? 0);
@@ -1612,6 +1636,7 @@ const HandleSpecificNotification = (
 						const Parts = [(Lines[SL] ?? "").slice(SC)];
 
 						for (let I = SL + 1; I < EL; I++)
+
 							Parts.push(Lines[I] ?? "");
 
 						Parts.push((Lines[EL] ?? "").slice(0, EC));
@@ -1657,6 +1682,7 @@ const HandleSpecificNotification = (
 
 						while ((M = R.exec(L)) !== null) {
 							if (M.index <= C && M.index + M[0].length >= C)
+
 								return {
 									start: {
 										line: Pos.line,
@@ -1684,6 +1710,7 @@ const HandleSpecificNotification = (
 							I < (P?.line ?? 0) && I < Lines.length;
 							I++
 						)
+
 							O += (Lines[I]?.length ?? 0) + 1;
 
 						return O + (P?.character ?? 0);
@@ -2521,6 +2548,7 @@ const HandleSpecificNotification = (
 					Emitter.emit("commands.executed", {
 						command: CommandId,
 						arguments: Array.isArray(ExecPayload?.arguments)
+
 							? ExecPayload.arguments
 							: [],
 					});

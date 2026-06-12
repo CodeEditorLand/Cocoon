@@ -35,6 +35,7 @@
  */
 
 import Tier from "../../../../../../../Utility/Tier.js";
+
 import { ClaimedFileSystemSchemes } from "../../Providers.js";
 
 export type FileSystemRoute = "native" | "mountain";
@@ -48,6 +49,7 @@ export type FileSystemRoute = "native" | "mountain";
  * - Plain filesystem path (`/<home>/foo`): implicit `"file"`
  */
 export function ExtractScheme(Uri: unknown): string {
+
 	if (Uri && typeof Uri === "object") {
 		const WithScheme = Uri as { scheme?: unknown };
 
@@ -87,6 +89,7 @@ export function ExtractScheme(Uri: unknown): string {
  * Mountain routing.
  */
 export function ExtractFsPath(Uri: unknown): string | undefined {
+
 	if (Uri && typeof Uri === "object") {
 		const WithPath = Uri as { fsPath?: unknown; path?: unknown };
 
@@ -136,6 +139,7 @@ export function ExtractFsPath(Uri: unknown): string | undefined {
  * is O(1).
  */
 export function Route(Uri: unknown): FileSystemRoute {
+
 	const Scheme = ExtractScheme(Uri);
 
 	// Tier override: Layer2 = always Mountain, Layer4 = always native

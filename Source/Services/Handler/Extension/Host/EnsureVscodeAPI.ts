@@ -12,13 +12,17 @@
  */
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
+
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import InstallVscodeModuleHooks from "./VscodeModuleHooks.js";
 
 const EnsureVscodeAPIRegistered = async (
 	Context: HandlerContext,
 ): Promise<void> => {
+
 	// Install hooks *before* anything else - idempotent, runs once.
 	await InstallVscodeModuleHooks();
 
@@ -67,6 +71,7 @@ const EnsureVscodeAPIRegistered = async (
 				const ReviveInput =
 					typeof WithUri.uri === "string"
 						? URI.parse(WithUri.uri)
+
 						: URI.revive(WithUri.uri as any);
 
 				return { ...(Base as object), uri: ReviveInput };
@@ -218,6 +223,7 @@ const EnsureVscodeAPIRegistered = async (
 		// DEVSENSE.phptools-vscode reads `.Initial` at activation.
 		const DebugConfigurationProviderTriggerKind: Record<
 			string | number,
+
 			string | number
 		> = {
 			Initial: 1,

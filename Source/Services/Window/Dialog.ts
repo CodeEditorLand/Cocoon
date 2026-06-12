@@ -12,12 +12,14 @@
 import { Context, Effect, Layer } from "effect";
 
 import { IMountainClientService } from "../../Interfaces/I/Mountain/Client/Service.js";
+
 import { DialogError } from "./Errors.js";
 
 /**
  * Dialog service interface
  */
 export interface DialogService {
+
 	readonly ShowInformationMessage: (
 		message: string,
 
@@ -89,6 +91,7 @@ export const DialogLive = Effect.gen(function* () {
 
 			return Selected
 				? (items.find((Item) => Item === Selected) ?? Selected)
+
 				: undefined;
 		});
 

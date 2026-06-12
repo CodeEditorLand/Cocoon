@@ -22,14 +22,18 @@ import { existsSync } from "node:fs";
 
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import type { CodegenProblem } from "@codeeditorland/wind/Target/Codegen/Type/CodegenProblem.js";
+
 // @ts-ignore — Wind Codegen types; resolved from Target at runtime
 import { WalkSourceTree } from "@codeeditorland/wind/Target/Codegen/Walk/SourceTreeWalker.js";
 
 import { EmitExtHostSchema } from "../../../Emit/Emit/Ext/Host/Schema.js";
+
 import { IterateExtHostDecorators } from "../../../Extract/Iterate/Ext/Host/Decorators.js";
+
 import type { ExtHostDecoratorRecord } from "../../../Type/Ext/Host/Decorator/Record.js";
 
 export interface RunExtHostCodegenOptions {
+
 	readonly SourceRoot: string;
 
 	readonly OutputRoot: string;
@@ -38,6 +42,7 @@ export interface RunExtHostCodegenOptions {
 }
 
 export interface RunExtHostCodegenSummary {
+
 	readonly RecordsEmitted: number;
 
 	readonly Failures: ReadonlyArray<CodegenProblem>;
@@ -46,6 +51,7 @@ export interface RunExtHostCodegenSummary {
 }
 
 const DefaultLog = (message: string): void => {
+
 	// eslint-disable-next-line no-console
 	console.log(`[Cocoon/Codegen] ${message}`);
 };
@@ -53,6 +59,7 @@ const DefaultLog = (message: string): void => {
 export const RunExtHostCodegen = async (
 	options: RunExtHostCodegenOptions,
 ): Promise<RunExtHostCodegenSummary | CodegenProblem> => {
+
 	const Log = options.Log ?? DefaultLog;
 
 	const Started = performance.now();

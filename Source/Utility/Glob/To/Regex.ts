@@ -38,6 +38,7 @@ const FindMatchingBrace = (
 
 	Close: string,
 ): number => {
+
 	let Depth = 1;
 
 	for (let I = Start + 1; I < Input.length; I++) {
@@ -50,6 +51,7 @@ const FindMatchingBrace = (
 		}
 
 		if (Character === Open) Depth++;
+
 		else if (Character === Close) {
 			Depth--;
 
@@ -65,6 +67,7 @@ const FindMatchingBrace = (
  * nested `{...}` and `(...)`. `"a,{b,c},d"` → `["a", "{b,c}", "d"]`.
  */
 const SplitTopLevelCommas = (Body: string): string[] => {
+
 	const Parts: string[] = [];
 
 	let Depth = 0;
@@ -81,7 +84,9 @@ const SplitTopLevelCommas = (Body: string): string[] => {
 		}
 
 		if (Character === "{" || Character === "(") Depth++;
+
 		else if (Character === "}" || Character === ")") Depth--;
+
 		else if (Character === "," && Depth === 0) {
 			Parts.push(Body.slice(Start, I));
 
@@ -101,6 +106,7 @@ const SplitTopLevelCommas = (Body: string): string[] => {
  * as literal `{`.
  */
 const ExpandBraces = (Input: string): string[] => {
+
 	const Open = Input.indexOf("{");
 
 	if (Open === -1) return [Input];
@@ -131,7 +137,9 @@ const ExpandBraces = (Input: string): string[] => {
 		if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
 			const Width =
 				RangeMatch[1]!.startsWith("0") || RangeMatch[2]!.startsWith("0")
+
 					? Math.max(RangeMatch[1]!.length, RangeMatch[2]!.length)
+
 					: 0;
 
 			const Direction = Start <= End ? 1 : -1;
@@ -182,6 +190,7 @@ const RegexEscape = (Character: string): string =>
  * `!(node_modules)` resolve to "any path segment that is not `node_modules`".
  */
 const PlainGlobToRegexSource = (Glob: string): string => {
+
 	let Expression = "";
 
 	let I = 0;
@@ -302,11 +311,13 @@ const PlainGlobToRegexSource = (Glob: string): string => {
 };
 
 const GlobToRegex = (Glob: string): RegExp => {
+
 	const Variants = ExpandBraces(Glob);
 
 	const Source =
 		Variants.length === 1
 			? PlainGlobToRegexSource(Variants[0]!)
+
 			: `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
 
 	return new RegExp(`^${Source}$`);

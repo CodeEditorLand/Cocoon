@@ -128,6 +128,7 @@ const Injected =
 	(globalThis as { __LandTiers?: Record<string, unknown> }).__LandTiers ?? {};
 
 const Pick = <T extends string>(Capability: string, Fallback: T): T => {
+
 	const FromInjected = Injected[Capability];
 
 	if (typeof FromInjected === "string" && FromInjected.length > 0) {
@@ -144,6 +145,7 @@ const Pick = <T extends string>(Capability: string, Fallback: T): T => {
 };
 
 const Tier = {
+
 	RemoteProcedureCall: Pick<TierRemoteProcedureCallValue>(
 		"RemoteProcedureCall",
 

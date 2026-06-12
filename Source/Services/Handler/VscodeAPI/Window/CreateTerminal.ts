@@ -21,6 +21,7 @@ export default (
 
 	Options?: { name?: string; [k: string]: unknown },
 ): {
+
 	name: string;
 
 	readonly processId: Promise<number | undefined>;
@@ -35,6 +36,7 @@ export default (
 
 	resize: (Columns: number, Rows: number) => Promise<void>;
 } => {
+
 	const Name = Options?.name ?? `Terminal ${Handle}`;
 
 	Context.SendToMountain("window.createTerminal", {

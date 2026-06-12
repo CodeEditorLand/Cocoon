@@ -8,12 +8,16 @@
  */
 
 import LandFixLog from "../../../../Utility/Land/Fix/Log.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapEnvNamespace from "../Wrap/Env/Namespace.js";
 
 const CreateEnvNamespace = (Context: HandlerContext) => {
+
 	const Env = (Context.ExtensionHostInitData?.environment ?? {}) as Record<
 		string,
+
 		unknown
 	>;
 

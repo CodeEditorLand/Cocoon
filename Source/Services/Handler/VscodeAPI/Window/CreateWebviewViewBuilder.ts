@@ -26,6 +26,7 @@ export default (
 
 	SharedCspSource: string,
 ): any => {
+
 	let CurrentHtml = "";
 
 	let CurrentWebviewViewOptions: Record<string, unknown> = {

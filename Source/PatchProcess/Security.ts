@@ -42,6 +42,7 @@
  */
 
 import * as Path from "node:path";
+
 import * as URL from "node:url";
 
 import { Data, Effect } from "effect";
@@ -53,6 +54,7 @@ import { Data, Effect } from "effect";
  * Defines restrictions and resource limits
  */
 export interface SecurityPolicy {
+
 	/**
 	 * Whether this process is allowed to exit gracefully
 	 */
@@ -114,6 +116,7 @@ export interface SecurityPolicy {
  * Extensions run in a secure sandbox environment
  */
 export const DefaultSecurityPolicy: SecurityPolicy = {
+
 	AllowExit: false,
 
 	MaxMemoryMB: 512,
@@ -142,6 +145,7 @@ export const DefaultSecurityPolicy: SecurityPolicy = {
  * Less restrictive for trusted code
  */
 export const TrustedSecurityPolicy: SecurityPolicy = {
+
 	AllowExit: false,
 
 	MaxMemoryMB: 1024,
@@ -173,6 +177,7 @@ export const TrustedSecurityPolicy: SecurityPolicy = {
 export class MemoryLimitExceededError extends Data.TaggedError(
 	"MemoryLimitExceededError",
 )<{
+
 	readonly LimitMB: number;
 
 	readonly AttemptedMB: number;
@@ -186,6 +191,7 @@ export class MemoryLimitExceededError extends Data.TaggedError(
 export class FileAccessDeniedError extends Data.TaggedError(
 	"FileAccessDeniedError",
 )<{
+
 	readonly Path: string;
 
 	readonly Operation: "read" | "write" | "delete";
@@ -199,6 +205,7 @@ export class FileAccessDeniedError extends Data.TaggedError(
 export class NetworkAccessDeniedError extends Data.TaggedError(
 	"NetworkAccessDeniedError",
 )<{
+
 	readonly Endpoint: string;
 
 	readonly AttemptedOperation: "connect" | "listen";
@@ -212,6 +219,7 @@ export class NetworkAccessDeniedError extends Data.TaggedError(
 export class ChildProcessDeniedError extends Data.TaggedError(
 	"ChildProcessDeniedError",
 )<{
+
 	readonly Command: string;
 
 	readonly Arguments: readonly string[];
@@ -225,6 +233,7 @@ export class ChildProcessDeniedError extends Data.TaggedError(
 export class CpuLimitExceededError extends Data.TaggedError(
 	"CpuLimitExceededError",
 )<{
+
 	readonly LimitPercent: number;
 
 	readonly CurrentUsage: number;
@@ -245,6 +254,7 @@ export const ValidatePathAccess = (
 
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
+
 	// Normalize the path
 	const NormalizedPath = Path.normalize(PathString);
 
@@ -291,6 +301,7 @@ export const ValidateNetworkAccess = (
 
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
+
 	if (!Policy.AllowNetwork) {
 		return false;
 	}
@@ -330,6 +341,7 @@ export const ValidateChildProcess = (
 
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
+
 	if (!Policy.AllowChildProcesses) {
 		return false;
 	}
@@ -360,6 +372,7 @@ export const ValidateEnvironmentVariable = (
 
 	Value: string,
 ): string => {
+
 	// Block certain environment variables
 	const BlockedVariables = [
 		"NODE_OPTIONS",
@@ -489,6 +502,7 @@ export const PerformSecurityAudit = Effect.gen(function* () {
 export const GetPolicyHash = (
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): string => {
+
 	const PolicyString = JSON.stringify(Policy, Object.keys(Policy).sort());
 
 	return Buffer.from(PolicyString).toString("base64").slice(0, 16);
@@ -500,6 +514,7 @@ export const GetPolicyHash = (
 export const MergeSecurityPolicies = (
 	Overrides: Partial<SecurityPolicy>,
 ): SecurityPolicy => {
+
 	return {
 		AllowExit: Overrides.AllowExit ?? DefaultSecurityPolicy.AllowExit,
 

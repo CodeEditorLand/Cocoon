@@ -19,6 +19,7 @@
 import type { InterfaceMemberRecord } from "@codeeditorland/wind/Target/Codegen/Type/InterfaceMemberRecord.js";
 
 export interface ExtHostDecoratorRecord {
+
 	readonly DecoratorName: string;
 
 	readonly DecoratorTag: string;

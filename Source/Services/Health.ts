@@ -13,12 +13,14 @@
  */
 
 import { CocoonDevLog } from "Dev/Log.js";
+
 import { Effect, Layer } from "effect";
 
 /**
  * Health status enumeration
  */
 export enum HealthStatus {
+
 	HEALTHY = "healthy",
 
 	DEGRADED = "degraded",
@@ -32,6 +34,7 @@ export enum HealthStatus {
  * Service health information
  */
 export interface ServiceHealth {
+
 	name: string;
 
 	status: HealthStatus;
@@ -53,6 +56,7 @@ export interface ServiceHealth {
  * Health metrics
  */
 export interface HealthMetrics {
+
 	responseTime: number;
 
 	errorRate: number;
@@ -70,6 +74,7 @@ export interface HealthMetrics {
  * Health configuration
  */
 export interface HealthConfig {
+
 	heartbeatInterval: number;
 
 	healthCheckInterval: number;
@@ -87,6 +92,7 @@ export interface HealthConfig {
  * Health event
  */
 export interface HealthEvent {
+
 	type:
 		| "service_healthy"
 		| "service_degraded"
@@ -108,6 +114,7 @@ export interface HealthEvent {
  * Health service interface
  */
 export interface IHealthService {
+
 	readonly _serviceBrand: undefined;
 
 	initialize(): Promise<void>;
@@ -139,6 +146,7 @@ export interface IHealthService {
  * Health service implementation
  */
 export class HealthService implements IHealthService {
+
 	readonly _serviceBrand: undefined;
 
 	private config: HealthConfig;

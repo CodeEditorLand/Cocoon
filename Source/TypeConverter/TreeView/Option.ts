@@ -11,6 +11,7 @@ import type { TreeViewOptions } from "vscode";
  * @returns The serializable DTO.
  */
 export const FromAPI = (option: TreeViewOptions<any>): any => {
+
 	return {
 		showCollapseAll: !!option.showCollapseAll,
 

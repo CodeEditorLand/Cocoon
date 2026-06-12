@@ -9,6 +9,7 @@ import { Context } from "effect";
 
 // API construction types
 export interface APIConstructionRequest {
+
 	extensionId: string;
 
 	extensionDescription: any;
@@ -19,6 +20,7 @@ export interface APIConstructionRequest {
 }
 
 export interface APIConstructionResult {
+
 	success: boolean;
 
 	vscodeAPI?: any;
@@ -31,6 +33,7 @@ export interface APIConstructionResult {
 }
 
 export interface APIValidationResult {
+
 	valid: boolean;
 
 	missingAPIs: string[];
@@ -41,6 +44,7 @@ export interface APIValidationResult {
 }
 
 export interface IAPIFactoryService {
+
 	readonly _serviceBrand: undefined;
 
 	/**

@@ -12,6 +12,7 @@ import { IMountainClientService } from "../../../Interfaces/I/Mountain/Client/Se
 // --- Interfaces ---
 
 export interface IFileSystemService {
+
 	stat(uri: any): Promise<any>;
 
 	readFile(uri: any): Promise<Uint8Array>;
@@ -38,6 +39,7 @@ export const IFileSystemService = Context.Tag<IFileSystemService>();
 // --- Implementation ---
 
 export class FileSystemService implements IFileSystemService {
+
 	constructor(private mountainClient: IMountainClientService) {}
 
 	async stat(uri: any): Promise<any> {

@@ -22,7 +22,9 @@
  */
 
 import * as acorn from "acorn";
+
 import * as walk from "acorn-walk";
+
 import { Context, Effect, Layer } from "effect";
 
 import {
@@ -32,10 +34,12 @@ import {
 	SecurityLevel,
 	SecurityPolicy,
 } from "../../Interfaces/I/Module/Interceptor.js";
+
 import { CocoonDevLog } from "../Dev/Log.js";
 
 // Module interception configuration
 interface ModuleInterceptorConfig {
+
 	allowNodeBuiltins: boolean;
 
 	allowFileSystemAccess: boolean;
@@ -51,6 +55,7 @@ interface ModuleInterceptorConfig {
 
 // Module cache entry with security metadata
 interface ModuleCacheEntry {
+
 	module: any;
 
 	securityLevel: SecurityLevel;
@@ -65,6 +70,7 @@ type ASTNode = any;
 
 // Module loading telemetry
 interface ModuleTelemetry {
+
 	totalModulesLoaded: number;
 
 	blockedModules: number;
@@ -80,6 +86,7 @@ interface ModuleTelemetry {
  * ModuleInterceptor implementation
  */
 export class ModuleInterceptor implements IModuleInterceptor {
+
 	private readonly _serviceBrand: undefined;
 
 	private config: ModuleInterceptorConfig;
@@ -1152,6 +1159,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			const reason =
 				allIssues.length > 0
 					? `Security analysis: ${allIssues.join(", ")}`
+
 					: "Advanced AST security analysis passed all checks";
 
 			CocoonDevLog(

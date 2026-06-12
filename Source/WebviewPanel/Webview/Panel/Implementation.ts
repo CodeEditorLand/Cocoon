@@ -40,6 +40,7 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+
 import type {
 	Event,
 	Uri,
@@ -52,8 +53,11 @@ import type {
 } from "vscode";
 
 import { FromAPI as UriFromAPI } from "../../../TypeConverter/Main/URI.js";
+
 import { ConvertShowOptionToDTO } from "../../../TypeConverter/Webview/Convert/Show/Option/To/DTO.js";
+
 import { CreateEventStream } from "../../../Utility/Event/Stream.js";
+
 import { type IPC, WebviewImplementation } from "../Implementation.js";
 
 /**
@@ -61,6 +65,7 @@ import { type IPC, WebviewImplementation } from "../Implementation.js";
  * @implements {WebviewPanel}
  */
 export class WebviewPanelImplementation implements WebviewPanel {
+
 	private IsDisposed = false;
 
 	private _title: string;
@@ -70,6 +75,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 	private _iconPath:
 		| Uri
 		| { readonly light: Uri; readonly dark: Uri }
+
 		| undefined;
 
 	private _active: boolean;
@@ -178,6 +184,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 		const internalValue = Value as
 			| Uri
 			| { readonly light: Uri; readonly dark: Uri }
+
 			| undefined;
 
 		if (this.IsDisposed || this._iconPath === internalValue) return;
@@ -191,11 +198,13 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 						dark: UriFromAPI(internalValue.dark),
 					}
+
 				: {
 						light: UriFromAPI(internalValue as Uri),
 
 						dark: UriFromAPI(internalValue as Uri),
 					}
+
 			: undefined;
 
 		void this.IPC.SendNotification("$setWebviewIconPath", [
@@ -210,6 +219,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 		const ViewColumnDTO = ViewColumn
 			? ConvertShowOptionToDTO(ViewColumn, PreserveFocus ?? false)
+
 			: undefined;
 
 		void this.IPC.SendNotification("$revealWebviewPanel", [

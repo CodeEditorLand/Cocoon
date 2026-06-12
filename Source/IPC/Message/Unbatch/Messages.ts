@@ -6,12 +6,15 @@
  */
 
 import { MAX_BATCH_COUNT } from "../Constants.js";
+
 import DeserializeMessage from "../Deserialize/Message.js";
+
 import type {
 	IBatchMessage,
 	IDeserializationResult,
 	IMessage,
 } from "../Types.js";
+
 import VSBuffer from "../VSBuffer.js";
 
 // ============================================================================
@@ -27,6 +30,7 @@ import VSBuffer from "../VSBuffer.js";
 export default (
 	Data: Uint8Array,
 ): IDeserializationResult & { readonly Messages: IMessage[] } => {
+
 	const Warnings: string[] = [];
 
 	let Messages: IMessage[] = [];

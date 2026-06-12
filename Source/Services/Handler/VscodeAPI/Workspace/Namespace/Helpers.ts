@@ -15,6 +15,7 @@ import type { HandlerContext } from "../../../Handler/Context.js";
 export const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
+
 		Context.WorkspaceEventEmitter.on(EventName, Listener);
 
 		return {
@@ -39,6 +40,7 @@ export const Call = async <T>(
 
 	Parameters: unknown,
 ): Promise<T | undefined> => {
+
 	try {
 		return (await Context.MountainClient?.sendRequest(
 			Method,
@@ -90,6 +92,7 @@ export const DefaultExcludeSegments = new Set([
  * need the pattern - base resolution is handled by the workspace walk.
  */
 export const ExtractGlobPattern = (Raw: unknown): string | undefined => {
+
 	if (typeof Raw === "string" && Raw.length > 0) return Raw;
 
 	if (Raw && typeof Raw === "object") {
@@ -108,6 +111,7 @@ export const ExtractGlobPattern = (Raw: unknown): string | undefined => {
  * object) to get a filesystem path we can walk with `fs.readdir`.
  */
 export const FolderToFsPath = (FolderUri: unknown): string | undefined => {
+
 	const Raw =
 		typeof FolderUri === "string"
 			? FolderUri

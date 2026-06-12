@@ -8,6 +8,7 @@
  */
 
 import { Effect } from "effect";
+
 import type * as VSCode from "vscode";
 
 import {
@@ -48,6 +49,7 @@ export const ShowQuickPick = <T extends string>(
 
 		const ButtonsDTO = Options?.buttons
 			? SerializeButtons(Options.buttons)
+
 			: undefined;
 
 		// Construct request payload
@@ -61,6 +63,7 @@ export const ShowQuickPick = <T extends string>(
 						ignoreFocusLost: Options.ignoreFocusLost,
 						canPickMany: Options.canPickMany,
 					}
+
 				: undefined,
 			buttons: ButtonsDTO,
 		};
@@ -143,8 +146,10 @@ export const ShowInputBox = (
 					ignoreFocusLost: Options.ignoreFocusLost,
 					validateInput: Options.validateInput
 						? Options.validateInput.toString()
+
 						: undefined,
 				}
+
 			: undefined;
 
 		// Delegates to Mountain's native input box implementation via gRPC

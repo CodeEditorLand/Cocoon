@@ -8,12 +8,15 @@
  */
 
 import { NextProviderHandle } from "../../../Language/Provider/Registry.js";
+
 import type { HandlerContext } from "../../Handler/Context.js";
+
 import WrapDebugNamespace from "../Wrap/Debug/Namespace.js";
 
 const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
+
 		Context.Emitter.on(EventName, Listener);
 
 		return {
@@ -29,6 +32,7 @@ const EventSubscriber =
 // is wired back to Mountain via `debug.dap-response`, and `handleMessage` is
 // called from the ExtHostDebug$sendDAPRequest dispatcher (see gRPC server).
 const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
+
 	const Anchor = Context as unknown as {
 		__dapAdapters?: Map<string, any>;
 
@@ -115,6 +119,7 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 };
 
 const CreateDebugNamespace = (Context: HandlerContext) => {
+
 	InitialiseDAPSessionTracker(Context);
 
 	return WrapDebugNamespace({

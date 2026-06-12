@@ -10,6 +10,7 @@
 export type Properties = Record<string, unknown>;
 
 export type Event = {
+
 	readonly Name: string;
 
 	readonly Timestamp: string;
@@ -18,6 +19,7 @@ export type Event = {
 };
 
 const BaseProperties: Properties = {
+
 	$app: "fiddee",
 
 	$app_version: "0.0.1",
@@ -45,6 +47,7 @@ export const Create = (Name: string, Properties: Properties = {}): Event => ({
 let CurrentTraceIdentifier: string | undefined;
 
 export const SetTraceIdentifier = (Identifier: string): void => {
+
 	CurrentTraceIdentifier = Identifier;
 };
 

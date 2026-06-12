@@ -16,6 +16,7 @@ import { ToUri as StockToUri } from "../Stock/Lift.js";
  * Priority: real URI → scheme+path → fsPath → String().
  */
 export const UriKey = (Value: unknown): string => {
+
 	if (Value == null) return "";
 
 	if (typeof Value === "string") return Value;
@@ -44,6 +45,7 @@ export const UriKey = (Value: unknown): string => {
 	}
 
 	if (typeof WithParts.fsPath === "string")
+
 		return `file://${WithParts.fsPath}`;
 
 	return Rendered;

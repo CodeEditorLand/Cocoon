@@ -13,10 +13,12 @@ import type { QuickInputButton, QuickPickItem, Uri } from "vscode";
 export const SerializeItems = <T extends QuickPickItem | string>(
 	Items: readonly T[],
 ) => {
+
 	return Items.map((Item, Index) => {
 		const Base =
 			typeof Item === "string"
 				? { label: Item }
+
 				: (Item as QuickPickItem);
 
 		return { ...Base, handle: Index };
@@ -29,6 +31,7 @@ export const SerializeItems = <T extends QuickPickItem | string>(
  * @returns A serializable representation of the buttons.
  */
 export const SerializeButtons = (Buttons?: readonly QuickInputButton[]) => {
+
 	return Buttons?.map((Button, Index) => {
 		const iconPath = (Button as any).iconPath;
 
@@ -39,7 +42,9 @@ export const SerializeButtons = (Buttons?: readonly QuickInputButton[]) => {
 							dark: (iconPath.dark as Uri).toJSON(),
 							light: (iconPath.light as Uri).toJSON(),
 						}
+
 					: (iconPath as Uri).toJSON()
+
 				: undefined,
 			tooltip: Button.tooltip,
 			handle: Index,

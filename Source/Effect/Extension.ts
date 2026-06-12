@@ -12,6 +12,7 @@ import { getTelemetry, type TelemetryService } from "./Telemetry.js";
 // ============================================================================
 
 export interface ExtensionManifest {
+
 	readonly id: string;
 
 	readonly name: string;
@@ -34,6 +35,7 @@ export interface ExtensionManifest {
 }
 
 export interface ExtensionHost {
+
 	readonly id: string;
 
 	readonly manifest: ExtensionManifest;
@@ -47,13 +49,19 @@ export interface ExtensionHost {
 
 export type ExtensionState =
 	| { readonly _tag: "Idle" }
+
 	| { readonly _tag: "Activating"; readonly startTime: number }
+
 	| { readonly _tag: "Active"; readonly activatedAt: number }
+
 	| { readonly _tag: "Deactivating" }
+
 	| { readonly _tag: "Deactivated" }
+
 	| { readonly _tag: "Error"; readonly error: string };
 
 export interface ActivateResult {
+
 	readonly extensionId: string;
 
 	readonly success: boolean;
@@ -64,6 +72,7 @@ export interface ActivateResult {
 }
 
 export interface DeactivateResult {
+
 	readonly extensionId: string;
 
 	readonly success: boolean;
@@ -76,6 +85,7 @@ export interface DeactivateResult {
 // ============================================================================
 
 export class ExtensionNotFoundError extends Error {
+
 	readonly _tag = "ExtensionNotFoundError";
 
 	constructor(readonly extensionId: string) {
@@ -84,6 +94,7 @@ export class ExtensionNotFoundError extends Error {
 }
 
 export class ExtensionActivationError extends Error {
+
 	readonly _tag = "ExtensionActivationError";
 
 	constructor(
@@ -98,6 +109,7 @@ export class ExtensionActivationError extends Error {
 }
 
 export class ExtensionDeactivationError extends Error {
+
 	readonly _tag = "ExtensionDeactivationError";
 
 	constructor(
@@ -116,6 +128,7 @@ export class ExtensionDeactivationError extends Error {
 // ============================================================================
 
 export interface ExtensionService {
+
 	/** Get all extensions */
 	readonly getAll: () => Promise<ReadonlyArray<ExtensionHost>>;
 
@@ -153,6 +166,7 @@ export const Extension = ExtensionTag;
 // ============================================================================
 
 function makeExtensionService(telemetry: TelemetryService): ExtensionService {
+
 	// Storage for extensions — plain Map replaces SubscriptionRef<HashMap>
 	const extensions = new Map<string, ExtensionHost>();
 
@@ -405,6 +419,7 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 let _instance: ExtensionService | undefined;
 
 export async function getExtension(): Promise<ExtensionService> {
+
 	if (_instance === undefined) {
 		const telemetry = await getTelemetry();
 
@@ -416,6 +431,7 @@ export async function getExtension(): Promise<ExtensionService> {
 
 /** Live singleton layer (call once at bootstrap) */
 export const ExtensionLive = {
+
 	_tag: "Cocoon/Extension/Live",
 
 	build: getExtension,
@@ -428,6 +444,7 @@ export const ExtensionLive = {
 export const makeMockExtension = (
 	extensions: Array<ExtensionManifest> = [],
 ): ExtensionService => {
+
 	const mockExtensions = extensions.map((manifest) => ({
 		id: manifest.id,
 		manifest,
@@ -474,6 +491,7 @@ export const makeMockExtension = (
 };
 
 export const ExtensionMock = {
+
 	_tag: "Cocoon/Extension/Mock",
 
 	build: async () => makeMockExtension(),

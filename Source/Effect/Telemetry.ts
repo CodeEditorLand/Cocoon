@@ -9,6 +9,7 @@
 // ============================================================================
 
 export interface TelemetryMetric {
+
 	readonly name: string;
 
 	readonly value: number;
@@ -19,6 +20,7 @@ export interface TelemetryMetric {
 }
 
 export interface TelemetrySpan {
+
 	readonly name: string;
 
 	readonly startTime: number;
@@ -35,6 +37,7 @@ export interface TelemetrySpan {
 }
 
 export interface TelemetryEvent {
+
 	readonly type: "metric" | "span" | "log";
 
 	readonly timestamp: number;
@@ -43,6 +46,7 @@ export interface TelemetryEvent {
 }
 
 export interface TelemetryLog {
+
 	readonly level: "debug" | "info" | "warn" | "error";
 
 	readonly message: string;
@@ -51,10 +55,12 @@ export interface TelemetryLog {
 }
 
 export interface SpanHandle {
+
 	readonly end: (success: boolean, error?: string) => void;
 }
 
 export interface TelemetryService {
+
 	readonly recordMetric: (
 		name: string,
 
@@ -93,6 +99,7 @@ export interface TelemetryService {
 // ============================================================================
 
 export class TelemetryCollectionError extends Error {
+
 	readonly _tag = "TelemetryCollectionError";
 
 	constructor(
@@ -123,6 +130,7 @@ const MAX_EVENTS = 1_000;
 const MAX_PER_NAME = 100;
 
 function makeTelemetry(): TelemetryService {
+
 	const metrics = new Map<string, TelemetryMetric[]>();
 
 	const spans = new Map<string, TelemetrySpan[]>();

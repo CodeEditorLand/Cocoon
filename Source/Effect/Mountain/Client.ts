@@ -5,6 +5,7 @@
  */
 
 import { MountainClientService as RealMountainClient } from "../../Services/Mountain/Client/Service.js";
+
 import { TelemetryLive } from "../Telemetry.js";
 
 // ============================================================================
@@ -13,18 +14,24 @@ import { TelemetryLive } from "../Telemetry.js";
 
 export type ConnectionState =
 	| { readonly _tag: "Disconnected" }
+
 	| { readonly _tag: "Connecting"; readonly attempt: number }
+
 	| {
+
 			readonly _tag: "Connected";
 
 			readonly serverVersion: string;
 
 			readonly connectedAt: number;
 	  }
+
 	| { readonly _tag: "Disconnecting" }
+
 	| { readonly _tag: "Error"; readonly error: string };
 
 export interface ClientConfig {
+
 	readonly host: string;
 
 	readonly port: number;
@@ -41,6 +48,7 @@ export interface ClientConfig {
 }
 
 export interface ClientMetrics {
+
 	readonly totalRequests: number;
 
 	readonly successfulRequests: number;
@@ -53,6 +61,7 @@ export interface ClientMetrics {
 }
 
 export interface RPCResponse<T = unknown> {
+
 	readonly success: boolean;
 
 	readonly data: T;
@@ -65,6 +74,7 @@ export interface RPCResponse<T = unknown> {
 // ============================================================================
 
 export class ConnectionError extends Error {
+
 	readonly _tag = "ConnectionError";
 
 	constructor(
@@ -77,6 +87,7 @@ export class ConnectionError extends Error {
 }
 
 export class RPCError extends Error {
+
 	readonly _tag = "RPCError";
 
 	constructor(
@@ -91,6 +102,7 @@ export class RPCError extends Error {
 }
 
 export class DisconnectionError extends Error {
+
 	readonly _tag = "DisconnectionError";
 
 	constructor(
@@ -107,6 +119,7 @@ export class DisconnectionError extends Error {
 // ============================================================================
 
 export interface MountainClientService {
+
 	/** Connection state */
 	readonly connectionState: () => Promise<ConnectionState>;
 
@@ -147,6 +160,7 @@ export const MountainClient = MountainClientTag;
 // ============================================================================
 
 async function makeMountainClientLive(): Promise<MountainClientService> {
+
 	const telemetry = TelemetryLive;
 
 	// Reactive connection state
@@ -505,6 +519,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 let _instance: MountainClientService | undefined;
 
 export async function getMountainClient(): Promise<MountainClientService> {
+
 	if (!_instance) {
 		_instance = await makeMountainClientLive();
 	}
@@ -519,6 +534,7 @@ export const MountainClientLive = getMountainClient;
 // ============================================================================
 
 export const makeMockMountainClient = (): MountainClientService => {
+
 	const mockState: ConnectionState = {
 		_tag: "Connected",
 
