@@ -187,8 +187,7 @@ export class StateService extends Effect.Service<StateService>()(
 							parameters: unknown,
 						) => Promise<unknown>;
 				  }
-				| undefined =>
-				(globalThis as any).__COCOON_MOUNTAIN_CLIENT__;
+				| undefined => (globalThis as any).__COCOON_MOUNTAIN_CLIENT__;
 
 			const StorageKey = (Handle: string): string =>
 				`webviewPanelState:${Handle}`;
@@ -405,11 +404,7 @@ export class StateService extends Effect.Service<StateService>()(
 					StateCache.delete(Handle);
 
 					void GetMountainClient()
-						?.sendRequest("Storage.Set", [
-							StorageKey(Handle),
-
-							null,
-						])
+						?.sendRequest("Storage.Set", [StorageKey(Handle), null])
 						.catch(() => undefined);
 				});
 

@@ -168,10 +168,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			const Window = yield* Context.Tag<Window>("Service/Window");
 
 			// Command registry - maps command ID to registered command metadata
-			const _commandRegistry = new Map<
-				string,
-				InternalCommandMetadata
-			>();
+			const _commandRegistry = new Map<string, InternalCommandMetadata>();
 
 			/**
 			 * Emit a tag-gated execution breadcrumb so command latency is

@@ -230,9 +230,10 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 * `toString`), mirroring the notification handler's stub.
 			 */
 			const ParseUri = (Raw: string): VSCode.Uri => {
-				const Match = /^([A-Za-z][A-Za-z0-9+.-]*):(?:\/\/([^/]*))?(.*)$/.exec(
-					Raw,
-				);
+				const Match =
+					/^([A-Za-z][A-Za-z0-9+.-]*):(?:\/\/([^/]*))?(.*)$/.exec(
+						Raw,
+					);
 
 				const Scheme = Match?.[1] ?? "file";
 
