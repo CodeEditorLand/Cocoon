@@ -453,8 +453,43 @@ export class GRPCServerService
 		// Add to streaming handlers
 		this.streamingHandlers.add(stream);
 
+		// Session identity for stale-channel detection. Mountain's pumps
+		// stamp Envelope.ChannelId (uint64, field 5) on every frame they
+		// push; with keepCase: true + longs: String the field decodes as
+		// the string property `ChannelId`. The first nonzero value seen on
+		// this stream is the session id; frames carrying a different
+		// nonzero ChannelId come from a stale (pre-reopen) registry entry
+		// and are discarded. "0" / absent is a wildcard (older Mountain
+		// builds, client-originated frames) and is never discarded.
+		let SessionChannelId: string | null = null;
+
 		// Handle incoming data
 		stream.on("data", (request: GenericRequest) => {
+			const FrameChannelId = String(
+				(request as { ChannelId?: string | number | bigint })
+					.ChannelId ?? "0",
+			);
+
+			if (FrameChannelId !== "0") {
+				if (SessionChannelId === null) {
+					SessionChannelId = FrameChannelId;
+
+					CocoonDevLog(
+						"grpc",
+
+						`[GRPCServerService] Streaming session ChannelId=${SessionChannelId}`,
+					);
+				} else if (FrameChannelId !== SessionChannelId) {
+					CocoonDevLog(
+						"grpc",
+
+						`[GRPCServerService] Discarding stale-channel frame: ChannelId=${FrameChannelId} != session ChannelId=${SessionChannelId}`,
+					);
+
+					return;
+				}
+			}
+
 			CocoonDevLog(
 				"grpc",
 
@@ -469,7 +504,7 @@ export class GRPCServerService
 			CocoonDevLog(
 				"grpc",
 
-				"[GRPCServerService] Bidirectional streaming connection closed",
+				`[GRPCServerService] Bidirectional streaming connection closed (session ChannelId=${SessionChannelId ?? "0"})`,
 			);
 
 			this.streamingHandlers.delete(stream);
