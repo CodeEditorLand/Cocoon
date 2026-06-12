@@ -1,4 +1,4 @@
-# **Cocoon** 🦋
+# **Cocoon**&#x2001;🦋
 
 <table>
 	<tr>
