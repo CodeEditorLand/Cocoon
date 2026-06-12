@@ -344,16 +344,41 @@ export class GRPCServerService
 					return;
 				}
 
+				let Responded = false;
+
+				const Respond: grpc.sendUnaryData<GenericResponse> = (
+					ResponseError,
+
+					Response,
+				) => {
+					if (Responded) {
+						return;
+					}
+
+					Responded = true;
+
+					Callback(ResponseError, Response);
+				};
+
 				this.handleMountainRequest(Call.request)
-					.then((Response) => Callback(null, Response))
+					.then((Response) => Respond(null, Response))
 					.catch((Error) =>
-						Callback({
+						Respond({
 							code: grpc.status.INTERNAL,
 							details:
 								Error instanceof globalThis.Error
 									? Error.message
 									: "Unknown error",
 						}),
+					)
+					.catch((Error) =>
+						CocoonDevLog(
+							"grpc",
+
+							"[GRPCServerService] ProcessMountainRequest response dispatch failed:",
+
+							Error,
+						),
 					);
 			},
 
@@ -582,10 +607,16 @@ export class GRPCServerService
 			`[GRPCServerService] Processing Mountain request: ${request.Method}`,
 		);
 
-		// Track request for cancellation
+		// Track request for cancellation. The AbortController is the
+		// cancellation root for this request: CancelOperation looks the entry
+		// up by RequestIdentifier and invokes cancelHandler, which aborts the
+		// signal threaded through routeRequest into provider invocations.
+		const CancellationController = new AbortController();
+
 		this.activeRequests.set(request.RequestIdentifier, {
 			method: request.Method,
 			startTime: startTime,
+			cancelHandler: () => CancellationController.abort(),
 		});
 
 		try {
@@ -602,6 +633,8 @@ export class GRPCServerService
 				request.Method,
 
 				parameters,
+
+				CancellationController.signal,
 			);
 
 			const response: GenericResponse = {
@@ -733,7 +766,21 @@ export class GRPCServerService
 				error,
 			);
 
-			return Buffer.from("{}", "utf8");
+			// `{}` is indistinguishable from a legitimate empty result;
+			// Mountain's converter inspects `result.error`, so surface the
+			// failure explicitly instead.
+			return Buffer.from(
+				JSON.stringify({
+					error: "SerializationFailed",
+
+					message:
+						error instanceof Error
+							? error.message
+							: String(error),
+				}),
+
+				"utf8",
+			);
 		}
 	}
 
@@ -771,7 +818,13 @@ export class GRPCServerService
 	 * ExtensionHostHandler for lifecycle methods, and
 	 * LanguageProviderHandler for $provide* methods.
 	 */
-	private async routeRequest(method: string, parameters: any): Promise<any> {
+	private async routeRequest(
+		method: string,
+
+		parameters: any,
+
+		CancellationSignal?: AbortSignal,
+	): Promise<any> {
 		// Try service routing table first (extension.*, configuration.*, etc.)
 		const ServiceResult = await RouteRequest(method, parameters);
 
@@ -860,6 +913,8 @@ export class GRPCServerService
 				parameters,
 
 				this.documentContentCache,
+
+				CancellationSignal,
 			);
 		}
 
@@ -879,6 +934,8 @@ export class GRPCServerService
 				parameters,
 
 				this.documentContentCache,
+
+				CancellationSignal,
 			);
 		}
 
@@ -1475,9 +1532,31 @@ export class GRPCServerService
 			`[GRPCServerService] Handling Mountain notification: ${notification.Method}`,
 		);
 
-		try {
-			const parameters = this.parseParameters(notification.Parameter);
+		let parameters: any;
 
+		try {
+			parameters = this.parseParameters(notification.Parameter);
+		} catch (parseError) {
+			this.errorCount++;
+
+			const RawParameter = Buffer.isBuffer(notification.Parameter)
+				? notification.Parameter.toString("utf8")
+				: String(notification.Parameter);
+
+			CocoonDevLog(
+				"grpc",
+
+				`[GRPCServerService] Dropping malformed notification ${notification.Method}: ${
+					parseError instanceof Error
+						? parseError.message
+						: String(parseError)
+				} raw(200)=${RawParameter.slice(0, 200)}`,
+			);
+
+			return;
+		}
+
+		try {
 			// Emit notification as event for subscribers
 			this.emit("notification", {
 				method: notification.Method,

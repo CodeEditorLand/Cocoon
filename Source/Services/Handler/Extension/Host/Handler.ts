@@ -16,7 +16,10 @@
 
 import { CocoonDevLog } from "../../../Dev/Log.js";
 import type { HandlerContext } from "../../Handler/Context.js";
-import ActivateExtension from "./ActivateExtension.js";
+import ActivateExtension, {
+	IsExtensionActivating,
+	ResetStoragePrime,
+} from "./ActivateExtension.js";
 import EnsureVscodeAPIRegistered from "./EnsureVscodeAPI.js";
 
 /**
@@ -40,6 +43,9 @@ const HandleInitializeExtensionHost = async (
 
 	// Store init data for later use by extension activation
 	Context.ExtensionHostInitData = Parameters;
+
+	// Host (re)initialization invalidates the coalesced storage dump.
+	ResetStoragePrime();
 
 	// Build extension registry and activation event index
 	Context.ExtensionRegistry.clear();
@@ -247,8 +253,14 @@ const HandleActivateByEvent = async (
 
 		Depth = 0,
 	): Promise<void> => {
-		// Already activated or currently being activated (cycle guard).
-		if (Context.ActivatedExtensions.has(ExtId) || InProgress.has(ExtId))
+		// Already activated or currently being activated (cycle guard;
+		// IsExtensionActivating covers in-flight activations started by
+		// other concurrent $activateByEvent calls).
+		if (
+			Context.ActivatedExtensions.has(ExtId) ||
+			InProgress.has(ExtId) ||
+			IsExtensionActivating(ExtId)
+		)
 			return;
 
 		// Depth guard: max 20 levels of transitive deps before bail-out.
@@ -273,7 +285,8 @@ const HandleActivateByEvent = async (
 		for (const DepId of Deps) {
 			if (
 				!Context.ActivatedExtensions.has(DepId) &&
-				!InProgress.has(DepId)
+				!InProgress.has(DepId) &&
+				!IsExtensionActivating(DepId)
 			) {
 				await ActivateWithDeps(DepId, Event, Depth + 1).catch(
 					(Err: unknown) => {
@@ -325,8 +338,40 @@ const HandleActivateByEvent = async (
 	// is sent only after extensions have actually activated. Returning
 	// early (fire-and-forget) means Mountain may dispatch language
 	// provider requests before extensions are ready, causing races.
+	// Each activation races a 30s timeout: one hung activate() must not
+	// block the $activateByEvent response forever (no gRPC deadline). A
+	// timed-out extension counts as failed but stays in the in-progress
+	// set so it is not hot-retried while still hung.
+	const ActivationTimeoutMs = 30_000;
+
+	let TimedOutCount = 0;
+
 	await Promise.allSettled(
-		ToActivate.map((ExtId) => ActivateWithDeps(ExtId, ActivationEvent)),
+		ToActivate.map((ExtId) => {
+			let Timer: ReturnType<typeof setTimeout> | undefined;
+
+			const Timeout = new Promise<void>((Resolve) => {
+				Timer = setTimeout(() => {
+					TimedOutCount++;
+
+					CocoonDevLog(
+						"ext-activate",
+
+						`[ExtensionHostHandler] Activation timed out after ${ActivationTimeoutMs}ms: ${ExtId}`,
+					);
+
+					Resolve();
+				}, ActivationTimeoutMs);
+			});
+
+			return Promise.race([
+				ActivateWithDeps(ExtId, ActivationEvent).finally(() => {
+					if (Timer !== undefined) clearTimeout(Timer);
+				}),
+
+				Timeout,
+			]);
+		}),
 	);
 
 	// Keep legacy event for any listeners
@@ -338,7 +383,9 @@ const HandleActivateByEvent = async (
 	return {
 		success: true,
 
-		activated: ToActivate.length,
+		activated: ToActivate.length - TimedOutCount,
+
+		timedOut: TimedOutCount,
 	};
 };
 
@@ -356,6 +403,9 @@ const HandleStartExtensionHost = async (
 
 		`[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`,
 	);
+
+	// Host start invalidates the coalesced storage dump.
+	ResetStoragePrime();
 
 	Context.Emitter.emit("startExtensionHost", {
 		extensionCount: Context.ExtensionRegistry.size,

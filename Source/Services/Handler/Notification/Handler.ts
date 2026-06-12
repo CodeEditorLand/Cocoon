@@ -41,6 +41,7 @@
 
 import type { EventEmitter } from "events";
 
+import { CocoonDevLog } from "../../Dev/Log.js";
 import type { HandlerContext } from "../Handler/Context.js";
 import * as WindowNamespaceModule from "../VscodeAPI/Window/Namespace.js";
 
@@ -319,6 +320,11 @@ const ApplyWorkspaceDelta = (
 	// Workspace.workspaceData mirror for consumers that read the alternate
 	// shape - keep them in sync so no extension reads stale state.
 	Init.workspaceData = Workspace;
+	// Null the hydrated-folder memo the WorkspaceNamespace getter caches on
+	// Context so the next `workspace.workspaceFolders` read re-hydrates from
+	// the mutated list.
+	(Context as { __workspaceFoldersMemo?: unknown }).__workspaceFoldersMemo =
+		undefined;
 	// `workspace.name` is derived from the first folder when the workspace has
 	// not been explicitly named. Refresh it so it survives open/close cycles.
 	if (typeof Workspace.name !== "string" || Workspace.name.length === 0) {

@@ -98,38 +98,6 @@ const ProbeTcp = (
 	});
 
 // ============================================================================
-// CONCURRENT RUNNER
-// ============================================================================
-
-async function runConcurrent<T, R>(
-	items: ReadonlyArray<T>,
-
-	fn: (item: T) => Promise<R>,
-
-	concurrency: number,
-): Promise<Array<R | { error: unknown }>> {
-	const results: Array<R | { error: unknown }> = [];
-
-	let i = 0;
-
-	const workers = Array.from(
-		{ length: Math.min(concurrency, items.length) },
-
-		async () => {
-			while (i < items.length) {
-				const item = items[i++]!;
-
-				results.push(await fn(item).catch((e) => ({ error: e })));
-			}
-		},
-	);
-
-	await Promise.all(workers);
-
-	return results;
-}
-
-// ============================================================================
 // TUNING
 // ============================================================================
 
@@ -245,9 +213,6 @@ const getModuleInterceptor = async () =>
 
 const getMountainClient = async () =>
 	(await import("./Mountain/Client.js")).MountainClientLive();
-
-const getExtension = async () =>
-	(await import("./Extension.js")).ExtensionLive.build();
 
 const getHealth = async () => (await import("./Health.js")).HealthLive;
 
@@ -403,47 +368,14 @@ const stage3_MountainConnection = async (): Promise<StageResult> => {
 const stage6_Extensions = async (): Promise<StageResult> => {
 	const start = Date.now();
 
-	const extension = await getExtension();
+	// Extension activation is driven solely by Mountain's $activateByEvent
+	// gRPC path into the extension-host handler; activating here in parallel
+	// risks double-activation with a stale context.
+	CocoonDevLog(
+		"bootstrap-stage",
 
-	let extensions = await extension.getAll();
-
-	// Mountain populates the installed-extensions list asynchronously; an
-	// empty list here may be a not-yet-populated race, not a real absence.
-	for (let Retry = 0; Retry < 3 && extensions.length === 0; Retry++) {
-		await new Promise((r) => setTimeout(r, 300));
-
-		extensions = await extension.getAll();
-
-		if (extensions.length > 0) {
-			LandFixLog.Info(
-				"Bootstrap",
-
-				`Extensions list populated after ${Retry + 1} retry probe(s)`,
-			);
-		}
-	}
-
-	const EligibleExtensions = extensions.filter(
-		(Ext: any) => Ext.manifest?.enabled,
+		"[Bootstrap] stage=Extensions event=ok activation delegated to host",
 	);
-
-	const results = await runConcurrent(
-		EligibleExtensions,
-
-		async (Ext: any) => {
-			try {
-				await extension.activate(Ext.id);
-
-				return { Id: Ext.id, Ok: true };
-			} catch (e) {
-				return { Id: Ext.id, Ok: false, Error: String(e) };
-			}
-		},
-
-		8,
-	);
-
-	void results.filter((r: any) => r.Ok).length;
 
 	return {
 		stageName: "Extensions",
@@ -509,56 +441,99 @@ const stage7_HealthCheck = async (): Promise<StageResult> => {
 // BOOTSTRAP IMPLEMENTATION
 // ============================================================================
 
+const runStage = async (
+	StageName: string,
+
+	stageFn: () => Promise<StageResult>,
+): Promise<StageResult> => {
+	const stageStart = Date.now();
+
+	try {
+		const result = await stageFn();
+
+		process.stdout.write(
+			`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStart}ms\n`,
+		);
+
+		return { ...result, duration: Date.now() - stageStart };
+	} catch (e) {
+		const err = e instanceof Error ? e : new Error(String(e));
+
+		process.stdout.write(
+			`[LandFix:Bootstrap] Stage "${StageName}" failed: ${err.message}\n`,
+		);
+
+		return {
+			stageName: StageName,
+			success: false,
+			duration: Date.now() - stageStart,
+			error: err,
+		};
+	}
+};
+
 const makeBootstrap = (): BootstrapService => ({
 	run: async (options?: BootstrapOptions): Promise<BootstrapResult> => {
 		const startTime = Date.now();
 
 		const { skipHealthCheck = false } = options ?? {};
 
-		const stages: Array<[string, () => Promise<StageResult>]> = [
-			["Environment", stage1_Environment],
-			["Configuration", stage2_Configuration],
-			["RPCServer", stage5_RPCServer],
-			["ModuleInterceptor", stage4_ModuleInterceptor],
-			["MountainConnection", stage3_MountainConnection],
-			["Extensions", stage6_Extensions],
-			...(skipHealthCheck
-				? []
-				: [
-						["HealthCheck", stage7_HealthCheck] as [
-							string,
+		// Stages grouped by dependency: stages inside a group are
+		// independent and run via Promise.all; groups run in order.
+		// RPCServer ∥ ModuleInterceptor (independent); MountainConnection
+		// requires RPCServer to be bound first.
+		const stageGroups: Array<Array<[string, () => Promise<StageResult>]>> =
+			[
+				[["Environment", stage1_Environment]],
+				[["Configuration", stage2_Configuration]],
+				[
+					["RPCServer", stage5_RPCServer],
+					["ModuleInterceptor", stage4_ModuleInterceptor],
+				],
+				[["MountainConnection", stage3_MountainConnection]],
+				[["Extensions", stage6_Extensions]],
+				...(skipHealthCheck
+					? []
+					: [
+							[
+								["HealthCheck", stage7_HealthCheck] as [
+									string,
 
-							() => Promise<StageResult>,
-						],
-					]),
-		];
+									() => Promise<StageResult>,
+								],
+							],
+						]),
+			];
 
 		const results: StageResult[] = [];
 
-		for (const [StageName, stageFn] of stages) {
-			const stageStart = Date.now();
+		for (const Group of stageGroups) {
+			const GroupResults = await Promise.all(
+				Group.map(([StageName, stageFn]) =>
+					runStage(StageName, stageFn),
+				),
+			);
 
-			try {
-				const result = await stageFn();
+			results.push(...GroupResults);
 
-				results.push({ ...result, duration: Date.now() - stageStart });
+			// An unreachable gRPC server makes Cocoon an orphan Mountain
+			// can never contact; exit instead of lingering degraded.
+			const RpcFailure = GroupResults.find(
+				(r) => r.stageName === "RPCServer" && !r.success,
+			);
 
-				process.stdout.write(
-					`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStart}ms\n`,
+			if (RpcFailure) {
+				CocoonDevLog(
+					"bootstrap",
+
+					`[Bootstrap] FATAL: RPCServer stage failed (${RpcFailure.error?.message ?? "unknown error"}); exiting to avoid orphan Cocoon`,
 				);
-			} catch (e) {
-				const err = e instanceof Error ? e : new Error(String(e));
 
-				process.stdout.write(
-					`[LandFix:Bootstrap] Stage "${StageName}" failed: ${err.message}\n`,
+				process.stderr.write(
+					`[LandFix:Bootstrap] FATAL: RPCServer stage failed (${RpcFailure.error?.message ?? "unknown error"}); exiting\n`,
 				);
 
-				results.push({
-					stageName: StageName,
-					success: false,
-					duration: Date.now() - stageStart,
-					error: err,
-				});
+				process.exit(1);
 			}
 		}
 

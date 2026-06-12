@@ -18,6 +18,27 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
 import type { HandlerContext } from "../../Handler/Context.js";
 
 /**
+ * Extension ids whose `activate()` has been entered but not yet settled.
+ * Ids are promoted to `Context.ActivatedExtensions` only after `activate()`
+ * resolves, so a throw leaves both sets clean and a retry is possible while
+ * concurrent callers still skip duplicate starts.
+ */
+const ActivatingExtensions = new Set<string>();
+
+export const IsExtensionActivating = (ExtensionId: string): boolean =>
+	ActivatingExtensions.has(ExtensionId);
+
+/**
+ * Coalesced `Storage.GetItems` full dump shared by every activation in a
+ * boot cycle. Reset on extension-host (re)start and on fetch rejection.
+ */
+let StoragePrimePromise: Promise<unknown> | null = null;
+
+export const ResetStoragePrime = (): void => {
+	StoragePrimePromise = null;
+};
+
+/**
  * Build a minimal VS Code ExtensionContext for activating an extension.
  */
 const CreateExtensionContext = (
@@ -552,9 +573,20 @@ const ActivateExtension = async (
 
 	ActivationEvent: string,
 ): Promise<void> => {
-	// Guard: only activate once
-	if (Context.ActivatedExtensions.has(ExtensionId)) return;
-	Context.ActivatedExtensions.add(ExtensionId);
+	// Guard: skip when already activated or an activation is in flight.
+	if (
+		Context.ActivatedExtensions.has(ExtensionId) ||
+		ActivatingExtensions.has(ExtensionId)
+	)
+		return;
+
+	ActivatingExtensions.add(ExtensionId);
+
+	const PromoteToActivated = (): void => {
+		ActivatingExtensions.delete(ExtensionId);
+
+		Context.ActivatedExtensions.add(ExtensionId);
+	};
 
 	const StartMs = Date.now();
 	CocoonDevLog(
@@ -570,6 +602,9 @@ const ActivateExtension = async (
 
 			`[ExtActivate] skip-missing ext=${ExtensionId} (not in registry)`,
 		);
+
+		PromoteToActivated();
+
 		return;
 	}
 
@@ -583,6 +618,8 @@ const ActivateExtension = async (
 
 	// Declarative extensions (themes, grammars) have no main - mark activated and return.
 	if (!LocationRaw || !MainFile) {
+		PromoteToActivated();
+
 		return;
 	}
 
@@ -627,6 +664,8 @@ const ActivateExtension = async (
 			process.stdout.write(
 				`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})\n`,
 			);
+
+			PromoteToActivated();
 
 			return;
 		}
@@ -769,11 +808,27 @@ const ActivateExtension = async (
 			try {
 				const PrimeStart = Date.now();
 
-				const AllRaw = await Context.MountainClient?.sendRequest(
-					"Storage.GetItems",
+				// Coalesce: concurrent activations share ONE full-dump
+				// fetch instead of N identical round-trips at boot. A
+				// rejected fetch resets the promise so the next caller
+				// retries fresh.
+				const PrimeClient = Context.MountainClient;
 
-					[],
-				);
+				if (StoragePrimePromise === null && PrimeClient) {
+					StoragePrimePromise = PrimeClient.sendRequest(
+						"Storage.GetItems",
+
+						[],
+					).catch((PrimeFetchErr: unknown) => {
+						StoragePrimePromise = null;
+
+						throw PrimeFetchErr;
+					});
+				}
+
+				const AllRaw = StoragePrimePromise
+					? await StoragePrimePromise
+					: undefined;
 
 				const AllArray = Array.isArray(AllRaw) ? AllRaw : [];
 
@@ -1015,8 +1070,12 @@ const ActivateExtension = async (
 				`[ExtActivate] no-activate-fn ext=${ExtensionId} duration_ms=${Date.now() - StartMs}`,
 			);
 		}
+
+		PromoteToActivated();
 	} catch (Err: unknown) {
-		// Remove from set so a retry is possible
+		// Remove from both sets so a retry is possible
+		ActivatingExtensions.delete(ExtensionId);
+
 		Context.ActivatedExtensions.delete(ExtensionId);
 		const Message = Err instanceof Error ? Err.message : String(Err);
 		CocoonDevLog(

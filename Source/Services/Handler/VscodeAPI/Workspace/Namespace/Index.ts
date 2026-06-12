@@ -150,6 +150,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		return { uri: Hydrated, name: Name, index: Index };
 	};
 
+	// `workspace.workspaceFolders` is a hot getter (vscode.git reads it in
+	// tight loops), so the hydrated array is memoized on Context.
+	// NotificationHandler's `$deltaWorkspaceFolders` path nulls the memo when
+	// folders mutate; an empty result is never cached so a pre-init read
+	// cannot pin the list to `[]`.
 	const ReadFolders = (): Array<{
 		uri: unknown;
 
@@ -157,6 +162,20 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		index: number;
 	}> => {
+		const Memoized = (
+			Context as {
+				__workspaceFoldersMemo?: Array<{
+					uri: unknown;
+
+					name: string;
+
+					index: number;
+				}>;
+			}
+		).__workspaceFoldersMemo;
+
+		if (Memoized) return Memoized;
+
 		const Live = (Context.ExtensionHostInitData?.workspace ??
 			Context.ExtensionHostInitData?.workspaceData ??
 			{}) as {
@@ -171,6 +190,20 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			const Hydrated = HydrateFolder(Raw[I] as any, I);
 
 			if (Hydrated) Out.push(Hydrated);
+		}
+
+		if (Out.length > 0) {
+			(
+				Context as {
+					__workspaceFoldersMemo?: Array<{
+						uri: unknown;
+
+						name: string;
+
+						index: number;
+					}>;
+				}
+			).__workspaceFoldersMemo = Out;
 		}
 
 		return Out;

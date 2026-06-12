@@ -78,6 +78,18 @@ const MakeEventSubscriber =
 // module so existing imports (e.g. Notification/Handler.ts) remain unchanged.
 
 const CreateWindowNamespace = (Context: HandlerContext) => {
+	// `window.state` reports a concrete value from the very first read.
+	// Mountain only pushes `window.focused`/`window.blurred` notifications
+	// on changes, so seed the initial state once; the `state` getter below
+	// keeps reading the live value NotificationHandler maintains.
+	if ((Context as { __windowState?: unknown }).__windowState === undefined) {
+		(Context as { __windowState?: unknown }).__windowState = {
+			focused: true,
+
+			active: true,
+		};
+	}
+
 	// User-interaction prompts need a *round-trip* (sendRequest) not a
 	// fire-and-forget notification (SendToMountain). Extensions like the
 	// TypeScript updater, Git conflict resolver, and Azure sign-in all gate
@@ -415,6 +427,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 
 			return {
 				key: Key,
+
+				// Full decoration options travel with the type so every
+				// `setDecorations` payload carries them - Mountain can
+				// lazily register the type on first use when the create
+				// notification raced ahead of its registry.
+				__options: Options ?? {},
 
 				dispose: () => {
 					Context.SendToMountain(
@@ -881,18 +899,36 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				}
 			}
 
+			// Second arg may be a `ViewColumn` number or a
+			// `TextDocumentShowOptions` object - normalise both shapes.
+			const ShowOptions =
+				_Column && typeof _Column === "object"
+					? (_Column as {
+							viewColumn?: number;
+
+							preserveFocus?: boolean;
+						})
+					: undefined;
+
+			const ViewColumn =
+				typeof _Column === "number" ? _Column : ShowOptions?.viewColumn;
+
+			const PreserveFocus = ShowOptions?.preserveFocus ?? _PreserveFocus;
+
 			try {
-				// Send the resolved URI STRING as the first arg (not the raw
-				// doc object). Mountain's sky://window/showTextDocument handler
-				// reads `Payload[0]?.uri ?? Payload[0]`, so a string in slot 0
-				// resolves to itself.
-				await Context.MountainClient?.sendRequest("showTextDocument", [
-					UriRaw,
+				// Mountain's GenericRequest dispatcher reads NAMED fields
+				// (`Params.get("uri")` / `"viewColumn"` / `"preserveFocus"`);
+				// a positional array makes every lookup miss and the open
+				// silently degrades. Send the resolved URI STRING (not the
+				// raw doc object) so the workbench never renders the tab as
+				// "[object Object]".
+				await Context.MountainClient?.sendRequest("showTextDocument", {
+					uri: UriRaw,
 
-					_Column,
+					viewColumn: ViewColumn,
 
-					_PreserveFocus,
-				]);
+					preserveFocus: PreserveFocus,
+				});
 			} catch {
 				// Mountain not yet connected or Sky rejected - no-op.
 			}
@@ -1108,6 +1144,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						decorationTypeKey: Key,
 						uri: UriRaw,
 						rangesOrOptions: Ranges,
+						// Decoration type options ride along so Mountain
+						// can lazily register the type if the create
+						// notification has not landed yet.
+						options:
+							Type && typeof Type === "object"
+								? (Type.__options ?? undefined)
+								: undefined,
 					}).catch(() => {});
 				},
 				edit: (Callback: (Builder: any) => void): Promise<boolean> => {
@@ -1979,13 +2022,13 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		// `showWorkspaceFolderPick` - stable API. Stock routes through
 		// `MainThreadMessageService` to open a quick pick seeded with the
 		// current `workspace.workspaceFolders`. Land's folder list lives
-		// in `ExtensionHostInitData.workspace.folders`; pick the first by
-		// default (no picker UI yet). Extensions only use this when a
-		// command has to choose a folder for multi-root; degrading to
-		// "auto-pick first folder" keeps those flows functional until the
-		// picker is wired to Sky.
+		// in `ExtensionHostInitData.workspace.folders`; route through the
+		// same `Window.ShowQuickPick` round-trip `showQuickPick` uses and
+		// map the chosen label back to its folder. Single-folder
+		// workspaces short-circuit to that folder (no picker needed);
+		// dismissal returns undefined.
 		showWorkspaceFolderPick: async (
-			_Options?: unknown,
+			Options?: unknown,
 		): Promise<unknown | undefined> => {
 			const Folders =
 				(
@@ -1996,7 +2039,68 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						| undefined
 				)?.folders ?? [];
 
-			return Folders[0];
+			if (Folders.length === 0) {
+				return undefined;
+			}
+
+			if (Folders.length === 1) {
+				return Folders[0];
+			}
+
+			const Labels = Folders.map((Folder, Index) => {
+				const Shape = Folder as {
+					name?: unknown;
+
+					uri?: { path?: unknown };
+				};
+
+				return typeof Shape?.name === "string" && Shape.name.length > 0
+					? Shape.name
+					: String(Shape?.uri?.path ?? Shape?.uri ?? Index);
+			});
+
+			try {
+				const Picked = await Context.MountainClient?.sendRequest(
+					"Window.ShowQuickPick",
+
+					[
+						Labels,
+
+						{
+							placeHolder: (
+								Options as
+									| { placeHolder?: string }
+									| undefined
+							)?.placeHolder,
+
+							ignoreFocusOut: (
+								Options as
+									| { ignoreFocusOut?: boolean }
+									| undefined
+							)?.ignoreFocusOut,
+						},
+					],
+				);
+
+				if (Picked == null) {
+					return undefined;
+				}
+
+				const PickedLabel = Array.isArray(Picked) ? Picked[0] : Picked;
+
+				const PickedIndex = Labels.indexOf(
+					typeof PickedLabel === "string"
+						? PickedLabel
+						: String(
+								(PickedLabel as { label?: unknown })?.label ??
+									"",
+							),
+				);
+
+				return PickedIndex >= 0 ? Folders[PickedIndex] : undefined;
+			} catch {
+				return undefined;
+			}
 		},
 
 		// `withScmProgress` - deprecated in `vscode.d.ts` but still present

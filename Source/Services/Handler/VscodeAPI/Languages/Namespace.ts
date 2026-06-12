@@ -865,6 +865,27 @@ const CreateLanguagesNamespace = (
 
 				set: (UriOrEntries: unknown, Diagnostics?: unknown[]) => {
 					// Two overloads: (uri, diagnostics) and (entries: [uri, diagnostics][])
+					//
+					// Empty/undefined diagnostics DELETE the URI key instead
+					// of storing `[]` (mirrors stock `ExtHostDiagnostics`
+					// clearing semantics) - storing the empty array left
+					// ghost `[uri, []]` entries in `getDiagnostics()`.
+					// Cleared URIs still ship on the wire as `[uri, []]`
+					// tuples so Mountain drops their markers.
+					const ClearedKeys: string[] = [];
+
+					const Apply = (Uri: unknown, D: unknown[] | undefined) => {
+						const Key = UriKey(Uri);
+
+						if (Array.isArray(D) && D.length > 0) {
+							Store.set(Key, D);
+						} else {
+							Store.delete(Key);
+
+							ClearedKeys.push(Key);
+						}
+					};
+
 					if (
 						Array.isArray(UriOrEntries) &&
 						Diagnostics === undefined
@@ -874,18 +895,24 @@ const CreateLanguagesNamespace = (
 						>;
 
 						for (const [Uri, D] of Entries) {
-							Store.set(UriKey(Uri), D ?? []);
+							Apply(Uri, D);
 						}
 					} else {
-						Store.set(UriKey(UriOrEntries), Diagnostics ?? []);
+						Apply(UriOrEntries, Diagnostics);
 					}
 
 					// Mirror into the module-level cache so getDiagnostics()
 					// returns real data without an async Mountain round-trip.
-					_AllDiagnostics.set(Owner, new Map(Store));
+					// A fully-cleared owner is removed outright so it never
+					// surfaces ghost entries.
+					if (Store.size === 0) {
+						_AllDiagnostics.delete(Owner);
+					} else {
+						_AllDiagnostics.set(Owner, new Map(Store));
+					}
 
 					Context.Emitter.emit("diagnostics.didChange", {
-						uris: [...Store.keys()],
+						uris: [...Store.keys(), ...ClearedKeys],
 					});
 
 					// Single-shot Diagnostic.Set over the whole collection.
@@ -901,11 +928,15 @@ const CreateLanguagesNamespace = (
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
 
-						[...Store.entries()].map(([U, D]) => [
-							U,
+						[
+							...[...Store.entries()].map(([U, D]) => [
+								U,
 
-							NormaliseList(D),
-						]),
+								NormaliseList(D),
+							]),
+
+							...ClearedKeys.map((U) => [U, []]),
+						],
 					]).catch(() => {});
 				},
 

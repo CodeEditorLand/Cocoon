@@ -15,6 +15,9 @@
 import { CocoonDevLog } from "../../../Dev/Log.js";
 import * as LanguageProviderRegistry from "../../../Language/Provider/Registry.js";
 
+/** Cached node:fs/promises module - loaded once on first cache-miss read. */
+let FsPromisesModule: typeof import("node:fs/promises") | null = null;
+
 /**
  * Normalize a VS Code range { start: { line, character }, end: {...} } to
  * Mountain's RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }.
@@ -106,9 +109,23 @@ const BuildVsDocument = async (
 
 	let CachedLines: string[] | null = null;
 
-	const LoadContent = (): string => {
-		if (CachedContent !== null) return CachedContent;
+	// Disk fallback happens here, in the async construction phase, so the
+	// synchronous TextDocument surface (getText/lineAt/offsetAt) never
+	// performs I/O. The document content cache (unsaved edits mirrored from
+	// Mountain) still takes precedence below.
+	if (DocumentContentCache.get(UriString) === undefined) {
+		if (FsPromisesModule === null) {
+			FsPromisesModule = await import("node:fs/promises");
+		}
 
+		try {
+			CachedContent = await FsPromisesModule.readFile(FsPath, "utf8");
+		} catch {
+			CachedContent = "";
+		}
+	}
+
+	const LoadContent = (): string => {
 		// Prefer document content cache (has unsaved edits from Mountain)
 		const MirrorContent = DocumentContentCache.get(UriString);
 
@@ -118,17 +135,7 @@ const BuildVsDocument = async (
 			return CachedContent;
 		}
 
-		// Fallback: read from disk
-		try {
-			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			const Fs = require("node:fs");
-
-			CachedContent = Fs.readFileSync(FsPath, "utf8") as string;
-		} catch {
-			CachedContent = "";
-		}
-
-		return CachedContent;
+		return CachedContent ?? "";
 	};
 
 	const GetLines = (): string[] => {
@@ -326,6 +333,8 @@ const InvokeLanguageProvider = async (
 	Parameters: any,
 
 	DocumentContentCache: Map<string, string>,
+
+	CancellationSignal?: AbortSignal,
 ): Promise<any> => {
 	const Args: any[] = Array.isArray(Parameters) ? Parameters : [Parameters];
 
@@ -413,7 +422,24 @@ const InvokeLanguageProvider = async (
 	const { CancellationTokenSource } =
 		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 
-	const VsToken = new CancellationTokenSource().token;
+	// The token handed to the provider flips isCancellationRequested when
+	// Mountain's CancelOperation aborts the per-request signal, so
+	// well-behaved providers stop work after the cursor moves on.
+	const VsTokenSource = new CancellationTokenSource();
+
+	const VsToken = VsTokenSource.token;
+
+	const OnAbort = () => VsTokenSource.cancel();
+
+	if (CancellationSignal) {
+		if (CancellationSignal.aborted) {
+			VsTokenSource.cancel();
+		} else {
+			CancellationSignal.addEventListener("abort", OnAbort, {
+				once: true,
+			});
+		}
+	}
 
 	const Context = Args[3];
 
@@ -1142,6 +1168,12 @@ const InvokeLanguageProvider = async (
 		);
 
 		return null;
+	} finally {
+		CancellationSignal?.removeEventListener("abort", OnAbort);
+
+		// dispose(true) cancels the token and frees its listeners once the
+		// invocation settles, whether the provider resolved or threw.
+		VsTokenSource.dispose(true);
 	}
 };
 
