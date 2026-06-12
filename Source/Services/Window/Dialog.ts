@@ -7,6 +7,8 @@
  * to Sky's notification surface and resolves with the selected action
  * title or null when dismissed.
  * Following Wind Effect-TS atomic module pattern.
+ *
+ * TODO(EFX-30): Convert Effect.gen wrappers → async/await when Window/Index.ts callers migrate.
  */
 
 import { Context, Effect, Layer } from "effect";

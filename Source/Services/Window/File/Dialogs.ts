@@ -5,6 +5,8 @@
  * Delegates to Mountain's native file dialog via gRPC.
  *
  * Source: src/vs/workbench/api/common/extHostWindow.ts (showOpenDialog, showSaveDialog)
+ *
+ * TODO(EFX-30): Convert Effect.gen → async/await when Window/Index.ts callers migrate.
  */
 
 import { Effect } from "effect";
