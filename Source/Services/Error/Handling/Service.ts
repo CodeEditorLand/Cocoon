@@ -64,7 +64,7 @@ export class ErrorHandlingService {
 
 	public readonly _serviceBrand: undefined;
 
-	private circuitBreakers: Map<string, CircuitBreakerState> = new Map(;
+	private circuitBreakers: Map<string, CircuitBreakerState> = new Map();
 
 	private config: ErrorHandlingConfig;
 

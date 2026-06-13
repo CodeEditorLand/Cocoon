@@ -15,7 +15,7 @@ import { RunExtHostCodegen } from "./Run/Ext/Host/Codegen.js";
 
 const Main = async (): Promise<void> => {
 
-	const Cwd = process.cwd(;
+	const Cwd = process.cwd();
 
 	const SourceRoot = resolve(
 		Cwd,

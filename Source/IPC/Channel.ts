@@ -387,10 +387,10 @@ const CHANNEL_ID_PREFIX = "chan";
 export class ChannelRegistry {
 
 	/** Map of channel name to channel configuration */
-	private channels: Map<string, RegisteredChannel> = new Map(;
+	private channels: Map<string, RegisteredChannel> = new Map();
 
 	/** Map of correlation ID to pending requests */
-	private pendingRequests: Map<string, PendingRequest> = new Map(;
+	private pendingRequests: Map<string, PendingRequest> = new Map();
 
 	/** Registry statistics */
 	private stats: {

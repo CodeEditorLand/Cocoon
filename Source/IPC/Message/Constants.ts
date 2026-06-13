@@ -19,7 +19,7 @@ export const MAX_BATCH_SIZE = 50 * 1024 * 1024;
 export const MAX_BATCH_COUNT = 1000;
 
 /** Magic bytes for message header validation (MNT for Mountain) */
-export const MESSAGE_HEADER_MAGIC = Buffer.from([0x4d, 0x4e, 0x54];
+export const MESSAGE_HEADER_MAGIC = Buffer.from([0x4d, 0x4e, 0x54]);
 
 /** Current protocol version */
 export const PROTOCOL_VERSION = 1;

@@ -314,7 +314,7 @@ export class ExtensionService extends /* Effect.Service */(
 
 			const Configuration = await Symbol<Configuration>(
 				"Service/Configuration",
-			;
+			);
 
 			const Logger = await Symbol<Logger>("Service/Logger";
 

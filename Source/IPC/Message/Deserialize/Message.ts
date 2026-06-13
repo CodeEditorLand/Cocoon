@@ -76,7 +76,7 @@ export default (Data: Uint8Array): IDeserializationResult => {
 		}
 
 		// Wrap data in VSBuffer for safe access
-		const Buffer = VSBuffer.Wrap(Data;
+		const Buffer = VSBuffer.Wrap(Data);
 
 		let Offset = 0;
 

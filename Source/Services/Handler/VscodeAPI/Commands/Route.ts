@@ -90,5 +90,5 @@ export const LogRoute = (CommandId: string, Decision: CommandsRoute): void => {
 
 	process.stdout.write(
 		`[DEV:CMD-ROUTE] cmd=${CommandId} route=${Decision}\n`,
-	;
+	);
 };

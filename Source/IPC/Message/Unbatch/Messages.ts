@@ -66,12 +66,12 @@ export default (
 		}
 
 		// Wrap data in VSBuffer
-		const Buffer = VSBuffer.Wrap(Data;
+		const Buffer = VSBuffer.Wrap(Data);
 
 		let Offset = 0;
 
 		// Read message count
-		const MessageCount = Buffer.readUInt32LE(Offset;
+		const MessageCount = Buffer.readUInt32LE(Offset);
 
 		Offset += 4;
 

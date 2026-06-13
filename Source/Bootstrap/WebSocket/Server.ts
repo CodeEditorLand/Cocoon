@@ -13,9 +13,9 @@ import { CocoonDevLog } from "../../Services/Dev/Log.js";
 
 import RouteRequest from "../../Services/Handler/Request/Routing/Handler.js";
 
-const _Port = parseInt(process.env["COCOON_WS_PORT"] ?? "0", 10;
+const _Port = parseInt(process.env["COCOON_WS_PORT"] ?? "0", 10);
 
-const _SecretHex = (process.env["COCOON_WS_SECRET"] ?? "").toLowerCase(;
+const _SecretHex = (process.env["COCOON_WS_SECRET"] ?? "").toLowerCase();
 
 function _Match(c: string): boolean {
 	if (!_SecretHex || !c) return false;

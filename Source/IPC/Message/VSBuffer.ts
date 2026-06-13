@@ -43,7 +43,7 @@ export default class VSBuffer {
 	 */
 	public static Allocate(Capacity: number): VSBuffer {
 		if (Capacity < 0) {
-			throw new Error(`Cannot allocate negative capacity: ${Capacity}`;
+			throw new Error(`Cannot allocate negative capacity: ${Capacity}`);
 		}
 
 		if (Capacity > MAX_MESSAGE_SIZE) {

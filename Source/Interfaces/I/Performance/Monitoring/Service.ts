@@ -103,4 +103,4 @@ export interface IPerformanceMonitoringService {
 /**
  * Effect context for PerformanceMonitoringService
  */
-export const IPerformanceMonitoringService: unique symbol = Symbol.for("IPerformanceMonitoringService";
+export const IPerformanceMonitoringService: unique symbol = Symbol.for("IPerformanceMonitoringService");

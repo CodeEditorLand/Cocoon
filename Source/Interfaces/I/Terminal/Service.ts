@@ -21,4 +21,4 @@ export interface ITerminalService {
 	kill(terminalId: number): Promise<void>;
 }
 
-export const ITerminalService: unique symbol = Symbol.for("ITerminalService";
+export const ITerminalService: unique symbol = Symbol.for("ITerminalService");

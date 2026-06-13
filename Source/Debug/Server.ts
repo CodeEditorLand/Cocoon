@@ -48,7 +48,7 @@ type LayerMode = "off" | "mountain" | "cocoon" | "both";
 
 function ParseMode(): LayerMode {
 
-	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase(;
+	const Raw = (process.env.DebugServer ?? "").trim().toLowerCase();
 
 	if (
 		Raw === "" ||

@@ -77,7 +77,7 @@ const ThreadKey = (Uri: unknown, Range: unknown): string => {
 	const UriStr =
 		typeof Uri === "string"
 			? Uri
-			: ((Uri as { toString?: () => string })?.toString?.() ?? "";
+			: ((Uri as { toString?: () => string })?.toString?.() ?? "");
 
 	const R = Range as
 		| { start?: { line?: number; character?: number } }

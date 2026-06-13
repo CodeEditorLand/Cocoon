@@ -89,7 +89,7 @@ export class FileSystemService implements IFileSystemService {
 		await this.mountainClient.sendRequest("FileSystem.WriteFile", {
 			path: uri.fsPath,
 			content: Array.from(content), // Serialize buffer to array
-		};
+		});
 	}
 
 	async readDirectory(uri: any): Promise<[string, any][]> {

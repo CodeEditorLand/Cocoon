@@ -18,7 +18,7 @@ import { Result } from "../Utility/Result.js";
 
 // Real VS Code CancellationTokenSource - replaces the hand-rolled class below.
 const { CancellationTokenSource } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 
 /**
  * Represents a unique request identifier

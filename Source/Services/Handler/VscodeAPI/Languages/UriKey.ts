@@ -25,7 +25,7 @@ export const UriKey = (Value: unknown): string => {
 
 	if (Hydrated) return Hydrated.toString(;
 
-	const Rendered = String(Value;
+	const Rendered = String(Value);
 
 	if (Rendered && Rendered !== "[object Object]") return Rendered;
 

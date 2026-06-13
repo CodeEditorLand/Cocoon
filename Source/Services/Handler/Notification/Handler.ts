@@ -292,7 +292,7 @@ if (
 			const IsExtensionFramePath = (Line: string): boolean =>
 				Line.includes("/.fiddee/extensions/") ||
 				Line.includes("/.land/extensions/") ||
-				Line.includes("/extensions/";
+				Line.includes("/extensions/");
 
 			const IsCocoonFramePath = (Line: string): boolean =>
 				Line.includes("/Cocoon/") || Line.includes("@codeeditorland/";

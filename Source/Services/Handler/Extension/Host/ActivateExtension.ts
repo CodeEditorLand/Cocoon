@@ -309,10 +309,10 @@ const CreateExtensionContext = (
 					Options?: EnvMutator["options"],
 				) => {
 					Entries.set(Variable, {
-						value: Value,
-						type: 2,
-						options: Options,
-					};
+							value: Value,
+							type: 2,
+							options: Options,
+						});
 
 					Forward("append", {
 						variable: Variable,

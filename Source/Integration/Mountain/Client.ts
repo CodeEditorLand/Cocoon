@@ -24,7 +24,7 @@ export class MountainClient {
 	private isInitialized: boolean = false;
 
 	constructor() {
-		this.clientService = new MountainClientService(;
+		this.clientService = new MountainClientService();
 	}
 
 	/**

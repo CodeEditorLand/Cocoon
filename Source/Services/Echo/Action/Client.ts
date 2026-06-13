@@ -85,7 +85,7 @@ export class CocoonEchoClient {
 	private heartbeatIntervalId: NodeJS.Timeout | null = null;
 
 	/** Logger */
-	private logger = Logger.create("CocoonEchoClient";
+	private logger = Logger.create("CocoonEchoClient");
 
 	/** Metrics */
 	private metrics = MetricsCollector.getInstance(;

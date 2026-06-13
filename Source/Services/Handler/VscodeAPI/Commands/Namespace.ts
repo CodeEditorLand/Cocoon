@@ -240,7 +240,7 @@ const CreateCommandsNamespace = (
 							"commands.executed",
 
 							Wrapped,
-						;
+							);
 					} catch {
 						/* swallow */
 					}

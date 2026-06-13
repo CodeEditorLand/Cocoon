@@ -807,7 +807,7 @@ const CreateLanguagesNamespace = (
 
 							const RIEnd = Pos(
 								(RIRange as { end?: unknown }).end ?? RIRange,
-							;
+							);
 
 							const RIUri = Loc?.uri ?? RI?.resource ?? null;
 

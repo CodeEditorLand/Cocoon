@@ -33,7 +33,7 @@ export const RegisterProvider = (
 	let Handle: number;
 
 	try {
-		Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider;
+		Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
 	} catch {
 		// RegisterAutoHandle should be infallible but soft-fail to a noop
 		// disposable on any future registry-full / duplicate-registration error.
@@ -51,12 +51,12 @@ export const RegisterProvider = (
 		handle: Handle,
 		languageSelector: Language,
 		extensionId: "",
-	}).catch(() => {};
+	}).catch(() => {});
 
 	return {
 		dispose: () => {
 			try {
-				LanguageProviderRegistry.Unregister(Handle;
+				LanguageProviderRegistry.Unregister(Handle);
 			} catch {
 				/* registry already cleared on shutdown */
 			}

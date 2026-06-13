@@ -183,7 +183,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 			const ItemHandle = Params?.treeItemHandle ?? Params?.[1] ?? "";
 
-			const Provider = TreeDataProvidersByViewId.get(String(ViewId);
+			const Provider = TreeDataProvidersByViewId.get(String(ViewId));
 
 			if (!Provider) {
 				return { items: [] };

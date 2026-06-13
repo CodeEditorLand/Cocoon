@@ -197,7 +197,7 @@ const HandleDeltaExtensions = async (
 		// re-install can activate again.
 		DisposeExtensionContext(Identifier;
 
-		Context.ActivatedExtensions.delete(Identifier;
+		Context.ActivatedExtensions.delete(Identifier);
 	}
 
 	const DurationMs = Math.round(performance.now() - DeltaStart;

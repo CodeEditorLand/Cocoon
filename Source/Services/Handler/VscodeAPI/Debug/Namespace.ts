@@ -145,7 +145,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 			return {
 				dispose: () => {
-					Context.ExtensionRegistry.delete(FactoryKey;
+					Context.ExtensionRegistry.delete(FactoryKey);
 
 					Context.SendToMountain("unregister_debug_adapter", {
 						handle: Handle,

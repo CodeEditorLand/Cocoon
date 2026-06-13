@@ -426,7 +426,7 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 		getExtension: (Identifier: string) => {
 			if (!IsExtensionKey(Identifier)) return undefined;
 
-			const Raw = Context.ExtensionRegistry.get(Identifier;
+			const Raw = Context.ExtensionRegistry.get(Identifier);
 
 			if (!Raw) return undefined;
 

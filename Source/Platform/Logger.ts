@@ -12,15 +12,15 @@ export class Logger {
 	}
 
 	Info(Message: string, ...Args: unknown[]): void {
-		console.log(`[${this.Prefix}] ${Message}`, ...Args;
+		console.log(`[${this.Prefix}] ${Message}`, ...Args);
 	}
 
 	Warn(Message: string, ...Args: unknown[]): void {
-		console.warn(`[${this.Prefix}] ${Message}`, ...Args;
+		console.warn(`[${this.Prefix}] ${Message}`, ...Args);
 	}
 
 	Error(Message: string, ...Args: unknown[]): void {
-		console.error(`[${this.Prefix}] ${Message}`, ...Args;
+		console.error(`[${this.Prefix}] ${Message}`, ...Args);
 	}
 
 	Debug(Message: string, ...Args: unknown[]): void {

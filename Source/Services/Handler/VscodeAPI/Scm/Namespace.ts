@@ -371,7 +371,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								"$scm:updateSourceControl",
 
 								[Handle, { inputBoxValue: V }],
-							).catch(() => {};
+							).catch(() => {});
 						},
 						get placeholder() {
 							return (this as any).__placeholder ?? "";
@@ -383,7 +383,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								"$scm:updateSourceControl",
 
 								[Handle, { inputBoxPlaceholder: V }],
-							).catch(() => {};
+							).catch(() => {});
 						},
 						enabled: true,
 						visible: true,
@@ -495,7 +495,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 										groupHandle: GroupHandle,
 									},
 								),
-							).catch(() => {};
+							).catch(() => {});
 
 							Groups.delete(GroupId;
 						},
@@ -515,7 +515,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						"$scm:updateSourceControl",
 
 						[Handle, { commitTemplate: V }],
-					).catch(() => {};
+					).catch(() => {});
 				},
 				get acceptInputCommand() {
 					return (ConcreteSourceControl as any).__acceptInputCommand;
@@ -527,7 +527,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						"$scm:updateSourceControl",
 
 						[Handle, { acceptInputCommand: V }],
-					).catch(() => {};
+					).catch(() => {});
 				},
 				quickDiffProvider: undefined,
 				dispose: () => {
@@ -535,7 +535,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						Context.SendToMountain("unregister_scm_provider", {
 							handle: Handle,
 						}),
-					).catch(() => {};
+					).catch(() => {});
 
 					Groups.clear(;
 				},

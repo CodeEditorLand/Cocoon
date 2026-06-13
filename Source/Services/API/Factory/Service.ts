@@ -20,7 +20,7 @@ import * as LanguageProviderRegistry from "../../Language/Provider/Registry.js";
 // Real VS Code type constructors from @codeeditorland/output (compiled from VS Code source).
 // Loaded once at module init - all extensions share these class definitions.
 const VsCodeTypes =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
 const { URI } =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";

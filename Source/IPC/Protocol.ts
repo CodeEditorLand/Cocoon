@@ -198,7 +198,7 @@ export function GetMessageType(
 		return ProtocolMessageType.Notification;
 	}
 
-	throw new Error("Invalid IPC protocol message";
+	throw new Error("Invalid IPC protocol message");
 }
 
 /**

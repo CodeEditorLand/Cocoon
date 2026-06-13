@@ -122,7 +122,7 @@ export class Memento {
 					"Storage.GetItems",
 
 					[],
-				;
+					);
 
 				const Prefix = `${ExtensionId}:`;
 

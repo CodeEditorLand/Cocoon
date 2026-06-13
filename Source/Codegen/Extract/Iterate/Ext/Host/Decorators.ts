@@ -35,7 +35,7 @@ const MainThreadCounterpartName = (decoratorName: string): string | null => {
 
 	if (!decoratorName.startsWith("IExtHost")) return null;
 
-	const Suffix = decoratorName.slice("IExtHost".length;
+	const Suffix = decoratorName.slice("IExtHost".length);
 
 	return `MainThread${Suffix}Shape`;
 };

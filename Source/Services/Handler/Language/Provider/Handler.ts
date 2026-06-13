@@ -284,7 +284,7 @@ const BuildVsDocument = async (
 		validatePosition: (P: any) => P,
 
 		getWordRangeAtPosition: (Pos: any, Pattern?: RegExp) => {
-			const Lines = GetLines(;
+				const Lines = GetLines();
 
 			const Line = Lines[Pos?.line ?? 0] ?? "";
 

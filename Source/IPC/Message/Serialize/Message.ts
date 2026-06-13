@@ -80,9 +80,9 @@ export default (Message: IMessage): ISerializationResult => {
 		}
 
 		// Serialize metadata to JSON
-		const MetadataJSON = JSON.stringify(Message.Metadata;
+		const MetadataJSON = JSON.stringify(Message.Metadata);
 
-		const MetadataBuffer = VSBuffer.FromString(MetadataJSON;
+		const MetadataBuffer = VSBuffer.FromString(MetadataJSON);
 
 		// Calculate total required size
 		OriginalSize =

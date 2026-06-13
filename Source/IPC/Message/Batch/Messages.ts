@@ -101,7 +101,7 @@ export default (
 		let TotalMessageSize = 0;
 
 		for (const Message of Messages) {
-			const Result = SerializeMessage(Message;
+			const Result = SerializeMessage(Message);
 
 			if (!Result.Success) {
 				return {

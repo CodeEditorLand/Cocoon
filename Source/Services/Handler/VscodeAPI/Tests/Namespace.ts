@@ -7,13 +7,17 @@
  * `createRunProfile`, and `createTestRun` mutations persist in-host.
  *
  * Real test execution (Sky-side `ITestService` integration → workbench
- * Testing panel rendering → run-from-gutter) is not yet wired - that
- * requires exposing `ITestService` via `Output/Source/Service/CEL/Expose/Accessor.ts`
- * and forwarding `TestRun.*` lifecycle events from Cocoon → Mountain → Sky.
- * Until that lands, this shim keeps every extension that imports
- * `vscode.tests` working at the API surface (no crashes on
- * `controller.items.add(item)` or `run.passed(item)`); their test runs
- * simply do not render in the Testing panel.
+ * Testing panel rendering → run-from-gutter) is now wired via
+ * `Output/Source/Service/CEL/Expose/Accessor.ts` (exposes `ITestService` as
+ * `__CEL_SERVICES__.TestService`) and forwarded through
+ * `Context.SendToMountain("tests.*")` → Mountain gRPC → `sky://tests/*`
+ * Tauri events → Sky `InstallTests.ts` bridge.
+ * `TestRun.*` lifecycle events flow Cocoon → Mountain → Sky.
+ * This shim keeps every extension that imports `vscode.tests` working at
+ * the API surface (no crashes on `controller.items.add(item)` or
+ * `run.passed(item)`), while the full lifecycle (controller creation,
+ * run start/end, individual results) is forwarded Cocoon → Mountain →
+ * Sky for Testing panel rendering via `ITestService`.
  *
  * ## Architecture
  *
@@ -222,6 +226,7 @@ const MakeTestRun = (
 
 			if (!RunStarted) {
 				RunStarted = true;
+
 				Context.SendToMountain("tests.run_started", {
 					controllerId: ControllerId,
 					runName: Name,

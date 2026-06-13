@@ -13,7 +13,7 @@ import "../../../Utility/Tier.js";
 
 import "../../../Debug/Server.js";
 
-import { runBootstrap } from "../../../Effect/Bootstrap.js";
+import { runBootstrap } from "../../../Service/Bootstrap.js";
 
 // Dual-layer DebugServer (Cocoon half). Activated by the unified
 // `DebugServer` env var ("cocoon" | "both"). Safe no-op otherwise.
@@ -22,7 +22,7 @@ import { StartWebSocketServer } from "../../WebSocket/Server.js";
 // PostHog telemetry - early init so bootstrap errors are captured.
 // Dead-code eliminated by esbuild in production (NODE_ENV substitute).
 type PostHogBridgeModule =
-	typeof import("../../../Telemetry/Post/Hog/Bridge.js";
+	typeof import("../../../Telemetry/Post/Hog/Bridge.js");
 
 /**
  * @module CocoonMain

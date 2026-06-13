@@ -17,11 +17,12 @@ const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 
-		Context.Emitter.on(EventName, Listener;
+		Context.Emitter.on(EventName, Listener);
+
 
 		return {
 			dispose: () => {
-				Context.Emitter.off(EventName, Listener;
+				Context.Emitter.off(EventName, Listener);
 			},
 		};
 	};
@@ -32,16 +33,16 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 	// (Mocha, Jest, Cargo runners) read this to skip launching duplicate
 	// tasks. Mountain fires `task.didStart` / `task.didEnd` notifications
 	// so we keep the array in sync.
-	const Executions = new Map<string, unknown>(;
+	const Executions = new Map<string, unknown>();
 
 	Context.Emitter.on(
 		"task.didStart",
 
 		(Event: { execution?: { id?: string }; id?: string }) => {
-			const Id = String(Event?.execution?.id ?? Event?.id ?? "";
+			const Id = String(Event?.execution?.id ?? Event?.id ?? "");
 
 			if (Id && Event?.execution) {
-				Executions.set(Id, Event.execution;
+				Executions.set(Id, Event.execution);
 			}
 		},
 	;
@@ -50,35 +51,35 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 		"task.didEnd",
 
 		(Event: { execution?: { id?: string }; id?: string }) => {
-			const Id = String(Event?.execution?.id ?? Event?.id ?? "";
+			const Id = String(Event?.execution?.id ?? Event?.id ?? "");
 
 			if (Id) {
-				Executions.delete(Id;
+				Executions.delete(Id);
 			}
 		},
 	;
 
 	return WrapTasksNamespace({
 		registerTaskProvider: (TaskType: string, Provider: unknown) => {
-			const Handle = NextProviderHandle(;
+			const Handle = NextProviderHandle();
 
 			Context.SendToMountain("register_task_provider", {
 				handle: Handle,
 				type: TaskType,
 				extensionId: "",
-			}).catch(() => {};
+				}).catch(() => {});
 
-			const ProviderKey = `__taskProvider:${Handle}`;
+				const ProviderKey = `__taskProvider:${Handle}`;
 
-			Context.ExtensionRegistry.set(ProviderKey, Provider;
+				Context.ExtensionRegistry.set(ProviderKey, Provider);
 
 			return {
 				dispose: () => {
-					Context.ExtensionRegistry.delete(ProviderKey;
+					Context.ExtensionRegistry.delete(ProviderKey);
 
 					Context.SendToMountain("unregister_task_provider", {
 						handle: Handle,
-					}).catch(() => {};
+					}).catch(() => {});
 				},
 			};
 		},
@@ -114,20 +115,20 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 					| { id?: string; task?: unknown }
 					| undefined;
 
-				const TaskId = String(Resolved?.id ?? "";
+				const TaskId = String(Resolved?.id ?? "");
 
 				const Execution = {
 					task: Resolved?.task ?? Task,
 					terminate: () => {
 						Context.SendToMountain("terminate_task", {
-							id: TaskId,
-						}).catch(() => {};
+								id: TaskId,
+							}).catch(() => {});
 
-						Executions.delete(TaskId;
+							Executions.delete(TaskId);
 					},
 				};
 
-				if (TaskId) Executions.set(TaskId, Execution;
+				if (TaskId) Executions.set(TaskId, Execution);
 
 				return Execution;
 			} catch {
@@ -143,7 +144,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 		// Live getter so iteration sees current executions, not the
 		// snapshot at module-construction time.
 		get taskExecutions() {
-			return Array.from(Executions.values();
+			return Array.from(Executions.values());
 		},
 	};
 };

@@ -90,7 +90,7 @@ import type { Uri } from "vscode";
 
 // URI class for runtime use - the `import type` above is erased at runtime.
 const { URI } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
 
 // ============================================================================
 // DTO Type Definitions (generated from Mountain Rust DTOs)

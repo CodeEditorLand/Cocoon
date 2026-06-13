@@ -127,7 +127,7 @@ export const GetExtension = (
  */
 export const GetStatistics = (Context: HandlerContext): ScannerStatistics => {
 
-	const All = Array.from(Context.ExtensionRegistry.values();
+	const All = Array.from(Context.ExtensionRegistry.values());
 
 	let Builtin = 0;
 

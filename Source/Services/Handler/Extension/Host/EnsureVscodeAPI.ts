@@ -595,7 +595,7 @@ const EnsureVscodeAPIRegistered = async (
 			"Disposable",
 		];
 
-		const Missing = CriticalNames.filter((Name) => API[Name] === undefined;
+		const Missing = CriticalNames.filter((Name) => API[Name] === undefined);
 
 		if (Missing.length) {
 			process.stderr.write(

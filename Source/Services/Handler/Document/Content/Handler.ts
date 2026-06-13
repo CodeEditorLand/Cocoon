@@ -459,7 +459,7 @@ const HandleDocumentOpen = (
 		if (Uri && Content !== undefined) {
 			DocumentContentCache.set(Uri, Content;
 
-			DocumentVersionMap.set(Uri, 1;
+			DocumentVersionMap.set(Uri, 1);
 
 			CocoonDevLog(
 				"document",

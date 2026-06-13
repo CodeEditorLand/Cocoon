@@ -53,7 +53,7 @@ export interface RunExtHostCodegenSummary {
 const DefaultLog = (message: string): void => {
 
 	// eslint-disable-next-line no-console
-	console.log(`[Cocoon/Codegen] ${message}`;
+	console.log(`[Cocoon/Codegen] ${message}`);
 };
 
 export const RunExtHostCodegen = async (

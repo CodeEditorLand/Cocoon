@@ -88,7 +88,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 							Resolve(),
 
 							Property,
-						;
+							);
 
 						return Descriptor
 							? { ...Descriptor, configurable: true }

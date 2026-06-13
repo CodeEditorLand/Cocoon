@@ -266,7 +266,7 @@ export class ExtensionHostService implements IExtensionHostService {
 	 * Deactivate an extension
 	 */
 	async deactivateExtension(extensionId: string): Promise<void> {
-		const activated = this.activatedExtensions.get(extensionId;
+		const activated = this.activatedExtensions.get(extensionId);
 
 		if (!activated) {
 			return;

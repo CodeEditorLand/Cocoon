@@ -256,7 +256,7 @@ export const ValidatePathAccess = (
 	// Normalize the path
 	const NormalizedPath = Path.normalize(PathString;
 
-	const ResolvedPath = Path.resolve(NormalizedPath;
+	const ResolvedPath = Path.resolve(NormalizedPath);
 
 	// Check denied paths first (blacklist overrides whitelist)
 	for (const DeniedPath of Policy.DeniedPaths) {

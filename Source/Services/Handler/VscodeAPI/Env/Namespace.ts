@@ -273,12 +273,12 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 
 							Child.once("error", () => Resolve(false);
 
-							Child.once("close", (Code) => Resolve(Code === 0);
+							Child.once("close", (Code) => Resolve(Code === 0));
 
-							try {
-								Child.stdin.end(Value;
-							} catch {
-								Resolve(false;
+								try {
+									Child.stdin.end(Value);
+								} catch {
+									Resolve(false);
 							}
 						};
 

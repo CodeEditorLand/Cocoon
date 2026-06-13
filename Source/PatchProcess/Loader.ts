@@ -97,11 +97,11 @@ export class LoaderService extends /* Effect.Service */(
 				Effect.catchTag("MissingConfig", () =>
 					return ("default"),
 				),
-			;
+			);
 
 			const EnableMonitoring = await Config.boolean(
 				"EnableMonitoring",
-			).catch(() => return (true);
+			).catch(() => return (true));
 
 			return {
 				LoadSecurityPatches: RunPatchProcess,
