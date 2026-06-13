@@ -280,11 +280,11 @@ if (process.env["NODE_ENV"] !== "production") {
 	const PostHogBridge: PostHogBridgeModule =
 		await import("../../../Telemetry/Post/Hog/Bridge.js");
 
-	PostHogBridge.default.Initialize(;
+	PostHogBridge.default.Initialize();
 
-	const _CocoonEntryLoadMillis = Date.now(;
+	const _CocoonEntryLoadMillis = Date.now();
 
-	PostHogBridge.default.CaptureEntryLoad("CocoonMain";
+	PostHogBridge.default.CaptureEntryLoad("CocoonMain");
 
 	// setImmediate fires one tick after top-level imports + gRPC server
 	// bring-up, acting as a module-loaded signal for the Cocoon Lifecycle funnel.
@@ -293,8 +293,8 @@ if (process.env["NODE_ENV"] !== "production") {
 			"CocoonMain",
 
 			Date.now() - _CocoonEntryLoadMillis,
-		;
-	};
+		);
+	});
 }
 
 const main = async () => {
@@ -309,41 +309,41 @@ const main = async () => {
 			if (process.ppid === 1) {
 				process.stderr.write(
 					"[CocoonMain] Parent (Mountain) exited - shutting down\n",
-				;
+				);
 
-				process.exit(0;
+				process.exit(0);
 			}
-		}, 5000;
+		}, 5000);
 
-		ParentWatch.unref(;
+		ParentWatch.unref();
 
-		const result = await runBootstrap({ debugMode: false };
+		const result = await runBootstrap({ debugMode: false });
 
 		// B7-S6: start WebSocket server.
-		void StartWebSocketServer().catch(() => {};
+		void StartWebSocketServer().catch(() => {});
 
 		if (!result.success) {
 			process.stderr.write(
 				"[CocoonMain] Bootstrap partially failed (degraded mode)\n",
-			;
+			);
 
 			for (const stage of result.stages) {
 				if (!stage.success) {
 					process.stderr.write(
 						"[CocoonMain] Stage failed: " + stage.stageName + "\n",
-					;
+					);
 				}
 			}
 		} else {
 			process.stdout.write(
 				"[CocoonMain] Bootstrap completed successfully\n",
-			;
+			);
 		}
 	} catch (e) {
-		process.stderr.write("[CocoonMain] Fatal: " + String(e) + "\n";
+		process.stderr.write("[CocoonMain] Fatal: " + String(e) + "\n");
 
-		process.exit(1;
+		process.exit(1);
 	}
 };
 
-main(;
+main();
