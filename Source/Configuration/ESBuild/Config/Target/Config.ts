@@ -17,7 +17,7 @@ const TierDefines = (() => {
 	} catch {
 		return {};
 	}
-})(;
+})();
 
 export default async function TargetConfig(
 	Current: BuildOptions,
