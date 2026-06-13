@@ -141,7 +141,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
 	}
 
 	if (process.env.MOUNTAIN_PORT) {
-		const port = parseInt(process.env.MOUNTAIN_PORT, 10;
+		const port = parseInt(process.env.MOUNTAIN_PORT, 10);
 
 		if (!isNaN(port) && port > 0 && port <= 65535) {
 			config.port = port;
