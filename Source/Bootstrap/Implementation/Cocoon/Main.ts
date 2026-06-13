@@ -278,7 +278,7 @@ declare const __LandTier_WebSocket__: string;
 // folds to false and the dynamic import drops from the bundle.
 if (process.env["NODE_ENV"] !== "production") {
 	const PostHogBridge: PostHogBridgeModule =
-		await import("../../../Telemetry/Post/Hog/Bridge.js";
+		await import("../../../Telemetry/Post/Hog/Bridge.js");
 
 	PostHogBridge.default.Initialize(;
 
