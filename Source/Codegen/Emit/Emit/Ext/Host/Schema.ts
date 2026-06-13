@@ -33,7 +33,7 @@ const FormatDocComment = (doc: string | null, indent: string): string => {
 
 	const Body = Lines.map((line) => `${indent} * ${line}`.trimEnd()).join(
 		"\n",
-	;
+	);
 
 	return `${indent}/**\n${Body}\n${indent} */\n`;
 };
