@@ -149,17 +149,17 @@ export class HealthService implements IHealthService {
 
 	private config: HealthConfig;
 
-	private monitoredServices: Map<string, ServiceHealth> = new Map(;
+	private monitoredServices: Map<string, ServiceHealth> = new Map();
 
-	private eventListeners: Set<(event: HealthEvent) => void> = new Set(;
+	private eventListeners: Set<(event: HealthEvent) => void> = new Set();
 
 	private heartbeatIntervalId: NodeJS.Timeout | null = null;
 
 	private healthCheckIntervalId: NodeJS.Timeout | null = null;
 
-	private errorCounts: Map<string, number> = new Map(;
+	private errorCounts: Map<string, number> = new Map();
 
-	private recoveryAttempts: Map<string, number> = new Map(;
+	private recoveryAttempts: Map<string, number> = new Map();
 
 	constructor(config: Partial<HealthConfig> = {}) {
 		this._serviceBrand = undefined;
@@ -183,7 +183,7 @@ export class HealthService implements IHealthService {
 			"health",
 
 			"[HealthService] Initializing health monitoring service",
-		;
+		);
 	}
 
 	/**
@@ -192,19 +192,19 @@ export class HealthService implements IHealthService {
 	async initialize(): Promise<void> {
 		try {
 			// Initialize core services
-			await this.initializeCoreServices(;
+			await this.initializeCoreServices();
 
 			// Start heartbeat monitoring
-			this.startHeartbeatMonitoring(;
+			this.startHeartbeatMonitoring();
 
 			// Start health checks
-			this.startHealthChecks(;
+			this.startHealthChecks();
 
 			CocoonDevLog(
 				"health",
 
 				"[HealthService] Health monitoring service initialized",
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"health",
@@ -212,14 +212,14 @@ export class HealthService implements IHealthService {
 				"[HealthService] Failed to initialize:",
 
 				error,
-			;
+			);
 
 			this.emitEvent({
 				type: "service_unhealthy",
 				timestamp: Date.now(),
 				service: "HealthService",
 				error: `Initialization failed: ${error}`,
-			};
+			});
 		}
 	}
 
@@ -292,9 +292,9 @@ export class HealthService implements IHealthService {
 				recoveryAttempts: 0,
 			};
 
-			this.monitoredServices.set(service.name, serviceHealth;
+			this.monitoredServices.set(service.name, serviceHealth);
 
-			this.errorCounts.set(service.name, 0;
+			this.errorCounts.set(service.name, 0);
 
 			this.recoveryAttempts.set(service.name, 0;
 

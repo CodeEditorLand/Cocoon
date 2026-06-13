@@ -106,7 +106,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 	public override readonly message: string;
 
 	constructor(Properties: any) {
-		super(Properties;
+		super(Properties);
 
 		this.message = `Validation failed for process ${Properties.ProcessId}: ${Properties.Reason}`;
 	}
@@ -154,14 +154,14 @@ class ValidationMetricsStore {
 
 	public static GetInstance(): ValidationMetricsStore {
 		if (!ValidationMetricsStore._instance) {
-			ValidationMetricsStore._instance = new ValidationMetricsStore(;
+			ValidationMetricsStore._instance = new ValidationMetricsStore();
 		}
 
 		return ValidationMetricsStore._instance;
 	}
 
 	public RecordValidation(StartTime: number, Success: boolean): void {
-		const EndTime = Date.now(;
+		const EndTime = Date.now();
 
 		const Duration = EndTime - StartTime;
 
@@ -200,7 +200,7 @@ class ValidationMetricsStore {
 
 // --- State Management ---
 
-const ProcessValidationStates = new Map<number, ProcessValidationState>(;
+const ProcessValidationStates = new Map<number, ProcessValidationState>();
 
 export let ValidationAlertQueue: Queue.Queue<ValidationResult> | null = null;
 
@@ -220,13 +220,13 @@ export const InitializeProcessValidation = async function() {
 		SecurityPolicy: DefaultSecurityPolicy,
 	};
 
-	ProcessValidationStates.set(Process.pid, State;
+	ProcessValidationStates.set(Process.pid, State);
 
-	ValidationAlertQueue = await Queue.unbounded<ValidationResult>(;
+	ValidationAlertQueue = await Queue.unbounded<ValidationResult>();
 
 	await console.info("Process validation initialized", {
 		ProcessId: Process.pid,
-	};
+	});
 
 	return State;
 };
@@ -240,11 +240,11 @@ export const ValidateFileSystemAccess = (
 	Operation: "read" | "write" | "delete",
 ): Promise<ValidationResult> =>
 	async function() {
-		const StartTime = Date.now(;
+		const StartTime = Date.now();
 
-		const Metrics = ValidationMetricsStore.GetInstance(;
+		const Metrics = ValidationMetricsStore.GetInstance();
 
-		const State = ProcessValidationStates.get(Process.pid;
+		const State = ProcessValidationStates.get(Process.pid);
 
 		if (!State) {
 			const Result: ValidationResult = {
@@ -254,7 +254,7 @@ export const ValidateFileSystemAccess = (
 				Timestamp: Date.now(),
 			};
 
-			Metrics.RecordValidation(StartTime, false;
+			Metrics.RecordValidation(StartTime, false);
 
 			return Result;
 		}
@@ -266,14 +266,14 @@ export const ValidateFileSystemAccess = (
 			Operation,
 
 			State.SecurityPolicy,
-		;
+		);
 
 		if (!PathValid) {
 			State.ViolationCount++;
 
 			const Count = (State.FileAccessCount.get(File) || 0) + 1;
 
-			State.FileAccessCount.set(File, Count;
+			State.FileAccessCount.set(File, Count);
 
 			const Result: ValidationResult = {
 				Valid: false,

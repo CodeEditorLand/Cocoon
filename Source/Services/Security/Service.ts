@@ -97,7 +97,7 @@ export interface IncidentResponse {
  */
 export class SecurityService {
 
-	private policies: Map<string, SecurityPolicy> = new Map(;
+	private policies: Map<string, SecurityPolicy> = new Map();
 
 	private auditLog: SecurityEvent[] = [];
 
@@ -108,27 +108,27 @@ export class SecurityService {
 			"service",
 
 			"[SecurityService] Initializing security service",
-		;
+		);
 
 		// Load default security policies
-		this.loadDefaultPolicies(;
+		this.loadDefaultPolicies();
 	}
 
 	/**
 	 * Initialize security service
 	 */
 	async initialize(): Promise<void> {
-		CocoonDevLog("service", "[SecurityService] Starting security service";
+		CocoonDevLog("service", "[SecurityService] Starting security service");
 
 		try {
 			// Load security policies from Mountain
-			await this.loadSecurityPolicies(;
+			await this.loadSecurityPolicies();
 
 			// Initialize audit logging
-			await this.initializeAuditLogging(;
+			await this.initializeAuditLogging();
 
 			// Initialize incident response
-			await this.initializeIncidentResponse(;
+			await this.initializeIncidentResponse();
 
 			this.securityActive = true;
 
@@ -136,7 +136,7 @@ export class SecurityService {
 				"service",
 
 				"[SecurityService] Security service started",
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -144,7 +144,7 @@ export class SecurityService {
 				"[SecurityService] Failed to initialize:",
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -191,13 +191,13 @@ export class SecurityService {
 			requireAuthentication: true,
 		};
 
-		this.policies.set("default", defaultPolicy;
+		this.policies.set("default", defaultPolicy);
 
 		CocoonDevLog(
 			"service",
 
 			"[SecurityService] Default security policy loaded",
-		;
+		);
 	}
 
 	/**
@@ -207,9 +207,9 @@ export class SecurityService {
 		try {
 			// Import MountainClientService for policy loading
 			const { MountainClientService } =
-				await import("../Mountain/Client/Service.js";
+				await import("../Mountain/Client/Service.js");
 
-			const mountainClient = new MountainClientService(;
+			const mountainClient = new MountainClientService();
 
 			// Load security policies from Mountain
 			const policiesResponse = await mountainClient.sendRequest(

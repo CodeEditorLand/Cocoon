@@ -159,7 +159,7 @@ export class SerializerService extends /* Effect.Service */(
 						Array.isArray(DTO)
 					) {
 						throw new Error("Mountain DTO must be an object"),
-						;
+						)))))))))))));
 					}
 
 					const D = DTO as Record<string, unknown>;

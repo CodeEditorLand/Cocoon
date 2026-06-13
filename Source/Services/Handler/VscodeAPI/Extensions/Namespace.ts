@@ -123,15 +123,15 @@ const MakeMultiStub = (): any => {
 		has(Target, Property) {
 			return (
 				Reflect.has(Target, Property) || typeof Property === "string"
-			;
+			);
 		},
-	};
+	});
 
 	return StubProxy;
 };
 
 // One shared Stub is enough - it's stateless and idempotent.
-const Stub = MakeMultiStub(;
+const Stub = MakeMultiStub();
 
 const MakePermissiveExports = (): any => {
 	const Base: Record<string, unknown> = {
@@ -170,13 +170,13 @@ const MakePermissiveExports = (): any => {
 			// permissive proxy so chained access succeeds AND the result is
 			// also iterable/callable (covers `gitAPI.repositories` access).
 			if (Property.startsWith("get") || Property.startsWith("create")) {
-				return (..._Args: unknown[]) => MakePermissiveExports(;
+				return (..._Args: unknown[]) => MakePermissiveExports();
 			}
 
 			// Fallback - the multi-stub: callable, iterable, chainable.
 			return Stub;
 		},
-	};
+	});
 };
 
 // Mountain ships `extensionLocation` as either a `file://` URL string or an
@@ -196,7 +196,7 @@ const NormalizeLocation = (
 
 	const MakeUri = (Path: string): any => {
 		if (UriFactoryAvailable) {
-			return VsCodeUri.file(Path;
+			return VsCodeUri.file(Path);
 		}
 
 		return {
@@ -229,19 +229,19 @@ const NormalizeLocation = (
 
 		if (Raw.startsWith("file:")) {
 			try {
-				Path = decodeURIComponent(new URL(Raw).pathname;
+				Path = decodeURIComponent(new URL(Raw).pathname);
 			} catch (Error: unknown) {
 				LandFixLog.Warn(
 					"ExtNs",
 
 					`URL parse failed for ${Raw}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}; using fallback strip`,
-				;
+				);
 
-				Path = Raw.replace(/^file:\/\//, "";
+				Path = Raw.replace(/^file:\/\//, "");
 			}
 		}
 
-		Path = Path.replace(/\/$/, "";
+		Path = Path.replace(/\/$/, "");
 
 		if (UriFactoryAvailable) {
 			LandFixLog.DebugOnce(
@@ -250,7 +250,7 @@ const NormalizeLocation = (
 				`string:${Path}`,
 
 				`string extensionLocation ${Raw} → path=${Path} (factory=real)`,
-			;
+			);
 		} else {
 			LandFixLog.InfoOnce(
 				"ExtNs",
@@ -258,7 +258,7 @@ const NormalizeLocation = (
 				`string-fallback:${Path}`,
 
 				`string extensionLocation ${Raw} → path=${Path} (factory=FALLBACK)`,
-			;
+			);
 		}
 
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
@@ -272,7 +272,7 @@ const NormalizeLocation = (
 			(typeof Obj["path"] === "string" && (Obj["path"] as string)) ||
 			(typeof Obj["external"] === "string"
 				? NormalizeLocation(Obj["external"]).ExtensionPath
-				: "";
+				: "");
 
 		if (UriFactoryAvailable) {
 			LandFixLog.DebugOnce(

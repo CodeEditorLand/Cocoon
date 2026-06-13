@@ -21,9 +21,9 @@ export const UriKey = (Value: unknown): string => {
 
 	if (typeof Value === "string") return Value;
 
-	const Hydrated = StockToUri(Value;
+	const Hydrated = StockToUri(Value);
 
-	if (Hydrated) return Hydrated.toString(;
+	if (Hydrated) return Hydrated.toString();
 
 	const Rendered = String(Value);
 

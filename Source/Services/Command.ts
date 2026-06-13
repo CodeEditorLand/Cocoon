@@ -169,12 +169,12 @@ export class CommandService extends /* Effect.Service */(
 			// Resolve service dependencies
 			const MountainClient = await IMountainClientService;
 
-			const Logger = await Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger");
 
-			const Window = await Symbol<Window>("Service/Window";
+			const Window = await Symbol<Window>("Service/Window");
 
 			// Command registry - maps command ID to registered command metadata
-			const _commandRegistry = new Map<string, InternalCommandMetadata>(;
+			const _commandRegistry = new Map<string, InternalCommandMetadata>();
 
 			/**
 			 * Emit a tag-gated execution breadcrumb so command latency is
@@ -193,7 +193,7 @@ export class CommandService extends /* Effect.Service */(
 					"command-telemetry",
 
 					`execute id=${Id} mode=${Mode} duration_ms=${DurationMs} ok=${Success}`,
-				;
+				);
 			};
 
 			// Command converter for marshalling
@@ -216,7 +216,7 @@ export class CommandService extends /* Effect.Service */(
 						ThisArg,
 						Extension: undefined,
 						RegisteredAt: Date.now(),
-					};
+					});
 
 					return Disposable;
 				},
@@ -225,11 +225,11 @@ export class CommandService extends /* Effect.Service */(
 					_Id: string,
 					..._Arguments: any[]
 				): Promise<T | undefined> => {
-					return Promise.resolve(undefined;
+					return Promise.resolve(undefined);
 				},
 
 				(_Id: string) => undefined,
-			;
+			);
 
 			/**
 			 * Execute a locally registered command with proper error handling and timing
@@ -246,7 +246,7 @@ export class CommandService extends /* Effect.Service */(
 				Arguments: any[],
 			): Promise<unknown> =>
 				async function() {
-					const StartTime = Date.now(;
+					const StartTime = Date.now();
 
 					const {
 						Callback,
@@ -257,7 +257,7 @@ export class CommandService extends /* Effect.Service */(
 
 					await Logger.Trace(
 						`[CommandService] Executing local command '${Id}' with ${Arguments.length} arguments`,
-					;
+					);
 
 					const Result = await (async () => {
 	try {
@@ -267,11 +267,11 @@ export class CommandService extends /* Effect.Service */(
 	}
 })() - StartTime;
 
-					TrackCommandExecution(Id, "local", Duration, true;
+					TrackCommandExecution(Id, "local", Duration, true);
 
 					await Logger.Debug(
 						`[CommandService] Command '${Id}' executed in ${Duration}ms`,
-					;
+					);
 
 					return Result;
 				};
@@ -300,7 +300,7 @@ export class CommandService extends /* Effect.Service */(
 							Command,
 
 							Arguments,
-						;
+						);
 
 						return Result as T;
 					}
@@ -308,7 +308,7 @@ export class CommandService extends /* Effect.Service */(
 					// Fall back to remote execution on Mountain
 					await Logger.Info(
 						`[CommandService] Command '${Id}' not registered locally, executing via Mountain gRPC`,
-					;
+					);
 
 					const startTime = Date.now(;
 

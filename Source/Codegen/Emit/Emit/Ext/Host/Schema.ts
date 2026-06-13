@@ -42,14 +42,14 @@ const FormatParameter = (parameter: InterfaceMemberParameter): string =>
 	`${parameter.Name}${parameter.Optional ? "?" : ""}: ${parameter.TypeText}`;
 
 const FormatMember = (member: InterfaceMemberRecord): string => {
-	const Doc = FormatDocComment(member.DocComment, "	";
+	const Doc = FormatDocComment(member.DocComment, "	");
 
 	const ReadonlyPrefix = member.Readonly ? "readonly " : "";
 
 	const OptionalSuffix = member.Optional ? "?" : "";
 
 	if (member.Kind === "Method") {
-		const Parameters = member.Parameters.map(FormatParameter).join(", ";
+		const Parameters = member.Parameters.map(FormatParameter).join(", ");
 
 		return `${Doc}	${ReadonlyPrefix}${member.Name}${OptionalSuffix}(${Parameters}): ${member.TypeText};`;
 	}
@@ -67,7 +67,7 @@ const FormatMemberRecord = (
 	const Parameters = member.Parameters.map(
 		(parameter: { Name: string; TypeText: string; Optional: boolean }) =>
 			`{ Name: ${JSON.stringify(parameter.Name)}, TypeText: ${JSON.stringify(parameter.TypeText)}, Optional: ${parameter.Optional} }`,
-	).join(", ";
+	).join(", ");
 
 	const DocText = member.DocComment
 		? JSON.stringify(member.DocComment)
@@ -95,27 +95,27 @@ const FormatMemberRecord = (
 		`		SourceLine: ${member.SourceLine},`,
 
 		`	}${Trailing}`,
-	].join("\n";
+	].join("\n");
 };
 
 const FormatOutput = (record: ExtHostDecoratorRecord): string => {
 	const Sorted = [...record.Members].sort(
 		(a, b) => a.SourceLine - b.SourceLine,
-	;
+	);
 
 	const InterfaceTypeName = `${record.DecoratorName}Upstream`;
 
 	const InterfaceBody =
 		Sorted.length === 0
 			? "	// (no members extracted - resolve cross-file)"
-			: Sorted.map(FormatMember).join("\n";
+			: Sorted.map(FormatMember).join("\n");
 
 	const RecordList =
 		Sorted.length === 0
 			? ""
 			: Sorted.map((member, index) =>
 					FormatMemberRecord(member, index, Sorted.length),
-				).join("\n";
+				).join("\n");
 
 	const Header = [
 		"/**",
@@ -168,7 +168,7 @@ const FormatOutput = (record: ExtHostDecoratorRecord): string => {
 		"",
 	];
 
-	return Header.join("\n";
+	return Header.join("\n");
 };
 
 export interface EmitExtHostSchemaOptions {
@@ -188,7 +188,7 @@ export interface EmitExtHostSchemaOutcome {
 export const EmitExtHostSchema = async (
 	options: EmitExtHostSchemaOptions,
 ): Promise<EmitExtHostSchemaOutcome | CodegenProblem> => {
-	const Output = FormatOutput(options.Record;
+	const Output = FormatOutput(options.Record);
 
 	const OutputPath = join(
 		options.OutputRoot,
@@ -200,12 +200,12 @@ export const EmitExtHostSchema = async (
 		options.Record.DecoratorName,
 
 		`${options.Record.DecoratorName}Upstream.ts`,
-	;
+	);
 
 	try {
-		await mkdir(dirname(OutputPath), { recursive: true };
+		await mkdir(dirname(OutputPath), { recursive: true });
 
-		await writeFile(OutputPath, Output, "utf8";
+		await writeFile(OutputPath, Output, "utf8");
 
 		return {
 			OutputPath,

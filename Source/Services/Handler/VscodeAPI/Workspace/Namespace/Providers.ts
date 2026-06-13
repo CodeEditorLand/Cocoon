@@ -30,22 +30,22 @@ const MakeProvider =
 	) =>
 	(Key: string, _Provider: any, _Options?: any) => {
 
-		const Handle = NextProviderHandle(;
+		const Handle = NextProviderHandle();
 
 		Context.SendToMountain(RegisterMethod, {
 			handle: Handle,
 			...ExtraPayload(Key),
-		}).catch(() => {};
+		}).catch(() => {});
 
-		OnRegister?.(Handle, Key, _Provider;
+		OnRegister?.(Handle, Key, _Provider);
 
 		return {
 			dispose: () => {
-				OnDispose?.(Handle, Key;
+				OnDispose?.(Handle, Key);
 
 				Context.SendToMountain(UnregisterMethod, {
 					handle: Handle,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 		};
 	};
@@ -69,7 +69,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 				`__textDocumentContentProvider:${Scheme}`,
 
 				Provider,
-			;
+			);
 
 			// Wire provider's onDidChange: when content changes, re-fetch and
 			// notify Cocoon's document model so $acceptModelChanged fires for
@@ -80,7 +80,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 						const UriStr =
 							typeof Uri === "string"
 								? Uri
-								: ((Uri as any)?.toString?.() ?? "";
+								: ((Uri as any)?.toString?.() ?? "");
 
 						if (!UriStr) return;
 
@@ -104,7 +104,7 @@ export const BuildRegisterTextDocumentContentProvider = (
 										UriStr,
 
 										Content,
-									;
+									);
 
 									// Emit didChangeTextDocument so extensions listening
 									// to onDidChangeTextDocument for virtual docs get the update.
@@ -136,11 +136,11 @@ export const BuildRegisterTextDocumentContentProvider = (
 											],
 											reason: undefined,
 										},
-									;
+									);
 								}
 							})
-							.catch(() => {};
-					};
+							.catch(() => {});
+					});
 				} catch {
 					// Provider may not have an event subscription method - skip.
 				}
@@ -150,9 +150,9 @@ export const BuildRegisterTextDocumentContentProvider = (
 		(_Handle, Scheme) => {
 			Context.ExtensionRegistry.delete(
 				`__textDocumentContentProvider:${Scheme}`,
-			;
+			);
 		},
-	;
+	);
 
 /**
  * Local registry of schemes an extension has claimed via

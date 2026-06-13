@@ -71,13 +71,13 @@ export class ErrorHandlingService {
 	constructor() {
 		this._serviceBrand = undefined;
 
-		this.config = this.loadDefaultConfig(;
+		this.config = this.loadDefaultConfig();
 
 		CocoonDevLog(
 			"service",
 
 			"[ErrorHandlingService] Initializing error handling service",
-		;
+		);
 	}
 
 	/**
@@ -107,7 +107,7 @@ export class ErrorHandlingService {
 
 		customConfig?: Partial<ErrorHandlingConfig>,
 	): Promise<ErrorHandlingResult<T>> {
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
 		const config = { ...this.config, ...customConfig };
 
@@ -115,24 +115,24 @@ export class ErrorHandlingService {
 			"service",
 
 			`[ErrorHandlingService] Executing operation: ${operationName}`,
-		;
+		);
 
 		// Enhanced circuit breaker state check with metrics
-		const circuitState = this.getCircuitBreakerState(operationName;
+		const circuitState = this.getCircuitBreakerState(operationName);
 
 		if (circuitState.state === "OPEN") {
 			const error = new Error(
 				`Circuit breaker is OPEN for ${operationName} (failures: ${circuitState.failureCount})`,
-			;
+			);
 
 			CocoonDevLog(
 				"service",
 
 				`[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`,
-			;
+			);
 
 			// Track circuit breaker metrics
-			this.trackCircuitBreakerEvent(operationName, "blocked";
+			this.trackCircuitBreakerEvent(operationName, "blocked");
 
 			return {
 				success: false,
@@ -161,14 +161,14 @@ export class ErrorHandlingService {
 
 		for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
 			try {
-				const operationStartTime = Date.now(;
+				const operationStartTime = Date.now();
 
-				const result = await operation(;
+				const result = await operation();
 
 				const operationDuration = Date.now() - operationStartTime;
 
 				// Record success with performance metrics
-				this.recordSuccess(operationName;
+				this.recordSuccess(operationName);
 
 				this.trackOperationSuccess(
 					operationName,
@@ -176,13 +176,13 @@ export class ErrorHandlingService {
 					operationDuration,
 
 					attempt,
-				;
+				);
 
 				CocoonDevLog(
 					"service",
 
 					`[ErrorHandlingService] Operation ${operationName} succeeded on attempt ${attempt + 1} in ${operationDuration}ms`,
-				;
+				);
 
 				return {
 					success: true,

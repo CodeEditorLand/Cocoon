@@ -27,20 +27,20 @@ const Raw = process.env["Trace"] ?? "";
 
 const ParsedTags = Raw.split(",")
 	.map((Segment) => Segment.trim().toLowerCase())
-	.filter((Segment) => Segment.length > 0;
+	.filter((Segment) => Segment.length > 0);
 
-const TagSet = new Set(ParsedTags;
+const TagSet = new Set(ParsedTags);
 
-const IsShort = TagSet.has("short";
+const IsShort = TagSet.has("short");
 
-const HasAll = TagSet.has("all";
+const HasAll = TagSet.has("all");
 
 const IsEnabled = (Tag: string): boolean => {
 	if (TagSet.size === 0) return false;
 
 	if (HasAll || IsShort) return true;
 
-	return TagSet.has(Tag.toLowerCase();
+	return TagSet.has(Tag.toLowerCase());
 };
 
 /**
@@ -51,9 +51,9 @@ const IsEnabled = (Tag: string): boolean => {
 export const CocoonDevLog = (Tag: string, Message: string): void => {
 	if (!IsEnabled(Tag)) return;
 
-	const TagUpper = Tag.toUpperCase(;
+	const TagUpper = Tag.toUpperCase();
 
-	process.stdout.write(`[DEV:${TagUpper}] ${Message}\n`;
+	process.stdout.write(`[DEV:${TagUpper}] ${Message}\n`);
 };
 
 export default CocoonDevLog;

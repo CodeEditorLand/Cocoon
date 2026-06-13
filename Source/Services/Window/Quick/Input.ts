@@ -41,10 +41,10 @@ export const ShowQuickPick = <T extends string>(
 
 		await Logger.Debug(
 			`[WindowService] Showing quick pick with ${Items.length} items`,
-		;
+		);
 
 		// Serialize items using TypeConverter
-		const ItemsDTO = SerializeItems(Items;
+		const ItemsDTO = SerializeItems(Items);
 
 		const ButtonsDTO = Options?.buttons
 			? SerializeButtons(Options.buttons)
@@ -101,7 +101,7 @@ export const ShowQuickPick = <T extends string>(
 		// If items are QuickPickItem[], find the matching item by label
 		return (Items as VSCode.QuickPickItem[]).find(
 			(Item) => Item.label === SelectedValue,
-		;
+		);
 	};
 
 /**
@@ -128,7 +128,7 @@ export const ShowInputBox = (
 	async function() {
 		await Logger.Debug(
 			`[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`,
-		;
+		);
 
 		// Construct request payload - options serialized directly
 		const RequestPayload = Options

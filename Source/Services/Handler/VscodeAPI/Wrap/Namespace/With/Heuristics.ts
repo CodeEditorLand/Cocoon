@@ -56,7 +56,7 @@ if (process.env["NODE_ENV"] !== "production") {
 		.then((Module) => {
 			LazyCaptureEvent = Module.CaptureEvent as CaptureEventFn;
 		})
-		.catch(() => {};
+		.catch(() => {});
 }
 
 /** Stable disposable shape used by every event/registration heuristic. */
@@ -100,7 +100,7 @@ const IsTrustFamily = (Property: string): boolean =>
 	Property === "requestResourceTrust" ||
 	Property === "isResourceTrusted" ||
 	Property === "requestWorkspaceTrust" ||
-	/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property;
+	/^(?:request|is|has)[A-Za-z]*Trust(?:ed)?$/.test(Property);
 
 /** Heuristic classifier given only the property name. Pure function. */
 const ClassifyProperty = (Property: string): Heuristic => {
@@ -194,14 +194,14 @@ const RecordGap = (
 		Key,
 
 		`${NamespaceName}.${Property} → ${Kind}`,
-	;
+	);
 
 	if (process.env["NODE_ENV"] !== "production") {
 		LazyCaptureEvent?.("land:cocoon:vscode_api_gap", {
 			namespace: NamespaceName,
 			method: Property,
 			kind: Kind,
-		};
+		});
 	}
 };
 
@@ -220,26 +220,26 @@ const BuildHeuristicMethod =
 		// Direct call - no Effect fiber on every VS Code API invocation.
 		try {
 			try {
-				RecordGap(NamespaceName, Property, Heuristic.Kind;
+				RecordGap(NamespaceName, Property, Heuristic.Kind);
 			} catch {}
 
-			return Heuristic.Produce(...Arguments;
+			return Heuristic.Produce(...Arguments);
 		} catch {
 			switch (Heuristic.Kind) {
 				case "trust":
-					return Heuristic.Sync ? true : Promise.resolve(true;
+					return Heuristic.Sync ? true : Promise.resolve(true);
 
 				case "event":
 				case "register":
 					return NoopDisposable;
 
 				case "bool-check":
-					return Heuristic.Sync ? false : Promise.resolve(false;
+					return Heuristic.Sync ? false : Promise.resolve(false);
 
 				default:
 					return Heuristic.Sync
 						? undefined
-						: Promise.resolve(undefined;
+						: Promise.resolve(undefined);
 			}
 		}
 	};
@@ -257,7 +257,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 ): T =>
 	new Proxy(ConcreteNamespace, {
 		get(Target, Property: string | symbol) {
-			const Key = String(Property;
+			const Key = String(Property);
 
 			if (Property === "then" || Property === Symbol.toPrimitive)
 				return undefined;
@@ -275,9 +275,9 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 			if (Existing !== undefined || Reflect.has(Target, Key))
 				return Existing;
 
-			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key;
+			const Heuristic = Overrides?.[Key] ?? ClassifyProperty(Key);
 
-			return BuildHeuristicMethod(NamespaceName, Key, Heuristic;
+			return BuildHeuristicMethod(NamespaceName, Key, Heuristic);
 		},
 
 		// `'x' in ns` guards must agree with the `get` trap: every string
@@ -287,7 +287,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 		has(Target, Property) {
 			return (
 				Reflect.has(Target, Property) || typeof Property === "string"
-			;
+			);
 		},
 
 		// `Object.getOwnPropertyDescriptor(ns, 'x')` mirrors the `get`

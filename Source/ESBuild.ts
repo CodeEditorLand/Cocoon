@@ -65,7 +65,7 @@ export default {
 							} catch (_Error) {
 								console.log(_Error);
 							}
-						};
+						});
 
 						break;
 
@@ -83,4 +83,4 @@ export default {
 	},
 } satisfies BuildOptions as BuildOptions;
 
-export const { sep, posix } = await import("node:path";
+export const { sep, posix } = await import("node:path");

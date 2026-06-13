@@ -33,7 +33,7 @@ export default (Config: Configuration, DistinctIdentifier: string): Buffer => {
 
 		Queue = [];
 
-		Transport(Config.Host, Config.Key, DistinctIdentifier, Pending;
+		Transport(Config.Host, Config.Key, DistinctIdentifier, Pending);
 	};
 
 	const ScheduleFlush = (): void => {
@@ -42,33 +42,33 @@ export default (Config: Configuration, DistinctIdentifier: string): Buffer => {
 		FlushTimer = setTimeout(() => {
 			FlushTimer = undefined;
 
-			Send(;
-		}, Config.BatchWindowMilliseconds;
+			Send();
+		}, Config.BatchWindowMilliseconds);
 
-		(FlushTimer as unknown as { unref?: () => void }).unref?.(;
+		(FlushTimer as unknown as { unref?: () => void }).unref?.();
 	};
 
 	return {
 		Enqueue: (Name: string, Properties: Properties): void => {
-			Queue.push(Event.Create(Name, Properties);
+			Queue.push(Event.Create(Name, Properties));
 
 			if (Queue.length >= Config.BatchMaximum) {
-				Send(;
+				Send();
 
 				return;
 			}
 
-			ScheduleFlush(;
+			ScheduleFlush();
 		},
 
 		Drain: (): void => {
 			if (FlushTimer) {
-				clearTimeout(FlushTimer;
+				clearTimeout(FlushTimer);
 
 				FlushTimer = undefined;
 			}
 
-			Send(;
+			Send();
 		},
 	};
 };

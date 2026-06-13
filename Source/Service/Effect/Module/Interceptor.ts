@@ -85,7 +85,7 @@ export class ModuleNotFoundError extends Error {
 
 		readonly extensionId: string,
 	) {
-		super(`Module not found: ${moduleId} for extension ${extensionId}`;
+		super(`Module not found: ${moduleId} for extension ${extensionId}`);
 	}
 }
 
@@ -97,7 +97,7 @@ export class ModuleAccessDeniedError extends Error {
 
 		readonly reason: string,
 	) {
-		super(`Module access denied: ${moduleId} - ${reason}`;
+		super(`Module access denied: ${moduleId} - ${reason}`);
 	}
 }
 
@@ -105,7 +105,7 @@ export class SecurityPolicyNotFoundError extends Error {
 	readonly _tag = "SecurityPolicyNotFoundError";
 
 	constructor(readonly extensionId: string) {
-		super(`Security policy not found for extension: ${extensionId}`;
+		super(`Security policy not found for extension: ${extensionId}`);
 	}
 }
 
@@ -219,13 +219,13 @@ const defaultSecurityPolicy = {
 } satisfies Omit<SecurityPolicy, "extensionId">;
 
 async function makeModuleInterceptorService(): Promise<ModuleInterceptorService> {
-	const telemetry: TelemetryService = getTelemetry(;
+	const telemetry: TelemetryService = getTelemetry();
 
 	// Security policies for extensions
-	const policies = new Map<string, SecurityPolicy>(;
+	const policies = new Map<string, SecurityPolicy>();
 
 	// Module cache
-	const moduleCache = new Map<string, unknown>(;
+	const moduleCache = new Map<string, unknown>();
 
 	// Statistics
 	let stats: InterceptionStats = {
@@ -242,7 +242,7 @@ async function makeModuleInterceptorService(): Promise<ModuleInterceptorService>
 	const resolutionTimes: number[] = [];
 
 	// vscode API registry: extensionId → vscode API instance
-	const vscodeAPIRegistry = new Map<string, unknown>(;
+	const vscodeAPIRegistry = new Map<string, unknown>();
 
 	// Check if module is a Node.js built-in
 	const isNodeBuiltin = (moduleId: string): boolean => {
@@ -276,7 +276,7 @@ async function makeModuleInterceptorService(): Promise<ModuleInterceptorService>
 			"querystring",
 		];
 
-		return builtins.includes(moduleId;
+		return builtins.includes(moduleId);
 	};
 
 	// Atom: Initialize
@@ -285,15 +285,15 @@ async function makeModuleInterceptorService(): Promise<ModuleInterceptorService>
 			"info",
 
 			"[ModuleInterceptor] Initializing module interceptor service...",
-		;
+		);
 
-		await new Promise<void>((r) => setTimeout(r, 5);
+		await new Promise<void>((r) => setTimeout(r, 5));
 
 		telemetry.log(
 			"info",
 
 			"[ModuleInterceptor] Module interceptor service initialized",
-		;
+		);
 	};
 
 	// Atom: Install - patches Node.js Module._load to intercept require('vscode')
@@ -302,7 +302,7 @@ async function makeModuleInterceptorService(): Promise<ModuleInterceptorService>
 			"info",
 
 			"[ModuleInterceptor] Installing Node.js Module._load hook...",
-		;
+		);
 
 		// Cocoon/Main.js is an ESM bundle - `require` is not in scope.
 		// Use dynamic import() to get the Module constructor.
@@ -332,7 +332,7 @@ async function makeModuleInterceptorService(): Promise<ModuleInterceptorService>
 
 				// Fallback: return the last registered API (single-extension mode)
 				if (vscodeAPIRegistry.size > 0) {
-					const LastAPI = [...vscodeAPIRegistry.values()].pop(;
+					const LastAPI = [...vscodeAPIRegistry.values()].pop();
 
 					return LastAPI;
 				}

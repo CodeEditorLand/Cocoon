@@ -102,7 +102,7 @@ export const DEFAULT_LOCALE = "en-US";
 /**
  * Cache for environment variables
  */
-const EnvironmentCache = new Map<string, string>(;
+const EnvironmentCache = new Map<string, string>();
 
 /**
  * Cache validity timestamp
@@ -131,9 +131,9 @@ function GetProcessEnvironment(): IProcessEnvironment {
  * Clear environment cache
  */
 export function ClearCache(): void {
-	EnvironmentCache.clear(;
+	EnvironmentCache.clear();
 
-	CacheTimestamp = Date.now(;
+	CacheTimestamp = Date.now();
 }
 
 /**
@@ -141,7 +141,7 @@ export function ClearCache(): void {
  */
 function InvalidateCacheIfNeeded(): void {
 	if (Date.now() - CacheTimestamp > CACHE_TTL) {
-		ClearCache(;
+		ClearCache();
 	}
 }
 
@@ -150,29 +150,29 @@ function InvalidateCacheIfNeeded(): void {
  */
 export function GetEnvironmentVariable(name: string): Option.Option<string> {
 	if (!name || typeof name !== "string") {
-		return Option.none(;
+		return Option.none();
 	}
 
-	InvalidateCacheIfNeeded(;
+	InvalidateCacheIfNeeded();
 
 	// Check cache first
-	const cached = EnvironmentCache.get(name;
+	const cached = EnvironmentCache.get(name);
 
 	if (cached !== undefined) {
-		return Option.some(cached;
+		return Option.some(cached);
 	}
 
-	const env = GetProcessEnvironment(;
+	const env = GetProcessEnvironment();
 
 	const value = env[name];
 
 	if (value !== undefined) {
-		EnvironmentCache.set(name, value;
+		EnvironmentCache.set(name, value);
 
-		return Option.some(value;
+		return Option.some(value);
 	}
 
-	return Option.none(;
+	return Option.none();
 }
 
 /**
@@ -183,7 +183,7 @@ export function GetEnvironmentVariableOr(
 
 	defaultValue: string,
 ): string {
-	return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue;
+	return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue);
 }
 
 /**

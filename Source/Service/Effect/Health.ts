@@ -104,11 +104,11 @@ const createServiceHealth = (
 	lastChecked: Date.now(),
 	responseTime,
 	details,
-};
+});
 
 const makeHealthChecker = (): HealthService => ({
 	checkService: async (serviceName: string): Promise<ServiceHealth> => {
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
 		switch (serviceName.toLowerCase()) {
 			case "environment": {
@@ -122,11 +122,11 @@ const makeHealthChecker = (): HealthService => ({
 					"Environment service available",
 
 					envTime,
-				;
+				);
 			}
 
 			case "telemetry": {
-				const telemetryService = getTelemetry(;
+				const telemetryService = getTelemetry();
 
 				const telemetryTime = Date.now() - startTime;
 
@@ -135,7 +135,7 @@ const makeHealthChecker = (): HealthService => ({
 						"info",
 
 						"[Health] Telemetry health check",
-					;
+					);
 
 					return createServiceHealth(
 						"Telemetry",
@@ -145,7 +145,7 @@ const makeHealthChecker = (): HealthService => ({
 						"Telemetry service available",
 
 						telemetryTime,
-					;
+					);
 				} catch {
 					return createServiceHealth(
 						"Telemetry",
@@ -155,7 +155,7 @@ const makeHealthChecker = (): HealthService => ({
 						"Telemetry service error",
 
 						telemetryTime,
-					;
+					);
 				}
 			}
 
@@ -170,7 +170,7 @@ const makeHealthChecker = (): HealthService => ({
 					"gRPC service available",
 
 					grpcTime,
-				;
+				);
 			}
 
 			case "extension": {
@@ -184,7 +184,7 @@ const makeHealthChecker = (): HealthService => ({
 					"Extension service available",
 
 					extensionTime,
-				;
+				);
 			}
 
 			default:
@@ -196,12 +196,12 @@ const makeHealthChecker = (): HealthService => ({
 					`Unknown service: ${serviceName}`,
 
 					0,
-				;
+				);
 		}
 	},
 
 	checkAllServices: async (): Promise<SystemHealth> => {
-		const telemetry = getTelemetry(;
+		const telemetry = getTelemetry();
 
 		const services = [
 			"environment",
@@ -213,13 +213,13 @@ const makeHealthChecker = (): HealthService => ({
 			"extension",
 		] as const;
 
-		const healthChecker = makeHealthChecker(;
+		const healthChecker = makeHealthChecker();
 
 		telemetry.log(
 			"info",
 
 			"[Health] Running health checks for all services...",
-		;
+		);
 
 		const healthResults = await Promise.all(
 			services.map((service) => healthChecker.checkService(service)),

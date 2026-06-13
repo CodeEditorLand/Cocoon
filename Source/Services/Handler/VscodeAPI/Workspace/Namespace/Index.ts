@@ -81,7 +81,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 			if (Item.length === 0) return Item;
 
 			try {
-				return StockUri.parse(Item;
+				return StockUri.parse(Item);
 			} catch {
 				return Item;
 			}
@@ -89,7 +89,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 
 		if (Item && typeof Item === "object") {
 			try {
-				const Hydrated = StockToUri(Item;
+				const Hydrated = StockToUri(Item);
 
 				if (Hydrated) return Hydrated;
 			} catch {
@@ -100,7 +100,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 		}
 
 		return Item;
-	};
+	});
 };
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
@@ -146,14 +146,14 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		FallbackIndex: number,
 	): { uri: unknown; name: string; index: number } | null => {
-		const Hydrated = StockToUri(Raw?.uri;
+		const Hydrated = StockToUri(Raw?.uri);
 
 		if (!Hydrated) return null;
 
 		const Name =
 			typeof Raw?.name === "string" && Raw.name.length > 0
 				? Raw.name
-				: (Hydrated.fsPath.split(/[\\/]/).pop() ?? "";
+				: (Hydrated.fsPath.split(/[\\/]/).pop() ?? "");
 
 		const Index =
 			typeof Raw?.index === "number" ? Raw.index : FallbackIndex;
@@ -198,9 +198,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		const Out: Array<{ uri: unknown; name: string; index: number }> = [];
 
 		for (let I = 0; I < Raw.length; I++) {
-			const Hydrated = HydrateFolder(Raw[I] as any, I;
+			const Hydrated = HydrateFolder(Raw[I] as any, I);
 
-			if (Hydrated) Out.push(Hydrated;
+			if (Hydrated) Out.push(Hydrated);
 		}
 
 		if (Out.length > 0) {
@@ -228,7 +228,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		return Live.name ?? InitWorkspace.name;
 	};
 
-	const ConfigState = CreateConfigurationState(Context;
+	const ConfigState = CreateConfigurationState(Context);
 
 	// Expose the shared Configuration cache + priming helpers on the
 	// globalThis so `ExtensionHostHandler.ActivateExtension` can seed
@@ -242,11 +242,11 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 	const Concrete = {
 		get workspaceFolders() {
-			return ReadFolders(;
+			return ReadFolders();
 		},
 
 		get name() {
-			return ReadName(;
+			return ReadName();
 		},
 
 		workspaceFile: undefined,
@@ -313,13 +313,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.exclude,
 
 						Opts?.maxResults,
-					;
+					);
 				},
 
 				(R) => !Array.isArray(R) || R.length === 0,
-			;
+			);
 
-			return HydrateUriResults(Raw;
+			return HydrateUriResults(Raw);
 		},
 
 		// `findFiles2` - VS Code 1.90+ multi-pattern signature.

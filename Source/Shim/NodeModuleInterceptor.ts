@@ -1134,7 +1134,7 @@ export default function installNodeModuleInterceptor(): void {
 
 	// Module._load interception
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	const Module = require("module") as {
+	const Module = )))))))))))))require("module") as {
 		_load: (request: string, parent: unknown, isMain: boolean) => unknown;
 	};
 

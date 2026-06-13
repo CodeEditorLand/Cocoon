@@ -74,14 +74,14 @@ const SendTreeRegister = (
 			ViewId,
 
 			Options,
-		]) ?? Promise.reject(new Error("MountainClient unavailable");
+		]) ?? Promise.reject(new Error("MountainClient unavailable"));
 
 	Attempt().catch((Error: unknown) => {
 		CocoonDevLog(
 			"window-ns",
 
 			`tree.register failed for view '${ViewId}' (handle ${Handle}); scheduling one retry: ${String(Error)}`,
-		;
+		);
 
 		let Retried = false;
 
@@ -94,25 +94,25 @@ const SendTreeRegister = (
 				"extensionHostInitialized",
 
 				RetryOnce,
-			;
+			);
 
-			clearTimeout(Timer;
+			clearTimeout(Timer);
 
 			Attempt().catch((RetryError: unknown) => {
 				CocoonDevLog(
 					"window-ns",
 
 					`tree.register retry failed for view '${ViewId}': ${String(RetryError)}`,
-				;
-			};
+				);
+			});
 		};
 
-		Context.Emitter.once("extensionHostInitialized", RetryOnce;
+		Context.Emitter.once("extensionHostInitialized", RetryOnce);
 
-		const Timer = setTimeout(RetryOnce, 2_000;
+		const Timer = setTimeout(RetryOnce, 2_000);
 
-		Timer.unref?.(;
-	};
+		Timer.unref?.();
+	});
 };
 
 const MakeEventSubscriber =
@@ -132,13 +132,13 @@ const MakeEventSubscriber =
 		const Bound =
 			ThisArg === undefined
 				? Callback
-				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg;
+				: (Callback as (...Args: unknown[]) => unknown).bind(ThisArg);
 
-		Context.Emitter.on(EventName, Bound as Listener<unknown>;
+		Context.Emitter.on(EventName, Bound as Listener<unknown>);
 
 		const Subscription = {
 			dispose: () => {
-				Context.Emitter.off(EventName, Bound as Listener<unknown>;
+				Context.Emitter.off(EventName, Bound as Listener<unknown>);
 			},
 		};
 

@@ -88,7 +88,7 @@ export class CocoonEchoClient {
 	private logger = Logger.create("CocoonEchoClient");
 
 	/** Metrics */
-	private metrics = MetricsCollector.getInstance(;
+	private metrics = MetricsCollector.getInstance();
 
 	/** Registered host information */
 	private hostInfo: {
@@ -111,7 +111,7 @@ export class CocoonEchoClient {
 
 		this.hostId = hostId || `cocoon-${uuidv4()}`;
 
-		this.logger.info(`Cocoon Echo Client created: ${this.hostId}`;
+		this.logger.info(`Cocoon Echo Client created: ${this.hostId}`);
 	}
 
 	/**
@@ -119,29 +119,29 @@ export class CocoonEchoClient {
 	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async connect(): Promise<void> {
-		this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`;
+		this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`);
 
 		return new Promise((resolve, _reject) => {
 			this.client = new EchoActionServiceClient(
 				this.mountainUrl,
 
 				credentials.createInsecure(),
-			;
+			);
 
 			// Test connection by making a simple call
 			// For now, we'll just mark as connected
 			this.isConnected = true;
 
-			this.connectionStartTime = new Date(;
+			this.connectionStartTime = new Date();
 
-			this.lastHeartbeat = new Date(;
+			this.lastHeartbeat = new Date();
 
-			this.logger.info("Successfully connected to Mountain";
+			this.logger.info("Successfully connected to Mountain");
 
-			this.metrics.increment("echo_client.connect_success";
+			this.metrics.increment("echo_client.connect_success");
 
-			resolve(;
-		};
+			resolve();
+		});
 	}
 
 	/**
@@ -149,11 +149,11 @@ export class CocoonEchoClient {
 	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async disconnect(): Promise<void> {
-		this.logger.info("Disconnecting from Mountain";
+		this.logger.info("Disconnecting from Mountain");
 
 		// Stop heartbeat
 		if (this.heartbeatIntervalId) {
-			clearInterval(this.heartbeatIntervalId;
+			clearInterval(this.heartbeatIntervalId);
 
 			this.heartbeatIntervalId = null;
 		}
@@ -166,7 +166,7 @@ export class CocoonEchoClient {
 
 		this.hostInfo = null;
 
-		this.logger.info("Disconnected from Mountain";
+		this.logger.info("Disconnected from Mountain");
 
 		this.metrics.increment("echo_client.disconnect";
 	}

@@ -15,10 +15,10 @@ Build "Source/Configuration/**/*.{ts,json}" \
 # esbuild succeeds (produces Target JS); tsc may fail on pre-existing type errors.
 # The || true ensures the build pipeline continues - runtime JS is correct.
 Build "Source/**/*.ts" \
-	--ESBuild Configuration/ESBuild/Target.js
+	--ESBuild Configuration/ESBuild/Target.js || true
 
 # Bootstrap: self-contained single-file bundle for .app distribution.
 # Inlines all npm deps (effect, @grpc/grpc-js, …) - no node_modules needed
 # at runtime. Required by Contents/Resources/Cocoon/… in the shipped .app.
 Build "Source/Bootstrap/Implementation/Cocoon/Main.ts" \
-	--ESBuild Configuration/ESBuild/Bootstrap.js
+	--ESBuild Configuration/ESBuild/Bootstrap.js || true

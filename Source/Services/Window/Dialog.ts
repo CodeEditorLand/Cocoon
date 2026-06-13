@@ -44,7 +44,7 @@ export interface DialogService {
  */
 export const DialogService = Symbol<DialogService>(
 	"Service/Window/Dialog",
-;
+);
 
 /**
  * Create dialog service layer
@@ -71,7 +71,7 @@ try {
 								method: string,
 
 								params: unknown,
-							) => Promise<unknown>;;
+							) => Promise<unknown>;))))))))))));
 } catch (_e) {
 	// error handled below
 }.sendRequest("Window.ShowMessage", [

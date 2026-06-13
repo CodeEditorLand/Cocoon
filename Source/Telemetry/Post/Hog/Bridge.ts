@@ -20,11 +20,11 @@ import EventModule, { type Properties } from "../../PostHog/Event.js";
 
 import ResolveDistinctIdentifier from "../../PostHog/Identifier.js";
 
-const Configuration = ReadConfiguration(;
+const Configuration = ReadConfiguration();
 
 const DistinctIdentifier = ResolveDistinctIdentifier(
 	Configuration.DistinctIdentifierSeed,
-;
+);
 
 let ActiveBuffer: Buffer | undefined;
 
@@ -34,7 +34,7 @@ const Buffered = (): Buffer | undefined => {
 	if (!Configuration.Enabled) return undefined;
 
 	if (!ActiveBuffer) {
-		ActiveBuffer = CreateBuffer(Configuration, DistinctIdentifier;
+		ActiveBuffer = CreateBuffer(Configuration, DistinctIdentifier);
 	}
 
 	return ActiveBuffer;
@@ -56,7 +56,7 @@ export const CaptureEvent = (
 	if (process.env["NODE_ENV"] === "production") return;
 
 	try {
-		Buffered()?.Enqueue(Name, Properties;
+		Buffered()?.Enqueue(Name, Properties);
 	} catch {
 		// Telemetry must not raise into callers.
 	}
@@ -75,7 +75,7 @@ export const CaptureError = (
 ): void => {
 	if (process.env["NODE_ENV"] === "production") return;
 
-	const Bridge = Buffered(;
+	const Bridge = Buffered();
 
 	if (!Bridge) return;
 
@@ -83,9 +83,9 @@ export const CaptureError = (
 		...Extra,
 		error_tag: Tag,
 		error_message: Message,
-	};
+	});
 
-	Bridge.Drain(;
+	Bridge.Drain();
 };
 
 /**
@@ -99,7 +99,7 @@ export const Initialize = (): void => {
 
 	Initialized = true;
 
-	const Bridge = Buffered(;
+	const Bridge = Buffered();
 
 	if (!Bridge) return;
 
@@ -109,16 +109,16 @@ export const Initialize = (): void => {
 	if (process.env["NODE_ENV"] !== "production") {
 		void import("../../OTLPBridge.js")
 			.then((OTLP) => {
-				EventModule.SetTraceIdentifier(OTLP.TraceIdentifier();
+				EventModule.SetTraceIdentifier(OTLP.TraceIdentifier());
 			})
-			.catch(() => {};
+			.catch(() => {});
 	}
 
-	const OnExit = () => Bridge.Drain(;
+	const OnExit = () => Bridge.Drain();
 
-	process.once("exit", OnExit;
+	process.once("exit", OnExit);
 
-	process.once("SIGINT", OnExit;
+	process.once("SIGINT", OnExit);
 
 	process.once("SIGTERM", OnExit;
 

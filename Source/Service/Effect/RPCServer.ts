@@ -104,7 +104,7 @@ export class ServerStartError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message;
+		super(message);
 	}
 }
 
@@ -116,7 +116,7 @@ export class ServerStopError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message;
+		super(message);
 	}
 }
 
@@ -124,7 +124,7 @@ export class ServerNotRunningError extends Error {
 	readonly _tag = "ServerNotRunningError";
 
 	constructor() {
-		super("Server is not running";
+		super("Server is not running");
 	}
 }
 
@@ -195,14 +195,14 @@ function makeRPCServer(): RPCServerService {
 	function setState(next: ServerState): void {
 		state = next;
 
-		stateHistory.push(next;
+		stateHistory.push(next);
 	}
 
 	const start = async (config?: ServerConfig): Promise<void> => {
-		const startTimeMs = Date.now(;
+		const startTimeMs = Date.now();
 
 		if (state._tag === "Running") {
-			telemetry.log("warn", "[RPCServer] Server already running";
+			telemetry.log("warn", "[RPCServer] Server already running");
 
 			return;
 		}
@@ -213,7 +213,7 @@ function makeRPCServer(): RPCServerService {
 			process.env["COCOON_GRPC_PORT"] || "50052",
 
 			10,
-		;
+		);
 
 		currentConfig = config ?? {
 			host: "0.0.0.0",
@@ -227,29 +227,29 @@ function makeRPCServer(): RPCServerService {
 			enableTls: false,
 		};
 
-		setState({ _tag: "Starting", startTime: startTimeMs };
+		setState({ _tag: "Starting", startTime: startTimeMs });
 
 		CocoonDevLog(
 			"grpc",
 
 			`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
-		;
+		);
 
 		telemetry.log(
 			"info",
 
 			`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
-		;
+		);
 
 		try {
-			grpcServer = new GRPCServerService(;
+			grpcServer = new GRPCServerService();
 
 			// Set port from config (GRPCServerService defaults to 50052)
 			(grpcServer as any).port = currentConfig.port;
 
-			await grpcServer.start(;
+			await grpcServer.start();
 
-			serverStartTime = Date.now(;
+			serverStartTime = Date.now();
 
 			metrics = {
 				uptime: 0,

@@ -77,14 +77,14 @@ const UriToString = (Value: unknown): string => {
 			typeof WithToString.toString === "function" &&
 			WithToString.toString !== Object.prototype.toString
 		) {
-			const Rendered = WithToString.toString(;
+			const Rendered = WithToString.toString();
 
 			if (Rendered && Rendered !== "[object Object]") return Rendered;
 		}
 
-		const Hydrated = StockToUri(Value;
+		const Hydrated = StockToUri(Value);
 
-		if (Hydrated) return Hydrated.toString(;
+		if (Hydrated) return Hydrated.toString();
 
 		const WithParts = Value as {
 			scheme?: unknown;
@@ -131,7 +131,7 @@ const UriToString = (Value: unknown): string => {
 		}
 	}
 
-	return String(Value;
+	return String(Value);
 };
 
 type StatShape = {
@@ -172,7 +172,7 @@ const LogRoute = (
 
 	process.stdout.write(
 		`[DEV:FS-ROUTE] op=${Operation} route=${Decision} scheme=${ExtractScheme(Uri)} uri=${UriToString(Uri)}\n`,
-	;
+	);
 };
 
 const ThrowFileNotFound = (Uri: unknown): never => {
@@ -180,11 +180,11 @@ const ThrowFileNotFound = (Uri: unknown): never => {
 
 	const FileNotFound = Api?.FileSystemError?.FileNotFound;
 
-	if (typeof FileNotFound === "function") throw FileNotFound(Uri;
+	if (typeof FileNotFound === "function") throw FileNotFound(Uri);
 
 	const Synthetic: any = new Error(
 		`EntryNotFound (FileSystemError): ${UriToString(Uri)}`,
-	;
+	);
 
 	Synthetic.code = "FileNotFound";
 
@@ -217,23 +217,23 @@ const MetadataToStat = (Metadata: {
 	mtime: Math.floor(Metadata.mtimeMs),
 
 	ctime: Math.floor(Metadata.ctimeMs),
-};
+});
 
 export const BuildFileSystemNamespace = (Context: HandlerContext) => ({
 	stat: async (Uri: any): Promise<StatShape> => {
-		const Decision = Route(Uri;
+		const Decision = Route(Uri);
 
-		LogRoute("stat", Uri, Decision;
+		LogRoute("stat", Uri, Decision);
 
 		if (Decision === "native") {
 			const Path = ExtractFsPath(Uri)!;
 
 			try {
-				const Metadata = await FsPromises.lstat(Path;
+				const Metadata = await FsPromises.lstat(Path);
 
-				return MetadataToStat(Metadata;
+				return MetadataToStat(Metadata);
 			} catch (Err: any) {
-				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri;
+				if (Err?.code === "ENOENT") ThrowFileNotFound(Uri);
 
 				throw Err;
 			}

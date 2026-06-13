@@ -82,11 +82,11 @@ import {
 } from "../Generated/Vine.js";
 
 // ESM compatibility - provide __dirname and require() for proto loading
-const __filename = fileURLToPath(import.meta.url;
+const __filename = fileURLToPath(import.meta.url);
 
-const __dirname = dirname(__filename;
+const __dirname = dirname(__filename);
 
-const require = createRequire(import.meta.url;
+const require = createRequire(import.meta.url);
 
 /**
  * Request tracking entry for cancellation support
@@ -118,7 +118,7 @@ export class GRPCServerService
 
 	private streamingHandlers: Set<
 		grpc.ServerDuplexStream<GenericRequest, GenericResponse>
-	> = new Set(;
+	> = new Set();
 
 	// Authentication configuration
 	public authToken: string | null = null;
@@ -133,7 +133,7 @@ export class GRPCServerService
 	public keepaliveTimer: NodeJS.Timeout | null = null;
 
 	// Request tracking for cancellation
-	private activeRequests: Map<bigint, RequestTrackingEntry> = new Map(;
+	private activeRequests: Map<bigint, RequestTrackingEntry> = new Map();
 
 	// Health monitoring
 	private readonly startTime: number = 0;
@@ -146,21 +146,21 @@ export class GRPCServerService
 	private extensionHostInitData: any = null;
 
 	/** Indexed extensions from InitializeExtensionHost, keyed by identifier */
-	private extensionRegistry: Map<string, any> = new Map(;
+	private extensionRegistry: Map<string, any> = new Map();
 
 	/** Activation event to extension identifiers that declare it */
-	private activationEventIndex: Map<string, string[]> = new Map(;
+	private activationEventIndex: Map<string, string[]> = new Map();
 
 	/** Whether the extension host has been initialized */
 	private extensionHostReady: boolean = false;
 
 	/** Track which extensions have already been activated (prevents double-activation) */
-	private readonly activatedExtensions: Set<string> = new Set(;
+	private readonly activatedExtensions: Set<string> = new Set();
 
 	/** Document content mirror - caches text content keyed by URI string.
 	 * Updated by $acceptModelChanged notifications from Mountain.
 	 * Read by InvokeLanguageProvider's VsDocument.getText() for real-time content. */
-	private readonly documentContentCache: Map<string, string> = new Map(;
+	private readonly documentContentCache: Map<string, string> = new Map();
 
 	/** Reverse gRPC client for sending messages back to Mountain */
 	private mountainClient:
@@ -170,19 +170,19 @@ export class GRPCServerService
 	/** Workspace document lifecycle event emitter.
 	 * Fires didOpenTextDocument, didChangeTextDocument,
 	 * didCloseTextDocument, didSaveTextDocument for vscode API shim listeners. */
-	private readonly workspaceEventEmitter: EventEmitter = new EventEmitter(;
+	private readonly workspaceEventEmitter: EventEmitter = new EventEmitter();
 
 	constructor() {
-		super(;
+		super();
 
 		this._serviceBrand = undefined;
 
-		CocoonDevLog("grpc", "[GRPCServerService] Initializing gRPC server";
+		CocoonDevLog("grpc", "[GRPCServerService] Initializing gRPC server");
 
 		// Extensions register many listeners (one per language client, webview,
 		// tree view, etc.). The default Node cap of 10 produces noisy
 		// `MaxListenersExceededWarning` spam during boot. 0 = unlimited.
-		this.setMaxListeners(0;
+		this.setMaxListeners(0);
 
 		this.workspaceEventEmitter.setMaxListeners(0;
 

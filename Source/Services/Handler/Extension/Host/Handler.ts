@@ -63,26 +63,26 @@ const HandleInitializeExtensionHost = async (
 		"ext-host",
 
 		`[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`,
-	;
+	);
 
 	// Store init data for later use by extension activation
 	Context.ExtensionHostInitData = Parameters;
 
 	// Host (re)initialization invalidates the coalesced storage dump.
-	ResetStoragePrime(;
+	ResetStoragePrime();
 
 	// Host re-init: dispose every previously-activated extension's
 	// `context.subscriptions` before the registry is rebuilt, so watchers,
 	// status-bar items, and providers from the prior host generation do not
 	// leak into the new one.
 	for (const ActivatedId of [...ActiveExtensionContexts.keys()]) {
-		DisposeExtensionContext(ActivatedId;
+		DisposeExtensionContext(ActivatedId);
 	}
 
 	// Build extension registry and activation event index
-	Context.ExtensionRegistry.clear(;
+	Context.ExtensionRegistry.clear();
 
-	Context.ActivationEventIndex.clear(;
+	Context.ActivationEventIndex.clear();
 
 	for (const Extension of Extensions) {
 		const Identifier =
@@ -91,16 +91,16 @@ const HandleInitializeExtensionHost = async (
 			Extension?.identifier ??
 			"unknown";
 
-		Context.ExtensionRegistry.set(Identifier, Extension;
+		Context.ExtensionRegistry.set(Identifier, Extension);
 
 		const ActivationEvents: string[] = Extension?.activationEvents ?? [];
 
 		for (const Event of ActivationEvents) {
 			const Existing = Context.ActivationEventIndex.get(Event) ?? [];
 
-			Existing.push(Identifier;
+			Existing.push(Identifier);
 
-			Context.ActivationEventIndex.set(Event, Existing;
+			Context.ActivationEventIndex.set(Event, Existing);
 		}
 	}
 
@@ -113,13 +113,13 @@ const HandleInitializeExtensionHost = async (
 		"ext-host",
 
 		`[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`,
-	;
+	);
 
 	// Emit event so other Cocoon services can react
 	Context.Emitter.emit("extensionHostInitialized", {
 		extensionCount: Context.ExtensionRegistry.size,
 		autoStart: Parameters?.autoStart ?? false,
-	};
+	});
 
 	// Mountain's gRPC is now confirmed running (it just called us).
 	// Reconnect MountainClientService in the background so Cocoon can
@@ -130,8 +130,8 @@ const HandleInitializeExtensionHost = async (
 			"ext-host",
 
 			`[ExtensionHostHandler] Background Mountain reconnect failed: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
-		;
-	};
+		);
+	});
 
 	return "initialized";
 };
@@ -151,7 +151,7 @@ const HandleDeltaExtensions = async (
 
 	Parameters: any,
 ): Promise<any> => {
-	const DeltaStart = performance.now(;
+	const DeltaStart = performance.now();
 
 	const Added: any[] = Parameters?.toAdd ?? [];
 

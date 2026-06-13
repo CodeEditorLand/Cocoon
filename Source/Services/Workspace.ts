@@ -221,9 +221,9 @@ export class WorkspaceService extends /* Effect.Service */(
 			// Resolve service dependencies
 			const Configuration = await Symbol<ConfigurationService>(
 				"Service/Configuration",
-			;
+			);
 
-			const Logger = await Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger");
 
 			/**
 			 * Parse a URI string into a `vscode.Uri`-shaped object. The
@@ -236,7 +236,7 @@ export class WorkspaceService extends /* Effect.Service */(
 				const Match =
 					/^([A-Za-z][A-Za-z0-9+.-]*):(?:\/\/([^/]*))?(.*)$/.exec(
 						Raw,
-					;
+					);
 
 				const Scheme = Match?.[1] ?? "file";
 
@@ -265,7 +265,7 @@ export class WorkspaceService extends /* Effect.Service */(
 			let _internalWorkspace: InternalWorkspace | undefined;
 
 			// Text editor tracking - keyed by document URI string
-			const _textEditorsMap = new Map<string, VSCode.TextEditor>(;
+			const _textEditorsMap = new Map<string, VSCode.TextEditor>();
 
 			let _activeTextEditor: VSCode.TextEditor | undefined;
 
@@ -274,23 +274,23 @@ export class WorkspaceService extends /* Effect.Service */(
 			// Event listener registries (fire on AcceptWorkspaceData / IPC notifications)
 			const OnDidChangeWorkspaceFoldersListeners = new Set<
 				(event: VSCode.WorkspaceFoldersChangeEvent) => void
-			>(;
+			>();
 
 			const OnDidChangeActiveTextEditorListeners = new Set<
 				(editor: VSCode.TextEditor | undefined) => void
-			>(;
+			>();
 
 			const OnDidChangeVisibleTextEditorsListeners = new Set<
 				(editors: readonly VSCode.TextEditor[]) => void
-			>(;
+			>();
 
 			const OnDidChangeTextDocumentListeners = new Set<
 				(event: VSCode.TextDocumentChangeEvent) => void
-			>(;
+			>();
 
 			const OnDidChangeConfigurationListeners = new Set<
 				(event: VSCode.ConfigurationChangeEvent) => void
-			>(;
+			>();
 
 			/**
 			 * Accept workspace data from Mountain. Invoked through the
@@ -319,12 +319,12 @@ export class WorkspaceService extends /* Effect.Service */(
 							const Source =
 								typeof F === "string"
 									? F
-									: ((F as any).uri ?? (F as any).path ?? F;
+									: ((F as any).uri ?? (F as any).path ?? F);
 
 							const SourceString =
 								typeof Source === "string"
 									? Source
-									: String(Source ?? "";
+									: String(Source ?? "");
 
 							if (!SourceString) continue;
 
@@ -336,7 +336,7 @@ export class WorkspaceService extends /* Effect.Service */(
 										? (F.split("/").pop() ?? "")
 										: ""),
 								index: (F as any).index ?? Index,
-							};
+							});
 						} catch {
 							/* skip the bad folder; the rest of the set
 							 * is still valid */
@@ -352,7 +352,7 @@ export class WorkspaceService extends /* Effect.Service */(
 						Data.configuration.length > 0
 					) {
 						try {
-							ConfigurationUri = ParseUri(Data.configuration;
+							ConfigurationUri = ParseUri(Data.configuration);
 						} catch {
 							ConfigurationUri = undefined;
 						}

@@ -15,6 +15,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapScmNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("scm", Concrete;
+	WrapNamespaceWithHeuristics("scm", Concrete);
 
 export default WrapScmNamespace;

@@ -25,10 +25,10 @@ import type { HandlerContext } from "../../Handler/Context.js";
  * resolves, so a throw leaves both sets clean and a retry is possible while
  * concurrent callers still skip duplicate starts.
  */
-const ActivatingExtensions = new Set<string>(;
+const ActivatingExtensions = new Set<string>();
 
 export const IsExtensionActivating = (ExtensionId: string): boolean =>
-	ActivatingExtensions.has(ExtensionId;
+	ActivatingExtensions.has(ExtensionId);
 
 /**
  * Live `ExtensionContext` per activated extension id. Entries are added when
@@ -36,7 +36,7 @@ export const IsExtensionActivating = (ExtensionId: string): boolean =>
  * disposal, so host shutdown / re-init can dispose every
  * `context.subscriptions` an extension registered.
  */
-export const ActiveExtensionContexts = new Map<string, unknown>(;
+export const ActiveExtensionContexts = new Map<string, unknown>();
 
 /**
  * Dispose every disposable an extension pushed onto its
@@ -45,9 +45,9 @@ export const ActiveExtensionContexts = new Map<string, unknown>(;
  * activations).
  */
 export const DisposeExtensionContext = (ExtensionId: string): void => {
-	const ExtContext = ActiveExtensionContexts.get(ExtensionId;
+	const ExtContext = ActiveExtensionContexts.get(ExtensionId);
 
-	ActiveExtensionContexts.delete(ExtensionId;
+	ActiveExtensionContexts.delete(ExtensionId);
 
 	const Subscriptions = (
 		ExtContext as
@@ -61,7 +61,7 @@ export const DisposeExtensionContext = (ExtensionId: string): void => {
 
 	for (const Subscription of Subscriptions) {
 		try {
-			Subscription?.dispose?.(;
+			Subscription?.dispose?.();
 
 			Disposed++;
 		} catch {
@@ -75,7 +75,7 @@ export const DisposeExtensionContext = (ExtensionId: string): void => {
 		"ext-host",
 
 		`[ExtensionHostHandler] Disposed ${Disposed} subscriptions for ${ExtensionId}`,
-	;
+	);
 };
 
 /**
@@ -109,7 +109,7 @@ const CreateExtensionContext = (
 	// `~/.fiddee/extensions/` so the user-extension scanner in Mountain's
 	// `ScanPathConfigure.rs` doesn't warn on non-extension siblings like
 	// `storage/`.
-	const FiddeeRootPath = FiddeeRoot(;
+	const FiddeeRootPath = FiddeeRoot();
 
 	const StorageBase = `${FiddeeRootPath}/extensionStorage`;
 
@@ -127,11 +127,11 @@ const CreateExtensionContext = (
 	// bundle, so bare `require("node:fs")` throws "Dynamic require of
 	// 'node:fs' is not supported" - use the static `NodeFS` import.
 	try {
-		NodeFS.mkdirSync(ExtStoragePath, { recursive: true };
+		NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
 
-		NodeFS.mkdirSync(GlobalStoragePath, { recursive: true };
+		NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
 
-		NodeFS.mkdirSync(LogPath, { recursive: true };
+		NodeFS.mkdirSync(LogPath, { recursive: true });
 	} catch {}
 
 	// Mountain's scanner keeps only a subset of package.json fields. VS
@@ -152,7 +152,7 @@ const CreateExtensionContext = (
 			`${ExtensionPath}/package.json`,
 
 			"utf8",
-		;
+		);
 
 		const Parsed = JSON.parse(Contents) as Record<string, unknown>;
 
@@ -175,7 +175,7 @@ const CreateExtensionContext = (
 
 	const MakeUri = (Path: string): unknown => {
 		if (VsCodeUri && typeof VsCodeUri.file === "function") {
-			return VsCodeUri.file(Path;
+			return VsCodeUri.file(Path);
 		}
 
 		return {

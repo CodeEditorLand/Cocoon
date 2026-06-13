@@ -108,7 +108,7 @@ const BuildVsDocument = async (
 ): Promise<any> => {
 
 	const { Position, Range } =
-		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
+		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
 	let CachedContent: string | null = null;
 
@@ -120,11 +120,11 @@ const BuildVsDocument = async (
 	// Mountain) still takes precedence below.
 	if (DocumentContentCache.get(UriString) === undefined) {
 		if (FsPromisesModule === null) {
-			FsPromisesModule = await import("node:fs/promises";
+			FsPromisesModule = await import("node:fs/promises");
 		}
 
 		try {
-			CachedContent = await FsPromisesModule.readFile(FsPath, "utf8";
+			CachedContent = await FsPromisesModule.readFile(FsPath, "utf8");
 		} catch {
 			CachedContent = "";
 		}
@@ -132,7 +132,7 @@ const BuildVsDocument = async (
 
 	const LoadContent = (): string => {
 		// Prefer document content cache (has unsaved edits from Mountain)
-		const MirrorContent = DocumentContentCache.get(UriString;
+		const MirrorContent = DocumentContentCache.get(UriString);
 
 		if (MirrorContent !== undefined) {
 			CachedContent = MirrorContent;
@@ -146,7 +146,7 @@ const BuildVsDocument = async (
 	const GetLines = (): string[] => {
 		if (CachedLines !== null) return CachedLines;
 
-		CachedLines = LoadContent().split(/\r?\n/;
+		CachedLines = LoadContent().split(/\r?\n/);
 
 		return CachedLines;
 	};
@@ -179,12 +179,12 @@ const BuildVsDocument = async (
 		eol: 1, // LF
 
 		getText: (_range?: any) => {
-			const Text = LoadContent(;
+			const Text = LoadContent();
 
 			if (!_range) return Text;
 
 			// Range-limited getText: extract substring
-			const Lines = GetLines(;
+			const Lines = GetLines();
 
 			const StartLine = _range?.start?.line ?? 0;
 
@@ -196,26 +196,26 @@ const BuildVsDocument = async (
 				_range?.end?.character ?? Lines[EndLine]?.length ?? 0;
 
 			if (StartLine === EndLine) {
-				return (Lines[StartLine] ?? "").substring(StartChar, EndChar;
+				return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
 			}
 
 			const Result: string[] = [];
 
-			Result.push((Lines[StartLine] ?? "").substring(StartChar);
+			Result.push((Lines[StartLine] ?? "").substring(StartChar));
 
 			for (let I = StartLine + 1; I < EndLine; I++)
-				Result.push(Lines[I] ?? "";
+				Result.push(Lines[I] ?? "");
 
-			Result.push((Lines[EndLine] ?? "").substring(0, EndChar);
+			Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
 
-			return Result.join("\n";
+			return Result.join("\n");
 		},
 
 		lineAt: (LineOrPos: number | any) => {
 			const LineNum =
 				typeof LineOrPos === "number"
 					? LineOrPos
-					: (LineOrPos?.line ?? 0;
+					: (LineOrPos?.line ?? 0);
 
 			const Lines = GetLines(;
 

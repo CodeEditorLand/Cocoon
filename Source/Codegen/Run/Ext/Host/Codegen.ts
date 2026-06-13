@@ -61,7 +61,7 @@ export const RunExtHostCodegen = async (
 ): Promise<RunExtHostCodegenSummary | CodegenProblem> => {
 	const Log = options.Log ?? DefaultLog;
 
-	const Started = performance.now(;
+	const Started = performance.now();
 
 	if (!existsSync(options.SourceRoot)) {
 		return {
@@ -71,44 +71,44 @@ export const RunExtHostCodegen = async (
 		};
 	}
 
-	Log(`source root: ${options.SourceRoot}`;
+	Log(`source root: ${options.SourceRoot}`);
 
-	Log(`output root: ${options.OutputRoot}`;
+	Log(`output root: ${options.OutputRoot}`);
 
 	const Files = WalkSourceTree({
 		Root: options.SourceRoot,
 		IncludeExtensions: [".ts"],
 		ExcludeSegments: [],
-	};
+	});
 
 	const Records: ExtHostDecoratorRecord[] = [];
 
 	const Failures: CodegenProblem[] = [];
 
 	for await (const Record of IterateExtHostDecorators(Files)) {
-		Records.push(Record;
+		Records.push(Record);
 
 		const Outcome = await EmitExtHostSchema({
 			Record,
 			OutputRoot: options.OutputRoot,
-		};
+		});
 
 		if ("_tag" in Outcome) {
-			Failures.push(Outcome;
+			Failures.push(Outcome);
 
-			Log(`failed ${Record.DecoratorName}: ${Outcome._tag}`;
+			Log(`failed ${Record.DecoratorName}: ${Outcome._tag}`);
 
 			continue;
 		}
 
 		Log(
 			`emitted ${Outcome.OutputPath} (${Outcome.Members} members, ${Outcome.Bytes}B)`,
-		;
+		);
 	}
 
-	const Elapsed = Math.round(performance.now() - Started;
+	const Elapsed = Math.round(performance.now() - Started);
 
-	Log(`done in ${Elapsed}ms - ${Records.length} extension-host decorators`;
+	Log(`done in ${Elapsed}ms - ${Records.length} extension-host decorators`);
 
 	return {
 		RecordsEmitted: Records.length,

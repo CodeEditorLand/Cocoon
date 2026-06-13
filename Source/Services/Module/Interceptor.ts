@@ -102,15 +102,15 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			"interceptor",
 
 			"[ModuleInterceptor] Initializing module interceptor",
-		;
+		);
 
-		this.config = this.loadDefaultConfig(;
+		this.config = this.loadDefaultConfig();
 
-		this.moduleCache = new Map(;
+		this.moduleCache = new Map();
 
-		this.securitySandbox = this.createSecuritySandbox(;
+		this.securitySandbox = this.createSecuritySandbox();
 
-		this.securityPolicies = new Map(;
+		this.securityPolicies = new Map();
 
 		this.telemetry = {
 			totalModulesLoaded: 0,
@@ -128,30 +128,30 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			"interceptor",
 
 			"[ModuleInterceptor] Module interceptor initialized",
-		;
+		);
 	}
 
 	/**
 	 * Initialize module interceptor service
 	 */
 	async initialize(): Promise<void> {
-		CocoonDevLog("interceptor", "[ModuleInterceptor] Initializing service";
+		CocoonDevLog("interceptor", "[ModuleInterceptor] Initializing service");
 
 		try {
 			// Load security policies
-			await this.loadSecurityPolicies(;
+			await this.loadSecurityPolicies();
 
 			// Validate module path resolution
-			this.validateModulePathResolution(;
+			this.validateModulePathResolution();
 
 			// Setup telemetry reporting
-			this.setupTelemetry(;
+			this.setupTelemetry();
 
 			CocoonDevLog(
 				"interceptor",
 
 				"[ModuleInterceptor] Service initialized successfully",
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"interceptor",
@@ -159,7 +159,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 				"[ModuleInterceptor] Failed to initialize:",
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -174,7 +174,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			"interceptor",
 
 			"[ModuleInterceptor] Loading security policies",
-		;
+		);
 
 		// Default security policy
 		const defaultPolicy: SecurityPolicy = {

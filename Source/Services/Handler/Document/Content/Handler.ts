@@ -24,11 +24,11 @@ import { CocoonDevLog } from "../../../Dev/Log.js";
  */
 const InferLanguageIdentifier = (Uri: string): string => {
 
-	const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/;
+	const ExtensionMatch = Uri.match(/\.([^./?#]+)(?:\?|#|$)/);
 
 	if (!ExtensionMatch?.[1]) return "plaintext";
 
-	const Extension = ExtensionMatch[1]!.toLowerCase(;
+	const Extension = ExtensionMatch[1]!.toLowerCase();
 
 	const LanguageMap: Record<string, string> = {
 		ts: "typescript",
@@ -126,11 +126,11 @@ const BuildTextDocument = (
 
 	LanguageIdentifier?: string,
 ): TextDocumentShape => {
-	const Lines = Content.split(/\r?\n/;
+	const Lines = Content.split(/\r?\n/);
 
-	const FileName = Uri.replace(/^file:\/\//, "";
+	const FileName = Uri.replace(/^file:\/\//, "");
 
-	const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri;
+	const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri);
 
 	return {
 		uri: {
@@ -182,20 +182,20 @@ const BuildTextDocument = (
 					StartCharacter,
 
 					EndCharacter,
-				;
+				);
 			}
 
 			const Result: string[] = [];
 
-			Result.push((Lines[StartLine] ?? "").substring(StartCharacter);
+			Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
 
 			for (let Index = StartLine + 1; Index < EndLine; Index++) {
-				Result.push(Lines[Index] ?? "";
+				Result.push(Lines[Index] ?? "");
 			}
 
-			Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter);
+			Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
 
-			return Result.join("\n";
+			return Result.join("\n");
 		},
 
 		lineAt: (
@@ -322,7 +322,7 @@ interface TextDocumentShape {
 }
 
 /** Track document versions keyed by URI */
-const DocumentVersionMap: Map<string, number> = new Map(;
+const DocumentVersionMap: Map<string, number> = new Map();
 
 /**
  * Handle document content change from Mountain.
@@ -364,7 +364,7 @@ const HandleDocumentChange = (
 		EventData?.content ?? EventData?.Content ?? EventData?.text;
 
 	if (Uri && Content !== undefined) {
-		DocumentContentCache.set(Uri, Content;
+		DocumentContentCache.set(Uri, Content);
 	} else if (Uri && (EventData?.changes || Parameters?.changes)) {
 		// Incremental changes - apply edits to cached content
 		const Existing = DocumentContentCache.get(Uri) ?? "";
@@ -380,7 +380,7 @@ const HandleDocumentChange = (
 		// Apply changes in reverse order (largest offset first) to avoid index shifts
 		const Sorted = [...Changes].sort(
 			(A: any, B: any) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0),
-		;
+		);
 
 		for (const Change of Sorted) {
 			const Offset = Change.rangeOffset ?? 0;

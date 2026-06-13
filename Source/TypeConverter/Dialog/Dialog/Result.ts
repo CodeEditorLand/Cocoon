@@ -18,7 +18,7 @@ export const ToURI = (DTO: any): Uri | undefined => {
 		return undefined;
 	}
 
-	return URI.revive(DTO;
+	return URI.revive(DTO);
 };
 
 /**
@@ -31,5 +31,5 @@ export const ToURIArray = (DTOs: any[] | undefined): Uri[] | undefined => {
 		return undefined;
 	}
 
-	return DTOs.map(ToURI).filter((URIValue): URIValue is Uri => !!URIValue;
+	return DTOs.map(ToURI).filter((URIValue): URIValue is Uri => !!URIValue);
 };

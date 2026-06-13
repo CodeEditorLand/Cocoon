@@ -203,7 +203,7 @@ export function ConvertPlatformNumberToDTO(platformNumber: number): number {
 	if (platformNumber < 0 || platformNumber > 3) {
 		console.warn(
 			`[TypeConverter] Invalid platform number: ${platformNumber}, using default`,
-		;
+		);
 
 		return 0; // Web as default
 	}
@@ -238,7 +238,7 @@ export function ConvertOperatingSystemToNumber(os: number): number {
 	if (os < 1 || os > 3) {
 		console.warn(
 			`[TypeConverter] Invalid operating system: ${os}, using default`,
-		;
+		);
 
 		return 3; // Linux as default
 	}
@@ -257,7 +257,7 @@ export function ConvertNumberToOperatingSystem(number: number): number {
  * Convert OS info to Mountain DTO
  */
 export function ConvertOSInfoToDTO(osInfo: any): MountainPlatformInfoDTO {
-	const timestamp = Date.now(;
+	const timestamp = Date.now();
 
 	return {
 		platform_number: ConvertPlatformNumberToDTO(
@@ -353,9 +353,9 @@ function IsSensitiveVariable(name: string): boolean {
 		"ACCESS_KEY",
 	];
 
-	const upperName = name.toUpperCase(;
+	const upperName = name.toUpperCase();
 
-	return sensitivePrefixes.some((prefix) => upperName.startsWith(prefix);
+	return sensitivePrefixes.some((prefix) => upperName.startsWith(prefix));
 }
 
 /**
@@ -386,7 +386,7 @@ function IsReadonlyVariable(name: string): boolean {
 		"WINDIR",
 	];
 
-	return readonlyVariables.includes(name.toUpperCase();
+	return readonlyVariables.includes(name.toUpperCase());
 }
 
 /**
@@ -510,7 +510,7 @@ export function ConvertDTOToEnvironmentInfo(
  * Convert process info to Mountain DTO
  */
 export function ConvertProcessInfoToDTO(procInfo: any): MountainProcessInfoDTO {
-	const now = Date.now(;
+	const now = Date.now();
 
 	const startTime = procInfo.startTime ?? now;
 
@@ -677,11 +677,11 @@ export function ConvertDTOToProcessSignal(dto: MountainProcessSignalDTO): any {
  */
 export function SerializeDTO(dto: any): string {
 	try {
-		return JSON.stringify(dto;
+		return JSON.stringify(dto);
 	} catch (error) {
-		console.error("[TypeConverter] Failed to serialize DTO:", error;
+		console.error("[TypeConverter] Failed to serialize DTO:", error);
 
-		throw new Error(`DTO serialization failed: ${error}`;
+		throw new Error(`DTO serialization failed: ${error}`);
 	}
 }
 
@@ -694,18 +694,18 @@ export function DeserializeDTO<T>(
 	validator?: (obj: any) => boolean,
 ): T | null {
 	try {
-		const parsed = JSON.parse(json;
+		const parsed = JSON.parse(json);
 
 		// Validate if validator provided
 		if (validator && !validator(parsed)) {
-			console.warn("[TypeConverter] DTO validation failed";
+			console.warn("[TypeConverter] DTO validation failed");
 
 			return null;
 		}
 
 		return parsed as T;
 	} catch (error) {
-		console.error("[TypeConverter] Failed to deserialize DTO:", error;
+		console.error("[TypeConverter] Failed to deserialize DTO:", error);
 
 		return null;
 	}

@@ -95,7 +95,7 @@ export class LoaderService extends /* Effect.Service */(
 		effect: async function() {
 			await Config.string("SecurityPolicy").pipe(
 				Effect.catchTag("MissingConfig", () =>
-					return ("default"),
+					)))))))))))))return ("default"),
 				),
 			);
 

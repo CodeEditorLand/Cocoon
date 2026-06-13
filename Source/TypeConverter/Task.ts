@@ -82,7 +82,7 @@ export const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
 		Execution,
 
 		DTO.problemMatchers,
-	;
+	);
 
 	(ConvertedTask as any)._id = DTO._id;
 

@@ -316,17 +316,17 @@ export class ExtensionService extends /* Effect.Service */(
 				"Service/Configuration",
 			);
 
-			const Logger = await Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger");
 
 			// Plain Maps - no Ref overhead on every extension lookup.
-			const _registry = new Map<string, IExtensionDescription>(;
+			const _registry = new Map<string, IExtensionDescription>();
 
-			const _activation = new Map<string, boolean>(;
+			const _activation = new Map<string, boolean>();
 
-			const _exports = new Map<string, unknown>(;
+			const _exports = new Map<string, unknown>();
 
 			// Change event listeners
-			const OnDidChangeListeners = new Set<() => void>(;
+			const OnDidChangeListeners = new Set<() => void>();
 
 			/**
 			 * Discover extensions from configuration
@@ -341,18 +341,18 @@ export class ExtensionService extends /* Effect.Service */(
 				async function() {
 					Logger.Debug(
 						"[ExtensionService] Discovering extensions from configuration",
-					;
+					);
 
 					// Load extensions from configuration
 					const ExtensionsConfig = Configuration.GetValue<
 						Record<string, any>
-					>("extensions", {};
+					>("extensions", {});
 
 					const NewRegistry = new Map<
 						string,
 
 						IExtensionDescription
-					>(;
+					>();
 
 					// Process configured extensions
 					for (const [
@@ -452,17 +452,17 @@ export class ExtensionService extends /* Effect.Service */(
 										: undefined,
 							};
 
-							NewRegistry.set(ExtensionId, Description;
+							NewRegistry.set(ExtensionId, Description);
 
 							Logger.Debug(
 								`[ExtensionService] Extension discovered: ${ExtensionId}`,
-							;
+							);
 						} catch (error) {
 							Logger.Error(
 								`[ExtensionService] Failed to parse extension config for ${ExtensionId}`,
 
 								error as Error,
-							;
+							);
 						}
 					}
 
@@ -483,9 +483,9 @@ export class ExtensionService extends /* Effect.Service */(
 									JSON.stringify(_registry.get(key)),
 						)
 					) {
-						_registry.clear(;
+						_registry.clear();
 
-						NewRegistry.forEach((v, k) => _registry.set(k, v);
+						NewRegistry.forEach((v, k) => _registry.set(k, v));
 
 						Logger.Info(
 							`[ExtensionService] Extensions discovered: ${NewRegistry.size} extensions`,

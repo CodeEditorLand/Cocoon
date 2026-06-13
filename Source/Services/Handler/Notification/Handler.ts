@@ -117,7 +117,7 @@ const WarnLazyURIUnavailable = (Reason: string): void => {
 		"uri-hydrate",
 
 		`real URI class unavailable (${Reason}) - URIs degrade to stub objects`,
-	;
+	);
 };
 
 const EnsureLazyURI = (): void => {
@@ -135,7 +135,7 @@ const EnsureLazyURI = (): void => {
 				} else {
 					WarnLazyURIUnavailable(
 						"module loaded without a URI export",
-					;
+					);
 				}
 			})
 			.catch((Error) => {
@@ -143,18 +143,18 @@ const EnsureLazyURI = (): void => {
 					Error instanceof globalThis.Error
 						? Error.message
 						: String(Error),
-				;
-			};
+				);
+			});
 };
 
 // Warm the cache at module load (non-blocking) so the pending-import window
 // where HydrateUri must hand out stubs is as short as possible.
-EnsureLazyURI(;
+EnsureLazyURI();
 
 // Minimal stub for when LazyURI.parse is unavailable (import failed or not
 // yet resolved). Enough shape for extensions to call fsPath / toString().
 const MakeUriStub = (Raw: string): UriObject => {
-	const Path = Raw.replace(/^file:\/\//, "";
+	const Path = Raw.replace(/^file:\/\//, "");
 	return {
 		scheme: Raw.startsWith("file://") ? "file" : "unknown",
 		authority: "",
@@ -167,24 +167,24 @@ const MakeUriStub = (Raw: string): UriObject => {
 };
 
 const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
-	EnsureLazyURI(;
+	EnsureLazyURI();
 
 	if (!Raw) return null;
 	if (typeof Raw === "string") {
 		if (!LazyURI) {
 			// Import still pending or failed - degrade to a stub so the
 			// folder is not silently dropped from the workspace list.
-			WarnLazyURIUnavailable("import pending or failed at parse time";
+			WarnLazyURIUnavailable("import pending or failed at parse time");
 
-			return MakeUriStub(Raw;
+			return MakeUriStub(Raw);
 		}
 
 		try {
-			return LazyURI.parse(Raw;
+			return LazyURI.parse(Raw);
 		} catch {
 			// Parse error - fall back to a stub so the folder is not
 			// silently dropped from the workspace list.
-			return MakeUriStub(Raw;
+			return MakeUriStub(Raw);
 		}
 	}
 	// Already a URI-shaped object - check for the critical getters extensions
@@ -206,9 +206,9 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 		if (!RawStr) return null;
 
 		if (!LazyURI) {
-			WarnLazyURIUnavailable("import pending or failed at parse time";
+			WarnLazyURIUnavailable("import pending or failed at parse time");
 
-			return MakeUriStub(RawStr;
+			return MakeUriStub(RawStr);
 		}
 
 		return LazyURI.parse(RawStr;

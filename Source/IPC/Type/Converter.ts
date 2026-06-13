@@ -365,7 +365,7 @@ const ValidateWindowStateDTO = (
 	async function() {
 		if (typeof dto.IsFocused !== "boolean") {
 			throw new Error("WindowStateDTO.IsFocused must be a boolean"),
-			;
+			)))))))))))));
 		}
 
 		if (typeof dto.IsFullScreen !== "boolean") {

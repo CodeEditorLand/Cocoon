@@ -23,7 +23,7 @@ import * as NodeHttps from "node:https";
 
 import ReadConfiguration from "./PostHog/Configuration.js";
 
-const Configuration = ReadConfiguration(;
+const Configuration = ReadConfiguration();
 
 let OTLPAvailable = Configuration.OTLPEnabled;
 
@@ -35,7 +35,7 @@ const RandomHex = (Bytes: number): string => {
 			Output +
 			Math.floor(Math.random() * 256)
 				.toString(16)
-				.padStart(2, "0";
+				.padStart(2, "0");
 	}
 
 	return Output;
@@ -44,15 +44,15 @@ const RandomHex = (Bytes: number): string => {
 let TraceIdentifierCached: string | undefined;
 
 export const TraceIdentifier = (): string => {
-	if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16;
+	if (!TraceIdentifierCached) TraceIdentifierCached = RandomHex(16);
 
 	return TraceIdentifierCached;
 };
 
 const NowNano = (): bigint => {
-	const Hr = process.hrtime(;
+	const Hr = process.hrtime();
 
-	return BigInt(Hr[0]) * 1_000_000_000n + BigInt(Hr[1];
+	return BigInt(Hr[0]) * 1_000_000_000n + BigInt(Hr[1]);
 };
 
 export type SpanAttributes = ReadonlyArray<readonly [string, string]>;
@@ -74,16 +74,16 @@ export const CaptureSpan = (
 
 	if (!OTLPAvailable) return;
 
-	const SpanIdentifier = RandomHex(8;
+	const SpanIdentifier = RandomHex(8);
 
-	const TraceIdentifierResolved = TraceIdentifier(;
+	const TraceIdentifierResolved = TraceIdentifier();
 
 	const StatusCode = Name.includes("error") ? 2 : 1;
 
 	const AttributesPayload = Attributes.map(([Key, Value]) => ({
 		key: Key,
 		value: { stringValue: Value },
-	});
+	}));
 
 	const Payload = JSON.stringify({
 		resourceSpans: [
@@ -123,10 +123,10 @@ export const CaptureSpan = (
 				],
 			},
 		],
-	};
+	});
 
 	try {
-		const Address = new URL("/v1/traces", Configuration.OTLPEndpoint;
+		const Address = new URL("/v1/traces", Configuration.OTLPEndpoint);
 
 		const HttpModule = Address.protocol === "https:" ? NodeHttps : NodeHttp;
 
@@ -152,13 +152,13 @@ export const CaptureSpan = (
 					OTLPAvailable = false;
 				}
 
-				Response.resume(;
+				Response.resume();
 			},
-		;
+		);
 
 		Request.on("error", () => {
 			OTLPAvailable = false;
-		};
+		});
 
 		Request.on("timeout", () => {
 			Request.destroy(;

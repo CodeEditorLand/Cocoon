@@ -44,7 +44,7 @@ export const BuildOpenTextDocument =
 
 			const UntitledKey = `untitled:Untitled-${Date.now()}`;
 
-			Context.DocumentContentCache.set(UntitledKey, InlineContent;
+			Context.DocumentContentCache.set(UntitledKey, InlineContent);
 
 			// Add to workspace.textDocuments so extensions iterating all open docs see it.
 			if (!Array.isArray((Context as any).__textDocuments))
@@ -62,12 +62,12 @@ export const BuildOpenTextDocument =
 				external: UntitledKey,
 			};
 
-			const Lines = InlineContent.split("\n";
+			const Lines = InlineContent.split("\n");
 
 			const LineStarts: number[] = [0];
 
 			for (let I = 0; I < InlineContent.length; I++) {
-				if (InlineContent.charCodeAt(I) === 10) LineStarts.push(I + 1;
+				if (InlineContent.charCodeAt(I) === 10) LineStarts.push(I + 1);
 			}
 
 			const PositionAt = (Off: number) => {
@@ -87,9 +87,9 @@ export const BuildOpenTextDocument =
 			};
 
 			const OffsetAt = (P: any) => {
-				const L = Math.max(0, Math.min(P?.line ?? 0, Lines.length - 1);
+				const L = Math.max(0, Math.min(P?.line ?? 0, Lines.length - 1));
 
-				return Math.max(0, (LineStarts[L] ?? 0) + (P?.character ?? 0);
+				return Math.max(0, (LineStarts[L] ?? 0) + (P?.character ?? 0));
 			};
 
 			const Doc = {
@@ -118,7 +118,7 @@ export const BuildOpenTextDocument =
 				offsetAt: OffsetAt,
 
 				lineAt: (N: any) => {
-					const Ln = typeof N === "number" ? N : (N?.line ?? 0;
+					const Ln = typeof N === "number" ? N : (N?.line ?? 0);
 
 					const T = Lines[Ln] ?? "";
 
@@ -149,7 +149,7 @@ export const BuildOpenTextDocument =
 				save: async () => false,
 			};
 
-			(Context as any).__textDocuments.push(Doc;
+			(Context as any).__textDocuments.push(Doc);
 
 			// Fire didOpenTextDocument so extensions subscribed to onDidOpenTextDocument see it.
 			setImmediate(() => {
@@ -158,9 +158,9 @@ export const BuildOpenTextDocument =
 						"didOpenTextDocument",
 
 						Doc,
-					;
+					);
 				} catch {}
-			};
+			});
 
 			return Doc;
 		}
@@ -168,15 +168,15 @@ export const BuildOpenTextDocument =
 		const UriString =
 			typeof UriOrPath === "string"
 				? UriOrPath
-				: (UriOrPath?.toString?.() ?? "";
+				: (UriOrPath?.toString?.() ?? "");
 
 		// `untitled:` scheme - blank document, no backend needed.
 		if (UriString.startsWith("untitled:") || UriString === "") {
 			const Content = Context.DocumentContentCache.get(UriString) ?? "";
 
-			const ULines = Content.split("\n";
+			const ULines = Content.split("\n");
 
-			const UntitledLang = DeriveLanguageIdFromUri(UriString;
+			const UntitledLang = DeriveLanguageIdFromUri(UriString);
 
 			return {
 				uri: UriOrPath ?? {
@@ -230,7 +230,7 @@ export const BuildOpenTextDocument =
 
 						O += (ULines[I]?.length ?? 0) + 1;
 
-					return O + (P?.character ?? 0;
+					return O + (P?.character ?? 0);
 				},
 
 				lineAt: (N: any) => {

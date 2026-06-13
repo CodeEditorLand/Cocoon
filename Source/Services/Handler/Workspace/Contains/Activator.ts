@@ -47,15 +47,15 @@ const UriToFsPath = (Uri: unknown): string | undefined => {
 			? Uri
 			: ((Uri as Record<string, unknown>)?.["fsPath"] ??
 				(Uri as Record<string, unknown>)?.["path"] ??
-				(Uri as Record<string, unknown>)?.["external"];
+				(Uri as Record<string, unknown>)?.["external"]);
 
 	if (typeof Raw !== "string" || Raw.length === 0) return undefined;
 
 	if (Raw.startsWith("file:")) {
 		try {
-			return decodeURIComponent(new URL(Raw).pathname;
+			return decodeURIComponent(new URL(Raw).pathname);
 		} catch {
-			return Raw.replace(/^file:\/\//, "";
+			return Raw.replace(/^file:\/\//, "");
 		}
 	}
 
@@ -86,7 +86,7 @@ const FolderContainsGlobViaMountain = async (
 			Glob,
 
 			{ maxResults: 1 },
-		];
+		]);
 
 		if (Array.isArray(Result)) return Result.length > 0;
 
@@ -110,18 +110,18 @@ const FolderContainsGlob = async (
 
 	Glob: string,
 ): Promise<boolean> => {
-	const { stat, readdir } = await import("node:fs/promises";
+	const { stat, readdir } = await import("node:fs/promises");
 
-	const { join, relative, sep } = await import("node:path";
+	const { join, relative, sep } = await import("node:path");
 
 	// Fast-path: literal file probe. Most of VS Code's shipped
 	// workspaceContains triggers are plain names (`package.json`,
 	// `Cargo.toml`, `pyproject.toml`, `requirements.txt`, …).
-	const IsLiteral = !/[*?[\]]/.test(Glob;
+	const IsLiteral = !/[*?[\]]/.test(Glob);
 
 	if (IsLiteral) {
 		try {
-			await stat(join(FsPath, Glob);
+			await stat(join(FsPath, Glob));
 
 			return true;
 		} catch {
@@ -133,7 +133,7 @@ const FolderContainsGlob = async (
 	let Matcher: RegExp;
 
 	try {
-		Matcher = GlobToRegex(Glob;
+		Matcher = GlobToRegex(Glob);
 	} catch {
 		return false;
 	}
@@ -160,7 +160,7 @@ const FolderContainsGlob = async (
 		"out",
 
 		"build",
-	];
+	]);
 
 	const MaxDepth = 8; // workspaceContains rarely needs to reach deep
 	const DeadlineAt = Date.now() + 1_500;
@@ -206,13 +206,13 @@ const FolderContainsGlob = async (
 
 				continue;
 
-			const Full = join(Current, Name;
+			const Full = join(Current, Name);
 
-			const Rel = relative(FsPath, Full).split(sep).join("/";
+			const Rel = relative(FsPath, Full).split(sep).join("/");
 
 			if (Matcher.test(Rel)) return true;
 
-			if (Entry.isDirectory()) SubDirs.push(Full;
+			if (Entry.isDirectory()) SubDirs.push(Full);
 		}
 
 		for (const Sub of SubDirs) {

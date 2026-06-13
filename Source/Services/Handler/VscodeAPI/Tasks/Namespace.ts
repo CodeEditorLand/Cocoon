@@ -45,7 +45,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 				Executions.set(Id, Event.execution);
 			}
 		},
-	;
+	);
 
 	Context.Emitter.on(
 		"task.didEnd",
@@ -57,7 +57,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 				Executions.delete(Id);
 			}
 		},
-	;
+	);
 
 	return WrapTasksNamespace({
 		registerTaskProvider: (TaskType: string, Provider: unknown) => {
@@ -90,7 +90,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 					"Task.Fetch",
 
 					[Filter],
-				;
+				);
 
 				return Array.isArray(Response) ? Response : [];
 			} catch {
@@ -109,7 +109,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 					"Task.Execute",
 
 					[Task],
-				;
+				);
 
 				const Resolved = Response as
 					| { id?: string; task?: unknown }
@@ -146,7 +146,7 @@ const CreateTasksNamespace = (Context: HandlerContext) => {
 		get taskExecutions() {
 			return Array.from(Executions.values());
 		},
-	};
+	});
 };
 
 export default CreateTasksNamespace;

@@ -23,14 +23,14 @@ import { CocoonDevLog } from "../../Dev/Log.js";
 type ProviderObject = Record<string, unknown>;
 
 /** Thread-safe (single-threaded JS) map of handle → provider. */
-const Callbacks = new Map<number, ProviderObject>(;
+const Callbacks = new Map<number, ProviderObject>();
 
 /**
  * Register a provider with the given handle.
  * Called by APIFactoryService when an extension calls register*Provider().
  */
 export function Register(Handle: number, Provider: ProviderObject): void {
-	Callbacks.set(Handle, Provider;
+	Callbacks.set(Handle, Provider);
 }
 
 /**
@@ -38,7 +38,7 @@ export function Register(Handle: number, Provider: ProviderObject): void {
  * Called by the dispose() function returned to the extension.
  */
 export function Unregister(Handle: number): void {
-	Callbacks.delete(Handle;
+	Callbacks.delete(Handle);
 }
 
 /**
@@ -46,14 +46,14 @@ export function Unregister(Handle: number): void {
  * Called by GRPCServerService when Mountain invokes a provider.
  */
 export function Get(Handle: number): ProviderObject | undefined {
-	const Provider = Callbacks.get(Handle;
+	const Provider = Callbacks.get(Handle);
 
 	if (process.env.Trace) {
 		CocoonDevLog(
 			"registry",
 
 			`[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`,
-		;
+		);
 	}
 
 	return Provider;
@@ -72,7 +72,7 @@ let NextHandle = 10000;
 export function RegisterAutoHandle(Provider: ProviderObject): number {
 	const Handle = NextHandle++;
 
-	Callbacks.set(Handle, Provider;
+	Callbacks.set(Handle, Provider);
 
 	return Handle;
 }
@@ -97,14 +97,14 @@ export function NextProviderHandle(): number {
 }
 
 /** Command registry - maps command IDs to callbacks. */
-const Commands = new Map<string, Function>(;
+const Commands = new Map<string, Function>();
 
 /**
  * Register a command callback.
  * Called by the vscode API shim when extensions call commands.registerCommand().
  */
 export function RegisterCommand(CommandId: string, Callback: Function): void {
-	Commands.set(CommandId, Callback;
+	Commands.set(CommandId, Callback);
 }
 
 /**
@@ -114,16 +114,16 @@ export function RegisterCommand(CommandId: string, Callback: Function): void {
  * Cocoon-local-vs-Mountain-remote split observable.
  */
 export function HasCommand(CommandId: string): boolean {
-	return Commands.has(CommandId;
+	return Commands.has(CommandId);
 }
 
 /**
  * Execute a registered command by ID.
  */
 export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
-	const Handler = Commands.get(CommandId;
+	const Handler = Commands.get(CommandId);
 
-	if (Handler) return Handler(...Args;
+	if (Handler) return Handler(...Args);
 
 	return undefined;
 }
@@ -133,14 +133,14 @@ export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
  * extensions from `vscode.commands.registerCommand(...)`.
  */
 export function UnregisterCommand(CommandId: string): void {
-	Commands.delete(CommandId;
+	Commands.delete(CommandId);
 }
 
 /**
  * Return all currently registered command IDs.
  */
 export function ListCommands(): readonly string[] {
-	return Array.from(Commands.keys();
+	return Array.from(Commands.keys());
 }
 
 /**

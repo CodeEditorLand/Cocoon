@@ -167,7 +167,7 @@ export class MessageService extends /* Effect.Service */(
 				new Map<string, MessageHandler>(),
 
 				(error) => new Error(`Failed to create handlers map: ${error}`),
-			;
+			);
 
 			/**
 			 * Validate a message structure
@@ -183,7 +183,7 @@ export class MessageService extends /* Effect.Service */(
 						Array.isArray(Message)
 					) {
 						throw new Error("Message must be an object"),
-						;
+						))))))))))));
 					}
 
 					const Msg = Message as Record<string, unknown>;

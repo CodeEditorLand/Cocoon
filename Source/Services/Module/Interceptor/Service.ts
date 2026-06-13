@@ -57,19 +57,19 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			"service",
 
 			"[ModuleInterceptorService] Initializing module interceptor",
-		;
+		);
 
-		this.config = this.loadDefaultConfig(;
+		this.config = this.loadDefaultConfig();
 
-		this.moduleCache = new Map(;
+		this.moduleCache = new Map();
 
-		this.securitySandbox = this.createSecuritySandbox(;
+		this.securitySandbox = this.createSecuritySandbox();
 
 		CocoonDevLog(
 			"service",
 
 			"[ModuleInterceptorService] Module interceptor initialized",
-		;
+		);
 	}
 
 	/**
@@ -119,22 +119,22 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 	 * Create security sandbox with safe functions
 	 */
 	private createSecuritySandbox(): Map<string, Function> {
-		const sandbox = new Map<string, Function>(;
+		const sandbox = new Map<string, Function>();
 
 		// Safe JavaScript globals
-		sandbox.set("console.log", console.log.bind(console);
+		sandbox.set("console.log", console.log.bind(console));
 
-		sandbox.set("console.error", console.error.bind(console);
+		sandbox.set("console.error", console.error.bind(console));
 
-		sandbox.set("console.warn", console.warn.bind(console);
+		sandbox.set("console.warn", console.warn.bind(console));
 
-		sandbox.set("setTimeout", setTimeout.bind(global);
+		sandbox.set("setTimeout", setTimeout.bind(global));
 
-		sandbox.set("setInterval", setInterval.bind(global);
+		sandbox.set("setInterval", setInterval.bind(global));
 
-		sandbox.set("clearTimeout", clearTimeout.bind(global);
+		sandbox.set("clearTimeout", clearTimeout.bind(global));
 
-		sandbox.set("clearInterval", clearInterval.bind(global);
+		sandbox.set("clearInterval", clearInterval.bind(global));
 
 		// Safe utility functions
 		sandbox.set("JSON.parse", JSON.parse;

@@ -52,7 +52,7 @@ export const CreateStatusBarItem = (
 
 		await Logger.Info(
 			`[WindowService] Creating status bar item with id '${ItemId}'`,
-		;
+		);
 
 		// Track status bar item state locally
 		const State = {
@@ -76,7 +76,7 @@ export const CreateStatusBarItem = (
 			id: ItemId,
 			text: "",
 			tooltip: undefined,
-		};
+		});
 
 		// Return a status bar item proxy synchronising mutations to Mountain
 		return {
@@ -104,7 +104,7 @@ export const CreateStatusBarItem = (
 				MountainClient.sendNotification("setStatusBarText", {
 					itemId: ItemId,
 					text: Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			get tooltip() {
 				return State.tooltip;
@@ -137,7 +137,7 @@ export const CreateStatusBarItem = (
 					itemId: ItemId,
 					text: State.text,
 					visible: true,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			hide(): void {
 				State.isVisible = false;
@@ -146,14 +146,14 @@ export const CreateStatusBarItem = (
 					itemId: ItemId,
 					text: State.text,
 					visible: false,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			dispose(): void {
 				State.isVisible = false;
 
 				MountainClient.sendNotification("disposeStatusBarItem", {
 					itemId: ItemId,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			accessibilityInformation: undefined,
 		} as VSCode.StatusBarItem;

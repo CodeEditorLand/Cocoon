@@ -17,11 +17,11 @@ const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 
-		Context.Emitter.on(EventName, Listener;
+		Context.Emitter.on(EventName, Listener);
 
 		return {
 			dispose: () => {
-				Context.Emitter.off(EventName, Listener;
+				Context.Emitter.off(EventName, Listener);
 			},
 		};
 	};
@@ -44,12 +44,12 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 
 	Anchor.__dapTrackerInstalled = true;
 
-	Anchor.__dapAdapters ??= new Map(;
+	Anchor.__dapAdapters ??= new Map();
 
 	const ResolveFactory = (DebugType: string): unknown => {
 		const FactoryKey = `__debugAdapterFactory:${DebugType}`;
 
-		return (Context.ExtensionRegistry as any)?.get(FactoryKey;
+		return (Context.ExtensionRegistry as any)?.get(FactoryKey);
 	};
 
 	Context.Emitter.on("debug.didStartSession", (Session: any) => {
@@ -59,7 +59,7 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 
 		if (!SessionId || !DebugType) return;
 
-		const Factory = ResolveFactory(String(DebugType);
+		const Factory = ResolveFactory(String(DebugType));
 
 		if (!Factory) return;
 
@@ -68,7 +68,7 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 				Session,
 
 				undefined,
-			;
+			);
 
 			const Resolve = (Value: any) => {
 				const Impl = Value?.implementation ?? Value;
@@ -80,32 +80,32 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 						Context.SendToMountain("debug.dap-response", {
 							sessionId: SessionId,
 							message: Message,
-						}).catch(() => {};
-					};
+						}).catch(() => {});
+					});
 				} catch {
 					/* adapter has no event subscription support */
 				}
 
-				Anchor.__dapAdapters!.set(String(SessionId), Impl;
+				Anchor.__dapAdapters!.set(String(SessionId), Impl);
 			};
 
 			if (Descriptor && typeof (Descriptor as any).then === "function") {
-				(Descriptor as Promise<unknown>).then(Resolve, () => {};
+				(Descriptor as Promise<unknown>).then(Resolve, () => {});
 			} else {
-				Resolve(Descriptor;
+				Resolve(Descriptor);
 			}
 		} catch {
 			/* factory rejected - leave session adapter-less, Mountain
 			 * surfaces the error via the SendCommand return value */
 		}
-	};
+	});
 
 	Context.Emitter.on("debug.didTerminateSession", (Session: any) => {
 		const SessionId = Session?.id ?? Session?.sessionId;
 
 		if (!SessionId) return;
 
-		const Adapter = Anchor.__dapAdapters!.get(String(SessionId);
+		const Adapter = Anchor.__dapAdapters!.get(String(SessionId));
 
 		try {
 			Adapter?.dispose?.(;

@@ -49,10 +49,10 @@ export default class VSBuffer {
 		if (Capacity > MAX_MESSAGE_SIZE) {
 			throw new Error(
 				`Cannot allocate buffer larger than ${MAX_MESSAGE_SIZE} bytes: ${Capacity}`,
-			;
+			);
 		}
 
-		return new VSBuffer(new Uint8Array(Capacity), 0;
+		return new VSBuffer(new Uint8Array(Capacity), 0);
 	}
 
 	/**
@@ -64,10 +64,10 @@ export default class VSBuffer {
 	 */
 	public static Wrap(Buffer: Uint8Array): VSBuffer {
 		if (!Buffer) {
-			throw new Error("Cannot wrap null or undefined buffer";
+			throw new Error("Cannot wrap null or undefined buffer");
 		}
 
-		return new VSBuffer(Buffer;
+		return new VSBuffer(Buffer);
 	}
 
 	/**
@@ -83,12 +83,12 @@ export default class VSBuffer {
 		_Encoding: BufferEncoding = "utf-8",
 	): VSBuffer {
 		if (String === null || String === undefined) {
-			return new VSBuffer(new Uint8Array(0);
+			return new VSBuffer(new Uint8Array(0));
 		}
 
-		const Buffer = new TextEncoder().encode(String;
+		const Buffer = new TextEncoder().encode(String);
 
-		return new VSBuffer(Buffer;
+		return new VSBuffer(Buffer);
 	}
 
 	/**
@@ -99,10 +99,10 @@ export default class VSBuffer {
 	 */
 	public static FromBuffer(Buffer: Buffer): VSBuffer {
 		if (!Buffer) {
-			throw new Error("Cannot convert null or undefined buffer";
+			throw new Error("Cannot convert null or undefined buffer");
 		}
 
-		return new VSBuffer(new Uint8Array(Buffer);
+		return new VSBuffer(new Uint8Array(Buffer));
 	}
 
 	/**
@@ -113,22 +113,22 @@ export default class VSBuffer {
 	 */
 	public static Concat(Buffers: VSBuffer[]): VSBuffer {
 		if (!Buffers || Buffers.length === 0) {
-			return new VSBuffer(new Uint8Array(0);
+			return new VSBuffer(new Uint8Array(0));
 		}
 
 		const TotalLength = Buffers.reduce(
 			(Sum, Buffer) => Sum + Buffer.length,
 
 			0,
-		;
+		);
 
 		if (TotalLength > MAX_MESSAGE_SIZE) {
 			throw new Error(
 				`Concatenated buffer size ${TotalLength} exceeds maximum ${MAX_MESSAGE_SIZE}`,
-			;
+			);
 		}
 
-		const Result = new Uint8Array(TotalLength;
+		const Result = new Uint8Array(TotalLength);
 
 		let Offset = 0;
 

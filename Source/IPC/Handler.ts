@@ -146,11 +146,11 @@ export class IPCHandler {
 	private activeRequestCount: number;
 
 	constructor(logger: Logger, config?: Partial<HandlerConfig>) {
-		this.handlers = new Map(;
+		this.handlers = new Map();
 
-		this.pendingRequests = new Map(;
+		this.pendingRequests = new Map();
 
-		this.handlerStats = new Map(;
+		this.handlerStats = new Map();
 
 		this.logger = logger;
 
@@ -166,7 +166,7 @@ export class IPCHandler {
 			maxConcurrentRequests: config?.maxConcurrentRequests ?? 100,
 		};
 
-		this.logger.info("IPCHandler initialized", config;
+		this.logger.info("IPCHandler initialized", config);
 	}
 
 	/**
@@ -186,17 +186,17 @@ export class IPCHandler {
 	): Promise<Result<void, Error>> {
 		try {
 			if (!method || method.trim().length === 0) {
-				return Result.Err(new Error("Method name cannot be empty");
+				return Result.Err(new Error("Method name cannot be empty"));
 			}
 
 			if (typeof handler !== "function") {
-				return Result.Err(new Error("Handler must be a function");
+				return Result.Err(new Error("Handler must be a function"));
 			}
 
 			if (this.handlers.has(method)) {
 				const warning = `Handler for method '${method}' already exists. Overwriting.`;
 
-				this.logger.warn(warning;
+				this.logger.warn(warning);
 			}
 
 			const registration: HandlerRegistration = {
@@ -217,27 +217,27 @@ export class IPCHandler {
 					failedCalls: 0,
 					averageLatency: 0,
 					lastCalled: 0,
-				};
+				});
 			}
 
-			this.handlers.set(method, registration;
+			this.handlers.set(method, registration);
 
 			this.logger.info(
 				`Handler registered successfully for method: ${method}`,
 
 				{ description: options?.description },
-			;
+			);
 
-			return Result.Ok(undefined;
+			return Result.Ok(undefined);
 		} catch (error) {
 			const err =
-				error instanceof Error ? error : new Error(String(error);
+				error instanceof Error ? error : new Error(String(error));
 
 			this.logger.error(
 				`Failed to register handler for method: ${method}`,
 
 				err,
-			;
+			);
 
 			return Result.Err(err;
 		}

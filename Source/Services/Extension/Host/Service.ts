@@ -55,7 +55,7 @@ export class ExtensionHostService implements IExtensionHostService {
 	readonly _serviceBrand: undefined;
 
 	// Extensions registry
-	private activatedExtensions: Map<string, ActivatedExtension> = new Map(;
+	private activatedExtensions: Map<string, ActivatedExtension> = new Map();
 
 	constructor(
 		private moduleInterceptor: IModuleInterceptorService,
@@ -79,17 +79,17 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`,
-		;
+		);
 
 		try {
-			const startTime = Date.now(;
+			const startTime = Date.now();
 
 			// 1. Prepare API instance for this extension
-			const vscodeAPI = this.apiFactory.createAPI(;
+			const vscodeAPI = this.apiFactory.createAPI();
 
 			// 2. Register with module interceptor
 			// When the extension requires 'vscode', it gets our proxy
-			this.moduleInterceptor.registerAPI(extensionId, vscodeAPI;
+			this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
 
 			// 3. Mock extension description (In real app, fetch from Registry)
 			const extension: IExtensionDescription = {
@@ -103,17 +103,17 @@ export class ExtensionHostService implements IExtensionHostService {
 			};
 
 			// 4. Load the extension module
-			const moduleLoadStart = Date.now(;
+			const moduleLoadStart = Date.now();
 
-			const extensionModule = await this._loadExtensionModule(extension;
+			const extensionModule = await this._loadExtensionModule(extension);
 
 			const codeLoadingTime = Date.now() - moduleLoadStart;
 
 			// 5. Activate (context kept so deactivation can dispose
 			// everything the extension pushed onto `subscriptions`)
-			const activateCallStart = Date.now(;
+			const activateCallStart = Date.now();
 
-			const context = this._createExtensionContext(extension;
+			const context = this._createExtensionContext(extension);
 
 			const exports = await this._callActivate(
 				extensionModule,
@@ -121,7 +121,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				extension,
 
 				context,
-			;
+			);
 
 			const activateCallTime = Date.now() - activateCallStart;
 
@@ -135,13 +135,13 @@ export class ExtensionHostService implements IExtensionHostService {
 				},
 				exports,
 				context,
-			};
+			});
 
 			CocoonDevLog(
 				"service",
 
 				`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"service",
@@ -149,7 +149,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				`[ExtensionHost] Failed to activate ${extensionId}:`,
 
 				error,
-			;
+			);
 
 			throw error;
 		}

@@ -17,11 +17,11 @@ const EventSubscriber =
 	(Context: HandlerContext, EventName: string) =>
 	(Listener: (...Arguments: any[]) => any) => {
 
-		Context.Emitter.on(EventName, Listener;
+		Context.Emitter.on(EventName, Listener);
 
 		return {
 			dispose: () => {
-				Context.Emitter.off(EventName, Listener;
+				Context.Emitter.off(EventName, Listener);
 			},
 		};
 	};
@@ -37,7 +37,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 			Options?: { supportsMultipleAccounts?: boolean },
 		) => {
-			const Handle = NextProviderHandle(;
+			const Handle = NextProviderHandle();
 
 			Context.SendToMountain("register_authentication_provider", {
 				handle: Handle,
@@ -46,12 +46,12 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 				supportsMultipleAccounts:
 					Options?.supportsMultipleAccounts ?? false,
 				extensionId: "",
-			}).catch(() => {};
+			}).catch(() => {});
 
 			// Stash so ExtHostAuthentication$getSession can call getSessions().
 			const ProviderKey = `__authProvider:${ProviderId}`;
 
-			Context.ExtensionRegistry.set(ProviderKey, Provider;
+			Context.ExtensionRegistry.set(ProviderKey, Provider);
 
 			// `AuthenticationProvider.onDidChangeSessions` fires with
 			// `AuthenticationProviderAuthenticationSessionsChangeEvent`
@@ -86,11 +86,11 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 									? Event.changed
 									: [],
-							};
+							});
 						} catch {
 							/* listener threw - never break the provider */
 						}
-					};
+					});
 
 					if (Sub && typeof Sub.dispose === "function") {
 						SessionChangeDisposable = Sub;
@@ -107,12 +107,12 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 			return {
 				dispose: () => {
 					try {
-						SessionChangeDisposable?.dispose?.(;
+						SessionChangeDisposable?.dispose?.();
 					} catch {
 						/* swallow */
 					}
 
-					Context.ExtensionRegistry.delete(ProviderKey;
+					Context.ExtensionRegistry.delete(ProviderKey);
 
 					Context.SendToMountain(
 						"unregister_authentication_provider",
@@ -120,7 +120,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 						{
 							handle: Handle,
 						},
-					).catch(() => {};
+					).catch(() => {});
 				},
 			};
 		},
@@ -166,7 +166,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 				let Sessions: unknown[] = [];
 
 				try {
-					const Raw = await Provider.getSessions(ScopeList;
+					const Raw = await Provider.getSessions(ScopeList);
 
 					Sessions = Array.isArray(Raw) ? Raw : [];
 				} catch {
@@ -177,7 +177,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					// Providers with a 0-arg getSessions ignore the scope
 					// argument; re-query unscoped and filter locally.
 					try {
-						const Raw = await Provider.getSessions(;
+						const Raw = await Provider.getSessions();
 
 						Sessions = Array.isArray(Raw) ? Raw : [];
 					} catch {
@@ -198,7 +198,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 
 								return ScopeList.every((Scope) =>
 									SessionScopes.includes(Scope),
-								;
+								);
 							};
 
 				if (Matching) return Matching;

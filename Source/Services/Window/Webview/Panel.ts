@@ -85,7 +85,7 @@ export const CreateWebviewPanel = (
 
 		await Logger.Info(
 			`[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`,
-		;
+		);
 
 		// Parse show options
 		const ViewColumn =
@@ -112,7 +112,7 @@ export const CreateWebviewPanel = (
 			: undefined;
 
 		// Convert ViewColumn to DTO format
-		const ViewColumnDTO = ViewColumnFromAPI(ViewColumn;
+		const ViewColumnDTO = ViewColumnFromAPI(ViewColumn);
 
 		// Register the panel with Mountain
 		await GRPCClient.createWebviewPanel({
@@ -126,20 +126,20 @@ export const CreateWebviewPanel = (
 			localResourceRoots: Options?.localResourceRoots?.map((Uri) =>
 				Uri.toString(),
 			),
-		};
+		});
 
 		// Build IPC proxy for webview <-> extension message passing
 		const IPCProxy: WebviewIPC = {
 			SendNotification: (Method: string, Params: unknown[]) => {
 				void Logger.Debug(
 					`[WindowService] Webview notification: ${Method}`,
-				).catch(() => {};
+				).catch(() => {});
 
 				return MountainClient.sendNotification("webview.postMessage", {
 					panelId: PanelId,
 					method: Method,
 					params: Params,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			SendRequest: <T>(_Method: string, _Params: unknown[]): Promise<T> =>
 				// Webview sendRequest is fire-and-forget from extension side;
@@ -165,7 +165,7 @@ export const CreateWebviewPanel = (
 				// Dispose callback: notify Mountain to destroy the webview panel
 				MountainClient.sendNotification("webview.dispose", {
 					panelId: PanelId,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 
 			ViewType,
@@ -175,7 +175,7 @@ export const CreateWebviewPanel = (
 			PanelOptionsDTO ?? {},
 
 			ViewColumn,
-		;
+		);
 
 		return WebviewPanel;
 	};

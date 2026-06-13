@@ -26,11 +26,11 @@ const UriKey = (Value: unknown): string => {
 
 	if (typeof Value === "string") return Value;
 
-	const Hydrated = StockToUri(Value;
+	const Hydrated = StockToUri(Value);
 
-	if (Hydrated) return Hydrated.toString(;
+	if (Hydrated) return Hydrated.toString();
 
-	const Rendered = String(Value;
+	const Rendered = String(Value);
 
 	if (Rendered && Rendered !== "[object Object]") return Rendered;
 
@@ -58,7 +58,7 @@ const UriKey = (Value: unknown): string => {
 // Module-level diagnostics store: owner → (uriKey → vscode.Diagnostic[]).
 // Each DiagnosticCollection.set() mirrors into this store so getDiagnostics()
 // can return real data without an async Mountain round-trip (T2.6 / C5).
-const _AllDiagnostics = new Map<string, Map<string, unknown[]>>(;
+const _AllDiagnostics = new Map<string, Map<string, unknown[]>>();
 
 /**
  * Helper: register a language provider with auto-handle,
@@ -103,7 +103,7 @@ const RegisterProvider = (
 	let Handle: number;
 
 	try {
-		Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider;
+		Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
 	} catch {
 		// RegisterAutoHandle should be infallible, but a future
 		// implementation could throw on registry-full or duplicate
@@ -132,7 +132,7 @@ const RegisterProvider = (
 	const Language =
 		typeof Selector === "string"
 			? Selector
-			: (SelectorArray[0]?.language ?? "*";
+			: (SelectorArray[0]?.language ?? "*");
 
 	Context.SendToMountain(MethodName, {
 		handle: Handle,
@@ -140,12 +140,12 @@ const RegisterProvider = (
 		documentSelector: SelectorArray,
 		extensionId: "",
 		...(Extra ?? {}),
-	}).catch(() => {};
+	}).catch(() => {});
 
 	return {
 		dispose: () => {
 			try {
-				LanguageProviderRegistry.Unregister(Handle;
+				LanguageProviderRegistry.Unregister(Handle);
 			} catch {
 				/* registry already cleared on shutdown - swallow */
 			}
@@ -491,7 +491,7 @@ const CreateLanguagesNamespace = (
 			} else {
 				TriggerCharacters = Metadata.filter(
 					(M): M is string => typeof M === "string",
-				;
+				);
 			}
 
 			return RegisterProvider(
@@ -509,7 +509,7 @@ const CreateLanguagesNamespace = (
 					triggerCharacters: TriggerCharacters,
 					retriggerCharacters: RetriggerCharacters,
 				},
-			;
+			);
 		},
 		registerDocumentHighlightProvider: (Selector: any, Provider: any) =>
 			RegisterProvider(
@@ -627,7 +627,7 @@ const CreateLanguagesNamespace = (
 		registerWorkspaceSymbolProvider: (Provider: any) => {
 			process.stdout.write(
 				"[LandFix:LangNs] registerWorkspaceSymbolProvider called\n",
-			;
+			);
 
 			return RegisterProvider(
 				Context,
@@ -639,12 +639,12 @@ const CreateLanguagesNamespace = (
 				"*",
 
 				Provider,
-			;
+			);
 		},
 		createDiagnosticCollection: (Name?: string) => {
 			const Owner = Name ?? "default";
 
-			const Store = new Map<string, unknown[]>(;
+			const Store = new Map<string, unknown[]>();
 
 			// Normalise a `vscode.Diagnostic` (or LSP-shaped diagnostic, or
 			// debug-string-severity diagnostic) to Mountain's

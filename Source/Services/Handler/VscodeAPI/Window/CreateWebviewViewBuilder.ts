@@ -53,9 +53,9 @@ export default (
 	// the pane.
 	let CurrentVisible = true;
 
-	const VisibilityListeners = new Set<(visible: boolean) => void>(;
+	const VisibilityListeners = new Set<(visible: boolean) => void>();
 
-	const DisposeListeners = new Set<() => void>(;
+	const DisposeListeners = new Set<() => void>();
 
 	// Per-resolve subscriptions to the Cocoon-side Emitter
 	// channels populated by `NotificationHandler.ts:
@@ -73,7 +73,7 @@ export default (
 
 		for (const L of VisibilityListeners) {
 			try {
-				L(!!Visible;
+				L(!!Visible);
 			} catch (_e) {
 				/* swallow */
 			}
@@ -83,24 +83,24 @@ export default (
 	const DisposeForward = () => {
 		for (const L of DisposeListeners) {
 			try {
-				L(;
+				L();
 			} catch (_e) {
 				/* swallow */
 			}
 		}
 
-		DisposeListeners.clear(;
+		DisposeListeners.clear();
 
-		VisibilityListeners.clear(;
+		VisibilityListeners.clear();
 
-		Context.Emitter?.off?.(ChannelVisibility, VisibilityForward;
+		Context.Emitter?.off?.(ChannelVisibility, VisibilityForward);
 
-		Context.Emitter?.off?.(ChannelDispose, DisposeForward;
+		Context.Emitter?.off?.(ChannelDispose, DisposeForward);
 	};
 
-	Context.Emitter?.on?.(ChannelVisibility, VisibilityForward;
+	Context.Emitter?.on?.(ChannelVisibility, VisibilityForward);
 
-	Context.Emitter?.on?.(ChannelDispose, DisposeForward;
+	Context.Emitter?.on?.(ChannelDispose, DisposeForward);
 
 	let CurrentTitle: string | undefined;
 
@@ -115,7 +115,7 @@ export default (
 			title: CurrentTitle ?? null,
 			description: CurrentDescription ?? null,
 			badge: CurrentBadge ?? null,
-		}).catch(() => {};
+		}).catch(() => {});
 	};
 
 	const View: any = {
@@ -158,7 +158,7 @@ export default (
 		set title(Value: string | undefined) {
 			CurrentTitle = Value;
 
-			FireMetadataUpdate(;
+			FireMetadataUpdate();
 		},
 
 		get description() {
@@ -168,7 +168,7 @@ export default (
 		set description(Value: string | undefined) {
 			CurrentDescription = Value;
 
-			FireMetadataUpdate(;
+			FireMetadataUpdate();
 		},
 
 		get badge() {

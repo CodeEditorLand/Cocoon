@@ -202,14 +202,14 @@ export const DEFAULT_RESTART_DELAY = 1000;
 /**
  * Process registry for tracking managed processes
  */
-const ProcessRegistry = new Map<number, ProcessInfo>(;
+const ProcessRegistry = new Map<number, ProcessInfo>();
 
 /**
  * Check if child_process module is available
  */
 function IsChildProcessAvailable(): boolean {
 	try {
-		return typeof require === "function" && require("child_process";
+		return typeof require === "function" && require("child_process");
 	} catch {
 		return false;
 	}
@@ -224,7 +224,7 @@ function GetChildProcessModule(): any {
 	}
 
 	try {
-		return require("child_process";
+		return require("child_process");
 	} catch {
 		return null;
 	}
@@ -238,7 +238,7 @@ export function ValidateCommand(command: string): boolean {
 		return false;
 	}
 
-	const trimmed = command.trim(;
+	const trimmed = command.trim();
 
 	if (trimmed === "") {
 		return false;
@@ -320,21 +320,21 @@ export async function SpawnProcess(
 ): Promise<ProcessInfo | null> {
 	// Security validation
 	if (!ValidateCommand(command)) {
-		console.error("[Process] Invalid command:", command;
+		console.error("[Process] Invalid command:", command);
 
 		return null;
 	}
 
 	if (!ValidateArgs(args)) {
-		console.error("[Process] Invalid arguments:", args;
+		console.error("[Process] Invalid arguments:", args);
 
 		return null;
 	}
 
-	const childProcess = GetChildProcessModule(;
+	const childProcess = GetChildProcessModule();
 
 	if (!childProcess) {
-		console.error("[Process] child_process module not available";
+		console.error("[Process] child_process module not available");
 
 		return null;
 	}
@@ -354,7 +354,7 @@ export async function SpawnProcess(
 			stdio: ["pipe", "pipe", "pipe"],
 		};
 
-		const childProc = childProcess.spawn(command, args, spawnOptions;
+		const childProc = childProcess.spawn(command, args, spawnOptions);
 
 		const processInfo: ProcessInfo = {
 			pid: childProc.pid,
@@ -379,7 +379,7 @@ export async function SpawnProcess(
 		};
 
 		// Register process
-		ProcessRegistry.set(childProc.pid, processInfo;
+		ProcessRegistry.set(childProc.pid, processInfo);
 
 		// Handle exit
 		childProc.on(
@@ -394,15 +394,15 @@ export async function SpawnProcess(
 
 				console.log(
 					`[Process] Process ${childProc.pid} exited: code=${code}, signal=${signal}`,
-				;
+				);
 			},
-		;
+		);
 
 		// Handle error
 		childProc.on("error", (error: Error) => {
 			processInfo.status = "error";
 
-			console.error(`[Process] Process ${childProc.pid} error:`, error;
+			console.error(`[Process] Process ${childProc.pid} error:`, error);
 		};
 
 		console.log(

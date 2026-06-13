@@ -200,7 +200,7 @@ let _userAgent: string | undefined = undefined;
  */
 function InitializeDetection(): void {
 
-	const nodeProcess: INodeProcess | undefined = GetNodeProcess(;
+	const nodeProcess: INodeProcess | undefined = GetNodeProcess();
 
 	// Native environment detection
 	if (typeof nodeProcess === "object") {
@@ -212,7 +212,7 @@ function InitializeDetection(): void {
 
 		_isElectron = typeof nodeProcess?.versions?.electron === "string";
 
-		_isCI = CheckCIEnvironment(nodeProcess.env;
+		_isCI = CheckCIEnvironment(nodeProcess.env);
 
 		// Determine platform number
 		if (_isMacintosh) {
@@ -231,10 +231,10 @@ function InitializeDetection(): void {
 				: OperatingSystem.Linux;
 
 		// Detect architecture
-		_architecture = DetectArchitecture(nodeProcess.arch;
+		_architecture = DetectArchitecture(nodeProcess.arch);
 
 		// Detect locale and language
-		DetectLocaleAndLanguage(nodeProcess.env;
+		DetectLocaleAndLanguage(nodeProcess.env);
 	}
 
 	// Web environment detection
@@ -270,9 +270,9 @@ function InitializeDetection(): void {
 
 		_locale = navigator.language || DEFAULT_LOCALE;
 
-		_architecture = DetectWebArchitecture(;
+		_architecture = DetectWebArchitecture();
 	} else {
-		process.stderr.write("[OS] Unable to resolve platform\n";
+		process.stderr.write("[OS] Unable to resolve platform\n");
 	}
 }
 
@@ -311,7 +311,7 @@ function CheckCIEnvironment(env: IProcessEnvironment): boolean {
 		env["JENKINS_URL"] ||
 		env["TRAVIS"] ||
 		env["CIRCLECI"]
-	;
+	);
 }
 
 /**
@@ -346,7 +346,7 @@ function DetectArchitecture(arch: string): OSArchitecture {
 function DetectWebArchitecture(): OSArchitecture {
 	// In Cocoon (Node.js) use process.arch directly - fastest, no API call.
 	if (typeof process !== "undefined" && process.arch) {
-		return DetectArchitecture(process.arch;
+		return DetectArchitecture(process.arch);
 	}
 
 	// Browser fallback: navigator.userAgentData is async-only; return
@@ -363,7 +363,7 @@ function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
 
 	if (rawNlsConfig) {
 		try {
-			const nlsConfig = JSON.parse(rawNlsConfig;
+			const nlsConfig = JSON.parse(rawNlsConfig);
 
 			_locale = nlsConfig.userLocale || DEFAULT_LOCALE;
 
@@ -406,13 +406,13 @@ function DetectLittleEndian(): boolean {
 
 	_isLittleEndianComputed = true;
 
-	const test = new Uint8Array(2;
+	const test = new Uint8Array(2);
 
 	test[0] = 1;
 
 	test[1] = 2;
 
-	const view = new Uint16Array(test.buffer;
+	const view = new Uint16Array(test.buffer);
 
 	_isLittleEndian = view[0] === (2 << 8) + 1;
 
@@ -422,9 +422,9 @@ function DetectLittleEndian(): boolean {
 /**
  * Initialize detection on module load
  */
-InitializeDetection(;
+InitializeDetection();
 
-_isLittleEndian = DetectLittleEndian(;
+_isLittleEndian = DetectLittleEndian();
 
 /**
  * Get platform number

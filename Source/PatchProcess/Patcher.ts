@@ -108,7 +108,7 @@ class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
 
 		readonly Cause?: unknown;
 	}) {
-		super(Properties;
+		super(Properties);
 
 		this.message = `Failed to patch Node.js module loader: ${this.Context}`;
 	}
@@ -131,11 +131,11 @@ export class PatcherService extends /* Effect.Service */(
 						{ Error },
 					).then(() => false),
 				),
-			;
+			);
 
 			const SecurityPolicy = await Config.string("SecurityPolicy").pipe(
 				Effect.catchTag("MissingConfig", () =>
-					return ("default"),
+					)))))))))))return ("default"),
 				),
 
 				Config.map((Value) => ParseSecurityPolicy(Value)),

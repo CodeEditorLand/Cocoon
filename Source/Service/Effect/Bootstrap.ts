@@ -79,28 +79,28 @@ const ProbeTcp = (
 			Settled = true;
 
 			try {
-				Socket.destroy(;
+				Socket.destroy();
 			} catch {}
 
-			resolve(v;
+			resolve(v);
 		};
 
-		const Socket = createConnection({ host: Host, port: Port };
+		const Socket = createConnection({ host: Host, port: Port });
 
-		const Timer = setTimeout(() => settle(false), TimeoutMs;
+		const Timer = setTimeout(() => settle(false), TimeoutMs);
 
 		Socket.once("connect", () => {
-			clearTimeout(Timer;
+			clearTimeout(Timer);
 
-			settle(true;
-		};
+			settle(true);
+		});
 
 		Socket.once("error", () => {
-			clearTimeout(Timer;
+			clearTimeout(Timer);
 
-			settle(false;
-		};
-	};
+			settle(false);
+		});
+	});
 
 // ============================================================================
 // TUNING
@@ -123,13 +123,13 @@ const MountainConnectMaxAttempts = 5;
 // ============================================================================
 
 const stage1_Environment = async (): Promise<StageResult> => {
-	const start = Date.now(;
+	const start = Date.now();
 
 	CocoonDevLog(
 		"bootstrap-stage",
 
 		"[Bootstrap] stage=Environment event=start",
-	;
+	);
 
 	const nodeVersion = process.version;
 

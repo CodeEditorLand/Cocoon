@@ -11,6 +11,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapLanguagesNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("languages", Concrete;
+	WrapNamespaceWithHeuristics("languages", Concrete);
 
 export default WrapLanguagesNamespace;

@@ -47,7 +47,7 @@ export class WebviewImplementation implements Webview {
 
 	private _options: WebviewOptions;
 
-	private readonly OnDidReceiveMessageEmitter = CreateEventStream<any>(;
+	private readonly OnDidReceiveMessageEmitter = CreateEventStream<any>();
 
 	public readonly onDidReceiveMessage: Event<any>;
 
@@ -78,7 +78,7 @@ export class WebviewImplementation implements Webview {
 			this.Handle,
 
 			Value,
-		]).catch(() => {};
+		]).catch(() => {});
 	}
 
 	public get options(): WebviewOptions {
@@ -94,13 +94,13 @@ export class WebviewImplementation implements Webview {
 			this.Extension,
 
 			NewOptions,
-		;
+		);
 
 		void this.IPCService.SendNotification("$setWebviewOptions", [
 			this.Handle,
 
 			OptionsDTO,
-		]).catch(() => {};
+		]).catch(() => {});
 	}
 
 	public get cspSource(): string {
@@ -117,27 +117,27 @@ export class WebviewImplementation implements Webview {
 	}
 
 	public postMessage(Message: any): Promise<boolean> {
-		if (this.IsDisposed) return Promise.resolve(false;
+		if (this.IsDisposed) return Promise.resolve(false);
 
 		return this.IPCService.SendRequest<boolean>("$postMessageToWebview", [
 			this.Handle,
 
 			Message,
-		]).catch(() => false;
+		]).catch(() => false);
 	}
 
 	public asWebviewUri(LocalResource: Uri): Uri {
-		const Authority = this.Extension.identifier.value.toLowerCase(;
+		const Authority = this.Extension.identifier.value.toLowerCase();
 
 		return LocalResource.with({
 			scheme: Schemas.vscodeFileResource,
 			authority: Authority,
-		};
+		});
 	}
 
 	public fireDidReceiveMessage(Message: any): void {
 		if (!this.IsDisposed) {
-			this.OnDidReceiveMessageEmitter.Fire(Message;
+			this.OnDidReceiveMessageEmitter.Fire(Message);
 		}
 	}
 
@@ -145,7 +145,7 @@ export class WebviewImplementation implements Webview {
 		if (!this.IsDisposed) {
 			this.IsDisposed = true;
 
-			this.OnDidReceiveMessageEmitter.Shutdown(;
+			this.OnDidReceiveMessageEmitter.Shutdown();
 		}
 	}
 }

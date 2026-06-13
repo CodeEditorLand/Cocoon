@@ -129,16 +129,16 @@ export class Memento {
 				if (Array.isArray(AllItems)) {
 					const Entries = (AllItems as [string, unknown][]).filter(
 						([K]) => typeof K === "string" && K.startsWith(Prefix),
-					;
+					);
 
 					for (const [K, V] of Entries) {
-						this.Storage.set(K.slice(Prefix.length), V;
+						this.Storage.set(K.slice(Prefix.length), V);
 					}
 				}
 			} catch {
 				// ignore - storage load failure is non-fatal
 			}
-		})(;
+		})();
 	}
 
 	/**
@@ -150,7 +150,7 @@ export class Memento {
 	get<T>(key: string, defaultValue?: T): T | undefined {
 		const Map = this.Storage;
 
-		const Value = Map.get(key;
+		const Value = Map.get(key);
 
 		return Value !== undefined ? (Value as T) : defaultValue;
 	}
@@ -162,7 +162,7 @@ export class Memento {
 	keys(): readonly string[] {
 		const Map = this.Storage;
 
-		return Array.from(Map.keys();
+		return Array.from(Map.keys());
 	}
 
 	/**
@@ -173,7 +173,7 @@ export class Memento {
 	 */
 	async update(key: string, value: unknown): Promise<void> {
 		// lean: direct map mutation
-		this.Storage.set(key, value;
+		this.Storage.set(key, value);
 
 		// Persist to Mountain's storage, namespaced by extension ID.
 		if (this._MountainClient) {
@@ -183,12 +183,12 @@ export class Memento {
 
 					value,
 				])
-				.catch(() => undefined;
+				.catch(() => undefined);
 		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Memento updated: ${this.ExtensionId}.${key}`,
-		;
+		);
 	}
 
 	/**
@@ -211,23 +211,23 @@ export class Memento {
 								(K) =>
 									typeof K === "string" &&
 									K.startsWith(Prefix),
-							;
+							);
 
 						for (const K of Keys) {
 							void this._MountainClient!.sendRequest(
 								"Storage.Set",
 
 								[K, null],
-							).catch(() => undefined;
+							).catch(() => undefined);
 						}
 					}
 				})
-				.catch(() => undefined;
+				.catch(() => undefined);
 		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Memento cleared: ${this.ExtensionId}`,
-		;
+		);
 	}
 }
 
@@ -248,7 +248,7 @@ export class ExtensionSecretStorage {
 
 	private readonly DidChangeListener = new Set<
 		(Event: VSCode.SecretStorageChangeEvent) => unknown
-	>(;
+	>();
 
 	constructor(
 		ExtensionId: string,

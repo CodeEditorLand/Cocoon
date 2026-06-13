@@ -415,24 +415,24 @@ export class ChannelRegistry {
 	RegisterChannel(options: ChannelOptions): void {
 		// Validate channel name
 		if (!options.name) {
-			throw new Error("Channel name cannot be empty";
+			throw new Error("Channel name cannot be empty");
 		}
 
 		if (options.name.length > MAX_CHANNEL_NAME_LENGTH) {
 			throw new Error(
 				`Channel name exceeds maximum length of ${MAX_CHANNEL_NAME_LENGTH}`,
-			;
+			);
 		}
 
 		if (!CHANNEL_NAME_PATTERN.test(options.name)) {
 			throw new Error(
 				"Channel name must contain only alphanumeric characters, hyphens, and underscores",
-			;
+			);
 		}
 
 		// Check for duplicate channel
 		if (this.channels.has(options.name)) {
-			throw new Error(`Channel '${options.name}' is already registered`;
+			throw new Error(`Channel '${options.name}' is already registered`);
 		}
 
 		// Create and register the channel
@@ -490,7 +490,7 @@ export class ChannelRegistry {
 			},
 		};
 
-		this.channels.set(options.name, channel;
+		this.channels.set(options.name, channel);
 
 		this.stats.totalChannels++;
 	}
@@ -501,7 +501,7 @@ export class ChannelRegistry {
 	 * @returns true if channel was unregistered, false if not found
 	 */
 	UnregisterChannel(name: string): boolean {
-		const channel = this.channels.get(name;
+		const channel = this.channels.get(name);
 
 		if (!channel) {
 			return false;
@@ -513,14 +513,14 @@ export class ChannelRegistry {
 		// Clear pending requests for this channel
 		for (const [correlationId, pending] of this.pendingRequests) {
 			if (pending.channel === name) {
-				clearTimeout(pending.timeoutHandle;
+				clearTimeout(pending.timeoutHandle);
 
-				this.pendingRequests.delete(correlationId;
+				this.pendingRequests.delete(correlationId);
 			}
 		}
 
 		// Remove channel
-		this.channels.delete(name;
+		this.channels.delete(name);
 
 		this.stats.totalChannels--;
 
@@ -533,7 +533,7 @@ export class ChannelRegistry {
 	 * @returns Registered channel or undefined if not found
 	 */
 	GetChannel(name: string): RegisteredChannel | undefined {
-		return this.channels.get(name;
+		return this.channels.get(name);
 	}
 
 	/**
@@ -542,7 +542,7 @@ export class ChannelRegistry {
 	 * @returns true if channel exists
 	 */
 	HasChannel(name: string): boolean {
-		return this.channels.has(name;
+		return this.channels.has(name);
 	}
 
 	/**
@@ -550,7 +550,7 @@ export class ChannelRegistry {
 	 * @returns Array of channel names
 	 */
 	GetAllChannelNames(): string[] {
-		return Array.from(this.channels.keys();
+		return Array.from(this.channels.keys());
 	}
 
 	/**
@@ -561,7 +561,7 @@ export class ChannelRegistry {
 		const states: ChannelState[] = [];
 
 		for (const channel of this.channels.values()) {
-			states.push(this.ExtractChannelState(channel);
+			states.push(this.ExtractChannelState(channel));
 		}
 
 		return states;

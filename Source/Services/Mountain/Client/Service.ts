@@ -68,11 +68,11 @@ import {
 } from "../Generated/Vine";
 
 // ESM compatibility
-const __filename = fileURLToPath(import.meta.url;
+const __filename = fileURLToPath(import.meta.url);
 
-const __dirname = dirname(__filename;
+const __dirname = dirname(__filename);
 
-const require = createRequire(import.meta.url;
+const require = createRequire(import.meta.url);
 
 /**
  * Circuit breaker state
@@ -138,7 +138,7 @@ export class MountainClientService implements IMountainClientService {
 	private requestCounter: number = 0;
 
 	private activeRequests: Map<bigint, { method: string; startTime: number }> =
-		new Map(;
+		new Map();
 
 	// Circuit breaker
 	private circuitBreakerState: CircuitBreakerState =
@@ -196,9 +196,9 @@ export class MountainClientService implements IMountainClientService {
 	// Connection metadata
 	private clientVersion: string = "1.0.0";
 
-	private clientId: string = uuidv4(;
+	private clientId: string = uuidv4();
 
-	private sessionId: string = uuidv4(;
+	private sessionId: string = uuidv4();
 
 	constructor() {
 		this._serviceBrand = undefined;
@@ -207,17 +207,17 @@ export class MountainClientService implements IMountainClientService {
 			"mountain-client",
 
 			`[MountainClientService] Initializing Mountain gRPC client (ID: ${this.clientId})`,
-		;
+		);
 
-		this.parseEnvironment(;
+		this.parseEnvironment();
 
 		CocoonDevLog(
 			"mountain-client",
 
 			`[MountainClientService] Configured for ${this.mountainHost}:${this.mountainPort}, Session: ${this.sessionId}`,
-		;
+		);
 
-		this.registerShutdownHandlers(;
+		this.registerShutdownHandlers();
 	}
 
 	/**
@@ -241,14 +241,14 @@ export class MountainClientService implements IMountainClientService {
 
 		this.mountainHost = mountainHost;
 
-		this.mountainPort = parseInt(mountainPort, 10;
+		this.mountainPort = parseInt(mountainPort, 10);
 
 		if (maxRetries) {
-			this.maxRetries = parseInt(maxRetries, 10;
+			this.maxRetries = parseInt(maxRetries, 10);
 		}
 
 		if (healthCheckPeriod) {
-			this.healthCheckPeriod = parseInt(healthCheckPeriod, 10;
+			this.healthCheckPeriod = parseInt(healthCheckPeriod, 10);
 		}
 
 		CocoonDevLog(

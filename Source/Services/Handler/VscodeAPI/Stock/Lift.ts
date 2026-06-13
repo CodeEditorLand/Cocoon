@@ -125,7 +125,7 @@ export function ToUri(Input: unknown): URI | undefined {
 					typeof WithScheme.fragment === "string"
 						? WithScheme.fragment
 						: "",
-			};
+			});
 		} catch {
 			return undefined;
 		}

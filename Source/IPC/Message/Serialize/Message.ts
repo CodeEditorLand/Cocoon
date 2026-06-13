@@ -103,24 +103,24 @@ export default (Message: IMessage): ISerializationResult => {
 		) {
 			CompressionHint.Fast; // Simplified - in real implementation would apply compression
 
-			Warnings.push("Compression support not fully implemented";
+			Warnings.push("Compression support not fully implemented");
 		}
 
 		// Allocate buffer for serialization
-		const Buffer = VSBuffer.Allocate(OriginalSize;
+		const Buffer = VSBuffer.Allocate(OriginalSize);
 
 		let Offset = 0;
 
 		// Write header (Magic + Version + Flags + Reserved)
-		Buffer.setBytes(Offset, MESSAGE_HEADER_MAGIC;
+		Buffer.setBytes(Offset, MESSAGE_HEADER_MAGIC);
 
 		Offset += 3;
 
-		Buffer.setByte(Offset, PROTOCOL_VERSION;
+		Buffer.setByte(Offset, PROTOCOL_VERSION);
 
 		Offset += 1;
 
-		Buffer.setByte(Offset, Flags;
+		Buffer.setByte(Offset, Flags);
 
 		Offset += 1;
 
@@ -137,22 +137,22 @@ export default (Message: IMessage): ISerializationResult => {
 		Offset += 1;
 
 		// Write metadata length
-		Buffer.writeUInt32LE(Offset, MetadataBuffer.length;
+		Buffer.writeUInt32LE(Offset, MetadataBuffer.length);
 
 		Offset += 4;
 
 		// Write metadata
-		Buffer.setBytes(Offset, MetadataBuffer.byteBuffer;
+		Buffer.setBytes(Offset, MetadataBuffer.byteBuffer);
 
 		Offset += MetadataBuffer.length;
 
 		// Write data length
-		Buffer.writeUInt32LE(Offset, DataBuffer.length;
+		Buffer.writeUInt32LE(Offset, DataBuffer.length);
 
 		Offset += 4;
 
 		// Write data
-		Buffer.setBytes(Offset, DataBuffer;
+		Buffer.setBytes(Offset, DataBuffer);
 
 		Offset += DataBuffer.length;
 

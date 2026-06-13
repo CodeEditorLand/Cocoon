@@ -34,13 +34,13 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 				"EnvNs",
 
 				"appRoot empty or non-string, returning ''",
-			;
+			);
 
 			return "";
 		}
 
 		if (!Raw.startsWith("file:")) {
-			LandFixLog.Info("EnvNs", `appRoot already plain path: ${Raw}`;
+			LandFixLog.Info("EnvNs", `appRoot already plain path: ${Raw}`);
 
 			return Raw;
 		}
@@ -48,17 +48,17 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		try {
 			const Normalised = decodeURIComponent(
 				new URL(Raw).pathname,
-			).replace(/\/$/, "";
+			).replace(/\/$/, "");
 
 			LandFixLog.Info(
 				"EnvNs",
 
 				`appRoot normalised file-URL ${Raw} → ${Normalised}`,
-			;
+			);
 
 			return Normalised;
 		} catch (Error: unknown) {
-			const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "";
+			const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
 
 			LandFixLog.Warn(
 				"EnvNs",
@@ -71,7 +71,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 							? Error.message
 							: String(Error),
 				},
-			;
+			);
 
 			return Fallback;
 		}
@@ -87,7 +87,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 				Method,
 
 				Parameters,
-			) as Promise<T> | undefined;
+			) as Promise<T> | undefined);
 		} catch {
 			return undefined;
 		}
@@ -173,12 +173,12 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			// Each branch swallows errors so the extension host never crashes
 			// on an unavailable clipboard subsystem.
 			readText: async (): Promise<string> => {
-				const FromMountain = await Call<string>("Clipboard.Read", [];
+				const FromMountain = await Call<string>("Clipboard.Read", []);
 
 				if (typeof FromMountain === "string") return FromMountain;
 
 				try {
-					const { spawn } = await import("node:child_process";
+					const { spawn } = await import("node:child_process");
 
 					const Candidates =
 						process.platform === "darwin"
@@ -216,7 +216,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 							(Resolve) => {
 								const Child = spawn(Cmd, Args, {
 									stdio: ["ignore", "pipe", "ignore"],
-								};
+								});
 
 								let Out = "";
 
@@ -225,13 +225,13 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 
 									(Chunk: Buffer) =>
 										(Out += Chunk.toString("utf8")),
-								;
+								);
 
-								Child.once("error", () => Resolve(undefined);
+								Child.once("error", () => Resolve(undefined));
 
 								Child.once("close", (Code) =>
 									Resolve(Code === 0 ? Out : undefined),
-								;
+								);
 							},
 						;
 

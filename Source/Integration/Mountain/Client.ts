@@ -36,7 +36,7 @@ export class MountainClient {
 				"mountain-client",
 
 				"[MountainClient] Already initialized",
-			;
+			);
 
 			return;
 		}
@@ -45,10 +45,10 @@ export class MountainClient {
 			"mountain-client",
 
 			"[MountainClient] Initializing Mountain client",
-		;
+		);
 
 		try {
-			await this.clientService.connect(;
+			await this.clientService.connect();
 
 			this.isInitialized = true;
 
@@ -56,7 +56,7 @@ export class MountainClient {
 				"mountain-client",
 
 				"[MountainClient] Successfully initialized",
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"mountain-client",
@@ -64,7 +64,7 @@ export class MountainClient {
 				"[MountainClient] Failed to initialize:",
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -77,27 +77,27 @@ export class MountainClient {
 		if (!this.isInitialized) {
 			throw new Error(
 				"MountainClient not initialized. Call initialize() first.",
-			;
+			);
 		}
 
 		CocoonDevLog(
 			"mountain-client",
 
 			`[MountainClient] Sending request: ${method}`,
-		;
+		);
 
 		try {
 			const response = await this.clientService.sendRequest(
 				method,
 
 				data || {},
-			;
+			);
 
 			CocoonDevLog(
 				"mountain-client",
 
 				`[MountainClient] Request ${method} completed successfully`,
-			;
+			);
 
 			return response;
 		} catch (error) {
@@ -107,7 +107,7 @@ export class MountainClient {
 				`[MountainClient] Request ${method} failed:`,
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -120,7 +120,7 @@ export class MountainClient {
 		if (!this.isInitialized) {
 			throw new Error(
 				"MountainClient not initialized. Call initialize() first.",
-			;
+			);
 		}
 
 		// Gated under `Trace=grpc-verbose` - see sibling comment in
@@ -130,14 +130,14 @@ export class MountainClient {
 		const TraceGrpcVerbose =
 			typeof process !== "undefined" &&
 			typeof process.env["Trace"] === "string" &&
-			process.env["Trace"].includes("grpc-verbose";
+			process.env["Trace"].includes("grpc-verbose");
 
 		if (TraceGrpcVerbose) {
 			CocoonDevLog(
 				"mountain-client",
 
 				`[MountainClient] Sending notification: ${method}`,
-			;
+			);
 		}
 
 		try {

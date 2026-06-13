@@ -60,15 +60,15 @@ export class Configuration implements IConfigurationService {
 
 		this.mountainClient = mountainClient;
 
-		this.configuration = new Map(;
+		this.configuration = new Map();
 
-		this.listeners = new Map(;
+		this.listeners = new Map();
 
 		CocoonDevLog(
 			"configuration",
 
 			"[ConfigurationService] Initializing configuration service with Universal Spine",
-		;
+		);
 	}
 
 	/**
@@ -79,7 +79,7 @@ export class Configuration implements IConfigurationService {
 			"configuration",
 
 			"[ConfigurationService] Loading initial configuration from Spine...",
-		;
+		);
 
 		try {
 			// Fetch full configuration from Mountain
@@ -88,7 +88,7 @@ export class Configuration implements IConfigurationService {
 				"config.reload",
 
 				{},
-			;
+			);
 
 			// Initialize with loaded configuration
 			// Expecting configData to match the structure { application: {...}, workspace: {...}, profile: {...} }
@@ -97,7 +97,7 @@ export class Configuration implements IConfigurationService {
 					ConfigurationScope.APPLICATION,
 
 					configData.application,
-				;
+				);
 			}
 
 			if (configData?.workspace) {
@@ -105,7 +105,7 @@ export class Configuration implements IConfigurationService {
 					ConfigurationScope.WORKSPACE,
 
 					configData.workspace,
-				;
+				);
 			}
 
 			if (configData?.profile) {
@@ -113,7 +113,7 @@ export class Configuration implements IConfigurationService {
 					ConfigurationScope.PROFILE,
 
 					configData.profile,
-				;
+				);
 			}
 
 			CocoonDevLog(
@@ -122,7 +122,7 @@ export class Configuration implements IConfigurationService {
 				"[ConfigurationService] Configuration loaded from Spine",
 
 				configData,
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"configuration",
@@ -130,7 +130,7 @@ export class Configuration implements IConfigurationService {
 				"[ConfigurationService] Failed to load initial configuration from Spine:",
 
 				error,
-			;
+			);
 
 			// Initialize with default configuration on failure
 			this.configuration.set(ConfigurationScope.APPLICATION, {
@@ -144,17 +144,17 @@ export class Configuration implements IConfigurationService {
 					fontSize: 14,
 					lineNumbers: "on",
 				},
-			};
+			});
 
 			this.configuration.set(ConfigurationScope.WORKSPACE, {
 				_version: 1,
 				_timestamp: Date.now(),
-			};
+			});
 
 			this.configuration.set(ConfigurationScope.PROFILE, {
 				_version: 1,
 				_timestamp: Date.now(),
-			};
+			});
 		}
 	}
 

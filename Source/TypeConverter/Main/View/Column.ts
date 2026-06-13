@@ -5,7 +5,7 @@
 
 // ViewColumn enum from the real VS Code source via @codeeditorland/output.
 const { ViewColumn: VSCodeViewColumn } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
 // VS Code internal constants for editor groups
 const ActiveEditorGroup = -1;

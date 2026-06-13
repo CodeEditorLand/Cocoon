@@ -66,7 +66,7 @@ export const ShowTextDocument = (
 		await Logger.Info(
 			`[WindowService] Showing text document: ${Uri.toString()}` +
 				(ColumnOrOptions ? ` with options` : ""),
-		;
+		);
 
 		let ViewColumnDTO: number | undefined;
 
@@ -77,11 +77,11 @@ export const ShowTextDocument = (
 		let Preview: boolean | undefined;
 
 		if (typeof ColumnOrOptions === "number") {
-			ViewColumnDTO = ViewColumnFromAPI(ColumnOrOptions;
+			ViewColumnDTO = ViewColumnFromAPI(ColumnOrOptions);
 		} else if (ColumnOrOptions) {
 			const Options = ColumnOrOptions;
 
-			ViewColumnDTO = ViewColumnFromAPI(Options.viewColumn;
+			ViewColumnDTO = ViewColumnFromAPI(Options.viewColumn);
 
 			PreserveFocusValue = Options.preserveFocus ?? false;
 
@@ -104,23 +104,23 @@ export const ShowTextDocument = (
 					}
 
 				: undefined,
-		};
+		});
 
-		const EditorId = "editor-" + Uri.toString().slice(-8;
+		const EditorId = "editor-" + Uri.toString().slice(-8);
 
 		await Logger.Debug(
 			`[WindowService] Showed text document with ID: ${EditorId}`,
-		;
+		);
 
 		const Editor = Workspace_.visibleTextEditors.find(
 			(E) => (E as any).id === EditorId,
-		;
+		);
 
 		if (!Editor) {
 			throw new Error(
 					`[WindowService] Could not find text editor with ID ${EditorId} after Mountain confirmation`,
 				),
-			;
+			))))));
 		}
 
 		return Editor;

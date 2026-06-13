@@ -53,15 +53,15 @@ const RegisterCustomEditor = (
 	IsReadonly: boolean,
 ) => {
 
-	const Handle = NextProviderHandle(;
+	const Handle = NextProviderHandle();
 
-	CustomEditorProviders.set(String(Handle), Provider;
+	CustomEditorProviders.set(String(Handle), Provider);
 
 	CustomEditorProvidersByViewType.set(ViewType, {
 		Provider,
 		Readonly: IsReadonly,
 		Handle,
-	};
+	});
 
 	// Scan the extension registry for the selector (glob patterns like
 	// "*.{png,jpg}") matching this viewType. Sky uses the selector to
@@ -75,7 +75,7 @@ const RegisterCustomEditor = (
 		if (Array.isArray(Contributions)) {
 			const Match = Contributions.find(
 				(CE: any) => CE?.viewType === ViewType,
-			;
+			);
 
 			if (Match?.selector) {
 				Selector = Array.isArray(Match.selector)
@@ -98,7 +98,7 @@ const RegisterCustomEditor = (
 				Options.supportsMultipleEditorsPerDocument ?? false,
 			webviewOptions: Options.webviewOptions ?? {},
 		},
-	}).catch(() => {};
+	}).catch(() => {});
 
 	const SafeAwait = async (
 		Channel: string,
@@ -109,7 +109,7 @@ const RegisterCustomEditor = (
 	): Promise<unknown> => {
 		const Entry = CustomEditorProvidersByViewType.get(
 			Payload?.viewType ?? ViewType,
-		;
+		);
 
 		if (!Entry || Entry.Handle !== Handle) return undefined;
 
@@ -131,7 +131,7 @@ const RegisterCustomEditor = (
 				Payload?.context ?? Payload?.destination,
 
 				Payload?.token,
-			;
+			);
 
 			return Result;
 		} catch (Error) {
@@ -142,7 +142,7 @@ const RegisterCustomEditor = (
 							? Error.message
 							: String(Error)
 					}\n`,
-				;
+				);
 			} catch {}
 
 			return undefined;
@@ -157,17 +157,17 @@ const RegisterCustomEditor = (
 
 	const Subscribe = (Channel: string, MethodName: string) => {
 		const Listener = (Payload: unknown) => {
-			void SafeAwait(Channel, MethodName, Payload;
+			void SafeAwait(Channel, MethodName, Payload);
 		};
 
-		Context.Emitter.on(Channel, Listener;
+		Context.Emitter.on(Channel, Listener);
 
-		Listeners.push({ Channel, Listener };
+		Listeners.push({ Channel, Listener });
 	};
 
-	Subscribe("customEditor.saveDocument", "saveCustomDocument";
+	Subscribe("customEditor.saveDocument", "saveCustomDocument");
 
-	Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs";
+	Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
 
 	Subscribe("customEditor.revertCustomDocument", "revertCustomDocument";
 

@@ -83,7 +83,7 @@ export class Command {
 
 	private readonly DelegatingCommandId: string;
 
-	private readonly DelegatedCommands = new Map<string, VSCode.Command>(;
+	private readonly DelegatedCommands = new Map<string, VSCode.Command>();
 
 	constructor(
 		private readonly RegisterCommand: (
@@ -115,20 +115,20 @@ export class Command {
 			this.ExecuteDelegatedCommand.bind(this),
 
 			this,
-		;
+		);
 	}
 
 	private ExecuteDelegatedCommand(Id: string, ...ArgumentArray: any[]): any {
-		const Command = this.DelegatedCommands.get(Id;
+		const Command = this.DelegatedCommands.get(Id);
 
 		if (!Command) {
-			throw new Error(`Unknown delegated command: ${Id}`;
+			throw new Error(`Unknown delegated command: ${Id}`);
 		}
 
 		return this.ExecuteCommand(
 			Command.command,
 			...[...(Command.arguments ?? []), ...ArgumentArray],
-		;
+		);
 	}
 
 	public ToInternal(
@@ -138,7 +138,7 @@ export class Command {
 	): InternalCommand | undefined {
 		if (!Command) return undefined;
 
-		const APICommandValue = this.LookupAPICommand(Command.command;
+		const APICommandValue = this.LookupAPICommand(Command.command);
 
 		if (APICommandValue) {
 			const ConvertedArgumentArray =
@@ -163,13 +163,13 @@ export class Command {
 			Array.isArray(Command.arguments) &&
 			Command.arguments.some((Argument) => typeof Argument === "function")
 		) {
-			const Id = generateUuid(;
+			const Id = generateUuid();
 
-			this.DelegatedCommands.set(Id, Command;
+			this.DelegatedCommands.set(Id, Command);
 
 			DisposableArray.push({
 				dispose: () => this.DelegatedCommands.delete(Id),
-			};
+			});
 
 			return {
 				id: this.DelegatingCommandId,

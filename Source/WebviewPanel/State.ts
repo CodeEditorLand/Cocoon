@@ -174,7 +174,7 @@ export class StateService extends /* Effect.Service */(
 		effect: async function() {
 			// In-memory cache of panel states - read path; Mountain storage
 			// is the durable copy keyed `webviewPanelState:<handle>`.
-			const StateCache = new Map<string, PanelState>(;
+			const StateCache = new Map<string, PanelState>();
 
 			/**
 			 * Resolve the live Mountain client published by
@@ -209,7 +209,7 @@ export class StateService extends /* Effect.Service */(
 						Array.isArray(State)
 					) {
 						throw new Error("Panel state must be an object"),
-						;
+						))))))))))));
 					}
 
 					const S = State as Record<string, unknown>;

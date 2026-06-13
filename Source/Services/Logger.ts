@@ -71,7 +71,7 @@ export interface Logger {
 
 // Runtime Tag for the Logger interface - needed because esbuild erases
 // type-only exports but consumers import { Logger } at runtime.
-export const Logger: unique symbol = Symbol.for("Service/Logger";
+export const Logger: unique symbol = Symbol.for("Service/Logger");
 
 /**
  * @class LoggerService
@@ -112,7 +112,7 @@ export class LoggerService extends /* Effect.Service */(
 
 				ExtensionId?: string,
 			) => {
-				const Timestamp = new Date().toISOString(;
+				const Timestamp = new Date().toISOString();
 
 				const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
 
@@ -133,7 +133,7 @@ export class LoggerService extends /* Effect.Service */(
 						? process.stderr
 						: process.stdout;
 
-				Stream.write(`${Line}\n`;
+				Stream.write(`${Line}\n`);
 			};
 
 			/**
@@ -153,14 +153,14 @@ export class LoggerService extends /* Effect.Service */(
 							"trace",
 
 							FormatMessage(Message, "trace", ExtensionId),
-						;
+						);
 
 						return await console.trace(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
 								data: Data.length === 1 ? Data[0] : Data,
 							}),
-						;
+						);
 					}
 				};
 
@@ -181,14 +181,14 @@ export class LoggerService extends /* Effect.Service */(
 							"debug",
 
 							FormatMessage(Message, "debug", ExtensionId),
-						;
+						);
 
 						return await console.debug(Message).pipe(
 							Effect.annotateLogs({
 								extensionId: ExtensionId,
 								data: Data.length === 1 ? Data[0] : Data,
 							}),
-						;
+						);
 					}
 				};
 
@@ -206,14 +206,14 @@ export class LoggerService extends /* Effect.Service */(
 						"info",
 
 						FormatMessage(Message, "info", ExtensionId),
-					;
+					);
 
 					return await console.info(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					;
+					);
 				};
 
 			/**
@@ -230,14 +230,14 @@ export class LoggerService extends /* Effect.Service */(
 						"warn",
 
 						FormatMessage(Message, "warn", ExtensionId),
-					;
+					);
 
 					return await console.warn(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					;
+					);
 				};
 
 			/**
@@ -254,14 +254,14 @@ export class LoggerService extends /* Effect.Service */(
 						"error",
 
 						FormatMessage(Message, "error", ExtensionId),
-					;
+					);
 
 					return await console.error(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					;
+					);
 				};
 
 			/**

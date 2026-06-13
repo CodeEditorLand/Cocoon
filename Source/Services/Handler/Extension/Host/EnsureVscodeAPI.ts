@@ -24,22 +24,22 @@ const EnsureVscodeAPIRegistered = async (
 ): Promise<void> => {
 
 	// Install hooks *before* anything else - idempotent, runs once.
-	await InstallVscodeModuleHooks(;
+	await InstallVscodeModuleHooks();
 
 	if ((globalThis as any).__cocoonVscodeAPI) return;
 
 	try {
 		const VsCodeTypes =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
 		const { URI } =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
 
 		const { CancellationTokenSource } =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 
 		const { Emitter } =
-			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+			await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
 
 		// Defensive RelativePattern wrapper. Stock `extHostTypes.RelativePattern`
 		// (extHostTypes.ts:1914) throws `Illegal argument: base` unless the
@@ -72,12 +72,12 @@ const EnsureVscodeAPIRegistered = async (
 					typeof WithUri.uri === "string"
 						? URI.parse(WithUri.uri)
 
-						: URI.revive(WithUri.uri as any;
+						: URI.revive(WithUri.uri as any);
 
 				return { ...(Base as object), uri: ReviveInput };
 			}
 
-			const Revived = URI.revive(Base as any;
+			const Revived = URI.revive(Base as any);
 
 			return Revived ?? Base;
 		};
@@ -89,7 +89,7 @@ const EnsureVscodeAPIRegistered = async (
 
 			Pattern: string,
 		) {
-			const Safe = HydrateRelativePatternBase(Base;
+			const Safe = HydrateRelativePatternBase(Base);
 
 			return Reflect.construct(
 				StockRelativePattern,
@@ -97,12 +97,12 @@ const EnsureVscodeAPIRegistered = async (
 				[Safe, Pattern],
 
 				PatchedRelativePattern,
-			;
+			);
 		};
 
 		PatchedRelativePattern.prototype = StockRelativePattern.prototype;
 
-		Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern;
+		Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 
 		// Spread every named export from extHostTypes - classes, enums,
 		// constants - so extensions that do `class X extends vscode.Y`
@@ -146,7 +146,7 @@ const EnsureVscodeAPIRegistered = async (
 		// minimal stub suffices.
 		class CancellationError extends Error {
 			constructor() {
-				super("Canceled";
+				super("Canceled");
 
 				this.name = "Canceled";
 			}
@@ -339,7 +339,7 @@ const EnsureVscodeAPIRegistered = async (
 						typeof Message === "string"
 							? Message
 							: ((Message as { message?: string })?.message ??
-								String(Message);
+								String(Message));
 
 					if (!Arguments.length) return Raw;
 
@@ -351,7 +351,7 @@ const EnsureVscodeAPIRegistered = async (
 
 							return Replacement === undefined
 								? ""
-								: String(Replacement;
+								: String(Replacement);
 						},
 					;
 				},

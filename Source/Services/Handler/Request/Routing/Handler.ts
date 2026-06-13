@@ -50,7 +50,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		"request-route",
 
 		`[RequestRoutingHandler] Routing request: ${Method}`,
-	;
+	);
 
 	// Service routing table with pattern matching
 	const RoutePatterns: Record<
@@ -61,26 +61,26 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		"extension.\\w+": async (Method: string, Params: any) => {
 			// Route to ExtensionHostService via ServiceMapping
 			const { ServiceMapping } =
-				await import("../../../../Service/Mapping.js";
+				await import("../../../../Service/Mapping.js");
 
 			const { IExtensionHostService } =
-				await import("../../../../Interfaces/I/Extension/Host/Service.js";
+				await import("../../../../Interfaces/I/Extension/Host/Service.js");
 
 			switch (Method) {
 				case "extension.activate": {
 					const ExtensionHostService =
-						await ServiceMapping.getService(IExtensionHostService;
+						await ServiceMapping.getService(IExtensionHostService);
 
 					return await ExtensionHostService.activateExtension(
 						Params.extensionId,
 
 						Params.reason,
-					;
+					);
 				}
 
 				case "extension.deactivate": {
 						const ExtensionHostService =
-							await ServiceMapping.getService(IExtensionHostService;
+							await ServiceMapping.getService(IExtensionHostService);
 
 						await ExtensionHostService.deactivateExtension(
 							Params.extensionId,
@@ -90,7 +90,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						// route-triggered deactivation disposes main-path
 						// subscriptions too (watchers, status-bar items, etc.).
 						const { DisposeExtensionContext } =
-							await import("../../../Handler/Extension/Host/ActivateExtension.js";
+							await import("../../../Handler/Extension/Host/ActivateExtension.js");
 
 						DisposeExtensionContext(Params.extensionId);
 
@@ -99,31 +99,31 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 				case "extension.get": {
 					const ExtensionHostService =
-						await ServiceMapping.getService(IExtensionHostService;
+						await ServiceMapping.getService(IExtensionHostService);
 
 					return ExtensionHostService.getActivatedExtension(
 						Params.extensionId,
-					;
+					);
 				}
 
 				default:
-					throw new Error(`Unknown extension method: ${Method}`;
+					throw new Error(`Unknown extension method: ${Method}`);
 			}
 		},
 
 		"configuration.\\w+": async (Method: string, Params: any) => {
 			// Route to ConfigurationService via ServiceMapping
 			const { ServiceMapping } =
-				await import("../../../../Service/Mapping.js";
+				await import("../../../../Service/Mapping.js");
 
 			const { IConfigurationService } =
-				await import("../../../../Interfaces/I/Configuration/Service.js";
+				await import("../../../../Interfaces/I/Configuration/Service.js");
 
 			switch (Method) {
 				case "configuration.get": {
 					const ConfigService = await ServiceMapping.getService(
 						IConfigurationService,
-					;
+					);
 
 					return await ConfigService.getValue(
 						Params.key,

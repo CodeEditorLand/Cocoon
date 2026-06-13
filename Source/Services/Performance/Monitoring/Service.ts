@@ -128,6 +128,6 @@ export const PerformanceMonitoringServiceLive = Layer.sync(
 	"PerformanceMonitoringService",
 
 	() => new PerformanceMonitoringService(),
-;
+);
 
 export default PerformanceMonitoringService;

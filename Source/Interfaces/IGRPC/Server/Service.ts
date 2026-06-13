@@ -36,4 +36,4 @@ export interface IGRPCServerService {
 }
 
 export const IGRPCServerService =
-	Context.GenericTag<IGRPCServerService>("IGRPCServerService";
+	Context.GenericTag<IGRPCServerService>("IGRPCServerService");

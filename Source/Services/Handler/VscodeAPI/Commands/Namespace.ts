@@ -31,19 +31,19 @@ const CreateCommandsNamespace = (
 
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
-			LanguageProviderRegistry.RegisterCommand(Command, Callback;
+			LanguageProviderRegistry.RegisterCommand(Command, Callback);
 
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
-			}).catch(() => {};
+			}).catch(() => {});
 
 			return {
 				dispose: () => {
-					LanguageProviderRegistry.UnregisterCommand(Command;
+					LanguageProviderRegistry.UnregisterCommand(Command);
 
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
-					}).catch(() => {};
+					}).catch(() => {});
 				},
 			};
 		},
@@ -75,7 +75,7 @@ const CreateCommandsNamespace = (
 						setEndOfLine: () => {},
 					};
 
-					return Callback(undefined, NoopBuilder, ...Arguments;
+					return Callback(undefined, NoopBuilder, ...Arguments);
 				}
 
 				// Drive the callback INSIDE `editor.edit()` so the buffered
@@ -90,8 +90,8 @@ const CreateCommandsNamespace = (
 
 						Builder,
 						...Arguments,
-					;
-				};
+					);
+				});
 
 				// If the callback returned a promise (e.g. async refactor that
 				// awaits an LSP response BEFORE issuing edits), await it so
@@ -101,26 +101,26 @@ const CreateCommandsNamespace = (
 					typeof (ExtensionResult as PromiseLike<unknown>).then ===
 						"function"
 				) {
-					return await (ExtensionResult as Promise<unknown>;
+					return await (ExtensionResult as Promise<unknown>);
 				}
 
 				return ExtensionResult;
 			};
 
-			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback;
+			LanguageProviderRegistry.RegisterCommand(Command, WrappedCallback);
 
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "textEditor",
-			}).catch(() => {};
+			}).catch(() => {});
 
 			return {
 				dispose: () => {
-					LanguageProviderRegistry.UnregisterCommand(Command;
+					LanguageProviderRegistry.UnregisterCommand(Command);
 
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
-					}).catch(() => {};
+					}).catch(() => {});
 				},
 			};
 		},
@@ -137,7 +137,7 @@ const CreateCommandsNamespace = (
 			// `[DEV:FS-ROUTE]`.
 			const Decision = Route(Command, {
 				Has: LanguageProviderRegistry.HasCommand,
-			};
+			});
 
 			LogRoute(Command, Decision;
 

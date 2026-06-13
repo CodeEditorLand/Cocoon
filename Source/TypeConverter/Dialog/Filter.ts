@@ -19,5 +19,5 @@ export const SerializeFilters = (Filters?: {
 	return Object.entries(Filters).map(([Name, Extensions]) => ({
 		name: Name,
 		extensions: Extensions,
-	});
+	}));
 };

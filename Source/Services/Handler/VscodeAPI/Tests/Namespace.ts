@@ -118,7 +118,7 @@ const NoOp = () => {};
 
 const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
 
-	const Items = new Map<string, TestItem>(;
+	const Items = new Map<string, TestItem>();
 
 	const Collection: TestItemCollection = {
 		get size() {
@@ -130,25 +130,25 @@ const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
 
 			(Item as { parent?: TestItem }).parent = Owner ?? undefined;
 
-			Items.set(Item.id, Item;
+			Items.set(Item.id, Item);
 		},
 
 		delete(Id) {
-			Items.delete(Id;
+			Items.delete(Id);
 		},
 
 		get(Id) {
-			return Items.get(Id;
+			return Items.get(Id);
 		},
 
 		replace(Next) {
-			Items.clear(;
+			Items.clear();
 
 			for (const Item of Next) {
 				if (Item?.id) {
 					(Item as { parent?: TestItem }).parent = Owner ?? undefined;
 
-					Items.set(Item.id, Item;
+					Items.set(Item.id, Item);
 				}
 			}
 		},
@@ -156,7 +156,7 @@ const MakeTestItemCollection = (Owner: TestItem | null): TestItemCollection => {
 		forEach(Cb) {
 			for (const Item of Items.values()) {
 				try {
-					Cb(Item, Collection;
+					Cb(Item, Collection);
 				} catch {
 					/* per-item callback failure must not break iteration */
 				}
@@ -185,7 +185,7 @@ const MakeTestItem = (Id: string, Label: string, Uri: unknown): TestItem => {
 	};
 
 	(Item as { children: TestItemCollection }).children =
-		MakeTestItemCollection(Item;
+		MakeTestItemCollection(Item);
 
 	return Item;
 };
@@ -211,7 +211,7 @@ const MakeTestRun = (
 
 	Persist: boolean,
 ) => {
-	const Results = new Map<string, RunResult>(;
+	const Results = new Map<string, RunResult>();
 
 	const OutputBuffer: string[] = [];
 
@@ -230,7 +230,7 @@ const MakeTestRun = (
 				Context.SendToMountain("tests.run_started", {
 					controllerId: ControllerId,
 					runName: Name,
-				}).catch(() => {};
+				}).catch(() => {});
 			}
 
 			Results.set(Item.id, {
@@ -243,7 +243,7 @@ const MakeTestRun = (
 					MaybeMessage && State !== "passed" && State !== "skipped"
 						? MaybeMessage
 						: undefined,
-			};
+			});
 
 			// Forward individual result to Mountain for Sky bridge
 			Context.SendToMountain("tests.result", {
@@ -259,7 +259,7 @@ const MakeTestRun = (
 					MaybeMessage && State !== "passed" && State !== "skipped"
 						? MaybeMessage
 						: undefined,
-			}).catch(() => {};
+			}).catch(() => {});
 		};
 
 	const Run = {
@@ -295,7 +295,7 @@ const MakeTestRun = (
 			if (Ended) return;
 
 			if (typeof Output === "string" && Output.length > 0) {
-				OutputBuffer.push(Output;
+				OutputBuffer.push(Output);
 			}
 		},
 

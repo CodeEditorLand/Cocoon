@@ -23,13 +23,13 @@ const VsCodeTypes =
 	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
 const { URI } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js");
 
 const { CancellationTokenSource, CancellationToken } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 
 const { Emitter } =
-	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+	await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js");
 
 // Defensive RelativePattern wrapper.
 //
@@ -80,14 +80,14 @@ const HydrateBase = (Base: unknown): unknown => {
 				Revived = undefined;
 			} else {
 				try {
-					Revived = URI.parse(Uri;
+					Revived = URI.parse(Uri);
 				} catch {
 					Revived = undefined;
 				}
 			}
 		} else {
 			try {
-				Revived = URI.revive(Uri as any;
+				Revived = URI.revive(Uri as any);
 			} catch {
 				Revived = undefined;
 			}
@@ -97,7 +97,7 @@ const HydrateBase = (Base: unknown): unknown => {
 	}
 
 	try {
-		const Revived = URI.revive(Base as any;
+		const Revived = URI.revive(Base as any);
 
 		return Revived ?? Base;
 	} catch {
@@ -112,7 +112,7 @@ const PatchedRelativePattern: any = function RelativePattern(
 
 	Pattern: string,
 ) {
-	const Safe = HydrateBase(Base;
+	const Safe = HydrateBase(Base);
 
 	// Forward to the stock constructor. `Reflect.construct` preserves
 	// prototype chain so `instanceof vscode.RelativePattern` still works.
@@ -122,12 +122,12 @@ const PatchedRelativePattern: any = function RelativePattern(
 		[Safe, Pattern],
 
 		PatchedRelativePattern,
-	;
+	);
 };
 
 PatchedRelativePattern.prototype = StockRelativePattern.prototype;
 
-Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern;
+Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 
 // --- API Service Interface ---
 
@@ -135,7 +135,7 @@ export interface IAPIFactoryService {
 	createAPI(): any;
 }
 
-export const IAPIFactoryService: unique symbol = Symbol.for("IAPIFactoryService";
+export const IAPIFactoryService: unique symbol = Symbol.for("IAPIFactoryService");
 
 // --- API Implementation ---
 
@@ -331,7 +331,7 @@ const createVSCodeAPI = (
 					title: "Information",
 					message: message,
 					level: "info",
-				};
+				});
 
 				return undefined;
 			},
@@ -341,7 +341,7 @@ const createVSCodeAPI = (
 					title: "Error",
 					message: message,
 					level: "error",
-				};
+				});
 
 				return undefined;
 			},
@@ -354,7 +354,7 @@ const createVSCodeAPI = (
 					title: "Warning",
 					message: message,
 					level: "warn",
-				};
+				});
 
 				return undefined;
 			},

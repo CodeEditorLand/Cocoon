@@ -109,7 +109,7 @@ export class TelemetryCollectionError extends Error {
 	) {
 		super(
 			`Telemetry collection failed for '${operation}': ${String(cause)}`,
-		;
+		);
 	}
 }
 
@@ -139,7 +139,7 @@ function makeTelemetry(): TelemetryService {
 	const pushEvent = (ev: TelemetryEvent) => {
 		eventsList.push(ev);
 
-		if (eventsList.length > MAX_EVENTS) eventsList.shift(;
+		if (eventsList.length > MAX_EVENTS) eventsList.shift();
 	};
 
 	const recordMetric = (
@@ -161,9 +161,9 @@ function makeTelemetry(): TelemetryService {
 
 		const existing = metrics.get(name) ?? [];
 
-		metrics.set(name, [...existing, metric].slice(-MAX_PER_NAME);
+		metrics.set(name, [...existing, metric].slice(-MAX_PER_NAME));
 
-		pushEvent({ type: "metric", timestamp: Date.now(), data: metric };
+		pushEvent({ type: "metric", timestamp: Date.now(), data: metric });
 	};
 
 	const startSpan = (
@@ -171,11 +171,11 @@ function makeTelemetry(): TelemetryService {
 
 		labels?: Record<string, string>,
 	): SpanHandle => {
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
 		return {
 			end: (success: boolean, error?: string) => {
-				const endTime = Date.now(;
+				const endTime = Date.now();
 
 				const span: TelemetrySpan = {
 					name,
@@ -195,9 +195,9 @@ function makeTelemetry(): TelemetryService {
 
 				const existing = spans.get(name) ?? [];
 
-				spans.set(name, [...existing, span].slice(-MAX_PER_NAME);
+				spans.set(name, [...existing, span].slice(-MAX_PER_NAME));
 
-				pushEvent({ type: "span", timestamp: Date.now(), data: span };
+				pushEvent({ type: "span", timestamp: Date.now(), data: span });
 			},
 		};
 	};
@@ -211,13 +211,13 @@ function makeTelemetry(): TelemetryService {
 	) => {
 		const entry: TelemetryLog = { level, message, context: context ?? {} };
 
-		pushEvent({ type: "log", timestamp: Date.now(), data: entry };
+		pushEvent({ type: "log", timestamp: Date.now(), data: entry });
 
 		if (typeof performance !== "undefined") {
 			try {
 				performance.mark(
 					`land:telemetry:${level}:${message.slice(0, 80)}`,
-				;
+				);
 			} catch {}
 		}
 	};
@@ -255,7 +255,7 @@ function makeTelemetry(): TelemetryService {
 	};
 }
 
-export const TelemetryLive: TelemetryService = makeTelemetry(;
+export const TelemetryLive: TelemetryService = makeTelemetry();
 
 // withSpan: pass-through (no Effect tracing overhead)
 export const withSpan = (_name: string, fn: any) => fn;
@@ -269,8 +269,8 @@ export const makeMockTelemetry = (): TelemetryService => ({
 	getAverageDuration: () => 0,
 	getSuccessRate: () => 1.0,
 	flush: () => {},
-};
+});
 
-export const TelemetryMock: TelemetryService = makeMockTelemetry(;
+export const TelemetryMock: TelemetryService = makeMockTelemetry();
 
 export const getTelemetry = (): TelemetryService => TelemetryLive;

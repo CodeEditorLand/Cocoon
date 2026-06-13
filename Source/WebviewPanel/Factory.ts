@@ -147,7 +147,7 @@ export class FactoryService extends /* Effect.Service */(
 					// Defensive: Validate required options
 					if (!Options?.ViewType || !Options?.Title) {
 						throw new Error("Panel requires ViewType and Title"),
-						;
+						)))))))))))));
 					}
 
 					// Generate unique handle for this panel

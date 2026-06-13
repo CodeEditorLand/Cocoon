@@ -86,7 +86,7 @@ export class NotImplementedError extends Error {
 	constructor(readonly Method: string) {
 		super(
 			`Method '${Method}' is not implemented in Land: no Mountain Rust handler, no stock VS Code lift, no Cocoon bespoke fallback.`,
-		;
+		);
 
 		this.name = "NotImplementedError";
 	}
@@ -101,7 +101,7 @@ export class NotImplementedError extends Error {
 if (process.env["Trace"]) {
 	process.stdout.write(
 		`[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}\n`,
-	;
+	);
 }
 
 /**
@@ -135,22 +135,22 @@ if (process.env["Trace"]) {
 const IsBypassValue = (Raw: string | undefined): boolean => {
 	if (!Raw) return false;
 
-	const Normalised = Raw.trim().toLowerCase(;
+	const Normalised = Raw.trim().toLowerCase();
 
 	return (
 		Normalised === "false" ||
 		Normalised === "0" ||
 		Normalised === "no" ||
 		Normalised === "off"
-	;
+	);
 };
 
 const ParseDomain = (Method: string): string => {
-	const Dot = Method.indexOf(".";
+	const Dot = Method.indexOf(".");
 
 	if (Dot <= 0) return "";
 
-	return Method.slice(0, Dot).toUpperCase(;
+	return Method.slice(0, Dot).toUpperCase();
 };
 
 /**
@@ -165,23 +165,23 @@ export const IsRustDeferralEnabled = (Method: string): boolean => {
 	const MethodKey = `Defer${Method.replace(/[.:]/g, "_")}`;
 
 	if (process.env[MethodKey] !== undefined) {
-		return !IsBypassValue(process.env[MethodKey];
+		return !IsBypassValue(process.env[MethodKey]);
 	}
 
 	// Per-domain override.
-	const Domain = ParseDomain(Method;
+	const Domain = ParseDomain(Method);
 
 	if (Domain) {
 		const DomainKey = `Defer${Domain}`;
 
 		if (process.env[DomainKey] !== undefined) {
-			return !IsBypassValue(process.env[DomainKey];
+			return !IsBypassValue(process.env[DomainKey]);
 		}
 	}
 
 	// Global override.
 	if (process.env["Defer"] !== undefined) {
-		return !IsBypassValue(process.env["Defer"];
+		return !IsBypassValue(process.env["Defer"]);
 	}
 
 	return true;
@@ -193,12 +193,12 @@ if (process.env["Trace"]) {
 	const ActiveBypasses = Object.keys(process.env)
 		.filter((K) => K === "Defer" || K.startsWith("Defer"))
 		.filter((K) => IsBypassValue(process.env[K]))
-		.join(",";
+		.join(",");
 
 	if (ActiveBypasses) {
 		process.stdout.write(
 			`[DEV:DUAL-TRACK] rust-deferral bypass-knobs=${ActiveBypasses}\n`,
-		;
+		);
 	}
 }
 
@@ -233,7 +233,7 @@ export function IsUnknownMethodError(Err: unknown): boolean {
 		Message.includes("Unknown IPC command") ||
 		Message.includes("no handler for method") ||
 		Message.includes("not routed to any domain")
-	;
+	);
 }
 
 /**

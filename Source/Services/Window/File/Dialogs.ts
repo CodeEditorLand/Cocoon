@@ -37,10 +37,10 @@ export const ShowOpenDialog = (
 ): Promise<VSCode.Uri[] | undefined> =>
 	async function() {
 
-		await Logger.Debug(`[WindowService] Showing open dialog`;
+		await Logger.Debug(`[WindowService] Showing open dialog`);
 
 		// Serialize options using TypeConverter
-		const OptionsDTO = OpenDialogOptionToDTO(Options;
+		const OptionsDTO = OpenDialogOptionToDTO(Options);
 
 		// Delegates to Mountain's native file dialog implementation via gRPC
 		let Result: VSCode.Uri[] | undefined;
@@ -91,10 +91,10 @@ export const ShowSaveDialog = (
 	Options?: VSCode.SaveDialogOptions,
 ): Promise<VSCode.Uri | undefined> =>
 	async function() {
-		await Logger.Debug(`[WindowService] Showing save dialog`;
+		await Logger.Debug(`[WindowService] Showing save dialog`);
 
 		// Serialize options using TypeConverter
-		const OptionsDTO = SaveDialogOptionToDTO(Options;
+		const OptionsDTO = SaveDialogOptionToDTO(Options);
 
 		// Delegates to Mountain's native file dialog implementation via gRPC
 		let Result: VSCode.Uri | undefined;

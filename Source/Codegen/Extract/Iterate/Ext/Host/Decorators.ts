@@ -47,13 +47,13 @@ const FindInterfaceDocComment = (
 ): string | null => {
 	const Pattern = new RegExp(
 		`((?:\\s*\\/\\*\\*[\\s\\S]*?\\*\\/\\s*)*)(?:export\\s+)?interface\\s+${interfaceName}\\b`,
-	;
+	);
 
-	const Match = Pattern.exec(source;
+	const Match = Pattern.exec(source);
 
 	if (!Match) return null;
 
-	const DocBlock = /\/\*\*([\s\S]*?)\*\//.exec(Match[1] ?? "";
+	const DocBlock = /\/\*\*([\s\S]*?)\*\//.exec(Match[1] ?? "");
 
 	if (!DocBlock) return null;
 
@@ -66,7 +66,7 @@ const FindInterfaceDocComment = (
 				.trim(),
 		)
 		.filter((line) => line.length > 0)
-		.join("\n";
+		.join("\n");
 };
 
 export const IterateExtHostDecorators = async function* (
@@ -75,7 +75,7 @@ export const IterateExtHostDecorators = async function* (
 	for await (const File of files) {
 		if (!IsExtHostFile(File.SourcePath)) continue;
 
-		const Matches = ExtractDecoratorMatches(File.Contents;
+		const Matches = ExtractDecoratorMatches(File.Contents);
 
 		if (Matches.length === 0) continue;
 
@@ -84,20 +84,20 @@ export const IterateExtHostDecorators = async function* (
 				File.Contents,
 
 				Match.InterfaceName,
-			;
+			);
 
 			let InterfaceDoc = FindInterfaceDocComment(
 				File.Contents,
 
 				Match.InterfaceName,
-			;
+			);
 
 			if (Members.length === 0) {
 				const CrossFile = await ResolveInterfaceCrossFile({
 					InterfaceName: Match.InterfaceName,
 					DecoratorFilePath: File.AbsolutePath,
 					DecoratorFileContents: File.Contents,
-				};
+				});
 
 				if (CrossFile) {
 					Members = CrossFile.Members;

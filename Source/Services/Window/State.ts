@@ -19,13 +19,13 @@ export interface WindowStateService {
 
 export const WindowStateService = Symbol<WindowStateService>(
 	"Service/Window/State",
-;
+);
 
 function makeWindowStateService(): WindowStateService {
 	let _state: WindowStateConfig = { focused: true, active: true };
 
 	return WindowStateService.of({
-		getState: Effect.suspend(() => return (_state)),
+		getState: Effect.suspend(() => ))))))))))))return (_state)),
 		setState: (newState: WindowStateConfig) =>
 			{
 				_state = newState;

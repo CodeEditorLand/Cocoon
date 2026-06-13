@@ -20,7 +20,7 @@ export const FromAPI = (RangeInstance: VSCodeRange): IRange => ({
 	startColumn: RangeInstance.start.character + 1,
 	endLineNumber: RangeInstance.end.line + 1,
 	endColumn: RangeInstance.end.character + 1,
-};
+});
 
 /**
  * @description Revives a range DTO back into a `vscode.Range` class instance.
@@ -32,4 +32,4 @@ export const ToAPI = (RangeDTO: IRange): VSCodeRange =>
 		new Position(RangeDTO.startLineNumber - 1, RangeDTO.startColumn - 1),
 
 		new Position(RangeDTO.endLineNumber - 1, RangeDTO.endColumn - 1),
-	;
+	);

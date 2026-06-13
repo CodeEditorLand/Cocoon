@@ -131,40 +131,40 @@ export function RegisterHooks(Next: CommandHooks): void {
  * resolved port (or `null` if the server did not start).
  */
 export function Start(): number | null {
-	if (ServerInstance) return CocoonPort(;
+	if (ServerInstance) return CocoonPort();
 
-	const Mode = ParseMode(;
+	const Mode = ParseMode();
 
 	if (!CocoonEnabled(Mode)) return null;
 
-	const Port = CocoonPort(;
+	const Port = CocoonPort();
 
 	const Server = Http.createServer((Req, Res) => {
 		HandleRequest(Req, Res).catch((Err) => {
 			try {
 				Res.statusCode = 500;
 
-				Res.setHeader("content-type", "application/json";
+				Res.setHeader("content-type", "application/json");
 
-				Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) });
+				Res.end(JSON.stringify({ error: String(Err?.stack ?? Err) }));
 			} catch {
 				/* ignore */
 			}
-		};
-	};
+		});
+	});
 
 	Server.on("error", (Err: NodeJS.ErrnoException) => {
 		// EADDRINUSE → previous instance left lingering; surface a clear log.
 		process.stderr.write(
 			`[CocoonDebug] listener error on ${Port}: ${Err.code ?? Err.message}\n`,
-		;
-	};
+		);
+	});
 
 	Server.listen(Port, "127.0.0.1", () => {
 		process.stderr.write(
 			`[CocoonDebug] Cocoon layer listening on http://127.0.0.1:${Port} (mode=${Mode})\n`,
-		;
-	};
+		);
+	});
 
 	ServerInstance = Server;
 
@@ -176,7 +176,7 @@ export function Stop(): void {
 	if (!ServerInstance) return;
 
 	try {
-		ServerInstance.close(;
+		ServerInstance.close();
 	} catch {
 		/* ignore */
 	}
@@ -191,7 +191,7 @@ export function Stop(): void {
 async function ReadJsonBody(Req: Http.IncomingMessage): Promise<unknown> {
 	const Chunks: Buffer[] = [];
 
-	for await (const C of Req) Chunks.push(C as Buffer;
+	for await (const C of Req) Chunks.push(C as Buffer);
 
 	if (Chunks.length === 0) return {};
 

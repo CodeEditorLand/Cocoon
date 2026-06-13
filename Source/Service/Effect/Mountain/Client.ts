@@ -82,7 +82,7 @@ export class ConnectionError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message;
+		super(message);
 	}
 }
 
@@ -96,7 +96,7 @@ export class RPCError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message;
+		super(message);
 	}
 }
 
@@ -108,7 +108,7 @@ export class DisconnectionError extends Error {
 
 		override readonly cause?: unknown,
 	) {
-		super(message;
+		super(message);
 	}
 }
 
@@ -199,7 +199,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 				"warn",
 
 				"[MountainClient] Already connected to Mountain",
-			;
+			);
 
 			return;
 		}
@@ -225,20 +225,20 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 			"info",
 
 			`[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`,
-		;
+		);
 
 		// State: Connecting
 		state = { _tag: "Connecting", attempt: 1 };
 
 		// Connect real client
 		try {
-			realClient = new RealMountainClient(;
+			realClient = new RealMountainClient();
 
 			(realClient as any).mountainHost = currentConfig.host;
 
 			(realClient as any).mountainPort = currentConfig.port;
 
-			await realClient.connect(;
+			await realClient.connect();
 
 			serverVersion = "1.0.0";
 		} catch (error) {
@@ -248,13 +248,13 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 				"error",
 
 				`[MountainClient] Failed to connect to Mountain: ${String(error)}`,
-			;
+			);
 
 			throw new ConnectionError(
 				"Failed to connect to Mountain backend",
 
 				error,
-			;
+			);
 		}
 
 		// State: Connected
@@ -264,7 +264,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 			"info",
 
 			`[MountainClient] Connected to Mountain (v${serverVersion})`,
-		;
+		);
 	};
 
 	// Disconnect
@@ -276,7 +276,7 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 					"warn",
 
 					"[MountainClient] Not connected to Mountain",
-				;
+				);
 
 				return;
 			}
@@ -288,11 +288,11 @@ async function makeMountainClientLive(): Promise<MountainClientService> {
 				"info",
 
 				"[MountainClient] Disconnecting from Mountain...",
-			;
+			);
 
 			// Disconnect real client
 			if (realClient) {
-				await realClient.disconnect(;
+				await realClient.disconnect();
 
 				realClient = undefined;
 			}

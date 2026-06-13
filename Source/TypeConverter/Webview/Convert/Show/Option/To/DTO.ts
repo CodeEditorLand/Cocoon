@@ -40,7 +40,7 @@ export const ConvertShowOptionToDTO = (
 		preserveFocus: PreserveFocus,
 	};
 
-	const ViewColumnValue = ViewColumnFromAPI(ViewColumn;
+	const ViewColumnValue = ViewColumnFromAPI(ViewColumn);
 
 	if (ViewColumnValue !== undefined) {
 		DTO.viewColumn = ViewColumnValue;

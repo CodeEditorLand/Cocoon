@@ -56,13 +56,13 @@ export const CreateConfigurationState = (
 	Context: HandlerContext,
 ): ConfigurationState => {
 
-	const ConfigCache = new Map<string, unknown>(;
+	const ConfigCache = new Map<string, unknown>();
 
-	const ConfigInFlight = new Set<string>(;
+	const ConfigInFlight = new Set<string>();
 
 	const ConfigListeners = new Set<
 		(Event: ConfigurationChangeEvent) => void
-	>(;
+	>();
 
 	const FireConfigChange = (ChangedKey: string): void => {
 		if (ConfigListeners.size === 0) return;
@@ -75,7 +75,7 @@ export const CreateConfigurationState = (
 
 		for (const Listener of ConfigListeners) {
 			try {
-				Listener(Event;
+				Listener(Event);
 			} catch {
 				// Never let a bad listener abort the fan-out.
 			}
@@ -85,7 +85,7 @@ export const CreateConfigurationState = (
 	const PrimeConfig = (Key: string): void => {
 		if (ConfigInFlight.has(Key)) return;
 
-		ConfigInFlight.add(Key;
+		ConfigInFlight.add(Key);
 
 		void Call<{ value?: unknown } | unknown>(
 			Context,
@@ -94,7 +94,7 @@ export const CreateConfigurationState = (
 
 			[Key],
 		).then((Value) => {
-			ConfigInFlight.delete(Key;
+			ConfigInFlight.delete(Key);
 
 			if (Value === undefined) return;
 
@@ -118,12 +118,12 @@ export const CreateConfigurationState = (
 				Shape?.["defaultValue"] ??
 				Value;
 
-			const Prior = ConfigCache.get(Key;
+			const Prior = ConfigCache.get(Key);
 
-			ConfigCache.set(Key, Resolved;
+			ConfigCache.set(Key, Resolved);
 
-			if (Prior !== Resolved) FireConfigChange(Key;
-		};
+			if (Prior !== Resolved) FireConfigChange(Key);
+		});
 	};
 
 	const TypeSafeDefault = (Decl: {
@@ -230,10 +230,10 @@ export const CreateConfigurationState = (
 					const Value =
 						"default" in Declaration
 							? Declaration.default
-							: TypeSafeDefault(Declaration;
+							: TypeSafeDefault(Declaration);
 
 					if (Value !== undefined) {
-						ConfigCache.set(DottedKey, Value;
+						ConfigCache.set(DottedKey, Value);
 
 						Seeded++;
 					}
@@ -252,7 +252,7 @@ export const CreateConfigurationState = (
 			"config-prime",
 
 			`[ConfigPrime] prepopulate ext=${ExtensionId || "<unknown>"} seeded=${Seeded} skipped=${Skipped}`,
-		;
+		);
 	};
 
 	// Listen for Mountain-side `configuration.change` notifications (routed

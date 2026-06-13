@@ -76,14 +76,14 @@ interface TextSearchMatch {
 }
 
 const EscapeLiteral = (Text: string): string =>
-	Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&";
+	Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	const Q =
 		typeof Query === "string"
 			? { pattern: Query }
 
-			: ((Query ?? {}) as QueryShape;
+			: ((Query ?? {}) as QueryShape);
 
 	// The only legitimate empty outcome: a genuinely empty query string.
 	if (!Q.pattern) return undefined;
@@ -97,7 +97,7 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	if (!Q.isRegExp) {
 		// Plain-text search: escape regex metacharacters so the user's
 		// `(foo)` doesn't get interpreted as a capture group.
-		Source = EscapeLiteral(Source;
+		Source = EscapeLiteral(Source);
 	}
 
 	if (Q.isWordMatch) {
@@ -105,16 +105,16 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 	}
 
 	try {
-		return new RegExp(Source, Flags;
+		return new RegExp(Source, Flags);
 	} catch {
 		// Invalid extension-supplied regex: degrade to a literal-text
 		// search on the raw pattern instead of matching nothing. The
 		// escaped form cannot throw - every metacharacter is neutralised.
 		const Literal = Q.isWordMatch
 			? `\\b${EscapeLiteral(Q.pattern)}\\b`
-			: EscapeLiteral(Q.pattern;
+			: EscapeLiteral(Q.pattern);
 
-		return new RegExp(Literal, Flags;
+		return new RegExp(Literal, Flags);
 	}
 };
 
@@ -129,7 +129,7 @@ export async function FindTextInFilesNodeFallback(
 
 	Callback?: (Result: unknown) => void,
 ): Promise<{ limitHit: boolean }> {
-	const Pattern = ExtractPattern(Query;
+	const Pattern = ExtractPattern(Query);
 
 	if (!Pattern) return { limitHit: false };
 
@@ -159,14 +159,14 @@ export async function FindTextInFilesNodeFallback(
 	for (const Candidate of Candidates) {
 		if (Emitted >= Max) return { limitHit: true };
 
-		const Path = FolderToFsPath(Candidate;
+		const Path = FolderToFsPath(Candidate);
 
 		if (!Path) continue;
 
 		let Content: string;
 
 		try {
-			Content = await FsPromises.readFile(Path, Encoding;
+			Content = await FsPromises.readFile(Path, Encoding);
 		} catch {
 			// Read failures on candidate files are expected (permission,
 			// symlink loops, binary files that tripped the read) - skip.
@@ -177,7 +177,7 @@ export async function FindTextInFilesNodeFallback(
 		// A NUL byte in the first 8 KB is the heuristic rg uses.
 		if (Content.length > 0 && Content.indexOf("\0") !== -1) continue;
 
-		const Lines = Content.split("\n";
+		const Lines = Content.split("\n");
 
 		for (let LineNumber = 0; LineNumber < Lines.length; LineNumber++) {
 			const Line = Lines[LineNumber];
@@ -195,7 +195,7 @@ export async function FindTextInFilesNodeFallback(
 						line: LineNumber,
 						character: M.index + M[0].length,
 					},
-				};
+				});
 
 				if (M[0].length === 0) Pattern.lastIndex++;
 			}
@@ -219,7 +219,7 @@ export async function FindTextInFilesNodeFallback(
 
 			if (Callback) {
 				try {
-					Callback(Match;
+					Callback(Match);
 				} catch {
 					// Extension callback threw - don't let one bad
 					// extension kill the whole search.

@@ -88,13 +88,13 @@ const SplitTopLevelCommas = (Body: string): string[] => {
 		else if (Character === "}" || Character === ")") Depth--;
 
 		else if (Character === "," && Depth === 0) {
-			Parts.push(Body.slice(Start, I);
+			Parts.push(Body.slice(Start, I));
 
 			Start = I + 1;
 		}
 	}
 
-	Parts.push(Body.slice(Start);
+	Parts.push(Body.slice(Start));
 
 	return Parts;
 };
@@ -106,28 +106,28 @@ const SplitTopLevelCommas = (Body: string): string[] => {
  * as literal `{`.
  */
 const ExpandBraces = (Input: string): string[] => {
-	const Open = Input.indexOf("{";
+	const Open = Input.indexOf("{");
 
 	if (Open === -1) return [Input];
 
-	const Close = FindMatchingBrace(Input, Open, "{", "}";
+	const Close = FindMatchingBrace(Input, Open, "{", "}");
 
 	if (Close === -1) return [Input];
 
-	const Prefix = Input.slice(0, Open;
+	const Prefix = Input.slice(0, Open);
 
-	const Body = Input.slice(Open + 1, Close;
+	const Body = Input.slice(Open + 1, Close);
 
-	const Suffix = Input.slice(Close + 1;
+	const Suffix = Input.slice(Close + 1);
 
-	const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body;
+	const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
 
 	const Alternatives: string[] = [];
 
 	if (RangeMatch) {
-		const Start = parseInt(RangeMatch[1]!, 10;
+		const Start = parseInt(RangeMatch[1]!, 10);
 
-		const End = parseInt(RangeMatch[2]!, 10;
+		const End = parseInt(RangeMatch[2]!, 10);
 
 		const StepRaw = RangeMatch[3];
 
@@ -148,20 +148,20 @@ const ExpandBraces = (Input: string): string[] => {
 				Direction === 1 ? Value <= End : Value >= End;
 				Value += Direction * Step
 			) {
-				const Text = String(Math.abs(Value);
+				const Text = String(Math.abs(Value));
 
 				const Padded =
 					Width > 0 && Text.length < Width
 						? "0".repeat(Width - Text.length) + Text
 						: Text;
 
-				Alternatives.push(Value < 0 ? `-${Padded}` : Padded;
+				Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
 			}
 		}
 	}
 
 	if (Alternatives.length === 0) {
-		Alternatives.push(...SplitTopLevelCommas(Body);
+		Alternatives.push(...SplitTopLevelCommas(Body));
 	}
 
 	const Expanded: string[] = [];

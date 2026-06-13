@@ -24,7 +24,7 @@ function ToExtHostRange(range: VSCodeRange): ExtHostRange {
 		range.end.line,
 
 		range.end.character,
-	;
+	);
 }
 
 /**
@@ -38,7 +38,7 @@ export const FromAPI = (
 	text: TextEditInstance.newText,
 	range: RangeFromAPI(TextEditInstance.range),
 	forceMoveMarkers: false,
-};
+});
 
 /**
  * @description Revives a text edit DTO back into a `vscode.TextEdit` class instance.
@@ -52,4 +52,4 @@ export const ToAPI = (
 		ToExtHostRange(RangeToAPI(TextEditDTO.range)),
 
 		TextEditDTO.text ?? "",
-	;
+	);

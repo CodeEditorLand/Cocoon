@@ -254,13 +254,13 @@ export const ValidatePathAccess = (
 ): boolean => {
 
 	// Normalize the path
-	const NormalizedPath = Path.normalize(PathString;
+	const NormalizedPath = Path.normalize(PathString);
 
 	const ResolvedPath = Path.resolve(NormalizedPath);
 
 	// Check denied paths first (blacklist overrides whitelist)
 	for (const DeniedPath of Policy.DeniedPaths) {
-		const ResolvedDeniedPath = Path.resolve(DeniedPath;
+		const ResolvedDeniedPath = Path.resolve(DeniedPath);
 
 		if (
 			ResolvedPath === ResolvedDeniedPath ||
@@ -277,7 +277,7 @@ export const ValidatePathAccess = (
 
 	// Check allowed paths
 	for (const AllowedPath of Policy.AllowedPaths) {
-		const ResolvedAllowedPath = Path.resolve(AllowedPath;
+		const ResolvedAllowedPath = Path.resolve(AllowedPath);
 
 		if (
 			ResolvedPath === ResolvedAllowedPath ||
@@ -309,7 +309,7 @@ export const ValidateNetworkAccess = (
 
 	// Parse endpoint URL
 	try {
-		void new URL.URL(Endpoint;
+		void new URL.URL(Endpoint);
 	} catch (Error) {
 		// Not a valid URL, try parsing as hostname:port
 		return true;
@@ -317,7 +317,7 @@ export const ValidateNetworkAccess = (
 
 	// Check against allowed patterns
 	for (const Pattern of Policy.AllowedEndpoints) {
-		const Regex = new RegExp(Pattern;
+		const Regex = new RegExp(Pattern);
 
 		if (Regex.test(Endpoint)) {
 			return true;
@@ -415,25 +415,25 @@ export const EnforceMemoryLimit = async function() {
 	const Policy = DefaultSecurityPolicy;
 
 	if (Policy.MaxMemoryMB <= 0) {
-		return await console.trace("No memory limit configured";
+		return await console.trace("No memory limit configured");
 	}
 
 	// Get current memory usage
-	const MemoryUsage = process.memoryUsage(;
+	const MemoryUsage = process.memoryUsage();
 
-	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024;
+	const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024);
 
 	if (UsedMemoryMB > Policy.MaxMemoryMB) {
 		await console.error(
 			`Memory limit exceeded: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`,
-		;
+		);
 
 		throw new MemoryLimitExceededError({
 				LimitMB: Policy.MaxMemoryMB,
 				AttemptedMB: UsedMemoryMB,
 				ProcessId: process.pid,
 			}),
-		;
+		))));
 	}
 
 	await console.trace(

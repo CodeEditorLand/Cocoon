@@ -89,7 +89,7 @@ export class ExtensionNotFoundError extends Error {
 	readonly _tag = "ExtensionNotFoundError";
 
 	constructor(readonly extensionId: string) {
-		super(`Extension not found: ${extensionId}`;
+		super(`Extension not found: ${extensionId}`);
 	}
 }
 
@@ -103,7 +103,7 @@ export class ExtensionActivationError extends Error {
 	) {
 		super(
 			`Failed to activate extension '${extensionId}': ${String(cause)}`,
-		;
+		);
 	}
 }
 
@@ -117,7 +117,7 @@ export class ExtensionDeactivationError extends Error {
 	) {
 		super(
 			`Failed to deactivate extension '${extensionId}': ${String(cause)}`,
-		;
+		);
 	}
 }
 
@@ -164,19 +164,19 @@ export const Extension = ExtensionTag;
 
 function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 	// Storage for extensions — plain Map replaces SubscriptionRef<HashMap>
-	const extensions = new Map<string, ExtensionHost>(;
+	const extensions = new Map<string, ExtensionHost>();
 
 	// Atom: Get all extensions
 	const getAll = async (): Promise<ReadonlyArray<ExtensionHost>> => {
-		return Array.from(extensions.values();
+		return Array.from(extensions.values());
 	};
 
 	// Atom: Get extension by ID
 	const getById = async (id: string): Promise<ExtensionHost> => {
-		const extension = extensions.get(id;
+		const extension = extensions.get(id);
 
 		if (extension === undefined) {
-			throw new ExtensionNotFoundError(id;
+			throw new ExtensionNotFoundError(id);
 		}
 
 		return extension;
@@ -184,12 +184,12 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 
 	// Atom: Activate an extension
 	const activate = async (id: string): Promise<ActivateResult> => {
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
-		const current = extensions.get(id;
+		const current = extensions.get(id);
 
 		if (current === undefined) {
-			throw new ExtensionNotFoundError(id;
+			throw new ExtensionNotFoundError(id);
 		}
 
 		// Check if already active
@@ -209,13 +209,13 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 		extensions.set(id, {
 			...current,
 			state: { _tag: "Activating", startTime },
-		};
+		});
 
-		telemetry.log("info", `[Extension] Activating extension: ${id}`;
+		telemetry.log("info", `[Extension] Activating extension: ${id}`);
 
 		try {
 			// Simulate activation (in production, this would load the extension module)
-			await new Promise<void>((r) => setTimeout(r, 10);
+			await new Promise<void>((r) => setTimeout(r, 10));
 
 			const activationTime = Date.now() - startTime;
 

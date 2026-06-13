@@ -98,13 +98,13 @@ const CreateCommentsNamespace = (Context: HandlerContext) => {
 			// Idempotent re-registration: dev-reloads call createCommentController
 			// twice. Stock VS Code throws on duplicate id; we soften to a no-op
 			// returning the existing instance.
-			const Existing = Context.ExtensionRegistry.get(ControllerKey;
+			const Existing = Context.ExtensionRegistry.get(ControllerKey);
 
 			if (Existing) {
 				return Existing;
 			}
 
-			const Threads = new Map<string, CommentThread>(;
+			const Threads = new Map<string, CommentThread>();
 
 			const Controller: any = {
 				id: Id,
@@ -124,7 +124,7 @@ const CreateCommentsNamespace = (Context: HandlerContext) => {
 
 					Comments: readonly Comment[],
 				) => {
-					const Key = ThreadKey(Uri, Range;
+					const Key = ThreadKey(Uri, Range);
 
 					const Thread: CommentThread = {
 						uri: Uri,
@@ -144,11 +144,11 @@ const CreateCommentsNamespace = (Context: HandlerContext) => {
 						state: undefined,
 
 						dispose: () => {
-							Threads.delete(Key;
+							Threads.delete(Key);
 						},
 					};
 
-					Threads.set(Key, Thread;
+					Threads.set(Key, Thread);
 
 					return Thread;
 				},
@@ -156,19 +156,19 @@ const CreateCommentsNamespace = (Context: HandlerContext) => {
 				dispose: () => {
 					for (const Thread of Threads.values()) {
 						try {
-							Thread.dispose(;
+							Thread.dispose();
 						} catch {
 							/* swallow per-thread dispose failure */
 						}
 					}
 
-					Threads.clear(;
+					Threads.clear();
 
-					Context.ExtensionRegistry.delete(ControllerKey;
+					Context.ExtensionRegistry.delete(ControllerKey);
 				},
 			};
 
-			Context.ExtensionRegistry.set(ControllerKey, Controller;
+			Context.ExtensionRegistry.set(ControllerKey, Controller);
 
 			return Controller;
 		},
