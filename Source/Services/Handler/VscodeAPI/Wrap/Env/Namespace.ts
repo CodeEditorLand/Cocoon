@@ -15,6 +15,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapEnvNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("env", Concrete;
+	WrapNamespaceWithHeuristics("env", Concrete);
 
 export default WrapEnvNamespace;

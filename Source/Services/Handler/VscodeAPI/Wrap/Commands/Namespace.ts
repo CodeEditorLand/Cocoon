@@ -14,6 +14,6 @@
 import WrapNamespaceWithHeuristics from "../Namespace/With/Heuristics.js";
 
 const WrapCommandsNamespace = <T extends object>(Concrete: T): T =>
-	WrapNamespaceWithHeuristics("commands", Concrete;
+	WrapNamespaceWithHeuristics("commands", Concrete);
 
 export default WrapCommandsNamespace;

@@ -130,14 +130,14 @@ const MAX_EVENTS = 1_000;
 const MAX_PER_NAME = 100;
 
 function makeTelemetry(): TelemetryService {
-	const metrics = new Map<string, TelemetryMetric[]>(;
+	const metrics = new Map<string, TelemetryMetric[]>();
 
-	const spans = new Map<string, TelemetrySpan[]>(;
+	const spans = new Map<string, TelemetrySpan[]>();
 
 	const eventsList: TelemetryEvent[] = [];
 
 	const pushEvent = (ev: TelemetryEvent) => {
-		eventsList.push(ev;
+		eventsList.push(ev);
 
 		if (eventsList.length > MAX_EVENTS) eventsList.shift(;
 	};

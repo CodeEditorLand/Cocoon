@@ -25,7 +25,7 @@ export class Logger {
 
 	Debug(Message: string, ...Args: unknown[]): void {
 		if (process.env.NODE_ENV !== "production") {
-			console.debug(`[${this.Prefix}] ${Message}`, ...Args;
+			console.debug(`[${this.Prefix}] ${Message}`, ...Args);
 		}
 	}
 }
