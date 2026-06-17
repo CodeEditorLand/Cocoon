@@ -33,7 +33,7 @@
 		"@grpc/grpc-js": "1.14.4",
 		"@grpc/proto-loader": "0.8.1",
 		"google-protobuf": "4.0.2",
-		"protobufjs": "8.6.3",
+		"protobufjs": "8.6.4",
 		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
