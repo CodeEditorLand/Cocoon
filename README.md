@@ -432,9 +432,9 @@ Cocoon is designed to be compatible with:
 - [Why gRPC](https://Editor.Land/Doc/why-grpc) - Design rationale for `gRPC`
 - [Land Documentation](../../Documentation/GitHub/README.md) - Complete
   documentation index
-- [Wind 🌬️](https://github.com/CodeEditorLand/Wind) - Service layer (correlated
+- [Wind 🍃](https://github.com/CodeEditorLand/Wind) - Service layer (correlated
   frontend element)
-- [Worker ⚙️](https://github.com/CodeEditorLand/Worker) - Service worker for
+- [Worker 🍩](https://github.com/CodeEditorLand/Worker) - Service worker for
   caching and offline support
 - [Vine 🌿](https://github.com/CodeEditorLand/Vine) - `gRPC` protocol definition
 - [Grove 🌳](https://github.com/CodeEditorLand/Grove) - `Rust`/`WASM` extension
