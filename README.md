@@ -5,17 +5,17 @@
 		<td>
 			<a href="https://GitHub.Com/CodeEditorLand/Cocoon" target="_blank">
 				<picture>
-					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/last-commit/CodeEditorLand/Cocoon?label=Last-commit&color=black&labelColor=black&logoColor=white&logoWidth=0" />
-					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/last-commit/CodeEditorLand/Cocoon?label=Last-commit&color=white&labelColor=white&logoColor=black&logoWidth=0" />
-					<img src="https://img.shields.io/github/last-commit/CodeEditorLand/Cocoon?label=Last-commit&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Last-commit" title="Last-commit" />
+					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/last-commit/CodeEditorLand/Cocoon?label=Update&color=black&labelColor=black&logoColor=white&logoWidth=0" />
+					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/last-commit/CodeEditorLand/Cocoon?label=Update&color=white&labelColor=white&logoColor=black&logoWidth=0" />
+					<img src="https://img.shields.io/github/last-commit/CodeEditorLand/Cocoon?label=Update&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Update" title="Update" />
 				</picture>
 			</a>
 			<br />
 			<a href="https://GitHub.Com/CodeEditorLand/Cocoon" target="_blank">
 				<picture>
-					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/issues/CodeEditorLand/Cocoon?label=Issues&color=black&labelColor=black&logoColor=white&logoWidth=0" />
-					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/issues/CodeEditorLand/Cocoon?label=Issues&color=white&labelColor=white&logoColor=black&logoWidth=0" />
-					<img src="https://img.shields.io/github/issues/CodeEditorLand/Cocoon?label=Issues&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Issues" title="Issues" />
+					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/issues/CodeEditorLand/Cocoon?label=Issue&color=black&labelColor=black&logoColor=white&logoWidth=0" />
+					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/issues/CodeEditorLand/Cocoon?label=Issue&color=white&labelColor=white&logoColor=black&logoWidth=0" />
+					<img src="https://img.shields.io/github/issues/CodeEditorLand/Cocoon?label=Issue&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Issue" title="Issue" />
 				</picture>
 			</a>
 		</td>
@@ -30,9 +30,9 @@
 			<br />
 			<a href="https://GitHub.Com/CodeEditorLand/Cocoon" target="_blank">
 				<picture>
-					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/downloads/CodeEditorLand/Cocoon?label=Downloads&color=black&labelColor=black&logoColor=white&logoWidth=0" />
-					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/downloads/CodeEditorLand/Cocoon?label=Downloads&color=white&labelColor=white&logoColor=black&logoWidth=0" />
-					<img src="https://img.shields.io/github/downloads/CodeEditorLand/Cocoon?label=Downloads&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Downloads" title="Downloads" />
+					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/downloads/CodeEditorLand/Cocoon/total?label=Download&color=black&labelColor=black&logoColor=white&logoWidth=0" />
+					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/downloads/CodeEditorLand/Cocoon/total?label=Download&color=white&labelColor=white&logoColor=black&logoWidth=0" />
+					<img src="https://img.shields.io/github/downloads/CodeEditorLand/Cocoon/total?label=Download&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Download" title="Download" />
 				</picture>
 			</a>
 		</td>
@@ -107,10 +107,11 @@ loads, uncaught exceptions, and unhandled rejections. A configurable
 `SecurityPolicy` controls exit permissions, memory limits, network access, file
 system access, and child process spawning.
 
-**Code Generation Pipeline** - The `Codegen` module walks the VS Code
-extension-host source tree (`Wind`) and emits `IExtHost*Upstream` schemas
-grounded in real upstream source, reusing every `Wind` extractor and resolver
-verbatim.
+**Code Generation Pipeline** — The `Codegen` module scans the VS Code
+extension-host source tree (`Wind`) to discover the actual API methods and
+types being used. It then generates matching TypeScript schema files that
+`Cocoon` uses to talk to `Mountain` — no hand-written stubs, everything is
+derived from the real upstream sources.
 
 **Multi-Transport Communications** - `gRPC` (`Vine` protocol to `Mountain`),
 `WebSocket` JSON-RPC (to `Sky` with hex-secret auth via URL param,
