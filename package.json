@@ -39,7 +39,7 @@
 	"devDependencies": {
 		"@playform/build": "0.3.2",
 		"@types/node": "26.1.0",
-		"@vitest/coverage-v8": "4.1.9",
+		"@vitest/coverage-v8": "4.1.10",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
 		"esbuild": "0.28.1",
