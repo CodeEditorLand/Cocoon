@@ -90,7 +90,7 @@ Source/
 
 ## Refactoring Strategy by Category
 
-### Category A: Effect/ Services ✅ ALREADY GOOD
+### Category A: Effect/ Services&#x2001;✅ ALREADY GOOD
 
 These services already follow the established patterns well. Just need
 refinement.

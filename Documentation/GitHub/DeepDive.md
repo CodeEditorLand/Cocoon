@@ -9,15 +9,13 @@
 				</picture>
 			</h3>
 		</td>
-		<td colspan="3" valign="top">
-			<h3 align="center"> Cocoon 🦋</h3>
-		</td>
+		<td colspan="3" valign="top"><h3 align="center">Cocoon&#x2001;🦋</h3></td>
 	</tr>
 </table>
 
 ---
 
-# **Cocoon** 🦋 Deep Dive & Architecture
+# **Cocoon**&#x2001;🦋&#x2001;Deep Dive & Architecture
 
 **Cocoon** provides the technical foundation for implementing VSCode extension
 host compatibility within the Land project. **Cocoon** serves as the Node.js

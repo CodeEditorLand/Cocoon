@@ -9,15 +9,13 @@
 				</picture>
 			</h3>
 		</td>
-		<td colspan="3" valign="top">
-			<h3 align="center"> Cocoon 🦋</h3>
-		</td>
+		<td colspan="3" valign="top"><h3 align="center">Cocoon&#x2001;🦋</h3></td>
 	</tr>
 </table>
 
 ---
 
-# **Cocoon** 🦋 Architecture
+# **Cocoon**&#x2001;🦋&#x2001;Architecture
 
 `Cocoon` is the `Node.js` extension host sidecar for `Land`.
 
@@ -71,7 +69,7 @@ graph TB
     MOUNTAIN["Mountain<br/>gRPC Server"] <-->|"Vine protocol :50052"| GRPC_C
 ```
 
-## Overview 📋
+## Overview&#x2001;📋
 
 `Cocoon` is a `TypeScript` application built with `Effect-TS`.
 
@@ -89,7 +87,7 @@ graph TB
 
 ---
 
-## Architecture 🏗️
+## Architecture&#x2001;🏗️
 
 ```
 +------------------------------------------------------------------+
@@ -117,7 +115,7 @@ graph TB
 +------------------------------------------------------------------+
 ```
 
-### Module Map 🗺️
+### Module Map&#x2001;🗺️
 
 | Path                                            | Purpose                                          |
 | ----------------------------------------------- | ------------------------------------------------ |
@@ -143,7 +141,7 @@ graph TB
 
 ---
 
-## Startup Sequence 🚀
+## Startup Sequence&#x2001;🚀
 
 ```
 1. Node.js process starts (bootstrap-fork.js)
@@ -190,7 +188,7 @@ Extension host ready for use
 
 ---
 
-## VS Code API Shim 📦
+## VS Code API Shim&#x2001;📦
 
 `Cocoon` constructs VS Code API objects for each extension via `ApiFactory.ts`:
 
@@ -206,7 +204,7 @@ const vscode = ApiFactory.create(extensionId, {
 });
 ```
 
-### API Namespace Providers 📋
+### API Namespace Providers&#x2001;📋
 
 | Namespace             | Provider            | Track                       |
 | --------------------- | ------------------- | --------------------------- |
@@ -225,7 +223,7 @@ const vscode = ApiFactory.create(extensionId, {
 
 ---
 
-## Service Providers 🔌
+## Service Providers&#x2001;🔌
 
 Each service is implemented as an `Effect-TS` `Layer`:
 
@@ -241,11 +239,11 @@ Each service is implemented as an `Effect-TS` `Layer`:
 
 ---
 
-## gRPC Communication 🌐
+## gRPC Communication&#x2001;🌐
 
 `Cocoon` communicates with `Mountain` via the `Vine` `gRPC` protocol.
 
-### Client Implementation 💻
+### Client Implementation&#x2001;💻
 
 ```typescript
 // gRPC client connects to Mountain on port 50051
@@ -270,7 +268,7 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 });
 ```
 
-### Connection Management 🔗
+### Connection Management&#x2001;🔗
 
 | Feature      | Implementation                                |
 | ------------ | --------------------------------------------- |
@@ -282,12 +280,12 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 
 ---
 
-## RequireInterceptor 🪝
+## RequireInterceptor&#x2001;🪝
 
 The `RequireInterceptor` patches `Node.js`'s `require()` to enable VS Code
 module loading.
 
-### Interception Rules 📋
+### Interception Rules&#x2001;📋
 
 | Module Pattern            | Replacement                        | Behavior                                |
 | ------------------------- | ---------------------------------- | --------------------------------------- |
@@ -300,7 +298,7 @@ module loading.
 | `./mainThread*.js`        | Load from `@codeeditorland/output` | VS Code stock source                    |
 | `vscode`                  | `ApiFactory` construct             | Extension-specific API surface          |
 
-### Installation ⚙️
+### Installation&#x2001;⚙️
 
 ```typescript
 // Installed before any VS Code source code is loaded
@@ -313,7 +311,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 
 ---
 
-## Extension Lifecycle 🔄
+## Extension Lifecycle&#x2001;🔄
 
 ```
 1. Extension Discovery
@@ -346,7 +344,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 
 ---
 
-## Dual-Track Routing 🛤️
+## Dual-Track Routing&#x2001;🛤️
 
 `Cocoon` routes extension API calls through two tracks:
 
@@ -355,7 +353,7 @@ const vscode = require("vscode"); // Returns per-extension API surface
 | **A - Stock Node**  | Unmodified VS Code `extHost*.ts` | In-process | Default for all APIs                       |
 | **B - Rust Native** | gRPC `ActionEffect` to Mountain  | ~1ms       | I/O-heavy APIs (fs, terminal, search, git) |
 
-### Routing Decision 🧭
+### Routing Decision&#x2001;🧭
 
 ```typescript
 // From Cocoon's tier router (simplified)
@@ -368,7 +366,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 }
 ```
 
-### Track Distribution by API 📊
+### Track Distribution by API&#x2001;📊
 
 | API                             | Default Track | Rationale                       |
 | ------------------------------- | ------------- | ------------------------------- |
@@ -383,7 +381,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 
 ---
 
-## Related Documentation 📚
+## Related Documentation&#x2001;📚
 
 - [Mountain](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/Architecture.md) -
   `gRPC` server and `ProcessManagement`
