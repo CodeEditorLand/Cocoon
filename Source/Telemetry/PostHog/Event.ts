@@ -47,6 +47,7 @@ export const Create = (Name: string, Properties: Properties = {}): Event => ({
 let CurrentTraceIdentifier: string | undefined;
 
 export const SetTraceIdentifier = (Identifier: string): void => {
+
 	CurrentTraceIdentifier = Identifier;
 };
 

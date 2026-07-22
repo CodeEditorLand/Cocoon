@@ -31,6 +31,7 @@ let ActiveBuffer: Buffer | undefined;
 let Initialized = false;
 
 const Buffered = (): Buffer | undefined => {
+
 	if (!Configuration.Enabled) return undefined;
 
 	if (!ActiveBuffer) {
@@ -48,6 +49,7 @@ export const CaptureEvent = (
 
 	Properties: Properties = {},
 ): void => {
+
 	// Build-time gate. esbuild substitutes `process.env.NODE_ENV` with
 	// the literal `"production"` for prod, the comparison folds, and
 	// the entire body (Buffered() lookup, Enqueue, the try/catch) dead-
@@ -73,6 +75,7 @@ export const CaptureError = (
 
 	Extra: Properties = {},
 ): void => {
+
 	if (process.env["NODE_ENV"] === "production") return;
 
 	const Bridge = Buffered();
@@ -93,6 +96,7 @@ export const CaptureError = (
  * `land:cocoon:session:start`.
  */
 export const Initialize = (): void => {
+
 	if (process.env["NODE_ENV"] === "production") return;
 
 	if (Initialized) return;

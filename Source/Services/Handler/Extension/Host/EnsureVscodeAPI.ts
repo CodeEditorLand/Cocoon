@@ -223,6 +223,7 @@ const EnsureVscodeAPIRegistered = async (
 		// DEVSENSE.phptools-vscode reads `.Initial` at activation.
 		const DebugConfigurationProviderTriggerKind: Record<
 			string | number,
+
 			string | number
 		> = {
 			Initial: 1,

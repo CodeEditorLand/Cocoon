@@ -121,6 +121,7 @@ const WarnLazyURIUnavailable = (Reason: string): void => {
 };
 
 const EnsureLazyURI = (): void => {
+
 	if (LazyURI || LazyURIImport) return;
 
 	LazyURIImport =
@@ -154,6 +155,7 @@ EnsureLazyURI();
 // Minimal stub for when LazyURI.parse is unavailable (import failed or not
 // yet resolved). Enough shape for extensions to call fsPath / toString().
 const MakeUriStub = (Raw: string): UriObject => {
+
 	const Path = Raw.replace(/^file:\/\//, "");
 	return {
 		scheme: Raw.startsWith("file://") ? "file" : "unknown",
@@ -199,6 +201,7 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 		const RawStr =
 			Raw.toString !== Object.prototype.toString
 				? Raw.toString()
+
 				: (Raw as any).scheme && (Raw as any).path
 					? `${(Raw as any).scheme}://${(Raw as any).authority ?? ""}${(Raw as any).path}`
 					: null;

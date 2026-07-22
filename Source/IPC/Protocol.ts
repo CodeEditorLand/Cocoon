@@ -205,6 +205,7 @@ export function GetMessageType(
  * Validate IPC message structure
  */
 export function ValidateMessage(message: unknown): boolean {
+
 	if (typeof message !== "object" || message === null) {
 		return false;
 	}
@@ -239,6 +240,7 @@ export function ValidateMessage(message: unknown): boolean {
  * Wrap message in protocol envelope
  */
 export function WrapMessage(message: IPCProtocolMessage): ProtocolMessage {
+
 	return {
 		Type: GetMessageType(message),
 
@@ -250,6 +252,7 @@ export function WrapMessage(message: IPCProtocolMessage): ProtocolMessage {
  * Extract message from protocol envelope
  */
 export function UnwrapMessage(envelope: ProtocolMessage): IPCProtocolMessage {
+
 	return envelope.Message;
 }
 
@@ -263,6 +266,7 @@ export function CreateErrorResponse(
 
 	code?: number,
 ): IPCResponse {
+
 	return {
 		Id: id,
 
@@ -278,6 +282,7 @@ export function CreateErrorResponse(
  * Create success response
  */
 export function CreateSuccessResponse<T>(id: string, data: T): IPCResponse {
+
 	return {
 		Id: id,
 
@@ -291,6 +296,7 @@ export function CreateSuccessResponse<T>(id: string, data: T): IPCResponse {
  * Serialize protocol message to VSBuffer
  */
 export function SerializeMessage(message: ProtocolMessage): VSBuffer {
+
 	const json = JSON.stringify(message);
 
 	return VSBuffer.fromString(json);
@@ -300,6 +306,7 @@ export function SerializeMessage(message: ProtocolMessage): VSBuffer {
  * Deserialize VSBuffer to protocol message
  */
 export function DeserializeMessage(buffer: VSBuffer): ProtocolMessage {
+
 	try {
 		const json = buffer.toString();
 
@@ -321,6 +328,7 @@ export function DeserializeMessage(buffer: VSBuffer): ProtocolMessage {
  * Check if message is a request
  */
 export function IsRequest(message: IPCProtocolMessage): message is IPCRequest {
+
 	return (
 		"Id" in message &&
 		"Channel" in message &&
@@ -336,6 +344,7 @@ export function IsRequest(message: IPCProtocolMessage): message is IPCRequest {
 export function IsResponse(
 	message: IPCProtocolMessage,
 ): message is IPCResponse {
+
 	return (
 		"Id" in message &&
 		"Success" in message &&
@@ -350,6 +359,7 @@ export function IsResponse(
 export function IsNotification(
 	message: IPCProtocolMessage,
 ): message is IPCNotification {
+
 	return (
 		"Channel" in message &&
 		"Type" in message &&

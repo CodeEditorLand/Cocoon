@@ -164,6 +164,7 @@ export const CreateConfigurationState = (
 					| {
 							properties?: Record<
 								string,
+
 								{ default?: unknown; type?: string | string[] }
 
 							>;
@@ -172,6 +173,7 @@ export const CreateConfigurationState = (
 					| Array<{
 							properties?: Record<
 								string,
+
 								{ default?: unknown; type?: string | string[] }
 
 							>;
@@ -187,6 +189,7 @@ export const CreateConfigurationState = (
 		// array of objects, both with a `properties` map keyed on the full
 		// dotted path (e.g. `gitlens.blame.format`).
 		const Sections = Array.isArray(Contributed)
+
 			? Contributed
 			: [Contributed];
 

@@ -55,6 +55,7 @@ const { Emitter } =
 const StockRelativePattern: any = VsCodeTypes.RelativePattern;
 
 const HydrateBase = (Base: unknown): unknown => {
+
 	if (Base == null) return Base;
 
 	if (typeof Base === "string") return Base;
@@ -112,6 +113,7 @@ const PatchedRelativePattern: any = function RelativePattern(
 
 	Pattern: string,
 ) {
+
 	const Safe = HydrateBase(Base);
 
 	// Forward to the stock constructor. `Reflect.construct` preserves
@@ -132,6 +134,7 @@ Object.setPrototypeOf(PatchedRelativePattern, StockRelativePattern);
 // --- API Service Interface ---
 
 export interface IAPIFactoryService {
+
 	createAPI(): any;
 }
 
@@ -140,6 +143,7 @@ export const IAPIFactoryService: unique symbol = Symbol.for("IAPIFactoryService"
 // --- API Implementation ---
 
 interface VSCodeAPI {
+
 	version: string;
 
 	env: any;
@@ -175,6 +179,7 @@ const createVSCodeAPI = (
 
 	terminalService: ITerminalService,
 ): VSCodeAPI => {
+
 	return {
 		version: "1.88.0",
 

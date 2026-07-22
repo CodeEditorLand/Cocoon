@@ -13,6 +13,7 @@
  * Compression hint types for optimizing message payloads
  */
 export enum CompressionHint {
+
 	/** No compression recommended */
 	None = "none",
 
@@ -30,6 +31,7 @@ export enum CompressionHint {
  * Message metadata for tracking and debugging
  */
 export interface MessageMetadata {
+
 	/** Unique message identifier */
 	readonly MessageID: string;
 
@@ -59,6 +61,7 @@ export interface MessageMetadata {
  * Message structure for IPC communication
  */
 export interface IMessage {
+
 	/** Message payload data */
 	readonly Data: Uint8Array;
 
@@ -85,6 +88,7 @@ export interface IMessage {
  * Batched message containing multiple individual messages
  */
 export interface IBatchMessage {
+
 	/** Array of individual messages */
 	readonly Messages: IMessage[];
 
@@ -109,6 +113,7 @@ export interface IBatchMessage {
  * to an optional field that's declared without `| undefined`).
  */
 export interface ISerializationResult {
+
 	/** Success flag */
 	readonly Success: boolean;
 
@@ -131,6 +136,7 @@ export interface ISerializationResult {
  * See `ISerializationResult` for the `Error: string | undefined` rationale.
  */
 export interface IDeserializationResult {
+
 	/** Success flag */
 	readonly Success: boolean;
 

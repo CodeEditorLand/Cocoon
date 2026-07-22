@@ -31,6 +31,7 @@ export const SerializeItems = <T extends QuickPickItem | string>(
  * @returns A serializable representation of the buttons.
  */
 export const SerializeButtons = (Buttons?: readonly QuickInputButton[]) => {
+
 	return Buttons?.map((Button, Index) => {
 		const iconPath = (Button as any).iconPath;
 

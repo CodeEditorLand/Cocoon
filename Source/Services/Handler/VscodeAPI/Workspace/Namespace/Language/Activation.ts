@@ -280,6 +280,7 @@ export function FireOnLanguageActivation(
 
 	LanguageId: string,
 ): void {
+
 	if (!LanguageId || LanguageId === "plaintext") return;
 
 	if (FiredLanguages.has(LanguageId)) return;

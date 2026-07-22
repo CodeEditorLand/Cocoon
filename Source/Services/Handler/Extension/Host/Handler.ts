@@ -151,6 +151,7 @@ const HandleDeltaExtensions = async (
 
 	Parameters: any,
 ): Promise<any> => {
+
 	const DeltaStart = performance.now();
 
 	const Added: any[] = Parameters?.toAdd ?? [];

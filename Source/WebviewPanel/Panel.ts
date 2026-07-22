@@ -281,6 +281,7 @@ export class Panel implements VSCodeWebviewPanel {
 		const InternalValue = Value as
 			| Uri
 			| { readonly light: Uri; readonly dark: Uri }
+
 			| undefined;
 
 		if (this.IsDisposed || this._iconPath === InternalValue) return;

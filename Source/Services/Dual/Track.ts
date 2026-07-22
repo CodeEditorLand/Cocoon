@@ -99,6 +99,7 @@ export class NotImplementedError extends Error {
  * as the previous run).
  */
 if (process.env["Trace"]) {
+
 	process.stdout.write(
 		`[DEV:DUAL-TRACK] manifest mountain=${RouteManifestSummary.mountain} stockLift=${RouteManifestSummary.stockLift} bespoke=${RouteManifestSummary.bespoke} generated=${RouteManifestSummary.generatedAt}\n`,
 	);
@@ -133,6 +134,7 @@ if (process.env["Trace"]) {
  * gated - Mountain decides whether to dispatch them.
  */
 const IsBypassValue = (Raw: string | undefined): boolean => {
+
 	if (!Raw) return false;
 
 	const Normalised = Raw.trim().toLowerCase();
@@ -146,6 +148,7 @@ const IsBypassValue = (Raw: string | undefined): boolean => {
 };
 
 const ParseDomain = (Method: string): string => {
+
 	const Dot = Method.indexOf(".");
 
 	if (Dot <= 0) return "";
@@ -159,6 +162,7 @@ const ParseDomain = (Method: string): string => {
  * skip Mountain and go straight to the Node fallback.
  */
 export const IsRustDeferralEnabled = (Method: string): boolean => {
+
 	// Per-method override wins. Method names can contain `.` and `:` -
 	// neither character is valid in a POSIX env-var name, so substitute
 	// to `_`.
@@ -190,6 +194,7 @@ export const IsRustDeferralEnabled = (Method: string): boolean => {
 // Boot-time banner: surface the active deferral state so debugging the
 // "why is Mountain being skipped" question is one log line away.
 if (process.env["Trace"]) {
+
 	const ActiveBypasses = Object.keys(process.env)
 		.filter((K) => K === "Defer" || K.startsWith("Defer"))
 		.filter((K) => IsBypassValue(process.env[K]))
@@ -212,6 +217,7 @@ if (process.env["Trace"]) {
  * source Cocoon sees can be probed the same way.
  */
 export function IsUnknownMethodError(Err: unknown): boolean {
+
 	if (Err == null) return false;
 
 	const Message =
@@ -261,6 +267,7 @@ export async function TryMountainThenNode<T>(
 
 	NodeFallback: (Arguments: unknown[]) => Promise<T>,
 ): Promise<T> {
+
 	// Env-controlled bypass: `Defer=false` (global),
 	// `Defer<DOMAIN>=false` (per-domain), or
 	// `Defer<METHOD>=false` (per-method) skip the

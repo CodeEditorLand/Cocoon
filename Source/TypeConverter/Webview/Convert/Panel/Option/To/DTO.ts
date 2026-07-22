@@ -4,6 +4,7 @@
  */
 
 import type { WebviewPanelOptions } from "vscode";
+
 import type * as VSCode from "vscode";
 
 /**
@@ -15,6 +16,7 @@ import type * as VSCode from "vscode";
 export const ConvertPanelOptionToDTO = (
 	Options: VSCode.WebviewPanelOptions,
 ): WebviewPanelOptions => {
+
 	// FIX: Create a mutable intermediate object and then return it.
 	// This is necessary because `WebviewPanelOptions` has readonly properties,
 	// so we cannot declare an empty object of that type and then assign to it.

@@ -79,6 +79,7 @@ const EscapeLiteral = (Text: string): string =>
 	Text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const ExtractPattern = (Query: unknown): RegExp | undefined => {
+
 	const Q =
 		typeof Query === "string"
 			? { pattern: Query }
@@ -112,6 +113,7 @@ const ExtractPattern = (Query: unknown): RegExp | undefined => {
 		// escaped form cannot throw - every metacharacter is neutralised.
 		const Literal = Q.isWordMatch
 			? `\\b${EscapeLiteral(Q.pattern)}\\b`
+
 			: EscapeLiteral(Q.pattern);
 
 		return new RegExp(Literal, Flags);
@@ -129,6 +131,7 @@ export async function FindTextInFilesNodeFallback(
 
 	Callback?: (Result: unknown) => void,
 ): Promise<{ limitHit: boolean }> {
+
 	const Pattern = ExtractPattern(Query);
 
 	if (!Pattern) return { limitHit: false };

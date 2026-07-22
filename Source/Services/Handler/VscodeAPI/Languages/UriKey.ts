@@ -45,6 +45,7 @@ export const UriKey = (Value: unknown): string => {
 	}
 
 	if (typeof WithParts.fsPath === "string")
+
 		return `file://${WithParts.fsPath}`;
 
 	return Rendered;

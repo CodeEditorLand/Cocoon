@@ -40,6 +40,7 @@ __LandTier_Shim__.length > 0
 // ── Mountain gRPC Client Interface ──────────────────────────────────────────
 
 interface MountainClient {
+
 	/** Whether the gRPC channel is connected and ready. */
 	isReady: boolean;
 
@@ -57,6 +58,7 @@ interface MountainClient {
 }
 
 interface CocoonGlobal {
+
 	__COCOON_GRPC_CLIENT__?: MountainClient;
 }
 
@@ -67,6 +69,7 @@ interface CocoonGlobal {
  * the real Node.js module.
  */
 function getMountainClient(): MountainClient | null {
+
 	const g = globalThis as unknown as CocoonGlobal;
 
 	return g.__COCOON_GRPC_CLIENT__ ?? null;
@@ -83,6 +86,7 @@ async function routeToMountain(
 
 	params: Record<string, unknown>,
 ): Promise<unknown> {
+
 	const client = getMountainClient();
 
 	if (!client) {
@@ -95,6 +99,7 @@ async function routeToMountain(
 // ── FS Method → Mountain Method Mapping ─────────────────────────────────────
 
 const FS_TO_MOUNTAIN: Record<string, string> = {
+
 	readFile: "file:read",
 
 	readFileSync: "file:read",
@@ -188,6 +193,7 @@ function buildFSParams(
 
 	args: unknown[],
 ): Record<string, unknown> {
+
 	switch (method) {
 		case "readFile":
 		case "readFileSync": {
@@ -205,6 +211,7 @@ function buildFSParams(
 					typeof options === "string"
 						? options
 						: (options as Record<string, unknown> | undefined)
+
 								?.encoding,
 			};
 		}
@@ -229,6 +236,7 @@ function buildFSParams(
 					typeof options === "string"
 						? options
 						: (options as Record<string, unknown> | undefined)
+
 								?.encoding,
 
 				mode:
@@ -333,6 +341,7 @@ function buildFSParams(
 					typeof options === "string"
 						? options
 						: (options as Record<string, unknown> | undefined)
+
 								?.encoding,
 			};
 		}
@@ -392,6 +401,7 @@ function buildFSParams(
 					typeof options === "string"
 						? options
 						: (options as Record<string, unknown> | undefined)
+
 								?.encoding,
 			};
 		}
@@ -434,6 +444,7 @@ function extractFSResult(
 
 	response: unknown,
 ): unknown {
+
 	switch (method) {
 		case "readFile":
 		case "readFileSync":
@@ -500,6 +511,7 @@ function createAsyncFSWrapper(
 
 	mountainMethod: string,
 ): (...args: unknown[]) => unknown {
+
 	return function landAsyncFSWrapper(
 		this: unknown,
 		...args: unknown[]
@@ -511,6 +523,7 @@ function createAsyncFSWrapper(
 
 		const callback = hasCallback
 			? (args.pop() as (...cbArgs: unknown[]) => void)
+
 			: undefined;
 
 		// Attempt Mountain gRPC routing
@@ -558,6 +571,7 @@ function createSyncFSWrapper(
 
 	method: string,
 ): (...args: unknown[]) => unknown {
+
 	return function landSyncFSWrapper(
 		this: unknown,
 		...args: unknown[]
@@ -601,6 +615,7 @@ function createSyncFSWrapper(
  *   - constants, promises, Dir, Stats, etc.
  */
 function createLandFSProxy(realFs: typeof import("fs")): typeof import("fs") {
+
 	// Set of all intercepted method names
 	const interceptedMethods = new Set(Object.keys(FS_TO_MOUNTAIN));
 
@@ -714,6 +729,7 @@ function createLandFSProxy(realFs: typeof import("fs")): typeof import("fs") {
 function createLandSpawnProxy(
 	realCp: typeof import("child_process"),
 ): typeof import("child_process") {
+
 	const proxiedCp = Object.create(realCp) as typeof import("child_process");
 
 	/**
@@ -805,6 +821,7 @@ function createLandSpawnProxy(
 
 		let cb:
 			| ((error: unknown, stdout: string, stderr: string) => void)
+
 			| undefined;
 
 		if (typeof optionsOrCallback === "function") {
@@ -963,6 +980,7 @@ function createLandSpawnProxy(
 
 			let cb:
 				| ((error: unknown, stdout: string, stderr: string) => void)
+
 				| undefined;
 
 			if (typeof optionsOrCallback === "function") {
@@ -1127,6 +1145,7 @@ function createLandSpawnProxy(
  * @returns void
  */
 export default function installNodeModuleInterceptor(): void {
+
 	// Fast path: shim disabled
 	if (TierShim === "None") {
 		return;

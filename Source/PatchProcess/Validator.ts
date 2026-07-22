@@ -118,6 +118,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 export class BehaviorViolationError extends Data.TaggedError(
 	"BehaviorViolationError",
 )<{
+
 	readonly ProcessId: number;
 
 	readonly ViolationType: string;
@@ -130,6 +131,7 @@ export class BehaviorViolationError extends Data.TaggedError(
 // --- Metrics Tracking ---
 
 interface ValidationMetrics {
+
 	readonly TotalValidations: number;
 
 	readonly FailedValidations: number;
@@ -140,6 +142,7 @@ interface ValidationMetrics {
 }
 
 class ValidationMetricsStore {
+
 	private static _instance: ValidationMetricsStore;
 
 	private _metrics: ValidationMetrics = {
@@ -210,13 +213,20 @@ export let ValidationAlertQueue: Queue.Queue<ValidationResult> | null = null;
  * Initialize process validation state
  */
 export const InitializeProcessValidation = async function() {
+
 	const State: ProcessValidationState = {
 		ProcessId: Process.pid,
+
 		StartTime: Date.now(),
+
 		FileAccessCount: new Map(),
+
 		NetworkAccessCount: new Map(),
+
 		ChildProcessCount: 0,
+
 		ViolationCount: 0,
+
 		SecurityPolicy: DefaultSecurityPolicy,
 	};
 
@@ -240,6 +250,7 @@ export const ValidateFileSystemAccess = (
 	Operation: "read" | "write" | "delete",
 ): Promise<ValidationResult> =>
 	async function() {
+
 		const StartTime = Date.now();
 
 		const Metrics = ValidationMetricsStore.GetInstance();
@@ -249,8 +260,11 @@ export const ValidateFileSystemAccess = (
 		if (!State) {
 			const Result: ValidationResult = {
 				Valid: false,
+
 				Reason: "Process validation state not initialized",
+
 				Severity: "error",
+
 				Timestamp: Date.now(),
 			};
 
@@ -277,8 +291,11 @@ export const ValidateFileSystemAccess = (
 
 			const Result: ValidationResult = {
 				Valid: false,
+
 				Reason: `File access denied: ${Operation} on ${File}`,
+
 				Severity: "error",
+
 				Timestamp: Date.now(),
 			};
 

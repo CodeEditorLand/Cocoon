@@ -240,6 +240,7 @@ export class Memento {
  * Specification: src/vs/workbench/api/common/extHostSecretStorage.ts
  */
 export class ExtensionSecretStorage {
+
 	private readonly ExtensionId: string;
 
 	private readonly Logger: Logger;

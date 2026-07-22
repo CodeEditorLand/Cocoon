@@ -4,6 +4,7 @@
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+
 import type * as VSCode from "vscode";
 
 /**
@@ -18,6 +19,7 @@ export const ConvertContentOptionToDTO = (
 
 	Options: VSCode.WebviewOptions,
 ) => {
+
 	return {
 		enableCommandUris: Options.enableCommandUris,
 

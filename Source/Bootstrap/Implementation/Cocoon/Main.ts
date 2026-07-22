@@ -108,6 +108,7 @@ declare const __LandTier_ExtensionHost__: string;
 declare const __LandTier_WebSocket__: string;
 
 (globalThis as { __LandTiers?: Record<string, string> }).__LandTiers = {
+
 	RemoteProcedureCall:
 		typeof __LandTier_RemoteProcedureCall__ === "string"
 			? __LandTier_RemoteProcedureCall__
@@ -277,6 +278,7 @@ declare const __LandTier_WebSocket__: string;
 // Telemetry init gated by esbuild's define - in prod builds the branch
 // folds to false and the dynamic import drops from the bundle.
 if (process.env["NODE_ENV"] !== "production") {
+
 	const PostHogBridge: PostHogBridgeModule =
 		await import("../../../Telemetry/Post/Hog/Bridge.js");
 
@@ -298,6 +300,7 @@ if (process.env["NODE_ENV"] !== "production") {
 }
 
 const main = async () => {
+
 	try {
 		// Parent-death watchdog: when Mountain exits (quit, crash, kill),
 		// Cocoon is reparented to launchd (ppid 1) but keeps running and

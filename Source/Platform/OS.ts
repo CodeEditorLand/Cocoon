@@ -280,6 +280,7 @@ function InitializeDetection(): void {
  * Get node process
  */
 function GetNodeProcess(): INodeProcess | undefined {
+
 	const globalThisAny = globalThis as any;
 
 	if (
@@ -303,6 +304,7 @@ function GetNodeProcess(): INodeProcess | undefined {
  * Check CI environment
  */
 function CheckCIEnvironment(env: IProcessEnvironment): boolean {
+
 	return !!(
 		env["CI"] ||
 		env["BUILD_ARTIFACTSTAGINGDIRECTORY"] ||
@@ -318,6 +320,7 @@ function CheckCIEnvironment(env: IProcessEnvironment): boolean {
  * Detect architecture from arch string
  */
 function DetectArchitecture(arch: string): OSArchitecture {
+
 	switch (arch.toLowerCase()) {
 		case "x64":
 		case "x86_64":
@@ -344,6 +347,7 @@ function DetectArchitecture(arch: string): OSArchitecture {
  * Detect architecture from web navigator
  */
 function DetectWebArchitecture(): OSArchitecture {
+
 	// In Cocoon (Node.js) use process.arch directly - fastest, no API call.
 	if (typeof process !== "undefined" && process.arch) {
 		return DetectArchitecture(process.arch);
@@ -358,6 +362,7 @@ function DetectWebArchitecture(): OSArchitecture {
  * Detect locale and language from environment
  */
 function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
+
 	// Check for VSCode NLS configuration
 	const rawNlsConfig = env["VSCODE_NLS_CONFIG"];
 
@@ -400,6 +405,7 @@ function DetectLocaleAndLanguage(env: IProcessEnvironment): void {
  * Detect if system is little endian
  */
 function DetectLittleEndian(): boolean {
+
 	if (_isLittleEndianComputed) {
 		return _isLittleEndian;
 	}
@@ -430,6 +436,7 @@ _isLittleEndian = DetectLittleEndian();
  * Get platform number
  */
 export function GetPlatformNumber(): PlatformNumber {
+
 	return _platformNumber;
 }
 
@@ -437,6 +444,7 @@ export function GetPlatformNumber(): PlatformNumber {
  * Get platform name
  */
 export function GetPlatformName(): PlatformName {
+
 	switch (_platformNumber) {
 		case PlatformNumber.Web:
 			return "Web";
@@ -456,6 +464,7 @@ export function GetPlatformName(): PlatformName {
  * Get operating system
  */
 export function GetOperatingSystem(): OperatingSystem {
+
 	return _operatingSystem;
 }
 
@@ -463,6 +472,7 @@ export function GetOperatingSystem(): OperatingSystem {
  * Get architecture
  */
 export function GetArchitecture(): OSArchitecture {
+
 	return _architecture;
 }
 
@@ -470,6 +480,7 @@ export function GetArchitecture(): OSArchitecture {
  * Check if running on Windows
  */
 export function IsWindows(): boolean {
+
 	return _isWindows;
 }
 
@@ -477,6 +488,7 @@ export function IsWindows(): boolean {
  * Check if running on macOS
  */
 export function IsMacintosh(): boolean {
+
 	return _isMacintosh;
 }
 
@@ -484,6 +496,7 @@ export function IsMacintosh(): boolean {
  * Check if running on Linux
  */
 export function IsLinux(): boolean {
+
 	return _isLinux;
 }
 
@@ -491,6 +504,7 @@ export function IsLinux(): boolean {
  * Check if running in web environment
  */
 export function IsWeb(): boolean {
+
 	return _isWeb;
 }
 
@@ -498,6 +512,7 @@ export function IsWeb(): boolean {
  * Check if running in Electron
  */
 export function IsElectron(): boolean {
+
 	return _isElectron;
 }
 
@@ -505,6 +520,7 @@ export function IsElectron(): boolean {
  * Check if running in CI environment
  */
 export function IsCI(): boolean {
+
 	return _isCI;
 }
 
@@ -512,6 +528,7 @@ export function IsCI(): boolean {
  * Get path separator for current platform
  */
 export function GetPathSeparator(): string {
+
 	return _isWindows ? PATH_SEPARATOR_WINDOWS : PATH_SEPARATOR_UNIX;
 }
 
@@ -519,6 +536,7 @@ export function GetPathSeparator(): string {
  * Get line ending for current platform
  */
 export function GetLineEnding(): string {
+
 	return _isWindows ? LINE_ENDING_WINDOWS : LINE_ENDING_UNIX;
 }
 
@@ -526,6 +544,7 @@ export function GetLineEnding(): string {
  * Normalize path separators to current platform
  */
 export function NormalizePath(path: string | null | undefined): string {
+
 	if (!path) {
 		return "";
 	}

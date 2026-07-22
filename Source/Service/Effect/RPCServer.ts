@@ -109,6 +109,7 @@ export class ServerStartError extends Error {
 }
 
 export class ServerStopError extends Error {
+
 	readonly _tag = "ServerStopError";
 
 	constructor(
@@ -121,6 +122,7 @@ export class ServerStopError extends Error {
 }
 
 export class ServerNotRunningError extends Error {
+
 	readonly _tag = "ServerNotRunningError";
 
 	constructor() {
@@ -133,6 +135,7 @@ export class ServerNotRunningError extends Error {
 // ============================================================================
 
 export interface RPCServerService {
+
 	/** Current server state */
 	getState(): ServerState;
 
@@ -166,6 +169,7 @@ export const RPCServerTag = RPCServer;
 // ============================================================================
 
 function makeRPCServer(): RPCServerService {
+
 	const telemetry = TelemetryLive;
 
 	let state: ServerState = { _tag: "Idle" };

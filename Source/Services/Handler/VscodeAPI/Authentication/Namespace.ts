@@ -141,6 +141,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 			},
 		): Promise<unknown> => {
 			const ScopeList: string[] = Array.isArray(Scopes)
+
 				? [...Scopes]
 				: typeof Scopes === "string"
 					? [Scopes]
@@ -160,6 +161,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 							Scopes: readonly string[],
 						) => Promise<unknown>;
 				  }
+
 				| undefined;
 
 			if (Provider && typeof Provider.getSessions === "function") {

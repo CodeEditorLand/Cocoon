@@ -124,6 +124,7 @@ const MakeEventSubscriber =
 
 		Disposables?: { push: (D: { dispose: () => void }) => unknown },
 	) => {
+
 		// Honour VS Code's `(listener, thisArg?, disposables?)` event
 		// contract. Extensions (rust-analyzer, gitlens, ...) bind class
 		// methods via ThisArg and rely on the listener being bound; an

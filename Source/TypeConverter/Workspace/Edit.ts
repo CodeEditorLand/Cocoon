@@ -110,6 +110,7 @@ export const FromAPI = (
 };
 
 export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
+
 	const Result = new VSCodeWorkspaceEdit();
 
 	for (const Edit of DTO.edits) {

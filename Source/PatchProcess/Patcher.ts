@@ -143,8 +143,11 @@ export class PatcherService extends /* Effect.Service */(
 
 			return {
 				NativeExit: process.exit.bind(process),
+
 				NativeCrash: (process as any).crash,
+
 				AllowExit: () => AllowExit,
+
 				GetSecurityPolicy: () => SecurityPolicy,
 			};
 		}),
@@ -157,6 +160,7 @@ export class PatcherService extends /* Effect.Service */(
  * Set ELECTRON_RUN_AS_NODE environment variable for proper process behavior
  */
 const SetElectronRunAsNode = {
+
 	process.env["ELECTRON_RUN_AS_NODE"] = "1";
 }.pipe(
 	Effect.tap(() =>

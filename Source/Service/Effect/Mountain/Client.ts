@@ -87,6 +87,7 @@ export class ConnectionError extends Error {
 }
 
 export class RPCError extends Error {
+
 	readonly _tag = "RPCError";
 
 	constructor(
@@ -101,6 +102,7 @@ export class RPCError extends Error {
 }
 
 export class DisconnectionError extends Error {
+
 	readonly _tag = "DisconnectionError";
 
 	constructor(
@@ -117,6 +119,7 @@ export class DisconnectionError extends Error {
 // ============================================================================
 
 export interface MountainClientService {
+
 	/** Connection state */
 	readonly connectionState: () => Promise<ConnectionState>;
 
@@ -157,6 +160,7 @@ export const MountainClient = MountainClientTag;
 // ============================================================================
 
 async function makeMountainClientLive(): Promise<MountainClientService> {
+
 	const telemetry = TelemetryLive;
 
 	// Reactive connection state

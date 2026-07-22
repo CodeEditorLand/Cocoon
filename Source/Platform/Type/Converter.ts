@@ -215,6 +215,7 @@ export function ConvertPlatformNumberToDTO(platformNumber: number): number {
  * Mountain DTO to PlatformNumber
  */
 export function ConvertDTOToPlatformNumber(dtoNumber: number): number {
+
 	return ConvertPlatformNumberToDTO(dtoNumber); // bidirectional
 }
 
@@ -222,6 +223,7 @@ export function ConvertDTOToPlatformNumber(dtoNumber: number): number {
  * Convert OS architecture to string
  */
 export function ConvertArchitectureToString(architecture: string): string {
+
 	const validArchitectures = ["x64", "arm64", "arm", "ia32", "unknown"];
 
 	if (validArchitectures.includes(architecture)) {
@@ -235,6 +237,7 @@ export function ConvertArchitectureToString(architecture: string): string {
  * OperatingSystem type to number for Mountain
  */
 export function ConvertOperatingSystemToNumber(os: number): number {
+
 	if (os < 1 || os > 3) {
 		console.warn(
 			`[TypeConverter] Invalid operating system: ${os}, using default`,
@@ -250,6 +253,7 @@ export function ConvertOperatingSystemToNumber(os: number): number {
  * Number to OperatingSystem type
  */
 export function ConvertNumberToOperatingSystem(number: number): number {
+
 	return ConvertOperatingSystemToNumber(number); // bidirectional
 }
 
@@ -257,6 +261,7 @@ export function ConvertNumberToOperatingSystem(number: number): number {
  * Convert OS info to Mountain DTO
  */
 export function ConvertOSInfoToDTO(osInfo: any): MountainPlatformInfoDTO {
+
 	const timestamp = Date.now();
 
 	return {
@@ -300,6 +305,7 @@ export function ConvertOSInfoToDTO(osInfo: any): MountainPlatformInfoDTO {
  * Convert Mountain DTO to OS info
  */
 export function ConvertDTOToOSInfo(dto: MountainPlatformInfoDTO): any {
+
 	return {
 		platformNumber: ConvertPlatformNumberToDTO(dto.platform_number),
 
@@ -333,6 +339,7 @@ export function ConvertDTOToOSInfo(dto: MountainPlatformInfoDTO): any {
  * Check if environment variable name is sensitive
  */
 function IsSensitiveVariable(name: string): boolean {
+
 	const sensitivePrefixes = [
 		"PASSWORD",
 
@@ -362,6 +369,7 @@ function IsSensitiveVariable(name: string): boolean {
  * Check if environment variable is read-only (system)
  */
 function IsReadonlyVariable(name: string): boolean {
+
 	const readonlyVariables = [
 		"PATH",
 
@@ -393,6 +401,7 @@ function IsReadonlyVariable(name: string): boolean {
  * Detect environment variable source
  */
 function DetectVariableSource(name: string): string {
+
 	if (name.startsWith("VSCODE_")) {
 		return "system";
 	}
@@ -416,6 +425,7 @@ export function ConvertEnvironmentVariableToDTO(
 
 	value: string,
 ): MountainEnvironmentVariableDTO {
+
 	return {
 		name: String(name),
 
@@ -435,6 +445,7 @@ export function ConvertEnvironmentVariableToDTO(
 export function ConvertDTOToEnvironmentVariable(
 	dto: MountainEnvironmentVariableDTO,
 ): { name: string; value: string } {
+
 	return {
 		name: dto.name,
 
@@ -448,6 +459,7 @@ export function ConvertDTOToEnvironmentVariable(
 export function ConvertEnvironmentInfoToDTO(
 	envInfo: any,
 ): MountainEnvironmentInfoDTO {
+
 	return {
 		language: String(envInfo.language ?? "en"),
 
@@ -483,6 +495,7 @@ export function ConvertEnvironmentInfoToDTO(
 export function ConvertDTOToEnvironmentInfo(
 	dto: MountainEnvironmentInfoDTO,
 ): any {
+
 	return {
 		language: dto.language,
 
@@ -510,6 +523,7 @@ export function ConvertDTOToEnvironmentInfo(
  * Convert process info to Mountain DTO
  */
 export function ConvertProcessInfoToDTO(procInfo: any): MountainProcessInfoDTO {
+
 	const now = Date.now();
 
 	const startTime = procInfo.startTime ?? now;
@@ -555,6 +569,7 @@ export function ConvertProcessInfoToDTO(procInfo: any): MountainProcessInfoDTO {
  * Convert Mountain DTO to process info
  */
 export function ConvertDTOToProcessInfo(dto: MountainProcessInfoDTO): any {
+
 	return {
 		pid: dto.pid,
 
@@ -586,6 +601,7 @@ export function ConvertDTOToProcessInfo(dto: MountainProcessInfoDTO): any {
 export function ConvertProcessSpawnOptionsToDTO(
 	options: any,
 ): MountainProcessSpawnOptionsDTO {
+
 	return {
 		cwd: options.cwd ? String(options.cwd) : undefined,
 
@@ -613,6 +629,7 @@ export function ConvertProcessSpawnOptionsToDTO(
 export function ConvertDTOToProcessSpawnOptions(
 	dto: MountainProcessSpawnOptionsDTO,
 ): any {
+
 	return {
 		cwd: dto.cwd,
 
@@ -646,6 +663,7 @@ export function ConvertProcessSignalToDTO(
 
 	force: boolean = false,
 ): MountainProcessSignalDTO {
+
 	return {
 		pid: Number(pid),
 
@@ -661,6 +679,7 @@ export function ConvertProcessSignalToDTO(
  * Convert Mountain DTO to process signal
  */
 export function ConvertDTOToProcessSignal(dto: MountainProcessSignalDTO): any {
+
 	return {
 		pid: dto.pid,
 
@@ -676,6 +695,7 @@ export function ConvertDTOToProcessSignal(dto: MountainProcessSignalDTO): any {
  * Serialize DTO to JSON string
  */
 export function SerializeDTO(dto: any): string {
+
 	try {
 		return JSON.stringify(dto);
 	} catch (error) {
@@ -693,6 +713,7 @@ export function DeserializeDTO<T>(
 
 	validator?: (obj: any) => boolean,
 ): T | null {
+
 	try {
 		const parsed = JSON.parse(json);
 
@@ -715,6 +736,7 @@ export function DeserializeDTO<T>(
  * Validate MountainPlatformInfoDTO
  */
 export function ValidatePlatformInfoDTO(dto: MountainPlatformInfoDTO): boolean {
+
 	return (
 		typeof dto === "object" &&
 		typeof dto.platform_number === "number" &&

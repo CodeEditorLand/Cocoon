@@ -96,19 +96,27 @@ export const CreateWebviewPanel = (
 		const PreserveFocus =
 			typeof ShowOptions === "object"
 				? (ShowOptions.preserveFocus ?? false)
+
 				: false;
 
 		// Parse panel options for the proxy
 		const PanelOptionsDTO = Options
 			? {
 					enableFindWidget: Options.enableFindWidget,
+
 					enableScripts: Options.enableScripts,
+
 					enableForms: Options.enableForms,
+
 					enableCommandUris: Options.enableCommandUris,
+
 					portMapping: Options.portMapping,
+
 					localResourceRoots: Options.localResourceRoots,
+
 					retainContextWhenHidden: Options.retainContextWhenHidden,
 				}
+
 			: undefined;
 
 		// Convert ViewColumn to DTO format
@@ -141,6 +149,7 @@ export const CreateWebviewPanel = (
 					params: Params,
 				}).catch(() => {});
 			},
+
 			SendRequest: <T>(_Method: string, _Params: unknown[]): Promise<T> =>
 				// Webview sendRequest is fire-and-forget from extension side;
 				// Sky resolves via onDidReceiveMessage.
@@ -150,6 +159,7 @@ export const CreateWebviewPanel = (
 		// Placeholder extension description - TODO: get from context
 		const ExtensionDescription: any = {
 			identifier: { value: "extension-placeholder" },
+
 			extensionLocation: { scheme: "file", path: "/tmp/extension" },
 		};
 

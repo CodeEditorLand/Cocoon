@@ -72,6 +72,7 @@ export default (
 
 	Options?: string | { log?: boolean },
 ): Record<string, unknown> => {
+
 	const IsLog =
 		typeof Options === "object" && Options !== null
 			? Options.log === true
@@ -108,8 +109,10 @@ export default (
 		const Resolved =
 			typeof NextLevel === "number"
 				? (NextLevel as LogLevel)
+
 				: typeof NextLevel === "string"
 					? ((LogLevel as any)[NextLevel] ?? CurrentLevel)
+
 					: CurrentLevel;
 
 		if (Resolved === CurrentLevel) return;

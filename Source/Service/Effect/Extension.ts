@@ -94,6 +94,7 @@ export class ExtensionNotFoundError extends Error {
 }
 
 export class ExtensionActivationError extends Error {
+
 	readonly _tag = "ExtensionActivationError";
 
 	constructor(
@@ -108,6 +109,7 @@ export class ExtensionActivationError extends Error {
 }
 
 export class ExtensionDeactivationError extends Error {
+
 	readonly _tag = "ExtensionDeactivationError";
 
 	constructor(
@@ -126,6 +128,7 @@ export class ExtensionDeactivationError extends Error {
 // ============================================================================
 
 export interface ExtensionService {
+
 	/** Get all extensions */
 	readonly getAll: () => Promise<ReadonlyArray<ExtensionHost>>;
 
@@ -163,6 +166,7 @@ export const Extension = ExtensionTag;
 // ============================================================================
 
 function makeExtensionService(telemetry: TelemetryService): ExtensionService {
+
 	// Storage for extensions — plain Map replaces SubscriptionRef<HashMap>
 	const extensions = new Map<string, ExtensionHost>();
 

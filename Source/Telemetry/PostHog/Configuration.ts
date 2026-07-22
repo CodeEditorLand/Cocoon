@@ -50,6 +50,7 @@ const ReadBoolean = (Key: string, Fallback: boolean): boolean => {
 };
 
 const ReadNumber = (Key: string, Fallback: number): number => {
+
 	const Value = process.env[Key];
 
 	const Parsed = Value ? Number(Value) : Number.NaN;

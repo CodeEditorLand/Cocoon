@@ -37,6 +37,7 @@ export const IFileSystemService: unique symbol = Symbol.for("IFileSystemService"
 // --- Implementation ---
 
 export class FileSystemService implements IFileSystemService {
+
 	constructor(private mountainClient: IMountainClientService) {}
 
 	async stat(uri: any): Promise<any> {

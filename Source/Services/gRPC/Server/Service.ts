@@ -92,6 +92,7 @@ const require = createRequire(import.meta.url);
  * Request tracking entry for cancellation support
  */
 interface RequestTrackingEntry {
+
 	method: string;
 
 	startTime: number;
@@ -106,6 +107,7 @@ export class GRPCServerService
 	extends EventEmitter
 	implements IGRPCServerService
 {
+
 	readonly _serviceBrand: undefined;
 
 	private server: grpc.Server | null = null;

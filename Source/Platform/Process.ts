@@ -208,6 +208,7 @@ const ProcessRegistry = new Map<number, ProcessInfo>();
  * Check if child_process module is available
  */
 function IsChildProcessAvailable(): boolean {
+
 	try {
 		return typeof require === "function" && require("child_process");
 	} catch {
@@ -219,6 +220,7 @@ function IsChildProcessAvailable(): boolean {
  * Get child_process module
  */
 function GetChildProcessModule(): any {
+
 	if (!IsChildProcessAvailable()) {
 		return null;
 	}
@@ -234,6 +236,7 @@ function GetChildProcessModule(): any {
  * Validate command for security
  */
 export function ValidateCommand(command: string): boolean {
+
 	if (!command || typeof command !== "string") {
 		return false;
 	}
@@ -318,6 +321,7 @@ export async function SpawnProcess(
 
 	options: ProcessSpawnOptions = {},
 ): Promise<ProcessInfo | null> {
+
 	// Security validation
 	if (!ValidateCommand(command)) {
 		console.error("[Process] Invalid command:", command);

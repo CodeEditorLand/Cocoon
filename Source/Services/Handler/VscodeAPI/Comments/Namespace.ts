@@ -81,6 +81,7 @@ const ThreadKey = (Uri: unknown, Range: unknown): string => {
 
 	const R = Range as
 		| { start?: { line?: number; character?: number } }
+
 		| undefined;
 
 	const Line = R?.start?.line ?? 0;
@@ -91,6 +92,7 @@ const ThreadKey = (Uri: unknown, Range: unknown): string => {
 };
 
 const CreateCommentsNamespace = (Context: HandlerContext) => {
+
 	return {
 		createCommentController: (Id: string, Label: string) => {
 			const ControllerKey = `__commentController:${Id}`;

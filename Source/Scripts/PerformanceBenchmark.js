@@ -6,11 +6,15 @@
  */
 
 import { APIFactoryService } from "../Services/APIFactoryService.js";
+
 import { ErrorHandlingService } from "../Services/ErrorHandlingService.js";
+
 import { ModuleInterceptorService } from "../Services/ModuleInterceptorService.js";
+
 import { SecurityService } from "../Services/SecurityService.js";
 
 class PerformanceBenchmark {
+
 	constructor() {
 		this.results = [];
 
@@ -378,6 +382,7 @@ class PerformanceBenchmark {
 			);
 
 			if (result.status === "PASS") passed++;
+
 			else failed++;
 		});
 
@@ -399,6 +404,7 @@ class PerformanceBenchmark {
 
 // Run benchmarks if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
+
 	const benchmark = new PerformanceBenchmark();
 
 	benchmark.runAllBenchmarks().catch(console.error);

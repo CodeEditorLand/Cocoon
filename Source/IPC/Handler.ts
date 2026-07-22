@@ -29,6 +29,7 @@ export type RequestId = string;
  * Represents the type of operation being requested
  */
 export enum OperationType {
+
 	Query = "query",
 
 	Mutation = "mutation",
@@ -42,6 +43,7 @@ export enum OperationType {
  * Generic request payload interface
  */
 export interface Request<TPayload = unknown> {
+
 	id: RequestId;
 
 	type: OperationType;
@@ -57,6 +59,7 @@ export interface Request<TPayload = unknown> {
  * Generic response payload interface
  */
 export interface Response<TData = unknown, TError = unknown> {
+
 	id: RequestId;
 
 	success: boolean;
@@ -81,6 +84,7 @@ export type RequestHandler<TInput = unknown, TOutput = unknown> = (
  * Represents a registered handler with metadata
  */
 interface HandlerRegistration {
+
 	handler: RequestHandler;
 
 	method: string;
@@ -94,6 +98,7 @@ interface HandlerRegistration {
  * Options for handler registration
  */
 export interface HandlerOptions {
+
 	description?: string;
 
 	timeout?: number;
@@ -105,6 +110,7 @@ export interface HandlerOptions {
  * Statistics for handler execution
  */
 interface HandlerStats {
+
 	totalCalls: number;
 
 	successfulCalls: number;
@@ -120,6 +126,7 @@ interface HandlerStats {
  * Configuration for the IPC Handler
  */
 interface HandlerConfig {
+
 	enableLogging: boolean;
 
 	enableMetrics: boolean;
@@ -133,6 +140,7 @@ interface HandlerConfig {
  * Main IPC Handler class responsible for request/response handling
  */
 export class IPCHandler {
+
 	private readonly handlers: Map<string, HandlerRegistration>;
 
 	private readonly pendingRequests: Map<RequestId, CancellationTokenSource>;

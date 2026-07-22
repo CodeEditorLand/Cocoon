@@ -44,6 +44,7 @@ export const ShowOpenDialog = (
 
 		// Delegates to Mountain's native file dialog implementation via gRPC
 		let Result: VSCode.Uri[] | undefined;
+
 		try {
 			const Response = await MountainClient.sendRequest(
 				"UserInterface.ShowOpenDialog",
@@ -91,6 +92,7 @@ export const ShowSaveDialog = (
 	Options?: VSCode.SaveDialogOptions,
 ): Promise<VSCode.Uri | undefined> =>
 	async function() {
+
 		await Logger.Debug(`[WindowService] Showing save dialog`);
 
 		// Serialize options using TypeConverter
@@ -98,6 +100,7 @@ export const ShowSaveDialog = (
 
 		// Delegates to Mountain's native file dialog implementation via gRPC
 		let Result: VSCode.Uri | undefined;
+
 		try {
 			const Response = await MountainClient.sendRequest(
 				"UserInterface.ShowSaveDialog",
@@ -127,5 +130,6 @@ export const ShowSaveDialog = (
 
 					return Uri.parse(Result.toString());
 				})()
+
 			: undefined;
 	};

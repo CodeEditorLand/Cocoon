@@ -120,6 +120,7 @@ declare const process: { env: IProcessEnvironment };
  * Get the process environment
  */
 function GetProcessEnvironment(): IProcessEnvironment {
+
 	if (typeof process === "object" && typeof process.env === "object") {
 		return process.env;
 	}
@@ -131,6 +132,7 @@ function GetProcessEnvironment(): IProcessEnvironment {
  * Clear environment cache
  */
 export function ClearCache(): void {
+
 	EnvironmentCache.clear();
 
 	CacheTimestamp = Date.now();
@@ -140,6 +142,7 @@ export function ClearCache(): void {
  * Invalidate cache if expired
  */
 function InvalidateCacheIfNeeded(): void {
+
 	if (Date.now() - CacheTimestamp > CACHE_TTL) {
 		ClearCache();
 	}
@@ -149,6 +152,7 @@ function InvalidateCacheIfNeeded(): void {
  * Get environment variable
  */
 export function GetEnvironmentVariable(name: string): Option.Option<string> {
+
 	if (!name || typeof name !== "string") {
 		return Option.none();
 	}
@@ -183,6 +187,7 @@ export function GetEnvironmentVariableOr(
 
 	defaultValue: string,
 ): string {
+
 	return Option.getOrElse(GetEnvironmentVariable(name), () => defaultValue);
 }
 
@@ -190,6 +195,7 @@ export function GetEnvironmentVariableOr(
  * Set environment variable (where supported)
  */
 export function SetEnvironmentVariable(name: string, value: string): boolean {
+
 	if (!name || typeof name !== "string") {
 		return false;
 	}

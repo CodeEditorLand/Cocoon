@@ -50,6 +50,7 @@ const UriKey = (Value: unknown): string => {
 	}
 
 	if (typeof WithParts.fsPath === "string")
+
 		return `file://${WithParts.fsPath}`;
 
 	return Rendered;
@@ -91,6 +92,7 @@ const RegisterProvider = (
 
 	Extra?: Record<string, unknown>,
 ) => {
+
 	// Defensive: if the extension passes `null`/`undefined` as a
 	// provider (some extensions do this defensively when their feature
 	// flags are off), don't register an empty handle - return a noop
@@ -126,7 +128,9 @@ const RegisterProvider = (
 	};
 
 	const SelectorArray = Array.isArray(Selector)
+
 		? Selector.map(NormaliseOne)
+
 		: [NormaliseOne(Selector)];
 
 	const Language =

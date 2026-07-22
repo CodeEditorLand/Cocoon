@@ -22,6 +22,7 @@ type EditorGroup = number;
 export const FromAPI = (
 	ViewColumn?: VSCodeViewColumn,
 ): EditorGroup | undefined => {
+
 	if (typeof ViewColumn !== "number") {
 		return undefined;
 	}

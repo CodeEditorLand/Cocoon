@@ -13,6 +13,7 @@ import type * as VSCode from "vscode";
  * Logger interface for Window service logging.
  */
 export interface Logger {
+
 	readonly Trace: (Message: string, ...Data: unknown[]) => Promise<void>;
 
 	readonly Debug: (Message: string, ...Data: unknown[]) => Promise<void>;
@@ -28,6 +29,7 @@ export interface Logger {
  * Workspace interface for accessing active and visible text editors.
  */
 export interface Workspace {
+
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
 
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];
@@ -40,6 +42,7 @@ export interface Workspace {
  * Specification: src/vs/workbench/api/common/extHostWindow.ts (ExtHostWindowShape)
  */
 export interface Window {
+
 	readonly state: VSCode.WindowState;
 
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
@@ -131,6 +134,7 @@ export interface Window {
  * TODO: Implement this as a namespace factory in APIFactoryService.
  */
 export interface VSCodeWindowAPI {
+
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
 
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];

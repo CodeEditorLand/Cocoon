@@ -299,6 +299,7 @@ export const ValidateNetworkAccess = (
 
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
+
 	if (!Policy.AllowNetwork) {
 		return false;
 	}
@@ -338,6 +339,7 @@ export const ValidateChildProcess = (
 
 	Policy: SecurityPolicy = DefaultSecurityPolicy,
 ): boolean => {
+
 	if (!Policy.AllowChildProcesses) {
 		return false;
 	}
@@ -368,6 +370,7 @@ export const ValidateEnvironmentVariable = (
 
 	Value: string,
 ): string => {
+
 	// Block certain environment variables
 	const BlockedVariables = [
 		"NODE_OPTIONS",
@@ -412,6 +415,7 @@ export const ValidateEnvironmentVariable = (
  * Returns Effect that checks memory and throws if limit exceeded
  */
 export const EnforceMemoryLimit = async function() {
+
 	const Policy = DefaultSecurityPolicy;
 
 	if (Policy.MaxMemoryMB <= 0) {

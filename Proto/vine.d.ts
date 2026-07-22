@@ -4,33 +4,37 @@
  * Real types are in Source/Generated/Vine.ts.
  */
 export interface EchoAction {
-	readonly ActionId: string;
 
-	readonly ActionType: string;
+    readonly ActionId: string;
 
-	readonly Payload: unknown;
+    readonly ActionType: string;
+
+    readonly Payload: unknown;
 }
 
 export interface EchoActionResponse {
-	readonly ActionId: string;
 
-	readonly Success: boolean;
+    readonly ActionId: string;
 
-	readonly Result: unknown;
+    readonly Success: boolean;
 
-	readonly Error?: string;
+    readonly Result: unknown;
+
+    readonly Error?: string;
 }
 
 export interface RegisterExtensionHostRequest {
-	readonly HostId: string;
 
-	readonly ProcessId: number;
+    readonly HostId: string;
+
+    readonly ProcessId: number;
 }
 
 export interface RegisterExtensionHostResponse {
-	readonly Accepted: boolean;
 
-	readonly SessionId: string;
+    readonly Accepted: boolean;
+
+    readonly SessionId: string;
 }
 
 export declare const EchoActionServiceClient: any;

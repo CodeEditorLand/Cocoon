@@ -48,6 +48,7 @@ export const BuildOpenTextDocument =
 
 			// Add to workspace.textDocuments so extensions iterating all open docs see it.
 			if (!Array.isArray((Context as any).__textDocuments))
+
 				(Context as any).__textDocuments = [];
 
 			const UriShape = {

@@ -135,6 +135,7 @@ const UriToString = (Value: unknown): string => {
 };
 
 type StatShape = {
+
 	readonly type: number;
 
 	readonly size: number;
@@ -145,6 +146,7 @@ type StatShape = {
 };
 
 const FileType = {
+
 	Unknown: 0,
 
 	File: 1,
@@ -161,6 +163,7 @@ const LogRoute = (
 
 	Decision: FileSystemRoute,
 ): void => {
+
 	// Per-call route decision - 14k+ lines per session under a normal
 	// extension activation (svelte's `detect` alone reads thousands of
 	// files). Gate under the explicit `fs-route` tag so the default
@@ -176,6 +179,7 @@ const LogRoute = (
 };
 
 const ThrowFileNotFound = (Uri: unknown): never => {
+
 	const Api = (globalThis as any).__cocoonVscodeAPI;
 
 	const FileNotFound = Api?.FileSystemError?.FileNotFound;

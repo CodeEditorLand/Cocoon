@@ -57,17 +57,26 @@ export const CreateStatusBarItem = (
 		// Track status bar item state locally
 		const State = {
 			id: ItemId,
+
 			name: undefined as string | undefined,
+
 			text: "",
+
 			tooltip: undefined as string | VSCode.MarkdownString | undefined,
+
 			command: undefined as string | VSCode.Command | undefined,
+
 			alignment: Alignment ?? (1 as VSCode.StatusBarAlignment), // Left = 1
+
 			priority: Priority,
+
 			backgroundColor: undefined as
 				| string
 				| VSCode.ThemeColor
 				| undefined,
+
 			color: undefined as string | VSCode.ThemeColor | undefined,
+
 			isVisible: false,
 		};
 
@@ -83,21 +92,27 @@ export const CreateStatusBarItem = (
 			get id() {
 				return State.id;
 			},
+
 			get name() {
 				return State.name;
 			},
+
 			set name(Value: string | undefined) {
 				State.name = Value;
 			},
+
 			get alignment() {
 				return State.alignment;
 			},
+
 			get priority() {
 				return State.priority;
 			},
+
 			get text() {
 				return State.text;
 			},
+
 			set text(Value: string) {
 				State.text = Value;
 
@@ -106,30 +121,39 @@ export const CreateStatusBarItem = (
 					text: Value,
 				}).catch(() => {});
 			},
+
 			get tooltip() {
 				return State.tooltip;
 			},
+
 			set tooltip(Value: string | VSCode.MarkdownString | undefined) {
 				State.tooltip = Value;
 			},
+
 			get command() {
 				return State.command;
 			},
+
 			set command(Value: string | VSCode.Command | undefined) {
 				State.command = Value;
 			},
+
 			get backgroundColor() {
 				return State.backgroundColor;
 			},
+
 			set backgroundColor(Value: string | VSCode.ThemeColor | undefined) {
 				State.backgroundColor = Value;
 			},
+
 			get color() {
 				return State.color;
 			},
+
 			set color(Value: string | VSCode.ThemeColor | undefined) {
 				State.color = Value;
 			},
+
 			show(): void {
 				State.isVisible = true;
 
@@ -139,6 +163,7 @@ export const CreateStatusBarItem = (
 					visible: true,
 				}).catch(() => {});
 			},
+
 			hide(): void {
 				State.isVisible = false;
 
@@ -148,6 +173,7 @@ export const CreateStatusBarItem = (
 					visible: false,
 				}).catch(() => {});
 			},
+
 			dispose(): void {
 				State.isVisible = false;
 
@@ -155,6 +181,7 @@ export const CreateStatusBarItem = (
 					itemId: ItemId,
 				}).catch(() => {});
 			},
+
 			accessibilityInformation: undefined,
 		} as VSCode.StatusBarItem;
 	};

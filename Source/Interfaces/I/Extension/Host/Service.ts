@@ -7,6 +7,7 @@
 
 // Types matching VSCode patterns
 export interface IExtensionDescription {
+
 	identifier: string;
 
 	name: string;
@@ -23,6 +24,7 @@ export interface IExtensionDescription {
 }
 
 export interface ExtensionActivationReason {
+
 	startup: boolean;
 
 	activationEvent: string;
@@ -31,6 +33,7 @@ export interface ExtensionActivationReason {
 }
 
 export interface ActivatedExtension {
+
 	activationTimes: {
 		codeLoadingTime: number;
 
@@ -43,6 +46,7 @@ export interface ActivatedExtension {
 }
 
 export interface IExtensionHostService {
+
 	readonly _serviceBrand: undefined;
 
 	/**

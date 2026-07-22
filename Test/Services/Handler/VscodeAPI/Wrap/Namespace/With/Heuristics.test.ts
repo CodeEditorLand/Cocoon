@@ -18,6 +18,7 @@ import WrapNamespaceWithHeuristics from "../../../../../../../Source/Services/Ha
 const Wrap = (Namespace: object): Record<string, unknown> =>
 	WrapNamespaceWithHeuristics("workspace", Namespace) as Record<
 		string,
+
 		unknown
 	>;
 

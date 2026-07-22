@@ -37,7 +37,7 @@
 		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
-		"@playform/build": "0.3.2",
+		"@playform/build": "0.3.3",
 		"@types/node": "26.1.1",
 		"@vitest/coverage-v8": "4.1.10",
 		"cross-env": "10.1.0",

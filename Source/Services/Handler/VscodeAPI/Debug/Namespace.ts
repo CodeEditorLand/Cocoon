@@ -32,6 +32,7 @@ const EventSubscriber =
 // is wired back to Mountain via `debug.dap-response`, and `handleMessage` is
 // called from the ExtHostDebug$sendDAPRequest dispatcher (see gRPC server).
 const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
+
 	const Anchor = Context as unknown as {
 		__dapAdapters?: Map<string, any>;
 

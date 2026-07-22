@@ -94,6 +94,7 @@ export const ExecutionToAPI = (
 
 	TaskToExecute: VSCode.Task,
 ): VSCode.TaskExecution => {
+
 	return {
 		task: TaskToExecute,
 

@@ -45,6 +45,7 @@ const FindInterfaceDocComment = (
 
 	interfaceName: string,
 ): string | null => {
+
 	const Pattern = new RegExp(
 		`((?:\\s*\\/\\*\\*[\\s\\S]*?\\*\\/\\s*)*)(?:export\\s+)?interface\\s+${interfaceName}\\b`,
 	);
@@ -72,6 +73,7 @@ const FindInterfaceDocComment = (
 export const IterateExtHostDecorators = async function* (
 	files: AsyncIterable<SourceFile>,
 ): AsyncIterableIterator<ExtHostDecoratorRecord> {
+
 	for await (const File of files) {
 		if (!IsExtHostFile(File.SourcePath)) continue;
 

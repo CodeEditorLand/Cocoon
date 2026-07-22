@@ -45,6 +45,7 @@ export const ActiveExtensionContexts = new Map<string, unknown>();
  * activations).
  */
 export const DisposeExtensionContext = (ExtensionId: string): void => {
+
 	const ExtContext = ActiveExtensionContexts.get(ExtensionId);
 
 	ActiveExtensionContexts.delete(ExtensionId);
@@ -85,6 +86,7 @@ export const DisposeExtensionContext = (ExtensionId: string): void => {
 let StoragePrimePromise: Promise<unknown> | null = null;
 
 export const ResetStoragePrime = (): void => {
+
 	StoragePrimePromise = null;
 };
 
@@ -98,6 +100,7 @@ const CreateExtensionContext = (
 
 	ExtensionPath: string,
 ): unknown => {
+
 	const ExtId: string =
 		Extension?.identifier?.value ??
 		Extension?.identifier?.id ??
@@ -144,6 +147,7 @@ const CreateExtensionContext = (
 	// descriptor so every published field is present.
 	let FullPackageJSON: Record<string, unknown> = Extension as Record<
 		string,
+
 		unknown
 	>;
 

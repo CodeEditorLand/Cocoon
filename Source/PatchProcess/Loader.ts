@@ -105,6 +105,7 @@ export class LoaderService extends /* Effect.Service */(
 
 			return {
 				LoadSecurityPatches: RunPatchProcess,
+
 				InitializeMonitoring: async function() {
 					if (!EnableMonitoring) {
 						return await console.info(
@@ -142,6 +143,7 @@ export class LoaderService extends /* Effect.Service */(
  * Loads all security measures and prepares environment
  */
 export const InitializeSecurityLoader = async function() {
+
 	const Loader = await LoaderService;
 
 	await console.info("Initializing Security Loader...";

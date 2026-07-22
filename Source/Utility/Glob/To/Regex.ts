@@ -106,6 +106,7 @@ const SplitTopLevelCommas = (Body: string): string[] => {
  * as literal `{`.
  */
 const ExpandBraces = (Input: string): string[] => {
+
 	const Open = Input.indexOf("{");
 
 	if (Open === -1) return [Input];

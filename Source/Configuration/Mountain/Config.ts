@@ -237,6 +237,7 @@ export function loadMountainConfigFromEnv(): MountainConfig {
  * Validate Mountain configuration
  */
 export function validateMountainConfig(config: MountainConfig): string[] {
+
 	const errors: string[] = [];
 
 	// Validate host

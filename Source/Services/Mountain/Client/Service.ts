@@ -78,6 +78,7 @@ const require = createRequire(import.meta.url);
  * Circuit breaker state
  */
 enum CircuitBreakerState {
+
 	Closed = "CLOSED", // Normal operation
 
 	Open = "OPEN", // Reject all requests
@@ -89,6 +90,7 @@ enum CircuitBreakerState {
  * Connection state
  */
 enum ConnectionState {
+
 	Disconnected = "DISCONNECTED",
 
 	Connecting = "CONNECTING",
@@ -106,6 +108,7 @@ enum ConnectionState {
  * optionally receive a disposable back.
  */
 interface CancellationToken {
+
 	readonly isCancellationRequested: boolean;
 
 	onCancellationRequested?: (
@@ -118,6 +121,7 @@ interface CancellationToken {
  * and retry logic for Mountain integration.
  */
 export class MountainClientService implements IMountainClientService {
+
 	readonly _serviceBrand: undefined;
 
 	// Core gRPC state

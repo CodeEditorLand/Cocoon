@@ -5,7 +5,9 @@
  */
 
 import { COMPRESSION_THRESHOLD, MessageFlags } from "./Constants.js";
+
 import { CompressionHint, type IMessage } from "./Types.js";
+
 import VSBuffer from "./VSBuffer.js";
 
 // ============================================================================
@@ -41,6 +43,7 @@ export const CreateMessage = (
 
 	Hint: CompressionHint = CompressionHint.None,
 ): IMessage => {
+
 	const DataBytes =
 		typeof Data === "string" ? VSBuffer.FromString(Data).byteBuffer : Data;
 
@@ -74,6 +77,7 @@ export const CreateMessage = (
 export const GetOptimalCompressionHint = (
 	Message: IMessage,
 ): CompressionHint => {
+
 	if (Message.Data.length < COMPRESSION_THRESHOLD) {
 		return CompressionHint.None;
 	}

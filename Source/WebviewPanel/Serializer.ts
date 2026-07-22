@@ -248,27 +248,43 @@ export class SerializerService extends /* Effect.Service */(
 					// Create DTO from PanelState
 					const DTO: MountainDTO = {
 						Version: DTO_VERSION,
+
 						Handle: State.Handle,
+
 						ExtensionId: State.ExtensionId,
+
 						ViewType: State.ViewType,
+
 						Title: State.Title,
+
 						ViewColumn: State.Position.ViewColumn,
+
 						PreservedFocus: State.Position.PreservedFocus,
+
 						IsActive: State.ViewState.Active,
+
 						IsVisible: State.ViewState.Visible,
+
 						Options: {
 							EnableScripts: State.Options.EnableScripts,
+
 							RetainContextWhenHidden:
 								State.Options.RetainContextWhenHidden,
+
 							EnableFindWidget: State.Options.EnableFindWidget,
+
 							LocalResourceRoots: State.Options
 								.LocalResourceRoots as
 								| readonly string[]
 								| undefined,
+
 							PortMapping: State.Options.PortMapping,
 						},
+
 						IconPath: State.IconPath,
+
 						Content: State.Content,
+
 						Metadata: State.Metadata,
 					};
 

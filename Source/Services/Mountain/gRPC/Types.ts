@@ -9,6 +9,7 @@
 
 /** Options for `showTextDocument`. */
 export interface ShowTextDocumentOptions {
+
 	uri: string;
 
 	viewColumn?: number;
@@ -22,6 +23,7 @@ export interface ShowTextDocumentOptions {
 
 /** Configuration for `createStatusBarItem`. */
 export interface StatusBarItemOptions {
+
 	id: string;
 
 	text: string;
@@ -31,6 +33,7 @@ export interface StatusBarItemOptions {
 
 /** Configuration for `createWebviewPanel`. */
 export interface WebviewPanelOptions {
+
 	viewType: string;
 
 	title: string;
@@ -52,6 +55,7 @@ export interface WebviewPanelOptions {
 
 /** Single text edit applied to a document. */
 export interface TextEdit {
+
 	range: {
 		start: { line: number; character: number };
 
@@ -68,6 +72,7 @@ export interface TextEdit {
  * Covers Window, Workspace, Command, Secret Storage, and File System domains.
  */
 export interface IMountainGRPCClientService {
+
 	readonly _serviceBrand: undefined;
 
 	// Window

@@ -153,6 +153,7 @@ export const GetStatistics = (Context: HandlerContext): ScannerStatistics => {
 };
 
 export default {
+
 	ScanAllExtensions,
 
 	ScanSystemExtensions,

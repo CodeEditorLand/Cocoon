@@ -64,6 +64,7 @@ export const FindFilesLocal = async (
 
 	MaxResults?: number,
 ): Promise<Array<{ scheme: string; path: string; fsPath: string }>> => {
+
 	const IncludePattern = ExtractGlobPattern(Include);
 
 	const ExcludePattern = ExtractGlobPattern(Exclude);
@@ -72,6 +73,7 @@ export const FindFilesLocal = async (
 		typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 10_000;
 
 	if (process.env["Trace"]?.includes("wsns"))
+
 		process.stdout.write(
 			`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}\n`,
 		);
@@ -100,6 +102,7 @@ export const FindFilesLocal = async (
 
 	const ExcludeMatcher = ExcludePattern
 		? CompileGlob(ExcludePattern)
+
 		: undefined;
 
 	const { readdir } = await import("node:fs/promises");

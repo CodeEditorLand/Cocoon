@@ -184,6 +184,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 		const internalValue = Value as
 			| Uri
 			| { readonly light: Uri; readonly dark: Uri }
+
 			| undefined;
 
 		if (this.IsDisposed || this._iconPath === internalValue) return;
@@ -197,11 +198,13 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 						dark: UriFromAPI(internalValue.dark),
 					}
+
 				: {
 						light: UriFromAPI(internalValue as Uri),
 
 						dark: UriFromAPI(internalValue as Uri),
 					}
+
 			: undefined;
 
 		void this.IPC.SendNotification("$setWebviewIconPath", [
@@ -216,6 +219,7 @@ export class WebviewPanelImplementation implements WebviewPanel {
 
 		const ViewColumnDTO = ViewColumn
 			? ConvertShowOptionToDTO(ViewColumn, PreserveFocus ?? false)
+
 			: undefined;
 
 		void this.IPC.SendNotification("$revealWebviewPanel", [

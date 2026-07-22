@@ -90,6 +90,7 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleAccessDeniedError extends Error {
+
 	readonly _tag = "ModuleAccessDeniedError";
 
 	constructor(
@@ -102,6 +103,7 @@ export class ModuleAccessDeniedError extends Error {
 }
 
 export class SecurityPolicyNotFoundError extends Error {
+
 	readonly _tag = "SecurityPolicyNotFoundError";
 
 	constructor(readonly extensionId: string) {
@@ -114,6 +116,7 @@ export class SecurityPolicyNotFoundError extends Error {
 // ============================================================================
 
 export interface ModuleInterceptorService {
+
 	/**
 	 * Initialize module interception service
 	 */
@@ -183,6 +186,7 @@ export interface ModuleInterceptorService {
 // ============================================================================
 
 export const ModuleInterceptorTag = {
+
 	_tag: "Cocoon/ModuleInterceptor",
 } as const;
 
@@ -193,6 +197,7 @@ export const ModuleInterceptor = ModuleInterceptorTag;
 // ============================================================================
 
 const defaultSecurityPolicy = {
+
 	allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
 
 	blockedModules: [
@@ -219,6 +224,7 @@ const defaultSecurityPolicy = {
 } satisfies Omit<SecurityPolicy, "extensionId">;
 
 async function makeModuleInterceptorService(): Promise<ModuleInterceptorService> {
+
 	const telemetry: TelemetryService = getTelemetry();
 
 	// Security policies for extensions

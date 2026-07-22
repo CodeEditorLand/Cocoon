@@ -43,6 +43,7 @@ export const FromAPI = (
 export const ToAPI = (
 	MarkdownStringDTO: IMarkdownString,
 ): VSCodeMarkdownString => {
+
 	const result = new MarkdownString(
 		MarkdownStringDTO.value,
 

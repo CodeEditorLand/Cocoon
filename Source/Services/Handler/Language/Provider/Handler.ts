@@ -204,6 +204,7 @@ const BuildVsDocument = async (
 			Result.push((Lines[StartLine] ?? "").substring(StartChar));
 
 			for (let I = StartLine + 1; I < EndLine; I++)
+
 				Result.push(Lines[I] ?? "");
 
 			Result.push((Lines[EndLine] ?? "").substring(0, EndChar));

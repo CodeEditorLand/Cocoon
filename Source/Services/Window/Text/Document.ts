@@ -148,6 +148,7 @@ export const ShowInformationMessage = (
 	...Items: string[]
 ): Promise<string | undefined> =>
 	async function() {
+
 		await Logger.Debug(
 			`[WindowService] Showing information message: ${Message}`,
 		;

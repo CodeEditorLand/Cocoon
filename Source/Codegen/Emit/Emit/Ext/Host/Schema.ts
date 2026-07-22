@@ -42,6 +42,7 @@ const FormatParameter = (parameter: InterfaceMemberParameter): string =>
 	`${parameter.Name}${parameter.Optional ? "?" : ""}: ${parameter.TypeText}`;
 
 const FormatMember = (member: InterfaceMemberRecord): string => {
+
 	const Doc = FormatDocComment(member.DocComment, "	");
 
 	const ReadonlyPrefix = member.Readonly ? "readonly " : "";
@@ -64,6 +65,7 @@ const FormatMemberRecord = (
 
 	total: number,
 ): string => {
+
 	const Parameters = member.Parameters.map(
 		(parameter: { Name: string; TypeText: string; Optional: boolean }) =>
 			`{ Name: ${JSON.stringify(parameter.Name)}, TypeText: ${JSON.stringify(parameter.TypeText)}, Optional: ${parameter.Optional} }`,
@@ -71,6 +73,7 @@ const FormatMemberRecord = (
 
 	const DocText = member.DocComment
 		? JSON.stringify(member.DocComment)
+
 		: "null";
 
 	const Trailing = index === total - 1 ? "" : ",";
@@ -99,6 +102,7 @@ const FormatMemberRecord = (
 };
 
 const FormatOutput = (record: ExtHostDecoratorRecord): string => {
+
 	const Sorted = [...record.Members].sort(
 		(a, b) => a.SourceLine - b.SourceLine,
 	);
@@ -172,12 +176,14 @@ const FormatOutput = (record: ExtHostDecoratorRecord): string => {
 };
 
 export interface EmitExtHostSchemaOptions {
+
 	readonly Record: ExtHostDecoratorRecord;
 
 	readonly OutputRoot: string;
 }
 
 export interface EmitExtHostSchemaOutcome {
+
 	readonly OutputPath: string;
 
 	readonly Bytes: number;
@@ -188,6 +194,7 @@ export interface EmitExtHostSchemaOutcome {
 export const EmitExtHostSchema = async (
 	options: EmitExtHostSchemaOptions,
 ): Promise<EmitExtHostSchemaOutcome | CodegenProblem> => {
+
 	const Output = FormatOutput(options.Record);
 
 	const OutputPath = join(

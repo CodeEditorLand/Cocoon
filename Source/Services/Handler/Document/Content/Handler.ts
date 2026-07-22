@@ -126,6 +126,7 @@ const BuildTextDocument = (
 
 	LanguageIdentifier?: string,
 ): TextDocumentShape => {
+
 	const Lines = Content.split(/\r?\n/);
 
 	const FileName = Uri.replace(/^file:\/\//, "");
@@ -372,8 +373,10 @@ const HandleDocumentChange = (
 		let Updated = Existing;
 
 		const Changes: any[] = Array.isArray(EventData?.changes)
+
 			? EventData.changes
 			: Array.isArray(Parameters?.changes)
+
 				? Parameters.changes
 				: [];
 

@@ -190,6 +190,7 @@ export class StateService extends /* Effect.Service */(
 							parameters: unknown,
 						) => Promise<unknown>;
 				  }
+
 				| undefined => (globalThis as any).__COCOON_MOUNTAIN_CLIENT__;
 
 			const StorageKey = (Handle: string): string =>
@@ -314,15 +315,25 @@ export class StateService extends /* Effect.Service */(
 			}) => {
 				const State: PanelState = {
 					Version: STATE_VERSION,
+
 					Handle: Params.Handle,
+
 					ExtensionId: Params.ExtensionId,
+
 					ViewType: Params.ViewType,
+
 					Title: Params.Title,
+
 					Position: Params.Position,
+
 					ViewState: Params.ViewState,
+
 					Options: Params.Options,
+
 					IconPath: Params.IconPath,
+
 					Content: Params.Content,
+
 					Metadata: {
 						CreatedAt: Date.now(),
 					},

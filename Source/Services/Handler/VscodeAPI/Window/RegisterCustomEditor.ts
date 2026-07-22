@@ -114,6 +114,7 @@ const RegisterCustomEditor = (
 		if (!Entry || Entry.Handle !== Handle) return undefined;
 
 		if (Entry.Readonly && MethodName !== "resolveCustomEditor")
+
 			return undefined;
 
 		const Method = (Entry.Provider as Record<string, unknown>)?.[

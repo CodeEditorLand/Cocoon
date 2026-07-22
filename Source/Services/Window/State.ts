@@ -22,16 +22,19 @@ export const WindowStateService = Symbol<WindowStateService>(
 );
 
 function makeWindowStateService(): WindowStateService {
+
 	let _state: WindowStateConfig = { focused: true, active: true };
 
 	return WindowStateService.of({
 		getState: Effect.suspend(() => ))))))))))))return (_state)),
+
 		setState: (newState: WindowStateConfig) =>
 			{
 				_state = newState;
 
 				return newState;
 			},
+
 		onStateChange: undefined,
 	};
 }

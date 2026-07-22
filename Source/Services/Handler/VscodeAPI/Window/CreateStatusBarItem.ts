@@ -58,12 +58,14 @@ const ResolveOverload = (
 
 	ThirdArg: unknown,
 ): {
+
 	Id: string | undefined;
 
 	Alignment: number;
 
 	Priority: number | undefined;
 } => {
+
 	// Three-arg form: createStatusBarItem(id, alignment, priority)
 	if (typeof FirstArg === "string") {
 		return {
@@ -100,6 +102,7 @@ export default (
 
 	Priority?: number,
 ): Record<string, unknown> => {
+
 	const {
 		Id,
 
@@ -148,6 +151,7 @@ export default (
 
 							tooltip: (CurrentCommand as any).tooltip,
 						}
+
 					: undefined;
 
 		const BackgroundId = ThemeColorId(CurrentBackgroundColor);

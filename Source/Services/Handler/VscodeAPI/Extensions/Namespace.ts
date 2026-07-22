@@ -134,6 +134,7 @@ const MakeMultiStub = (): any => {
 const Stub = MakeMultiStub();
 
 const MakePermissiveExports = (): any => {
+
 	const Base: Record<string, unknown> = {
 		enabled: true,
 	};
@@ -189,6 +190,7 @@ const MakePermissiveExports = (): any => {
 const NormalizeLocation = (
 	Raw: unknown,
 ): { ExtensionPath: string; ExtensionUri: any } => {
+
 	const VsCodeUri = (globalThis as any).__cocoonVscodeAPI?.Uri;
 
 	const UriFactoryAvailable =

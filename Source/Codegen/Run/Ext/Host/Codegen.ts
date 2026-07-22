@@ -59,6 +59,7 @@ const DefaultLog = (message: string): void => {
 export const RunExtHostCodegen = async (
 	options: RunExtHostCodegenOptions,
 ): Promise<RunExtHostCodegenSummary | CodegenProblem> => {
+
 	const Log = options.Log ?? DefaultLog;
 
 	const Started = performance.now();

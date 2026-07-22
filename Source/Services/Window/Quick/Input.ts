@@ -48,26 +48,34 @@ export const ShowQuickPick = <T extends string>(
 
 		const ButtonsDTO = Options?.buttons
 			? SerializeButtons(Options.buttons)
+
 			: undefined;
 
 		// Construct request payload
 		const RequestPayload = {
 			items: ItemsDTO,
+
 			options: Options
 				? {
 						placeHolder: Options.placeHolder,
+
 						matchOnDescription: Options.matchOnDescription,
+
 						matchOnDetail: Options.matchOnDetail,
+
 						ignoreFocusLost: Options.ignoreFocusLost,
+
 						canPickMany: Options.canPickMany,
 					}
 
 				: undefined,
+
 			buttons: ButtonsDTO,
 		};
 
 		// Delegates to Mountain's native quick pick implementation via gRPC
 		let SelectedItems: string[] | undefined;
+
 		try {
 			const Response = await MountainClient.sendRequest(
 				"UserInterface.ShowQuickPick",
@@ -126,6 +134,7 @@ export const ShowInputBox = (
 	Options?: VSCode.InputBoxOptions,
 ): Promise<string | undefined> =>
 	async function() {
+
 		await Logger.Debug(
 			`[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`,
 		);
@@ -134,21 +143,30 @@ export const ShowInputBox = (
 		const RequestPayload = Options
 			? {
 					title: Options.title,
+
 					value: Options.value,
+
 					valueSelection: Options.valueSelection,
+
 					prompt: Options.prompt,
+
 					placeHolder: Options.placeHolder,
+
 					password: Options.password,
+
 					ignoreFocusLost: Options.ignoreFocusLost,
+
 					validateInput: Options.validateInput
 						? Options.validateInput.toString()
 
 						: undefined,
 				}
+
 			: undefined;
 
 		// Delegates to Mountain's native input box implementation via gRPC
 		let Result: string | undefined;
+
 		try {
 			const Response = await MountainClient.sendRequest(
 				"UserInterface.ShowInputBox",

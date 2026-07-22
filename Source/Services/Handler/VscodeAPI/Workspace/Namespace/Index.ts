@@ -104,6 +104,7 @@ const HydrateUriResults = (Raw: unknown[]): unknown[] => {
 };
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
+
 	const InitWorkspace = (Context.ExtensionHostInitData?.workspace ??
 		Context.ExtensionHostInitData?.workspaceData ??
 		{}) as {
@@ -334,6 +335,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			Options?: { exclude?: unknown; maxResults?: number },
 		): Promise<unknown[]> => {
 			const Include = Array.isArray(FilePatterns)
+
 				? FilePatterns[0]
 				: FilePatterns;
 

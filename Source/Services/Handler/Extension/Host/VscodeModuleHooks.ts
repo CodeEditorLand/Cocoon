@@ -74,7 +74,9 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 						const Live = Resolve();
 
 						return Reflect.has(Live, Property)
+
 							? Reflect.get(Live, Property, Live)
+
 							: undefined;
 					},
 
@@ -92,6 +94,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 
 						return Descriptor
 							? { ...Descriptor, configurable: true }
+
 							: undefined;
 					},
 				});

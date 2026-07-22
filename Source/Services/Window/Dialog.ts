@@ -50,6 +50,7 @@ export const DialogService = Symbol<DialogService>(
  * Create dialog service layer
  */
 export const DialogLive = async function() {
+
 	const MountainClient = await IMountainClientService;
 
 	const ShowMessage = (

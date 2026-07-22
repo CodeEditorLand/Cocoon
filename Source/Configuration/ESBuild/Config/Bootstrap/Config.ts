@@ -17,6 +17,7 @@ import * as Environment from "../../Constant/Environment/Constant.js";
  * never reached at runtime are kept external.
  */
 const BootstrapConfig: BuildOptions = {
+
 	color: true,
 
 	format: "esm",

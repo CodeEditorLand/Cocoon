@@ -27,6 +27,7 @@ export const ToURI = (DTO: any): Uri | undefined => {
  * @returns A `Uri[]` or `undefined`.
  */
 export const ToURIArray = (DTOs: any[] | undefined): Uri[] | undefined => {
+
 	if (!DTOs || !Array.isArray(DTOs)) {
 		return undefined;
 	}

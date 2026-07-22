@@ -123,6 +123,7 @@ const MountainConnectMaxAttempts = 5;
 // ============================================================================
 
 const stage1_Environment = async (): Promise<StageResult> => {
+
 	const start = Date.now();
 
 	CocoonDevLog(

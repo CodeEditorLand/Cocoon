@@ -4,6 +4,7 @@
  */
 
 export interface InitData {
+
 	readonly commit: string;
 
 	readonly version: string;
@@ -30,6 +31,7 @@ const ResolvedVersion = process.env["ProductVersion"] ?? "1.118.0";
 const ResolvedCommit = process.env["ProductCommit"] ?? "dev";
 
 export const InitDataLive = {
+
 	commit: ResolvedCommit,
 
 	version: ResolvedVersion,
