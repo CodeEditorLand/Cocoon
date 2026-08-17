@@ -15,11 +15,11 @@
 
 ---
 
-# **Cocoon**&#x2001;🦋&#x2001;Architecture
+# **Cocoon** Architecture&#x2001;🦋
 
-`Cocoon` is the `Node.js` extension host sidecar for `Land`.
+`Cocoon` is the Node.js extension host sidecar for `Land`.
 
-- `Cocoon` runs VS Code extensions in a supervised `Node.js` process.
+- `Cocoon` runs VS Code extensions in a supervised Node.js process.
 - It provides a `vscode` API shim via `Effect-TS`.
 - This shim translates extension API calls into declarative Effects.
 - `Effects` are either handled in-process.
@@ -80,10 +80,15 @@ graph TB
 | Attribute    | Value                                                                                                               |
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
 | Language     | `TypeScript` (`Effect-TS` v3.21)                                                                                    |
-| Runtime      | `Node.js` (managed by `SideCar`)                                                                                    |
+| Runtime      | Node.js (managed by `SideCar`)                                                                                    |
 | IPC          | `gRPC` (`Vine` protocol)                                                                                            |
 | Dependencies | `effect`, `@effect/platform`, `@effect/platform-node`, `@grpc/grpc-js`, `@codeeditorland/output`, `google-protobuf` |
-| Managed by   | `Mountain` `ProcessManagement/CocoonManagement.rs`                                                                  |
+| Managed by   | [Mountain ProcessManagement/CocoonManagement.rs](https://github.com/CodeEditorLand/Mountain/tree/Current/Source/ProcessManagement/CocoonManagement.rs) |
+
+> [!NOTE]
+>
+> Node.js is the runtime, not a path in this repository, so it is named
+> here in plain prose rather than as a code path.
 
 ---
 
@@ -115,29 +120,68 @@ graph TB
 +------------------------------------------------------------------+
 ```
 
+> [!IMPORTANT]
+>
+> The box diagram above is the historical sketch and uses short display
+> names; the [Module Map](#module-map) below carries the real, current
+> paths as they exist on disk.
+
+### Naming Corrections&#x2001;🔧
+
+Earlier revisions of this document named modules that never existed under
+this layout. Each is recorded here with the real path that replaces it, so
+a reader following an old reference knows where the code actually went.
+
+Names in the left column are quoted as plain text on purpose: they are
+former spellings, not paths you can open.
+
+| Claimed previously                              | Real location                                                                                                                                          |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source/Bootstrap/Implementation/CocoonMain.ts   | [`Bootstrap/Implementation/Cocoon/Main.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/Cocoon/Main.ts)       |
+| Source/Core/ExtensionHost.ts                    | [`Services/Extension/Host/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension/Host/Service.ts)                 |
+| Source/Core/RequireInterceptor.ts               | [`Services/Module/Interceptor.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Module/Interceptor.ts)                         |
+| Source/Core/ApiFactory.ts, ApiFactory.ts        | [`Services/API/Factory/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts)                       |
+| Source/Services/Commands.ts, Services/Commands.ts | [`Services/Command.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Command.ts) - singular                                 |
+| Source/Services/gRPC/Client.ts                  | [`Services/Mountain/gRPC/Client.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/gRPC/Client.ts)                     |
+| Source/Generated/                               | [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen) emits into Effect/Generated/ at build time                           |
+
+> [!WARNING]
+>
+> There is no Source/Core directory in this repository - the modules once
+> filed under it live under
+> [`Services/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services).
+
 ### Module Map&#x2001;🗺️
 
-| Path                                            | Purpose                                          |
-| ----------------------------------------------- | ------------------------------------------------ |
-| `Source/Bootstrap/Implementation/CocoonMain.ts` | Entry point; initialization prelude              |
-| `Source/PatchProcess/`                          | Process hardening, signal handling, log piping   |
-| `Source/Core/ExtensionHost.ts`                  | Extension activation and lifecycle               |
-| `Source/Core/RequireInterceptor.ts`             | Require() patching for VS Code module loading    |
-| `Source/Core/ApiFactory.ts`                     | Constructs vscode.\\\* API objects per extension |
-| `Source/Services/Commands.ts`                   | Command registration and execution               |
-| `Source/Services/Window.ts`                     | Window and editor management                     |
-| `Source/Services/Workspace.ts`                  | Workspace and file system operations             |
-| `Source/Services/Configuration.ts`              | Configuration read/write                         |
-| `Source/Services/gRPC/Client.ts`                | gRPC client for Mountain communication           |
-| `Source/API/`                                   | API surface construction and type definitions    |
-| `Source/ModuleInterceptor/`                     | ESM and CommonJS module interception             |
-| `Source/TypeConverter/`                         | Type conversion between extensions and gRPC      |
-| `Source/Telemetry/`                             | PostHog + OTLP telemetry                         |
-| `Source/IPC/`                                   | Internal message channel system                  |
-| `Source/Utility/Tier.ts`                        | Tier configuration reader                        |
-| `Source/WebviewPanel/`                          | Webview panel lifecycle management               |
-| `Source/Generated/`                             | Proto-generated TypeScript types                 |
-| `Source/Configuration/ESBuild/`                 | Build configuration                              |
+Every path below exists in the source tree and links to its canonical
+location on the `Current` branch.
+
+| Path                                                                                                                          | Purpose                                        |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [`Bootstrap/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap)                 | Entry point; initialization prelude            |
+| [`PatchProcess/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/PatchProcess)           | Process hardening, signal handling, log piping |
+| [`Services/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services)                   | Extension activation, lifecycle and API surface |
+| [`Service/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Service)                     | `Effect-TS` layer wiring and service registry  |
+| [`Services/Command.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Command.ts) | Command registration and execution          |
+| [`Services/Window.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Window.ts) | Window and editor management                  |
+| [`Services/Workspace.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Workspace.ts) | Workspace and file system operations    |
+| [`Services/Configuration.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Configuration.ts) | Configuration read/write        |
+| [`Services/gRPC/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/gRPC)         | gRPC server for Mountain communication         |
+| [`Services/API/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API)           | API surface construction and type definitions  |
+| [`Services/ModuleInterceptor/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/ModuleInterceptor) | ESM and CommonJS module interception |
+| [`TypeConverter/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter)         | Type conversion between extensions and gRPC    |
+| [`Telemetry/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Telemetry)                 | PostHog + OTLP telemetry                       |
+| [`IPC/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC)                             | Internal message channel system                |
+| [`Utility/Tier.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Tier.ts)      | Tier configuration reader                      |
+| [`WebviewPanel/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel)           | Webview panel lifecycle management             |
+| [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen)                     | Proto-generated TypeScript types               |
+| [`Configuration/ESBuild/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Configuration/ESBuild) | Build configuration                    |
+| [`Interfaces/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces)               | Service interface contracts                    |
+| [`Platform/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform)                   | OS, environment and process abstraction        |
+| [`Integration/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Integration)             | High-level Mountain client wrapper             |
+| [`Debug/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Debug)                         | Inspection HTTP surface                        |
+| [`Shim/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Shim)                           | Deep-shim `Module._load` interception          |
+| [`Scripts/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Scripts)                     | Benchmark harness                              |
 
 ---
 
@@ -186,11 +230,78 @@ graph TB
 Extension host ready for use
 ```
 
+### Bootstrap and WebSocket&#x2001;🥾
+
+[`Bootstrap/Implementation/Cocoon/Main.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/Cocoon/Main.ts)
+is the real entry module. It installs the shim, imports the tier
+dispatcher, then hands control to `runBootstrap`.
+
+    // Bootstrap/Implementation/Cocoon/Main.ts - real prelude order
+    import installNodeModuleInterceptor from "../../../Shim/NodeModuleInterceptor.js";
+    installNodeModuleInterceptor();
+    import { runBootstrap } from "../../../Service/Bootstrap.js";
+
+> [!NOTE]
+>
+> The interceptor is installed synchronously before any other import so no
+> extension can reach an unpatched `fs`.
+
+[`Bootstrap/WebSocket/Server.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/WebSocket/Server.ts)
+adds a JSON-RPC `WebSocket` transport for direct `Sky` to `Cocoon` traffic,
+authenticated by a shared secret.
+
+    // Bootstrap/WebSocket/Server.ts - auth surface
+    // Auth: secret via URL ?secret=, Sec-WebSocket-Protocol, or X-Land-Secret
+
+> [!NOTE]
+>
+> This is the only inbound socket `Cocoon` opens that does not originate
+> from `Mountain`.
+
+### Init Data&#x2001;🌱
+
+[`Services/Init/Data.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Init/Data.ts)
+defines the payload `Mountain` sends at handshake.
+
+    // Services/Init/Data.ts
+    export interface InitData {
+        readonly commit: string; readonly version: string;
+        readonly parentPid: number; readonly extensions: ReadonlyArray<unknown>;
+    }
+
+> [!NOTE]
+>
+> `parentPid` is what the process monitor watches to exit when the editor dies.
+
+### Platform Abstraction&#x2001;🖥️
+
+[`Platform/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform)
+isolates every OS-specific decision behind one module group.
+
+| Module                                                                                                              | Responsibility                                    |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [`Platform/OS.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform/OS.ts)                     | OS detection, path separators, architecture enums |
+| [`Platform/Environment.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform/Environment.ts)   | Reads, validates and caches environment variables |
+| [`Platform/FiddeeRoot.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform/FiddeeRoot.ts)     | Resolves the `$HOME/.fiddee` user dotfile root    |
+| [`Platform/Logger.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform/Logger.ts)             | Platform-level log sink                           |
+| [`Platform/Process.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform/Process.ts)           | Process metadata and lifetime helpers             |
+| [`Platform/VSCode/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform/VSCode)                  | `VSCode` type aliases used across the shim        |
+
+    // Platform/OS.ts - the platform vocabulary
+    export type PlatformName = "Web" | "Windows" | "Mac" | "Linux";
+    export const PATH_SEPARATOR_WINDOWS = "\\";
+
+> [!NOTE]
+>
+> Every other module asks `Platform` rather than reading `process.platform`.
+
 ---
 
 ## VS Code API Shim&#x2001;📦
 
-`Cocoon` constructs VS Code API objects for each extension via `ApiFactory.ts`:
+`Cocoon` constructs VS Code API objects for each extension via its
+ApiFactory, implemented in
+[`Services/API/Factory/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts):
 
 ```typescript
 // Cocoon constructs a vscode namespace for each extension
@@ -203,6 +314,12 @@ const vscode = ApiFactory.create(extensionId, {
 	// ... all vscode.* namespaces
 });
 ```
+
+> [!IMPORTANT]
+>
+> The snippet keeps the historical `ApiFactory.create` spelling; the real
+> implementation is
+> [`Services/API/Factory/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts).
 
 ### API Namespace Providers&#x2001;📋
 
@@ -221,6 +338,39 @@ const vscode = ApiFactory.create(extensionId, {
 | `vscode.Notebook*`    | NotebookProvider    | A (Stock Node)              |
 | `vscode.WebviewPanel` | WebviewProvider     | B (Mountain-backed)         |
 
+### Interfaces&#x2001;📐
+
+[`Interfaces/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces)
+holds the contracts that let a provider be swapped without touching call
+sites.
+
+- [`IAPI/Factory/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces/IAPI/Factory/Service.ts) - constructs the API surface with per-extension scoping.
+- [`IGRPC/Server/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces/IGRPC/Server/Service.ts) - handles `Mountain` requests and notifications.
+- [`IAPIFactory.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces/IAPIFactory.ts) - the legacy flat alias kept for existing imports.
+- [`I/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces/I) - one interface per service: `Configuration`, `Terminal`, `Security`, `Module`, `Mountain`, `Extension`.
+
+    // Interfaces/IAPI/Factory/Service.ts
+    export interface APIConstructionRequest { extensionId: string; extensionDescription: any; }
+
+> [!NOTE]
+>
+> Every API object is built per extension, so one extension cannot reach
+> another's state.
+
+### Extensions Scanner&#x2001;🔎
+
+[`Services/Extensions/Scanner.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extensions/Scanner.ts)
+is the facade over the extension registry populated from `InitData`.
+
+    // Services/Extensions/Scanner.ts
+    export const ScanAllExtensions = (...)
+    export const ScanSystemExtensions = (...)
+
+> [!NOTE]
+>
+> It is shaped like VS Code's `IExtensionsScannerService` so the registry
+> can later be swapped out underneath it.
+
 ---
 
 ## Service Providers&#x2001;🔌
@@ -229,13 +379,70 @@ Each service is implemented as an `Effect-TS` `Layer`:
 
 | Service               | Module                      | Key Methods                                                                             |
 | --------------------- | --------------------------- | --------------------------------------------------------------------------------------- |
-| CommandsProvider      | `Services/Commands.ts`      | `registerCommand`, `executeCommand`, `getCommands`                                      |
+| CommandsProvider      | `Services/Command.ts`       | `registerCommand`, `executeCommand`, `getCommands`                                      |
 | WindowProvider        | `Services/Window.ts`        | `createWebviewPanel`, `showTextDocument`, `activeTextEditor`, `showInformationMessage`  |
 | WorkspaceProvider     | `Services/Workspace.ts`     | `workspaceFolders`, `openTextDocument`, `findFiles`, `applyEdit`, `getConfiguration`    |
 | LanguagesProvider     | `Services/Language/`        | `registerHoverProvider`, `registerCompletionProvider`, `registerDefinitionProvider`     |
 | ConfigurationProvider | `Services/Configuration.ts` | `get`, `has`, `inspect`, `update`, `onDidChange`                                        |
-| WebviewProvider       | `Services/WebviewPanel/`    | `createWebviewPanel`, `postMessage`, `onDidReceiveMessage`                              |
+| WebviewProvider       | `Services/Window/Webview/`  | `createWebviewPanel`, `postMessage`, `onDidReceiveMessage`                              |
 | FileSystemProvider    | `Services/File/`            | `readFile`, `writeFile`, `stat`, `readDirectory`, `createDirectory`, `delete`, `rename` |
+
+### Supporting Services&#x2001;🧰
+
+Beyond the `vscode` namespaces, `Services/` carries the machinery that keeps
+the host honest under load.
+
+| Module                                                                                                                                   | What it does                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| [`Services/Dev/Log.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Dev/Log.ts)                                | `CocoonDevLog`, the breadcrumb logger every module imports |
+| [`Services/Error/Handling/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Error/Handling/Service.ts)  | Circuit breaker, retry and recovery                     |
+| [`Services/Metrics/Collector.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Metrics/Collector.ts)            | Counter map for service instrumentation                 |
+| [`Services/Performance/Monitoring/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Performance/Monitoring/Service.ts) | Zero-overhead stub; use `Telemetry` instead |
+| [`Services/Security/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Security/Service.ts)              | Policy enforcement and audit logging                    |
+| [`Services/Terminal/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Terminal/Service.ts)              | Deprecated wrapper, retained pending cleanup            |
+| [`Services/Health.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Health.ts)                                  | Liveness reporting back to `Mountain`                   |
+| [`Services/Echo/Action/Client.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Echo/Action/Client.ts)          | Bidirectional `Echo` action traffic with the Spine      |
+
+    // Services/Error/Handling/Service.ts - the breaker states
+    state: "CLOSED" | "OPEN" | "HALF_OPEN";
+
+> [!NOTE]
+>
+> A provider that trips the breaker stops calling `Mountain` until the
+> half-open probe succeeds.
+
+### Handler Fan-out&#x2001;📮
+
+[`Services/Handler/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Handler)
+turns each inbound `Mountain` notification into a domain event on one of two
+emitters.
+
+    // Services/Handler/Notification/Handler.ts - two channels
+    // Emitter               -> configurationChanged, windowFocused, webview.message:<handle>
+    // WorkspaceEventEmitter -> didOpenTextDocument, didChangeTextDocument
+
+> [!NOTE]
+>
+> Text-document events are split onto their own emitter because they fire
+> once per keystroke.
+
+[`Services/Handler/Handler/Context.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Handler/Handler/Context.ts)
+passes the shared `Emitter` and registry to each handler without creating a
+circular dependency.
+
+### Effect Layer Registry&#x2001;🧵
+
+[`Service/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Service)
+(singular) is where the `Effect` layers are composed and handed out.
+
+    // Service/Mapping.ts - the live layer set
+    import { BootstrapLive, ExtensionLive, HealthLive, ModuleInterceptorLive,
+             MountainClientLive, RPCServerLive, TelemetryLive } from "../Effect/index.js";
+
+> [!NOTE]
+>
+> [`Service/Mapping.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Service/Mapping.ts)
+> is the single registry every consumer resolves against.
 
 ---
 
@@ -278,11 +485,50 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 | Timeout      | 30-second request timeout                     |
 | Backpressure | gRPC flow control                             |
 
+### Server Side and Integration&#x2001;📡
+
+`Cocoon` is not only a client: it also serves the `CocoonService` protocol
+so `Mountain` can call into the extension host.
+
+- [`Services/gRPC/Server/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/gRPC/Server/Service.ts) - implements `CocoonService` with bidirectional streaming, cancellation and keepalive.
+- [`Services/Mountain/gRPC/Client.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/gRPC/Client.ts) - the outbound client.
+- [`Integration/Mountain/Client.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Integration/Mountain/Client.ts) - a convenience wrapper over that client.
+
+    // Services/gRPC/Server/Service.ts
+    // Implements the CocoonService protocol defined in Mountain's Vine.proto
+
+> [!NOTE]
+>
+> Both directions speak the same `Vine` schema, which is why the port is
+> shared rather than duplicated.
+
+### IPC Message Layer&#x2001;✉️
+
+[`IPC/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC)
+carries the in-process channel that sits under the wire.
+
+| Module                                                                                                          | Role                                          |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| [`IPC/Channel.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Channel.ts)                 | Priority, direction and delivery-status enums |
+| [`IPC/Message.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Message.ts)                 | Re-export barrel for the `Message/` atoms     |
+| [`IPC/Message/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Message)                      | Serialize, deserialize, batch, unbatch, `VSBuffer` |
+| [`IPC/Protocol.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Protocol.ts)               | Request / response / notification contracts   |
+| [`IPC/Handler.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC/Handler.ts)                 | Dispatch of decoded messages                  |
+
+    // IPC/Channel.ts - the delivery vocabulary
+    export enum MessagePriority { ... }
+    export enum DeliveryStatus { ... }
+
+> [!NOTE]
+>
+> Batching lives in `Message/Batch` so a burst of notifications costs one
+> wire round trip.
+
 ---
 
 ## RequireInterceptor&#x2001;🪝
 
-The `RequireInterceptor` patches `Node.js`'s `require()` to enable VS Code
+The `RequireInterceptor` patches Node.js's `require()` to enable VS Code
 module loading.
 
 ### Interception Rules&#x2001;📋
@@ -308,6 +554,25 @@ interceptor.install();
 // After installation, all require() calls go through interceptor
 const vscode = require("vscode"); // Returns per-extension API surface
 ```
+
+### Where the Interception Really Lives&#x2001;🧷
+
+Three modules share this responsibility, at three different depths.
+
+| Module                                                                                                                                | Depth                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [`Services/Module/Interceptor.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Module/Interceptor.ts)       | AST-based sandboxing and secure path resolution    |
+| [`Services/ModuleInterceptor/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/ModuleInterceptor)              | The `ESM` and `CommonJS` rule tables               |
+| [`Shim/NodeModuleInterceptor.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Shim/NodeModuleInterceptor.ts)         | `Module._load` patch for `fs` / `child_process`    |
+
+    // Services/Module/Interceptor.ts - stated responsibilities
+    // - Intercept and validate all module require/import calls
+    // - Perform AST-based security analysis on loaded modules
+
+> [!NOTE]
+>
+> The `Shim` layer is the lowest hook and is compiled out entirely when
+> `TierShim=None`.
 
 ---
 
@@ -341,6 +606,20 @@ const vscode = require("vscode"); // Returns per-extension API surface
    - All subscriptions disposed
    - Module unloaded
 ```
+
+### Extension Context and Host&#x2001;🧬
+
+- [`Services/Extension/Host/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension/Host/Service.ts) - owns activation, records `codeLoadingTime` and `activateCallTime`.
+- [`Services/Extension/Context.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension/Context.ts) - builds the `extContext` handed to `activate()`.
+- [`Services/Extension.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension.ts) - the service tag other layers depend on.
+
+    // Services/Extension/Host/Service.ts
+    interface IExtensionDescription { identifier: string; main?: string; activationEvents: string[]; }
+
+> [!NOTE]
+>
+> `activationEvents` is what the startup step matches against to decide
+> which extensions wake on boot.
 
 ---
 
@@ -378,6 +657,176 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 | `workspace.findFiles`           | B             | Native search (ripgrep)         |
 | `window.createWebviewPanel`     | B             | Mountain owns webview lifecycle |
 | `env.clipboard`                 | B             | Native clipboard access         |
+
+### Fallback Between Tracks&#x2001;🪃
+
+[`Services/Dual/Track.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Dual/Track.ts)
+is the backstop that makes the migration safe: every cross-process method
+tries `Mountain` first and falls back to the Node implementation when
+`Mountain` reports an unknown method.
+
+    // Services/Dual/Track.ts
+    export async function TryMountainThenNode<T>(...)
+    export function IsUnknownMethodError(Err: unknown): boolean
+
+> [!NOTE]
+>
+> As `Mountain` grows a Rust handler the fallback path simply goes quiet -
+> no `Cocoon` edit is required.
+
+---
+
+## Type Conversion&#x2001;🔁
+
+[`TypeConverter/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter)
+translates between the `vscode` object graph and the flat DTOs the wire
+carries.
+
+| Converter                                                                                                                     | Covers                                        |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| [`TypeConverter/Command.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Command.ts)           | Command payloads                              |
+| [`TypeConverter/Main/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Main)                      | `URI`, `Range`, `Text/Edit`, `View/Column`, `Markdown/String`, `Workspace/Folder` |
+| [`TypeConverter/Dialog/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Dialog)                  | Open / save dialog options and results        |
+| [`TypeConverter/Quick/Input.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Quick/Input.ts)   | Quick pick and input box                      |
+| [`TypeConverter/Status/Bar.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Status/Bar.ts)     | Status bar items                              |
+| [`TypeConverter/TreeView/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/TreeView)              | Tree items and options                        |
+| [`TypeConverter/Task.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Task.ts)                 | Task definitions                              |
+| [`TypeConverter/Workspace/Edit.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Workspace/Edit.ts) | Workspace edits                           |
+| [`TypeConverter/Webview/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter/Webview)                | Webview options                               |
+
+    // TypeConverter/Main/URI.ts - the whole contract, both directions
+    export const FromAPI = (TheURI: VSCodeURI): UriComponents => TheURI.toJSON();
+    export const ToAPI = (DTO: UriComponents): VSCodeURI => URI.revive(DTO);
+
+> [!NOTE]
+>
+> Conversion is always explicit and total, so no `vscode` class instance
+> ever reaches the socket.
+
+---
+
+## Webview Panels&#x2001;🖼️
+
+[`WebviewPanel/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel)
+keeps the `Cocoon` half of a panel whose real window is owned by `Mountain`.
+
+| Module                                                                                                                          | Role                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [`WebviewPanel/Factory.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel/Factory.ts)               | Creates panels and holds the registry      |
+| [`WebviewPanel/Panel.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel/Panel.ts)                   | The panel handle handed to the extension   |
+| [`WebviewPanel/Message.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel/Message.ts)               | `postMessage` traffic in both directions   |
+| [`WebviewPanel/Serializer.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel/Serializer.ts)         | Panel state to and from `Mountain` DTOs    |
+| [`WebviewPanel/State.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel/State.ts)                   | Persisted panel state                      |
+
+    // WebviewPanel/Factory.ts
+    export interface CreatePanelOptions { ... }
+    export interface PanelRegistryEntry { ... }
+
+> [!NOTE]
+>
+> The registry entry is what survives a reload; the panel handle does not.
+
+---
+
+## Telemetry&#x2001;📈
+
+[`Telemetry/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Telemetry)
+ships two independent, dependency-free bridges.
+
+- [`Telemetry/OTLPBridge.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Telemetry/OTLPBridge.ts) - fire-and-forget span export to `OTLPEndpoint/v1/traces`, imported lazily so production bundles drop it.
+- [`Telemetry/Post/Hog/Bridge.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Telemetry/Post/Hog/Bridge.ts) - composes the `PostHog` atoms and exposes `CaptureEvent`, `CaptureError`, `Initialize`.
+- [`Telemetry/PostHog/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Telemetry/PostHog) - `Buffer`, `Configuration`, `Event`, `Identifier`, `Transport`.
+
+    // Telemetry/PostHog/Event.ts
+    export const Create = (Name: string, Properties: Properties = {}): Event => ({ ... });
+
+> [!NOTE]
+>
+> Both bridges no-op when `Report=false`, so a build with telemetry off
+> pays nothing.
+
+---
+
+## Build and Codegen&#x2001;🏭
+
+### Codegen&#x2001;⚗️
+
+[`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen)
+scans VS Code's extension-host sources and emits the typed upstream bridge.
+
+| Stage                                                                                                                                | Does                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [`Codegen/Extract/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen/Extract)                                   | Finds `extHost*.ts` files and iterates decorators   |
+| [`Codegen/Type/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen/Type)                                         | The decorator record type                           |
+| [`Codegen/Emit/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen/Emit)                                         | Writes the schema, idempotently                     |
+| [`Codegen/Run/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen/Run)                                           | Drives the pipeline end to end                      |
+
+    // Codegen/Codegen.ts - invoked by prepublishOnly.sh, exits non-zero on CodegenProblem
+    import { RunExtHostCodegen } from "./Run/Ext/Host/Codegen.js";
+
+> [!NOTE]
+>
+> Re-running on an unchanged tree produces byte-identical output, so the
+> build stays reproducible.
+
+### Build Scripts&#x2001;🧱
+
+- [`ESBuild.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ESBuild.ts) and [`ESBuild.js`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ESBuild.js) - the bundler entry, source and shipped form.
+- [`Configuration/ESBuild/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Configuration/ESBuild) - `Bootstrap`, `Cocoon` and `Target` build configs.
+- [`Configuration/Mountain/Config.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Configuration/Mountain/Config.ts) - connection defaults for the `Mountain` link.
+- [`Run.sh`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Run.sh) - local launch helper.
+- [`prepublishOnly.sh`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/prepublishOnly.sh) - runs codegen before publish.
+- [`Scripts/PerformanceBenchmark.js`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Scripts/PerformanceBenchmark.js) - the benchmark harness.
+
+    # Source/prepublishOnly.sh drives the generator
+    node Codegen/Codegen.js
+
+> [!NOTE]
+>
+> Codegen runs at publish time, never at extension activation.
+
+---
+
+## Diagnostics and Utilities&#x2001;🔬
+
+### Debug Server&#x2001;🐞
+
+[`Debug/Server.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Debug/Server.ts)
+is the `Node` half of a dual-layer inspection surface that speaks the same
+wire protocol as `Mountain`'s Rust `DebugServer`.
+
+    // Debug/Server.ts - gated by the unified DebugServer env var
+    export function Start(): number | null   // port DebugServerPortCocoon, default 9934
+    export function Stop(): void
+
+> [!NOTE]
+>
+> It only listens when `DebugServer` is set to `cocoon`, `both`, `all` or
+> `dual`.
+
+### PatchProcess&#x2001;🩹
+
+[`PatchProcess/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/PatchProcess)
+hardens the process before extension code runs: `Loader`, `Patcher`,
+`Security`, `Validator` and the `Type/Converter` bridge.
+
+### Utility&#x2001;🧮
+
+| Module                                                                                                                    | Purpose                                             |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [`Utility/Tier.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Tier.ts)                         | Resolves tier flags from `__LandTiers` or `process.env` |
+| [`Utility/Glob/To/Regex.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Glob/To/Regex.ts)       | VS Code glob to anchored `RegExp`                   |
+| [`Utility/Event/Stream.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Event/Stream.ts)         | Bridges the VS Code `Event` API                     |
+| [`Utility/Land/Fix/Log.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Land/Fix/Log.ts)         | `LandFixLog`, survives `drop: ["console"]`          |
+| [`Utility/Result.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Result.ts)                     | The shared result type                              |
+
+    // Utility/Glob/To/Regex.ts - one shared implementation
+    const GlobToRegex = (Glob: string): RegExp => { ... };
+
+> [!NOTE]
+>
+> `workspace.findFiles` and `languages.match` both call this, which is why
+> their pattern semantics agree.
 
 ---
 
