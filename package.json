@@ -44,7 +44,7 @@
 		"deepmerge-ts": "8.0.1",
 		"esbuild": "0.28.2",
 		"ulid": "3.0.2",
-		"vitest": "4.1.10"
+		"vitest": "4.1.11"
 	},
 	"publishConfig": {
 		"access": "public",
