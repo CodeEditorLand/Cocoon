@@ -1,11 +1,11 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Generate the DualTrack route manifest before esbuild runs. The
 # manifest is written to Source/Generated/RouteManifest.ts and is a
 # hard import in Source/Services/DualTrack.ts; without it esbuild
 # fails with "Could not resolve ../Generated/RouteManifest.js" and
 # the launch falls into degraded mode (no Cocoon, no extensions).
-sh ../../Maintain/Script/GenerateRouteManifest.sh
+bash ../../Maintain/Script/GenerateRouteManifest.sh
 
 # Build configuration files
 Build "Source/Configuration/**/*.{ts,json}" \

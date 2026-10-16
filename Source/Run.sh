@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Cocoon Run Script - Development Mode
 # Based on Wind's successful patterns
