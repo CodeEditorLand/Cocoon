@@ -1,53 +1,53 @@
 {
-    "name": "@codeeditorland/cocoon",
-    "version": "0.0.1",
-    "private": false,
-    "description": "Cocoon 🦋",
-    "homepage": "https://GitHub.Com/CodeEditorLand/Cocoon?tab=readme-ov-file",
-    "bugs": {
-        "url": "https://GitHub.Com/CodeEditorLand/Cocoon/issues"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/CodeEditorLand/Cocoon.git"
-    },
-    "license": "SEE LICENSE IN LICENSE",
-    "author": {
-        "name": "Source 🖋️ Open 👐🏻",
-        "email": "Source/Open@Editor.Land",
-        "url": "https://Editor.Land"
-    },
-    "type": "module",
-    "scripts": {
-        "Run": "bash Source/Run.sh",
-        "build-grpc": "node Scripts/compile-grpc-protocol.js",
-        "compile-protocol": "node Scripts/compile-grpc-protocol.js",
-        "prepublishOnly": "bash Source/prepublishOnly.sh",
-        "test": "vitest --run",
-        "test:coverage": "vitest --coverage",
-        "test:watch": "vitest",
-        "type-check": "tsc --noEmit"
-    },
-    "dependencies": {
-        "@codeeditorland/output": "0.0.1",
-        "@grpc/grpc-js": "1.14.4",
-        "@grpc/proto-loader": "0.8.1",
-        "google-protobuf": "4.0.2",
-        "protobufjs": "8.8.0",
-        "ts-protoc-gen": "0.15.0"
-    },
-    "devDependencies": {
-        "@playform/build": "0.3.4",
-        "@types/node": "26.4.1",
-        "@vitest/coverage-v8": "5.0.0",
-        "cross-env": "10.1.0",
-        "deepmerge-ts": "8.0.2",
-        "esbuild": "0.28.2",
-        "ulid": "3.0.2",
-        "vitest": "5.0.0"
-    },
-    "publishConfig": {
-        "access": "public",
-        "provenance": true
-    }
+	"name": "@codeeditorland/cocoon",
+	"version": "0.0.1",
+	"private": false,
+	"description": "Cocoon 🦋",
+	"homepage": "https://GitHub.Com/CodeEditorLand/Cocoon?tab=readme-ov-file",
+	"bugs": {
+		"url": "https://GitHub.Com/CodeEditorLand/Cocoon/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/CodeEditorLand/Cocoon.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "https://Editor.Land"
+	},
+	"type": "module",
+	"scripts": {
+		"Run": "sh Source/Run.sh",
+		"build-grpc": "node Scripts/compile-grpc-protocol.js",
+		"compile-protocol": "node Scripts/compile-grpc-protocol.js",
+		"prepublishOnly": "sh Source/prepublishOnly.sh",
+		"test": "vitest --run",
+		"test:coverage": "vitest --coverage",
+		"test:watch": "vitest",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@codeeditorland/output": "0.0.1",
+		"@grpc/grpc-js": "1.14.6",
+		"@grpc/proto-loader": "0.8.1",
+		"google-protobuf": "4.0.3",
+		"protobufjs": "8.8.1",
+		"ts-protoc-gen": "0.15.0"
+	},
+	"devDependencies": {
+		"@playform/build": "0.3.4",
+		"@types/node": "26.6.5",
+		"@vitest/coverage-v8": "5.0.3",
+		"cross-env": "10.1.0",
+		"deepmerge-ts": "8.0.2",
+		"esbuild": "0.28.2",
+		"ulid": "3.0.2",
+		"vitest": "5.0.3"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	}
 }
