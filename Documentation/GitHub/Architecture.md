@@ -9,13 +9,13 @@
 				</picture>
 			</h3>
 		</td>
-		<td colspan="3" valign="top"><h3 align="center">Cocoon&#x2001;🦋</h3></td>
+		<td colspan="3" valign="top"><h3 align="center">Cocoon 🦋</h3></td>
 	</tr>
 </table>
 
 ---
 
-# **Cocoon** Architecture&#x2001;🦋
+# **Cocoon** Architecture 🦋
 
 `Cocoon` is the Node.js extension host sidecar for `Land`.
 
@@ -69,7 +69,7 @@ graph TB
     MOUNTAIN["Mountain<br/>gRPC Server"] <-->|"Vine protocol :50052"| GRPC_C
 ```
 
-## Overview&#x2001;📋
+## Overview 📋
 
 `Cocoon` is a `TypeScript` application built with `Effect-TS`.
 
@@ -92,7 +92,7 @@ graph TB
 
 ---
 
-## Architecture&#x2001;🏗️
+## Architecture 🏗️
 
 ```
 +------------------------------------------------------------------+
@@ -126,7 +126,7 @@ graph TB
 > names; the [Module Map](#module-map) below carries the real, current
 > paths as they exist on disk.
 
-### Naming Corrections&#x2001;🔧
+### Naming Corrections 🔧
 
 Earlier revisions of this document named modules that never existed under
 this layout. Each is recorded here with the real path that replaces it, so
@@ -151,7 +151,7 @@ former spellings, not paths you can open.
 > filed under it live under
 > [`Services/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services).
 
-### Module Map&#x2001;🗺️
+### Module Map 🗺️
 
 Every path below exists in the source tree and links to its canonical
 location on the `Current` branch.
@@ -185,7 +185,7 @@ location on the `Current` branch.
 
 ---
 
-## Startup Sequence&#x2001;🚀
+## Startup Sequence 🚀
 
 ```
 1. Node.js process starts (bootstrap-fork.js)
@@ -230,7 +230,7 @@ location on the `Current` branch.
 Extension host ready for use
 ```
 
-### Bootstrap and WebSocket&#x2001;🥾
+### Bootstrap and WebSocket 🥾
 
 [`Bootstrap/Implementation/Cocoon/Main.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/Cocoon/Main.ts)
 is the real entry module. It installs the shim, imports the tier
@@ -258,7 +258,7 @@ authenticated by a shared secret.
 > This is the only inbound socket `Cocoon` opens that does not originate
 > from `Mountain`.
 
-### Init Data&#x2001;🌱
+### Init Data 🌱
 
 [`Services/Init/Data.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Init/Data.ts)
 defines the payload `Mountain` sends at handshake.
@@ -273,7 +273,7 @@ defines the payload `Mountain` sends at handshake.
 >
 > `parentPid` is what the process monitor watches to exit when the editor dies.
 
-### Platform Abstraction&#x2001;🖥️
+### Platform Abstraction 🖥️
 
 [`Platform/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform)
 isolates every OS-specific decision behind one module group.
@@ -297,7 +297,7 @@ isolates every OS-specific decision behind one module group.
 
 ---
 
-## VS Code API Shim&#x2001;📦
+## VS Code API Shim 📦
 
 `Cocoon` constructs VS Code API objects for each extension via its
 ApiFactory, implemented in
@@ -321,7 +321,7 @@ const vscode = ApiFactory.create(extensionId, {
 > implementation is
 > [`Services/API/Factory/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts).
 
-### API Namespace Providers&#x2001;📋
+### API Namespace Providers 📋
 
 | Namespace             | Provider            | Track                       |
 | --------------------- | ------------------- | --------------------------- |
@@ -338,7 +338,7 @@ const vscode = ApiFactory.create(extensionId, {
 | `vscode.Notebook*`    | NotebookProvider    | A (Stock Node)              |
 | `vscode.WebviewPanel` | WebviewProvider     | B (Mountain-backed)         |
 
-### Interfaces&#x2001;📐
+### Interfaces 📐
 
 [`Interfaces/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces)
 holds the contracts that let a provider be swapped without touching call
@@ -357,7 +357,7 @@ sites.
 > Every API object is built per extension, so one extension cannot reach
 > another's state.
 
-### Extensions Scanner&#x2001;🔎
+### Extensions Scanner 🔎
 
 [`Services/Extensions/Scanner.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extensions/Scanner.ts)
 is the facade over the extension registry populated from `InitData`.
@@ -373,7 +373,7 @@ is the facade over the extension registry populated from `InitData`.
 
 ---
 
-## Service Providers&#x2001;🔌
+## Service Providers 🔌
 
 Each service is implemented as an `Effect-TS` `Layer`:
 
@@ -387,7 +387,7 @@ Each service is implemented as an `Effect-TS` `Layer`:
 | WebviewProvider       | `Services/Window/Webview/`  | `createWebviewPanel`, `postMessage`, `onDidReceiveMessage`                              |
 | FileSystemProvider    | `Services/File/`            | `readFile`, `writeFile`, `stat`, `readDirectory`, `createDirectory`, `delete`, `rename` |
 
-### Supporting Services&#x2001;🧰
+### Supporting Services 🧰
 
 Beyond the `vscode` namespaces, `Services/` carries the machinery that keeps
 the host honest under load.
@@ -411,7 +411,7 @@ the host honest under load.
 > A provider that trips the breaker stops calling `Mountain` until the
 > half-open probe succeeds.
 
-### Handler Fan-out&#x2001;📮
+### Handler Fan-out 📮
 
 [`Services/Handler/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Handler)
 turns each inbound `Mountain` notification into a domain event on one of two
@@ -430,7 +430,7 @@ emitters.
 passes the shared `Emitter` and registry to each handler without creating a
 circular dependency.
 
-### Effect Layer Registry&#x2001;🧵
+### Effect Layer Registry 🧵
 
 [`Service/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Service)
 (singular) is where the `Effect` layers are composed and handed out.
@@ -446,11 +446,11 @@ circular dependency.
 
 ---
 
-## gRPC Communication&#x2001;🌐
+## gRPC Communication 🌐
 
 `Cocoon` communicates with `Mountain` via the `Vine` `gRPC` protocol.
 
-### Client Implementation&#x2001;💻
+### Client Implementation 💻
 
 ```typescript
 // gRPC client connects to Mountain on port 50051
@@ -475,7 +475,7 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 });
 ```
 
-### Connection Management&#x2001;🔗
+### Connection Management 🔗
 
 | Feature      | Implementation                                |
 | ------------ | --------------------------------------------- |
@@ -485,7 +485,7 @@ const response: CommandResponse = await new Promise((resolve, reject) => {
 | Timeout      | 30-second request timeout                     |
 | Backpressure | gRPC flow control                             |
 
-### Server Side and Integration&#x2001;📡
+### Server Side and Integration 📡
 
 `Cocoon` is not only a client: it also serves the `CocoonService` protocol
 so `Mountain` can call into the extension host.
@@ -502,7 +502,7 @@ so `Mountain` can call into the extension host.
 > Both directions speak the same `Vine` schema, which is why the port is
 > shared rather than duplicated.
 
-### IPC Message Layer&#x2001;✉️
+### IPC Message Layer ✉️
 
 [`IPC/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC)
 carries the in-process channel that sits under the wire.
@@ -526,12 +526,12 @@ carries the in-process channel that sits under the wire.
 
 ---
 
-## RequireInterceptor&#x2001;🪝
+## RequireInterceptor 🪝
 
 The `RequireInterceptor` patches Node.js's `require()` to enable VS Code
 module loading.
 
-### Interception Rules&#x2001;📋
+### Interception Rules 📋
 
 | Module Pattern            | Replacement                        | Behavior                                |
 | ------------------------- | ---------------------------------- | --------------------------------------- |
@@ -544,7 +544,7 @@ module loading.
 | `./mainThread*.js`        | Load from `@codeeditorland/output` | VS Code stock source                    |
 | `vscode`                  | `ApiFactory` construct             | Extension-specific API surface          |
 
-### Installation&#x2001;⚙️
+### Installation ⚙️
 
 ```typescript
 // Installed before any VS Code source code is loaded
@@ -555,7 +555,7 @@ interceptor.install();
 const vscode = require("vscode"); // Returns per-extension API surface
 ```
 
-### Where the Interception Really Lives&#x2001;🧷
+### Where the Interception Really Lives 🧷
 
 Three modules share this responsibility, at three different depths.
 
@@ -576,7 +576,7 @@ Three modules share this responsibility, at three different depths.
 
 ---
 
-## Extension Lifecycle&#x2001;🔄
+## Extension Lifecycle 🔄
 
 ```
 1. Extension Discovery
@@ -607,7 +607,7 @@ Three modules share this responsibility, at three different depths.
    - Module unloaded
 ```
 
-### Extension Context and Host&#x2001;🧬
+### Extension Context and Host 🧬
 
 - [`Services/Extension/Host/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension/Host/Service.ts) - owns activation, records `codeLoadingTime` and `activateCallTime`.
 - [`Services/Extension/Context.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Extension/Context.ts) - builds the `extContext` handed to `activate()`.
@@ -623,7 +623,7 @@ Three modules share this responsibility, at three different depths.
 
 ---
 
-## Dual-Track Routing&#x2001;🛤️
+## Dual-Track Routing 🛤️
 
 `Cocoon` routes extension API calls through two tracks:
 
@@ -632,7 +632,7 @@ Three modules share this responsibility, at three different depths.
 | **A - Stock Node**  | Unmodified VS Code `extHost*.ts` | In-process | Default for all APIs                       |
 | **B - Rust Native** | gRPC `ActionEffect` to Mountain  | ~1ms       | I/O-heavy APIs (fs, terminal, search, git) |
 
-### Routing Decision&#x2001;🧭
+### Routing Decision 🧭
 
 ```typescript
 // From Cocoon's tier router (simplified)
@@ -645,7 +645,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 }
 ```
 
-### Track Distribution by API&#x2001;📊
+### Track Distribution by API 📊
 
 | API                             | Default Track | Rationale                       |
 | ------------------------------- | ------------- | ------------------------------- |
@@ -658,7 +658,7 @@ if (Tier.FileSystem === "Layer4" && operation.isIoHeavy) {
 | `window.createWebviewPanel`     | B             | Mountain owns webview lifecycle |
 | `env.clipboard`                 | B             | Native clipboard access         |
 
-### Fallback Between Tracks&#x2001;🪃
+### Fallback Between Tracks 🪃
 
 [`Services/Dual/Track.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Dual/Track.ts)
 is the backstop that makes the migration safe: every cross-process method
@@ -676,7 +676,7 @@ tries `Mountain` first and falls back to the Node implementation when
 
 ---
 
-## Type Conversion&#x2001;🔁
+## Type Conversion 🔁
 
 [`TypeConverter/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/TypeConverter)
 translates between the `vscode` object graph and the flat DTOs the wire
@@ -705,7 +705,7 @@ carries.
 
 ---
 
-## Webview Panels&#x2001;🖼️
+## Webview Panels 🖼️
 
 [`WebviewPanel/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel)
 keeps the `Cocoon` half of a panel whose real window is owned by `Mountain`.
@@ -728,7 +728,7 @@ keeps the `Cocoon` half of a panel whose real window is owned by `Mountain`.
 
 ---
 
-## Telemetry&#x2001;📈
+## Telemetry 📈
 
 [`Telemetry/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Telemetry)
 ships two independent, dependency-free bridges.
@@ -747,9 +747,9 @@ ships two independent, dependency-free bridges.
 
 ---
 
-## Build and Codegen&#x2001;🏭
+## Build and Codegen 🏭
 
-### Codegen&#x2001;⚗️
+### Codegen ⚗️
 
 [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen)
 scans VS Code's extension-host sources and emits the typed upstream bridge.
@@ -769,7 +769,7 @@ scans VS Code's extension-host sources and emits the typed upstream bridge.
 > Re-running on an unchanged tree produces byte-identical output, so the
 > build stays reproducible.
 
-### Build Scripts&#x2001;🧱
+### Build Scripts 🧱
 
 - [`ESBuild.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ESBuild.ts) and [`ESBuild.js`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ESBuild.js) - the bundler entry, source and shipped form.
 - [`Configuration/ESBuild/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Configuration/ESBuild) - `Bootstrap`, `Cocoon` and `Target` build configs.
@@ -787,9 +787,9 @@ scans VS Code's extension-host sources and emits the typed upstream bridge.
 
 ---
 
-## Diagnostics and Utilities&#x2001;🔬
+## Diagnostics and Utilities 🔬
 
-### Debug Server&#x2001;🐞
+### Debug Server 🐞
 
 [`Debug/Server.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Debug/Server.ts)
 is the `Node` half of a dual-layer inspection surface that speaks the same
@@ -804,13 +804,13 @@ wire protocol as `Mountain`'s Rust `DebugServer`.
 > It only listens when `DebugServer` is set to `cocoon`, `both`, `all` or
 > `dual`.
 
-### PatchProcess&#x2001;🩹
+### PatchProcess 🩹
 
 [`PatchProcess/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/PatchProcess)
 hardens the process before extension code runs: `Loader`, `Patcher`,
 `Security`, `Validator` and the `Type/Converter` bridge.
 
-### Utility&#x2001;🧮
+### Utility 🧮
 
 | Module                                                                                                                    | Purpose                                             |
 | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -830,7 +830,7 @@ hardens the process before extension code runs: `Loader`, `Patcher`,
 
 ---
 
-## Related Documentation&#x2001;📚
+## Related Documentation 📚
 
 - [Mountain](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/Architecture.md) -
   `gRPC` server and `ProcessManagement`
