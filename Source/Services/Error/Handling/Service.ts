@@ -208,7 +208,7 @@ export class ErrorHandlingService {
 				};
 			} catch (error) {
 				lastError =
-					error instanceof Error ? error : new Error(String(error);
+					error instanceof Error ? error : new Error(String(error));
 
 				totalRetries = attempt;
 
@@ -218,24 +218,24 @@ export class ErrorHandlingService {
 					`[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
 
 					error,
-				;
+				);
 
 				// Record failure with error categorization
-				this.recordFailure(operationName;
+				this.recordFailure(operationName);
 
-				this.trackOperationFailure(operationName, error, attempt;
+				this.trackOperationFailure(operationName, error, attempt);
 
 				// Enhanced retry logic with error type analysis
 				if (attempt < config.maxRetries && this.shouldRetry(error)) {
-					const delay = this.calculateRetryDelay(attempt, config;
+					const delay = this.calculateRetryDelay(attempt, config);
 
 					CocoonDevLog(
 						"service",
 
 						`[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`,
-					;
+					);
 
-					await this.delay(delay;
+					await this.delay(delay);
 				} else {
 					// Stop retrying if error is non-retryable
 					break;
@@ -247,7 +247,7 @@ export class ErrorHandlingService {
 			"service",
 
 			`[ErrorHandlingService] Operation ${operationName} failed after ${totalRetries} retries`,
-		;
+		);
 
 		return {
 			success: false,
@@ -285,7 +285,7 @@ export class ErrorHandlingService {
 				successThreshold: 3,
 				failureThreshold: this.config.circuitBreakerThreshold,
 				timeout: this.config.circuitBreakerTimeout,
-			};
+			});
 		}
 
 		const state = this.circuitBreakers.get(serviceName)!;
@@ -301,7 +301,7 @@ export class ErrorHandlingService {
 				"service",
 
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`,
-			;
+			);
 		}
 
 		return state;
@@ -311,7 +311,7 @@ export class ErrorHandlingService {
 	 * Record operation success
 	 */
 	private recordSuccess(serviceName: string): void {
-		const state = this.getCircuitBreakerState(serviceName;
+		const state = this.getCircuitBreakerState(serviceName);
 
 		if (state.state === "HALF_OPEN") {
 			// Success in HALF_OPEN state - close the circuit
@@ -323,10 +323,10 @@ export class ErrorHandlingService {
 				"service",
 
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`,
-			;
+			);
 		} else if (state.state === "CLOSED") {
 			// Reset failure count on success
-			state.failureCount = Math.max(0, state.failureCount - 1;
+			state.failureCount = Math.max(0, state.failureCount - 1);
 		}
 	}
 
@@ -334,11 +334,11 @@ export class ErrorHandlingService {
 	 * Record operation failure
 	 */
 	private recordFailure(serviceName: string): void {
-		const state = this.getCircuitBreakerState(serviceName;
+		const state = this.getCircuitBreakerState(serviceName);
 
 		state.failureCount++;
 
-		state.lastFailureTime = Date.now(;
+		state.lastFailureTime = Date.now();
 
 		if (state.state === "HALF_OPEN") {
 			// Failure in HALF_OPEN state - reopen the circuit
@@ -348,7 +348,7 @@ export class ErrorHandlingService {
 				"service",
 
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`,
-			;
+			);
 		} else if (
 			state.state === "CLOSED" &&
 			state.failureCount >= state.failureThreshold
@@ -360,7 +360,7 @@ export class ErrorHandlingService {
 				"service",
 
 				`[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`,
-			;
+			);
 		}
 	}
 
@@ -377,21 +377,21 @@ export class ErrorHandlingService {
 		}
 
 		// Exponential backoff with jitter: base * 2^attempt ± random jitter
-		const baseDelay = config.retryDelay * Math.pow(2, attempt;
+		const baseDelay = config.retryDelay * Math.pow(2, attempt);
 
 		const jitter = Math.random() * baseDelay * 0.1; // 10% jitter
 
-		const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter;
+		const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter);
 
 		// Cap at maximum delay of 30 seconds
-		return Math.min(finalDelay, 30000;
+		return Math.min(finalDelay, 30000);
 	}
 
 	/**
 	 * Advanced error classification with ML-inspired patterns
 	 */
 	private shouldRetry(error: Error): boolean {
-		const errorMessage = error.message.toLowerCase(;
+		const errorMessage = error.message.toLowerCase();
 
 		// Non-retryable error patterns
 		const nonRetryablePatterns = [
@@ -454,7 +454,7 @@ export class ErrorHandlingService {
 		}
 
 		// Default: retry for transient errors
-		return this.isTransientError(error;
+		return this.isTransientError(error);
 	}
 
 	/**
@@ -479,11 +479,11 @@ export class ErrorHandlingService {
 			"briefly",
 		];
 
-		const errorMessage = error.message.toLowerCase(;
+		const errorMessage = error.message.toLowerCase();
 
 		return transientIndicators.some((indicator) =>
 			errorMessage.includes(indicator),
-		;
+		);
 	}
 
 	/**
@@ -519,10 +519,10 @@ export class ErrorHandlingService {
 			"service",
 
 			`[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`,
-		;
+		);
 
 		// Adaptive learning: adjust retry strategy based on success patterns
-		this.adaptRetryStrategy(operationName, duration, attempt;
+		this.adaptRetryStrategy(operationName, duration, attempt);
 	}
 
 	/**
@@ -537,7 +537,7 @@ export class ErrorHandlingService {
 	): void {
 		// Simple adaptive learning: if operations consistently succeed on first attempt,
 		// reduce retry count for this operation
-		const circuitState = this.getCircuitBreakerState(operationName;
+		const circuitState = this.getCircuitBreakerState(operationName);
 
 		if (attempt === 0 && duration < 1000) {
 			// Fast success on first attempt - reduce retry count
@@ -545,7 +545,7 @@ export class ErrorHandlingService {
 				1,
 
 				circuitState.successThreshold - 1,
-			;
+			);
 		}
 	}
 
@@ -584,14 +584,14 @@ export class ErrorHandlingService {
 			"service",
 
 			`[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`,
-		;
+		);
 	}
 
 	/**
 	 * Classify error for better analytics
 	 */
 	private classifyError(error: Error): string {
-		const errorMessage = error.message.toLowerCase(;
+		const errorMessage = error.message.toLowerCase();
 
 		if (
 			errorMessage.includes("timeout") ||
@@ -636,14 +636,14 @@ export class ErrorHandlingService {
 			"service",
 
 			`[ErrorHandlingService] Circuit breaker event: ${operationName}, ${eventType}`,
-		;
+		);
 	}
 
 	/**
 	 * Delay execution
 	 */
 	private delay(ms: number): Promise<void> {
-		return new Promise((resolve) => setTimeout(resolve, ms);
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
 	/**
@@ -652,14 +652,14 @@ export class ErrorHandlingService {
 	getCircuitBreakerStatus(
 		serviceName: string,
 	): CircuitBreakerState | undefined {
-		return this.circuitBreakers.get(serviceName;
+		return this.circuitBreakers.get(serviceName);
 	}
 
 	/**
 	 * Get all circuit breaker statuses
 	 */
 	getAllCircuitBreakerStatuses(): CircuitBreakerState[] {
-		return Array.from(this.circuitBreakers.values();
+		return Array.from(this.circuitBreakers.values());
 	}
 
 	/**
@@ -667,13 +667,13 @@ export class ErrorHandlingService {
 	 */
 	resetCircuitBreaker(serviceName: string): void {
 		if (this.circuitBreakers.has(serviceName)) {
-			this.circuitBreakers.delete(serviceName;
+			this.circuitBreakers.delete(serviceName);
 
 			CocoonDevLog(
 				"service",
 
 				`[ErrorHandlingService] Circuit breaker reset for ${serviceName}`,
-			;
+			);
 		}
 	}
 
@@ -683,7 +683,7 @@ export class ErrorHandlingService {
 	updateConfiguration(newConfig: Partial<ErrorHandlingConfig>): void {
 		this.config = { ...this.config, ...newConfig };
 
-		CocoonDevLog("service", "[ErrorHandlingService] Configuration updated";
+		CocoonDevLog("service", "[ErrorHandlingService] Configuration updated");
 	}
 
 	/**
@@ -700,7 +700,7 @@ export class ErrorHandlingService {
 
 		config: ErrorHandlingConfig;
 	} {
-		const states = this.getAllCircuitBreakerStatuses(;
+		const states = this.getAllCircuitBreakerStatuses();
 
 		return {
 			totalCircuitBreakers: states.length,

@@ -274,12 +274,12 @@ export async function TryMountainThenNode<T>(
 	// Mountain round-trip and run the Node fallback directly. Logged
 	// distinctly so the env-toggled path is observable.
 	if (!IsRustDeferralEnabled(Method)) {
-		LogDualTrack(Method, "node-bypass";
+		LogDualTrack(Method, "node-bypass");
 
 		try {
-			return await NodeFallback(Arguments;
+			return await NodeFallback(Arguments);
 		} catch (NodeErr: unknown) {
-			LogDualTrack(Method, "error";
+			LogDualTrack(Method, "error");
 
 			throw NodeErr;
 		}
@@ -293,14 +293,14 @@ export async function TryMountainThenNode<T>(
 	// correctly - the only cost is one extra fallback invocation until
 	// the next `sh Maintain/Script/GenerateRouteManifest.sh` rebuild.
 	if (!MountainMethods.has(Method)) {
-		LogDualTrack(Method, "node-fallback";
+		LogDualTrack(Method, "node-fallback");
 
 		try {
-			return await NodeFallback(Arguments;
+			return await NodeFallback(Arguments);
 		} catch (NodeErr: unknown) {
 			// Distinguish "Cocoon's fallback failed" from "no fallback
 			// exists" - the latter is the Tier-4 unavailable case.
-			LogDualTrack(Method, "error";
+			LogDualTrack(Method, "error");
 
 			throw NodeErr;
 		}
@@ -311,9 +311,9 @@ export async function TryMountainThenNode<T>(
 			Method,
 
 			Arguments,
-		;
+		);
 
-		LogDualTrack(Method, "mountain";
+		LogDualTrack(Method, "mountain");
 
 		return MountainResult as T;
 	} catch (Err: unknown) {
@@ -321,18 +321,18 @@ export async function TryMountainThenNode<T>(
 			// Manifest drift: manifest said Mountain has it, runtime
 			// says it doesn't. Fall back anyway and log so the next
 			// manifest regeneration picks up the gap.
-			LogDualTrack(Method, "node-fallback";
+			LogDualTrack(Method, "node-fallback");
 
 			try {
-				return await NodeFallback(Arguments;
+				return await NodeFallback(Arguments);
 			} catch (NodeErr: unknown) {
-				LogDualTrack(Method, "error";
+				LogDualTrack(Method, "error");
 
 				throw NodeErr;
 			}
 		}
 
-		LogDualTrack(Method, "error";
+		LogDualTrack(Method, "error");
 
 		throw Err;
 	}
@@ -370,24 +370,24 @@ export async function TryMountainWithEmptyFallback<T>(
 	// Env-controlled bypass mirrors `TryMountainThenNode`. When set,
 	// skip Mountain and rely on the Node fallback directly.
 	if (!IsRustDeferralEnabled(Method)) {
-		LogDualTrack(Method, "node-bypass";
+		LogDualTrack(Method, "node-bypass");
 
 		try {
-			return await NodeFallback(Arguments;
+			return await NodeFallback(Arguments);
 		} catch (NodeErr: unknown) {
-			LogDualTrack(Method, "error";
+			LogDualTrack(Method, "error");
 
 			throw NodeErr;
 		}
 	}
 
 	if (!MountainMethods.has(Method)) {
-		LogDualTrack(Method, "node-fallback";
+		LogDualTrack(Method, "node-fallback");
 
 		try {
-			return await NodeFallback(Arguments;
+			return await NodeFallback(Arguments);
 		} catch (NodeErr: unknown) {
-			LogDualTrack(Method, "error";
+			LogDualTrack(Method, "error");
 
 			throw NodeErr;
 		}
@@ -406,15 +406,15 @@ export async function TryMountainWithEmptyFallback<T>(
 
 		MountainSucceeded = true;
 
-		LogDualTrack(Method, "mountain";
+		LogDualTrack(Method, "mountain");
 	} catch (Err: unknown) {
 		if (!IsUnknownMethodError(Err)) {
-			LogDualTrack(Method, "error";
+			LogDualTrack(Method, "error");
 
 			throw Err;
 		}
 
-		LogDualTrack(Method, "node-fallback";
+		LogDualTrack(Method, "node-fallback");
 	}
 
 	// Empty-result guard: Mountain succeeded but the result looks empty.
@@ -426,15 +426,15 @@ export async function TryMountainWithEmptyFallback<T>(
 		IsEmpty(MountainResult)
 	) {
 		try {
-			const NodeResult = await NodeFallback(Arguments;
+			const NodeResult = await NodeFallback(Arguments);
 
-			const NodeIsEmpty = IsEmpty(NodeResult;
+			const NodeIsEmpty = IsEmpty(NodeResult);
 
 			if (!NodeIsEmpty) {
 				if (process.env["Trace"]) {
 					process.stdout.write(
 						`[DEV:DUAL-TRACK] method=${Method} route=node-shadow (mountain returned empty)\n`,
-					;
+					);
 				}
 
 				return NodeResult;
@@ -454,9 +454,9 @@ export async function TryMountainWithEmptyFallback<T>(
 
 	// Mountain rejected with "unknown method": run the fallback.
 	try {
-		return await NodeFallback(Arguments;
+		return await NodeFallback(Arguments);
 	} catch (NodeErr: unknown) {
-		LogDualTrack(Method, "error";
+		LogDualTrack(Method, "error");
 
 		throw NodeErr;
 	}
@@ -469,9 +469,9 @@ export async function TryMountainWithEmptyFallback<T>(
  * route=unavailable` so the build process can surface the gap.
  */
 export function MarkUnavailable(Method: string): never {
-	LogDualTrack(Method, "unavailable";
+	LogDualTrack(Method, "unavailable");
 
-	throw new NotImplementedError(Method;
+	throw new NotImplementedError(Method);
 }
 
 /**
@@ -504,16 +504,16 @@ export const SendToMountainOrLocal = (
 	OnLocalFallback?: () => void,
 ): Promise<void> => {
 	if (!IsRustDeferralEnabled(Method)) {
-		LogDualTrack(Method, "node-bypass";
+		LogDualTrack(Method, "node-bypass");
 
 		try {
-			OnLocalFallback?.(;
+			OnLocalFallback?.();
 		} catch {
 			// Local fallback errors must not crash the caller - same
 			// fire-and-forget semantics as the underlying SendToMountain.
 		}
 
-		return Promise.resolve(;
+		return Promise.resolve();
 	}
 
 	const Send = (
@@ -524,13 +524,13 @@ export const SendToMountainOrLocal = (
 
 	return Send.call(Context, Method, Payload).then(
 		() => {
-			LogDualTrack(Method, "mountain";
+			LogDualTrack(Method, "mountain");
 		},
 
 		(_Err: unknown) => {
-			LogDualTrack(Method, "error";
+			LogDualTrack(Method, "error");
 		},
-	;
+	);
 };
 
 export type DualTrackRoute =
@@ -549,5 +549,5 @@ export type DualTrackRoute =
 export const LogDualTrack = (Method: string, Route: DualTrackRoute): void => {
 	if (!process.env["Trace"]) return;
 
-	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`;
+	process.stdout.write(`[DEV:DUAL-TRACK] method=${Method} route=${Route}\n`);
 };

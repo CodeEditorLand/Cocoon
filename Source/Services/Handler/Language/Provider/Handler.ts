@@ -218,11 +218,11 @@ const BuildVsDocument = async (
 					? LineOrPos
 					: (LineOrPos?.line ?? 0);
 
-			const Lines = GetLines(;
+			const Lines = GetLines();
 
 			const LineText = Lines[LineNum] ?? "";
 
-			const FirstNonWS = LineText.search(/\S/;
+			const FirstNonWS = LineText.search(/\S/);
 
 			return {
 				text: LineText,
@@ -245,7 +245,7 @@ const BuildVsDocument = async (
 		},
 
 		offsetAt: (Pos: any) => {
-			const Lines = GetLines(;
+			const Lines = GetLines();
 
 			let Offset = 0;
 
@@ -255,11 +255,11 @@ const BuildVsDocument = async (
 				Offset += (Lines[I] ?? "").length + 1; // +1 for newline
 			}
 
-			return Offset + (Pos?.character ?? 0;
+			return Offset + (Pos?.character ?? 0);
 		},
 
 		positionAt: (Offset: number) => {
-			const Lines = GetLines(;
+			const Lines = GetLines();
 
 			let Remaining = Offset;
 
@@ -267,7 +267,7 @@ const BuildVsDocument = async (
 				const LineText = Lines[I] ?? "";
 
 				if (Remaining <= LineText.length) {
-					return new Position(I, Remaining;
+					return new Position(I, Remaining);
 				}
 
 				Remaining -= LineText.length + 1;
@@ -277,7 +277,7 @@ const BuildVsDocument = async (
 				Lines.length - 1,
 
 				(Lines[Lines.length - 1] ?? "").length,
-			;
+			);
 		},
 
 		validateRange: (R: any) => R,
@@ -311,7 +311,7 @@ const BuildVsDocument = async (
 						Pos.line,
 
 						Match.index + Match[0].length,
-					;
+					);
 				}
 			}
 
@@ -346,14 +346,14 @@ const InvokeLanguageProvider = async (
 
 	const Handle: number = Args[0];
 
-	const Provider = LanguageProviderRegistry.Get(Handle;
+	const Provider = LanguageProviderRegistry.Get(Handle);
 
 	if (!Provider) {
 		CocoonDevLog(
 			"language-provider",
 
 			`[LanguageProviderHandler] Provider handle ${Handle} not found for ${Method}`,
-		;
+		);
 
 		return null;
 	}
@@ -364,7 +364,7 @@ const InvokeLanguageProvider = async (
 	const UriString =
 		typeof UriObj === "string"
 			? UriObj
-			: (UriObj?.external ?? "file:///unknown";
+			: (UriObj?.external ?? "file:///unknown");
 
 	const RawPos = Args[2] as
 		| {
@@ -392,28 +392,28 @@ const InvokeLanguageProvider = async (
 	// gRPC layer serialises Rust struct fields as PascalCase, while
 	// extHost-shape payloads come through camelCase. Accept both rather
 	// than guess which path a given provider call took.
-	const SubtractOne = (V: number): number => (V > 0 ? V - 1 : 0;
+	const SubtractOne = (V: number): number => (V > 0 ? V - 1 : 0);
 
 	const RawLine = RawPos?.Line ?? RawPos?.lineNumber ?? RawPos?.line ?? 1;
 
 	const RawCol =
 		RawPos?.Character ?? RawPos?.column ?? RawPos?.character ?? 1;
 
-	const PosLine = SubtractOne(RawLine;
+	const PosLine = SubtractOne(RawLine);
 
-	const PosChar = SubtractOne(RawCol;
+	const PosChar = SubtractOne(RawCol);
 
 	// Real VS Code Position class from @codeeditorland/output.
 	const { Position } =
-		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
+		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js");
 
-	const VsPosition = new Position(PosLine, PosChar;
+	const VsPosition = new Position(PosLine, PosChar);
 
 	const Ext = UriString.split(".").pop() ?? "";
 
-	const LangId = ResolveLanguageIdentifier(Ext;
+	const LangId = ResolveLanguageIdentifier(Ext);
 
-	const FsPath = UriString.replace(/^file:\/\//, "";
+	const FsPath = UriString.replace(/^file:\/\//, "");
 
 	const VsDocument = await BuildVsDocument(
 		UriString,
@@ -423,27 +423,27 @@ const InvokeLanguageProvider = async (
 		LangId,
 
 		DocumentContentCache,
-	;
+	);
 
 	const { CancellationTokenSource } =
-		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+		await import("@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js");
 
 	// The token handed to the provider flips isCancellationRequested when
 	// Mountain's CancelOperation aborts the per-request signal, so
 	// well-behaved providers stop work after the cursor moves on.
-	const VsTokenSource = new CancellationTokenSource(;
+	const VsTokenSource = new CancellationTokenSource();
 
 	const VsToken = VsTokenSource.token;
 
-	const OnAbort = () => VsTokenSource.cancel(;
+	const OnAbort = () => VsTokenSource.cancel();
 
 	if (CancellationSignal) {
 		if (CancellationSignal.aborted) {
-			VsTokenSource.cancel(;
+			VsTokenSource.cancel();
 		} else {
 			CancellationSignal.addEventListener("abort", OnAbort, {
 				once: true,
-			};
+			});
 		}
 	}
 
@@ -457,7 +457,7 @@ const InvokeLanguageProvider = async (
 						"exthost",
 
 						`[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof (Provider as any).provideHover === "function"}`,
-					;
+					);
 				}
 
 				const Result = await (Provider as any).provideHover?.(
@@ -466,14 +466,14 @@ const InvokeLanguageProvider = async (
 					VsPosition,
 
 					VsToken,
-				;
+				);
 
 				if (process.env.Trace) {
 					CocoonDevLog(
 						"exthost",
 
 						`[DEV:EXTHOST] provideHover result kind=${Result ? (Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents) : "null"}`,
-					;
+					);
 				}
 
 				if (!Result) return null;
@@ -538,13 +538,13 @@ const InvokeLanguageProvider = async (
 					VsToken,
 
 					Context,
-				;
+				);
 
 				if (!Result) return { Suggestions: [], IsIncomplete: false };
 
 				const RawItems = Array.isArray(Result)
 					? Result
-					: (Result.items ?? [];
+					: (Result.items ?? []);
 
 				// Shape: CompletionListDTO { Suggestions: CompletionItemDTO[] }
 				return {
@@ -582,7 +582,7 @@ const InvokeLanguageProvider = async (
 					VsPosition,
 
 					VsToken,
-				;
+				);
 
 				if (!Result) return null;
 
@@ -592,7 +592,7 @@ const InvokeLanguageProvider = async (
 				return Locations.map((L: any) => ({
 					Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
 					Range: NormalizeRange(L.range ?? L.targetSelectionRange),
-				});
+				}));
 			}
 
 			case "$provideReferences": {
@@ -604,14 +604,14 @@ const InvokeLanguageProvider = async (
 					Context ?? { includeDeclaration: true },
 
 					VsToken,
-				;
+				);
 
 				if (!Result) return null;
 
 				return (Result as any[]).map((L: any) => ({
 					Uri: L.uri?.toString?.() ?? UriString,
 					Range: NormalizeRange(L.range),
-				});
+				}));
 			}
 
 			// Mountain sends "$provideCodeAction" (ProviderType::CodeAction)
@@ -629,7 +629,7 @@ const InvokeLanguageProvider = async (
 					ContextArg,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -639,7 +639,7 @@ const InvokeLanguageProvider = async (
 			case "$provideDocumentHighlights": {
 				const Result = await (
 					Provider as any
-				).provideDocumentHighlights?.(VsDocument, VsPosition, VsToken;
+				).provideDocumentHighlights?.(VsDocument, VsPosition, VsToken);
 
 				return Result ?? null;
 			}
@@ -651,7 +651,7 @@ const InvokeLanguageProvider = async (
 					VsDocument,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -663,7 +663,7 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (
 					Provider as any
-				).provideWorkspaceSymbols?.(Query, VsToken;
+				).provideWorkspaceSymbols?.(Query, VsToken);
 
 				return Result ?? null;
 			}
@@ -691,7 +691,7 @@ const InvokeLanguageProvider = async (
 					OptionsArg,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -705,7 +705,7 @@ const InvokeLanguageProvider = async (
 					VsToken,
 
 					Context,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -723,7 +723,7 @@ const InvokeLanguageProvider = async (
 					NewName,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -737,7 +737,7 @@ const InvokeLanguageProvider = async (
 					Context,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -753,7 +753,7 @@ const InvokeLanguageProvider = async (
 					RangeArg,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -765,7 +765,7 @@ const InvokeLanguageProvider = async (
 					VsDocument,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -788,7 +788,7 @@ const InvokeLanguageProvider = async (
 					TypeOptions ?? {},
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -812,7 +812,7 @@ const InvokeLanguageProvider = async (
 						: [VsPosition],
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -821,7 +821,7 @@ const InvokeLanguageProvider = async (
 			case "$provideSemanticTokensFull": {
 				const Result = await (
 					Provider as any
-				).provideDocumentSemanticTokens?.(VsDocument, VsToken;
+				).provideDocumentSemanticTokens?.(VsDocument, VsToken);
 
 				return Result ?? null;
 			}
@@ -838,7 +838,7 @@ const InvokeLanguageProvider = async (
 					VsPosition,
 
 					VsToken,
-				;
+				);
 
 				// Normalise to array (VS Code API returns item | item[] | undefined)
 				if (!Result) return null;
@@ -852,7 +852,7 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (
 					Provider as any
-				).provideCallHierarchyIncomingCalls?.(Item, VsToken;
+				).provideCallHierarchyIncomingCalls?.(Item, VsToken);
 
 				return Result ?? null;
 			}
@@ -862,7 +862,7 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (
 					Provider as any
-				).provideCallHierarchyOutgoingCalls?.(Item, VsToken;
+				).provideCallHierarchyOutgoingCalls?.(Item, VsToken);
 
 				return Result ?? null;
 			}
@@ -877,7 +877,7 @@ const InvokeLanguageProvider = async (
 					VsPosition,
 
 					VsToken,
-				;
+				);
 
 				if (!Result) return null;
 
@@ -890,7 +890,7 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (
 					Provider as any
-				).provideTypeHierarchySupertypes?.(Item, VsToken;
+				).provideTypeHierarchySupertypes?.(Item, VsToken);
 
 				return Result ?? null;
 			}
@@ -900,7 +900,7 @@ const InvokeLanguageProvider = async (
 
 				const Result = await (
 					Provider as any
-				).provideTypeHierarchySubtypes?.(Item, VsToken;
+				).provideTypeHierarchySubtypes?.(Item, VsToken);
 
 				return Result ?? null;
 			}
@@ -909,7 +909,7 @@ const InvokeLanguageProvider = async (
 			case "$provideLinkedEditingRanges": {
 				const Result = await (
 					Provider as any
-				).provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken;
+				).provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken);
 
 				return Result ?? null;
 			}
@@ -931,7 +931,7 @@ const InvokeLanguageProvider = async (
 					Context,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -948,7 +948,7 @@ const InvokeLanguageProvider = async (
 					Context,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -967,7 +967,7 @@ const InvokeLanguageProvider = async (
 					OtherDocs,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -985,7 +985,7 @@ const InvokeLanguageProvider = async (
 					Context,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -1010,7 +1010,7 @@ const InvokeLanguageProvider = async (
 					Context,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -1029,7 +1029,7 @@ const InvokeLanguageProvider = async (
 					DataTransfer,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -1053,9 +1053,9 @@ const InvokeLanguageProvider = async (
 									(UriArg as any)?.path
 										? `${(UriArg as any).scheme}://${(UriArg as any).authority ?? ""}${(UriArg as any).path}`
 										: "") ??
-									"";
+									"");
 
-						if (UriStr) UriValue = API.Uri.parse(UriStr;
+						if (UriStr) UriValue = API.Uri.parse(UriStr);
 					}
 				} catch {}
 
@@ -1063,7 +1063,7 @@ const InvokeLanguageProvider = async (
 					UriValue,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? null;
 			}
@@ -1079,7 +1079,7 @@ const InvokeLanguageProvider = async (
 					Item,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Item ?? null;
 			}
@@ -1091,7 +1091,7 @@ const InvokeLanguageProvider = async (
 					Lens,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Lens ?? null;
 			}
@@ -1103,7 +1103,7 @@ const InvokeLanguageProvider = async (
 					Item,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Item ?? null;
 			}
@@ -1117,7 +1117,7 @@ const InvokeLanguageProvider = async (
 					VsPosition,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Item ?? null;
 			}
@@ -1130,7 +1130,7 @@ const InvokeLanguageProvider = async (
 					Hint,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Hint ?? null;
 			}
@@ -1142,7 +1142,7 @@ const InvokeLanguageProvider = async (
 					Link,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Link ?? null;
 			}
@@ -1154,7 +1154,7 @@ const InvokeLanguageProvider = async (
 					Symbol,
 
 					VsToken,
-				;
+				);
 
 				return Result ?? Symbol ?? null;
 			}
@@ -1164,7 +1164,7 @@ const InvokeLanguageProvider = async (
 					"language-provider",
 
 					`[LanguageProviderHandler] Unhandled $provide method: ${Method}`,
-				;
+				);
 
 				return null;
 		}
@@ -1173,15 +1173,15 @@ const InvokeLanguageProvider = async (
 			"language-provider",
 
 			`[LanguageProviderHandler] Provider ${Handle} threw for ${Method}: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
-		;
+		);
 
 		return null;
 	} finally {
-		CancellationSignal?.removeEventListener("abort", OnAbort;
+		CancellationSignal?.removeEventListener("abort", OnAbort);
 
 		// dispose(true) cancels the token and frees its listeners once the
 		// invocation settles, whether the provider resolved or threw.
-		VsTokenSource.dispose(true;
+		VsTokenSource.dispose(true);
 	}
 };
 

@@ -139,13 +139,13 @@ const CreateCommandsNamespace = (
 				Has: LanguageProviderRegistry.HasCommand,
 			});
 
-			LogRoute(Command, Decision;
+			LogRoute(Command, Decision);
 
 			if (Decision === "local") {
 				const LocalResult = LanguageProviderRegistry.ExecuteCommand(
 					Command,
 					...Arguments,
-				;
+				);
 
 				if (LocalResult !== undefined) {
 					// Symmetric with the Mountain branch: fire the
@@ -159,7 +159,7 @@ const CreateCommandsNamespace = (
 						Context.Emitter.emit("commands.executed", {
 							command: Command,
 							arguments: Arguments,
-						};
+						});
 					} catch {
 						/* listener threw - swallow */
 					}
@@ -181,7 +181,7 @@ const CreateCommandsNamespace = (
 					"Command.Execute",
 
 					[Command, ...Arguments],
-				;
+				);
 			} catch {
 				return undefined;
 			}
@@ -193,7 +193,7 @@ const CreateCommandsNamespace = (
 					"Command.GetAll",
 
 					[FilterInternal ?? false],
-				;
+				);
 
 				if (Array.isArray(Response)) return Response as string[];
 
@@ -225,13 +225,13 @@ const CreateCommandsNamespace = (
 
 						| undefined;
 
-					if (E?.command) Listener(E;
+					if (E?.command) Listener(E);
 				} catch {
 					/* swallow */
 				}
 			};
 
-			Context.Emitter.on("commands.executed", Wrapped;
+			Context.Emitter.on("commands.executed", Wrapped);
 
 			return {
 				dispose: () => {
@@ -259,23 +259,23 @@ const CreateCommandsNamespace = (
 
 			Callback: (...Arguments: unknown[]) => unknown,
 		) => {
-			LanguageProviderRegistry.RegisterCommand(Command, Callback;
+			LanguageProviderRegistry.RegisterCommand(Command, Callback);
 
 			Context.SendToMountain("registerCommand", {
 				commandId: Command,
 				kind: "diffInformation",
-			}).catch(() => {};
+			}).catch(() => {});
 
 			return {
 				dispose: () => {
-					LanguageProviderRegistry.UnregisterCommand(Command;
+					LanguageProviderRegistry.UnregisterCommand(Command);
 
 					Context.SendToMountain("unregisterCommand", {
 						commandId: Command,
-					}).catch(() => {};
+					}).catch(() => {});
 				},
 			};
 		},
-	};
+	});
 
 export default CreateCommandsNamespace;

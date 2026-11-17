@@ -222,7 +222,7 @@ const FolderContainsGlob = async (
 		return false;
 	};
 
-	return Walk(FsPath, 0;
+	return Walk(FsPath, 0);
 };
 
 const GetActivationEvents = (Extension: unknown): string[] => {
@@ -238,7 +238,7 @@ const GetWorkspaceContainsGlobs = (Extension: unknown): string[] =>
 	GetActivationEvents(Extension)
 		.filter((Event) => Event.startsWith(WORKSPACE_CONTAINS_PREFIX))
 		.map((Event) => Event.slice(WORKSPACE_CONTAINS_PREFIX.length))
-		.filter((Glob) => Glob.length > 0;
+		.filter((Glob) => Glob.length > 0);
 
 /**
  * Run the workspaceContains activation pass against the freshly-added folders.
@@ -262,7 +262,7 @@ export const ActivateWorkspaceContainsExtensions = async (
 	})).filter(
 		(Record): Record is { FsPath: string; Uri: string } =>
 			typeof Record.FsPath === "string" && Record.FsPath.length > 0,
-	;
+	);
 
 	if (FolderPaths.length === 0) return;
 
@@ -270,20 +270,20 @@ export const ActivateWorkspaceContainsExtensions = async (
 	const Extensions: Array<{ Identifier: string; Globs: string[] }> = [];
 
 	for (const [Identifier, Extension] of Context.ExtensionRegistry.entries()) {
-		const Globs = GetWorkspaceContainsGlobs(Extension;
+		const Globs = GetWorkspaceContainsGlobs(Extension);
 
 		if (Globs.length === 0) continue;
 
 		if (Context.ActivatedExtensions.has(Identifier)) continue;
 
-		Extensions.push({ Identifier, Globs };
+		Extensions.push({ Identifier, Globs });
 	}
 
 	if (Extensions.length === 0) {
 		try {
 			process.stdout.write(
 				"[LandFix:Activator] No pending workspaceContains extensions; skipping scan.\n",
-			;
+			);
 		} catch {}
 
 		return;
@@ -292,7 +292,7 @@ export const ActivateWorkspaceContainsExtensions = async (
 	// Lazy-load ExtensionHostHandler to avoid a circular import with the
 	// handler suite - NotificationHandler imports this module at load time.
 	const { default: ExtensionHostHandler } =
-		await import("../../Extension/Host/Handler.js";
+		await import("../../Extension/Host/Handler.js");
 
 	let ActivationCount = 0;
 
@@ -318,26 +318,26 @@ export const ActivateWorkspaceContainsExtensions = async (
 				//     `dist` automatically.
 				//   - Mountain miss → fall back to the local walker so
 				//     the activator never blocks on an IPC failure.
-				const IsLiteral = !/[*?[\]]/.test(Glob;
+				const IsLiteral = !/[*?[\]]/.test(Glob);
 
 				let Hit = false;
 
 				if (IsLiteral) {
 					// eslint-disable-next-line no-await-in-loop
-					Hit = await FolderContainsGlob(Folder.FsPath, Glob;
+					Hit = await FolderContainsGlob(Folder.FsPath, Glob);
 				} else {
 					// eslint-disable-next-line no-await-in-loop
 					const Mountain = await FolderContainsGlobViaMountain(
 						Context,
 
 						Glob,
-					;
+					);
 
 					if (typeof Mountain === "boolean") {
 						Hit = Mountain;
 					} else {
 						// eslint-disable-next-line no-await-in-loop
-						Hit = await FolderContainsGlob(Folder.FsPath, Glob;
+						Hit = await FolderContainsGlob(Folder.FsPath, Glob);
 					}
 				}
 
@@ -358,26 +358,26 @@ export const ActivateWorkspaceContainsExtensions = async (
 		try {
 			process.stdout.write(
 				`[LandFix:Activator] workspaceContains match: extension=${Identifier} glob=${MatchingGlob} folder=${MatchingFolder}\n`,
-			;
+			);
 		} catch {}
 
 		try {
 			// eslint-disable-next-line no-await-in-loop
 			await ExtensionHostHandler.HandleActivateByEvent(Context, {
 				activationEvent: `${WORKSPACE_CONTAINS_PREFIX}${MatchingGlob}`,
-			};
+			});
 
 			ActivationCount += 1;
 		} catch (CaughtError: unknown) {
 			const Message =
 				CaughtError instanceof globalThis.Error
 					? CaughtError.message
-					: String(CaughtError;
+					: String(CaughtError);
 
 			try {
 				process.stdout.write(
 					`[LandFix:Activator] activate failed for ${Identifier}: ${Message}\n`,
-				;
+				);
 			} catch {}
 		}
 	}
@@ -385,7 +385,7 @@ export const ActivateWorkspaceContainsExtensions = async (
 	try {
 		process.stdout.write(
 			`[LandFix:Activator] Pass complete: ${ActivationCount} extension(s) activated against ${FolderPaths.length} folder(s).\n`,
-		;
+		);
 	} catch {}
 };
 

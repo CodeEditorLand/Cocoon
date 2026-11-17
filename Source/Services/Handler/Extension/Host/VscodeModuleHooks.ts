@@ -469,7 +469,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
 					}
 
-					return NextResolve(Specifier, Context;
+					return NextResolve(Specifier, Context);
 				}
 
 				export async function load(Url, Context, NextLoad) {
@@ -479,7 +479,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
 					}
 
-					return NextLoad(Url, Context;
+					return NextLoad(Url, Context);
 				}
 
 			`;
@@ -507,7 +507,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			"ext-host",
 
 			`[ExtensionHostHandler] ESM loader setup skipped: ${Err instanceof Error ? Err.message : String(Err)}`,
-		;
+		);
 	}
 };
 

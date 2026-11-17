@@ -38,7 +38,7 @@ export const CreateOutputChannel = (
 
 		await Logger.Info(
 			`[WindowService] Creating output channel: ${Name} (${ChannelId})`,
-		;
+		);
 
 		// Notify Mountain to create the output channel (Sky renders it)
 		await (async () => {
@@ -54,18 +54,18 @@ export const CreateOutputChannel = (
 				MountainClient.sendNotification("output.append", {
 					channel: ChannelId,
 					value: Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			appendLine(Value: string): void {
 				MountainClient.sendNotification("output.appendLine", {
 					channel: ChannelId,
 					value: Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			clear(): void {
 				MountainClient.sendNotification("output.clear", {
 					channel: ChannelId,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			show(
 				_ColumnOrPreserveFocus?: boolean | VSCode.ViewColumn,
@@ -74,24 +74,24 @@ export const CreateOutputChannel = (
 			): void {
 				MountainClient.sendNotification("output.show", {
 					channel: ChannelId,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			hide(): void {
 				MountainClient.sendNotification("output.show", {
 					channel: ChannelId,
 					visible: false,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			dispose(): void {
 				MountainClient.sendNotification("output.dispose", {
 					channel: ChannelId,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			replace(_Value: string): void {
 				MountainClient.sendNotification("output.replace", {
 					channel: ChannelId,
 					value: _Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 		};
 

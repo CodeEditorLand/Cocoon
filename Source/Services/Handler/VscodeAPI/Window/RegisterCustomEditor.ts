@@ -170,17 +170,17 @@ const RegisterCustomEditor = (
 
 	Subscribe("customEditor.saveDocumentAs", "saveCustomDocumentAs");
 
-	Subscribe("customEditor.revertCustomDocument", "revertCustomDocument";
+	Subscribe("customEditor.revertCustomDocument", "revertCustomDocument");
 
-	Subscribe("customEditor.backupCustomDocument", "backupCustomDocument";
+	Subscribe("customEditor.backupCustomDocument", "backupCustomDocument");
 
-	Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument";
+	Subscribe("customEditor.willSaveCustomDocument", "willSaveCustomDocument");
 
 	Subscribe(
 		"customEditor.didChangeCustomDocument",
 
 		"didChangeCustomDocument",
-	;
+	);
 
 	return {
 		dispose: () => {
@@ -189,24 +189,24 @@ const RegisterCustomEditor = (
 					Channel,
 
 					Listener as (..._A: unknown[]) => void,
-				;
+				);
 			}
 
 			Listeners.length = 0;
 
-			CustomEditorProviders.delete(String(Handle);
+			CustomEditorProviders.delete(String(Handle));
 
-			const ByViewType = CustomEditorProvidersByViewType.get(ViewType;
+			const ByViewType = CustomEditorProvidersByViewType.get(ViewType);
 
 			if (ByViewType && ByViewType.Handle === Handle) {
-				CustomEditorProvidersByViewType.delete(ViewType;
+				CustomEditorProvidersByViewType.delete(ViewType);
 			}
 
 			Context.MountainClient?.sendRequest(
 				"webview.unregisterCustomEditor",
 
 				{ handle: Handle, viewType: ViewType },
-			).catch(() => {};
+			).catch(() => {});
 		},
 	};
 };

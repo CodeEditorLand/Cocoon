@@ -168,7 +168,7 @@ export const BuildRegisterTextDocumentContentProvider = (
  * Exported so the routing module + its tests can read it. `disposeAll`
  * is for test teardown.
  */
-export const ClaimedFileSystemSchemes = new Set<string>(;
+export const ClaimedFileSystemSchemes = new Set<string>();
 
 export const BuildRegisterFileSystemProvider =
 	(Context: HandlerContext) =>
@@ -179,9 +179,9 @@ export const BuildRegisterFileSystemProvider =
 
 		Options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
 	) => {
-		const Handle = NextProviderHandle(;
+		const Handle = NextProviderHandle();
 
-		ClaimedFileSystemSchemes.add(Scheme;
+		ClaimedFileSystemSchemes.add(Scheme);
 
 		Context.SendToMountain("register_file_system_provider", {
 			handle: Handle,
@@ -189,15 +189,15 @@ export const BuildRegisterFileSystemProvider =
 			isCaseSensitive: Options?.isCaseSensitive ?? true,
 			isReadonly: Options?.isReadonly ?? false,
 			extensionId: "",
-		}).catch(() => {};
+		}).catch(() => {});
 
 		return {
 			dispose: () => {
-				ClaimedFileSystemSchemes.delete(Scheme;
+				ClaimedFileSystemSchemes.delete(Scheme);
 
 				Context.SendToMountain("unregister_file_system_provider", {
 					handle: Handle,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 		};
 	};
@@ -215,13 +215,13 @@ export const BuildRegisterTaskProvider = (Context: HandlerContext) =>
 		(TaskType) => ({ taskType: TaskType, extensionId: "" }),
 
 		(Handle, _TaskType, Provider) => {
-			Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider;
+			Context.ExtensionRegistry.set(`__taskProvider:${Handle}`, Provider);
 		},
 
 		(Handle, _TaskType) => {
-			Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`;
+			Context.ExtensionRegistry.delete(`__taskProvider:${Handle}`);
 		},
-	;
+	);
 
 export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>
 	MakeProvider(
@@ -234,7 +234,7 @@ export const BuildRegisterNotebookContentProvider = (Context: HandlerContext) =>
 		"notebookContent",
 
 		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
-	;
+	);
 
 export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 	MakeProvider(
@@ -247,7 +247,7 @@ export const BuildRegisterNotebookSerializer = (Context: HandlerContext) =>
 		"notebookSerializer",
 
 		(NotebookType) => ({ notebookType: NotebookType, extensionId: "" }),
-	;
+	);
 
 export const BuildRegisterRemoteAuthorityResolver =
 	(Context: HandlerContext) =>
@@ -255,13 +255,13 @@ export const BuildRegisterRemoteAuthorityResolver =
 		Context.SendToMountain("register_remote_authority_resolver", {
 			authorityPrefix: AuthorityPrefix,
 			extensionId: "",
-		}).catch(() => {};
+		}).catch(() => {});
 
 		return {
 			dispose: () => {
 				Context.SendToMountain("unregister_remote_authority_resolver", {
 					authorityPrefix: AuthorityPrefix,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 		};
 	};
@@ -270,7 +270,7 @@ export const BuildRegisterResourceLabelFormatter =
 	(Context: HandlerContext) => (Formatter: unknown) => {
 		Context.SendToMountain("register_resource_label_formatter", {
 			formatter: Formatter,
-		}).catch(() => {};
+		}).catch(() => {});
 
 		return { dispose: () => {} };
 	};

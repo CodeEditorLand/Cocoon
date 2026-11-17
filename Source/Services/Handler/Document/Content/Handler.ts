@@ -395,27 +395,27 @@ const HandleDocumentChange = (
 			Updated =
 				Updated.substring(0, Offset) +
 				Text +
-				Updated.substring(Offset + Length;
+				Updated.substring(Offset + Length);
 		}
 
-		DocumentContentCache.set(Uri, Updated;
+		DocumentContentCache.set(Uri, Updated);
 	}
 
 	// Emit workspace event with updated content
 	if (Uri && WorkspaceEventEmitter) {
 		const CurrentVersion = (DocumentVersionMap.get(Uri) ?? 1) + 1;
 
-		DocumentVersionMap.set(Uri, CurrentVersion;
+		DocumentVersionMap.set(Uri, CurrentVersion);
 
 		const CachedContent = DocumentContentCache.get(Uri) ?? "";
 
-		const Document = BuildTextDocument(Uri, CachedContent, CurrentVersion;
+		const Document = BuildTextDocument(Uri, CachedContent, CurrentVersion);
 
 		WorkspaceEventEmitter.emit("didChangeTextDocument", {
 			document: Document,
 			contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
 			reason: undefined,
-		};
+		});
 	}
 };
 
@@ -451,7 +451,7 @@ const HandleDocumentOpen = (
 		let Content: string | undefined;
 
 		if (Array.isArray(Lines)) {
-			Content = Lines.join(EOL;
+			Content = Lines.join(EOL);
 		} else {
 			Content = Model?.content ?? Model?.Content ?? Model?.text;
 		}
@@ -460,7 +460,7 @@ const HandleDocumentOpen = (
 			Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
 
 		if (Uri && Content !== undefined) {
-			DocumentContentCache.set(Uri, Content;
+			DocumentContentCache.set(Uri, Content);
 
 			DocumentVersionMap.set(Uri, 1);
 
@@ -468,7 +468,7 @@ const HandleDocumentOpen = (
 				"document",
 
 				`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`,
-			;
+			);
 
 			if (WorkspaceEventEmitter) {
 				const Document = BuildTextDocument(
@@ -479,9 +479,9 @@ const HandleDocumentOpen = (
 					1,
 
 					LanguageIdentifier,
-				;
+				);
 
-				WorkspaceEventEmitter.emit("didOpenTextDocument", Document;
+				WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
 			}
 		}
 	}
@@ -516,14 +516,14 @@ const HandleDocumentClose = (
 
 				const Version = DocumentVersionMap.get(Uri) ?? 1;
 
-				const Document = BuildTextDocument(Uri, CachedContent, Version;
+				const Document = BuildTextDocument(Uri, CachedContent, Version);
 
-				WorkspaceEventEmitter.emit("didCloseTextDocument", Document;
+				WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
 			}
 
-			DocumentContentCache.delete(Uri;
+			DocumentContentCache.delete(Uri);
 
-			DocumentVersionMap.delete(Uri;
+			DocumentVersionMap.delete(Uri);
 		}
 	}
 };
@@ -553,16 +553,16 @@ const HandleDocumentSave = (
 					Item?.uri?.external ??
 					Item?.uri ??
 					Item?.Uri ??
-					"";
+					"");
 
 		if (Uri) {
 			const CachedContent = DocumentContentCache.get(Uri) ?? "";
 
 			const Version = DocumentVersionMap.get(Uri) ?? 1;
 
-			const Document = BuildTextDocument(Uri, CachedContent, Version;
+			const Document = BuildTextDocument(Uri, CachedContent, Version);
 
-			WorkspaceEventEmitter.emit("didSaveTextDocument", Document;
+			WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
 		}
 	}
 };

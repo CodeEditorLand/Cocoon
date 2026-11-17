@@ -94,7 +94,7 @@ try {
 			const Selected =
 				typeof Response === "string"
 					? Response
-					: ((Response as { title?: string } | null)?.title ?? null;
+					: ((Response as { title?: string } | null)?.title ?? null);
 
 			return Selected
 				? (items.find((Item) => Item === Selected) ?? Selected)
@@ -106,27 +106,27 @@ try {
 
 		items: readonly string[] = [],
 	): Promise<string | undefined> =>
-		ShowMessage("showInformationMessage", "info", message, items;
+		ShowMessage("showInformationMessage", "info", message, items);
 
 	const ShowWarningMessage = (
 		message: string,
 
 		items: readonly string[] = [],
 	): Promise<string | undefined> =>
-		ShowMessage("showWarningMessage", "warning", message, items;
+		ShowMessage("showWarningMessage", "warning", message, items);
 
 	const ShowErrorMessage = (
 		message: string,
 
 		items: readonly string[] = [],
 	): Promise<string | undefined> =>
-		ShowMessage("showErrorMessage", "error", message, items;
+		ShowMessage("showErrorMessage", "error", message, items);
 
 	return DialogService.of({
 		ShowInformationMessage,
 		ShowWarningMessage,
 		ShowErrorMessage,
-	};
+	});
 };
 
 /**

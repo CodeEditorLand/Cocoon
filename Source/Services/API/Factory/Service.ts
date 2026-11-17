@@ -34,7 +34,7 @@ const { Emitter } =
 // Defensive RelativePattern wrapper.
 //
 // Stock `RelativePattern(base, pattern)` in extHostTypes.ts:1914 does:
-//   if (!base || !URI.isUri(base) && !URI.isUri(base.uri)) throw illegalArgument('base';
+//   if (!base || !URI.isUri(base) && !URI.isUri(base.uri)) throw illegalArgument('base');
 //
 // `URI.isUri` is strict: instance-check first, then duck-type that
 // requires `.with` method + `.toString` override + `.fsPath` getter
@@ -380,7 +380,7 @@ const createVSCodeAPI = (
 					shellPath,
 
 					cwd,
-				;
+				);
 
 				return {
 					name,
@@ -388,7 +388,7 @@ const createVSCodeAPI = (
 					sendText: async (text: string) => {
 						const id = await terminalIdPromise;
 
-						await terminalService.sendText(id, text;
+						await terminalService.sendText(id, text);
 					},
 
 					show: () => {},
@@ -398,7 +398,7 @@ const createVSCodeAPI = (
 					dispose: async () => {
 						const id = await terminalIdPromise;
 
-						await terminalService.kill(id;
+						await terminalService.kill(id);
 					},
 				};
 			},
@@ -422,7 +422,7 @@ const createVSCodeAPI = (
 			}),
 
 			withProgress: async (_options: any, task: any) => {
-				return task({ report: (_value: any) => {} };
+				return task({ report: (_value: any) => {} });
 			},
 
 			// Terminal shell-integration events. Land doesn't track shell
@@ -453,13 +453,13 @@ const createVSCodeAPI = (
 					get: (key: string, defaultValue?: any) => {
 						const fullKey = section ? `${section}.${key}` : key;
 
-						return configService.getValue(fullKey, 0, defaultValue;
+						return configService.getValue(fullKey, 0, defaultValue);
 					},
 
 					update: async (key: string, value: any, target: any) => {
 						const fullKey = section ? `${section}.${key}` : key;
 
-						await configService.setValue(fullKey, value, target;
+						await configService.setValue(fullKey, value, target);
 					},
 
 					has: (key: string) =>
@@ -522,7 +522,7 @@ const createVSCodeAPI = (
 			const LocalHandlers = new Map<
 				string,
 				(...args: readonly unknown[]) => unknown
-			>(;
+			>();
 
 			return {
 				registerCommand: (
@@ -530,7 +530,7 @@ const createVSCodeAPI = (
 
 					callback: (...args: any[]) => any,
 				) => {
-					LocalHandlers.set(command, callback;
+					LocalHandlers.set(command, callback);
 
 					// Notify Mountain so the command appears in the command palette
 					// and can be dispatched via execute_contributed_command gRPC.
@@ -540,26 +540,26 @@ const createVSCodeAPI = (
 							extensionId: "unknown",
 							title: command,
 						})
-						.catch(() => {};
+						.catch(() => {});
 
 					return {
 						dispose: () => {
-							LocalHandlers.delete(command;
+							LocalHandlers.delete(command);
 
 							mountainClient
 								.sendNotification("unregisterCommand", {
 									commandId: command,
 								})
-								.catch(() => {};
+								.catch(() => {});
 						},
 					};
 				},
 				executeCommand: async (command: string, ...args: any[]) => {
 					// Check local handlers first (same-process shortcut)
-					const Local = LocalHandlers.get(command;
+					const Local = LocalHandlers.get(command);
 
 					if (Local !== undefined) {
-						return Local(...args;
+						return Local(...args);
 					}
 
 					// Delegate to Mountain's CommandRegistry
@@ -585,7 +585,7 @@ const createVSCodeAPI = (
 									return { stringValue: JSON.stringify(Arg) };
 								}),
 							},
-						;
+						);
 
 						return Result?.result;
 					} catch (Error: any) {
@@ -599,17 +599,17 @@ const createVSCodeAPI = (
 						// swallow "not found" errors on extension-namespaced
 						// commands. Real native-command typos still surface -
 						// they lack the `<extension-id>.<command>` shape.
-						const Message = String(Error?.message ?? Error;
+						const Message = String(Error?.message ?? Error);
 
 						const IsNotFound =
 							Message.includes("not found") ||
-							Message.includes("Command not found";
+							Message.includes("Command not found");
 
 						const IsExtensionNamespaced =
 							command.includes(".") &&
 							!command.startsWith("vscode.") &&
 							!command.startsWith("workbench.") &&
-							!command.startsWith("editor.";
+							!command.startsWith("editor.");
 
 						if (IsNotFound && IsExtensionNamespaced) {
 							return undefined;
@@ -624,7 +624,7 @@ const createVSCodeAPI = (
 							commandId: "_getCommands",
 							arguments: [],
 						})
-						.catch(() => null;
+						.catch(() => null);
 
 					return Array.isArray(Result?.result) ? Result.result : [];
 				},
@@ -649,11 +649,11 @@ const createVSCodeAPI = (
 				const Url =
 					typeof target === "string"
 						? target
-						: (target?.toString?.() ?? "";
+						: (target?.toString?.() ?? "");
 
 				await mountainClient.sendNotification("openExternal", {
 					url: Url,
-				};
+				});
 
 				return true;
 			},
@@ -698,7 +698,7 @@ const createVSCodeAPI = (
 
 				// Store in the shared registry so GRPCServerService can invoke
 				// this provider when Mountain calls $provide* via gRPC.
-				LanguageProviderRegistry.Register(Handle, provider;
+				LanguageProviderRegistry.Register(Handle, provider);
 
 				mountainClient
 					.sendNotification(`register_${type}`, {
@@ -723,7 +723,7 @@ const createVSCodeAPI = (
 				match: () => 0,
 
 				createDiagnosticCollection: (name?: string) => {
-					const Items = new Map<string, any[]>(;
+					const Items = new Map<string, any[]>();
 
 					return {
 						name: name ?? "default",
@@ -849,7 +849,7 @@ const createVSCodeAPI = (
 							language: lang,
 							configuration: config,
 						})
-						.catch(() => {};
+						.catch(() => {});
 
 					return { dispose: () => {} };
 				},
@@ -904,7 +904,7 @@ export class APIFactoryService implements IAPIFactoryService {
 			fsService,
 
 			terminalService,
-		;
+		);
 	}
 
 	/**
@@ -939,6 +939,6 @@ export const APIFactoryLayer = async function() {
 			terminalService,
 
 			moduleInterceptor,
-		;
+		);
 	}),
-;
+);

@@ -109,17 +109,17 @@ const InitialiseDAPSessionTracker = (Context: HandlerContext): void => {
 		const Adapter = Anchor.__dapAdapters!.get(String(SessionId));
 
 		try {
-			Adapter?.dispose?.(;
+			Adapter?.dispose?.();
 		} catch {
 			/* ignore */
 		}
 
-		Anchor.__dapAdapters!.delete(String(SessionId);
-	};
+		Anchor.__dapAdapters!.delete(String(SessionId));
+	});
 };
 
 const CreateDebugNamespace = (Context: HandlerContext) => {
-	InitialiseDAPSessionTracker(Context;
+	InitialiseDAPSessionTracker(Context);
 
 	return WrapDebugNamespace({
 		registerDebugAdapterDescriptorFactory: (
@@ -127,13 +127,13 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 			Factory: unknown,
 		) => {
-			const Handle = NextProviderHandle(;
+			const Handle = NextProviderHandle();
 
 			Context.SendToMountain("register_debug_adapter", {
 				handle: Handle,
 				debugType: DebugType,
 				extensionId: "",
-			}).catch(() => {};
+			}).catch(() => {});
 
 			// Stash factory by type so the ExtHostDebug$sendDAPRequest gRPC
 			// dispatch can look it up. `DebugAdapterInlineImplementation`
@@ -142,7 +142,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 			// reverse-RPC into Cocoon and are dispatched here.
 			const FactoryKey = `__debugAdapterFactory:${DebugType}`;
 
-			Context.ExtensionRegistry.set(FactoryKey, Factory;
+			Context.ExtensionRegistry.set(FactoryKey, Factory);
 
 			return {
 				dispose: () => {
@@ -150,7 +150,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 					Context.SendToMountain("unregister_debug_adapter", {
 						handle: Handle,
-					}).catch(() => {};
+					}).catch(() => {});
 				},
 			};
 		},
@@ -162,21 +162,21 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 			_TriggerKind?: unknown,
 		) => {
-			const Handle = NextProviderHandle(;
+			const Handle = NextProviderHandle();
 
 			Context.SendToMountain("register_debug_configuration_provider", {
 				handle: Handle,
 				debugType: DebugType,
-			}).catch(() => {};
+			}).catch(() => {});
 
 			// Stash locally so ExtHostDebug$resolveDebugConfiguration can call back.
 			const ProviderKey = `__debugConfigProvider:${Handle}`;
 
-			Context.ExtensionRegistry.set(ProviderKey, Provider;
+			Context.ExtensionRegistry.set(ProviderKey, Provider);
 
 			return {
 				dispose: () => {
-					Context.ExtensionRegistry.delete(ProviderKey;
+					Context.ExtensionRegistry.delete(ProviderKey);
 
 					Context.SendToMountain(
 						"unregister_debug_configuration_provider",
@@ -184,7 +184,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 						{
 							handle: Handle,
 						},
-					).catch(() => {};
+					).catch(() => {});
 				},
 			};
 		},
@@ -221,9 +221,9 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 					"Debug.Start",
 
 					[Folder, NameOrConfig, ParentSession],
-				;
+				);
 
-				return Boolean((Response as { success?: boolean })?.success;
+				return Boolean((Response as { success?: boolean })?.success);
 			} catch {
 				return false;
 			}
@@ -236,36 +236,36 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 				const SessionId =
 					typeof Session === "string"
 						? Session
-						: ((Session as { id?: unknown })?.id ?? "";
+						: ((Session as { id?: unknown })?.id ?? "");
 
 				await Context.MountainClient?.sendRequest("Debug.Stop", [
 					SessionId,
-				];
+				]);
 			} catch {}
 		},
 
 		addBreakpoints: (Breakpoints: unknown[]) => {
-			const All: unknown[] = ((Context as any).__breakpoints ??= [];
+			const All: unknown[] = ((Context as any).__breakpoints ??= []);
 
-			All.push(...Breakpoints;
+			All.push(...Breakpoints);
 
 			Context.SendToMountain("debug.addBreakpoints", {
 				breakpoints: Breakpoints,
-			}).catch(() => {};
+			}).catch(() => {});
 		},
 
 		removeBreakpoints: (Breakpoints: unknown[]) => {
-			const All: unknown[] = ((Context as any).__breakpoints ??= [];
+			const All: unknown[] = ((Context as any).__breakpoints ??= []);
 
-			const Ids = new Set((Breakpoints as any[]).map((B) => B?.id);
+			const Ids = new Set((Breakpoints as any[]).map((B) => B?.id));
 
 			(Context as any).__breakpoints = All.filter(
 				(B: unknown) => !Ids.has((B as any)?.id),
-			;
+			);
 
 			Context.SendToMountain("debug.removeBreakpoints", {
 				breakpoints: Breakpoints,
-			}).catch(() => {};
+			}).catch(() => {});
 		},
 
 		asDebugSourceUri: (Source: unknown) => Source,
@@ -308,12 +308,12 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 			append: (Value: string) => {
 				Context.SendToMountain("debug.consoleAppend", {
 					value: Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 			appendLine: (Value: string) => {
 				Context.SendToMountain("debug.consoleAppend", {
 					value: `${Value}\n`,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 		},
 
@@ -332,7 +332,7 @@ const CreateDebugNamespace = (Context: HandlerContext) => {
 
 			"debug.didChangeActiveStackItem",
 		),
-	};
+	});
 };
 
 export default CreateDebugNamespace;

@@ -302,7 +302,7 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 		// invariants - so `Object.keys(ns)` still under-reports; that is
 		// the safe trade.
 		getOwnPropertyDescriptor(Target, Property) {
-			const Real = Reflect.getOwnPropertyDescriptor(Target, Property;
+			const Real = Reflect.getOwnPropertyDescriptor(Target, Property);
 
 			if (Real !== undefined) return Real;
 
@@ -328,6 +328,6 @@ const WrapNamespaceWithHeuristics = <T extends object>(
 							),
 			};
 		},
-	};
+	});
 
 export default WrapNamespaceWithHeuristics;

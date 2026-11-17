@@ -154,7 +154,7 @@ export class PlatformService implements IPlatformService {
 
 	private initialized: boolean = false;
 
-	private cache: Map<string, { value: any; timestamp: number }> = new Map(;
+	private cache: Map<string, { value: any; timestamp: number }> = new Map();
 
 	private readonly CACHE_TTL = 60000; // 60 seconds
 
@@ -166,60 +166,58 @@ export class PlatformService implements IPlatformService {
 	 * Initialize platform service
 	 */
 	initialize(): Promise<void> {
-		return {
-			if (this.initialized {
-				console.log("[PlatformService] Already initialized";
+		if (this.initialized) {
+			console.log("[PlatformService] Already initialized");
 
-				return;
-			}
+			return;
+		}
 
-			this.startTime = Date.now(;
+		this.startTime = Date.now();
 
-			// Perform initial platform detection
-			const platform = OSModule.GetPlatformNumber(;
+		// Perform initial platform detection
+		const platform = OSModule.GetPlatformNumber();
 
-			const osInfo = OSModule.GetOSInfo(;
+		const osInfo = OSModule.GetOSInfo();
 
-			const envInfo = EnvironmentModule.GetEnvironmentInfo(;
+		const envInfo = EnvironmentModule.GetEnvironmentInfo();
 
-			// Cache initial values
-			this.cache.set("platform", {
-				value: platform,
-				timestamp: Date.now(),
-			};
+		// Cache initial values
+		this.cache.set("platform", {
+			value: platform,
+			timestamp: Date.now(),
+		});
 
-			this.cache.set("osInfo", { value: osInfo, timestamp: Date.now() };
+		this.cache.set("osInfo", { value: osInfo, timestamp: Date.now() });
 
-			this.cache.set("envInfo", {
-				value: envInfo,
-				timestamp: Date.now(),
-			};
+		this.cache.set("envInfo", {
+			value: envInfo,
+			timestamp: Date.now(),
+		});
 
-			this.initialized = true;
+		this.initialized = true;
 
-			console.log("[PlatformService] Initialized successfully", {
-				platform,
-				osInfo,
-				envInfo,
-			};
-		};
+		console.log("[PlatformService] Initialized successfully", {
+			platform,
+			osInfo,
+			envInfo,
+		});
 	}
 
 	/**
 	 * Get cached value or compute new one
 	 */
 	private getCached<T>(key: string, compute: () => T): T {
-		const cached = this.cache.get(key;
+		const cached = this.cache.get(key);
 
-		const now = Date.now(;
+		const now = Date.now();
 
 		if (cached && now - cached.timestamp < this.CACHE_TTL) {
 			return cached.value as T;
 		}
 
-		const value = compute(;
+		const value = compute();
 
-		this.cache.set(key, { value, timestamp: now };
+		this.cache.set(key, { value, timestamp: now });
 
 		return value;
 	}
@@ -228,62 +226,58 @@ export class PlatformService implements IPlatformService {
 	 * Clear cache
 	 */
 	private clearCache(): void {
-		this.cache.clear(;
+		this.cache.clear();
 	}
 
 	/**
 	 * Detect platform
 	 */
 	detectPlatform(): Promise<OSModule.PlatformNumber> {
-		return {
-			return this.getCached("platform", ( =>
-				OSModule.GetPlatformNumber(),
-			;
-		};
+		return this.getCached("platform", () =>
+			OSModule.GetPlatformNumber(),
+		);
 	}
 
 	/**
 	 * Get OS information
 	 */
 	getOSInfo(): Promise<OSModule.OSInfo> {
-		return {
-			return this.getCached("osInfo", ( => OSModule.GetOSInfo();
-		};
+		return this.getCached("osInfo", () => OSModule.GetOSInfo());
 	}
 
 	/**
 	 * Check if Windows
 	 */
 	isWindows(): Promise<boolean> {
-		return OSModule.IsWindows(;
+		return OSModule.IsWindows();
 	}
 
 	/**
 	 * Check if Macintosh
 	 */
 	isMacintosh(): Promise<boolean> {
-		return OSModule.IsMacintosh(;
+		return OSModule.IsMacintosh();
 	}
 
 	/**
 	 * Check if Linux
 	 */
 	isLinux(): Promise<boolean> {
-		return OSModule.IsLinux(;
+		return OSModule.IsLinux();
 	}
 
 	/**
 	 * Normalize path for current platform
 	 */
 	normalizePath(path: string): Promise<string> {
-		return OSModule.NormalizePath(path;
+		return OSModule.NormalizePath(path);
 	}
 
 	/**
 	 * Join path segments
 	 */
 	joinPath(...segments: string[]): Promise<string> {
-		return OSModule.JoinPath(...segments;
+		return OSModule.JoinPath(...segments);
 	}
 
 	/**
@@ -291,7 +285,7 @@ export class PlatformService implements IPlatformService {
 	 */
 	getEnvironmentVariable(name: string): Promise<Option.Option<string>> {
 		return EnvironmentModule.GetEnvironmentVariable(name,
-		;
+		);
 	}
 
 	/**
@@ -302,14 +296,12 @@ export class PlatformService implements IPlatformService {
 
 		value: string,
 	): Promise<void> {
-		return {
-			if (!EnvironmentModule.SetEnvironmentVariable(name, value) {
-				throw new Error(`Failed to set environment variable: ${name}`;
-			}
+		if (!EnvironmentModule.SetEnvironmentVariable(name, value)) {
+			throw new Error(`Failed to set environment variable: ${name}`);
+		}
 
-			// Invalidate environment cache
-			this.cache.delete("envInfo";
-		};
+		// Invalidate environment cache
+		this.cache.delete("envInfo");
 	}
 
 	/**
@@ -319,39 +311,37 @@ export class PlatformService implements IPlatformService {
 		EnvironmentModule.EnvironmentInfo,
 		Error
 	> {
-		return {
-			return this.getCached("envInfo", ( =>
-				EnvironmentModule.GetEnvironmentInfo(),
-			;
-		};
+		return this.getCached("envInfo", () =>
+			EnvironmentModule.GetEnvironmentInfo(),
+		);
 	}
 
 	/**
 	 * Get language
 	 */
 	getLanguage(): Promise<string> {
-		return EnvironmentModule.GetLanguage(;
+		return EnvironmentModule.GetLanguage();
 	}
 
 	/**
 	 * Get locale
 	 */
 	getLocale(): Promise<string> {
-		return EnvironmentModule.GetLocale(;
+		return EnvironmentModule.GetLocale();
 	}
 
 	/**
 	 * Get home directory
 	 */
 	getHomeDirectory(): Promise<string> {
-		return EnvironmentModule.GetHomeDirectory(;
+		return EnvironmentModule.GetHomeDirectory();
 	}
 
 	/**
 	 * Get temp directory
 	 */
 	getTempDirectory(): Promise<string> {
-		return EnvironmentModule.GetTempDirectory(;
+		return EnvironmentModule.GetTempDirectory();
 	}
 
 	/**
@@ -393,7 +383,7 @@ export class PlatformService implements IPlatformService {
 		throw _e;
 	}
 })(): Promise<boolean> {
-		return ProcessModule.KillProcess(pid;
+		return ProcessModule.KillProcess(pid);
 	}
 
 	/**
@@ -402,7 +392,7 @@ export class PlatformService implements IPlatformService {
 	getProcess(
 		pid: number,
 	): Promise<Option.Option<ProcessModule.ProcessInfo>> {
-		return ProcessModule.GetProcess(pid;
+		return ProcessModule.GetProcess(pid);
 	}
 
 	/**
@@ -412,7 +402,7 @@ export class PlatformService implements IPlatformService {
 		osInfo: OSModule.OSInfo,
 	): Promise<TypeConverterModule.MountainPlatformInfoDTO> {
 		return TypeConverterModule.ConvertOSInfoToDTO(osInfo,
-		;
+		);
 	}
 
 	/**
@@ -422,7 +412,7 @@ export class PlatformService implements IPlatformService {
 		envInfo: EnvironmentModule.EnvironmentInfo,
 	): Promise<TypeConverterModule.MountainEnvironmentInfoDTO> {
 		return TypeConverterModule.ConvertEnvironmentInfoToDTO(envInfo,
-		;
+		);
 	}
 
 	/**
@@ -432,7 +422,7 @@ export class PlatformService implements IPlatformService {
 		procInfo: ProcessModule.ProcessInfo,
 	): Promise<TypeConverterModule.MountainProcessInfoDTO> {
 		return TypeConverterModule.ConvertProcessInfoToDTO(procInfo,
-		;
+		);
 	}
 
 	/**
@@ -445,31 +435,29 @@ export class PlatformService implements IPlatformService {
 
 		lastUpdate: number;
 	}> {
+		const uptime = Date.now() - this.startTime;
+
+		const lastUpdate = Math.max(
+			this.getCacheTimestamp("osInfo"),
+
+			this.getCacheTimestamp("envInfo"),
+
+			this.getCacheTimestamp("platform"),
+		);
+
+		// Determine health status
+		let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+
+		if (!this.initialized) {
+			status = "unhealthy";
+		} else if (Date.now() - lastUpdate > 120000) {
+			status = "degraded"; // Stale cache
+		}
+
 		return {
-			const uptime = Date.now( - this.startTime;
-
-			const lastUpdate = Math.max(
-				this.getCacheTimestamp("osInfo"),
-
-				this.getCacheTimestamp("envInfo"),
-
-				this.getCacheTimestamp("platform"),
-			;
-
-			// Determine health status
-			let status: "healthy" | "degraded" | "unhealthy" = "healthy";
-
-			if (!this.initialized) {
-				status = "unhealthy";
-			} else if (Date.now() - lastUpdate > 120000) {
-				status = "degraded"; // Stale cache
-			}
-
-			return {
-				status,
-				uptime,
-				lastUpdate,
-			};
+			status,
+			uptime,
+			lastUpdate,
 		};
 	}
 
@@ -477,7 +465,7 @@ export class PlatformService implements IPlatformService {
 	 * Get cache timestamp by key
 	 */
 	private getCacheTimestamp(key: string): number {
-		const cached = this.cache.get(key;
+		const cached = this.cache.get(key);
 
 		return cached ? cached.timestamp : 0;
 	}
@@ -486,17 +474,15 @@ export class PlatformService implements IPlatformService {
 	 * Dispose platform service
 	 */
 	dispose(): Promise<void> {
-		return {
-			console.log("[PlatformService] Disposing...";
+		console.log("[PlatformService] Disposing...");
 
-			// Clean up all processes
-			ProcessModule.CleanupAllProcesses(;
+		// Clean up all processes
+		ProcessModule.CleanupAllProcesses();
 
-			// Clear cache
-			this.clearCache(;
+		// Clear cache
+		this.clearCache();
 
-			console.log("[PlatformService] Disposed";
-		};
+		console.log("[PlatformService] Disposed");
 	}
 }
 
@@ -504,7 +490,7 @@ export class PlatformService implements IPlatformService {
  * Platform Service Tag for Effect-TS dependency injection
  */
 export const PlatformServiceTag =
-	Context.GenericTag<IPlatformService>("PlatformService";
+	Context.GenericTag<IPlatformService>("PlatformService");
 
 /**
  * Platform Service Layer
@@ -513,7 +499,7 @@ export const PlatformServiceLayer = Layer.sync(
 	PlatformServiceTag,
 
 	() => new PlatformService(),
-;
+);
 
 /**
  * Live platform service layer
@@ -544,7 +530,7 @@ export function DetectPlatform(): Promise<
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.detectPlatform(),
-	;
+	);
 }
 
 /**
@@ -559,7 +545,7 @@ export function GetOSInfo(): Promise<
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.getOSInfo(),
-	;
+	);
 }
 
 /**
@@ -572,7 +558,7 @@ export function NormalizePath(
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.normalizePath(path),
-	;
+	);
 }
 
 /**
@@ -585,7 +571,7 @@ export function GetEnvironmentVariable(
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.getEnvironmentVariable(name),
-	;
+	);
 }
 
 /**
@@ -601,7 +587,7 @@ export function SetEnvironmentVariable(
 
 		(service: IPlatformService) =>
 			service.setEnvironmentVariable(name, value),
-	;
+	);
 }
 
 /**
@@ -623,7 +609,7 @@ export function ExecuteCommand(
 
 		(service: IPlatformService) =>
 			service.executeCommand(command, args || [], options),
-	;
+	);
 }
 
 /**
@@ -641,7 +627,7 @@ export function SpawnProcess(
 
 		(service: IPlatformService) =>
 			service.spawnProcess(command, args, options),
-	;
+	);
 }
 
 /**
@@ -662,18 +648,16 @@ export function GetHealthStatus(): Promise<
 		Effect.service(PlatformServiceTag),
 
 		(service: IPlatformService) => service.getHealthStatus(),
-	;
+	);
 }
 
 /**
  * Initialize platform service
  */
 export function InitializePlatformService(): Promise<void> {
-	return {
-		const service = new PlatformService(;
+	const service = new PlatformService();
 
-		return (service.initialize();
-	}).then(() => undefined);
+	return service.initialize().then(() => undefined);
 }
 
 /**

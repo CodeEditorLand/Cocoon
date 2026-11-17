@@ -75,7 +75,218 @@ export interface IPCNotification {
 /**
  * Protocol message wrapper for all message types
  */
-export type IPCProtocolMessage = IPCRequest | IPCResponse | IPCNotification;
+export type IPCProtocolMessage =
+	| IPCRequest
+	| IPCResponse
+	| IPCNotification
+	| IPCCancel;
+
+/**
+ * Caller-side cancellation message. Keyed by the SAME `CorrelationId` the
+ * original `IPCRequest` was issued with - no parallel id scheme. This is
+ * the envelope counterpart of the upstream `'cancel'` request type in
+ * `vs/base/parts/ipc/common/ipc.ts`.
+ */
+export interface IPCCancel {
+
+	readonly Type: "cancel";
+
+	readonly CorrelationId?: string;
+
+	readonly Reason?: string;
+}
+
+/**
+ * Typed error used to reject the pending resolver of a cancelled request.
+ */
+export class CancelledError extends Error {
+
+	readonly Code = "CANCELLED";
+
+	readonly CorrelationId?: string;
+
+	constructor(CorrelationId?: string, Reason?: string) {
+		super(Reason ?? "IPC request cancelled");
+
+		this.name = "CancelledError";
+
+		if (CorrelationId !== undefined) {
+			this.CorrelationId = CorrelationId;
+		}
+	}
+}
+
+/** Warn without ever throwing - cancellation must degrade, not crash. */
+function WarnCancellation(Message: string): void {
+	try {
+		if (
+			typeof console !== "undefined" &&
+			typeof console.warn === "function"
+		) {
+			console.warn(`[IPC:Protocol] ${Message}`);
+		}
+	} catch {
+		// A hostile or partial console must not turn a cancel into a throw.
+	}
+}
+
+/** True when a protocol message is the `cancel` variant. */
+export function IsCancel(message: IPCProtocolMessage): message is IPCCancel {
+	return (
+		typeof message === "object" &&
+
+		message !== null &&
+
+		"Type" in message &&
+
+		(message as IPCCancel).Type === "cancel"
+	);
+}
+
+/**
+ * Build the `cancel` request for an in-flight `CorrelationId`. Returns
+ * undefined (with a warning) for a missing/blank id so callers degrade
+ * instead of minting a new identifier.
+ */
+export function CreateCancelRequest(
+	CorrelationId: string | undefined,
+	Reason?: string,
+): IPCCancel | undefined {
+	const Id = typeof CorrelationId === "string" ? CorrelationId.trim() : "";
+
+	if (Id.length === 0) {
+		WarnCancellation(
+			"cancel requested without a CorrelationId - ignoring emit",
+		);
+
+		return undefined;
+	}
+
+	return {
+		Type: "cancel",
+
+		CorrelationId: Id,
+
+		...(Reason !== undefined ? { Reason } : {}),
+	};
+}
+
+/**
+ * Reject a pending request resolver with a typed cancelled error.
+ * A missing resolver, an already-settled request and a throwing reject all
+ * warn and degrade: nothing is left hanging and no rejection escapes.
+ */
+export function RejectAsCancelled(
+	reject: ((error: Error) => void) | undefined,
+	CorrelationId: string | undefined,
+	Reason?: string,
+): void {
+	if (typeof reject !== "function") {
+		WarnCancellation(
+			`cancel for ${CorrelationId ?? "<missing id>"} has no pending resolver - already settled?`,
+		);
+
+		return;
+	}
+
+	try {
+		reject(new CancelledError(CorrelationId, Reason));
+	} catch (error) {
+		WarnCancellation(
+			`failed to reject cancelled request ${CorrelationId ?? "<missing id>"}: ${error instanceof Error ? error.message : String(error)}`,
+		);
+	}
+}
+
+/**
+ * Bind a caller-side `CancellationToken` to one pending request. When the
+ * token fires, the `cancel` request is emitted and the pending resolver is
+ * rejected exactly once. A missing id, duplicate fires, an already-settled
+ * request or a token that cannot signal cancellation all warn and degrade.
+ * The returned disposer detaches the listener and marks the request settled
+ * so a late cancel cannot reject twice.
+ */
+export function BindCancellation(
+	token: CancellationToken | undefined,
+	CorrelationId: string | undefined,
+	emit: (cancel: IPCCancel) => void,
+	reject: (error: Error) => void,
+): () => void {
+	let Settled = false;
+
+	let Cancelled = false;
+
+	const Id =
+		typeof CorrelationId === "string" && CorrelationId.trim().length > 0
+			? CorrelationId.trim()
+			: undefined;
+
+	if (Id === undefined) {
+		WarnCancellation(
+			"BindCancellation called without a CorrelationId - cancel cannot be keyed",
+		);
+	}
+
+	const OnCancelled = (): void => {
+		if (Settled) {
+			WarnCancellation(
+				`cancel for ${Id ?? "<missing id>"} arrived after settle - ignoring`,
+			);
+
+			return;
+		}
+
+		if (Cancelled) {
+			WarnCancellation(
+				`duplicate cancel for ${Id ?? "<missing id>"} - ignoring`,
+			);
+
+			return;
+		}
+
+		Cancelled = true;
+
+		try {
+			const Cancel = CreateCancelRequest(Id, "caller token fired");
+
+			if (Cancel !== undefined) {
+				emit(Cancel);
+			}
+		} catch (error) {
+			WarnCancellation(
+				`failed to emit cancel for ${Id ?? "<missing id>"}: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+
+		RejectAsCancelled(reject, Id, "caller token fired");
+
+		Settled = true;
+	};
+
+	if (token && typeof token.onCancellationRequested === "function") {
+		const Subscription = token.onCancellationRequested(OnCancelled);
+
+		return (): void => {
+			Settled = true;
+
+			try {
+				Subscription.dispose();
+			} catch (error) {
+				WarnCancellation(
+					`failed to dispose cancel listener for ${Id ?? "<missing id>"}: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		};
+	}
+
+	WarnCancellation(
+		`token for ${Id ?? "<missing id>"} cannot signal cancellation - the remote handler cannot be stopped from this side`,
+	);
+
+	return (): void => {
+		Settled = true;
+	};
+}
 
 /**
  * Message type enum for protocol routing
@@ -87,6 +298,10 @@ export enum ProtocolMessageType {
 	Response = "response",
 
 	Notification = "notification",
+
+	// Caller-side cancellation (upstream `ipc.ts` `'cancel'` request type).
+	// Appended so the existing variants and their ordering are unchanged.
+	Cancel = "cancel",
 }
 
 /**
@@ -186,6 +401,12 @@ export function GetMessageType(
 	message: IPCProtocolMessage,
 ): ProtocolMessageType {
 
+	// New variant first: a cancel carries no Channel/Method, so the normal
+	// request/response/notification checks below stay byte-for-byte intact.
+	if (IsCancel(message)) {
+		return ProtocolMessageType.Cancel;
+	}
+
 	if ("Id" in message && "Channel" in message && "Method" in message) {
 		return ProtocolMessageType.Request;
 	}
@@ -211,6 +432,13 @@ export function ValidateMessage(message: unknown): boolean {
 	}
 
 	const msg = message as Record<string, unknown>;
+
+	// New variant: accept a cancel with a missing id (the emit/reject helpers
+	// warn and degrade) so deserialization never throws on it. Normal request,
+	// response and notification validation below is unchanged.
+	if (msg.Type === "cancel") {
+		return !("CorrelationId" in msg) || typeof msg.CorrelationId === "string";
+	}
 
 	// Request validation
 	if ("Channel" in msg && "Method" in msg && "Parameters" in msg) {

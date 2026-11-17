@@ -197,7 +197,7 @@ export class ProgressError extends Error {
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, ProgressError.prototype;
+		Object.setPrototypeOf(this, ProgressError.prototype);
 	}
 
 	override get name() {
@@ -220,7 +220,7 @@ export class TextDocumentError extends Error {
 	constructor(documentUri: string, operation: string, cause: unknown) {
 		super(
 			`TextDocument '${documentUri}' operation '${operation}' failed: ${String(cause)}`,
-		;
+		);
 
 		this.documentUri = documentUri;
 
@@ -228,7 +228,7 @@ export class TextDocumentError extends Error {
 
 		this.cause = cause;
 
-		Object.setPrototypeOf(this, TextDocumentError.prototype;
+		Object.setPrototypeOf(this, TextDocumentError.prototype);
 	}
 
 	override get name() {

@@ -371,13 +371,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Opts?.exclude,
 
 						Opts?.maxResults,
-					;
+					);
 				},
 
 				(R) => !Array.isArray(R) || R.length === 0,
-			;
+			);
 
-			return HydrateUriResults(Raw;
+			return HydrateUriResults(Raw);
 		},
 
 		// `findTextInFiles` / `findTextInFiles2` - dual-track Mountain
@@ -420,7 +420,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						O,
 
 						Callback,
-					;
+					);
 				},
 
 				(R) => {
@@ -467,7 +467,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						O,
 
 						Callback,
-					;
+					);
 				},
 
 				(R) => {
@@ -527,7 +527,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			try {
 				await Context.MountainClient?.sendRequest("Workspace.Save", {
 					uri: Uri,
-				};
+				});
 
 				return Uri;
 			} catch {
@@ -541,7 +541,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					"Workspace.SaveAs",
 
 					{ uri: Uri },
-				;
+				);
 
 				return (Result as { uri?: unknown })?.uri ?? Uri;
 			} catch {
@@ -570,12 +570,12 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 							?.fsPath ??
 						(PathOrUri as { fsPath?: string; path?: string })
 							?.path ??
-						String(PathOrUri);
+						String(PathOrUri));
 
-			const Folders = ReadFolders(;
+			const Folders = ReadFolders();
 
 			for (const Folder of Folders) {
-				const Relative = StockRelativePath(Folder.uri, PathOrUri;
+				const Relative = StockRelativePath(Folder.uri, PathOrUri);
 
 				if (Relative !== undefined) {
 					if (IncludeWorkspaceFolder && Folders.length > 1) {
@@ -657,25 +657,25 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		) => {
 			const List: ((...A: any[]) => any)[] = ((
 				Context as any
-			).__willSaveListeners ??= [];
+			).__willSaveListeners ??= []);
 
-			List.push(Listener;
+			List.push(Listener);
 
 			// Also subscribe to the WorkspaceEventEmitter so the event emitter
 			// pattern used by extensions like TypeScript's `onWillSave` works.
-			Context.WorkspaceEventEmitter.on("willSaveTextDocument", Listener;
+			Context.WorkspaceEventEmitter.on("willSaveTextDocument", Listener);
 
 			return {
 				dispose: () => {
-					const Idx = List.indexOf(Listener;
+					const Idx = List.indexOf(Listener);
 
-					if (Idx !== -1) List.splice(Idx, 1;
+					if (Idx !== -1) List.splice(Idx, 1);
 
 					Context.WorkspaceEventEmitter.removeListener(
 						"willSaveTextDocument",
 
 						Listener,
-					;
+					);
 				},
 			};
 		},
@@ -699,7 +699,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 				"didChangeWorkspaceFolders",
 
 				Listener,
-			;
+			);
 
 			return {
 				dispose: () => {
@@ -707,7 +707,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						"didChangeWorkspaceFolders",
 
 						Listener,
-					;
+					);
 				},
 			};
 		},
@@ -873,7 +873,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		fs: BuildFileSystemNamespace(Context),
 	};
 
-	return WrapWorkspaceNamespace(Concrete;
+	return WrapWorkspaceNamespace(Concrete);
 };
 
 export default CreateWorkspaceNamespace;

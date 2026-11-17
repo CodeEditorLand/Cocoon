@@ -275,6 +275,237 @@ declare const __LandTier_WebSocket__: string;
 			: (process.env["TierWebSocket"] ?? "Disabled"),
 };
 
+// ============================================================================
+// D20-C3: process-level unexpected-error forwarding.
+//
+// Upstream `extensionHostMain.ts` installs a single unexpected-error handler so
+// uncaught errors are serialised and forwarded instead of being dropped. Land
+// had none at the boot entry: the closest sites were the boot `catch` and a
+// WebSocket listener start whose rejection was swallowed outright. This block
+// installs ONE process-level handler that logs every unexpected error with a
+// stable correlation/extension id and forwards a structured IPC error
+// notification when a channel is available. It is additive: it does not reorder
+// boot and never exits the process on its own.
+//
+// `Source/IPC/Channel.ts` exports only a channel *manager* class and message
+// constructors - there is no module-level channel instance or notification
+// sender to reuse (the file also carries unrelated syntax damage). Forwarding
+// is therefore kept local to this boot entry: a notifier can be attached by an
+// IPC bridge, and Node's own process IPC channel is used when one is present.
+// ============================================================================
+
+/** Stable correlation token for this extension-host process. */
+const UnexpectedErrorCorrelationID =
+	`cocoon-${process.pid}-${Date.now().toString(36)}`;
+
+/** Extension id used for attribution on every forwarded error. */
+const UnexpectedErrorExtensionID = "CocoonMain";
+
+/** Bounded flood guards for the process-level handler. */
+const UnexpectedErrorForwardLimit = 25;
+
+const UnexpectedErrorSeenLimit = 500;
+
+let UnexpectedErrorSequence = 0;
+
+let UnexpectedErrorForwarded = 0;
+
+const UnexpectedErrorSeen: Set<string> = new Set();
+
+const UnexpectedErrorWarned: Set<string> = new Set();
+
+/** Structured error notification forwarded over IPC. */
+type UnexpectedErrorNotification = {
+	CorrelationID: string;
+	ExtensionID: string;
+	Kind: "uncaughtException" | "unhandledRejection";
+	Message: string;
+	Stack: string;
+	Sequence: number;
+};
+
+/** The attachable IPC notifier; undefined until a channel is available. */
+let UnexpectedErrorNotifier:
+	| ((Notification: UnexpectedErrorNotification) => void)
+	| undefined;
+
+/**
+ * Register a synchronous IPC error notifier. A missing or disconnected channel
+ * simply leaves this unset and the handler degrades to log-only.
+ */
+export const AttachUnexpectedErrorNotifier = (
+	Notifier: (Notification: UnexpectedErrorNotification) => void,
+): void => {
+	UnexpectedErrorNotifier = Notifier;
+};
+
+/** Throw-free stderr sink - this file's only logger. */
+const WarnUnexpectedError = (Tag: string, Detail: string): void => {
+	try {
+		process.stderr.write(`[${Tag}] ${Detail}\n`);
+	} catch {}
+};
+
+/** One warning per condition, so repeated failures cannot flood the log. */
+const WarnUnexpectedErrorOnce = (Tag: string, Detail: string): void => {
+	if (UnexpectedErrorWarned.has(Tag)) {
+		return;
+	}
+
+	UnexpectedErrorWarned.add(Tag);
+
+	WarnUnexpectedError(Tag, Detail);
+};
+
+/** Serialise an arbitrary thrown value without assuming it is an Error. */
+const DescribeUnexpectedError = (
+	Cause: unknown,
+): { Message: string; Stack: string } => {
+	try {
+		if (Cause instanceof globalThis.Error) {
+			return {
+				Message: Cause.message ?? String(Cause),
+				Stack: Cause.stack ?? Cause.message ?? String(Cause),
+			};
+		}
+
+		const Text = String(Cause);
+
+		return { Message: Text, Stack: Text };
+	} catch {
+		return {
+			Message: "unserialisable thrown value",
+			Stack: "unserialisable thrown value",
+		};
+	}
+};
+
+/**
+ * Emit the notification only when a channel is attached. Never throws: an
+ * unreachable channel is reported once and forwarding is disabled thereafter.
+ */
+const ForwardErrorNotification = (
+	Notification: UnexpectedErrorNotification,
+): void => {
+	if (typeof UnexpectedErrorNotifier !== "function") {
+		WarnUnexpectedErrorOnce(
+			"CocoonUnexpectedError",
+			"IPC channel not ready - error logged locally",
+		);
+
+		return;
+	}
+
+	try {
+		UnexpectedErrorNotifier(Notification);
+	} catch (Error) {
+		UnexpectedErrorNotifier = undefined;
+
+		WarnUnexpectedErrorOnce(
+			"CocoonUnexpectedError",
+			`IPC error channel disconnected; forwarding disabled: ${String(Error)}`,
+		);
+	}
+};
+
+/**
+ * The single forwarder used by both process listeners. Logs with correlation
+ * and extension id, deduplicates repeated errors, caps the forward count, and
+ * never lets a failure in logging or forwarding escape into the listener.
+ */
+const ForwardUnexpectedError = (
+	Kind: UnexpectedErrorNotification["Kind"],
+	Cause: unknown,
+): void => {
+	try {
+		const { Message, Stack } = DescribeUnexpectedError(Cause);
+
+		UnexpectedErrorSequence++;
+
+		WarnUnexpectedError(
+			"CocoonUnexpectedError",
+			`${Kind} corr=${UnexpectedErrorCorrelationID} ext=${UnexpectedErrorExtensionID} seq=${UnexpectedErrorSequence} ${Stack}`,
+		);
+
+		const Key = `${Kind}:${Message}`;
+
+		if (UnexpectedErrorSeen.has(Key)) {
+			return;
+		}
+
+		if (UnexpectedErrorSeen.size < UnexpectedErrorSeenLimit) {
+			UnexpectedErrorSeen.add(Key);
+		}
+
+		if (UnexpectedErrorForwarded >= UnexpectedErrorForwardLimit) {
+			WarnUnexpectedErrorOnce(
+				"CocoonUnexpectedError",
+				`forward limit ${UnexpectedErrorForwardLimit} reached - suppressing further IPC error notifications`,
+			);
+
+			return;
+		}
+
+		UnexpectedErrorForwarded++;
+
+		ForwardErrorNotification({
+			CorrelationID: UnexpectedErrorCorrelationID,
+			ExtensionID: UnexpectedErrorExtensionID,
+			Kind,
+			Message,
+			Stack,
+			Sequence: UnexpectedErrorSequence,
+		});
+	} catch {}
+};
+
+/** Install the handler once per process; a distinct guard avoids the LandFix pair. */
+const InstallUnexpectedErrorHandler = (): void => {
+	const Scope = process as typeof process & {
+		_cocoonUnexpectedErrorHandlerInstalled?: boolean;
+	};
+
+	if (Scope._cocoonUnexpectedErrorHandlerInstalled) {
+		return;
+	}
+
+	Scope._cocoonUnexpectedErrorHandlerInstalled = true;
+
+	process.on("uncaughtException", (Cause: unknown) => {
+		ForwardUnexpectedError("uncaughtException", Cause);
+	});
+
+	process.on("unhandledRejection", (Reason: unknown) => {
+		ForwardUnexpectedError("unhandledRejection", Reason);
+	});
+};
+
+/** Warn on a failed boot operation, naming the operation and error. */
+const WarnOperationFailure = (Operation: string, Cause: unknown): void => {
+	try {
+		const { Stack } = DescribeUnexpectedError(Cause);
+
+		WarnUnexpectedError(
+			"CocoonOperationFailure",
+			`operation=${Operation} corr=${UnexpectedErrorCorrelationID} ext=${UnexpectedErrorExtensionID} ${Stack}`,
+		);
+	} catch {}
+};
+
+InstallUnexpectedErrorHandler();
+
+// Node's own IPC channel is the only synchronous channel available at this
+// point in boot. Use it as the default notifier when Cocoon was spawned with
+// one; a gRPC bridge may replace it via AttachUnexpectedErrorNotifier later.
+if (typeof process.send === "function") {
+	AttachUnexpectedErrorNotifier((Notification) => {
+		process.send?.({
+			Channel: "cocoon:unexpected-error",
+			Notification,
+		});
+	});
+}
+
 // Telemetry init gated by esbuild's define - in prod builds the branch
 // folds to false and the dynamic import drops from the bundle.
 if (process.env["NODE_ENV"] !== "production") {
@@ -322,8 +553,11 @@ const main = async () => {
 
 		const result = await runBootstrap({ debugMode: false });
 
-		// B7-S6: start WebSocket server.
-		void StartWebSocketServer().catch(() => {});
+		// B7-S6: start WebSocket server. A failed listener start is no longer
+		// invisible: warn with the operation name and the serialised error.
+		void StartWebSocketServer().catch((Cause: unknown) => {
+			WarnOperationFailure("StartWebSocketServer", Cause);
+		});
 
 		if (!result.success) {
 			process.stderr.write(

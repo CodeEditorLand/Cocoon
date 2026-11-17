@@ -129,13 +129,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						Params.key,
 
 						Params.scope,
-					;
+					);
 				}
 
 				case "configuration.set": {
 					const ConfigService = await ServiceMapping.getService(
 						IConfigurationService,
-					;
+					);
 
 					await ConfigService.setValue(
 						Params.key,
@@ -143,7 +143,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						Params.value,
 
 						Params.scope,
-					;
+					);
 
 					return { success: true };
 				}
@@ -151,7 +151,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				case "configuration.update": {
 					const ConfigService = await ServiceMapping.getService(
 						IConfigurationService,
-					;
+					);
 
 					await ConfigService.updateValue(
 						Params.key,
@@ -159,13 +159,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						Params.updater,
 
 						Params.scope,
-					;
+					);
 
 					return { success: true };
 				}
 
 				default:
-					throw new Error(`Unknown configuration method: ${Method}`;
+					throw new Error(`Unknown configuration method: ${Method}`);
 			}
 		},
 
@@ -177,7 +177,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		// contributes.views manifest - the only stable key Mountain has.
 		"^\\$provideTreeChildren$": async (_Method: string, Params: any) => {
 			const { TreeDataProvidersByViewId } =
-				await import("../../VscodeAPI/Window/Namespace.js";
+				await import("../../VscodeAPI/Window/Namespace.js");
 
 			const ViewId = Params?.viewId ?? Params?.[0];
 
@@ -217,7 +217,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// same result - the tree re-queries on the next refresh event.
 			const _ChildrenTimeout = new Promise<unknown[]>((Resolve) =>
 				setTimeout(() => Resolve([]), 5_000),
-			;
+			);
 
 			let Children: unknown;
 
@@ -230,7 +230,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					])) ?? [];
 			} catch (Reason) {
 				const Message =
-					Reason instanceof Error ? Reason.message : String(Reason;
+					Reason instanceof Error ? Reason.message : String(Reason);
 
 				if (/MISSING provider|provider is not set/i.test(Message)) {
 					return { items: [] };
@@ -251,7 +251,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							typeof Raw.label === "string"
 								? Raw.label
 								: ((Raw.label as { label?: string } | undefined)
-										?.label ?? "";
+										?.label ?? "");
 
 						const IconValue = Raw.iconPath ?? Raw.icon ?? "";
 
@@ -271,7 +271,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 												(IconValue as any)?.light?.path
 													? `${(IconValue as any).light.scheme}://${(IconValue as any).light.authority ?? ""}${(IconValue as any).light.path}`
 													: ""))) ??
-										"";
+										"");
 
 						// CollapsibleState: 0=None, 1=Collapsed, 2=Expanded.
 						// Pass the raw enum numeric through so Sky can
@@ -337,7 +337,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						};
 					},
 				),
-			;
+			);
 
 			return { items: Items };
 		},
@@ -346,16 +346,16 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			// Mountain asks Cocoon for tree data; route to the registered
 			// TreeDataProvider for the handle and serialise the response.
 			const { TreeDataProviders } =
-				await import("../../VscodeAPI/Window/Namespace.js";
+				await import("../../VscodeAPI/Window/Namespace.js");
 
 			const Handle = Params?.handle ?? Params?.[0];
 
-			const Provider = TreeDataProviders.get(String(Handle);
+			const Provider = TreeDataProviders.get(String(Handle));
 
 			if (!Provider) {
 				throw new Error(
 					`TreeDataProvider handle not registered: ${Handle}`,
-				;
+				);
 			}
 
 			switch (Method) {
@@ -388,11 +388,11 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					return (
 						(await Provider.resolveTreeItem?.(Item, Element)) ??
 						Item
-					;
+					);
 				}
 
 				default:
-					throw new Error(`Unknown tree method: ${Method}`;
+					throw new Error(`Unknown tree method: ${Method}`);
 			}
 		},
 
@@ -409,13 +409,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				WebviewViewBuilders,
 
 				CustomEditorProviders,
-			} = await import("../../VscodeAPI/Window/Namespace.js";
+			} = await import("../../VscodeAPI/Window/Namespace.js");
 
 			const Handle = Params?.handle ?? Params?.[0];
 
 			switch (Method) {
 				case "webview.resolveView": {
-					const Provider = WebviewViewProviders.get(String(Handle);
+					const Provider = WebviewViewProviders.get(String(Handle));
 
 					if (!Provider) {
 						// Soft-fail instead of throwing. Throwing here
@@ -433,7 +433,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							"webview",
 
 							`[RequestRoutingHandler] webview.resolveView called with unregistered handle=${Handle}; returning null so the workbench resolver settles`,
-						;
+						);
 
 						return null;
 					}
@@ -447,7 +447,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					// (Sky bridge or workbench RPC) may also pass an
 					// override `view` in Params; honour the override
 					// when the caller has already constructed one.
-					const Builder = WebviewViewBuilders.get(String(Handle);
+					const Builder = WebviewViewBuilders.get(String(Handle));
 
 					const View =
 						Params?.view ?? Params?.[1] ?? Builder?.() ?? {};
@@ -479,7 +479,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						if (process.env["Trace"]) {
 							process.stdout.write(
 								`[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView ENTER handle=${Handle} hasView=${!!View} hasWebview=${!!View?.webview} hasResolver=${typeof Provider?.resolveWebviewView === "function"}\n`,
-							;
+							);
 						}
 
 						const Result =
@@ -494,7 +494,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 						if (process.env["Trace"]) {
 							process.stdout.write(
 								`[RequestRoutingHandler] webview.resolveView -> Provider.resolveWebviewView EXIT handle=${Handle} htmlLen=${String((View as any)?.webview?.html ?? "").length}\n`,
-							;
+							);
 						}
 
 						return Result;
@@ -514,14 +514,14 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							"webview",
 
 							`[RequestRoutingHandler] Extension provider.resolveWebviewView threw for handle=${Handle}: ${(ResolveError as any)?.message ?? String(ResolveError)}`,
-						;
+						);
 
 						return null;
 					}
 				}
 
 				case "webview.resolveCustomEditor": {
-					const Provider = CustomEditorProviders.get(String(Handle);
+					const Provider = CustomEditorProviders.get(String(Handle));
 
 					if (!Provider) {
 						// Same soft-fail rationale as `webview.resolveView`
@@ -533,7 +533,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 							"webview",
 
 							`[RequestRoutingHandler] webview.resolveCustomEditor called with unregistered handle=${Handle}; returning null`,
-						;
+						);
 
 						return null;
 					}
@@ -566,13 +566,13 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 								Token,
 							)) ?? null
-						;
+						);
 					} catch (ResolveError) {
 						CocoonDevLog(
 							"webview",
 
 							`[RequestRoutingHandler] Extension provider.resolveCustomEditor threw for handle=${Handle}: ${(ResolveError as any)?.message ?? String(ResolveError)}`,
-						;
+						);
 
 						return null;
 					}
@@ -580,7 +580,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 				default: {
 					// Default: panels host one-off events
-					const Panel = WebviewPanels.get(String(Handle);
+					const Panel = WebviewPanels.get(String(Handle));
 
 					if (!Panel) return null;
 
@@ -592,75 +592,75 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		"performance.\\w+": async (Method: string, _Params: any) => {
 			// Route to PerformanceMonitoringService via ServiceMapping
 			const { ServiceMapping } =
-				await import("../../../../Service/Mapping.js";
+				await import("../../../../Service/Mapping.js");
 
 			const { IPerformanceMonitoringService } =
-				await import("../../../../Interfaces/I/Performance/Monitoring/Service.js";
+				await import("../../../../Interfaces/I/Performance/Monitoring/Service.js");
 
 			switch (Method) {
 				case "performance.metrics": {
 					const PerfService = await ServiceMapping.getService(
 						IPerformanceMonitoringService,
-					;
+					);
 
-					return PerfService.getMetrics(;
+					return PerfService.getMetrics();
 				}
 
 				case "performance.alerts": {
 					const PerfService = await ServiceMapping.getService(
 						IPerformanceMonitoringService,
-					;
+					);
 
-					return PerfService.getAlerts(;
+					return PerfService.getAlerts();
 				}
 
 				case "performance.report": {
 					const PerfService = await ServiceMapping.getService(
 						IPerformanceMonitoringService,
-					;
+					);
 
-					return PerfService.generateReport(;
+					return PerfService.generateReport();
 				}
 
 				default:
-					throw new Error(`Unknown performance method: ${Method}`;
+					throw new Error(`Unknown performance method: ${Method}`);
 			}
 		},
 
 		"security.\\w+": async (Method: string, Params: any) => {
 			// Route to SecurityService via ServiceMapping
 			const { ServiceMapping } =
-				await import("../../../../Service/Mapping.js";
+				await import("../../../../Service/Mapping.js");
 
 			const { ISecurityService } =
-				await import("../../../../Interfaces/I/Security/Service.js";
+				await import("../../../../Interfaces/I/Security/Service.js");
 
 			switch (Method) {
 				case "security.policy": {
 					const SecurityService =
-						await ServiceMapping.getService(ISecurityService;
+						await ServiceMapping.getService(ISecurityService);
 
 					return await SecurityService.getSecurityPolicy(
 						Params.extensionId,
-					;
+					);
 				}
 
 				case "security.audit": {
 					const SecurityService =
-						await ServiceMapping.getService(ISecurityService;
+						await ServiceMapping.getService(ISecurityService);
 
-					return SecurityService.getAuditLog(;
+					return SecurityService.getAuditLog();
 				}
 
 				case "security.incidents": {
 					const SecurityService =
-						await ServiceMapping.getService(ISecurityService;
+						await ServiceMapping.getService(ISecurityService);
 
-					return SecurityService.getActiveIncidents(;
+					return SecurityService.getActiveIncidents();
 				}
 
 				default:
-					throw new Error(`Unknown security method: ${Method}`;
+					throw new Error(`Unknown security method: ${Method}`);
 			}
 		},
 	};
@@ -693,22 +693,22 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					(UriRaw?.scheme && UriRaw?.path
 						? `${UriRaw.scheme}://${UriRaw.authority ?? ""}${UriRaw.path}`
 						: "") ??
-					"";
+					"");
 
 		// Extract scheme from URI string or object.
 		let Scheme = "file";
 
 		if (typeof UriRaw === "object" && UriRaw?.scheme) {
-			Scheme = String(UriRaw.scheme;
+			Scheme = String(UriRaw.scheme);
 		} else if (typeof UriStr === "string") {
-			const Colon = UriStr.indexOf(":";
+			const Colon = UriStr.indexOf(":");
 
-			if (Colon > 0 && Colon < 32) Scheme = UriStr.slice(0, Colon;
+			if (Colon > 0 && Colon < 32) Scheme = UriStr.slice(0, Colon);
 		}
 
 		const Provider = Context.ExtensionRegistry?.get(
 			`__textDocumentContentProvider:${Scheme}`,
-		;
+		);
 
 		if (
 			!Provider ||
@@ -731,7 +731,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 			if (API?.Uri && UriStr) {
 				try {
-					UriArg = API.Uri.parse(UriStr;
+					UriArg = API.Uri.parse(UriStr);
 				} catch {
 					UriArg = UriRaw;
 				}
@@ -741,7 +741,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				UriArg,
 
 				CancellationToken,
-			;
+			);
 
 			return Content ?? null;
 		} catch (ProviderErr) {
@@ -749,7 +749,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				"model",
 
 				`[RequestRoutingHandler] $provideTextDocumentContent provider error for ${UriStr}: ${(ProviderErr as any)?.message ?? String(ProviderErr)}`,
-			;
+			);
 
 			return null;
 		}
@@ -775,7 +775,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		if (!Context) return [];
 
 		const { CollectWillSaveDocumentEdits } =
-			await import("../../Notification/Handler.js";
+			await import("../../Notification/Handler.js");
 
 		const { Edits } = await CollectWillSaveDocumentEdits(
 			Context,
@@ -785,7 +785,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			Params,
 
 			Context.WorkspaceEventEmitter,
-		;
+		);
 
 		return Edits;
 	};
@@ -815,7 +815,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					return Array.from(
 						(Context.languageIds as Set<string> | undefined) ??
 							new Set<string>(),
-					;
+					);
 
 				case "languages:getEncodedLanguageId":
 					return null;
@@ -884,7 +884,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					return null;
 			}
 		},
-	};
+	});
 
 	// Find matching route pattern. Wrap dispatch in PostHog +
 	// OTLP capture so the Feature Parity dashboard's
@@ -894,16 +894,16 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	// import + Capture call drops from the bundle, the dispatcher
 	// becomes a clean `return await Handler(Method, Parameters)`.
 	for (const [Pattern, Handler] of Object.entries(RoutePatterns)) {
-		const Regex = new RegExp(Pattern;
+		const Regex = new RegExp(Pattern);
 
 		if (Regex.test(Method)) {
 			if (process.env["NODE_ENV"] !== "production") {
-				const StartMillis = Date.now(;
+				const StartMillis = Date.now();
 
 				let Ok = true;
 
 				try {
-					return await Handler(Method, Parameters;
+					return await Handler(Method, Parameters);
 				} catch (Error) {
 					Ok = false;
 
@@ -913,9 +913,9 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 
 					try {
 						const { CaptureHandler } =
-							await import("../../../../Telemetry/Post/Hog/Bridge.js";
+							await import("../../../../Telemetry/Post/Hog/Bridge.js");
 
-						CaptureHandler(Method, DurationMs, Ok;
+						CaptureHandler(Method, DurationMs, Ok);
 					} catch {
 						// Telemetry must not raise into the dispatcher.
 					}
@@ -923,7 +923,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			}
 
 			// Production path: no timing, no capture, just dispatch.
-			return Handler(Method, Parameters;
+			return Handler(Method, Parameters);
 		}
 	}
 

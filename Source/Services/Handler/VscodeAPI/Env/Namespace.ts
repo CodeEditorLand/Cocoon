@@ -233,7 +233,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 									Resolve(Code === 0 ? Out : undefined),
 								);
 							},
-						;
+						);
 
 						if (Text !== undefined) return Text;
 					}
@@ -243,12 +243,12 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			},
 
 			writeText: async (Value: string): Promise<void> => {
-				await Call<void>("Clipboard.Write", [Value];
+				await Call<void>("Clipboard.Write", [Value]);
 
 				// Mirror to native clipboard as well so the UI and terminal
 				// stay in sync even when only one route is wired up.
 				try {
-					const { spawn } = await import("node:child_process";
+					const { spawn } = await import("node:child_process");
 
 					const Candidates =
 						process.platform === "darwin"
@@ -269,9 +269,9 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 						const Ok = await new Promise<boolean>((Resolve) => {
 							const Child = spawn(Cmd, Args, {
 								stdio: ["pipe", "ignore", "ignore"],
-							};
+							});
 
-							Child.once("error", () => Resolve(false);
+							Child.once("error", () => Resolve(false));
 
 							Child.once("close", (Code) => Resolve(Code === 0));
 
@@ -280,7 +280,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 								} catch {
 									Resolve(false);
 							}
-						};
+						});
 
 						if (Ok) return;
 					}
@@ -297,9 +297,9 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			const Hydrate = (Raw: unknown): string => {
 				if (typeof Raw === "string") return Raw;
 
-				const Direct = StockToUri(Raw;
+				const Direct = StockToUri(Raw);
 
-				if (Direct) return Direct.toString(;
+				if (Direct) return Direct.toString();
 
 				const Record = (Raw ?? {}) as Record<string, unknown>;
 
@@ -325,9 +325,9 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 					fragment: Component("fragment"),
 				};
 
-				if (Shape.scheme.length === 0) return String(Raw;
+				if (Shape.scheme.length === 0) return String(Raw);
 
-				const Rehydrated = StockToUri(Shape;
+				const Rehydrated = StockToUri(Shape);
 
 				return Rehydrated
 					? Rehydrated.toString()
@@ -336,13 +336,13 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 						}${Shape.fragment ? `#${Shape.fragment}` : ""}`;
 			};
 
-			const Url = Hydrate(Target;
+			const Url = Hydrate(Target);
 
 			const OkFromMountain = await Call<boolean>(
 				"NativeHost.OpenExternal",
 
 				[Url],
-			;
+			);
 
 			if (OkFromMountain === true) return true;
 
@@ -350,7 +350,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			// `xdg-open` on Linux, `cmd /c start` on Windows. Returns true iff
 			// the child process exits successfully within 2 s.
 			try {
-				const { spawn } = await import("node:child_process";
+				const { spawn } = await import("node:child_process");
 
 				const Command: [string, string[]] =
 					process.platform === "darwin"
@@ -363,30 +363,30 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 					const Child = spawn(Command[0], Command[1], {
 						stdio: "ignore",
 						detached: true,
-					};
+					});
 
 					const Timer = setTimeout(() => {
 						try {
-							Child.kill(;
+							Child.kill();
 						} catch {}
 
-						Resolve(false;
-					}, 2_000;
+						Resolve(false);
+					}, 2_000);
 
 					Child.once("error", () => {
-						clearTimeout(Timer;
+						clearTimeout(Timer);
 
-						Resolve(false;
-					};
+						Resolve(false);
+					});
 
 					Child.once("close", (Code) => {
-						clearTimeout(Timer;
+						clearTimeout(Timer);
 
-						Resolve(Code === 0;
-					};
+						Resolve(Code === 0);
+					});
 
-					Child.unref(;
-				};
+					Child.unref();
+				});
 
 				return Ok;
 			} catch {
@@ -399,7 +399,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		// `(await asExternalUri(u)).toString()` in OAuth redirect URLs,
 		// and a POJO yields `[object Object]`.
 		asExternalUri: async (Target: unknown) => {
-			const Direct = StockToUri(Target;
+			const Direct = StockToUri(Target);
 
 			if (Direct) return Direct;
 
@@ -427,7 +427,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 				fragment: Component("fragment"),
 			};
 
-			const Rehydrated = StockToUri(Shape;
+			const Rehydrated = StockToUri(Shape);
 
 			if (Rehydrated) return Rehydrated;
 
@@ -435,7 +435,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 				"EnvNs",
 
 				"asExternalUri could not hydrate input; returning shaped fallback",
-			;
+			);
 
 			return {
 				...Shape,
@@ -461,7 +461,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		onDidChangeLogLevel: () => ({ dispose: () => {} }),
 	};
 
-	return WrapEnvNamespace(Concrete;
+	return WrapEnvNamespace(Concrete);
 };
 
 export default CreateEnvNamespace;

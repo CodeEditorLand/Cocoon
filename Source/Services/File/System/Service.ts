@@ -137,7 +137,7 @@ export class FileSystemService implements IFileSystemService {
 		await this.mountainClient.sendRequest("FileSystem.Rename", {
 			from: source.fsPath,
 			to: target.fsPath,
-		};
+		});
 	}
 }
 
@@ -147,6 +147,6 @@ export class FileSystemService implements IFileSystemService {
 export const FileSystemServiceLayer = async function() {
 		const mountainClient = await IMountainClientService;
 
-		return new FileSystemService(mountainClient;
+		return new FileSystemService(mountainClient);
 	}),
-;
+);

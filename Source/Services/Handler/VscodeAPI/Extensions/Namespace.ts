@@ -283,7 +283,7 @@ const NormalizeLocation = (
 				`object:${Path}`,
 
 				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=real)`,
-			;
+			);
 		} else {
 			LandFixLog.InfoOnce(
 				"ExtNs",
@@ -291,7 +291,7 @@ const NormalizeLocation = (
 				`object-fallback:${Path}`,
 
 				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=FALLBACK)`,
-			;
+			);
 		}
 
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
@@ -301,7 +301,7 @@ const NormalizeLocation = (
 		"ExtNs",
 
 		`extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`,
-	;
+	);
 
 	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 };
@@ -315,11 +315,11 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 	const Exports =
 		RealExports !== undefined && RealExports !== null
 			? RealExports
-			: MakePermissiveExports(;
+			: MakePermissiveExports();
 
 	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
 		Raw?.extensionLocation,
-	;
+	);
 
 	// Defensive packageJSON: extensions like `muhammad-sammy.csharp`
 	// invoke `semver.parse(extension.packageJSON.version)` on their own
@@ -395,7 +395,7 @@ const ToExtensionObject = (_Context: HandlerContext, Id: string, Raw: any) => {
 // getters so ToExtensionObject isn't fed Raw = undefined on
 // extensionLocation - otherwise NormalizeLocation emits a WARN and returns
 // a bogus extension with empty path.
-const IsExtensionKey = (Key: string) => !Key.startsWith("__";
+const IsExtensionKey = (Key: string) => !Key.startsWith("__");
 
 // Defensive `all`/`allAcrossExtensionHosts` iteration helper. Extensions
 // like `csharp` iterate `vscode.extensions.all` and immediately call
@@ -413,7 +413,7 @@ const SafeExtensionList = (Context: HandlerContext): unknown[] => {
 		if (!IsExtensionKey(Id)) continue;
 
 		try {
-			Out.push(ToExtensionObject(Context, Id, Raw);
+			Out.push(ToExtensionObject(Context, Id, Raw));
 		} catch {
 			/* skip the bad entry; the rest of the registry is
 			 * still iterable */
@@ -433,7 +433,7 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 			if (!Raw) return undefined;
 
 			try {
-				return ToExtensionObject(Context, Identifier, Raw;
+				return ToExtensionObject(Context, Identifier, Raw);
 			} catch {
 				// `getExtension` returning `undefined` matches stock VS
 				// Code's contract for "extension not found" - safer
@@ -442,13 +442,13 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 			}
 		},
 		get all() {
-			return SafeExtensionList(Context;
+			return SafeExtensionList(Context);
 		},
 		// Some extensions (html-language-features) iterate
 		// `extensions.allAcrossExtensionHosts`; return the same array as `all`
 		// so `for (...of...)` does not throw on `is not iterable`.
 		get allAcrossExtensionHosts() {
-			return SafeExtensionList(Context;
+			return SafeExtensionList(Context);
 		},
 		onDidChange: (Listener: () => void) => {
 			// Wrap the user's listener so a throw inside it doesn't
@@ -459,21 +459,21 @@ const CreateExtensionsNamespace = (Context: HandlerContext) =>
 			// catching here is the "Promise.allSettled" equivalent.
 			const SafeListener = () => {
 				try {
-					Listener(;
+					Listener();
 				} catch {
 					/* extension's onDidChange callback threw - swallow
 					 * to keep the registry's other subscribers alive */
 				}
 			};
 
-			Context.Emitter.on("deltaExtensions", SafeListener;
+			Context.Emitter.on("deltaExtensions", SafeListener);
 
 			return {
 				dispose: () => {
-					Context.Emitter.off("deltaExtensions", SafeListener;
+					Context.Emitter.off("deltaExtensions", SafeListener);
 				},
 			};
 		},
-	};
+	});
 
 export default CreateExtensionsNamespace;

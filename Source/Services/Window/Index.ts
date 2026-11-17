@@ -70,9 +70,9 @@ export class WindowService extends /* Effect.Service */(
 			const MountainClient = await IMountainClientService;
 
 			const Workspace_ =
-				await Symbol<Workspace>("Service/Workspace";
+				await Symbol<Workspace>("Service/Workspace");
 
-			const Logger_ = await Symbol<Logger>("Service/Logger";
+			const Logger_ = await Symbol<Logger>("Service/Logger");
 
 			// Resolve the Mountain gRPC client (used by delegated operations)
 			const MountainGRPC = await MountainGRPCClientService;
@@ -85,7 +85,7 @@ export class WindowService extends /* Effect.Service */(
 
 			// Event stream for window state changes
 			const OnDidChangeWindowStateStream =
-				CreateEventStream<VSCode.WindowState>(;
+				CreateEventStream<VSCode.WindowState>();
 
 			/**
 			 * Accept window state change notification from Mountain.
@@ -101,9 +101,9 @@ export class WindowService extends /* Effect.Service */(
 
 						await Logger_.Debug(
 							`[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`,
-						;
+						);
 
-						OnDidChangeWindowStateStream.Fire(State;
+						OnDidChangeWindowStateStream.Fire(State);
 					}
 				};
 

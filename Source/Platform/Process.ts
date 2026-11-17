@@ -407,15 +407,15 @@ export async function SpawnProcess(
 			processInfo.status = "error";
 
 			console.error(`[Process] Process ${childProc.pid} error:`, error);
-		};
+		});
 
 		console.log(
 			`[Process] Spawned process: pid=${childProc.pid}, command=${command}`,
-		;
+		);
 
 		return processInfo;
 	} catch (error) {
-		console.error("[Process] Failed to spawn process:", error;
+		console.error("[Process] Failed to spawn process:", error);
 
 		return null;
 	}
@@ -432,17 +432,17 @@ export async function ExecuteCommand(
 	options: ProcessSpawnOptions = {},
 ): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
 	if (!ValidateCommand(command)) {
-		throw new Error("Invalid command";
+		throw new Error("Invalid command");
 	}
 
 	if (!ValidateArgs(args)) {
-		throw new Error("Invalid arguments";
+		throw new Error("Invalid arguments");
 	}
 
-	const childProcess = GetChildProcessModule(;
+	const childProcess = GetChildProcessModule();
 
 	if (!childProcess) {
-		throw new Error("child_process module not available";
+		throw new Error("child_process module not available");
 	}
 
 	return new Promise((resolve) => {
@@ -468,17 +468,17 @@ export async function ExecuteCommand(
 						stdout: stdout || "",
 						stderr: stderr || error.message || "",
 						exitCode: error.code || null,
-					};
+					});
 				} else {
 					resolve({
 						stdout: stdout || "",
 						stderr: stderr || "",
 						exitCode: 0,
-					};
+					});
 				}
 			},
-		;
-	};
+		);
+	});
 }
 
 /**
@@ -491,10 +491,10 @@ export async function ForkProcess(
 
 	options: ProcessSpawnOptions = {},
 ): Promise<ProcessInfo | null> {
-	const childProcess = GetChildProcessModule(;
+	const childProcess = GetChildProcessModule();
 
 	if (!childProcess) {
-		console.error("[Process] child_process module not available";
+		console.error("[Process] child_process module not available");
 
 		return null;
 	}
@@ -505,7 +505,7 @@ export async function ForkProcess(
 		typeof modulePath !== "string" ||
 		modulePath.trim() === ""
 	) {
-		console.error("[Process] Invalid module path";
+		console.error("[Process] Invalid module path");
 
 		return null;
 	}
@@ -521,7 +521,7 @@ export async function ForkProcess(
 			windowsHide: options.windowsHide !== false,
 		};
 
-		const childProc = childProcess.fork(modulePath, args, forkOptions;
+		const childProc = childProcess.fork(modulePath, args, forkOptions);
 
 		const processInfo: ProcessInfo = {
 			pid: childProc.pid,
@@ -545,7 +545,7 @@ export async function ForkProcess(
 			parentPid: process.pid,
 		};
 
-		ProcessRegistry.set(childProc.pid, processInfo;
+		ProcessRegistry.set(childProc.pid, processInfo);
 
 		childProc.on(
 			"exit",
@@ -557,15 +557,15 @@ export async function ForkProcess(
 
 				processInfo.signal = signal;
 			},
-		;
+		);
 
 		console.log(
 			`[Process] Forked process: pid=${childProc.pid}, module=${modulePath}`,
-		;
+		);
 
 		return processInfo;
 	} catch (error) {
-		console.error("[Process] Failed to fork process:", error;
+		console.error("[Process] Failed to fork process:", error);
 
 		return null;
 	}
@@ -580,7 +580,7 @@ export function SendSignal(
 	signal: NodeJS.Signals | string,
 ): boolean {
 	try {
-		process.kill(pid, signal;
+		process.kill(pid, signal);
 
 		return true;
 	} catch (error) {
@@ -588,7 +588,7 @@ export function SendSignal(
 			`[Process] Failed to send signal ${signal} to pid ${pid}:`,
 
 			error,
-		;
+		);
 
 		return false;
 	}
@@ -602,16 +602,16 @@ export function TerminateProcess(
 
 	timeout: number = DEFAULT_KILL_TIMEOUT,
 ): boolean {
-	const processInfo = ProcessRegistry.get(pid;
+	const processInfo = ProcessRegistry.get(pid);
 
 	if (!processInfo) {
-		console.warn(`[Process] Process ${pid} not found in registry`;
+		console.warn(`[Process] Process ${pid} not found in registry`);
 
 		return false;
 	}
 
 	if (processInfo.status !== "running") {
-		console.warn(`[Process] Process ${pid} is not running`;
+		console.warn(`[Process] Process ${pid} is not running`);
 
 		return false;
 	}
@@ -623,28 +623,28 @@ export function TerminateProcess(
 		}
 
 		// Wait for graceful shutdown
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
 		const checkInterval = setInterval(() => {
-			const updatedInfo = ProcessRegistry.get(pid;
+			const updatedInfo = ProcessRegistry.get(pid);
 
 			if (!updatedInfo || updatedInfo.status !== "running") {
-				clearInterval(checkInterval;
+				clearInterval(checkInterval);
 
 				return;
 			}
 
 			if (Date.now() - startTime > timeout) {
-				clearInterval(checkInterval;
+				clearInterval(checkInterval);
 
 				// Force kill if not terminated
-				SendSignal(pid, ProcessSignal.SIGKILL;
+				SendSignal(pid, ProcessSignal.SIGKILL);
 			}
-		}, 100;
+		}, 100);
 
 		return true;
 	} catch (error) {
-		console.error(`[Process] Failed to terminate process ${pid}:`, error;
+		console.error(`[Process] Failed to terminate process ${pid}:`, error);
 
 		return false;
 	}
@@ -654,10 +654,10 @@ export function TerminateProcess(
  * Kill process immediately
  */
 export function KillProcess(pid: number): boolean {
-	const processInfo = ProcessRegistry.get(pid;
+	const processInfo = ProcessRegistry.get(pid);
 
 	if (!processInfo) {
-		console.warn(`[Process] Process ${pid} not found in registry`;
+		console.warn(`[Process] Process ${pid} not found in registry`);
 
 		return false;
 	}
@@ -666,7 +666,7 @@ export function KillProcess(pid: number): boolean {
 		return false;
 	}
 
-	console.log(`[Process] Killed process ${pid}`;
+	console.log(`[Process] Killed process ${pid}`);
 
 	return true;
 }
@@ -675,16 +675,16 @@ export function KillProcess(pid: number): boolean {
  * Get process information by PID
  */
 export function GetProcess(pid: number): Option.Option<ProcessInfo> {
-	const processInfo = ProcessRegistry.get(pid;
+	const processInfo = ProcessRegistry.get(pid);
 
-	return processInfo ? Option.some(processInfo) : Option.none(;
+	return processInfo ? Option.some(processInfo) : Option.none();
 }
 
 /**
  * Get all managed processes
  */
 export function GetAllProcesses(): ProcessInfo[] {
-	return Array.from(ProcessRegistry.values();
+	return Array.from(ProcessRegistry.values());
 }
 
 /**
@@ -693,7 +693,7 @@ export function GetAllProcesses(): ProcessInfo[] {
 export function GetRunningProcesses(): ProcessInfo[] {
 	return Array.from(ProcessRegistry.values()).filter(
 		(p) => p.status === "running",
-	;
+	);
 }
 
 /**
@@ -702,29 +702,29 @@ export function GetRunningProcesses(): ProcessInfo[] {
 export function GetStoppedProcesses(): ProcessInfo[] {
 	return Array.from(ProcessRegistry.values()).filter(
 		(p) => p.status === "stopped" || p.status === "error",
-	;
+	);
 }
 
 /**
  * Unregister process
  */
 export function UnregisterProcess(pid: number): boolean {
-	return ProcessRegistry.delete(pid;
+	return ProcessRegistry.delete(pid);
 }
 
 /**
  * Clean up all processes
  */
 export function CleanupAllProcesses(): void {
-	const processes = GetRunningProcesses(;
+	const processes = GetRunningProcesses();
 
 	for (const procInfo of processes) {
-		console.log(`[Process] Cleaning up process ${procInfo.pid}`;
+		console.log(`[Process] Cleaning up process ${procInfo.pid}`);
 
-		KillProcess(procInfo.pid;
+		KillProcess(procInfo.pid);
 	}
 
-	ProcessRegistry.clear(;
+	ProcessRegistry.clear();
 }
 
 /**
@@ -763,7 +763,7 @@ export async function MonitorProcess(
 
 	options: ProcessMonitorOptions = {},
 ): Promise<boolean> {
-	const processInfo = ProcessRegistry.get(pid;
+	const processInfo = ProcessRegistry.get(pid);
 
 	if (!processInfo) {
 		return false;
@@ -776,36 +776,36 @@ export async function MonitorProcess(
 
 	return new Promise((resolve) => {
 		const interval = setInterval(() => {
-			const updatedInfo = ProcessRegistry.get(pid;
+			const updatedInfo = ProcessRegistry.get(pid);
 
 			if (!updatedInfo) {
-				clearInterval(interval;
+				clearInterval(interval);
 
-				resolve(false;
+				resolve(false);
 
 				return;
 			}
 
 			if (updatedInfo.status !== "running") {
-				clearInterval(interval;
+				clearInterval(interval);
 
-				resolve(updatedInfo.status === "stopped";
+				resolve(updatedInfo.status === "stopped");
 
 				return;
 			}
-		}, heartbeatInterval;
+		}, heartbeatInterval);
 
 		// Auto-kill after timeout
 		setTimeout(() => {
-			clearInterval(interval;
+			clearInterval(interval);
 
 			if (ProcessRegistry.has(pid)) {
-				TerminateProcess(pid, killTimeout;
+				TerminateProcess(pid, killTimeout);
 			}
 
-			resolve(false;
-		}, killTimeout * 10;
-	};
+			resolve(false);
+		}, killTimeout * 10);
+	});
 }
 
 /**
@@ -814,7 +814,7 @@ export async function MonitorProcess(
 export function IsProcessRunning(pid: number): boolean {
 	try {
 		// Send signal 0 to check if process exists
-		process.kill(pid, 0;
+		process.kill(pid, 0);
 
 		return true;
 	} catch {
@@ -851,7 +851,7 @@ export function SpawnProcessEffect(
 		return await SpawnProcess(command, args, options);
 	} catch (_e) {
 		return new Error(`Failed to spawn process: ${error}`),
-	};
+	});
 }
 
 /**
@@ -873,7 +873,7 @@ export function ExecuteCommandEffect(
 		return await ExecuteCommand(command, args, options);
 	} catch (_e) {
 		return new Error(`Failed to execute command: ${error}`),
-	};
+	});
 }
 
 /**
@@ -889,9 +889,9 @@ export function SendSignalEffect(
 		if (!SendSignal(pid, signal)) {
 			throw new Error(
 				`Failed to send signal ${signal} to process ${pid}`,
-			;
+			);
 		}
-	};
+	});
 }
 
 /**
@@ -900,7 +900,7 @@ export function SendSignalEffect(
 export function GetProcessEffect(
 	pid: number,
 ): Promise<Option.Option<ProcessInfo>> {
-	return GetProcess(pid;
+	return GetProcess(pid);
 }
 
 /**

@@ -159,5 +159,5 @@ export function ListCommands(): readonly string[] {
  */
 export function ListHandles(): readonly number[] {
 
-	return Array.from(Callbacks.keys();
+	return Array.from(Callbacks.keys());
 }

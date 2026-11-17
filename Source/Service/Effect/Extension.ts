@@ -8,6 +8,17 @@
 import { getTelemetry, type TelemetryService } from "./Telemetry.js";
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/**
+ * Hard ceiling (ms) for a single extension `deactivate()` at shutdown.
+ * Mirrors the upstream extHostExtensionService 5s guard so a hung
+ * `deactivate()` cannot stall host exit.
+ */
+export const DEACTIVATION_TIMEOUT_MS = 5000;
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -167,7 +178,7 @@ export const Extension = ExtensionTag;
 
 function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 
-	// Storage for extensions — plain Map replaces SubscriptionRef<HashMap>
+	// Storage for extensions - plain Map replaces SubscriptionRef<HashMap>
 	const extensions = new Map<string, ExtensionHost>();
 
 	// Atom: Get all extensions
@@ -229,13 +240,13 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 				state: { _tag: "Active", activatedAt: startTime },
 				activatedAt: startTime,
 				activationTime,
-			};
+			});
 
 			telemetry.log(
 				"info",
 
 				`[Extension] Activated extension: ${id} (${activationTime}ms)`,
-			;
+			);
 
 			return {
 				extensionId: id,
@@ -287,31 +298,68 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 			extensions.set(id, {
 				...latest,
 				state: { _tag: "Error", error: String(error) },
-			};
+			});
 
 			telemetry.log(
 				"error",
 
 				`[Extension] Failed to activate ${id}: ${String(error)}`,
-			;
+			);
 
-			throw new ExtensionActivationError(id, error;
+			throw new ExtensionActivationError(id, error);
 		}
 	};
 
 	// Atom: Deactivate an extension
 	const deactivate = async (id: string): Promise<DeactivateResult> => {
-		const current = extensions.get(id;
+		// Defensive: a missing/blank id degrades to a tagged error result rather
+		// than throwing (which would surface as an uncaught rejection at shutdown).
+		if (typeof id !== "string" || id.length === 0) {
+			telemetry.log(
+				"warn",
 
-		if (current === undefined) {
-			throw new ExtensionNotFoundError(id;
+				"[Extension] Deactivate called without a valid extension id",
+			);
+
+			return {
+				extensionId: typeof id === "string" ? id : "",
+
+				success: false,
+
+				error: "Missing extension id",
+			} satisfies DeactivateResult;
 		}
 
-		// Check if already deactivated
+		const current = extensions.get(id);
+
+		if (current === undefined) {
+			telemetry.log(
+				"warn",
+
+				`[Extension] Deactivate called for unknown extension: ${id}`,
+			);
+
+			return {
+				extensionId: id,
+
+				success: false,
+
+				error: `Extension not found: ${id}`,
+			} satisfies DeactivateResult;
+		}
+
+		// Idempotent: an already-deactivated (or never-activated) extension needs
+		// no work and starts no timer, so shutdown cannot hang on it.
 		if (
 			current.state._tag === "Deactivated" ||
 			current.state._tag === "Idle"
 		) {
+			telemetry.log(
+				"info",
+
+				`[Extension] Extension '${id}' already deactivated; skipping`,
+			);
+
 			return {
 				extensionId: id,
 
@@ -321,55 +369,107 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 			} satisfies DeactivateResult;
 		}
 
-		telemetry.log("info", `[Extension] Deactivating extension: ${id}`;
+		telemetry.log("info", `[Extension] Deactivating extension: ${id}`);
+
+		let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+		const timedOut = new Promise<"timeout">((resolve) => {
+			timeoutHandle = setTimeout(
+				() => resolve("timeout"),
+
+				DEACTIVATION_TIMEOUT_MS,
+			);
+		});
+
+		// Always settle into a DeactivateResult: a synchronous throw inside the
+		// async body becomes a rejection, which is caught and returned here.
+		const work = (async (): Promise<DeactivateResult> => {
+			try {
+				// Update state to deactivating
+				extensions.set(id, {
+					...current,
+					state: { _tag: "Deactivating" },
+				});
+
+				// Simulate deactivation
+				await new Promise<void>((r) => setTimeout(r, 5));
+
+				// Update state to deactivated
+				extensions.set(id, {
+					...current,
+					state: { _tag: "Deactivated" },
+				});
+
+				telemetry.log(
+					"info",
+
+					`[Extension] Deactivated extension: ${id}`,
+				);
+
+				return {
+					extensionId: id,
+
+					success: true,
+
+					error: undefined,
+				} satisfies DeactivateResult;
+			} catch (error) {
+				// Preserve the tagged Error state and the existing error typing.
+				extensions.set(id, {
+					...current,
+					state: { _tag: "Error", error: String(error) },
+				});
+
+				telemetry.log(
+					"error",
+
+					`[Extension] Failed to deactivate ${id}: ${String(error)}`,
+				);
+
+				return {
+					extensionId: id,
+
+					success: false,
+
+					error: String(error),
+				} satisfies DeactivateResult;
+			}
+		})();
 
 		try {
-			// Update state to deactivating
-			extensions.set(id, {
-				...current,
-				state: { _tag: "Deactivating" },
-			};
+			const outcome = await Promise.race([work, timedOut]);
 
-			// Simulate deactivation
-			await new Promise<void>((r) => setTimeout(r, 5);
+			if (outcome === "timeout") {
+				const message = `Deactivation of extension '${id}' timed out after ${DEACTIVATION_TIMEOUT_MS}ms`;
 
-			// Update state to deactivated
-			extensions.set(id, {
-				...current,
-				state: { _tag: "Deactivated" },
-			};
+				telemetry.log("warn", `[Extension] ${message}`);
 
-			telemetry.log(
-				"info",
+				// Mark the tagged Error state so callers can observe the failure.
+				extensions.set(id, {
+					...current,
+					state: { _tag: "Error", error: message },
+				});
 
-				`[Extension] Deactivated extension: ${id}`,
-			;
+				return {
+					extensionId: id,
 
-			return {
-				extensionId: id,
+					success: false,
 
-				success: true,
-
-				error: undefined,
-			} satisfies DeactivateResult;
-		} catch (error) {
-			if (error instanceof ExtensionNotFoundError) {
-				throw error;
+					error: message,
+				} satisfies DeactivateResult;
 			}
 
-			telemetry.log(
-				"error",
-
-				`[Extension] Failed to deactivate ${id}: ${String(error)}`,
-			;
-
-			throw new ExtensionDeactivationError(id, error;
+			return outcome;
+		} finally {
+			// Clear the timer on every settled path (success, failure, timeout).
+			if (timeoutHandle !== undefined) {
+				clearTimeout(timeoutHandle);
+			}
 		}
 	};
 
 	// Atom: Check if extension is active
 	const isActive = async (id: string): Promise<boolean> => {
-		const extension = extensions.get(id;
+		const extension = extensions.get(id);
 
 		if (extension === undefined) {
 			return false;
@@ -415,14 +515,14 @@ function makeExtensionService(telemetry: TelemetryService): ExtensionService {
 	};
 }
 
-// Singleton — created once on first import
+// Singleton - created once on first import
 let _instance: ExtensionService | undefined;
 
 export async function getExtension(): Promise<ExtensionService> {
 	if (_instance === undefined) {
-		const telemetry = await getTelemetry(;
+		const telemetry = await getTelemetry();
 
-		_instance = makeExtensionService(telemetry;
+		_instance = makeExtensionService(telemetry);
 	}
 
 	return _instance;
@@ -448,16 +548,16 @@ export const makeMockExtension = (
 		state: { _tag: "Idle" } as ExtensionState,
 		activatedAt: undefined,
 		activationTime: undefined,
-	});
+	}));
 
 	return {
 		getAll: async () => mockExtensions,
 
 		getById: async (id: string) => {
-			const ext = mockExtensions.find((e) => e.id === id;
+			const ext = mockExtensions.find((e) => e.id === id);
 
 			if (!ext) {
-				throw new ExtensionNotFoundError(id;
+				throw new ExtensionNotFoundError(id);
 			}
 
 			return ext;

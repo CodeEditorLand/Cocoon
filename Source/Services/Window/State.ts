@@ -36,10 +36,10 @@ function makeWindowStateService(): WindowStateService {
 			},
 
 		onStateChange: undefined,
-	};
+	});
 }
 
-export const WindowStateLive = return (makeWindowStateService();
+export const WindowStateLive = return (makeWindowStateService());
 
 export const WindowStateLayer = makeWindowStateService(),
-;
+);

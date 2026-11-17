@@ -13,6 +13,18 @@ import { IAPIFactoryService } from "../../API/Factory/Service.js";
 
 import { CocoonDevLog } from "../../Dev/Log.js";
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/**
+ * Hard ceiling (ms) for a single extension load + activate sequence.
+ * Mirrors the upstream extHostExtensionService eager-activation guard so a
+ * slow or hung extension cannot block the boot of the rest. Kept local (as
+ * D7's DEACTIVATION_TIMEOUT_MS is) rather than adding a config subsystem.
+ */
+export const ACTIVATION_TIMEOUT_MS = 10000;
+
 // Types matching VSCode patterns
 interface IExtensionDescription {
 
@@ -32,7 +44,18 @@ interface IExtensionContextShape {
 	[Key: string]: unknown;
 }
 
+/**
+ * Terminal activation state, mirroring the tagged `ExtensionState` union
+ * (`_tag: "Error"`) used by the Effect extension service. Kept local so this
+ * file owns the typing of the state it marks.
+ */
+type HostActivationState =
+	| { readonly _tag: "Active" }
+	| { readonly _tag: "Error"; readonly error: string };
+
 interface ActivatedExtension {
+
+	readonly state: HostActivationState;
 
 	activationTimes: {
 		codeLoadingTime: number;
@@ -54,8 +77,11 @@ export class ExtensionHostService implements IExtensionHostService {
 
 	readonly _serviceBrand: undefined;
 
-	// Extensions registry
+	// Completed extensions (Active or Error)
 	private activatedExtensions: Map<string, ActivatedExtension> = new Map();
+
+	// In-flight activations, shared so a second caller never starts a duplicate.
+	private activatingExtensions: Map<string, Promise<void>> = new Map();
 
 	constructor(
 		private moduleInterceptor: IModuleInterceptorService,
@@ -64,95 +90,226 @@ export class ExtensionHostService implements IExtensionHostService {
 	) {}
 
 	/**
-	 * Activate an extension
+	 * Activate an extension under a bounded budget.
+	 *
+	 * A missing id warns and returns; an already-recorded id is idempotent;
+	 * an already-activating id shares the in-flight promise instead of
+	 * starting a second activation. The load + activate sequence is raced
+	 * against ACTIVATION_TIMEOUT_MS and every failure is caught, warned and
+	 * marked Error here so boot can continue with the remaining extensions.
 	 */
 	async activateExtension(
 		extensionId: string,
 
 		activationEvent: string,
 	): Promise<void> {
+		if (typeof extensionId !== "string" || extensionId.length === 0) {
+			CocoonDevLog(
+				"service",
+
+				"[ExtensionHost] WARN: Activate called without a valid extension id",
+			);
+
+			return;
+		}
+
 		if (this.activatedExtensions.has(extensionId)) {
 			return;
 		}
 
-		CocoonDevLog(
-			"service",
+		const inFlight = this.activatingExtensions.get(extensionId);
 
-			`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`,
+		if (inFlight !== undefined) {
+			CocoonDevLog(
+				"service",
+
+				`[ExtensionHost] Activation already in progress for ${extensionId}; sharing in-flight promise`,
+			);
+
+			await inFlight;
+
+			return;
+		}
+
+		const activation = this._activateWithBudget(extensionId, activationEvent);
+
+		this.activatingExtensions.set(extensionId, activation);
+
+		try {
+			// _activateWithBudget settles every path internally: it never rejects.
+			await activation;
+		} finally {
+			this.activatingExtensions.delete(extensionId);
+		}
+	}
+
+	/**
+	 * Race load + activate against the budget. The timer is cleared on the
+	 * success, failure and timeout paths in the finally block.
+	 */
+	private async _activateWithBudget(
+		extensionId: string,
+
+		activationEvent: string,
+	): Promise<void> {
+		let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
+		const timedOut = new Promise<"timeout">((resolve) => {
+			timeoutHandle = setTimeout(
+				() => resolve("timeout"),
+
+				ACTIVATION_TIMEOUT_MS,
+			);
+		});
+
+		// Shared flag: a late-completing activation must not resurrect an
+		// extension the timeout path already marked Error.
+		let expired = false;
+
+		const work = this._doActivate(extensionId, activationEvent, () => expired).then(
+			() => "complete" as const,
+
+			(error: unknown) => {
+				this._markActivationError(extensionId, error);
+
+				return "failed" as const;
+			},
 		);
 
 		try {
-			const startTime = Date.now();
+			const outcome = await Promise.race([work, timedOut]);
 
-			// 1. Prepare API instance for this extension
-			const vscodeAPI = this.apiFactory.createAPI();
+			if (outcome === "timeout") {
+				expired = true;
 
-			// 2. Register with module interceptor
-			// When the extension requires 'vscode', it gets our proxy
-			this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
+				const message =
+					`Activation of extension '${extensionId}' timed out after ${ACTIVATION_TIMEOUT_MS}ms`;
 
-			// 3. Mock extension description (In real app, fetch from Registry)
-			const extension: IExtensionDescription = {
-				identifier: extensionId,
+				CocoonDevLog(
+					"service",
 
-				extensionLocation: `/extensions/${extensionId}`,
+					`[ExtensionHost] WARN: ${message}`,
+				);
 
-				main: "extension.js",
-
-				activationEvents: [activationEvent],
-			};
-
-			// 4. Load the extension module
-			const moduleLoadStart = Date.now();
-
-			const extensionModule = await this._loadExtensionModule(extension);
-
-			const codeLoadingTime = Date.now() - moduleLoadStart;
-
-			// 5. Activate (context kept so deactivation can dispose
-			// everything the extension pushed onto `subscriptions`)
-			const activateCallStart = Date.now();
-
-			const context = this._createExtensionContext(extension);
-
-			const exports = await this._callActivate(
-				extensionModule,
-
-				extension,
-
-				context,
-			);
-
-			const activateCallTime = Date.now() - activateCallStart;
-
-			const activateResolvedTime = Date.now() - startTime;
-
-			this.activatedExtensions.set(extensionId, {
-				activationTimes: {
-					codeLoadingTime,
-					activateCallTime,
-					activateResolvedTime,
-				},
-				exports,
-				context,
-			});
-
-			CocoonDevLog(
-				"service",
-
-				`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
-			);
-		} catch (error) {
-			CocoonDevLog(
-				"service",
-
-				`[ExtensionHost] Failed to activate ${extensionId}:`,
-
-				error,
-			);
-
-			throw error;
+				this._markActivationError(extensionId, message);
+			}
+		} finally {
+			// Clear the timer on every settled path.
+			if (timeoutHandle !== undefined) {
+				clearTimeout(timeoutHandle);
+			}
 		}
+	}
+
+	/** Mark a failed activation with the tagged Error state and a warning. */
+	private _markActivationError(
+		extensionId: string,
+
+		error: unknown,
+	): void {
+		CocoonDevLog(
+			"service",
+
+			`[ExtensionHost] WARN: Failed to activate ${extensionId}: ${String(error)}`,
+		);
+
+		this.activatedExtensions.set(extensionId, {
+			state: { _tag: "Error", error: String(error) },
+
+			activationTimes: {
+				codeLoadingTime: 0,
+
+				activateCallTime: 0,
+
+				activateResolvedTime: 0,
+			},
+		});
+	}
+
+	/** Perform the actual load + activate sequence. Rejects on any real failure. */
+	private async _doActivate(
+		extensionId: string,
+
+		activationEvent: string,
+
+		isExpired: () => boolean,
+	): Promise<void> {
+		const startTime = Date.now();
+
+		// 1. Prepare API instance for this extension
+		const vscodeAPI = this.apiFactory.createAPI();
+
+		// 2. Register with module interceptor
+		this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
+
+		// 3. Mock extension description (In real app, fetch from Registry)
+		const extension: IExtensionDescription = {
+			identifier: extensionId,
+
+			extensionLocation: `/extensions/${extensionId}`,
+
+			main: "extension.js",
+
+			activationEvents: [activationEvent],
+		};
+
+		// 4. Load the extension module
+		const moduleLoadStart = Date.now();
+
+		const extensionModule = await this._loadExtensionModule(extension);
+
+		const codeLoadingTime = Date.now() - moduleLoadStart;
+
+		// 5. Activate (context kept so deactivation can dispose
+		// everything the extension pushed onto `subscriptions`)
+		const activateCallStart = Date.now();
+
+		const context = this._createExtensionContext(extension);
+
+		const exports = await this._callActivate(
+			extensionModule,
+
+			extension,
+
+			context,
+		);
+
+		const activateCallTime = Date.now() - activateCallStart;
+
+		const activateResolvedTime = Date.now() - startTime;
+
+		// A timed-out activation may finish late; do not overwrite its Error state.
+		if (isExpired()) {
+			CocoonDevLog(
+				"service",
+
+				`[ExtensionHost] ${extensionId} completed after its activation budget expired; keeping Error state`,
+			);
+
+			return;
+		}
+
+		this.activatedExtensions.set(extensionId, {
+			state: { _tag: "Active" },
+
+			activationTimes: {
+				codeLoadingTime,
+
+				activateCallTime,
+
+				activateResolvedTime,
+			},
+
+			exports,
+
+			context,
+		});
+
+		CocoonDevLog(
+			"service",
+
+			`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
+		);
 	}
 
 	/**
@@ -172,7 +329,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Loading module: ${modulePath}`,
-		;
+		);
 
 		// Advanced module loading with security interception
 		try {
@@ -181,7 +338,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				modulePath,
 
 				extension.extensionLocation,
-			;
+			);
 
 			// Load module with security interception
 			// Note: interceptRequire would be synchronous in Node, but we simulate it here
@@ -189,17 +346,15 @@ export class ExtensionHostService implements IExtensionHostService {
 				resolvedPath,
 
 				extension.extensionLocation,
-			;
+			);
 
 			return extensionModule;
 		} catch (error) {
 			CocoonDevLog(
 				"service",
 
-				`[ExtensionHost] Failed to load module ${modulePath}:`,
-
-				error,
-			;
+				`[ExtensionHost] Failed to load module ${modulePath}: ${String(error)}`,
+			);
 
 			// Fallback: If module interceptor fails (e.g. file not found in real FS),
 			// we simulate a dummy module for development continuity
@@ -207,7 +362,7 @@ export class ExtensionHostService implements IExtensionHostService {
 				"service",
 
 				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
-			;
+			);
 
 			return {
 				activate: (_context: any) => {
@@ -215,7 +370,7 @@ export class ExtensionHostService implements IExtensionHostService {
 						"service",
 
 						`[${extension.identifier}] activate() called`,
-					;
+					);
 				},
 
 				deactivate: () => {},
@@ -259,7 +414,7 @@ export class ExtensionHostService implements IExtensionHostService {
 		}
 
 		// Call activate function
-		return await extensionModule.activate(context;
+		return await extensionModule.activate(context);
 	}
 
 	/**
@@ -276,7 +431,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Deactivating extension: ${extensionId}`,
-		;
+		);
 
 		// Dispose everything the extension pushed onto
 		// `context.subscriptions` (watchers, status-bar items, output
@@ -287,17 +442,15 @@ export class ExtensionHostService implements IExtensionHostService {
 
 		for (const subscription of subscriptions) {
 			try {
-				subscription?.dispose?.(;
+				subscription?.dispose?.();
 
 				disposed++;
 			} catch (error) {
 				CocoonDevLog(
 					"service",
 
-					`[ExtensionHost] Subscription dispose failed for ${extensionId}:`,
-
-					error,
-				;
+					`[ExtensionHost] Subscription dispose failed for ${extensionId}: ${String(error)}`,
+				);
 			}
 		}
 
@@ -307,20 +460,19 @@ export class ExtensionHostService implements IExtensionHostService {
 			"service",
 
 			`[ExtensionHost] Disposed ${disposed} subscription(s) for ${extensionId}`,
-		;
+		);
 
-		this.activatedExtensions.delete(extensionId;
+		this.activatedExtensions.delete(extensionId);
 	}
 }
 
 /**
  * Service Layer
  */
-export const ExtensionHostLayer = async function() {
-		const moduleInterceptor = await IModuleInterceptorService;
+export const ExtensionHostLayer = async function () {
+	const moduleInterceptor = await IModuleInterceptorService;
 
-		const apiFactory = await IAPIFactoryService;
+	const apiFactory = await IAPIFactoryService;
 
-		return new ExtensionHostService(moduleInterceptor, apiFactory;
-	}),
-;
+	return new ExtensionHostService(moduleInterceptor, apiFactory);
+};

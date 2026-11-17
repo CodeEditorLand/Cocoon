@@ -361,7 +361,7 @@ export interface MountainGRPCClientService {
  *   when the consumer files migrate during Track-B vertical splits.
  */
 export const MountainGRPCClientService =
-	Context.GenericTag<MountainGRPCClientService>("Service/MountainGRPCClient";
+	Context.GenericTag<MountainGRPCClientService>("Service/MountainGRPCClient");
 
 /**
  * Live implementation of MountainGRPCClientService
@@ -381,7 +381,7 @@ const MountainGRPCClientLive = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] showTextDocument: ${uri}`,
-					;
+					);
 
 					const result = await (async () => {
 	try {
@@ -397,7 +397,7 @@ const MountainGRPCClientLive = async function() {
 	}
 })() {
 						throw new Error(`Failed to show text document: ${uri}`),
-						;
+						);
 					}
 
 					return;
@@ -407,7 +407,7 @@ const MountainGRPCClientLive = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] showInformationMessage: ${message}`,
-					;
+					);
 
 					let result;
 try {
@@ -424,7 +424,7 @@ new Error(
 						throw new Error(
 								`Failed to show information message: ${message}`,
 							),
-						;
+						);
 					}
 
 					return;
@@ -434,7 +434,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] showWarningMessage: ${message}`,
-					;
+					);
 
 					let result;
 try {
@@ -451,7 +451,7 @@ new Error(
 						throw new Error(
 								`Failed to show warning message: ${message}`,
 							),
-						;
+						);
 					}
 
 					return;
@@ -461,7 +461,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] showErrorMessage: ${message}`,
-					;
+					);
 
 					let result;
 try {
@@ -478,7 +478,7 @@ new Error(
 						throw new Error(
 								`Failed to show error message: ${message}`,
 							),
-						;
+						);
 					}
 
 					return;
@@ -488,7 +488,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] createStatusBarItem: ${options.id}`,
-					;
+					);
 
 					let result;
 try {
@@ -507,7 +507,7 @@ new Error(
 						throw new Error(
 								`Failed to create status bar item: ${options.id}`,
 							),
-						;
+						);
 					}
 
 					return result.itemId;
@@ -517,7 +517,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -539,7 +539,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] createWebviewPanel: ${options.viewType}`,
-					;
+					);
 
 					let result;
 try {
@@ -568,7 +568,7 @@ new Error(
 						throw new Error(
 								`Failed to create webview panel: ${options.viewType}`,
 							),
-						;
+						);
 					}
 
 					return result.handle;
@@ -578,7 +578,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] setWebviewHtml: handle=${handle}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -600,7 +600,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] postWebviewMessage: handle=${handle}`,
-					;
+					);
 
 					const isString = typeof message === "string";
 
@@ -635,7 +635,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] findFiles: ${pattern}`,
-					;
+					);
 
 					let result;
 try {
@@ -656,7 +656,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] findTextInFiles: ${pattern}`,
-					;
+					);
 
 					let result;
 try {
@@ -678,7 +678,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] openDocument: ${uri}`,
-					;
+					);
 
 					const result = await (async () => {
 	try {
@@ -693,7 +693,7 @@ new Error(
 	}
 })() {
 						throw new Error(`Failed to open document: ${uri}`),
-						;
+						);
 					}
 
 					return;
@@ -703,7 +703,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`,
-					;
+					);
 
 					let result;
 try {
@@ -718,7 +718,7 @@ new Error(
 
 					if (!result?.success) {
 						throw new Error("Failed to save all documents"),
-						;
+						);
 					}
 
 					return;
@@ -728,7 +728,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] applyEdit: ${uri}`,
-					;
+					);
 
 					// Defensive: an extension that builds edits with
 					// `new TextEdit(range, text)` ALWAYS produces well-
@@ -783,7 +783,7 @@ new Error(
 								typeof edit.newText === "string"
 									? edit.newText
 									: "",
-						};
+						});
 					}
 
 					const result = await (async () => {
@@ -797,7 +797,7 @@ new Error(
 	}
 })() {
 						throw new Error(`Failed to apply edit to: ${uri}`),
-						;
+						);
 					}
 
 					return;
@@ -809,7 +809,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] registerCommand: ${commandId}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -832,7 +832,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] executeCommand: ${commandId}`,
-					;
+					);
 
 					const result = await (async () => {
 	try {
@@ -865,7 +865,7 @@ new Error(
 						throw new Error(
 								`Command execution failed: ${result.error.Message}`,
 							),
-						;
+						);
 					}
 
 					// Return the result value if present
@@ -876,7 +876,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] unregisterCommand: ${commandId}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -903,11 +903,11 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] getSecret: ${key}`,
-					;
+					);
 
 					let result;
 try {
-	result = await mountainClient.sendRequest("getSecret", { key;
+	result = await mountainClient.sendRequest("getSecret", { key);
 } catch (_e) {
 	// error handled below
 new Error(
@@ -922,7 +922,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] storeSecret: ${key}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -944,7 +944,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] deleteSecret: ${key}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -967,7 +967,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] readFile: ${uri}`,
-					;
+					);
 
 					const result = await (async () => {
 	try {
@@ -979,7 +979,7 @@ new Error(
 	}
 })() {
 						throw new Error(`Failed to read file: ${uri}`),
-						;
+						);
 					}
 
 					return result.content as Uint8Array;
@@ -989,7 +989,7 @@ new Error(
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClient] writeFile: ${uri}`,
-					;
+					);
 
 					await (async () => {
 	try {
@@ -1010,7 +1010,7 @@ new Error(
 
 			stat: (uri) =>
 				async function() {
-					await logger.debug(`[MountainGRPCClient] stat: ${uri}`;
+					await logger.debug(`[MountainGRPCClient] stat: ${uri}`);
 
 					const result = await (async () => {
 	try {
@@ -1022,7 +1022,7 @@ new Error(
 	}
 })() {
 						throw new Error(`Failed to stat file: ${uri}`),
-						;
+						);
 					}
 
 					return result;
@@ -1030,7 +1030,7 @@ new Error(
 
 			readdir: (uri) =>
 				async function() {
-					await logger.debug(`[MountainGRPCClient] readdir: ${uri}`;
+					await logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
 
 					const result = await (async () => {
 	try {
@@ -1046,7 +1046,7 @@ new Error(
 
 		return service;
 	}),
-;
+);
 
 /**
  * Mock implementation for testing
@@ -1056,11 +1056,11 @@ const MountainGRPCClientMock = async function() {
 		const logger = await Logger.Logger;
 
 		// In-memory storage for mock data
-		const mockSecrets = new Map<string, string>(;
+		const mockSecrets = new Map<string, string>();
 
-		const mockStatusBarItems = new Map<string, string>(;
+		const mockStatusBarItems = new Map<string, string>();
 
-		const mockWebviewPanels = new Map<number, { html: string }>(;
+		const mockWebviewPanels = new Map<number, { html: string }>();
 
 		let mockWebviewHandleCounter = 0;
 
@@ -1072,7 +1072,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] showTextDocument: ${uri}`,
-					;
+					);
 
 					return;
 				}),
@@ -1081,7 +1081,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] showInformationMessage: ${message}`,
-					;
+					);
 
 					return;
 				}),
@@ -1090,7 +1090,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] showWarningMessage: ${message}`,
-					;
+					);
 
 					return;
 				}),
@@ -1099,7 +1099,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] showErrorMessage: ${message}`,
-					;
+					);
 
 					return;
 				}),
@@ -1108,11 +1108,11 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] createStatusBarItem: ${options.id}`,
-					;
+					);
 
 					const itemId = `status-${options.id}`;
 
-					mockStatusBarItems.set(itemId, options.text;
+					mockStatusBarItems.set(itemId, options.text);
 
 					return itemId;
 				}),
@@ -1121,9 +1121,9 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] setStatusBarText: ${itemId}`,
-					;
+					);
 
-					mockStatusBarItems.set(itemId, text;
+					mockStatusBarItems.set(itemId, text);
 
 					return;
 				}),
@@ -1132,11 +1132,11 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`,
-					;
+					);
 
 					const handle = mockWebviewHandleCounter++;
 
-					mockWebviewPanels.set(handle, { html: options.html ?? "" };
+					mockWebviewPanels.set(handle, { html: options.html ?? "" });
 
 					return handle;
 				}),
@@ -1145,9 +1145,9 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] setWebviewHtml: ${handle}`,
-					;
+					);
 
-					const panel = mockWebviewPanels.get(handle;
+					const panel = mockWebviewPanels.get(handle);
 
 					if (panel) {
 						panel.html = html;
@@ -1160,7 +1160,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] postWebviewMessage: ${handle}`,
-					;
+					);
 
 					return;
 				}),
@@ -1170,7 +1170,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] findFiles: ${pattern}`,
-					;
+					);
 
 					return []; // Return empty array for mock
 				}),
@@ -1179,7 +1179,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] findTextInFiles: ${pattern}`,
-					;
+					);
 
 					return []; // Return empty array for mock
 				}),
@@ -1188,14 +1188,14 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] openDocument: ${uri}`,
-					;
+					);
 
 					return;
 				}),
 
 			saveAll: () =>
 				async function() {
-					await logger.debug("[MountainGRPCClientMock] saveAll";
+					await logger.debug("[MountainGRPCClientMock] saveAll");
 
 					return;
 				}),
@@ -1204,7 +1204,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] applyEdit: ${uri}`,
-					;
+					);
 
 					return;
 				}),
@@ -1214,7 +1214,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] registerCommand: ${commandId}`,
-					;
+					);
 
 					return;
 				}),
@@ -1223,7 +1223,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] executeCommand: ${commandId}`,
-					;
+					);
 
 					return undefined;
 				}),
@@ -1232,7 +1232,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] unregisterCommand: ${commandId}`,
-					;
+					);
 
 					return;
 				}),
@@ -1242,18 +1242,18 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] getSecret: ${key}`,
-					;
+					);
 
-					return mockSecrets.get(key;
+					return mockSecrets.get(key);
 				}),
 
 			storeSecret: (key, value) =>
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] storeSecret: ${key}`,
-					;
+					);
 
-					mockSecrets.set(key, value;
+					mockSecrets.set(key, value);
 
 					return;
 				}),
@@ -1262,9 +1262,9 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] deleteSecret: ${key}`,
-					;
+					);
 
-					mockSecrets.delete(key;
+					mockSecrets.delete(key);
 
 					return;
 				}),
@@ -1274,16 +1274,16 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] readFile: ${uri}`,
-					;
+					);
 
-					return new Uint8Array(0;
+					return new Uint8Array(0);
 				}),
 
 			writeFile: (uri, content) =>
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] writeFile: ${uri}`,
-					;
+					);
 
 					return;
 				}),
@@ -1292,7 +1292,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] stat: ${uri}`,
-					;
+					);
 
 					return {
 						isFile: true,
@@ -1306,7 +1306,7 @@ const MountainGRPCClientMock = async function() {
 				async function() {
 					await logger.debug(
 						`[MountainGRPCClientMock] readdir: ${uri}`,
-					;
+					);
 
 					return [];
 				}),
@@ -1314,7 +1314,7 @@ const MountainGRPCClientMock = async function() {
 
 		return service;
 	}),
-;
+);
 
 /**
  * Export layers.
@@ -1328,7 +1328,7 @@ const MountainGRPCClientMock = async function() {
  */
 export const MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
 	Layer.provide(IMountainClientService as any),
-;
+);
 
 /**
  * @deprecated 2026-05-26 - see `MountainGRPCClientLayer`. Mock layer is

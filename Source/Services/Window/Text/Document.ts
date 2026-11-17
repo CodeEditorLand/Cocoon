@@ -151,7 +151,7 @@ export const ShowInformationMessage = (
 
 		await Logger.Debug(
 			`[WindowService] Showing information message: ${Message}`,
-		;
+		);
 
 		let InfoResponse;
 try {
@@ -159,7 +159,7 @@ try {
 					{
 						message: Message,
 						level: "info",
-						items: Items.map((I) => ({ title: I;
+						items: Items.map((I) => ({ title: I })),
 } catch (_e) {
 	// error handled below
 }),
@@ -175,7 +175,7 @@ try {
 		const InfoSelected =
 			typeof InfoResponse === "string"
 				? InfoResponse
-				: ((InfoResponse as any)?.title ?? null;
+				: ((InfoResponse as any)?.title ?? null);
 
 		return InfoSelected
 			? (Items.find((I) => I === InfoSelected) ?? InfoSelected)
@@ -206,7 +206,7 @@ export const ShowWarningMessage = (
 	async function() {
 		await Logger.Debug(
 			`[WindowService] Showing warning message: ${Message}`,
-		;
+		);
 
 		let WarnResponse;
 try {
@@ -214,7 +214,7 @@ try {
 					{
 						message: Message,
 						level: "warn",
-						items: Items.map((I) => ({ title: I;
+						items: Items.map((I) => ({ title: I })),
 } catch (_e) {
 	// error handled below
 }),
@@ -229,7 +229,7 @@ try {
 		const WarnSelected =
 			typeof WarnResponse === "string"
 				? WarnResponse
-				: ((WarnResponse as any)?.title ?? null;
+				: ((WarnResponse as any)?.title ?? null);
 
 		return WarnSelected
 			? (Items.find((I) => I === WarnSelected) ?? WarnSelected)
@@ -260,7 +260,7 @@ export const ShowErrorMessage = (
 	async function() {
 		await Logger.Debug(
 			`[WindowService] Showing error message: ${Message}`,
-		;
+		);
 
 		let ErrorResponse;
 try {
@@ -268,7 +268,7 @@ try {
 					{
 						message: Message,
 						level: "error",
-						items: Items.map((I) => ({ title: I;
+						items: Items.map((I) => ({ title: I })),
 } catch (_e) {
 	// error handled below
 }),
@@ -283,7 +283,7 @@ try {
 		const ErrorSelected =
 			typeof ErrorResponse === "string"
 				? ErrorResponse
-				: ((ErrorResponse as any)?.title ?? null;
+				: ((ErrorResponse as any)?.title ?? null);
 
 		return ErrorSelected
 			? (Items.find(

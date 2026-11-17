@@ -700,7 +700,7 @@ const CreateLanguagesNamespace = (
 				}
 
 				if (typeof Sev === "string") {
-					const Lower = Sev.toLowerCase(;
+					const Lower = Sev.toLowerCase();
 
 					if (Lower.startsWith("err")) return 8;
 
@@ -748,14 +748,14 @@ const CreateLanguagesNamespace = (
 
 				const Range = Obj.range ?? {};
 
-				const Start = Pos((Range as { start?: unknown }).start;
+				const Start = Pos((Range as { start?: unknown }).start);
 
-				const End = Pos((Range as { end?: unknown }).end;
+				const End = Pos((Range as { end?: unknown }).end);
 
 				const RawMsg =
 					typeof Obj.message === "string"
 						? Obj.message
-						: String(Obj.message ?? "";
+						: String(Obj.message ?? "");
 
 				const Out: Record<string, unknown> = {
 					severity: NormaliseSeverity(Obj.severity),
@@ -778,7 +778,7 @@ const CreateLanguagesNamespace = (
 				};
 
 				if (Obj.source !== undefined && Obj.source !== null) {
-					Out.source = String(Obj.source;
+					Out.source = String(Obj.source);
 				}
 
 				if (Obj.code !== undefined && Obj.code !== null) {
@@ -786,7 +786,7 @@ const CreateLanguagesNamespace = (
 				}
 
 				if (Array.isArray(Obj.tags)) {
-					Out.tags = Obj.tags.filter((T) => typeof T === "number";
+					Out.tags = Obj.tags.filter((T) => typeof T === "number");
 				}
 
 				// Normalize vscode.DiagnosticRelatedInformation[] to the
@@ -807,7 +807,7 @@ const CreateLanguagesNamespace = (
 							const RIStart = Pos(
 								(RIRange as { start?: unknown }).start ??
 									RIRange,
-							;
+							);
 
 							const RIEnd = Pos(
 								(RIRange as { end?: unknown }).end ?? RIRange,
@@ -829,7 +829,7 @@ const CreateLanguagesNamespace = (
 								endColumn: RIEnd.character + 1,
 							};
 						},
-					;
+					);
 				}
 
 				return Out;
@@ -853,7 +853,7 @@ const CreateLanguagesNamespace = (
 
 				for (const Item of List) {
 					try {
-						Result.push(NormaliseDiagnostic(Item);
+						Result.push(NormaliseDiagnostic(Item));
 					} catch {
 						/* skip the bad entry; the rest of the batch
 						 * is still valid */
@@ -885,14 +885,14 @@ const CreateLanguagesNamespace = (
 					const ClearedKeys: string[] = [];
 
 					const Apply = (Uri: unknown, D: unknown[] | undefined) => {
-						const Key = UriKey(Uri;
+						const Key = UriKey(Uri);
 
 						if (Array.isArray(D) && D.length > 0) {
-							Store.set(Key, D;
+							Store.set(Key, D);
 						} else {
-							Store.delete(Key;
+							Store.delete(Key);
 
-							ClearedKeys.push(Key;
+							ClearedKeys.push(Key);
 						}
 					};
 
@@ -905,10 +905,10 @@ const CreateLanguagesNamespace = (
 						>;
 
 						for (const [Uri, D] of Entries) {
-							Apply(Uri, D;
+							Apply(Uri, D);
 						}
 					} else {
-						Apply(UriOrEntries, Diagnostics;
+						Apply(UriOrEntries, Diagnostics);
 					}
 
 					// Mirror into the module-level cache so getDiagnostics()
@@ -916,14 +916,14 @@ const CreateLanguagesNamespace = (
 					// A fully-cleared owner is removed outright so it never
 					// surfaces ghost entries.
 					if (Store.size === 0) {
-						_AllDiagnostics.delete(Owner;
+						_AllDiagnostics.delete(Owner);
 					} else {
-						_AllDiagnostics.set(Owner, new Map(Store);
+						_AllDiagnostics.set(Owner, new Map(Store));
 					}
 
 					Context.Emitter.emit("diagnostics.didChange", {
 						uris: [...Store.keys(), ...ClearedKeys],
-					};
+					});
 
 					// Single-shot Diagnostic.Set over the whole collection.
 					// Wire shape MUST be a 2-tuple `[uri, markers]` (NOT
@@ -947,17 +947,17 @@ const CreateLanguagesNamespace = (
 
 							...ClearedKeys.map((U) => [U, []]),
 						],
-					]).catch(() => {};
+					]).catch(() => {});
 				},
 
 				delete: (Uri: unknown) => {
-					Store.delete(UriKey(Uri);
+					Store.delete(UriKey(Uri));
 
-					_AllDiagnostics.set(Owner, new Map(Store);
+					_AllDiagnostics.set(Owner, new Map(Store));
 
 					Context.Emitter.emit("diagnostics.didChange", {
 						uris: [UriKey(Uri)],
-					};
+					});
 
 					Context.MountainClient?.sendRequest("Diagnostic.Set", [
 						Owner,
@@ -967,21 +967,21 @@ const CreateLanguagesNamespace = (
 
 							NormaliseList(D),
 						]),
-					]).catch(() => {};
+					]).catch(() => {});
 				},
 
 				clear: () => {
 					if (Store.size === 0) return;
 
-					Store.clear(;
+					Store.clear();
 
-					_AllDiagnostics.delete(Owner;
+					_AllDiagnostics.delete(Owner);
 
-					Context.Emitter.emit("diagnostics.didChange", { uris: [] };
+					Context.Emitter.emit("diagnostics.didChange", { uris: [] });
 
 					Context.MountainClient?.sendRequest("Diagnostic.Clear", [
 						Owner,
-					]).catch(() => {};
+					]).catch(() => {});
 				},
 
 				forEach: (
@@ -1004,7 +1004,7 @@ const CreateLanguagesNamespace = (
 					// language-features API surface.
 					for (const [Uri, Diagnostics] of Store) {
 						try {
-							Callback(Uri, Diagnostics, Self;
+							Callback(Uri, Diagnostics, Self);
 						} catch {
 							/* extension callback bug - skip + continue */
 						}
@@ -1022,11 +1022,11 @@ const CreateLanguagesNamespace = (
 
 					if (Store.size === 0) return;
 
-					Store.clear(;
+					Store.clear();
 
 					Context.MountainClient?.sendRequest("Diagnostic.Clear", [
 						Owner,
-					]).catch(() => {};
+					]).catch(() => {});
 				},
 			};
 		},
@@ -1037,7 +1037,7 @@ const CreateLanguagesNamespace = (
 					"Languages.GetAll",
 
 					[],
-				;
+				);
 
 				return Array.isArray(Result) ? (Result as string[]) : [];
 			} catch {
@@ -1057,7 +1057,7 @@ const CreateLanguagesNamespace = (
 			Context.SendToMountain("languages.setDocumentLanguage", {
 				uri: Uri,
 				languageId: LanguageId,
-			}).catch(() => {};
+			}).catch(() => {});
 
 			// Mutate `Document.languageId` in place so the extension's
 			// reference sees the new value, AND update the cached entry
@@ -1078,7 +1078,7 @@ const CreateLanguagesNamespace = (
 						(D) =>
 							D?.uri?.toString?.() === Uri ||
 							(D as any)?.fileName === Uri,
-					;
+					);
 
 					if (Match) (Match as any).languageId = LanguageId;
 				}
@@ -1102,7 +1102,7 @@ const CreateLanguagesNamespace = (
 			Context.SendToMountain("set_language_configuration", {
 				language: LanguageId,
 				configuration: Configuration ?? {},
-			}).catch(() => {};
+			}).catch(() => {});
 
 			return {
 				dispose: () => {
@@ -1209,7 +1209,7 @@ const CreateLanguagesNamespace = (
 				let Best = 0;
 
 				for (const One of Selector) {
-					const Value = ScoreOne(One;
+					const Value = ScoreOne(One);
 
 					if (Value > Best) Best = Value;
 				}
@@ -1217,15 +1217,15 @@ const CreateLanguagesNamespace = (
 				return Best;
 			}
 
-			return ScoreOne(Selector;
+			return ScoreOne(Selector);
 		},
 
 		onDidChangeDiagnostics: (Listener: (...Arguments: any[]) => any) => {
-			Context.Emitter.on("diagnostics.didChange", Listener;
+			Context.Emitter.on("diagnostics.didChange", Listener);
 
 			return {
 				dispose: () => {
-					Context.Emitter.off("diagnostics.didChange", Listener;
+					Context.Emitter.off("diagnostics.didChange", Listener);
 				},
 			};
 		},
@@ -1236,30 +1236,30 @@ const CreateLanguagesNamespace = (
 			//   getDiagnostics(uri)  → Diagnostic[]
 			//   getDiagnostics()     → [Uri, Diagnostic[]][]
 			if (Resource !== undefined) {
-				const Key = UriKey(Resource;
+				const Key = UriKey(Resource);
 
 				const Merged: unknown[] = [];
 
 				for (const OwnerStore of _AllDiagnostics.values()) {
-					const Diags = OwnerStore.get(Key;
+					const Diags = OwnerStore.get(Key);
 
-					if (Diags) Merged.push(...Diags;
+					if (Diags) Merged.push(...Diags);
 				}
 
 				return Merged;
 			}
 
 			// No resource - return all [uri, diagnostics] pairs.
-			const All = new Map<string, unknown[]>(;
+			const All = new Map<string, unknown[]>();
 
 			for (const OwnerStore of _AllDiagnostics.values()) {
 				for (const [Uri, Diags] of OwnerStore.entries()) {
-					const Existing = All.get(Uri;
+					const Existing = All.get(Uri);
 
 					if (Existing) {
-						Existing.push(...Diags;
+						Existing.push(...Diags);
 					} else {
-						All.set(Uri, [...Diags];
+						All.set(Uri, [...Diags]);
 					}
 				}
 			}
@@ -1374,7 +1374,7 @@ const CreateLanguagesNamespace = (
 		createLanguageStatusItem: (Identifier: string, _Selector: unknown) => {
 			process.stdout.write(
 				`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}\n`,
-			;
+			);
 
 			const Item: Record<string, unknown> = {
 				id: Identifier,

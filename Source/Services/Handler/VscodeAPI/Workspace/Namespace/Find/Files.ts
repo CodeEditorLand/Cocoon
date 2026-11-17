@@ -204,7 +204,7 @@ export const FindFilesLocal = async (
 			const RelativeFromRoot = relative(Root, Full).split(sep).join("/");
 
 			if (Entry.isDirectory()) {
-				SubDirectories.push(Full;
+				SubDirectories.push(Full);
 
 				continue;
 			}
@@ -219,7 +219,7 @@ export const FindFilesLocal = async (
 			// behaviour as stock VS Code. A POJO `{scheme,path,fsPath}`
 			// serialises to `"[object Object]"`, which Mountain rejects
 			// as a sandbox denial.
-			Results.push(StockUri.file(Full);
+			Results.push(StockUri.file(Full));
 		}
 
 		// Bounded parallel descent: 4 concurrent readdir()s per level keeps
@@ -231,9 +231,9 @@ export const FindFilesLocal = async (
 			Index < SubDirectories.length;
 			Index += Concurrency
 		) {
-			const Batch = SubDirectories.slice(Index, Index + Concurrency;
+			const Batch = SubDirectories.slice(Index, Index + Concurrency);
 
-			await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1));
+			await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
 
 			if (Results.length >= Cap) {
 				Truncated = "cap";
@@ -255,50 +255,50 @@ export const FindFilesLocal = async (
 	// `ExtensionHostInitData` workspace snapshot, then to the process
 	// working directory as the last-resort root.
 	const EffectiveFolders =
-		Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context;
+		Folders.length > 0 ? Folders : ResolveWorkspaceFolders(Context);
 
 	const Roots: string[] = [];
 
 	for (const Folder of EffectiveFolders) {
-		const FsPath = FolderToFsPath(Folder?.uri;
+		const FsPath = FolderToFsPath(Folder?.uri);
 
 		if (!FsPath) {
 			if (process.env["Trace"]?.includes("wsns"))
 
 				process.stdout.write(
 					`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})\n`,
-				;
+				);
 
 			continue;
 		}
 
-		Roots.push(FsPath;
+		Roots.push(FsPath);
 	}
 
 	if (Roots.length === 0) {
 		if (process.env["Trace"]?.includes("wsns"))
 			process.stdout.write(
 				"[LandFix:WsNs] findFiles: no workspace folders resolved → walking process.cwd()\n",
-			;
+			);
 
-		Roots.push(process.cwd();
+		Roots.push(process.cwd());
 	}
 
 	for (const Root of Roots) {
-		await Walk(Root, Root, 0;
+		await Walk(Root, Root, 0);
 	}
 
 	if (Truncated) {
 		if (process.env["Trace"]?.includes("wsns"))
 			process.stdout.write(
 				`[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)\n`,
-			;
+			);
 	}
 
 	if (process.env["Trace"]?.includes("wsns"))
 		process.stdout.write(
 			`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}\n`,
-		;
+		);
 
 	return Results;
 };

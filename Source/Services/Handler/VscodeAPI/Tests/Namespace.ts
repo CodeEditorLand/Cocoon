@@ -313,7 +313,7 @@ const MakeTestRun = (
 					runName: Name,
 					results: Object.fromEntries(Results),
 					output: OutputBuffer.join(""),
-				};
+				});
 			} catch {
 				/* listener threw */
 			}
@@ -324,7 +324,7 @@ const MakeTestRun = (
 				runName: Name,
 				results: Object.fromEntries(Results),
 				output: OutputBuffer.join(""),
-			}).catch(() => {};
+			}).catch(() => {});
 		},
 	};
 
@@ -334,11 +334,11 @@ const MakeTestRun = (
 const CreateTestsNamespace = (Context: HandlerContext) => {
 	const EventSubscriber =
 		(EventName: string) => (Listener: (...Arguments: any[]) => any) => {
-			Context.Emitter.on(EventName, Listener;
+			Context.Emitter.on(EventName, Listener);
 
 			return {
 				dispose: () => {
-					Context.Emitter.off(EventName, Listener;
+					Context.Emitter.off(EventName, Listener);
 				},
 			};
 		};
@@ -351,15 +351,15 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 			// id returns the existing one (matches stock VS Code, which
 			// throws on duplicate id; we soften to idempotent registration
 			// because extensions in dev-reload occasionally call twice).
-			const Existing = Context.ExtensionRegistry.get(ControllerKey;
+			const Existing = Context.ExtensionRegistry.get(ControllerKey);
 
 			if (Existing) {
 				return Existing;
 			}
 
-			const Items = MakeTestItemCollection(null;
+			const Items = MakeTestItemCollection(null);
 
-			const Profiles = new Map<number, unknown>(;
+			const Profiles = new Map<number, unknown>();
 
 			let ProfileSeq = 0;
 
@@ -401,11 +401,11 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 						configureHandler: undefined,
 
 						dispose: () => {
-							Profiles.delete(ProfileId;
+							Profiles.delete(ProfileId);
 						},
 					};
 
-					Profiles.set(ProfileId, Profile;
+					Profiles.set(ProfileId, Profile);
 
 					return Profile;
 				},
@@ -447,18 +447,18 @@ const CreateTestsNamespace = (Context: HandlerContext) => {
 					),
 
 				dispose: () => {
-				Context.ExtensionRegistry.delete(ControllerKey;
+				Context.ExtensionRegistry.delete(ControllerKey);
 
-				Profiles.clear(;
+				Profiles.clear();
 			},
 		};
 
-		Context.ExtensionRegistry.set(ControllerKey, Controller;
+		Context.ExtensionRegistry.set(ControllerKey, Controller);
 
 		Context.SendToMountain("tests.controller_created", {
 			controllerId: Id,
 			label: Label,
-		}).catch(() => {};
+		}).catch(() => {});
 
 		return Controller;
 		},

@@ -752,7 +752,7 @@ export function ValidatePlatformInfoDTO(dto: MountainPlatformInfoDTO): boolean {
 		typeof dto.is_electron === "boolean" &&
 		typeof dto.is_ci === "boolean" &&
 		typeof dto.timestamp === "number"
-	;
+	);
 }
 
 /**
@@ -768,7 +768,7 @@ export function ValidateEnvironmentVariableDTO(
 		typeof dto.is_sensitive === "boolean" &&
 		typeof dto.is_readonly === "boolean" &&
 		typeof dto.source === "string"
-	;
+	);
 }
 
 /**
@@ -784,7 +784,7 @@ export function ValidateProcessInfoDTO(dto: MountainProcessInfoDTO): boolean {
 		typeof dto.start_time === "number" &&
 		["running", "stopped", "error"].includes(dto.status) &&
 		typeof dto.timestamp === "number"
-	;
+	);
 }
 
 /**
@@ -806,9 +806,9 @@ export function DeserializeDTOEffect<T>(
 
 	validator?: (obj: any) => boolean,
 ): Option.Option<T> {
-	const parsed = DeserializeDTO<T>(json, validator;
+	const parsed = DeserializeDTO<T>(json, validator);
 
-	return parsed ? Option.some(parsed) : Option.none(;
+	return parsed ? Option.some(parsed) : Option.none();
 }
 
 /**

@@ -44,7 +44,7 @@ export const WithProgress = <T>(
 
 		await Logger.Info(
 			`[WindowService] Starting progress: ${Options.location} (${ProgressId})`,
-		;
+		);
 
 		// Create a minimal cancellation token (cancellation via Mountain is a future TODO)
 		const CancellationToken: VSCode.CancellationToken = {
@@ -65,7 +65,7 @@ export const WithProgress = <T>(
 					id: ProgressId,
 					message: Value.message,
 					increment: Value.increment,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 		};
 
@@ -85,7 +85,7 @@ export const WithProgress = <T>(
 			catch: (Error_) => {
 				throw new Error(
 					`Progress task failed: ${(Error_ as Error).message}`,
-				;
+				);
 			},
 		};
 

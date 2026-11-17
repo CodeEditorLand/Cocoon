@@ -277,7 +277,7 @@ export class ExtensionSecretStorage {
 					"secrets.get",
 
 					{ key, extensionId: this.ExtensionId },
-				;
+				);
 
 				return result as string | undefined;
 			} catch (error) {
@@ -285,7 +285,7 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Failed to get secret: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				;
+				);
 
 				return undefined;
 			}
@@ -293,7 +293,7 @@ export class ExtensionSecretStorage {
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret get: ${this.ExtensionId}.${key}`,
-		;
+		);
 
 		return undefined;
 	}
@@ -310,13 +310,13 @@ export class ExtensionSecretStorage {
 					key,
 					value,
 					extensionId: this.ExtensionId,
-				};
+				});
 
 				this.Logger.Debug(
 					`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
-				;
+				);
 
-				this.EmitDidChange(key;
+				this.EmitDidChange(key);
 
 				return;
 			} catch (error) {
@@ -324,7 +324,7 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Failed to store secret: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				;
+				);
 
 				throw error;
 			}
@@ -332,9 +332,9 @@ export class ExtensionSecretStorage {
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
-		;
+		);
 
-		this.EmitDidChange(key;
+		this.EmitDidChange(key);
 	}
 
 	/**
@@ -347,13 +347,13 @@ export class ExtensionSecretStorage {
 				await this.MountainClient.sendRequest("secrets.delete", {
 					key,
 					extensionId: this.ExtensionId,
-				};
+				});
 
 				this.Logger.Debug(
 					`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
-				;
+				);
 
-				this.EmitDidChange(key;
+				this.EmitDidChange(key);
 
 				return;
 			} catch (error) {
@@ -361,7 +361,7 @@ export class ExtensionSecretStorage {
 					`[ExtensionContext] Failed to delete secret: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				;
+				);
 
 				throw error;
 			}
@@ -369,9 +369,9 @@ export class ExtensionSecretStorage {
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
-		;
+		);
 
-		this.EmitDidChange(key;
+		this.EmitDidChange(key);
 	}
 
 	/**
@@ -383,11 +383,11 @@ export class ExtensionSecretStorage {
 	 */
 	get onDidChange(): VSCode.Event<VSCode.SecretStorageChangeEvent> {
 		return (Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
-			this.DidChangeListener.add(Listener;
+			this.DidChangeListener.add(Listener);
 
 			const Disposable = {
 				dispose: () => {
-					this.DidChangeListener.delete(Listener;
+					this.DidChangeListener.delete(Listener);
 				},
 			} as VSCode.Disposable;
 
@@ -402,13 +402,13 @@ export class ExtensionSecretStorage {
 	private EmitDidChange(key: string): void {
 		for (const Listener of this.DidChangeListener) {
 			try {
-				Listener({ key };
+				Listener({ key });
 			} catch (error) {
 				this.Logger.Error(
 					`[ExtensionContext] Secret change listener failed: ${this.ExtensionId}.${key}`,
 
 					error as Error,
-				;
+				);
 			}
 		}
 	}
@@ -473,9 +473,9 @@ export class ExtensionContextService extends /* Effect.Service */(
 			// Resolve service dependencies
 			const MountainClient = await IMountainClientService;
 
-			await Symbol<Configuration>("Service/Configuration";
+			await Symbol<Configuration>("Service/Configuration");
 
-			const Logger = await Symbol<Logger>("Service/Logger";
+			const Logger = await Symbol<Logger>("Service/Logger");
 
 			// Global subscription tracking for all extensions
 			const GlobalSubscriptionsRef = { current: new Map<string, Set<VSCode.Disposable>>(), };
@@ -497,7 +497,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 				async function() {
 					Logger.Info(
 						`[ExtensionContext] Creating context for extension: ${ExtensionId}`,
-					;
+					);
 
 					// Create storage paths. Both dirs are pre-created on the
 					// filesystem so extensions that `fs.readFile(<path>)` on
@@ -521,9 +521,9 @@ export class ExtensionContextService extends /* Effect.Service */(
 					const GlobalStoragePath = `${GlobalStorageRoot}/${ExtensionId}`;
 
 					try {
-						mkdirSync(GlobalStoragePath, { recursive: true };
+						mkdirSync(GlobalStoragePath, { recursive: true });
 
-						mkdirSync(StoragePath, { recursive: true };
+						mkdirSync(StoragePath, { recursive: true });
 					} catch {
 						// Storage dirs are best-effort - if mkdir fails
 						// (read-only mount, perms, ...) extensions will see
@@ -540,7 +540,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 						Logger,
 
 						MountainClient,
-					;
+					);
 
 					const GlobalState = new Memento(
 						new Map<string, unknown>(),
@@ -550,7 +550,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 						Logger,
 
 						MountainClient,
-					;
+					);
 
 					// Create secret storage
 					const SecretStorage = new ExtensionSecretStorage(
@@ -559,16 +559,16 @@ export class ExtensionContextService extends /* Effect.Service */(
 						Logger,
 
 						MountainClient,
-					;
+					);
 
 					// Create subscription list for this extension
-					const Subscriptions = new Set<VSCode.Disposable>(;
+					const Subscriptions = new Set<VSCode.Disposable>();
 
 					await GlobalSubscriptionsRef.current = GlobalMap(GlobalSubscriptionsRef.current) => {
-						const NewMap = new Map(GlobalMap;
+						const NewMap = new Map(GlobalMap);
 
 						if (!NewMap.has(ExtensionId)) {
-							NewMap.set(ExtensionId, Subscriptions;
+							NewMap.set(ExtensionId, Subscriptions);
 						}
 
 						return NewMap;
@@ -583,7 +583,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 							ExtensionDescription.extensionLocation,
 
 							relativePath,
-						;
+						);
 
 						return Uri.fsPath;
 					};
@@ -632,7 +632,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 
 					// TODO: LOW: Implement extension migration on version changes
 					// Check for previous version and run migration if needed
-					// const previousVersion = GlobalState.get('version';
+					// const previousVersion = GlobalState.get('version');
 					// if (previousVersion !== ExtensionDescription.version) {
 					//     await runMigration(ExtensionId, previousVersion, ExtensionDescription.version;
 					//     await Effect.promise(() => GlobalState.update('version', ExtensionDescription.version);
@@ -640,7 +640,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 
 					Logger.Debug(
 						`[ExtensionContext] Context created: ${ExtensionId} at ${ExtensionPath}`,
-					;
+					);
 
 					return ExtensionContext;
 				};
@@ -654,18 +654,18 @@ export class ExtensionContextService extends /* Effect.Service */(
 				async function() {
 					const GlobalSubscriptions = await (
 						GlobalSubscriptionsRef,
-					;
+					);
 
-					const Subscriptions = GlobalSubscriptions.get(ExtensionId;
+					const Subscriptions = GlobalSubscriptions.get(ExtensionId);
 
 					if (Subscriptions) {
 						Logger.Info(
 							`[ExtensionContext] Disposing ${Subscriptions.size} subscriptions for ${ExtensionId}`,
-						;
+						);
 
 						// Dispose all subscriptions
 						for (const Subscription of Subscriptions) {
-							Subscription.dispose(;
+							Subscription.dispose();
 						}
 
 						// Clear from registry
@@ -673,19 +673,19 @@ export class ExtensionContextService extends /* Effect.Service */(
 							GlobalSubscriptionsRef,
 
 							(GlobalMap) => {
-								const NewMap = new Map(GlobalMap;
+								const NewMap = new Map(GlobalMap);
 
-								NewMap.delete(ExtensionId;
+								NewMap.delete(ExtensionId);
 
 								return NewMap;
 							},
-						;
+						);
 					}
 
 					Logger.Debug(
 						`[ExtensionContext] Extension ${ExtensionId} disposed`,
-					;
-				});
+					);
+				}));
 
 			// Return the service implementation with PascalCase methods
 			const ServiceImplementation: ExtensionContextService = {
@@ -694,7 +694,7 @@ export class ExtensionContextService extends /* Effect.Service */(
 
 			Logger.Info(
 				`[ExtensionContext] ExtensionContextService initialized`,
-			;
+			);
 
 			return ServiceImplementation;
 		}),

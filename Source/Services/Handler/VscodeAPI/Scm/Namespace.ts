@@ -493,8 +493,8 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 											? Error.message
 											: String(Error)
 									}`,
-								;
-							};
+								);
+							});
 						},
 						dispose: () => {
 							GroupReady.then(() =>
@@ -508,7 +508,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 								),
 							).catch(() => {});
 
-							Groups.delete(GroupId;
+							Groups.delete(GroupId);
 						},
 					};
 				},
@@ -517,7 +517,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				get commitTemplate() {
 					return (
 						(ConcreteSourceControl as any).__commitTemplate ?? ""
-					;
+					);
 				},
 				set commitTemplate(V: string) {
 					(ConcreteSourceControl as any).__commitTemplate = V;
@@ -548,7 +548,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 						}),
 					).catch(() => {});
 
-					Groups.clear(;
+					Groups.clear();
 				},
 			};
 
@@ -556,7 +556,7 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 				`scm.sourceControl[${Id}]`,
 
 				ConcreteSourceControl,
-			;
+			);
 		},
 
 		// vscode.scm.inputBox - global input box reference; proxies the active
@@ -574,8 +574,8 @@ const CreateScmNamespace = (Context: HandlerContext) =>
 					enabled: true,
 					visible: true,
 				}
-			;
+			);
 		},
-	};
+	});
 
 export default CreateScmNamespace;

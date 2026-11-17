@@ -354,7 +354,7 @@ const EnsureVscodeAPIRegistered = async (
 								? ""
 								: String(Replacement);
 						},
-					;
+					);
 				},
 
 				bundle: undefined,
@@ -547,7 +547,7 @@ const EnsureVscodeAPIRegistered = async (
 
 		process.stdout.write(
 			"[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI\n",
-		;
+		);
 
 		// Diagnostic: log which critical base classes are resolved at shim
 		// registration time. vscode-languageclient does
@@ -601,18 +601,18 @@ const EnsureVscodeAPIRegistered = async (
 		if (Missing.length) {
 			process.stderr.write(
 				`[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}\n`,
-			;
+			);
 		} else {
 			CocoonDevLog(
 				"ext-host",
 
 				"[ExtensionHostHandler] vscode API shim critical symbols OK",
-			;
+			);
 		}
 	} catch (Err: unknown) {
 		process.stderr.write(
 			`[ExtensionHostHandler] Failed to create vscode API shim: ${Err instanceof Error ? Err.message : String(Err)}\n`,
-		;
+		);
 	}
 };
 

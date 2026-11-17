@@ -201,7 +201,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 								return ScopeList.every((Scope) =>
 									SessionScopes.includes(Scope),
 								);
-							};
+							});
 
 				if (Matching) return Matching;
 
@@ -209,7 +209,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					Options?.createIfNone &&
 					typeof Provider.createSession === "function"
 				) {
-					const Created = await Provider.createSession(ScopeList;
+					const Created = await Provider.createSession(ScopeList);
 
 					if (Created) {
 						Context.Emitter.emit("auth.didChangeSessions", {
@@ -217,7 +217,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 							added: [Created],
 							removed: [],
 							changed: [],
-						};
+						});
 					}
 
 					return Created;
@@ -233,7 +233,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					"Authentication.GetSession",
 
 					[ProviderId, Scopes, Options ?? {}],
-				;
+				);
 			} catch {
 				return undefined;
 			}
@@ -246,7 +246,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 					"Authentication.GetAccounts",
 
 					[ProviderId],
-				;
+				);
 
 				return Array.isArray(Result) ? Result : [];
 			} catch {
@@ -255,6 +255,6 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) =>
 		},
 
 		onDidChangeSessions: EventSubscriber(Context, "auth.didChangeSessions"),
-	};
+	});
 
 export default CreateAuthenticationNamespace;

@@ -192,13 +192,13 @@ export default (
 		},
 
 		onDidChangeLogLevel: (Listener: (Level: LogLevel) => unknown) => {
-			LevelListeners.push(Listener;
+			LevelListeners.push(Listener);
 
 			return {
 				dispose: () => {
-					const Index = LevelListeners.indexOf(Listener;
+					const Index = LevelListeners.indexOf(Listener);
 
-					if (Index >= 0) LevelListeners.splice(Index, 1;
+					if (Index >= 0) LevelListeners.splice(Index, 1);
 				},
 			};
 		},
@@ -210,36 +210,36 @@ export default (
 		trace: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Trace))
-					Append(FormatLog("trace", Message);
+					Append(FormatLog("trace", Message));
 			} else {
-				Append(`${Message}\n`;
+				Append(`${Message}\n`);
 			}
 		},
 
 		debug: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Debug))
-					Append(FormatLog("debug", Message);
+					Append(FormatLog("debug", Message));
 			} else {
-				Append(`${Message}\n`;
+				Append(`${Message}\n`);
 			}
 		},
 
 		info: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Info))
-					Append(FormatLog("info", Message);
+					Append(FormatLog("info", Message));
 			} else {
-				Append(`${Message}\n`;
+				Append(`${Message}\n`);
 			}
 		},
 
 		warn: (Message: string, ..._Arguments: unknown[]) => {
 			if (IsLog) {
 				if (ShouldLog(LogLevel.Warning))
-					Append(FormatLog("warning", Message);
+					Append(FormatLog("warning", Message));
 			} else {
-				Append(`${Message}\n`;
+				Append(`${Message}\n`);
 			}
 		},
 
@@ -247,12 +247,12 @@ export default (
 			const Text =
 				MessageOrError instanceof Error
 					? (MessageOrError.stack ?? MessageOrError.message)
-					: String(MessageOrError;
+					: String(MessageOrError);
 
 			if (IsLog) {
-				if (ShouldLog(LogLevel.Error)) Append(FormatLog("error", Text);
+				if (ShouldLog(LogLevel.Error)) Append(FormatLog("error", Text));
 			} else {
-				Append(`${Text}\n`;
+				Append(`${Text}\n`);
 			}
 		},
 	};

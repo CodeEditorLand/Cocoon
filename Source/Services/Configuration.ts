@@ -168,13 +168,13 @@ export class Configuration implements IConfigurationService {
 
 		defaultValue?: T,
 	): T | undefined {
-		const scopeConfig = this.configuration.get(scope;
+		const scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			return defaultValue;
 		}
 
-		const value = this.getNestedValue(scopeConfig, key;
+		const value = this.getNestedValue(scopeConfig, key);
 
 		return value !== undefined ? value : defaultValue;
 	}
@@ -191,30 +191,30 @@ export class Configuration implements IConfigurationService {
 	): Promise<void> {
 		// Validate configuration key and value
 		if (!this.validateConfigurationKey(key)) {
-			throw new Error(`Invalid configuration key: ${key}`;
+			throw new Error(`Invalid configuration key: ${key}`);
 		}
 
 		if (!this.validateConfigurationValue(key, value)) {
 			throw new Error(
 				`Invalid configuration value for key ${key}: ${value}`,
-			;
+			);
 		}
 
-		let scopeConfig = this.configuration.get(scope;
+		let scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			scopeConfig = {};
 
-			this.configuration.set(scope, scopeConfig;
+			this.configuration.set(scope, scopeConfig);
 		}
 
-		const oldValue = this.getNestedValue(scopeConfig, key;
+		const oldValue = this.getNestedValue(scopeConfig, key);
 
 		if (oldValue !== value) {
-			this.setNestedValue(scopeConfig, key, value;
+			this.setNestedValue(scopeConfig, key, value);
 
 			// Update timestamp
-			scopeConfig._timestamp = Date.now(;
+			scopeConfig._timestamp = Date.now();
 
 			scopeConfig._version = (scopeConfig._version || 0) + 1;
 
@@ -231,16 +231,16 @@ export class Configuration implements IConfigurationService {
 					key,
 					value,
 					scope: spineScope,
-				};
+				});
 
 				CocoonDevLog(
 					"configuration",
 
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
-				;
+				);
 
 				// Notify listeners
-				this.notifyConfigurationChange([key], scope;
+				this.notifyConfigurationChange([key], scope);
 			} catch (error) {
 				CocoonDevLog(
 					"configuration",
@@ -248,7 +248,7 @@ export class Configuration implements IConfigurationService {
 					`[ConfigurationService] Failed to update configuration: ${key}`,
 
 					error,
-				;
+				);
 
 				// Implement conflict resolution
 				await this.handleConfigurationConflict(
@@ -259,7 +259,7 @@ export class Configuration implements IConfigurationService {
 					value,
 
 					scope,
-				;
+				);
 			}
 		}
 	}
@@ -340,7 +340,7 @@ export class Configuration implements IConfigurationService {
 	 * Validate entire configuration scope
 	 */
 	validateScopeConfiguration(scope: ConfigurationScope): boolean {
-		const scopeConfig = this.configuration.get(scope;
+		const scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			return true; // Empty scope is valid
@@ -349,10 +349,10 @@ export class Configuration implements IConfigurationService {
 		// Validate all keys and values in the scope
 		const keys: string[] = [];
 
-		this.collectKeys(scopeConfig, "", keys;
+		this.collectKeys(scopeConfig, "", keys);
 
 		for (const key of keys) {
-			const value = this.getNestedValue(scopeConfig, key;
+			const value = this.getNestedValue(scopeConfig, key);
 
 			if (
 				!this.validateConfigurationKey(key) ||
@@ -375,24 +375,24 @@ export class Configuration implements IConfigurationService {
 
 		scope: ConfigurationScope,
 	): Promise<void> {
-		const currentValue = this.getValue<T>(key, scope;
+		const currentValue = this.getValue<T>(key, scope);
 
-		const newValue = updateFn(currentValue;
+		const newValue = updateFn(currentValue);
 
-		await this.setValue(key, newValue, scope;
+		await this.setValue(key, newValue, scope);
 	}
 
 	/**
 	 * Check if configuration key exists
 	 */
 	hasKey(key: string, scope: ConfigurationScope): boolean {
-		const scopeConfig = this.configuration.get(scope;
+		const scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			return false;
 		}
 
-		const value = this.getNestedValue(scopeConfig, key;
+		const value = this.getNestedValue(scopeConfig, key);
 
 		return value !== undefined;
 	}
@@ -401,7 +401,7 @@ export class Configuration implements IConfigurationService {
 	 * Get all configuration keys for a scope
 	 */
 	getConfigurationKeys(scope: ConfigurationScope): string[] {
-		const scopeConfig = this.configuration.get(scope;
+		const scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			return [];
@@ -409,7 +409,7 @@ export class Configuration implements IConfigurationService {
 
 		const keys: string[] = [];
 
-		this.collectKeys(scopeConfig, "", keys;
+		this.collectKeys(scopeConfig, "", keys);
 
 		return keys;
 	}
@@ -420,7 +420,7 @@ export class Configuration implements IConfigurationService {
 	async getAllValues(
 		scope: ConfigurationScope,
 	): Promise<Record<string, any>> {
-		const scopeConfig = this.configuration.get(scope;
+		const scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			return {};
@@ -428,10 +428,10 @@ export class Configuration implements IConfigurationService {
 
 		const result: Record<string, any> = {};
 
-		this.collectKeys(scopeConfig, "", Object.keys(result);
+		this.collectKeys(scopeConfig, "", Object.keys(result));
 
 		for (const key of Object.keys(result)) {
-			result[key] = this.getNestedValue(scopeConfig, key;
+			result[key] = this.getNestedValue(scopeConfig, key);
 		}
 
 		return result;
@@ -445,13 +445,13 @@ export class Configuration implements IConfigurationService {
 
 		scope: ConfigurationScope = ConfigurationScope.APPLICATION,
 	): IConfigurationValue<T> {
-		const scopeConfig = this.configuration.get(scope;
+		const scopeConfig = this.configuration.get(scope);
 
 		if (!scopeConfig) {
 			return { key } as IConfigurationValue<T>;
 		}
 
-		const value = this.getNestedValue(scopeConfig, key;
+		const value = this.getNestedValue(scopeConfig, key);
 
 		return {
 			key,
@@ -470,28 +470,28 @@ export class Configuration implements IConfigurationService {
 			"configuration",
 
 			"[ConfigurationService] Registering configuration change listener",
-		;
+		);
 
 		// Create a unique listener ID
 		const listenerId = `listener_${Date.now()}_${Math.random()}`;
 
 		// Store listener for configuration changes
 		// For now, we'll store it under a generic key
-		let globalListeners = this.listeners.get("*";
+		let globalListeners = this.listeners.get("*");
 
 		if (!globalListeners) {
 			globalListeners = [];
 
-			this.listeners.set("*", globalListeners;
+			this.listeners.set("*", globalListeners);
 		}
 
-		globalListeners.push(callback;
+		globalListeners.push(callback);
 
 		CocoonDevLog(
 			"configuration",
 
 			`[ConfigurationService] Configuration change listener registered: ${listenerId}`,
-		;
+		);
 	}
 
 	/**
@@ -502,20 +502,20 @@ export class Configuration implements IConfigurationService {
 			"configuration",
 
 			"[ConfigurationService] Reloading configuration from Mountain",
-		;
+		);
 
 		try {
 			// Clear existing listeners
-			this.listeners.clear(;
+			this.listeners.clear();
 
 			// Reload configuration
-			await this.initialize(;
+			await this.initialize();
 
 			CocoonDevLog(
 				"configuration",
 
 				"[ConfigurationService] Configuration reloaded successfully",
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"configuration",
@@ -523,7 +523,7 @@ export class Configuration implements IConfigurationService {
 				"[ConfigurationService] Failed to reload configuration:",
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -545,40 +545,40 @@ export class Configuration implements IConfigurationService {
 			"configuration",
 
 			"[ConfigurationService] Configuration conflict detected, implementing retry logic",
-		;
+		);
 
 		const maxRetries = 3;
 
 		const baseDelay = 100; // ms
 
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
-			const delay = baseDelay * Math.pow(2, attempt - 1;
+			const delay = baseDelay * Math.pow(2, attempt - 1);
 
 			CocoonDevLog(
 				"configuration",
 
 				`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`,
-			;
+			);
 
-			await new Promise((resolve) => setTimeout(resolve, delay);
+			await new Promise((resolve) => setTimeout(resolve, delay));
 
 			try {
 				// Reload configuration first to get latest state
-				await this.initialize(;
+				await this.initialize();
 
 				// Retry setting the value
-				let scopeConfig = this.configuration.get(scope;
+				let scopeConfig = this.configuration.get(scope);
 
 				if (!scopeConfig) {
 					scopeConfig = {};
 
-					this.configuration.set(scope, scopeConfig;
+					this.configuration.set(scope, scopeConfig);
 				}
 
-				this.setNestedValue(scopeConfig, key, value;
+				this.setNestedValue(scopeConfig, key, value);
 
 				// Update timestamp
-				scopeConfig._timestamp = Date.now(;
+				scopeConfig._timestamp = Date.now();
 
 				scopeConfig._version = (scopeConfig._version || 0) + 1;
 
@@ -593,13 +593,13 @@ export class Configuration implements IConfigurationService {
 					key,
 					value,
 					scope: spineScope,
-				};
+				});
 
 				CocoonDevLog(
 					"configuration",
 
 					"[ConfigurationService] Configuration saved successfully after retry",
-				;
+				);
 
 				return;
 			} catch (retryError) {
@@ -609,18 +609,18 @@ export class Configuration implements IConfigurationService {
 					`[ConfigurationService] Retry attempt ${attempt} failed:`,
 
 					retryError,
-				;
+				);
 
 				if (attempt === maxRetries) {
 					CocoonDevLog(
 						"configuration",
 
 						"[ConfigurationService] All retry attempts failed, configuration may be out of sync",
-					;
+					);
 
 					throw new Error(
 						`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`,
-					;
+					);
 				}
 			}
 		}
@@ -634,24 +634,24 @@ export class Configuration implements IConfigurationService {
 			"configuration",
 
 			"[ConfigurationService] Cleaning up configuration service",
-		;
+		);
 
-		this.listeners.clear(;
+		this.listeners.clear();
 
-		this.configuration.clear(;
+		this.configuration.clear();
 
 		CocoonDevLog(
 			"configuration",
 
 			"[ConfigurationService] Configuration service cleaned up",
-		;
+		);
 	}
 
 	/**
 	 * Get nested value from configuration object
 	 */
 	private getNestedValue(obj: any, key: string): any {
-		const keys = key.split(".";
+		const keys = key.split(".");
 
 		let current = obj;
 
@@ -670,7 +670,7 @@ export class Configuration implements IConfigurationService {
 	 * Set nested value in configuration object
 	 */
 	private setNestedValue(obj: any, key: string, value: any): void {
-		const keys = key.split(".";
+		const keys = key.split(".");
 
 		let current = obj;
 
@@ -703,9 +703,9 @@ export class Configuration implements IConfigurationService {
 			const fullKey = prefix ? `${prefix}.${key}` : key;
 
 			if (typeof obj[key] === "object" && obj[key] !== null) {
-				this.collectKeys(obj[key], fullKey, keys;
+				this.collectKeys(obj[key], fullKey, keys);
 			} else {
-				keys.push(fullKey;
+				keys.push(fullKey);
 			}
 		}
 	}
@@ -721,10 +721,10 @@ export class Configuration implements IConfigurationService {
 		for (const key of keys) {
 			const eventKey = `${scope}.${key}`;
 
-			const listeners = this.listeners.get(eventKey;
+			const listeners = this.listeners.get(eventKey);
 
 			// Also notify global listeners
-			const globalListeners = this.listeners.get("*";
+			const globalListeners = this.listeners.get("*");
 
 			const allListeners = [
 				...(listeners || []),
@@ -734,7 +734,7 @@ export class Configuration implements IConfigurationService {
 			if (allListeners.length > 0) {
 				for (const listener of allListeners) {
 					try {
-						listener([{ key, scope }];
+						listener([{ key, scope }]);
 					} catch (error) {
 						CocoonDevLog(
 							"configuration",
@@ -742,7 +742,7 @@ export class Configuration implements IConfigurationService {
 							`[ConfigurationService] Error in listener for ${eventKey}:`,
 
 							error,
-						;
+						);
 					}
 				}
 			}
@@ -756,14 +756,14 @@ export class Configuration implements IConfigurationService {
 export const ConfigurationLayer = async function() {
 		const mountainClient = await IMountainClientService;
 
-		const configService = new Configuration(mountainClient;
+		const configService = new Configuration(mountainClient);
 
 		// Auto-initialize
-		await Effect.promise(() => configService.initialize();
+		await Effect.promise(() => configService.initialize());
 
 		return configService;
 	}),
-;
+);
 
 /**
  * Live implementation

@@ -310,7 +310,7 @@ export class CommandService extends /* Effect.Service */(
 						`[CommandService] Command '${Id}' not registered locally, executing via Mountain gRPC`,
 					);
 
-					const startTime = Date.now(;
+					const startTime = Date.now();
 
 					try {
 						// Routed by Mountain via Track::SideCarRequest →
@@ -327,7 +327,7 @@ export class CommandService extends /* Effect.Service */(
 })() - startTime,
 
 							true,
-						;
+						);
 
 						return result as T;
 					} catch (error) {
@@ -339,13 +339,13 @@ export class CommandService extends /* Effect.Service */(
 							Date.now() - startTime,
 
 							false,
-						;
+						);
 
 						await Logger.Error(
 							`[CommandService] Failed to execute remote command '${Id}'`,
 
 							error as Error,
-						;
+						);
 
 						throw error;
 					}
@@ -372,9 +372,9 @@ export class CommandService extends /* Effect.Service */(
 					if (!Id || typeof Id !== "string") {
 						await Logger.Error(
 							`[CommandService] Invalid command ID: ${Id}`,
-						;
+						);
 
-						throw new Error(`Invalid command ID: ${Id}`;
+						throw new Error(`Invalid command ID: ${Id}`);
 					}
 
 					const Metadata: InternalCommandMetadata = {
@@ -390,11 +390,11 @@ export class CommandService extends /* Effect.Service */(
 					};
 
 					// Register in local registry
-					_commandRegistry.set(Id, Metadata;
+					_commandRegistry.set(Id, Metadata);
 
 					await Logger.Info(
 						`[CommandService] Command '${Id}' registered locally`,
-					;
+					);
 
 					// Mirror into Mountain's command registry so Sky's command
 					// palette and `Command.Execute` routing can see it.
@@ -402,7 +402,7 @@ export class CommandService extends /* Effect.Service */(
 					// Mountain is not yet connected.
 					void MountainClient.sendNotification("registerCommand", {
 						commandId: Id,
-					}).catch(() => {};
+					}).catch(() => {});
 
 					// Return disposable for cleanup
 					return {
@@ -413,7 +413,7 @@ export class CommandService extends /* Effect.Service */(
 								"unregisterCommand",
 
 								{ commandId: Id },
-							).catch(() => {};
+							).catch(() => {});
 						},
 					};
 				};
@@ -446,7 +446,7 @@ export class CommandService extends /* Effect.Service */(
 						if (!ActiveEditor) {
 							Logger.Warn(
 								`[CommandService] Cannot execute text editor command '${Id}' - no active text editor`,
-							).catch?.(() => {};
+							).catch?.(() => {});
 
 							return undefined;
 						}
@@ -458,12 +458,12 @@ export class CommandService extends /* Effect.Service */(
 
 									EditBuilder,
 									...Args,
-								];
+								]);
 							},
-						;
+						);
 					};
 
-					return await RegisterCommand(Id, AdaptedCallback, ThisArg;
+					return await RegisterCommand(Id, AdaptedCallback, ThisArg);
 				};
 
 			/**
@@ -477,7 +477,7 @@ export class CommandService extends /* Effect.Service */(
 				async function() {
 					const Registry = _commandRegistry;
 
-					const LocalCommandIds = Array.from(Registry.keys();
+					const LocalCommandIds = Array.from(Registry.keys());
 
 					try {
 						// Routed by Mountain via Track::SideCarRequest →
@@ -498,18 +498,18 @@ export class CommandService extends /* Effect.Service */(
 
 						await Logger.Info(
 							`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`,
-						;
+						);
 
 						// Combine and deduplicate
 						const AllCommands = Array.from(
 							new Set([...LocalCommandIds, ...RemoteCommands]),
-						;
+						);
 
 						if (FilterInternal) {
 							// Filter out internal commands (starting with _)
 							return AllCommands.filter(
 								(Id) => !Id.startsWith("_"),
-							;
+							);
 						}
 
 						return AllCommands;
@@ -518,12 +518,12 @@ export class CommandService extends /* Effect.Service */(
 							`[CommandService] Error getting remote commands, using local only`,
 
 							error as Error,
-						;
+						);
 
 						if (FilterInternal) {
 							return LocalCommandIds.filter(
 								(Id) => !Id.startsWith("_"),
-							;
+							);
 						}
 
 						return LocalCommandIds;
@@ -542,7 +542,7 @@ export class CommandService extends /* Effect.Service */(
 
 			await Logger.Info(
 				`[CommandService] CommandService initialized with ${Registry.size} registered commands`,
-			;
+			);
 
 			return ServiceImplementation;
 		}),

@@ -13,7 +13,7 @@
  * ## Usage
  *
  *     import { CocoonDevLog } from "./Log.js";
- *     CocoonDevLog("config-prime", `prepopulate ext=${Id} seeded=${N}`;
+ *     CocoonDevLog("config-prime", `prepopulate ext=${Id} seeded=${N}`);
  *
  * ## When NOT to use
  *

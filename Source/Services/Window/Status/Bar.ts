@@ -183,5 +183,5 @@ export const CreateStatusBarItem = (
 			},
 
 			accessibilityInformation: undefined,
-		} as VSCode.StatusBarItem;
+		} as VSCode.StatusBarItem);
 	};

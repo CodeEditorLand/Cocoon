@@ -186,23 +186,23 @@ export class GRPCServerService
 		// `MaxListenersExceededWarning` spam during boot. 0 = unlimited.
 		this.setMaxListeners(0);
 
-		this.workspaceEventEmitter.setMaxListeners(0;
+		this.workspaceEventEmitter.setMaxListeners(0);
 
 		process.stdout.write(
 			"[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter\n",
-		;
+		);
 
 		// Parse environment variables
-		this.parseEnvironment(;
+		this.parseEnvironment();
 
 		// Create service implementation
-		this.serviceImplementation = this.createServiceImplementation(;
+		this.serviceImplementation = this.createServiceImplementation();
 
 		CocoonDevLog(
 			"grpc",
 
 			`[GRPCServerService] Configured for port ${this.port}`,
-		;
+		);
 	}
 
 	// ==================================================================
@@ -237,7 +237,7 @@ export class GRPCServerService
 						Self.GetHandlerContext(),
 
 						{ activationEvent: Event },
-					;
+					);
 				},
 			} as HandlerContext,
 
@@ -282,7 +282,7 @@ export class GRPCServerService
 					configurable: true,
 				},
 			},
-		;
+		);
 	}
 
 	// ==================================================================
@@ -296,7 +296,7 @@ export class GRPCServerService
 		const cocoonPort = process.env["COCOON_GRPC_PORT"];
 
 		if (cocoonPort) {
-			this.port = parseInt(cocoonPort, 10;
+			this.port = parseInt(cocoonPort, 10);
 		}
 
 		// Parse authentication settings
@@ -307,19 +307,19 @@ export class GRPCServerService
 
 			this.authEnabled = true;
 
-			CocoonDevLog("grpc", "[GRPCServerService] Authentication enabled";
+			CocoonDevLog("grpc", "[GRPCServerService] Authentication enabled");
 		}
 
 		CocoonDevLog(
 			"grpc",
 
 			`[GRPCServerService] Environment parsed: COCOON_GRPC_PORT=${this.port}, AUTH_ENABLED=${this.authEnabled}`,
-		;
+		);
 	}
 
 	/**
 	 * Validate the authorization token presented in the gRPC call metadata.
-	 * Permissive when authentication is disabled (no MOUNTAIN_AUTH_TOKEN;
+	 * Permissive when authentication is disabled (no MOUNTAIN_AUTH_TOKEN);
 	 * otherwise the "authorization" metadata entry must match the configured
 	 * token exactly (an optional "Bearer " prefix is accepted).
 	 */
@@ -328,7 +328,7 @@ export class GRPCServerService
 			return true; // No auth required
 		}
 
-		const Entries = Metadata.get("authorization";
+		const Entries = Metadata.get("authorization");
 
 		if (Entries.length === 0) {
 			return false;
@@ -361,7 +361,7 @@ export class GRPCServerService
 					Callback({
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
-					};
+					});
 
 					return;
 				}
@@ -379,7 +379,7 @@ export class GRPCServerService
 
 					Responded = true;
 
-					Callback(ResponseError, Response;
+					Callback(ResponseError, Response);
 				};
 
 				this.handleMountainRequest(Call.request)
@@ -401,7 +401,7 @@ export class GRPCServerService
 
 							Error,
 						),
-					;
+					);
 			},
 
 			SendMountainNotification: (
@@ -413,14 +413,14 @@ export class GRPCServerService
 					Callback({
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
-					};
+					});
 
 					return;
 				}
 
-				this.handleMountainNotification(Call.request;
+				this.handleMountainNotification(Call.request);
 
-				Callback(null, {};
+				Callback(null, {});
 			},
 
 			CancelOperation: (
@@ -432,14 +432,14 @@ export class GRPCServerService
 					Callback({
 						code: grpc.status.UNAUTHENTICATED,
 						details: "Authentication failed",
-					};
+					});
 
 					return;
 				}
 
-				this.handleCancelOperation(Call.request;
+				this.handleCancelOperation(Call.request);
 
-				Callback(null, {};
+				Callback(null, {});
 			},
 
 			OpenChannelFromMountain:
@@ -470,10 +470,10 @@ export class GRPCServerService
 			"grpc",
 
 			"[GRPCServerService] Starting bidirectional streaming connection",
-		;
+		);
 
 		// Add to streaming handlers
-		this.streamingHandlers.add(stream;
+		this.streamingHandlers.add(stream);
 
 		// Session identity for stale-channel detection. Mountain's pumps
 		// stamp Envelope.ChannelId (uint64, field 5) on every frame they
@@ -490,7 +490,7 @@ export class GRPCServerService
 			const FrameChannelId = String(
 				(request as { ChannelId?: string | number | bigint })
 					.ChannelId ?? "0",
-			;
+			);
 
 			if (FrameChannelId !== "0") {
 				if (SessionChannelId === null) {
@@ -500,13 +500,13 @@ export class GRPCServerService
 						"grpc",
 
 						`[GRPCServerService] Streaming session ChannelId=${SessionChannelId}`,
-					;
+					);
 				} else if (FrameChannelId !== SessionChannelId) {
 					CocoonDevLog(
 						"grpc",
 
 						`[GRPCServerService] Discarding stale-channel frame: ChannelId=${FrameChannelId} != session ChannelId=${SessionChannelId}`,
-					;
+					);
 
 					return;
 				}
@@ -516,10 +516,10 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] Received streaming request: ${request.Method}`,
-			;
+			);
 
-			this.handleStreamingRequest(request, stream;
-		};
+			this.handleStreamingRequest(request, stream);
+		});
 
 		// Handle connection close
 		stream.on("close", () => {
@@ -527,10 +527,10 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] Bidirectional streaming connection closed (session ChannelId=${SessionChannelId ?? "0"})`,
-			;
+			);
 
-			this.streamingHandlers.delete(stream;
-		};
+			this.streamingHandlers.delete(stream);
+		});
 
 		// Handle errors
 		stream.on("error", (error) => {
@@ -540,11 +540,11 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] Streaming error: ${error}`,
-			;
-		};
+			);
+		});
 
 		// Send keepalive pings
-		this.startKeepalive(stream;
+		this.startKeepalive(stream);
 	}
 
 	/**
@@ -561,10 +561,10 @@ export class GRPCServerService
 		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
 	): Promise<void> {
 		try {
-			const response = await this.handleMountainRequest(request;
+			const response = await this.handleMountainRequest(request);
 
 			if (stream.writable) {
-				stream.write(response;
+				stream.write(response);
 			}
 		} catch (error) {
 			CocoonDevLog(
@@ -573,7 +573,7 @@ export class GRPCServerService
 				`[GRPCServerService] Streaming request failed for ${request.Method}:`,
 
 				error,
-			;
+			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
@@ -602,7 +602,7 @@ export class GRPCServerService
 				},
 			};
 
-			stream.write(response;
+			stream.write(response);
 		}
 	}
 
@@ -614,7 +614,7 @@ export class GRPCServerService
 	): void {
 		const keepaliveInterval = setInterval(() => {
 			if (!stream.writable) {
-				clearInterval(keepaliveInterval;
+				clearInterval(keepaliveInterval);
 
 				return;
 			}
@@ -630,12 +630,12 @@ export class GRPCServerService
 			stream.write({
 				RequestIdentifier: keepaliveRequest.RequestIdentifier,
 				Result: Buffer.from(JSON.stringify({ status: "alive" })),
-			} as GenericResponse;
-		}, this.keepaliveInterval;
+			} as GenericResponse);
+		}, this.keepaliveInterval);
 
 		stream.on("close", () => {
-			clearInterval(keepaliveInterval;
-		};
+			clearInterval(keepaliveInterval);
+		});
 	}
 
 	/**
@@ -650,9 +650,9 @@ export class GRPCServerService
 
 		this.streamingHandlers.forEach((stream) => {
 			if (stream.writable) {
-				stream.write(notification;
+				stream.write(notification);
 			}
-		};
+		});
 	}
 
 	// ==================================================================
@@ -665,7 +665,7 @@ export class GRPCServerService
 	private async handleMountainRequest(
 		request: GenericRequest,
 	): Promise<GenericResponse> {
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
 		this.requestCount++;
 
@@ -673,27 +673,27 @@ export class GRPCServerService
 			"grpc",
 
 			`[GRPCServerService] Processing Mountain request: ${request.Method}`,
-		;
+		);
 
 		// Track request for cancellation. The AbortController is the
 		// cancellation root for this request: CancelOperation looks the entry
 		// up by RequestIdentifier and invokes cancelHandler, which aborts the
 		// signal threaded through routeRequest into provider invocations.
-		const CancellationController = new AbortController(;
+		const CancellationController = new AbortController();
 
 		this.activeRequests.set(request.RequestIdentifier, {
 			method: request.Method,
 			startTime: startTime,
 			cancelHandler: () => CancellationController.abort(),
-		};
+		});
 
 		try {
 			// Parse parameters from JSON with validation
-			const parameters = this.parseParameters(request.Parameter;
+			const parameters = this.parseParameters(request.Parameter);
 
 			// Validate request method
 			if (!request.Method || !this.IsValidMethod(request.Method)) {
-				throw new Error(`Invalid method: ${request.Method}`;
+				throw new Error(`Invalid method: ${request.Method}`);
 			}
 
 			// Route to appropriate service
@@ -703,7 +703,7 @@ export class GRPCServerService
 				parameters,
 
 				CancellationController.signal,
-			;
+			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
@@ -717,10 +717,10 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] Request ${request.Method} processed in ${processingTime}ms`,
-			;
+			);
 
 			// Remove from active requests
-			this.activeRequests.delete(request.RequestIdentifier;
+			this.activeRequests.delete(request.RequestIdentifier);
 
 			return response;
 		} catch (error) {
@@ -742,7 +742,7 @@ export class GRPCServerService
 			const IsExtensionProvidedHandler =
 				request.Method.startsWith("$provide") ||
 				request.Method.startsWith("$resolve") ||
-				request.Method.startsWith("$get";
+				request.Method.startsWith("$get");
 
 			if (IsExtensionProvidedHandler) {
 				CocoonDevLog(
@@ -751,7 +751,7 @@ export class GRPCServerService
 					`[GRPCServerService] Extension handler ${request.Method} rejected (extension-side): ${
 						error instanceof Error ? error.message : String(error)
 					}`,
-				;
+				);
 			} else {
 				CocoonDevLog(
 					"grpc",
@@ -759,11 +759,11 @@ export class GRPCServerService
 					`[GRPCServerService] Error processing request ${request.Method}:`,
 
 					error,
-				;
+				);
 			}
 
 			// Remove from active requests
-			this.activeRequests.delete(request.RequestIdentifier;
+			this.activeRequests.delete(request.RequestIdentifier);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
@@ -832,9 +832,9 @@ export class GRPCServerService
 		try {
 			const Normalised = data === undefined ? null : data;
 
-			const serialized = JSON.stringify(Normalised;
+			const serialized = JSON.stringify(Normalised);
 
-			return Buffer.from(serialized ?? "null", "utf8";
+			return Buffer.from(serialized ?? "null", "utf8");
 		} catch (error) {
 			CocoonDevLog(
 				"grpc",
@@ -842,7 +842,7 @@ export class GRPCServerService
 				"[GRPCServerService] Failed to serialize response:",
 
 				error,
-			;
+			);
 
 			// `{}` is indistinguishable from a legitimate empty result;
 			// Mountain's converter inspects `result.error`, so surface the
@@ -856,7 +856,7 @@ export class GRPCServerService
 				}),
 
 				"utf8",
-			;
+			);
 		}
 	}
 
@@ -865,14 +865,14 @@ export class GRPCServerService
 	 */
 	private parseParameters(parameterBuffer: Buffer): any {
 		try {
-			const parameterString = parameterBuffer.toString("utf8";
+			const parameterString = parameterBuffer.toString("utf8");
 
 			// Handle empty buffer
 			if (!parameterString || parameterString.length === 0) {
 				return {};
 			}
 
-			return JSON.parse(parameterString;
+			return JSON.parse(parameterString);
 		} catch (error) {
 			CocoonDevLog(
 				"grpc",
@@ -880,11 +880,11 @@ export class GRPCServerService
 				"[GRPCServerService] Failed to parse parameters:",
 
 				error,
-			;
+			);
 
 			throw new Error(
 				`Invalid parameter format: ${error instanceof Error ? error.message : "Unknown error"}`,
-			;
+			);
 		}
 	}
 
@@ -902,21 +902,21 @@ export class GRPCServerService
 		CancellationSignal?: AbortSignal,
 	): Promise<any> {
 		// Try service routing table first (extension.*, configuration.*, etc.)
-		const ServiceResult = await RouteRequest(method, parameters;
+		const ServiceResult = await RouteRequest(method, parameters);
 
 		if (ServiceResult !== undefined) {
 			return ServiceResult;
 		}
 
 		// Extension host lifecycle methods from Mountain
-		const Context = this.GetHandlerContext(;
+		const Context = this.GetHandlerContext();
 
 		if (method === "InitializeExtensionHost") {
 			return ExtensionHostHandler.HandleInitializeExtensionHost(
 				Context,
 
 				parameters,
-			;
+			);
 		}
 
 		if (method === "$deltaExtensions") {
@@ -924,7 +924,7 @@ export class GRPCServerService
 				Context,
 
 				parameters,
-			;
+			);
 		}
 
 		if (method === "$activateByEvent") {
@@ -932,7 +932,7 @@ export class GRPCServerService
 				Context,
 
 				parameters,
-			;
+			);
 		}
 
 		if (method === "$startExtensionHost") {
@@ -940,7 +940,7 @@ export class GRPCServerService
 				Context,
 
 				parameters,
-			;
+			);
 		}
 
 		// `$provideTreeChildren` shares the `$provide*` prefix but has
@@ -955,7 +955,7 @@ export class GRPCServerService
 				await import("../../Handler/Request/Routing/Handler.js")
 			).default;
 
-			return RequestRoutingHandler(method, parameters;
+			return RequestRoutingHandler(method, parameters);
 		}
 
 		// Call hierarchy and type hierarchy - Mountain forwards `language:prepareCallHierarchy`
@@ -991,7 +991,7 @@ export class GRPCServerService
 				this.documentContentCache,
 
 				CancellationSignal,
-			;
+			);
 		}
 
 		// Language feature provider invocation: "$provideHover", "$provideCompletions",
@@ -1012,7 +1012,7 @@ export class GRPCServerService
 				this.documentContentCache,
 
 				CancellationSignal,
-			;
+			);
 		}
 
 		// VS Code-style proxied RPC: `{Prefix}${Method}`. Mountain's
@@ -1037,18 +1037,18 @@ export class GRPCServerService
 				const PendingOnCommand = (
 					this.activationEventIndex.get(`onCommand:${CommandId}`) ??
 					[]
-				).filter((Id) => !this.activatedExtensions.has(Id);
+				).filter((Id) => !this.activatedExtensions.has(Id));
 
 				if (PendingOnCommand.length > 0) {
 					await ExtensionHostHandler.HandleActivateByEvent(
 						this.GetHandlerContext(),
 
 						{ activationEvent: `onCommand:${CommandId}` },
-					).catch(() => {};
+					).catch(() => {});
 				}
 
 				const LanguageProviderRegistry =
-					await import("../../Language/Provider/Registry.js";
+					await import("../../Language/Provider/Registry.js");
 
 				const ExtensionArguments = Array.isArray(CommandArguments)
 					? CommandArguments
@@ -1059,7 +1059,7 @@ export class GRPCServerService
 				return (LanguageProviderRegistry as any).ExecuteCommand(
 					CommandId,
 					...ExtensionArguments,
-				;
+				);
 			}
 
 			return undefined;
@@ -1082,10 +1082,10 @@ export class GRPCServerService
 		// vscode.authentication.registerAuthenticationProvider which stashes
 		// them with key `__authProvider:${providerId}`.
 		if (/^ExtHostAuthentication\$/.test(method)) {
-			const AuthMethod = method.slice("ExtHostAuthentication$".length;
+			const AuthMethod = method.slice("ExtHostAuthentication$".length);
 
 			if (AuthMethod === "getSession") {
-				const Context = this.GetHandlerContext(;
+				const Context = this.GetHandlerContext();
 
 				const Args = Array.isArray(parameters)
 					? parameters
@@ -1101,11 +1101,11 @@ export class GRPCServerService
 
 				const Provider = (Context.ExtensionRegistry as any)?.get(
 					ProviderKey,
-				;
+				);
 
 				if (Provider && typeof Provider.getSessions === "function") {
 					try {
-						const Sessions = await Provider.getSessions(Scopes;
+						const Sessions = await Provider.getSessions(Scopes);
 
 						if (Array.isArray(Sessions) && Sessions.length > 0) {
 							return Sessions[0];
@@ -1121,9 +1121,9 @@ export class GRPCServerService
 
 		// ExtHostTaskService - task provider invocations from Mountain.
 		if (/^ExtHostTaskService\$/.test(method)) {
-			const TaskMethod = method.slice("ExtHostTaskService$".length;
+			const TaskMethod = method.slice("ExtHostTaskService$".length);
 
-			const Context = this.GetHandlerContext(;
+			const Context = this.GetHandlerContext();
 
 			if (TaskMethod === "fetchTasks" || TaskMethod === "provideTasks") {
 				const Filter = Array.isArray(parameters)
@@ -1149,9 +1149,9 @@ export class GRPCServerService
 
 						const Tasks = await (Provider as any).provideTasks?.(
 							CancellationToken,
-						;
+						);
 
-						if (Array.isArray(Tasks)) AllTasks.push(...Tasks;
+						if (Array.isArray(Tasks)) AllTasks.push(...Tasks);
 					} catch {
 						/* skip bad provider */
 					}
@@ -1161,7 +1161,7 @@ export class GRPCServerService
 			}
 
 			if (TaskMethod === "executeTask") {
-				const TaskId = String(Date.now();
+				const TaskId = String(Date.now());
 
 				const TaskDef = Array.isArray(parameters)
 					? parameters[0]
@@ -1186,7 +1186,7 @@ export class GRPCServerService
 						Context.Emitter.emit("task.didStart", {
 							execution: { task: TaskDef, terminate: () => {} },
 							id: TaskId,
-						};
+						});
 
 						// Call runHandler if available (for custom task providers)
 						if (
@@ -1216,7 +1216,7 @@ export class GRPCServerService
 										},
 										id: TaskId,
 									}),
-								;
+								);
 						}
 					} catch {
 						/* skip bad provider */
@@ -1235,9 +1235,9 @@ export class GRPCServerService
 		// Mountain reverse-RPCs `$serializeAllWebviewPanels` before reload and
 		// `$deserializeWebviewPanel` once the workbench is back up.
 		if (/^ExtHostWebviewPanels\$/.test(method)) {
-			const PanelMethod = method.slice("ExtHostWebviewPanels$".length;
+			const PanelMethod = method.slice("ExtHostWebviewPanels$".length);
 
-			const Context = this.GetHandlerContext(;
+			const Context = this.GetHandlerContext();
 
 			const Args = Array.isArray(parameters) ? parameters : [parameters];
 
@@ -1248,7 +1248,7 @@ export class GRPCServerService
 				const Result: Array<{ viewType: string; state: unknown }> = [];
 
 				for (const [PanelHandle, Panel] of ActivePanels.entries()) {
-					const ViewType = String(Panel?.viewType ?? "";
+					const ViewType = String(Panel?.viewType ?? "");
 
 					if (!ViewType) continue;
 
@@ -1256,18 +1256,18 @@ export class GRPCServerService
 
 					const Serializer = (Context.ExtensionRegistry as any)?.get(
 						Key,
-					;
+					);
 
 					if (!Serializer?.serializeWebviewPanel) continue;
 
 					try {
 						const State =
-							await Serializer.serializeWebviewPanel(Panel;
+							await Serializer.serializeWebviewPanel(Panel);
 
 						Result.push({
 							viewType: ViewType,
 							state: State ?? null,
-						};
+						});
 					} catch {
 						/* serializer threw - skip this panel rather than abort */
 					}
@@ -1279,7 +1279,7 @@ export class GRPCServerService
 			}
 
 			if (PanelMethod === "deserializeWebviewPanel") {
-				const ViewType = String(Args[0] ?? "";
+				const ViewType = String(Args[0] ?? "");
 
 				const Panel = Args[1];
 
@@ -1287,7 +1287,7 @@ export class GRPCServerService
 
 				const Key = `__webviewSerializer:${ViewType}`;
 
-				const Serializer = (Context.ExtensionRegistry as any)?.get(Key;
+				const Serializer = (Context.ExtensionRegistry as any)?.get(Key);
 
 				if (!Serializer?.deserializeWebviewPanel) {
 					return {
@@ -1300,7 +1300,7 @@ export class GRPCServerService
 				}
 
 				try {
-					await Serializer.deserializeWebviewPanel(Panel, State;
+					await Serializer.deserializeWebviewPanel(Panel, State);
 
 					return { success: true, viewType: ViewType };
 				} catch (Error) {
@@ -1321,9 +1321,9 @@ export class GRPCServerService
 
 		// ExtHostDebug - debug configuration and session handling.
 		if (/^ExtHostDebug\$/.test(method)) {
-			const DebugMethod = method.slice("ExtHostDebug$".length;
+			const DebugMethod = method.slice("ExtHostDebug$".length);
 
-			const Context = this.GetHandlerContext(;
+			const Context = this.GetHandlerContext();
 
 			if (
 				DebugMethod === "resolveDebugConfiguration" ||
@@ -1364,7 +1364,7 @@ export class GRPCServerService
 							Config,
 
 							CancellationToken,
-						;
+						);
 
 						if (Resolved != null) return Resolved;
 					} catch {
@@ -1391,7 +1391,7 @@ export class GRPCServerService
 					request?: unknown;
 				};
 
-				const SessionId = String(Payload?.sessionId ?? "";
+				const SessionId = String(Payload?.sessionId ?? "");
 
 				const Request = Payload?.request;
 
@@ -1399,7 +1399,7 @@ export class GRPCServerService
 					| Map<string, any>
 					| undefined;
 
-				const Adapter = Adapters?.get(SessionId;
+				const Adapter = Adapters?.get(SessionId);
 
 				if (!Adapter || typeof Adapter.handleMessage !== "function") {
 					return {
@@ -1412,7 +1412,7 @@ export class GRPCServerService
 				}
 
 				try {
-					Adapter.handleMessage(Request;
+					Adapter.handleMessage(Request);
 
 					return {
 						success: true,
@@ -1464,9 +1464,9 @@ export class GRPCServerService
 							Folder,
 
 							CancellationToken,
-						;
+						);
 
-						if (Array.isArray(Configs)) AllConfigs.push(...Configs;
+						if (Array.isArray(Configs)) AllConfigs.push(...Configs);
 					} catch {
 						/* skip */
 					}
@@ -1485,7 +1485,7 @@ export class GRPCServerService
 
 		// ExtHostTesting - test runner invocations.
 		if (/^ExtHostTesting\$/.test(method)) {
-			const TestMethod = method.slice("ExtHostTesting$".length;
+			const TestMethod = method.slice("ExtHostTesting$".length);
 
 			if (TestMethod === "runTests" || TestMethod === "cancelRun") {
 				return null; // Test runner stubs - no-op until Grove WASM host.
@@ -1496,9 +1496,9 @@ export class GRPCServerService
 
 		// ExtHostFileSystem - custom file system provider callbacks.
 		if (/^ExtHostFileSystem\$/.test(method)) {
-			const FSMethod = method.slice("ExtHostFileSystem$".length;
+			const FSMethod = method.slice("ExtHostFileSystem$".length);
 
-			const Context = this.GetHandlerContext(;
+			const Context = this.GetHandlerContext();
 
 			const Args = Array.isArray(parameters) ? parameters : [parameters];
 
@@ -1511,7 +1511,7 @@ export class GRPCServerService
 						((UriArg as any)?.scheme && (UriArg as any)?.path
 							? `${(UriArg as any).scheme}://${(UriArg as any).authority ?? ""}${(UriArg as any).path}`
 							: "") ??
-						"";
+						"");
 
 			const Scheme = UriStr.split(":")[0] ?? "file";
 
@@ -1519,7 +1519,7 @@ export class GRPCServerService
 
 			const Provider = (Context.ExtensionRegistry as any)?.get(
 				ProviderKey,
-			;
+			);
 
 			if (Provider) {
 				try {
@@ -1528,7 +1528,7 @@ export class GRPCServerService
 							return (
 								(await (Provider as any).readFile?.(UriArg)) ??
 								new Uint8Array()
-							;
+							);
 
 						case "writeFile":
 							return await (Provider as any).writeFile?.(
@@ -1537,7 +1537,7 @@ export class GRPCServerService
 								Args[1],
 
 								Args[2],
-							;
+							);
 
 						case "stat":
 							return (
@@ -1547,26 +1547,26 @@ export class GRPCServerService
 									ctime: 0,
 									mtime: 0,
 								}
-							;
+							);
 
 						case "readDirectory":
 							return (
 								(await (Provider as any).readDirectory?.(
 									UriArg,
 								)) ?? []
-							;
+							);
 
 						case "createDirectory":
 							return await (Provider as any).createDirectory?.(
 								UriArg,
-							;
+							);
 
 						case "delete":
 							return await (Provider as any).delete?.(
 								UriArg,
 
 								Args[1],
-							;
+							);
 
 						case "rename":
 							return await (Provider as any).rename?.(
@@ -1575,7 +1575,7 @@ export class GRPCServerService
 								Args[1],
 
 								Args[2],
-							;
+							);
 
 						case "copy":
 							return await (Provider as any).copy?.(
@@ -1584,7 +1584,7 @@ export class GRPCServerService
 								Args[1],
 
 								Args[2],
-							;
+							);
 
 						default:
 							return null;
@@ -1604,12 +1604,12 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] Unhandled ExtHost method: ${method}`,
-			;
+			);
 
 			return null;
 		}
 
-		throw new Error(`Unknown method: ${method}`;
+		throw new Error(`Unknown method: ${method}`);
 	}
 
 	// ==================================================================
@@ -1626,18 +1626,18 @@ export class GRPCServerService
 			"grpc",
 
 			`[GRPCServerService] Handling Mountain notification: ${notification.Method}`,
-		;
+		);
 
 		let parameters: any;
 
 		try {
-			parameters = this.parseParameters(notification.Parameter;
+			parameters = this.parseParameters(notification.Parameter);
 		} catch (parseError) {
 			this.errorCount++;
 
 			const RawParameter = Buffer.isBuffer(notification.Parameter)
 				? notification.Parameter.toString("utf8")
-				: String(notification.Parameter;
+				: String(notification.Parameter);
 
 			CocoonDevLog(
 				"grpc",
@@ -1647,7 +1647,7 @@ export class GRPCServerService
 						? parseError.message
 						: String(parseError)
 				} raw(200)=${RawParameter.slice(0, 200)}`,
-			;
+			);
 
 			return;
 		}
@@ -1657,7 +1657,7 @@ export class GRPCServerService
 			this.emit("notification", {
 				method: notification.Method,
 				parameters: parameters,
-			};
+			});
 
 			// Handle specific notification types via NotificationHandler
 			HandleSpecificNotification(
@@ -1680,7 +1680,7 @@ export class GRPCServerService
 				this.workspaceEventEmitter,
 
 				this.GetHandlerContext(),
-			;
+			);
 
 			CocoonDevLog(
 				"grpc",
@@ -1688,7 +1688,7 @@ export class GRPCServerService
 				`[GRPCServerService] Notification ${notification.Method} handled`,
 
 				parameters,
-			;
+			);
 		} catch (error) {
 			this.errorCount++;
 
@@ -1698,7 +1698,7 @@ export class GRPCServerService
 				`[GRPCServerService] Error handling notification ${notification.Method}:`,
 
 				error,
-			;
+			);
 		}
 	}
 
@@ -1711,7 +1711,7 @@ export class GRPCServerService
 			this.documentContentCache,
 
 			Uri,
-		;
+		);
 	}
 
 	// ==================================================================
@@ -1728,23 +1728,23 @@ export class GRPCServerService
 			"grpc",
 
 			`[GRPCServerService] Canceling operation: ${requestId}`,
-		;
+		);
 
 		try {
 			// Look up the active request
-			const requestEntry = this.activeRequests.get(requestId;
+			const requestEntry = this.activeRequests.get(requestId);
 
 			if (requestEntry) {
 				// Execute cancel handler if registered
 				if (requestEntry.cancelHandler) {
 					try {
-						requestEntry.cancelHandler(;
+						requestEntry.cancelHandler();
 
 						CocoonDevLog(
 							"grpc",
 
 							`[GRPCServerService] Cancel handler executed for request ${requestId}`,
-						;
+						);
 					} catch (error) {
 						this.errorCount++;
 
@@ -1754,24 +1754,24 @@ export class GRPCServerService
 							`[GRPCServerService] Cancel handler failed for request ${requestId}:`,
 
 							error,
-						;
+						);
 					}
 				}
 
 				// Remove from active requests
-				this.activeRequests.delete(requestId;
+				this.activeRequests.delete(requestId);
 
 				CocoonDevLog(
 					"grpc",
 
 					`[GRPCServerService] Request ${requestId} canceled successfully`,
-				;
+				);
 			} else {
 				CocoonDevLog(
 					"grpc",
 
 					`[GRPCServerService] Request ${requestId} not found in active requests (may have already completed)`,
-				;
+				);
 			}
 		} catch (error) {
 			this.errorCount++;
@@ -1782,7 +1782,7 @@ export class GRPCServerService
 				`[GRPCServerService] Error canceling operation ${requestId}:`,
 
 				error,
-			;
+			);
 		}
 
 		// NOT mirrored to Mountain: the inbound RequestIdentifier comes from
@@ -1804,7 +1804,7 @@ export class GRPCServerService
 	 * Validation: Test with nested and parallel operations
 	 */
 	public registerCancelHandler(requestId: bigint, handler: () => void): void {
-		const entry = this.activeRequests.get(requestId;
+		const entry = this.activeRequests.get(requestId);
 
 		if (entry) {
 			entry.cancelHandler = handler;
@@ -1826,7 +1826,7 @@ export class GRPCServerService
 				"grpc",
 
 				"[GRPCServerService] Already connected to Mountain",
-			;
+			);
 
 			return;
 		}
@@ -1835,20 +1835,20 @@ export class GRPCServerService
 			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
 
 			10,
-		;
+		);
 
 		CocoonDevLog(
 			"grpc",
 
 			`[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort}...`,
-		;
+		);
 
 		const { MountainClientService } =
-			await import("../../Mountain/Client/Service.js";
+			await import("../../Mountain/Client/Service.js");
 
-		const Client = new MountainClientService(;
+		const Client = new MountainClientService();
 
-		await Client.connect(;
+		await Client.connect();
 
 		this.mountainClient = Client;
 
@@ -1862,9 +1862,9 @@ export class GRPCServerService
 			"grpc",
 
 			`[GRPCServerService] Connected to Mountain gRPC - return path active`,
-		;
+		);
 
-		this.emit("mountainConnected", { port: MountainPort };
+		this.emit("mountainConnected", { port: MountainPort });
 	}
 
 	/**
@@ -1881,10 +1881,10 @@ export class GRPCServerService
 	 */
 	async SendToMountain(Method: string, Parameters: any): Promise<void> {
 		const { IsRustDeferralEnabled, LogDualTrack } =
-			await import("../../Dual/Track.js";
+			await import("../../Dual/Track.js");
 
 		if (!IsRustDeferralEnabled(Method)) {
-			LogDualTrack(Method, "node-bypass";
+			LogDualTrack(Method, "node-bypass");
 
 			return;
 		}
@@ -1894,12 +1894,12 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] Cannot send ${Method} to Mountain - not connected`,
-			;
+			);
 
 			return;
 		}
 
-		await this.mountainClient.sendNotification(Method, Parameters;
+		await this.mountainClient.sendNotification(Method, Parameters);
 	}
 
 	// ==================================================================
@@ -1911,7 +1911,7 @@ export class GRPCServerService
 	 */
 	async start(): Promise<void> {
 		if (this.isRunning) {
-			CocoonDevLog("grpc", "[GRPCServerService] Server already running";
+			CocoonDevLog("grpc", "[GRPCServerService] Server already running");
 
 			return;
 		}
@@ -1920,11 +1920,11 @@ export class GRPCServerService
 			"grpc",
 
 			`[GRPCServerService] Starting gRPC server on port ${this.port}`,
-		;
+		);
 
 		try {
 			// Load protocol definition
-			const packageDefinition = await this.loadProtocolDefinition(;
+			const packageDefinition = await this.loadProtocolDefinition();
 
 			const protoDescriptor = grpc.loadPackageDefinition(
 				packageDefinition,
@@ -1934,7 +1934,7 @@ export class GRPCServerService
 			this.server = new grpc.Server({
 				"grpc.max_receive_message_length": 1024 * 1024 * 100, // 100MB
 				"grpc.max_send_message_length": 1024 * 1024 * 100, // 100MB
-			};
+			});
 
 			// Add service implementation
 			const CocoonSvc =
@@ -1945,10 +1945,10 @@ export class GRPCServerService
 				CocoonSvc.service,
 
 				this.serviceImplementation,
-			;
+			);
 
 			// Start server
-			await this.startServer(;
+			await this.startServer();
 
 			this.isRunning = true;
 
@@ -1956,7 +1956,7 @@ export class GRPCServerService
 				"grpc",
 
 				`[GRPCServerService] gRPC server started successfully on port ${this.port}`,
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"grpc",
@@ -1964,7 +1964,7 @@ export class GRPCServerService
 				"[GRPCServerService] Failed to start gRPC server:",
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -1979,13 +1979,13 @@ export class GRPCServerService
 			"grpc",
 
 			"[GRPCServerService] Loading Vine.proto protocol definition",
-		;
+		);
 
 		try {
 			// Load actual Vine.proto from Mountain's source
-			const fs = require("fs";
+			const fs = require("fs");
 
-			const path = require("path";
+			const path = require("path");
 
 			// Resolve Mountain's Proto directory with multiple fallback paths
 			const protoSearchPaths = [
@@ -2027,7 +2027,7 @@ export class GRPCServerService
 					"grpc",
 
 					`[GRPCServerService] Found Vine.proto at: ${mountainProtoPath}`,
-				;
+				);
 
 				return protoLoader.loadSync(mountainProtoPath, {
 					keepCase: true,
@@ -2036,13 +2036,13 @@ export class GRPCServerService
 					defaults: true,
 					oneofs: true,
 					includeDirs: [path.dirname(mountainProtoPath)],
-				};
+				});
 			} else {
 				CocoonDevLog(
 					"grpc",
 
 					"[GRPCServerService] Vine.proto not found in any search path",
-				;
+				);
 
 				CocoonDevLog(
 					"grpc",
@@ -2050,7 +2050,7 @@ export class GRPCServerService
 					"[GRPCServerService] Search paths attempted:",
 
 					protoSearchPaths,
-				;
+				);
 
 				// Enhanced fallback with production-ready protocol definition
 				const fallbackProtoContent = `
@@ -2059,9 +2059,9 @@ export class GRPCServerService
                     package Vine;
 
                     service CocoonService {
-                        rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse;
-                        rpc SendMountainNotification(GenericNotification) returns (Empty;
-                        rpc CancelOperation(CancelOperationRequest) returns (Empty;
+                        rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+                        rpc SendMountainNotification(GenericNotification) returns (Empty);
+                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
                     }
 
                     message GenericRequest {
@@ -2091,17 +2091,17 @@ export class GRPCServerService
                 `;
 
 				// Create temporary file with proper permissions
-				const tempDir = require("os").tmpdir(;
+				const tempDir = require("os").tmpdir();
 
-				const tempProtoPath = path.join(tempDir, "vine_fallback.proto";
+				const tempProtoPath = path.join(tempDir, "vine_fallback.proto");
 
-				fs.writeFileSync(tempProtoPath, fallbackProtoContent;
+				fs.writeFileSync(tempProtoPath, fallbackProtoContent);
 
 				CocoonDevLog(
 					"grpc",
 
 					`[GRPCServerService] Using enhanced fallback protocol at: ${tempProtoPath}`,
-				;
+				);
 
 				return protoLoader.loadSync(tempProtoPath, {
 					keepCase: true,
@@ -2109,7 +2109,7 @@ export class GRPCServerService
 					enums: String,
 					defaults: true,
 					oneofs: true,
-				};
+				});
 			}
 		} catch (error) {
 			CocoonDevLog(
@@ -2118,18 +2118,18 @@ export class GRPCServerService
 				"[GRPCServerService] Failed to load protocol definition:",
 
 				error,
-			;
+			);
 
 			throw new Error(
 				`Failed to load Vine.proto: ${error instanceof Error ? error.message : "Unknown error"}`,
-			;
+			);
 		}
 	}
 
 	private startServer(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.server) {
-				reject(new Error("Server not initialized");
+				reject(new Error("Server not initialized"));
 
 				return;
 			}
@@ -2141,20 +2141,20 @@ export class GRPCServerService
 
 				(error, port) => {
 					if (error) {
-						reject(error;
+						reject(error);
 					} else {
 						CocoonDevLog(
 							"grpc",
 
 							`[GRPCServerService] Server bound to port ${port}`,
-						;
+						);
 
 						// server.start() removed - no longer needed in @grpc/grpc-js v1.12+
-						resolve(;
+						resolve();
 					}
 				},
-			;
-		};
+			);
+		});
 	}
 
 	/**
@@ -2162,12 +2162,12 @@ export class GRPCServerService
 	 */
 	async stop(): Promise<void> {
 		if (!this.isRunning || !this.server) {
-			CocoonDevLog("grpc", "[GRPCServerService] Server not running";
+			CocoonDevLog("grpc", "[GRPCServerService] Server not running");
 
 			return;
 		}
 
-		CocoonDevLog("grpc", "[GRPCServerService] Stopping gRPC server";
+		CocoonDevLog("grpc", "[GRPCServerService] Stopping gRPC server");
 
 		return new Promise((resolve) => {
 			this.server!.tryShutdown(() => {
@@ -2175,11 +2175,11 @@ export class GRPCServerService
 
 				this.server = null;
 
-				CocoonDevLog("grpc", "[GRPCServerService] gRPC server stopped";
+				CocoonDevLog("grpc", "[GRPCServerService] gRPC server stopped");
 
-				resolve(;
-			};
-		};
+				resolve();
+			});
+		});
 	}
 
 	/**
@@ -2221,8 +2221,8 @@ export class GRPCServerService
 	 */
 	onNotification(callback: (method: string, parameters: any) => void): void {
 		this.on("notification", (event) => {
-			callback(event.method, event.parameters;
-		};
+			callback(event.method, event.parameters);
+		});
 	}
 }
 
@@ -2233,7 +2233,7 @@ export const GRPCServerServiceLayer = Layer.effect(
 	IGRPCServerService,
 
 	new GRPCServerService(),
-;
+);
 
 /**
  * Live implementation
@@ -2242,4 +2242,4 @@ export const GRPCServerServiceLive = Layer.effect(
 	IGRPCServerService,
 
 	new GRPCServerService(),
-;
+);

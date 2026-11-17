@@ -289,7 +289,7 @@ export default (
 
 			CurrentVisible = true;
 
-			Push(;
+			Push();
 		},
 
 		hide: () => {
@@ -303,7 +303,7 @@ export default (
 				handle: Handle,
 				id: Id,
 				visible: false,
-			}).catch(() => {};
+			}).catch(() => {});
 		},
 
 		// `dispose()` is idempotent in stock VS Code - calling it twice
@@ -320,7 +320,7 @@ export default (
 			Context.SendToMountain("statusBar.dispose", {
 				handle: Handle,
 				id: Id,
-			}).catch(() => {};
+			}).catch(() => {});
 		},
 	};
 

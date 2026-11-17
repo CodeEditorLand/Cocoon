@@ -489,10 +489,10 @@ export class ExtensionService extends /* Effect.Service */(
 
 						Logger.Info(
 							`[ExtensionService] Extensions discovered: ${NewRegistry.size} extensions`,
-						;
+						);
 
 						// Emit change event
-						OnDidChangeListeners.forEach((Listener) => Listener();
+						OnDidChangeListeners.forEach((Listener) => Listener());
 					}
 				};
 
@@ -508,7 +508,7 @@ export class ExtensionService extends /* Effect.Service */(
 				ExtensionId: string,
 			): Promise<IExtension<T> | undefined> =>
 				return (() => {
-					const Description = _registry.get(ExtensionId;
+					const Description = _registry.get(ExtensionId);
 
 					if (!Description) {
 						return undefined;
@@ -559,7 +559,7 @@ export class ExtensionService extends /* Effect.Service */(
 
 									: PublisherFallback,
 						} as IExtensionDescription;
-					})(;
+					})();
 
 					const ExtensionObject: IExtension<T> = {
 						id: Description.identifier,
@@ -572,14 +572,14 @@ export class ExtensionService extends /* Effect.Service */(
 						activate: async () => {
 							Logger.Warn(
 								`[ExtensionService] activate() called on ${ExtensionId}, but activation is handled by ExtensionHostService`,
-							;
+							);
 
 							return _exports.get(ExtensionId) as T;
 						},
 					};
 
 					return ExtensionObject;
-				})(;
+				})();
 
 			/**
 			 * Get all extensions
@@ -639,10 +639,10 @@ export class ExtensionService extends /* Effect.Service */(
 								exports: _exports.get(id),
 							};
 						},
-					;
+					);
 
 					return Extensions;
-				})(;
+				})();
 
 			/**
 			 * Get extension path by ID
@@ -652,17 +652,17 @@ export class ExtensionService extends /* Effect.Service */(
 			): Promise<string | undefined> =>
 				return (
 					_registry.get(ExtensionId)?.extensionLocation?.fsPath,
-				;
+				);
 
 			/**
 			 * Register event handler for extension changes
 			 */
 			const OnDidChange = (Listener: () => any): VSCode.Disposable => {
-				OnDidChangeListeners.add(Listener;
+				OnDidChangeListeners.add(Listener);
 
 				const Disposable = {
 					dispose: () => {
-						OnDidChangeListeners.delete(Listener;
+						OnDidChangeListeners.delete(Listener);
 					},
 				} as VSCode.Disposable;
 
@@ -680,28 +680,28 @@ export class ExtensionService extends /* Effect.Service */(
 				Exports: unknown,
 			): Promise<void> =>
 				{
-					_activation.set(ExtensionId, true;
+					_activation.set(ExtensionId, true);
 
-					_exports.set(ExtensionId, Exports;
+					_exports.set(ExtensionId, Exports);
 
 					Logger.Info(
 						`[ExtensionService] Extension activated: ${ExtensionId}`,
-					;
+					);
 				};
 
 			const MarkDeactivated = (
 				ExtensionId: string,
 			): Promise<void> =>
 				{
-					_activation.set(ExtensionId, false;
+					_activation.set(ExtensionId, false);
 
 					Logger.Debug(
 						`[ExtensionService] Extension deactivated: ${ExtensionId}`,
-					;
+					);
 				};
 
 			// Discover extensions on initialization
-			await DiscoverExtensions(;
+			await DiscoverExtensions();
 
 			// Return the service implementation with PascalCase methods
 			const ServiceImplementation: ExtensionService = {

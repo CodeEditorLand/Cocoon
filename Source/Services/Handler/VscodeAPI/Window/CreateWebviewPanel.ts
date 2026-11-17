@@ -272,7 +272,7 @@ export default (
 					handle: Handle,
 					viewId: ViewType,
 					options: Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 
 			get html() {
@@ -296,7 +296,7 @@ export default (
 					handle: Handle,
 					viewId: ViewType,
 					html: Value,
-				}).catch(() => {};
+				}).catch(() => {});
 			},
 
 			get cspSource() {
@@ -323,7 +323,7 @@ export default (
 						"webview.postMessage",
 
 						{ handle: Handle, viewId: ViewType, message: Message },
-					;
+					);
 
 					return true;
 				} catch {
@@ -334,12 +334,12 @@ export default (
 			onDidReceiveMessage: (Listener: (Message: unknown) => any) => {
 				const Event = `webview.message:${Handle}`;
 
-				Context.Emitter.on(Event, Listener;
+				Context.Emitter.on(Event, Listener);
 
 				return {
 					dispose: () => {
 						try {
-							Context.Emitter.removeListener(Event, Listener;
+							Context.Emitter.removeListener(Event, Listener);
 						} catch {
 							/* swallow */
 						}
@@ -381,33 +381,33 @@ export default (
 				viewId: ViewType,
 				viewColumn: Column,
 				preserveFocus: PreserveFocus,
-			}).catch(() => {};
+			}).catch(() => {});
 		},
 
 		dispose: () => {
-			DisposeInternal(;
+			DisposeInternal();
 		},
 
 		onDidDispose: (Listener: () => any) => {
-			DisposeListeners.push(Listener;
+			DisposeListeners.push(Listener);
 
 			return {
 				dispose: () => {
-					const Index = DisposeListeners.indexOf(Listener;
+					const Index = DisposeListeners.indexOf(Listener);
 
-					if (Index >= 0) DisposeListeners.splice(Index, 1;
+					if (Index >= 0) DisposeListeners.splice(Index, 1);
 				},
 			};
 		},
 
 		onDidChangeViewState: (Listener: (State: unknown) => any) => {
-			ViewStateListeners.push(Listener;
+			ViewStateListeners.push(Listener);
 
 			return {
 				dispose: () => {
-					const Index = ViewStateListeners.indexOf(Listener;
+					const Index = ViewStateListeners.indexOf(Listener);
 
-					if (Index >= 0) ViewStateListeners.splice(Index, 1;
+					if (Index >= 0) ViewStateListeners.splice(Index, 1);
 				},
 			};
 		},

@@ -369,7 +369,7 @@ export class WorkspaceService extends /* Effect.Service */(
 
 					await Logger.Info(
 						`[WorkspaceService] Workspace updated: ${NewWorkspace.Name} with ${Folders.length} folders`,
-					;
+					);
 
 					// Calculate delta for folder change event
 					const OldFolders = OldWorkspace?.Folders ?? [];
@@ -381,7 +381,7 @@ export class WorkspaceService extends /* Effect.Service */(
 									OldFolder.uri.toString() ===
 									Folder.uri.toString(),
 							),
-					;
+					);
 
 					const RemovedFolders = OldFolders.filter(
 						(OldFolder) =>
@@ -390,7 +390,7 @@ export class WorkspaceService extends /* Effect.Service */(
 									Folder.uri.toString() ===
 									OldFolder.uri.toString(),
 							),
-					;
+					);
 
 					if (AddedFolders.length > 0 || RemovedFolders.length > 0) {
 						const Event: VSCode.WorkspaceFoldersChangeEvent = {
@@ -400,7 +400,7 @@ export class WorkspaceService extends /* Effect.Service */(
 
 						OnDidChangeWorkspaceFoldersListeners.forEach(
 							(listener) => listener(Event),
-						;
+						);
 					}
 				};
 
@@ -434,11 +434,11 @@ export class WorkspaceService extends /* Effect.Service */(
 					if (OldActiveEditor !== NewActiveEditor) {
 						await Logger.Debug(
 							`[WorkspaceService] Active text editor changed: ${NewActiveEditor?.document.uri.toString() ?? "none"}`,
-						;
+						);
 
 						OnDidChangeActiveTextEditorListeners.forEach(
 							(listener) => listener(NewActiveEditor),
-						;
+						);
 					}
 
 					// Update visible editors
@@ -447,13 +447,13 @@ export class WorkspaceService extends /* Effect.Service */(
 					).filter(
 						(editor): editor is VSCode.TextEditor =>
 							editor !== undefined,
-					;
+					);
 
 					_visibleTextEditors = NewVisibleEditors;
 
 					OnDidChangeVisibleTextEditorsListeners.forEach((listener) =>
 						listener(NewVisibleEditors),
-					;
+					);
 				};
 
 			/**
@@ -470,13 +470,13 @@ export class WorkspaceService extends /* Effect.Service */(
 					return undefined;
 				}
 
-				const UriString = uri.toString(;
+				const UriString = uri.toString();
 
 				return Workspace.Folders.find((folder) => {
-					const FolderUri = folder.uri.toString(;
+					const FolderUri = folder.uri.toString();
 
-					return UriString.startsWith(FolderUri;
-				};
+					return UriString.startsWith(FolderUri);
+				});
 			};
 
 			/**
@@ -500,7 +500,7 @@ export class WorkspaceService extends /* Effect.Service */(
 					Logger.Debug(
 						`[WorkspaceService] Finding files: ${include}${exclude ? `, excluding: ${exclude}` : ""}` +
 							(maxResults ? `, maxResults: ${maxResults}` : ""),
-					;
+					);
 
 					// Implement actual gRPC call to Mountain
 					// ARCHITECTURE-PATTERN: Mountain needs to implement file search
@@ -519,7 +519,7 @@ export class WorkspaceService extends /* Effect.Service */(
 						pattern,
 
 						excludePatterns,
-					;
+					);
 
 					// Return URIs
 					return files.map((uri: string) => ({
@@ -531,7 +531,7 @@ export class WorkspaceService extends /* Effect.Service */(
 						fsPath: uri,
 						with: () => ({ scheme: "file", path: uri }),
 						toString: () => uri,
-					});
+					}));
 				};
 
 			/**
@@ -545,7 +545,7 @@ export class WorkspaceService extends /* Effect.Service */(
 				options?: VSCode.FindTextInFilesOptions,
 			): Promise<VSCode.Uri[] | null> =>
 				async function() {
-					Logger.Debug(`[WorkspaceService] Finding text in files`;
+					Logger.Debug(`[WorkspaceService] Finding text in files`);
 
 					// Implement actual gRPC call to Mountain
 					const mountainClient = await MountainGRPCClientService;
@@ -582,7 +582,7 @@ export class WorkspaceService extends /* Effect.Service */(
 						includePatterns,
 
 						excludePatterns,
-					;
+					);
 
 					// Return matches or null
 					return matches.length > 0
@@ -624,7 +624,7 @@ export class WorkspaceService extends /* Effect.Service */(
 							// Create untitled document
 							Uri = ParseUri(
 								`untitled:${Language}-${Date.now()}`,
-							;
+							);
 
 							Language = uriOrOptions.language;
 
@@ -638,7 +638,7 @@ export class WorkspaceService extends /* Effect.Service */(
 							throw new Error(
 									"[WorkspaceService] No active text editor to open",
 								),
-							;
+							);
 						}
 
 						return ActiveEditor.document;
@@ -646,13 +646,13 @@ export class WorkspaceService extends /* Effect.Service */(
 
 					Logger.Debug(
 						`[WorkspaceService] Opening text document: ${Uri}`,
-					;
+					);
 
 					// Implement actual gRPC call to Mountain
 					const mountainClient = await MountainGRPCClientService;
 
 					// Open document in Mountain
-					await mountainClient.openDocument(Uri.toString();
+					await mountainClient.openDocument(Uri.toString());
 
 					// Fetch actual file content via fs.readFile to build a real TextDocument
 					let DocumentContent = Content ?? "";
@@ -662,12 +662,12 @@ export class WorkspaceService extends /* Effect.Service */(
 					if (Uri.scheme === "file") {
 						const FileBytes = await Effect.either(
 							mountainClient.readFile(Uri.toString()),
-						;
+						);
 
 						if (FileBytes._tag === "Right") {
 							DocumentContent = new TextDecoder().decode(
 								FileBytes.right,
-							;
+							);
 
 							const Ext = Uri.fsPath.split(".").pop() ?? "";
 
@@ -693,7 +693,7 @@ export class WorkspaceService extends /* Effect.Service */(
 						}
 					}
 
-					const DocumentLines = DocumentContent.split("\n";
+					const DocumentLines = DocumentContent.split("\n");
 
 					return {
 						uri: Uri,
@@ -708,7 +708,7 @@ export class WorkspaceService extends /* Effect.Service */(
 								Range.start.line,
 
 								Range.end.line + 1,
-							).join("\n";
+							).join("\n");
 						},
 						lineCount: DocumentLines.length,
 						lineAt: (LineOrPos: any) => {
@@ -773,12 +773,12 @@ export class WorkspaceService extends /* Effect.Service */(
 				async function() {
 					Logger.Debug(
 						`[WorkspaceService] Saving all documents${includeUntitled ? " (including untitled)" : ""}`,
-					;
+					);
 
 					// Implement actual gRPC call to Mountain
 					const mountainClient = await MountainGRPCClientService;
 
-					await mountainClient.saveAll(includeUntitled ?? false;
+					await mountainClient.saveAll(includeUntitled ?? false);
 
 					return true;
 				};
@@ -795,7 +795,7 @@ export class WorkspaceService extends /* Effect.Service */(
 				async function() {
 					Logger.Info(
 						`[WorkspaceService] Applying workspace edit with ${edit.entries()?.length ?? 0} changes`,
-					;
+					);
 
 					// Serialize edit using TypeConverter
 					// TODO: Use proper TypeConverter/WorkspaceEdit.ts for serialization
@@ -819,13 +819,13 @@ export class WorkspaceService extends /* Effect.Service */(
 								},
 							},
 							newText: e.newText,
-						});
+						}));
 
 						await mountainClient.applyEdit(
 							uri.toString(),
 
 							textEdits,
-						;
+						);
 					}
 
 					return true;
@@ -847,7 +847,7 @@ export class WorkspaceService extends /* Effect.Service */(
 							? key
 								? `${section}.${key}`
 								: section
-							: (key ?? "";
+							: (key ?? "");
 
 						return Configuration.getValue(
 							FullKey,
@@ -862,7 +862,7 @@ export class WorkspaceService extends /* Effect.Service */(
 							? `${section}.${HasKey}`
 							: HasKey;
 
-						return Configuration.hasKey(FullKey, 1;
+						return Configuration.hasKey(FullKey, 1);
 					},
 					update: <T>(
 						key: string,
@@ -873,14 +873,14 @@ export class WorkspaceService extends /* Effect.Service */(
 					) => {
 						const FullKey = section ? `${section}.${key}` : key;
 
-						Configuration.updateValue(FullKey, value, 1;
+						Configuration.updateValue(FullKey, value, 1);
 					},
 					inspect: (InspectKey?: string) => {
 						const FullKey = section
 							? InspectKey
 								? `${section}.${InspectKey}`
 								: section
-							: (InspectKey ?? "";
+							: (InspectKey ?? "");
 
 						return {
 							key: FullKey,
@@ -917,11 +917,11 @@ export class WorkspaceService extends /* Effect.Service */(
 			const OnDidChangeWorkspaceFolders = (
 				listener: (e: VSCode.WorkspaceFoldersChangeEvent) => any,
 			): VSCode.Disposable => {
-				OnDidChangeWorkspaceFoldersListeners.add(listener;
+				OnDidChangeWorkspaceFoldersListeners.add(listener);
 
 				return {
 					dispose: () => {
-						OnDidChangeWorkspaceFoldersListeners.delete(listener;
+						OnDidChangeWorkspaceFoldersListeners.delete(listener);
 					},
 				};
 			};
@@ -932,11 +932,11 @@ export class WorkspaceService extends /* Effect.Service */(
 			const OnDidChangeActiveTextEditor = (
 				listener: (e: VSCode.TextEditor | undefined) => any,
 			): VSCode.Disposable => {
-				OnDidChangeActiveTextEditorListeners.add(listener;
+				OnDidChangeActiveTextEditorListeners.add(listener);
 
 				return {
 					dispose: () => {
-						OnDidChangeActiveTextEditorListeners.delete(listener;
+						OnDidChangeActiveTextEditorListeners.delete(listener);
 					},
 				};
 			};
@@ -947,11 +947,11 @@ export class WorkspaceService extends /* Effect.Service */(
 			const OnDidChangeVisibleTextEditors = (
 				listener: (e: readonly VSCode.TextEditor[]) => any,
 			): VSCode.Disposable => {
-				OnDidChangeVisibleTextEditorsListeners.add(listener;
+				OnDidChangeVisibleTextEditorsListeners.add(listener);
 
 				return {
 					dispose: () => {
-						OnDidChangeVisibleTextEditorsListeners.delete(listener;
+						OnDidChangeVisibleTextEditorsListeners.delete(listener);
 					},
 				};
 			};
@@ -962,11 +962,11 @@ export class WorkspaceService extends /* Effect.Service */(
 			const OnDidChangeTextDocument = (
 				listener: (e: VSCode.TextDocumentChangeEvent) => any,
 			): VSCode.Disposable => {
-				OnDidChangeTextDocumentListeners.add(listener;
+				OnDidChangeTextDocumentListeners.add(listener);
 
 				return {
 					dispose: () => {
-						OnDidChangeTextDocumentListeners.delete(listener;
+						OnDidChangeTextDocumentListeners.delete(listener);
 					},
 				};
 			};
@@ -977,11 +977,11 @@ export class WorkspaceService extends /* Effect.Service */(
 			const OnDidChangeConfiguration = (
 				listener: (e: VSCode.ConfigurationChangeEvent) => any,
 			): VSCode.Disposable => {
-				OnDidChangeConfigurationListeners.add(listener;
+				OnDidChangeConfigurationListeners.add(listener);
 
 				return {
 					dispose: () => {
-						OnDidChangeConfigurationListeners.delete(listener;
+						OnDidChangeConfigurationListeners.delete(listener);
 					},
 				};
 			};
@@ -1031,7 +1031,7 @@ export class WorkspaceService extends /* Effect.Service */(
 				AcceptWorkspaceData: (Data: unknown): void => {
 					void (AcceptWorkspaceData(Data)).catch(
 						() => {},
-					;
+					);
 				},
 
 				AcceptEditorState: (
@@ -1041,7 +1041,7 @@ export class WorkspaceService extends /* Effect.Service */(
 				): void => {
 					void (
 						AcceptEditorState(ActiveEditorId, VisibleEditorIds),
-					).catch(() => {};
+					).catch(() => {});
 				},
 
 				RegisterTextEditor: (
@@ -1049,7 +1049,7 @@ export class WorkspaceService extends /* Effect.Service */(
 
 					Editor: VSCode.TextEditor,
 				): void => {
-					_textEditorsMap.set(Id, Editor;
+					_textEditorsMap.set(Id, Editor);
 				},
 			};
 

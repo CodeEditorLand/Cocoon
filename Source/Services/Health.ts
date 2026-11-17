@@ -296,20 +296,20 @@ export class HealthService implements IHealthService {
 
 			this.errorCounts.set(service.name, 0);
 
-			this.recoveryAttempts.set(service.name, 0;
+			this.recoveryAttempts.set(service.name, 0);
 
 			CocoonDevLog(
 				"health",
 
 				`[HealthService] Initialized monitoring for service: ${service.name}`,
-			;
+			);
 		}
 
 		CocoonDevLog(
 			"health",
 
 			`[HealthService] Initialized ${this.monitoredServices.size} core services`,
-		;
+		);
 	}
 
 	/**
@@ -317,17 +317,17 @@ export class HealthService implements IHealthService {
 	 */
 	private startHeartbeatMonitoring(): void {
 		this.heartbeatIntervalId = setInterval(async () => {
-			await this.checkServiceHeartbeats(;
-		}, this.config.heartbeatInterval;
+			await this.checkServiceHeartbeats();
+		}, this.config.heartbeatInterval);
 
-		CocoonDevLog("health", "[HealthService] Heartbeat monitoring started";
+		CocoonDevLog("health", "[HealthService] Heartbeat monitoring started");
 	}
 
 	/**
 	 * Check service heartbeats
 	 */
 	private async checkServiceHeartbeats(): Promise<void> {
-		const now = Date.now(;
+		const now = Date.now();
 
 		for (const [
 			serviceName,
@@ -341,7 +341,7 @@ export class HealthService implements IHealthService {
 					"health",
 
 					`[HealthService] Service ${serviceName} heartbeat timeout`,
-				;
+				);
 
 				// Mark service as unhealthy
 				serviceHealth.status = HealthStatus.UNHEALTHY;
@@ -351,11 +351,11 @@ export class HealthService implements IHealthService {
 					timestamp: now,
 					service: serviceName,
 					error: `Heartbeat timeout: ${timeSinceHeartbeat}ms`,
-				};
+				});
 
 				// Attempt recovery if enabled
 				if (this.config.enableAutoRecovery) {
-					await this.attemptServiceRecovery(serviceName;
+					await this.attemptServiceRecovery(serviceName);
 				}
 			}
 		}
@@ -366,17 +366,17 @@ export class HealthService implements IHealthService {
 	 */
 	private startHealthChecks(): void {
 		this.healthCheckIntervalId = setInterval(async () => {
-			await this.performHealthChecks(;
-		}, this.config.healthCheckInterval;
+			await this.performHealthChecks();
+		}, this.config.healthCheckInterval);
 
-		CocoonDevLog("health", "[HealthService] Health checks started";
+		CocoonDevLog("health", "[HealthService] Health checks started");
 	}
 
 	/**
 	 * Perform comprehensive health checks
 	 */
 	private async performHealthChecks(): Promise<void> {
-		CocoonDevLog("health", "[HealthService] Performing health checks";
+		CocoonDevLog("health", "[HealthService] Performing health checks");
 
 		for (const [
 			serviceName,
@@ -384,7 +384,7 @@ export class HealthService implements IHealthService {
 			serviceHealth,
 		] of this.monitoredServices.entries()) {
 			try {
-				await this.checkServiceHealth(serviceName, serviceHealth;
+				await this.checkServiceHealth(serviceName, serviceHealth);
 			} catch (error) {
 				CocoonDevLog(
 					"health",
@@ -392,12 +392,12 @@ export class HealthService implements IHealthService {
 					`[HealthService] Health check failed for ${serviceName}:`,
 
 					error,
-				;
+				);
 
 				// Increment error count
 				const errorCount = (this.errorCounts.get(serviceName) || 0) + 1;
 
-				this.errorCounts.set(serviceName, errorCount;
+				this.errorCounts.set(serviceName, errorCount);
 
 				// Update service status based on error threshold
 				if (errorCount >= this.config.errorThreshold) {
@@ -408,7 +408,7 @@ export class HealthService implements IHealthService {
 						timestamp: Date.now(),
 						service: serviceName,
 						error: `Health check failed: ${error}`,
-					};
+					});
 				}
 			}
 		}
@@ -424,14 +424,14 @@ export class HealthService implements IHealthService {
 	): Promise<void> {
 		try {
 			// Simulate health check - in real implementation, this would check actual service status
-			const isHealthy = await this.performServiceHealthCheck(serviceName;
+			const isHealthy = await this.performServiceHealthCheck(serviceName);
 
 			// Update service information
 			serviceHealth.status = isHealthy
 				? HealthStatus.HEALTHY
 				: HealthStatus.UNHEALTHY;
 
-			serviceHealth.lastHeartbeat = Date.now(;
+			serviceHealth.lastHeartbeat = Date.now();
 
 			serviceHealth.uptime = isHealthy
 				? serviceHealth.uptime + 1
@@ -456,7 +456,7 @@ export class HealthService implements IHealthService {
 
 			// Reset error count on successful health check
 			if (isHealthy) {
-				this.errorCounts.set(serviceName, 0;
+				this.errorCounts.set(serviceName, 0);
 			}
 
 			// Emit health status event
@@ -466,14 +466,14 @@ export class HealthService implements IHealthService {
 					timestamp: Date.now(),
 					service: serviceName,
 					data: serviceHealth,
-				};
+				});
 			}
 
 			CocoonDevLog(
 				"health",
 
 				`[HealthService] Service ${serviceName} health check: ${serviceHealth.status}`,
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"health",
@@ -481,7 +481,7 @@ export class HealthService implements IHealthService {
 				`[HealthService] Failed to check health for ${serviceName}:`,
 
 				error,
-			;
+			);
 
 			throw error;
 		}
@@ -497,19 +497,19 @@ export class HealthService implements IHealthService {
 		switch (serviceName) {
 			case "MountainClientService":
 				// Check Mountain client connection
-				return await this.checkMountainClientHealth(;
+				return await this.checkMountainClientHealth();
 
 			case "ExtensionHostService":
 				// Check extension host status
-				return await this.checkExtensionHostHealth(;
+				return await this.checkExtensionHostHealth();
 
 			case "ConfigurationService":
 				// Check configuration service status
-				return await this.checkConfigurationServiceHealth(;
+				return await this.checkConfigurationServiceHealth();
 
 			case "GRPCServerService":
 				// Check gRPC server status
-				return await this.checkGRPCServerHealth(;
+				return await this.checkGRPCServerHealth();
 
 			default:
 				return true; // Default to healthy for unknown services
@@ -649,7 +649,7 @@ export class HealthService implements IHealthService {
 				"health",
 
 				`[HealthService] Max recovery attempts reached for ${serviceName}`,
-			;
+			);
 
 			return;
 		}
@@ -658,39 +658,39 @@ export class HealthService implements IHealthService {
 			"health",
 
 			`[HealthService] Attempting recovery for ${serviceName} (attempt ${currentAttempts + 1})`,
-		;
+		);
 
-		this.recoveryAttempts.set(serviceName, currentAttempts + 1;
+		this.recoveryAttempts.set(serviceName, currentAttempts + 1);
 
 		this.emitEvent({
 			type: "recovery_attempted",
 			timestamp: Date.now(),
 			service: serviceName,
 			data: { attempt: currentAttempts + 1 },
-		};
+		});
 
 		try {
 			// Simulate recovery attempt
-			await this.performServiceRecovery(serviceName;
+			await this.performServiceRecovery(serviceName);
 
 			// Wait for service to come back online
-			await this.waitForServiceRecovery(serviceName;
+			await this.waitForServiceRecovery(serviceName);
 
 			// Reset recovery attempts on success
-			this.recoveryAttempts.set(serviceName, 0;
+			this.recoveryAttempts.set(serviceName, 0);
 
 			this.emitEvent({
 				type: "recovery_successful",
 				timestamp: Date.now(),
 				service: serviceName,
 				data: { attempt: currentAttempts + 1 },
-			};
+			});
 
 			CocoonDevLog(
 				"health",
 
 				`[HealthService] Recovery successful for ${serviceName}`,
-			;
+			);
 		} catch (error) {
 			CocoonDevLog(
 				"health",
@@ -698,14 +698,14 @@ export class HealthService implements IHealthService {
 				`[HealthService] Recovery failed for ${serviceName}:`,
 
 				error,
-			;
+			);
 
 			this.emitEvent({
 				type: "service_unhealthy",
 				timestamp: Date.now(),
 				service: serviceName,
 				error: `Recovery failed: ${error}`,
-			};
+			});
 		}
 	}
 
@@ -718,16 +718,16 @@ export class HealthService implements IHealthService {
 			"health",
 
 			`[HealthService] Performing recovery for ${serviceName}`,
-		;
+		);
 
 		// Simulate recovery time
-		await new Promise((resolve) => setTimeout(resolve, 2000);
+		await new Promise((resolve) => setTimeout(resolve, 2000));
 
 		CocoonDevLog(
 			"health",
 
 			`[HealthService] Recovery completed for ${serviceName}`,
-		;
+		);
 	}
 
 	/**
@@ -738,37 +738,37 @@ export class HealthService implements IHealthService {
 
 		const checkInterval = 1000; // 1 second
 
-		const startTime = Date.now(;
+		const startTime = Date.now();
 
 		while (Date.now() - startTime < maxWaitTime) {
 			try {
 				const isHealthy =
-					await this.performServiceHealthCheck(serviceName;
+					await this.performServiceHealthCheck(serviceName);
 
 				if (isHealthy) {
 					CocoonDevLog(
 						"health",
 
 						`[HealthService] Service ${serviceName} recovered`,
-					;
+					);
 
 					return;
 				}
 
 				await new Promise((resolve) =>
 					setTimeout(resolve, checkInterval),
-				;
+				);
 			} catch (error) {
 				// Service not available yet, continue waiting
 				await new Promise((resolve) =>
 					setTimeout(resolve, checkInterval),
-				;
+				);
 			}
 		}
 
 		throw new Error(
 			`Service ${serviceName} did not recover within ${maxWaitTime}ms`,
-		;
+		);
 	}
 
 	/**
@@ -777,7 +777,7 @@ export class HealthService implements IHealthService {
 	private emitEvent(event: HealthEvent): void {
 		this.eventListeners.forEach((listener) => {
 			try {
-				listener(event;
+				listener(event);
 			} catch (error) {
 				CocoonDevLog(
 					"health",
@@ -785,9 +785,9 @@ export class HealthService implements IHealthService {
 					"[HealthService] Error in event listener:",
 
 					error,
-				;
+				);
 			}
-		};
+		});
 	}
 
 	/**
@@ -796,7 +796,7 @@ export class HealthService implements IHealthService {
 	async getServiceHealth(
 		serviceName: string,
 	): Promise<ServiceHealth | undefined> {
-		return this.monitoredServices.get(serviceName;
+		return this.monitoredServices.get(serviceName);
 	}
 
 	/**
@@ -813,7 +813,7 @@ export class HealthService implements IHealthService {
 
 		unhealthyServices: number;
 	}> {
-		const services = Array.from(this.monitoredServices.values();
+		const services = Array.from(this.monitoredServices.values());
 
 		const healthyServices = services.filter(
 			(s) => s.status === HealthStatus.HEALTHY,
@@ -852,21 +852,21 @@ export class HealthService implements IHealthService {
 	 * Trigger manual health check
 	 */
 	async triggerHealthCheck(): Promise<void> {
-		await this.performHealthChecks(;
+		await this.performHealthChecks();
 	}
 
 	/**
 	 * Add event listener
 	 */
 	onHealthEvent(listener: (event: HealthEvent) => void): void {
-		this.eventListeners.add(listener;
+		this.eventListeners.add(listener);
 	}
 
 	/**
 	 * Remove event listener
 	 */
 	offHealthEvent(listener: (event: HealthEvent) => void): void {
-		this.eventListeners.delete(listener;
+		this.eventListeners.delete(listener);
 	}
 
 	/**
@@ -874,30 +874,30 @@ export class HealthService implements IHealthService {
 	 */
 	dispose(): void {
 		if (this.heartbeatIntervalId) {
-			clearInterval(this.heartbeatIntervalId;
+			clearInterval(this.heartbeatIntervalId);
 
 			this.heartbeatIntervalId = null;
 		}
 
 		if (this.healthCheckIntervalId) {
-			clearInterval(this.healthCheckIntervalId;
+			clearInterval(this.healthCheckIntervalId);
 
 			this.healthCheckIntervalId = null;
 		}
 
-		this.eventListeners.clear(;
+		this.eventListeners.clear();
 
-		this.monitoredServices.clear(;
+		this.monitoredServices.clear();
 
-		this.errorCounts.clear(;
+		this.errorCounts.clear();
 
-		this.recoveryAttempts.clear(;
+		this.recoveryAttempts.clear();
 
 		CocoonDevLog(
 			"health",
 
 			"[HealthService] Health monitoring service disposed",
-		;
+		);
 	}
 }
 
@@ -905,4 +905,4 @@ export class HealthService implements IHealthService {
  * Service layer for HealthService
  */
 export const HealthServiceLayer = new HealthService(),
-;
+);

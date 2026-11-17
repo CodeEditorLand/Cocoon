@@ -278,14 +278,14 @@ export class LoggerService extends /* Effect.Service */(
 						"fatal",
 
 						FormatMessage(Message, "fatal", ExtensionId),
-					;
+					);
 
 					return await console.error(Message).pipe(
 						Effect.annotateLogs({
 							extensionId: ExtensionId,
 							data: Data.length === 1 ? Data[0] : Data,
 						}),
-					;
+					);
 				};
 
 			/**
