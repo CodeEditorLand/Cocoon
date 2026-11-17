@@ -35,7 +35,7 @@
 		"google-protobuf": "4.0.3",
 		"protobufjs": "8.8.1",
 		"ts-protoc-gen": "0.15.0",
-		"ws": "8.18.3"
+		"ws": "8.23.0"
 	},
 	"devDependencies": {
 		"@playform/build": "0.3.5",
