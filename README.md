@@ -243,7 +243,7 @@ graph LR
 
 ## Project Structure 🗺️
 
-```
+```text
 Element/Cocoon/
 ├── Source/
 │   ├── Bootstrap/                 # Startup and initialization

@@ -94,7 +94,7 @@ graph TB
 
 ## Architecture 🏗️
 
-```
+```text
 +------------------------------------------------------------------+
 |                        Cocoon                                     |
 |                                                                   |
@@ -187,7 +187,7 @@ location on the `Current` branch.
 
 ## Startup Sequence 🚀
 
-```
+```text
 1. Node.js process starts (bootstrap-fork.js)
     |
     v
@@ -593,7 +593,7 @@ Three modules share this responsibility, at three different depths.
 
 ## Extension Lifecycle 🔄
 
-```
+```text
 1. Extension Discovery
    - Mountain scans extension directories
    - Sends extension manifests in InitData
