@@ -15,7 +15,7 @@
 
 ---
 
-# **Cocoon** Architecture 🦋
+# **Cocoon** Architecture
 
 `Cocoon` is the Node.js extension host sidecar for `Land`.
 
@@ -27,7 +27,7 @@
 
 ---
 
-## Table of Contents
+## Table of Contents 📖
 
 1. [Overview](#overview)
 2. [Architecture](#architecture)
@@ -143,7 +143,7 @@ former spellings, not paths you can open.
 | Source/Core/ApiFactory.ts, ApiFactory.ts        | [`Services/API/Factory/Service.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/API/Factory/Service.ts)                       |
 | Source/Services/Commands.ts, Services/Commands.ts | [`Services/Command.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Command.ts) - singular                                 |
 | Source/Services/gRPC/Client.ts                  | [`Services/Mountain/gRPC/Client.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Mountain/gRPC/Client.ts)                     |
-| Source/Generated/                               | [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen) emits into Effect/Generated/ at build time                           |
+| Source/Generated/                               | [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen) emits into `Effect/Generated/` at build time                           |
 
 > [!WARNING]
 >
@@ -174,7 +174,7 @@ location on the `Current` branch.
 | [`IPC/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/IPC)                             | Internal message channel system                |
 | [`Utility/Tier.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Utility/Tier.ts)      | Tier configuration reader                      |
 | [`WebviewPanel/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/WebviewPanel)           | Webview panel lifecycle management             |
-| [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen)                     | Proto-generated TypeScript types               |
+| [`Codegen/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Codegen)                     | TypeScript types derived from `Proto/`               |
 | [`Configuration/ESBuild/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Configuration/ESBuild) | Build configuration                    |
 | [`Interfaces/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Interfaces)               | Service interface contracts                    |
 | [`Platform/`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Platform)                   | OS, environment and process abstraction        |
@@ -447,6 +447,21 @@ circular dependency.
 ---
 
 ## gRPC Communication 🌐
+
+```mermaid
+sequenceDiagram
+    participant Ext as Extension host service
+    participant Client as gRPC client
+    participant Server as Mountain gRPC server
+    participant IPC as IPC message layer
+
+    Ext->>Client: typed service call
+    Client->>Server: protobuf request over Vine channel
+    Server-->>Client: protobuf response
+    Client->>IPC: message framing
+    IPC-->>Ext: decoded result
+```
+
 
 `Cocoon` communicates with `Mountain` via the `Vine` `gRPC` protocol.
 
@@ -847,7 +862,7 @@ hardens the process before extension code runs: `Loader`, `Patcher`,
 
 ---
 
-## Shim Compatibility
+## Shim Compatibility 🛡️
 
 | 🟠 Low-Level Shim             | 🔵 Coverage Shim                |
 | ----------------------------- | ------------------------------- |

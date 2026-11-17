@@ -1,4 +1,4 @@
-# **Cocoon** 🦋
+# **Cocoon**
 
 <table>
 	<tr>
@@ -57,7 +57,7 @@ the rest."_
 
 ---
 
-## Overview
+## Overview 📋
 
 **Cocoon** is the `Node.js`/`Effect-TS` extension host for the
 **Land** 🏞️ Code Editor. It hosts existing VS Code extensions in a
@@ -145,7 +145,7 @@ endpoints for runtime introspection.
 
 ---
 
-## System Architecture
+## System Architecture 🏗️
 
 `Cocoon` operates as a standalone `Node.js` process orchestrated by and
 communicating with `Mountain` ⛰️.
@@ -218,7 +218,7 @@ graph LR
 
 ---
 
-## Key Components
+## Key Components 🧩
 
 | Component        | Path                                             | Description                                                                                                                                                              |
 | ---------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -294,18 +294,18 @@ Element/Cocoon/
 
 ---
 
-## In the Land Project
+## In the Land Project 🔌
 
 `Cocoon` operates as a standalone `Node.js` process orchestrated by
 `Mountain` ⛰️. It provides the `Node.js` extension runtime environment
 that allows existing VS Code extensions to run unmodified within Land 🏞️.
 It complements `Grove` 🌳 (`Rust`/`WASM`) as the second extension host,
-together providing the two execution environments for Land's extension model:
+together providing the two execution environments for Land's extension system:
 
 | Host                 | Language                   | Runtime                   | Isolation                                   |
 | -------------------- | -------------------------- | ------------------------- | ------------------------------------------- |
 | **Cocoon** 🦋 | `TypeScript`, `JavaScript` | `Node.js` via `Effect-TS` | Fiber-level supervision + process hardening |
-| **Grove** 🌳  | `Rust`, `WASM`             | `WASMtime`                | Hardware-enforced via capability model      |
+| **Grove** 🌳  | `Rust`, `WASM`             | `WASMtime`                | Hardware-enforced capabilities      |
 
 - **Depends on:** `Mountain` ⛰️ (gRPC host), `@codeeditorland/output` (VS
   Code platform code), `Wind` 🍃 (extraction pipeline for codegen)
@@ -313,7 +313,7 @@ together providing the two execution environments for Land's extension model:
 - **Protocol:** `gRPC` (`Vine` 🌿 protocol on port `:50052`), `WebSocket`
   (`JSON-RPC` with cryptographic auth to `Sky` 🌌)
 
-### Interaction Flow: `vscode.window.showInformationMessage`
+### Interaction Flow: `vscode.window.showInformationMessage` 📊
 
 1. `Mountain` ⛰️ launches Cocoon with initialization data.
 2. Cocoon's `Main.ts` bootstraps: `PatchProcess` hardens the environment,
@@ -336,19 +336,19 @@ together providing the two execution environments for Land's extension model:
 
 ## Getting Started 🚀
 
-### Prerequisites
+### Prerequisites 📦
 
 - **Node.js** v18 or later
 - **pnpm** (monorepo package manager)
 
-### Build / Install
+### Build / Install 📦
 
 `Cocoon` is developed as a core component of the **Land** project. It is built
 as part of the monorepo and requires the `Bundle=true` build variable, which
 triggers the `Rest` ⛱️ element to prepare the necessary VS Code platform
 code.
 
-### Key Dependencies
+### Key Dependencies 🧩
 
 | Package                            | Purpose                                               |
 | ---------------------------------- | ----------------------------------------------------- |
@@ -387,7 +387,7 @@ Future platform-native layers: `Windows` Job Objects / AppContainer, `Linux`
 
 ---
 
-## Compatibility
+## Compatibility 🔌
 
 Cocoon is designed to be compatible with:
 
@@ -401,7 +401,9 @@ Cocoon is designed to be compatible with:
 
 ---
 
-## API Reference
+## API Reference 📖
+
+- [Architecture](https://github.com/CodeEditorLand/Cocoon/tree/Current/Documentation/GitHub/Architecture.md) - internal module structure, startup and data flow
 
 - [Main Entry Point](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Bootstrap/Implementation/Cocoon/Main.ts)
     - Application bootstrap and layer composition
@@ -421,14 +423,14 @@ Cocoon is designed to be compatible with:
 
 ---
 
-## Related Documentation
+## Related Documentation 📖
 
 - [Architecture Overview](https://Editor.Land/Doc/architecture) - Internal
   module structure
 - [Why Effect-TS](https://Editor.Land/Doc/why-effect-ts) - Design rationale for
   `Effect-TS`
 - [Why gRPC](https://Editor.Land/Doc/why-grpc) - Design rationale for `gRPC`
-- [Land Documentation](../../Documentation/GitHub/README.md) - Complete
+- [Land Documentation](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/README.md) - Complete
   documentation index
 - [Wind 🍃](https://github.com/CodeEditorLand/Wind) - Service layer
   (correlated frontend element)
